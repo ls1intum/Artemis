@@ -1,0 +1,460 @@
+// ── Shared values ──
+// File-scoped variables, placeholders and mixins for the recurring literals and
+// declaration groups used across the Iris course settings page. Keeping these in
+// one place removes duplication without changing any computed value.
+
+$iris-radius: 0.5rem;
+$iris-card-padding: 1.5rem;
+$iris-text-sm: 0.875rem;
+$iris-text-xs: 0.75rem;
+$iris-label: var(--iris-label-color);
+$iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+$iris-thumb: 20px;
+
+// Card-like surface shared by the content cards and the enable/disable toggle row.
+%iris-surface {
+    background: var(--iris-secondary-background);
+    border: 1px solid var(--iris-accent-background);
+    border-radius: $iris-radius;
+}
+
+// A white dot with a coloured ring, centred on its host. Used for both the small
+// clickable slider ticks and (scaled up) the slider handle.
+@mixin iris-dot($size, $ring-color) {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: $size;
+    height: $size;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid $ring-color;
+    transform: translate(-50%, -50%);
+}
+
+// The slider handle ("big tick"): a larger version of the small tick's dot, white with a primary-coloured ring.
+// A mixin because the WebKit and the Gecko thumb cannot share a selector list.
+@mixin iris-thumb {
+    box-sizing: border-box;
+    width: $iris-thumb;
+    height: $iris-thumb;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    background: var(--white);
+    cursor: pointer;
+}
+
+// Chat bubble shared between the user and Iris example messages.
+%iris-bubble {
+    border-radius: 1rem;
+    color: var(--body-color);
+    padding: 0.5rem 0.75rem;
+    font-size: $iris-text-sm;
+}
+
+.iris-settings-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+// The tab panels are TUM AET UI components, whose hosts reset the font size to the kit base (1rem) and the line height
+// with it. The page keeps the application's base size (0.9rem, 1.5), which is what everything inside inherits.
+.iris-general-panel,
+.admin-section {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+// Stacks the enable/disable toggle row and the revealed cards as flex children
+// so the spacing between them comes from a single `gap` instead of margins.
+.iris-general-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.iris-card {
+    @extend %iris-surface;
+
+    padding: $iris-card-padding;
+}
+
+.iris-card-title {
+    font-size: 1rem;
+}
+
+// On a <small> this also overrides the element's default 0.875em shrink
+.iris-card-subtitle {
+    color: $iris-label !important;
+    font-size: $iris-text-sm;
+}
+
+// Layout of a toggle next to its label. The switch keeps its intrinsic width
+// (`shrink-0` in the template) and the label takes what is left; without the
+// shrink guard a long label squeezes the switch until only part of the pill is drawn.
+%iris-toggle-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+// Card variant: a toggle row that stands on its own surface.
+.iris-toggle-row {
+    @extend %iris-surface;
+    @extend %iris-toggle-layout;
+
+    padding: 1.25rem $iris-card-padding;
+}
+
+// Plain variant: a toggle row inside an existing card, no surface of its own.
+.iris-toggle-line {
+    @extend %iris-toggle-layout;
+}
+
+// Group of cards revealed when the Iris toggle is switched on. Stacked as a
+// flex column so the inter-card spacing is a single `gap`, not stacked
+// margins. Each direct child also slides down and fades in, staggered so the
+// cards cascade out from under the toggle row.
+.iris-enabled-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    > * {
+        animation: iris-card-slide-in 0.32s $iris-card-easing both;
+
+        @for $i from 1 through 4 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{($i - 1) * 0.06}s;
+            }
+        }
+    }
+}
+
+// Respect users who prefer reduced motion — show the cards without sliding.
+@media (prefers-reduced-motion: reduce) {
+    .iris-enabled-cards > * {
+        animation: none;
+    }
+}
+
+// Stack the two example chat bubbles as flex children so the spacing between
+// them comes from `gap`, not from a margin on the user bubble.
+.iris-example-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@keyframes iris-card-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Slider with clickable tick markers at the start, middle and end of the track. The slider is a native range input: the kit
+// has no slider. It is drawn in three layers so its thumb travels exactly from the first to the last tick:
+//   1. the track and its filled part, drawn by the wrapper (`::before`, `::after`) from `--iris-slider-value` (0 to 100),
+//   2. the tick dots, and
+//   3. the transparent input with the thumb on top, wider than the wrapper by one thumb so the centre of the thumb, not
+//      its edge, sits on the ends of the track.
+.iris-slider-wrapper {
+    position: relative;
+    max-width: 80%;
+    margin-inline: auto;
+
+    // Vertical room so the enlarged tick hit-area is not clipped
+    padding: 0.5rem 0;
+
+    // Thin rounded track in a light grey, with the filled portion from the start up to the thumb
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 6px;
+        border-radius: 999px;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    &::before {
+        right: 0;
+        background: var(--iris-accent-background);
+    }
+
+    &::after {
+        width: calc(var(--iris-slider-value, 0) * 1%);
+        background: var(--primary);
+    }
+
+    // Clickable tick: a 20px-square button (generous hit area) with a
+    // visible 10px dot centred inside it. Clicking it jumps the slider here.
+    .iris-slider-tick {
+        position: absolute;
+        top: 50%;
+        left: 0; // overridden inline per tick
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        z-index: 2; // sit above the track
+        appearance: none;
+
+        // The visible dot: white fill with a border-coloured ring
+        &::before {
+            @include iris-dot(10px, var(--iris-accent-border-color));
+
+            transition:
+                border-color 0.15s ease,
+                opacity 0.15s ease,
+                transform 0.15s ease;
+        }
+
+        // A "covered" tick sits behind the handle (its level is selected) —
+        // promote its ring to the primary colour. Plain (unselected) ticks
+        // ahead of the handle keep the grey ring.
+        &.covered::before {
+            border-color: var(--primary);
+        }
+
+        // The handle currently sits over this tick — hide it so the handle
+        // is the only marker at that position (no double dot).
+        &.active::before {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.4);
+        }
+    }
+
+    .iris-slider {
+        position: relative;
+        z-index: 3; // sit above the decorative ticks
+        display: block;
+        width: calc(100% + #{$iris-thumb});
+        height: 24px;
+        margin: 0 (-$iris-thumb * 0.5);
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+        appearance: none;
+
+        &::-webkit-slider-runnable-track {
+            height: 24px;
+            background: transparent;
+        }
+
+        &::-moz-range-track {
+            height: 24px;
+            background: transparent;
+        }
+
+        &::-webkit-slider-thumb {
+            @include iris-thumb;
+
+            margin-top: 2px; // centres the thumb in the 24px track
+            appearance: none;
+        }
+
+        &::-moz-range-thumb {
+            @include iris-thumb;
+        }
+
+        &:focus-visible {
+            outline: none;
+        }
+
+        &:focus-visible::-webkit-slider-thumb {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        &:focus-visible::-moz-range-thumb {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+    }
+
+    // When the pop class is active, replay the ring animation on the thumb
+    &.handle-popping .iris-slider::-webkit-slider-thumb {
+        animation: iris-handle-pop 0.32s ease-out;
+    }
+
+    &.handle-popping .iris-slider::-moz-range-thumb {
+        animation: iris-handle-pop 0.32s ease-out;
+    }
+}
+
+// Brief expanding ring played on the slider thumb when it lands on a tick.
+@keyframes iris-handle-pop {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+
+    100% {
+        box-shadow: 0 0 0 12px transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-slider-wrapper.handle-popping .iris-slider::-webkit-slider-thumb,
+    .iris-slider-wrapper.handle-popping .iris-slider::-moz-range-thumb {
+        animation: none;
+    }
+}
+
+// Each label is absolutely positioned at the same percentage as its tick
+// (see .iris-slider-tick) so the two always stay aligned. The container only
+// needs to provide the positioning context and reserve vertical space.
+.iris-slider-labels {
+    position: relative;
+
+    // Match the slider width and centering so labels line up with the track
+    max-width: 80%;
+    margin-inline: auto;
+    margin-top: 0.25rem;
+
+    // Reserve room for the absolutely positioned labels
+    height: 1.5em;
+    color: var(--body-color);
+    font-size: $iris-text-xs;
+
+    .iris-slider-label {
+        position: absolute;
+        top: 0;
+        left: 0; // overridden inline per label
+        // Centre the label on its tick percentage
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+}
+
+.iris-support-description {
+    background: var(--iris-primary-background);
+    border-radius: $iris-radius;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    font-size: $iris-text-sm;
+    color: $iris-label !important;
+
+    strong {
+        color: var(--body-color);
+        font-weight: 500;
+    }
+
+    // "Best suited for" line — cancel the <small> shrink to match the body text
+    > small {
+        font-size: $iris-text-sm;
+        color: $iris-label !important;
+
+        // The "Best suited for:" label is wrapped in <em>; render it upright
+        em {
+            font-style: normal;
+        }
+    }
+}
+
+.iris-example-conversation {
+    background: var(--iris-secondary-background);
+    border-radius: $iris-radius;
+    padding: 1rem;
+    margin-top: 1rem;
+
+    // "Example conversation at this level" label
+    > small {
+        font-size: $iris-text-sm;
+    }
+}
+
+.iris-user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--iris-tertiary-background);
+    color: $iris-label;
+    font-size: 1rem;
+}
+
+.iris-message-user {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0.5rem;
+
+    .bubble {
+        @extend %iris-bubble;
+
+        background: var(--iris-tertiary-background);
+        border-bottom-right-radius: 0.25rem;
+        max-width: 55%;
+    }
+}
+
+.iris-message-iris {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .iris-message-logo {
+        flex-shrink: 0;
+    }
+
+    .bubble {
+        @extend %iris-bubble;
+
+        background: var(--iris-primary-background);
+        border-bottom-left-radius: 0.25rem;
+        max-width: 55%;
+
+        // Soft drop shadow to lift the bubble off the conversation background
+        box-shadow: var(--tumaet-ui-shadow-sm);
+
+        // Inline code snippets embedded in the example reply (via <code> tags
+        // in the translation, rendered with [innerHTML]).
+        code {
+            font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+            font-size: 0.85em;
+            background: var(--iris-accent-background);
+            color: var(--body-color);
+            padding: 0.1em 0.35em;
+            border-radius: 0.25rem;
+        }
+    }
+}
+
+.iris-info-banner {
+    background: var(--iris-blue-background);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    border-radius: $iris-radius;
+    padding: 1rem;
+    font-size: $iris-text-sm;
+    font-weight: 500;
+    color: var(--primary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.admin-section .iris-save-row {
+    margin-top: 1rem;
+}
+
+.iris-save-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

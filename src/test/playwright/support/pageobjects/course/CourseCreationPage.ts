@@ -1,0 +1,233 @@
+import { Page } from '@playwright/test';
+import dayjs from 'dayjs';
+
+import { COURSE_ADMIN_BASE } from '../../constants';
+import { fillDateTimePicker, readResponseJson } from '../../utils';
+
+/**
+ * A class which encapsulates UI selectors and actions for the course creation page.
+ */
+export class CourseCreationPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * Sets the title of the course.
+     * @param title the exam title
+     */
+    async setTitle(title: string) {
+        await this.page.locator('#field_title').fill(title);
+    }
+
+    /**
+     * Sets the short name of the course.
+     * @param shortName the course short name
+     */
+    async setShortName(shortName: string) {
+        await this.page.locator('#field_shortName').fill(shortName);
+    }
+
+    /**
+     * Sets the description of the course.
+     * @param description the course description
+     */
+    async setDescription(description: string) {
+        await this.page.locator('#field_description').fill(description);
+    }
+
+    /**
+     * @param date the date when the course starts
+     */
+    async setStartDate(date: dayjs.Dayjs) {
+        await fillDateTimePicker(this.page.locator('#field_startDate_input'), date);
+    }
+
+    /**
+     * @param date the date when the course will end
+     */
+    async setEndDate(date: dayjs.Dayjs) {
+        await fillDateTimePicker(this.page.locator('#field_endDate_input'), date);
+    }
+
+    /**
+     * Sets course to be a test course
+     * @param testCourse if is a test course
+     */
+    async setTestCourse(testCourse: boolean) {
+        const selector = this.page.locator('#field_testCourse');
+        if (testCourse) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
+     * Sets semester for the course. Selecting it also fills in the start and end date unless they were set by hand.
+     * @param semester the semester of the course
+     */
+    async setSemester(semester: string) {
+        await this.selectOption('#semester', semester);
+    }
+
+    /**
+     * Sets the maximum achievable points in the course.
+     * @param courseMaxPoints the max points
+     */
+    async setCourseMaxPoints(courseMaxPoints: number) {
+        await this.page.locator('#field_maxPoints').fill(courseMaxPoints.toString());
+    }
+
+    /**
+     * Sets the default programming language
+     * @param programmingLanguage the programming language
+     */
+    async setProgrammingLanguage(programmingLanguage: string) {
+        await this.selectOption('#programmingLanguage', programmingLanguage);
+    }
+
+    /**
+     * Picks an option of a TUM AET UI select, which opens a listbox rather than being a native select.
+     * @param triggerSelector the selector of the select's trigger
+     * @param label the visible label of the option
+     */
+    private async selectOption(triggerSelector: string, label: string) {
+        await this.page.locator(triggerSelector).click();
+        await this.page.getByRole('option', { name: label, exact: true }).click();
+    }
+
+    /**
+     * Sets if complaints are enabled
+     * @param complaints if complaints should be enabled
+     */
+    async setEnableComplaints(complaints: boolean) {
+        const selector = this.page.locator('#field_maxComplaintSettingEnabled');
+        if (complaints) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
+     * Sets maximum amount of complaints
+     * @param maxComplaints the maximum complaints
+     */
+    async setMaxComplaints(maxComplaints: number) {
+        await this.page.locator('#field_maxComplaints').fill(maxComplaints.toString());
+    }
+
+    /**
+     * Sets maximum amount of team complaints
+     * @param maxTeamComplaints the maximum team complaints
+     */
+    async setMaxTeamComplaints(maxTeamComplaints: number) {
+        await this.page.locator('#field_maxTeamComplaints').fill(maxTeamComplaints.toString());
+    }
+
+    /**
+     * Sets the maximal complaints time in days
+     * @param maxComplaintsTimeDays the maximal complaints time in days
+     */
+    async setMaxComplaintsTimeDays(maxComplaintsTimeDays: number) {
+        await this.page.locator('#field_maxComplaintTimeDays').fill(maxComplaintsTimeDays.toString());
+    }
+
+    /**
+     * Sets the maximal complaint text limit
+     * @param maxComplaintTextLimit the maximal complaint text limit
+     */
+    async setMaxComplaintTextLimit(maxComplaintTextLimit: number) {
+        await this.page.locator('#field_maxComplaintTextLimit').fill(maxComplaintTextLimit.toString());
+    }
+
+    /**
+     * Sets the maximal complaint response text limit
+     * @param maxComplaintResponseTextLimit the maximal complaint response text limit
+     */
+    async setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit: number) {
+        await this.page.locator('#field_maxComplaintResponseTextLimit').fill(maxComplaintResponseTextLimit.toString());
+    }
+
+    /**
+     * Sets if more feedback requests are enabled
+     * @param moreFeedback if more feedback should be enabled
+     */
+    async setEnableMoreFeedback(moreFeedback: boolean) {
+        const selector = this.page.locator('#field_maxRequestMoreFeedbackSettingEnabled');
+        if (moreFeedback) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
+     * Sets the maximal request more feedback time in days
+     * @param maxRequestMoreFeedbackTimeDays maximal request more feedback time in days
+     */
+    async setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays: number) {
+        await this.page.locator('#field_maxRequestMoreFeedbackTimeDays').fill(maxRequestMoreFeedbackTimeDays.toString());
+    }
+
+    /**
+     * Sets if course is an online course
+     * @param onlineCourse if should be online course
+     */
+    async setOnlineCourse(onlineCourse: boolean) {
+        const selector = this.page.locator('#field_onlineCourse');
+        if (onlineCourse) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
+     * Sets if students can register for this course
+     * @param registration if registration should be possible
+     */
+    async setRegistrationEnabled(registration: boolean) {
+        const selector = this.page.locator('#field_registrationEnabled');
+        if (registration) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
+     * Submits the created exam.
+     * @returns the response if a test needs it
+     */
+    async submit() {
+        const responsePromise = this.page.waitForResponse(COURSE_ADMIN_BASE);
+        await this.page.click('#save-entity');
+        const response = await responsePromise;
+        return await readResponseJson(response);
+    }
+
+    /**
+     * Updates the created exam.
+     *
+     * Scopes `waitForResponse` to the update method (PUT/POST `multipart/form-data`)
+     * — the generic `api/course/courses/*` glob also matches concurrent GETs (refresh,
+     * stats, dashboards) that the page issues right before the form save, and racing
+     * against those returns a course object without the just-edited fields.
+     *
+     * @returns the response if a test needs it
+     */
+    async update() {
+        // Matches both the canonical /api/course/courses/{id} and the legacy /api/core/courses/{id} so
+        // the test stays correct during the deprecation window where either prefix could fire.
+        const responsePromise = this.page.waitForResponse(
+            (resp) => /\/api\/(?:course|core)\/courses\/\d+(\?|$)/.test(resp.url()) && ['POST', 'PUT'].includes(resp.request().method()),
+        );
+        await this.page.click('#save-entity');
+        const response = await responsePromise;
+        return readResponseJson(response);
+    }
+}

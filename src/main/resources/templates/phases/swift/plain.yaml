@@ -1,0 +1,25 @@
+- name: setup
+  script: |-
+    cp -R Tests ${studentParentWorkingDirectoryName}
+    cp Package.swift ${studentParentWorkingDirectoryName}
+- name: compile
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    swift build
+- name: test
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    # Swift Testing appends -swift-testing to the name of the xUnit file, so its results are in xunit-swift-testing.xml.
+    # Exercises created before the Swift Testing templates use XCTest with SwiftTestReporter, which writes tests.xml with the failure messages.
+    # The xUnit file of SwiftPM has another name, because it would replace that report and lose the messages.
+    # A test repository has the tests of one framework only, so no result is reported twice.
+    swift test --xunit-output xunit.xml
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/tests.xml'
+    - '${studentParentWorkingDirectoryName}/xunit-swift-testing.xml'
+- name: finalize
+  script: |-
+    # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
+    # so we need to allow everyone to access these files
+    chmod -R 777 .
+  forceRun: true

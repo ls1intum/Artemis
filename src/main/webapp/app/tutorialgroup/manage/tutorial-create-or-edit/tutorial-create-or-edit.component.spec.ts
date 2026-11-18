@@ -1,0 +1,703 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { Observable, of, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ValidationStatus } from 'app/foundation/util/validation';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
+import {
+    CreateTutorialGroupEvent,
+    TutorialCreateOrEditComponent,
+    UpdateTutorialGroupEvent,
+} from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
+import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+
+describe('TutorialCreateOrEditComponent', () => {
+    let component: TutorialCreateOrEditComponent;
+    let fixture: ComponentFixture<TutorialCreateOrEditComponent>;
+
+    let tutorialGroupApiService: { getUniqueLanguageValues: ReturnType<typeof vi.fn> };
+    let alertService: { addErrorAlert: ReturnType<typeof vi.fn> };
+
+    const mockTranslateService = new MockTranslateService();
+    const tutors: TutorialGroupTutor[] = [
+        { id: 11, nameAndLogin: 'Ada Lovelace (ada)' },
+        { id: 12, nameAndLogin: 'Grace Hopper (grace)' },
+    ];
+
+    beforeEach(async () => {
+        tutorialGroupApiService = {
+            getUniqueLanguageValues: vi.fn(),
+        };
+        alertService = {
+            addErrorAlert: vi.fn(),
+        };
+
+        await TestBed.configureTestingModule({
+            imports: [TutorialCreateOrEditComponent, MockDirective(TranslateDirective), MockDirective(RouterLink)],
+            providers: [
+                { provide: TranslateService, useValue: mockTranslateService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
+                { provide: AlertService, useValue: alertService },
+                { provide: ActivatedRoute, useValue: {} },
+            ],
+        })
+            .overrideComponent(TutorialCreateOrEditComponent, {
+                remove: { imports: [TumAetUiConfirmDialogComponent, TutorialEditLanguagesInputComponent] },
+                add: { imports: [MockComponent(TumAetUiConfirmDialogComponent), MockComponent(TutorialEditLanguagesInputComponent)] },
+            })
+            .compileComponents();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+        vi.restoreAllMocks();
+    });
+
+    function createTutorialGroupDetailData(overrides: Partial<RawTutorialGroupDetailData> = {}): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
+            id: 17,
+            title: 'TG 1',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Grace Hopper',
+            tutorLogin: 'grace',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 15,
+            campus: 'Garching',
+            additionalInformation: 'Bring laptop',
+            groupChannelId: undefined,
+            tutorChatId: undefined,
+            ...overrides,
+        });
+    }
+
+    function createTutorialGroupSchedule(overrides: Partial<TutorialGroupSchedule> = {}): TutorialGroupSchedule {
+        return {
+            firstSessionStart: '2026-04-20T10:15:00',
+            firstSessionEnd: '2026-04-20T11:45:00',
+            repetitionFrequency: 2,
+            tutorialPeriodEnd: '2026-07-20',
+            location: 'Room 101',
+            ...overrides,
+        };
+    }
+
+    async function createComponentWithLanguageValues(languageValues$: Observable<string[]>) {
+        tutorialGroupApiService.getUniqueLanguageValues.mockReturnValue(languageValues$);
+
+        fixture = TestBed.createComponent(TutorialCreateOrEditComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('tutors', tutors);
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
+    function setValidGeneralInputs() {
+        component.title.set('TG 2');
+        component.selectedTutorId.set(11);
+        component.selectedLanguage.set('English');
+        component.selectedMode.set('Offline' as never);
+        component.campus.set('Garching');
+        component.capacity.set(20);
+        component.additionalInformation.set('Bring worksheet');
+    }
+
+    function setValidScheduleInputs() {
+        component.configureSessionPlan.set(true);
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
+        component.repetitionFrequency.set(2);
+        component.tutorialPeriodEnd.set(dayjs('2026-07-20'));
+        component.location.set('Room 101');
+    }
+
+    it('should initialize in create mode with default field values', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.isEditMode()).toBe(false);
+        expect(component.title()).toBe('');
+        expect(component.selectedTutorId()).toBeUndefined();
+        expect(component.selectedLanguage()).toBe('');
+        expect(component.selectedMode()).toBe('Offline');
+        expect(component.campus()).toBe('');
+        expect(component.capacity()).toBeUndefined();
+        expect(component.additionalInformation()).toBe('');
+        expect(component.configureSessionPlan()).toBe(false);
+        expect(component.firstSessionStart()).toBeUndefined();
+        expect(component.firstSessionEnd()).toBeUndefined();
+        expect(component.repetitionFrequency()).toBe(1);
+        expect(component.tutorialPeriodEnd()).toBeUndefined();
+        expect(component.location()).toBe('');
+    });
+
+    it('clears optional fields and the schedule when switching to another group', async () => {
+        await createComponentWithLanguageValues(of(['English']));
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+        fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.componentRef.setInput(
+            'tutorialGroup',
+            createTutorialGroupDetailData({ id: 18, title: 'TG 2', campus: undefined, capacity: undefined, additionalInformation: undefined }),
+        );
+        fixture.componentRef.setInput('schedule', undefined);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.title()).toBe('TG 2');
+        expect(component.campus()).toBe('');
+        expect(component.capacity()).toBeUndefined();
+        expect(component.additionalInformation()).toBe('');
+        expect(component.configureSessionPlan()).toBe(false);
+        expect(component.firstSessionStart()).toBeUndefined();
+        expect(component.firstSessionEnd()).toBeUndefined();
+        expect(component.tutorialPeriodEnd()).toBeUndefined();
+        expect(component.location()).toBe('');
+    });
+
+    it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.isEditMode()).toBe(true);
+        expect(component.title()).toBe('TG 1');
+        expect(component.selectedTutorId()).toBe(12);
+        expect(component.selectedLanguage()).toBe('English');
+        expect(component.selectedMode()).toBe('Offline');
+        expect(component.campus()).toBe('Garching');
+        expect(component.capacity()).toBe(15);
+        expect(component.additionalInformation()).toBe('Bring laptop');
+        expect(component.configureSessionPlan()).toBe(true);
+        expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart));
+        expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd));
+        expect(component.repetitionFrequency()).toBe(2);
+        expect(component.tutorialPeriodEnd()).toEqual(dayjs(schedule.tutorialPeriodEnd));
+        expect(component.location()).toBe('Room 101');
+    });
+
+    it('should fetch already used languages once courseId is available', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1);
+        expect(component.alreadyUsedLanguages()).toEqual(['English', 'German']);
+    });
+
+    it('should show error alert if fetching already used languages fails', async () => {
+        await createComponentWithLanguageValues(throwError(() => new Error('network error')));
+
+        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1);
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchLanguages');
+    });
+
+    it('should expose the correct title validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.titleValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.titleContent',
+        });
+
+        component.title.set('@invalid');
+        expect(component.titleValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.titleContent',
+        });
+
+        component.title.set('a'.repeat(20));
+        expect(component.titleValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.titleLength',
+        });
+
+        component.title.set('TG 1');
+        expect(component.titleValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct tutor validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.tutorValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired',
+        });
+
+        component.selectedTutorId.set(11);
+
+        expect(component.tutorValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct campus validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.campusValidationResult()).toEqual({ status: ValidationStatus.VALID });
+
+        component.campus.set('a'.repeat(256));
+        expect(component.campusValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.campusLength',
+        });
+
+        component.campus.set('Garching');
+        expect(component.campusValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct additional information validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+
+        component.additionalInformation.set('a'.repeat(256));
+        expect(component.additionalInformationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.additionalInformationLength',
+        });
+
+        component.additionalInformation.set('Bring worksheet');
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct first session start validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.firstSessionStartValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired',
+        });
+
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+
+        expect(component.firstSessionStartValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct first session end validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.firstSessionEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired',
+        });
+
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.firstSessionEnd.set(dayjs('2026-04-20T10:15'));
+        expect(component.firstSessionEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotAfterStart',
+        });
+
+        component.firstSessionEnd.set(dayjs('2026-04-21T11:45'));
+        expect(component.firstSessionEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotOnSameDayAsStart',
+        });
+
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
+        expect(component.firstSessionEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct tutorial period end validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired',
+        });
+
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.tutorialPeriodEnd.set(dayjs('2026-04-20T09:00'));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
+        });
+
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
+        component.tutorialPeriodEnd.set(dayjs('2026-04-20T11:00'));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
+        });
+
+        component.tutorialPeriodEnd.set(dayjs('2028-04-21'));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
+        });
+
+        component.tutorialPeriodEnd.set(dayjs('2028-04-20'));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should expose the correct location validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+        });
+
+        component.location.set('   ');
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+        });
+
+        component.location.set('a'.repeat(256));
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationLength',
+        });
+
+        component.location.set('Room 101');
+        expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
+    it('should keep the save button enabled with a valid group while the schedule toggle is off', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.saveButtonDisabled()).toBe(true);
+
+        setValidGeneralInputs();
+        expect(component.configureSessionPlan()).toBe(false);
+        expect(component.saveButtonDisabled()).toBe(false);
+    });
+
+    it('should require the schedule fields once the schedule toggle is on', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        setValidGeneralInputs();
+
+        // Toggle on but no schedule fields filled -> save is blocked and says which fields are missing.
+        component.configureSessionPlan.set(true);
+        expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired');
+
+        setValidScheduleInputs();
+        expect(component.saveButtonDisabled()).toBe(false);
+        expect(component.saveDisabledReasons()).toEqual([]);
+    });
+
+    it('should block saving when a schedule date is edited into invalid text and unblock once corrected', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        setValidGeneralInputs();
+        setValidScheduleInputs();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.saveButtonDisabled()).toBe(false);
+
+        // The first picker keeps its last committed date but reports the unparseable text through inputValidityChange.
+        const startPicker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+        startPicker.componentInstance.inputValidityChange.emit(false);
+        fixture.detectChanges();
+
+        expect(component.firstSessionStart()).toEqual(dayjs('2026-04-20T10:15'));
+        expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartInvalid');
+
+        startPicker.componentInstance.inputValidityChange.emit(true);
+        fixture.detectChanges();
+        expect(component.saveButtonDisabled()).toBe(false);
+    });
+
+    it('should list the missing general-information fields as reasons the save button is disabled', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.titleContent');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired');
+    });
+
+    it('should disable the save button in edit mode until something changes', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.isEditMode()).toBe(true);
+        expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toEqual(['artemisApp.pages.createOrEditTutorialGroup.validationError.noChanges']);
+
+        component.additionalInformation.set('Updated info');
+        expect(component.saveButtonDisabled()).toBe(false);
+    });
+
+    it('should emit onCreate with assembled dto when saving a new tutorial group', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const onCreateSpy = vi.fn<(event: CreateTutorialGroupEvent) => void>();
+        component.onCreate.subscribe(onCreateSpy);
+
+        setValidGeneralInputs();
+        setValidScheduleInputs();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(onCreateSpy).toHaveBeenCalledWith({
+            courseId: 1,
+            createTutorialGroupDTO: {
+                title: 'TG 2',
+                tutorId: 11,
+                language: 'English',
+                isOnline: false,
+                campus: 'Garching',
+                capacity: 20,
+                additionalInformation: 'Bring worksheet',
+                tutorialGroupSchedule: {
+                    firstSessionStart: '2026-04-20T10:15:00',
+                    firstSessionEnd: '2026-04-20T11:45:00',
+                    repetitionFrequency: 2,
+                    tutorialPeriodEnd: '2026-07-20',
+                    location: 'Room 101',
+                },
+            },
+        });
+    });
+
+    it('should emit onUpdate directly when saving an edited tutorial group without schedule overwrite confirmation', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(onUpdateSpy).toHaveBeenCalledWith({
+            courseId: 1,
+            tutorialGroupId: 17,
+            updateTutorialGroupDTO: {
+                title: 'TG Updated',
+                tutorId: 12,
+                language: 'English',
+                isOnline: false,
+                campus: 'Garching',
+                capacity: 15,
+                additionalInformation: 'Bring laptop',
+                tutorialGroupSchedule: undefined,
+            },
+        });
+    });
+
+    it('should emit onUpdate directly without the overwrite warning when only a non-schedule field of a scheduled group changes', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute schedule times without seconds (10:15, not 10:15:00).
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should send the original server schedule strings for fields the user did not change', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute times without seconds; an unchanged field must be sent back verbatim rather than reformatted.
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+        const emittedSchedule = onUpdateSpy.mock.calls[0][0].updateTutorialGroupDTO.tutorialGroupSchedule;
+        expect(emittedSchedule?.firstSessionStart).toBe('2026-04-20T10:15');
+        expect(emittedSchedule?.firstSessionEnd).toBe('2026-04-20T11:45');
+    });
+
+    it('should confirm schedule-overwriting update and emit on accept', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((request: TumAetUiConfirmationRequest) => {
+            request.accept();
+        });
+
+        component.location.set('Room 202');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(onUpdateSpy).toHaveBeenCalledWith({
+            courseId: 1,
+            tutorialGroupId: 17,
+            updateTutorialGroupDTO: {
+                title: 'TG 1',
+                tutorId: 12,
+                language: 'English',
+                isOnline: false,
+                campus: 'Garching',
+                capacity: 15,
+                additionalInformation: 'Bring laptop',
+                tutorialGroupSchedule: {
+                    firstSessionStart: '2026-04-20T10:15:00',
+                    firstSessionEnd: '2026-04-20T11:45:00',
+                    repetitionFrequency: 2,
+                    tutorialPeriodEnd: '2026-07-20',
+                    location: 'Room 202',
+                },
+            },
+        });
+    });
+    describe('session plan date pickers', () => {
+        function field(id: string): HTMLInputElement {
+            return fixture.nativeElement.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        function errorOf(id: string): HTMLElement {
+            return field(id).closest('tumaet-ui-form-field')!.querySelector('.tumaet-ui-form-field-error')!;
+        }
+
+        function blur(input: HTMLInputElement) {
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+        }
+
+        async function createWithSessionPlan() {
+            await createComponentWithLanguageValues(of(['English', 'German']));
+            component.configureSessionPlan.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should render a labelled picker for each date with its stable id', async () => {
+            await createWithSessionPlan();
+
+            for (const id of ['first-session-start-input', 'first-session-end-input', 'tutorial-period-end-input']) {
+                expect(field(id)).not.toBeNull();
+                expect(fixture.nativeElement.querySelector(`label[for="${id}"]`)).not.toBeNull();
+            }
+        });
+
+        it('should write typed values into the signals', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '20.04.2026 11:45');
+            type(field('tutorial-period-end-input'), '20.07.2026');
+
+            expect(component.firstSessionStart()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T10:15');
+            expect(component.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T11:45');
+            expect(component.tutorialPeriodEnd()?.format('YYYY-MM-DD HH:mm')).toBe('2026-07-20 00:00');
+        });
+
+        it('should show the stored schedule in the pickers', async () => {
+            await createComponentWithLanguageValues(of(['English']));
+            fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+            fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(field('first-session-start-input').value).toBe('20.04.2026 10:15');
+            expect(field('first-session-end-input').value).toBe('20.04.2026 11:45');
+            expect(field('tutorial-period-end-input').value).toBe('20.07.2026');
+        });
+
+        it('should explain a missing first session start once the field was touched', async () => {
+            await createWithSessionPlan();
+            expect(errorOf('first-session-start-input').hidden).toBe(true);
+
+            blur(field('first-session-start-input'));
+
+            const error = errorOf('first-session-start-input');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('firstSessionStartRequired');
+            expect(field('first-session-start-input').getAttribute('aria-describedby')).toBe(error.id);
+        });
+
+        it('should explain an end that is not on the start day', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '21.04.2026 11:45');
+            blur(field('first-session-end-input'));
+
+            const error = errorOf('first-session-end-input');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('firstSessionEndNotOnSameDayAsStart');
+        });
+    });
+});

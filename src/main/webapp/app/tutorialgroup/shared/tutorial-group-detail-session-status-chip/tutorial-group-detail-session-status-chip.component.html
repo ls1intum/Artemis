@@ -1,0 +1,17 @@
+<tumaet-ui-tag size="sm" [rounded]="true" [severity]="variant() === 'REGULAR' ? 'success' : variant() === 'CANCELLED' ? 'danger' : 'warn'">
+    @switch (variant()) {
+        @case ('REGULAR') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.regular"></span>
+        }
+        @case ('CANCELLED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.cancelled"></span>
+        }
+        @case ('RESCHEDULED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.rescheduled"></span>
+        }
+        @case ('RELOCATED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.relocated"></span>
+        }
+        @default {}
+    }
+</tumaet-ui-tag>

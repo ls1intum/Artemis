@@ -1,0 +1,27 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { PagingService } from 'app/exercise/services/paging.service';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+type EntityResponseType = SearchResult<Lecture>;
+
+@Service()
+export class LecturePagingService extends PagingService<Lecture> {
+    private http = inject(HttpClient);
+
+    private static readonly RESOURCE_URL = 'api/lecture/lectures';
+
+    constructor() {
+        super();
+    }
+
+    override search(pageable: SearchTermPageableSearch): Observable<EntityResponseType> {
+        const params = this.createHttpParams(pageable);
+        return this.http
+            .get<EntityResponseType>(`${LecturePagingService.RESOURCE_URL}`, { params, observe: 'response' })
+            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+    }
+}

@@ -1,0 +1,265 @@
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { Directive, OnDestroy, OnInit, inject, input, model, signal } from '@angular/core';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { DisplayPriority } from 'app/communication/communication.util';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { Router } from '@angular/router';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+@Directive()
+export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
+    protected oneToOneChatService = inject(OneToOneChatService);
+    protected courseConversationsService = inject(CourseConversationsService);
+    protected communicationService = inject(CommunicationService);
+    protected router = inject(Router);
+
+    readonly posting = model<T>();
+    readonly isCommunicationPage = input<boolean | undefined>();
+    readonly showChannelReference = input<boolean>();
+
+    readonly hasChannelModerationRights = input(false);
+    readonly isThreadSidebar = input<boolean | undefined>();
+    abstract get reactionsBar(): PostingReactionsBarComponent<T> | undefined;
+    readonly showDropdown = signal(false);
+    readonly dropdownPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+    showReactionSelector = false;
+    clickPosition = { x: 0, y: 0 };
+
+    isAnswerPost = false;
+    isDeleted = false;
+    readonly timeToDeleteInSeconds = 6;
+    readonly deleteTimerInSeconds = signal(6);
+    deleteTimer: NodeJS.Timeout | undefined;
+    deleteInterval: NodeJS.Timeout | undefined;
+
+    content?: string;
+
+    // Icons
+    farBookmark = farBookmark;
+    faBookmark = faBookmark;
+
+    protected openDropdownAt(event: MouseEvent): void {
+        this.dropdownPosition.set({ x: event.clientX, y: event.clientY });
+        this.showDropdown.set(true);
+        this.adjustDropdownPosition();
+    }
+
+    adjustDropdownPosition(): void {
+        const dropdownWidth = 200;
+        if (this.dropdownPosition().x + dropdownWidth > window.innerWidth) {
+            this.dropdownPosition.update((position) => cloneWith(position, { x: window.innerWidth - dropdownWidth - 10 }));
+        }
+    }
+
+    ngOnInit(): void {
+        this.content = this.posting()?.content;
+    }
+
+    ngOnDestroy(): void {
+        const shouldDeletePosting = this.deleteTimer !== undefined && this.isDeleted;
+        this.clearDeleteTimers();
+        // Only delete if still marked as deleted
+        if (shouldDeletePosting) {
+            this.deletePostingWithoutTimeout();
+        }
+    }
+
+    onDeleteEvent(isDelete: boolean) {
+        this.isDeleted = isDelete;
+
+        this.clearDeleteTimers();
+
+        if (isDelete) {
+            this.deleteTimerInSeconds.set(this.timeToDeleteInSeconds);
+
+            this.deleteTimer = setTimeout(
+                () => {
+                    this.deletePostingWithoutTimeout();
+                    this.isDeleted = false;
+                    this.clearDeleteTimers();
+                },
+                // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
+                this.deleteTimerInSeconds() * 1000 + 1000,
+            );
+
+            this.deleteInterval = setInterval(() => {
+                this.deleteTimerInSeconds.set(Math.max(0, this.deleteTimerInSeconds() - 1));
+            }, 1000);
+        }
+    }
+
+    private clearDeleteTimers() {
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+            this.deleteTimer = undefined;
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+            this.deleteInterval = undefined;
+        }
+    }
+
+    /**
+     * Invokes the edit functionality from the child reaction bar.
+     * Closes the dropdown afterward.
+     */
+    editPosting() {
+        this.reactionsBar!.editPosting();
+        this.showDropdown.set(false);
+    }
+
+    /**
+     * Invokes the pin toggle from the child reaction bar.
+     * Closes dropdown and updates the view.
+     */
+    togglePin() {
+        this.reactionsBar!.togglePin();
+        this.showDropdown.set(false);
+    }
+
+    /**
+     * Deletes the post by invoking the delete method from the reaction bar.
+     */
+    deletePost() {
+        this.reactionsBar!.deletePosting();
+        this.showDropdown.set(false);
+    }
+
+    /**
+     * Initiates the forward message logic from the reaction bar.
+     */
+    forwardMessage() {
+        this.reactionsBar!.forwardMessage();
+    }
+
+    /**
+     * Delegates pin status retrieval to the reaction bar (used for dropdown display).
+     */
+    checkIfPinned(): DisplayPriority {
+        return this.reactionsBar!.checkIfPinned();
+    }
+
+    selectReaction(event: EmojiEvent) {
+        this.reactionsBar!.selectReaction(event);
+        this.showReactionSelector = false;
+    }
+
+    addReaction(event: MouseEvent) {
+        event.preventDefault();
+        this.showDropdown.set(false);
+
+        this.clickPosition = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+
+        this.showReactionSelector = true;
+    }
+
+    /**
+     * Toggles visibility of the emoji picker (used by emoji button in dropdown).
+     */
+    toggleEmojiSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    markMessageAsUnread() {
+        const posting = this.posting();
+        if (posting) {
+            this.communicationService.markMessageAsUnread(posting);
+        }
+    }
+
+    protected toggleSavePost() {
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
+
+        if (posting.isSaved) {
+            this.communicationService.removeSavedPost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = false;
+            this.posting.set(updated);
+        } else {
+            this.communicationService.savePost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = true;
+            this.posting.set(updated);
+        }
+    }
+
+    private deletePostingWithoutTimeout() {
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
+        if (this.isAnswerPost) {
+            this.communicationService.deleteAnswerPost(posting).subscribe();
+        } else {
+            this.communicationService.deletePost(posting);
+        }
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     *
+     * @param referencedUserLogin login of the referenced user
+     */
+    onUserReferenceClicked(referencedUserLogin: string) {
+        const course = this.communicationService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCommunicationPage()) {
+                this.courseConversationsService.createOneToOneChat(referencedUserLogin).subscribe({
+                    // the chat itself is created before the conversations are reloaded, and a failed reload is already
+                    // reported by the service, so it must not surface as an unhandled error here
+                    error: () => {},
+                });
+            } else {
+                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
+                        queryParams: {
+                            conversationId: res.body!.id,
+                        },
+                    });
+                });
+            }
+        }
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     */
+    onUserNameClicked() {
+        if (!this.posting()?.author?.id) {
+            return;
+        }
+
+        const referencedUserId = this.posting()!.author!.id!;
+
+        const course = this.communicationService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCommunicationPage()) {
+                this.courseConversationsService.createOneToOneChatWithId(referencedUserId).subscribe({
+                    // see above, a failed reload of the conversations must not surface as an unhandled error
+                    error: () => {},
+                });
+            } else {
+                this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
+                        queryParams: {
+                            conversationId: res.body!.id,
+                        },
+                    });
+                });
+            }
+        }
+    }
+}

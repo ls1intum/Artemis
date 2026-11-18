@@ -1,0 +1,103 @@
+cabal-version: 2.2
+name: test
+version: 0.1
+build-type: Simple
+
+-- Set this flag when building on the Artemis production server.
+-- This flag is needed as cabal tries to build all specified libraries
+-- even though some of them are not needed to run the executable
+-- and in our case are not even available on the server.
+Flag Prod
+  Description: Enable production mode to avoid compilation of unneeded libraries
+  Default: False
+  Manual: True
+
+-- dependencies for all targets
+common common-all
+  default-language: Haskell2010
+  build-depends:
+    base == 4.*
+
+-- dependencies for test targets
+common common-tests
+  import: common-all
+  hs-source-dirs: test
+  other-modules: Interface
+  build-depends:
+    tasty == 1.*,
+    tasty-smallcheck == 0.*,
+    smallcheck == 1.*,
+    tasty-quickcheck == 0.*,
+    QuickCheck == 2.*,
+    quickcheck-assertions == 0.*,
+    tasty-hunit == 0.*,
+    tasty-ant-xml == 1.*,
+    solution
+  mixins:
+    -- rename module exported by the solution to avoid a naming conflict
+    solution (Exercise as Solution)
+  ghc-options:
+    -main-is Test
+    -- this flag is necessary as it allows interrupts of non-allocating loops
+    -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/bugs.html#bugs-in-ghc
+    -fno-omit-yields
+  if flag(Prod)
+    cpp-options: -DPROD
+
+-- build a submission
+library submission
+  import: common-all
+  -- enables safe Haskell mode; that is, disallow unsafe features -- see https://wiki.haskell.org/Safe_Haskell
+  default-extensions: Safe
+  -- The base package by Haskell can be trusted.
+  -- See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/safe_haskell.html#package-trust
+  -- for a description of the flags. Add more trusted packages if needed.
+  -- `-pgmP nonExistentCPP` disables the pre-processor for security reasons
+  -- by setting it to a non-existent program called `nonExistentCPP`. See
+  -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/phases.html
+  ghc-options: -fpackage-trust -trust base -pgmP nonExistentCPP
+  hs-source-dirs: ${studentParentWorkingDirectoryName}/src
+  exposed-modules: Exercise
+
+-- build the local template
+library template
+  import: common-all
+  -- There is no template folder on the production server, but cabal tries to build all executables
+  -- without exception (https://github.com/commercialhaskell/stack/issues/3486).
+  -- We hence disable the build explicitly with a flag.
+  if flag(Prod)
+    buildable: False
+  else
+    hs-source-dirs: template/src
+  exposed-modules: Exercise
+
+-- build the solution
+library solution
+  import: common-all
+  hs-source-dirs: ${solutionWorkingDirectory}/src
+  exposed-modules: Exercise
+
+-- run tests for a submission
+executable test
+  import: common-tests
+  build-depends: submission
+  main-is: Test.hs
+
+-- run tests for local template
+executable test-template
+  import: common-tests
+  build-depends: template
+  main-is: Test.hs
+  if flag(Prod)
+    buildable: False
+
+-- run tests for solution locally
+executable test-solution
+  import: common-tests
+  main-is: Test.hs
+  mixins:
+    -- use solution as both submission and solution
+    solution (Exercise as Exercise),
+    solution (Exercise as Solution)
+  if flag(Prod)
+    buildable: False

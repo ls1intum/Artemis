@@ -1,0 +1,153 @@
+import { Page, expect } from '@playwright/test';
+import { Fixtures } from '../../../fixtures/fixtures';
+import { annotateRecovery, getExercise } from '../../utils';
+import { RELOAD_RENDER_TIMEOUT } from '../../timeouts';
+import { Dayjs } from 'dayjs';
+
+export class ExamParticipationActions {
+    protected readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    async selectExerciseOnOverview(index: number) {
+        await this.page.getByTestId('exercise-table').locator(`tr:nth-child(${index}) a`).click();
+    }
+
+    async clickSaveAndContinue() {
+        await this.page.click('#save');
+    }
+
+    async checkExerciseTitle(exerciseID: number, title: string) {
+        const exercise = getExercise(this.page, exerciseID);
+        await expect(exercise.locator('.exercise-title')).toContainText(title);
+    }
+
+    async checkExerciseProblemStatementDifference(differenceSlices: TextDifferenceSlice[]) {
+        const problemStatementCard = this.page.getByTestId('resizeable-container-right').filter({ hasText: 'Problem Statement' });
+        const problemStatementText = problemStatementCard.locator('.markdown-preview').locator('p');
+
+        if ((await problemStatementText.locator('.diffmod').count()) > 0) {
+            for (const slice of differenceSlices) {
+                switch (slice.differenceType) {
+                    case TextDifferenceType.ADD:
+                        await expect(problemStatementText.locator('ins').getByText(slice.text)).toBeVisible();
+                        break;
+                    case TextDifferenceType.DELETE:
+                        await expect(problemStatementText.locator('del').getByText(slice.text)).toBeVisible();
+                        break;
+                    case TextDifferenceType.NONE:
+                        await expect(problemStatementText).toContainText(slice.text);
+                        break;
+                }
+            }
+        } else {
+            const firstSlice = differenceSlices[0];
+            expect(firstSlice.differenceType).toBe(TextDifferenceType.NONE);
+            await expect(problemStatementText).toHaveText(firstSlice.text);
+        }
+    }
+
+    async checkExamTitle(title: string) {
+        await expect(this.page.locator('[data-testid="exam-title"]')).toContainText(title);
+    }
+
+    /**
+     * Finds the score of an assessed exercise (or of the whole exam) on the page the student is looking at.
+     * <p>
+     * The result is there when the page opens, because callers only look for it after the assessment was submitted. The one recovery is
+     * recorded: the page is loaded once more, in case it was opened while the result was still being written.
+     */
+    async getResultScore(exerciseID?: number) {
+        const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
+        const summaryScoreLocator = parentComponent.getByTestId('achieved-percentage');
+        const resultComponentScoreLocator = parentComponent.locator('#result-score');
+        const anyScore = summaryScoreLocator.or(resultComponentScoreLocator).first();
+        try {
+            await expect(anyScore).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
+        } catch {
+            annotateRecovery(`getResultScore: no score visible after ${RELOAD_RENDER_TIMEOUT}ms at ${this.page.url()}; reloading`);
+            await this.page.reload();
+            await expect(anyScore).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
+        }
+        return (await summaryScoreLocator.count()) > 0 ? summaryScoreLocator : resultComponentScoreLocator;
+    }
+
+    async checkResultScore(scoreText: string, exerciseID?: number) {
+        const scoreElement = await this.getResultScore(exerciseID);
+        await expect(scoreElement.getByText(new RegExp(scoreText))).toBeVisible({ timeout: 10000 });
+    }
+
+    async checkExamFinishedTitle(title: string) {
+        await expect(this.page.locator('[data-testid="exam-finished-title"]')).toContainText(title, { timeout: 40000 });
+    }
+
+    async checkExamFullnameInputExists() {
+        // Wait for the exam to end and the cover page to appear with the fullname input.
+        // The exam timer fires timerAboutToEnd when ≤1s remains, then the UI switches.
+        await expect(this.page.locator('#fullname')).toBeVisible({ timeout: 60000 });
+    }
+
+    async checkYourFullname(name: string) {
+        await expect(this.page.locator('#your-name')).toContainText(name, { timeout: 30000 });
+    }
+
+    async checkExamTimeLeft(timeLeft: string) {
+        await expect(this.page.locator('[data-testid="displayTime"]').getByText(timeLeft)).toBeVisible();
+    }
+
+    async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
+        const timeChangeDialog = this.page.getByRole('dialog').first();
+        await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
+        const timeFormat = 'MMM D, YYYY HH:mm';
+        const announcementTimeFormatted = announcementTime.format(timeFormat);
+        const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
+        await expect(timeChangeDialog.getByTestId('live-event-date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
+        await expect(timeChangeDialog.getByTestId('live-event-content').getByText(message)).toBeVisible();
+    }
+
+    async closeDialog() {
+        await this.page.locator('button', { hasText: 'Acknowledge' }).nth(0).click({ force: true, timeout: 5000 });
+    }
+
+    async verifyExerciseTitleOnFinalPage(exerciseID: number, exerciseTitle: string): Promise<void> {
+        const exercise = getExercise(this.page, exerciseID);
+        await expect(exercise.locator(`#exercise-group-title-${exerciseID}`).getByText(exerciseTitle)).toBeVisible();
+    }
+
+    /**
+     * Verifies the submitted text of an exercise on the exam summary page.
+     *
+     * @param exerciseID the exercise whose submission is checked
+     * @param textFixture the fixture holding the expected submission text
+     * @param timeout optional override, in ms. Pass `RELOAD_RENDER_TIMEOUT` from `support/timeouts` for the first check after a
+     *                `page.reload()`, where the summary view has to re-bootstrap and lazy-load its chunks; omit it
+     *                otherwise so a genuine regression still fails on the default timeout.
+     */
+    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string, timeout?: number): Promise<void> {
+        const exercise = getExercise(this.page, exerciseID);
+        const submissionText = await Fixtures.get(textFixture);
+        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!, { timeout });
+    }
+
+    async verifyGradingKeyOnFinalPage(gradeName: string) {
+        const gradingKeyCard = this.page.locator('jhi-collapsible-card').filter({ hasText: 'Grading Key Grade Interval' });
+        await gradingKeyCard.getByTestId('collapsible-card-toggle').click();
+        await expect(gradingKeyCard.locator('tr.highlighted').locator('td', { hasText: gradeName })).toBeVisible();
+    }
+}
+
+export class TextDifferenceSlice {
+    constructor(
+        public text: string,
+        public differenceType: TextDifferenceType,
+    ) {}
+}
+
+export enum TextDifferenceType {
+    NONE,
+    ADD,
+    DELETE,
+}

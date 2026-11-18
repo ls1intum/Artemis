@@ -1,0 +1,248 @@
+name: Deploy to a test-server
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: "Which branch to deploy"
+        required: true
+        type: string
+      commit_sha:
+        description: "Exact commit SHA to deploy. When set, this commit's image is verified and deployed; otherwise the branch/PR head is used."
+        required: false
+        type: string
+      environment_name:
+        description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
+        required: true
+        type: string
+      triggered_by:
+        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
+        required: false
+        type: string
+
+# Serialize deployments per environment. `cancel-in-progress: false` means a running deploy is
+# never interrupted; GitHub keeps at most ONE pending run per group, so rapid re-dispatches to the
+# same environment coalesce to the most recent request.
+concurrency:
+  group: ${{ github.event.inputs.environment_name }}
+  cancel-in-progress: false
+
+# Default-deny; each job opts into the minimum scope it needs.
+permissions: {}
+
+env:
+  IMAGE_NAME: ghcr.io/ls1intum/artemis
+  WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
+
+# The registry is the source of truth: resolve the commit to deploy, verify its immutable
+# `sha-<commit>` image exists in GHCR (or build it on the fly for a branch with no PR), then
+# deploy that exact tag.
+jobs:
+  determine-build-context:
+    name: Determine Build Context
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read        # git refs lookup
+      pull-requests: read    # find the PR for the branch
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      needs_build: ${{ steps.resolve.outputs.needs_build }}
+    steps:
+      - name: Resolve deploy target (commit / PR / branch)
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          REQUESTED_SHA: ${{ github.event.inputs.commit_sha }}
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
+        run: |
+          set -Eeuo pipefail
+          echo "Branch=$BRANCH_NAME  Commit=${REQUESTED_SHA:-<head>}  Env=$ENVIRONMENT_NAME  By=${TRIGGERED_BY:-?}"
+
+          # Security boundary: these inputs flow into API calls, the deploy tag, the concurrency
+          # group and the target environment; allow only the characters each legitimately contains.
+          if [[ ! "$BRANCH_NAME" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::Refusing suspicious branch name '$BRANCH_NAME'."
+            exit 1
+          fi
+          if [[ ! "$ENVIRONMENT_NAME" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "::error::Refusing suspicious environment name '$ENVIRONMENT_NAME'."
+            exit 1
+          fi
+          # A commit_sha, when given, must be the full 40-char SHA: the deploy tag is sha-<commit>
+          # and an abbreviated value would point at a tag that was never pushed.
+          if [ -n "$REQUESTED_SHA" ] && [[ ! "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit_sha '$REQUESTED_SHA' is not a full 40-char commit SHA."
+            exit 1
+          fi
+
+          # Exactly one internal PR for this branch -> develop, via a server-side filter instead of
+          # paginating every open PR. `-X GET` is required: `-f` params otherwise default to POST
+          # (which would attempt to *create* a PR); with GET they become URL-encoded query params.
+          prs=$(gh api -X GET "repos/$REPO/pulls" \
+            -f head="$OWNER:$BRANCH_NAME" -f base=develop -f state=open \
+            --jq '[.[] | {number, sha: .head.sha}]')
+          count=$(jq 'length' <<<"$prs")
+          if [ "$count" -gt 1 ]; then
+            echo "::error::$count open PRs from '$BRANCH_NAME' to develop; expected at most one."
+            exit 1
+          fi
+
+          needs_build=false
+          if [ "$count" -eq 1 ]; then
+            pr_number=$(jq -r '.[0].number' <<<"$prs")
+            head_sha=${REQUESTED_SHA:-$(jq -r '.[0].sha' <<<"$prs")}
+          else
+            pr_number=""
+            branch_tip=$(gh api "repos/$REPO/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
+            head_sha=${REQUESTED_SHA:-$branch_tip}
+            if [ "$BRANCH_NAME" != "develop" ] && [ "$BRANCH_NAME" != "main" ]; then
+              needs_build=true  # branch without a PR: no CI image exists -> build it on the fly
+            fi
+          fi
+
+          # head_sha becomes the deploy tag and, on the needs_build path, is deployed with no other
+          # check (verify is skipped there), so ensure the resolved value is a real commit SHA.
+          if [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Could not resolve a full 40-char commit SHA for '$BRANCH_NAME'."
+            exit 1
+          fi
+
+          {
+            echo "pr_number=$pr_number"
+            echo "head_sha=$head_sha"
+            echo "tag=sha-$head_sha"
+            echo "needs_build=$needs_build"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved commit $head_sha (pr='$pr_number', needs_build=$needs_build) -> deploy tag sha-$head_sha"
+
+  # Branch without a PR: build the image now, tagged with its immutable sha-<commit>.
+  conditional-build:
+    name: Build Image On-The-Fly
+    if: ${{ needs.determine-build-context.outputs.needs_build == 'true' }}
+    needs: determine-build-context
+    # The reusable workflow checks out and pushes the image to GHCR via GITHUB_TOKEN; a called
+    # workflow cannot elevate beyond its caller, so grant packages: write here (matches ci-build.yml).
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2  # v1.2.0
+    with:
+      ref: ${{ needs.determine-build-context.outputs.head_sha }}
+      image-name: ls1intum/artemis
+      docker-file: ./deployment/docker/artemis/Dockerfile
+      tags: ${{ needs.determine-build-context.outputs.tag }}
+
+  # PR / develop / main: the exact commit's `sha-<commit>` image must already exist in the registry.
+  # Checking the registry (not a per-run artifact) is immune to run ordering and artifact expiry.
+  verify-image-build:
+    name: Verify Deployable Image
+    if: ${{ needs.determine-build-context.outputs.needs_build == 'false' }}
+    needs: determine-build-context
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
+      # from the branch being deployed). Keep it out of the root workspace: sparse checkouts mutate
+      # the worktree.
+      - name: Check out verify action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/actions/verify-image-build
+          sparse-checkout-cone-mode: false
+          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/verify-image-build
+
+      - name: Verify deployable image exists
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}
+          SHA: ${{ needs.determine-build-context.outputs.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          set -Eeuo pipefail
+          bash "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build/.github/actions/verify-image-build/verify-image-build.sh"
+
+      - name: Cleanup verify checkout
+        if: always()
+        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build"
+
+  deploy:
+    name: Deploy to Test-Server
+    needs:
+      - determine-build-context
+      - conditional-build
+      - verify-image-build
+    # Deploy once the image is ready (verified or just built) and the migration gate passed or did
+    # not apply. `!cancelled()` (not `always()`) so a Cancel truly stops a queued deploy.
+    #
+    # The migration check runs only when a PR exists (it needs a PR to check against), so accepting
+    # its "skipped" result also lets the PR-less conditional-build path deploy without it — an
+    # accepted risk (test servers are limited to accredited developers); a PR-less check is out of scope.
+    if: >-
+      !cancelled()
+      && (needs.conditional-build.result == 'success' || needs.verify-image-build.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    environment:
+      name: ${{ github.event.inputs.environment_name }}
+      url: ${{ vars.DEPLOYMENT_URL }}
+    env:
+      GATEWAY_USER: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+      GATEWAY_HOST: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}:${{ vars.DEPLOYMENT_GATEWAY_PORT }}
+      GATEWAY_HOST_PUBLIC_KEY: ${{ vars.DEPLOYMENT_GATEWAY_PUBLIC_KEY }}
+    steps:
+      # Check out the deploy CLI from the workflow's own ref — a proper checkout, replacing the old
+      # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
+      # deployed, and test-server deploys are limited to accredited developers.
+      - name: Check out deploy CLI
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: deployment/artemis-server-cli
+          sparse-checkout-cone-mode: false
+          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/deploy-cli
+
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          GATEWAY_SSH_KEY: ${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}
+          DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.ssh
+          rm -f "$SSH_AUTH_SOCK"
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          ssh-add - <<< "$GATEWAY_SSH_KEY"
+          ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
+          cat - <<< "$GATEWAY_HOST_PUBLIC_KEY" >> ~/.ssh/known_hosts
+
+      - name: Deploy Artemis with Docker
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+          DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
+          TAG: ${{ needs.determine-build-context.outputs.tag }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
+        run: |
+          set -Eeuo pipefail
+          chmod +x "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli"
+          "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli" docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
+            -g "$GATEWAY_USER@$GATEWAY_HOST" \
+            -t "$TAG" -b "$BRANCH_NAME" -d "$DEPLOYMENT_FOLDER" -y
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/ssh_agent.sock
+          rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli"

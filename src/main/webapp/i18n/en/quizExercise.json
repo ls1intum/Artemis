@@ -1,0 +1,411 @@
+{
+    "artemisApp": {
+        "quizWarning": {
+            "title": "Attention!",
+            "question": "Potential Performance Issues",
+            "description": "You are using a very large number of Short-Answer items and/or Drag-and-Drop items in this quiz. This can lead to significant performance issues. Are you sure you want to save the exercise this way?",
+            "confirmButton": "Save anyway"
+        },
+        "quizExercise": {
+            "home": {
+                "title": "Quiz Exercise",
+                "createLabel": "Create Quiz",
+                "editLabel": "Edit Quiz",
+                "importLabel": "Import Quiz",
+                "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
+            },
+            "aiGeneration": {
+                "button": "Generate with AI",
+                "modalTitle": "Generate Quiz with AI",
+                "configuration": {
+                    "title": "Configuration",
+                    "mode": "Generation mode",
+                    "modeFreeTopicLabel": "Free topic",
+                    "modeCompetencyGraphLabel": "From competencies",
+                    "topic": "Topic",
+                    "competencies": "Competencies",
+                    "competenciesPlaceholder": "Select competencies to assess...",
+                    "competenciesTooltip": "The quiz is generated using your selected competencies, their relationships, and linked lecture or exercise content. Link materials to competencies to include them.",
+                    "optionalPrompt": "Optional prompt",
+                    "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
+                    "language": "Language",
+                    "numberOfQuestions": "Number of questions",
+                    "questionType": "Question type",
+                    "difficulty": "Difficulty",
+                    "difficultyLevels": {
+                        "easy": "Easy",
+                        "medium": "Medium",
+                        "hard": "Hard"
+                    }
+                },
+                "languages": {
+                    "en": "English",
+                    "de": "German"
+                },
+                "types": {
+                    "single-choice": "Single Choice",
+                    "multiple-choice": "Multiple Choice",
+                    "true-false": "True/False"
+                },
+                "actions": {
+                    "generate": "Generate",
+                    "openInEditor": "Open in editor",
+                    "addToEditor": "Add to quiz",
+                    "loading": {
+                        "thinking": "Thinking",
+                        "analyzing": "Analyzing input",
+                        "generating": "Generating questions",
+                        "refining": "Refining results"
+                    }
+                },
+                "errors": {
+                    "invalidConfiguration": "Please provide a topic (or select competencies) and at least one question type.",
+                    "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "competencyLoadFailed": "Failed to load course competencies. Please try again.",
+                    "refinementFailed": "Failed to refine quiz questions. Please try again.",
+                    "partialRefinementFailed": "{{ count }} question(s) could not be refined and were skipped."
+                },
+                "refinement": {
+                    "promptPlaceholder": "Describe how to refine this question...",
+                    "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
+                    "globalRefineFabLabel": "Refine all questions with AI",
+                    "changesLabel": "Changes made",
+                    "dismissChanges": "Close",
+                    "restoreChanges": "Restore previous version",
+                    "defaultReasoning": "The question was refined based on your instructions.",
+                    "errors": {
+                        "failed": "Failed to refine the question. Please try again."
+                    }
+                },
+                "preview": {
+                    "title": "Preview Results",
+                    "emptyTitle": "No questions generated yet",
+                    "emptyDescription": "Fill in the configuration on the left and click Generate to preview AI-generated quiz questions.",
+                    "correct": "CORRECT",
+                    "oneResultGenerated": "1 result generated",
+                    "multipleResultsGenerated": "{{ count }} results generated"
+                }
+            },
+            "detail": {
+                "title": "Quiz Exercise",
+                "questionCount": {
+                    "title": "Number of Questions",
+                    "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Short Answer: {{ shortCount }}"
+                }
+            },
+            "created": "Created new Quiz Exercise with identifier {{ param }}",
+            "updated": "Updated Quiz Exercise with identifier {{ param }}",
+            "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
+            "resetSuccessful": "The reset of the quiz exercise <strong>{{ title }}</strong> was successful",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
+            },
+            "reset": {
+                "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
+            },
+            "endNow": {
+                "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
+            },
+            "actionDisabledInGroup": "This quiz is part of an exercise group. Its dates are shared across all variants and cannot be changed individually.",
+            "edit": {
+                "title": "Edit Quiz Exercise for {{ param }}",
+                "addQuestion": "Add Question",
+                "warning": "Warning",
+                "pendingChanges": "Unsaved Changes",
+                "saving": "Saving...",
+                "saved": "Saved!",
+                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\" once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
+                "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options.",
+                "editNotPossibleDuringQuiz": "During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.",
+                "editNotPossibleAfterEnd": "After the end of the quiz working time, editing is not possible."
+            },
+            "deleteQuestion": "Delete question",
+            "refineQuestion": "Refine question",
+            "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
+            "editNotPossibleStudentsStarted": "Editing is not possible because students have already participated in this quiz.",
+            "saveError": "An error occurred while saving. Please review your input data and try again later.",
+            "export": {
+                "export": "Export",
+                "questionTitle": "Short question Title",
+                "quizExerciseTitle": "Quiz Exercise Title"
+            },
+            "filter": {
+                "mcq": "Multiple-Choice Question",
+                "dnd": "Drag-And-Drop Question",
+                "sa": "Short-Answer Question",
+                "applyFilter": "Apply Filter"
+            },
+            "quizStatus": {
+                "invisible": "Invisible",
+                "openForPractice": "Open for practice",
+                "active": "Active",
+                "visible": "Visible"
+            },
+            "quizLifecycle": "Quiz Lifecycle",
+            "description": "Description",
+            "options": "Options",
+            "explanation": "Explanation",
+            "randomizeQuestionOrder": "Present Questions in Random Order",
+            "includedInOverallScoreCourseLabelShort": "Include in Course Score Calculation",
+            "includedInOverallScoreExamLabelShort": "Exam Score Calculation",
+            "includedInScoreYes": "Yes",
+            "includedInScoreBonus": "Bonus",
+            "includedInScoreNo": "No",
+            "allowedNumberOfAttempts": "Allowed Number Of Attempts",
+            "isVisibleBeforeStart": "Is Visible Before Start",
+            "isOpenForPractice": "Is Open For Practice",
+            "isPlannedToStart": "Is Planned To Start",
+            "openForPractice": "Release For Practice",
+            "startQuiz": "Start Quiz",
+            "startBatch": "Start Batch",
+            "endQuiz": "End",
+            "batches": "Batches ({{ count }})",
+            "showNow": "Set Visible",
+            "duration": "Duration",
+            "hours": "hours",
+            "minutes": "minutes",
+            "seconds": "seconds",
+            "minutesShort": "min",
+            "secondsShort": "s",
+            "questions": "Questions",
+            "questionsDescription": "Add and manage questions for this quiz exercise.",
+            "sections": {
+                "settings": {
+                    "title": "Quiz Settings",
+                    "description": "Configure general settings."
+                },
+                "general": "General",
+                "schedule": "Schedule & Mode",
+                "competencies": "Competencies"
+            },
+            "noQuestionsFoundCourse": "No questions in Course found",
+            "noQuestionsFoundExam": "No questions in Exam found",
+            "noMatchingQuestionsFound": "No questions in the Course match the selected criteria",
+            "multipleChoiceQuestion": "Multiple-Choice Question",
+            "dragAndDropQuestion": "Drag-And-Drop Question",
+            "shortAnswerQuestion": "Short-Answer Question",
+            "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
+            "addDragAndDropQuestion": "Add Drag-And-Drop Question",
+            "addShortAnswerQuestion": "Add Short-Answer Question",
+            "addApollonDragAndDropQuestion": "Add Apollon Drag-And-Drop Question",
+            "addExistingQuestions": "Add Existing Questions",
+            "fromAFile": "From a file",
+            "fromACourse": "From a course",
+            "fromAnExam": "From an exam",
+            "addSelectedQuestions": "Add Selected Questions",
+            "addThisQuestion": "Add This Question",
+            "previewQuestion": "Preview question {{ title }}",
+            "selectCourse": "Select a Course",
+            "selectExam": "Select an Exam",
+            "selectQuizExercise": "Select a Quiz Exercise",
+            "status": "Status",
+            "releaseDate": "Visible from",
+            "startTime": "Start of working time",
+            "startTimeErrorSynchronized": "Start of working time should be after Visible from",
+            "startTimeError": "Start of working time should be after Visible from and before the Due Date.",
+            "setStartTime": "Schedule Quiz Start",
+            "dueDateError": "Due Date must be after Visible from. Please check your selection again.",
+            "quizPointStatistic": "Quiz Point Statistic",
+            "quiz": "Quiz",
+            "totalPoints": "Overall Points",
+            "totalScore": "Result",
+            "maxScore": "Max Points",
+            "remainingTime": "Time left",
+            "resultsAvailable": "Results available",
+            "waitingForStart": "Waiting for Start",
+            "numberOfQuestions": "Number of Questions",
+            "noQuestions": "No questions available",
+            "quizInstructions": {
+                "live": "Answer all questions in the remaining time and only click the \"Submit\" button once you are done.",
+                "autoSave": "Your answers will be saved every 30s.",
+                "wait": "Please wait until the quiz has ended to see your results.",
+                "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
+                "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
+                "timeUntilPlannedStart": "Time until planned start:",
+                "enterPassword": "Enter the password to join the quiz:",
+                "startNow": "Start your quiz run now",
+                "noMoreAttempts": "You have already used all your allowed attempts at this quiz.",
+                "alreadyAttempted": "You have already participated in this quiz."
+            },
+            "isSaving": "Saving answers...",
+            "lastSaved": "Saved",
+            "lastSavedTimeNever": "Never",
+            "submitted": "Submitted",
+            "unsavedChanges": "Unsaved Changes",
+            "statistics": "Statistics",
+            "practiceMode": "Practice",
+            "preview": "Preview",
+            "solution": "Solution",
+            "quizIsOverText": "The quiz has ended. Please wait. If the results do not load automatically within 60s, please refresh the page.",
+            "notParticipatedText": "The quiz has ended and you did not participate. There are no results to display.",
+            "missedDeadlinePracticeHint": "You did not submit this quiz in time. You can still practice it using the <b>Start practice</b> button.",
+            "statisticsNotPublished": "The instructor has not published any statistics.",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically within 60s after the end of the quiz, please reload the page.",
+            "evaluateQuizExercise": "Evaluate quiz",
+            "evaluateQuizExerciseSuccess": "Quiz exercise successfully evaluated!",
+            "re-evaluate": {
+                "title": "Re-evaluate Quiz Exercise for {{ param }}",
+                "resetQuiz": "Reset Quiz Exercise",
+                "setQuestionInvalid": "Set question invalid",
+                "questionIsInvalid": "Question is invalid",
+                "setAnswerInvalid": "Set answer invalid",
+                "answerIsInvalid": "Answer is invalid",
+                "resetQuizTitle": "Reset Quiz Title",
+                "resetQuestion": "Reset Question",
+                "resetQuestionTitle": "Reset Question Title",
+                "resetQuestionText": "Reset Question Text",
+                "resetAnswer": "Reset Answer",
+                "deleteAnswer": "Delete Answer",
+                "moveUp": "Move Question up",
+                "moveDown": "Move Question down",
+                "warning": {
+                    "warning": "Warning!",
+                    "confirm": "Confirm changes",
+                    "problems": "The following problems may occur:",
+                    "element_deleted": "Question-element deleted:",
+                    "element_invalid": "Question-element set invalid:",
+                    "element_correctness": "Solution mappings or solution of an answer option changed:",
+                    "answer_deleted": "Answer option deleted:",
+                    "answer_invalid": "Answer option set invalid:",
+                    "answer_correctness": "Solution of an answer option changed:",
+                    "question_deleted": "Question deleted:",
+                    "question_invalid": "Question set invalid:",
+                    "scoring_change": "Scoring changed:",
+                    "no_changes": "No changes which affect the existing results",
+                    "quizStatistic": "The existing statistics must be recalculated!",
+                    "results": "The existing results must be recalculated!",
+                    "exam": "This quiz is an exam exercise. Make sure the quiz was already evaluated once before attempting to re-evaluate it!",
+                    "resulttext": {
+                        "element_deleted": "The question-element will be removed from all results",
+                        "element_invalid": "All participants will receive the points for the invalid question-element",
+                        "answer_deleted": "The answer option will be removed from all results",
+                        "answer_invalid": "All participants will receive the points for the invalid answer",
+                        "question_deleted": "The question will be removed from all results",
+                        "question_invalid": "All participants will receive the points for the invalid question",
+                        "scoring_change": "The points will be recalculated. Some participants may lose points."
+                    },
+                    "confirmtext": "Do you really want to apply these changes?",
+                    "succesfully_confirm": "Changes successfully applied!"
+                }
+            },
+            "hidden": "Hidden",
+            "visible": "Visible",
+            "invalidReasons": {
+                "quizTitle": "Quiz: The title is missing.",
+                "quizDuration": "Quiz: The duration is missing or invalid.",
+                "noQuestion": "Quiz: The quiz has no questions.",
+                "invalidStartTime": "Quiz: The Start Time is not valid.",
+                "startTimeInPast": "Quiz: The Start Time has already passed.",
+                "questionTitle": "Question {{index}}: The title is missing.",
+                "questionScore": "Question {{index}}: At least one point is required per question.",
+                "questionScoreInvalid": "Question {{index}}: Points are invalid.",
+                "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
+                "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct for a single choice question.",
+                "questionCorrectMapping": "Question {{index}}: No correct mapping.",
+                "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
+                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
+                "shortAnswerQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
+                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing that is necessary for a correct mapping.",
+                "shortAnswerQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly. Please check your mapped solutions.",
+                "shortAnswerQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value.",
+                "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping is duplicated.",
+                "questionTitleLength": "Question {{index}}: The question is too long. Please shorten it to fewer than {{threshold}} characters.",
+                "quizTitleLength": "Quiz: The title is too long. Please shorten it to fewer than {{threshold}} characters.",
+                "quizAnswerOptionLength": "Question {{index}}: At least one answer option is too long. Please shorten it to fewer than {{threshold}} characters.",
+                "dragItemTextLength": "Question {{index}}: At least one text drag item is too long. Please shorten it to at most {{threshold}} characters.",
+                "explanationIsMissing": "Question {{index}}: Not every answer option contains an explanation. Please add an explanation.",
+                "questionHasInvalidFlaggedElements": "<strong>Question {{index}} </strong>: This question has been previously marked as invalid or contains invalid elements.",
+                "questionExplanationLength": "Question {{index}}: The provided explanation is too long. Please shorten it to {{threshold}} characters.",
+                "questionHintLength": "Question {{index}}: The provided hint is too long. Please shorten it to {{threshold}} characters.",
+                "answerExplanationLength": "Question {{index}}: The explanation of at least one answer option is too long. Please shorten it to {{threshold}} characters.",
+                "answerHintLength": "Question {{index}}: The hint of at least one answer option is too long. Please shorten it to {{threshold}} characters.",
+                "multipleChoiceQuestionAnswerOptionInvalid": "Question {{index}}: At least one answer option is invalid."
+            },
+            "scoringType": {
+                "all_or_nothing": "All or Nothing",
+                "proportional_with_penalty": "Proportional with Penalty",
+                "proportional_without_penalty": "Proportional without Penalty"
+            },
+            "scoringTypeExplanation": {
+                "title": "Scoring Types",
+                "all_or_nothing": "All correct options must be selected and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
+                "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
+                "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
+            },
+            "importJSON": "Import Question(s) in JSON/Zip Format",
+            "importWarningShort": "Invalid questions found",
+            "importWarningLong": "The following questions have an invalid flag set. Are you sure you want to continue? <strong>If so, the invalid flags will be reset</strong>.",
+            "confirmImport": "Continue",
+            "explanationText": {
+                "point": "point",
+                "points": "points",
+                "item": "item",
+                "items": "items",
+                "textgap": "text gap",
+                "textgaps": "text gaps",
+                "option": "option",
+                "options": "options",
+                "scoringTitle": "Scoring explanation for question {{paramIndex}} {{paramTitle}}",
+                "scoringTypeProportional": "Scoring Proportional with Penalty: ",
+                "scoringTypeProportionalWithout": "Scoring Proportional without Penalty: ",
+                "scoringTypeAllOrNothing": "Scoring All or Nothing: ",
+                "scoringTypeSingleChoice": "Scoring Single Choice: ",
+                "scoringTypeProportionalExplanation": "Every correct answer is awarded with points, every mistake results in a point penalty to prevent guesswork. ",
+                "scoringTypeProportionalWithoutExplanation": "Every correct answer is awarded with points. No points are deducted for mistakes. ",
+                "scoringTypeAllOrNothingExplanation": "You either get all points or none at all.",
+                "scoringTypeSingleChoiceExplanation": "There is only one correct answer.",
+                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected all answer options correctly you have received full credit for this question. Great Job!",
+                "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. Keep trying!",
+                "multipleChoiceSingleChoiceCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected the correct answer option you have received full credit for this question. Great Job!",
+                "multipleChoiceSingleChoiceNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you didn't select the correct answer option. Keep trying!",
+                "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points for selecting the answer options correctly. You selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. In total you have",
+                "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you mapped all the items correctly you have received full credit for this question. Great Job!",
+                "dragAndDropAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mapped {{paramWrongMappedItems}} {{wrongMap}} incorrectly. Keep trying!",
+                "dragAndDropProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramDragAndDropElementsCount}} drag and drop items grants you {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} points for mapping it to the corresponding location. You mapped {{paramRightMapping}} {{rightMap}} correctly and {{paramWrongMappedItems}} {{wrongMap}} incorrectly. In total you have",
+                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you filled all text gaps correctly you have received full credit for this question. Great Job!",
+                "shortAnswerAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you filled out {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly and {{paramShortAnswerWrongOption}} {{wrongGap}} incorrectly. Keep trying!",
+                "shortAnswerProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each text gap grants you {{paramQuestionScore}}/{{paramCount}} points for filling it out correctly. You filled out {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly and {{paramShortAnswerWrongOption}} {{wrongGap}} incorrectly. In total you have",
+                "KeepTrying": "Keep trying!",
+                "zeroPointer": "(Of course you cannot have fewer than 0 points.)"
+            },
+            "explanationAnswered": "You have answered this question",
+            "explanationNotAnswered": "You have not answered this question",
+            "submissionWarning": "Are you sure you want to submit? You have not answered all questions and you still have some time left!",
+            "placeholder": {
+                "title": "Short Quiz Title",
+                "questionTitle": "Question Title",
+                "shortQuestionTitle": "Short Question Title"
+            },
+            "matchLetterCase": {
+                "title": "Match Letter Case",
+                "explanation": "Select if the letter case of the answers provided matters in the evaluation (Example: should 'Answer' and 'answer' be evaluated as the same?)"
+            },
+            "matchPercentage": {
+                "title": "Match Answers Exactly",
+                "explanationTitle": "Similarity",
+                "explanation": "Determines the required similarity between predefined solutions and student solutions in the evaluation for each spot. The value (between 50% and 100%) indicates whether only exactly correct answers (100%) are treated as correct or whether students can have typo(s) in their solutions. The lower the value is, the more typos are allowed in the student solutions (based on the Levenshtein distance https://en.wikipedia.org/wiki/Levenshtein_distance). Example: a value of 85% would allow 1 typo in a word with 5 characters and 2 typos in a word with 10 characters. Please use the preview feature for the quiz if you would like to try out different values."
+            },
+            "answerMatching": {
+                "title": "Answer Matching"
+            },
+            "matchingInfoModalTitle": "Answer Matching Options",
+            "quizMode": {
+                "title": "Batch Mode",
+                "synchronized": "Synchronized",
+                "batched": "Batched",
+                "individual": "Individual",
+                "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
+            },
+            "releaseDateExplanation": {
+                "SYNCHRONIZED": "Synchronized: The date when the quiz becomes visible to students. Students cannot see the questions until the start date.",
+                "BATCHED": "Batched: The date when the quiz becomes visible to students. Students cannot see the questions until a batch is started and they enter the password for it.",
+                "INDIVIDUAL": "Individual: The date when the quiz becomes visible to students. Students can start working on the quiz from this time onward"
+            },
+            "startTimeExplanation": "Set the time when the students are able to see the questions and start answering.",
+            "addBatch": "Add Batch",
+            "join": "Join",
+            "joinFailed": "Unable to join the quiz.",
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date"
+        }
+    }
+}

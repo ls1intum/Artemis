@@ -1,0 +1,150 @@
+# ===================================================================
+# Spring Boot configuration for the "prod" profile.
+#
+# This configuration overrides the application.yml file.
+#
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
+artemis:
+    push-notification-relay: https://hermes-prod.artemis.cit.tum.de
+    # The core node with the scheduling profile sends one report ten minutes after startup to a telemetry collection service: the
+    # version, server url, operator, university, active profiles, enabled module features, node and build agent counts, and,
+    # only with sendAdminDetails, the administrator's name and contact. See documentation/docs/admin/telemetry.mdx.
+    telemetry:
+        enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
+        sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
+        destination: https://telemetry.artemis.cit.tum.de
+    audit-events:
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
+    continuous-integration:
+        build-job:
+            retention-period: 365 # Number of days before build job entries are deleted.
+
+spring:
+    devtools:
+        restart:
+            enabled: false
+        livereload:
+            enabled: false
+    datasource:
+        type: com.zaxxer.hikari.HikariDataSource
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the default datasource to PostgreSQL before MySQL support is removed
+        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        username: root
+        password:
+        hikari:
+            poolName: Hikari
+            auto-commit: false
+            data-source-properties:
+                cachePrepStmts: true
+                prepStmtCacheSize: 250
+                prepStmtCacheSqlLimit: 2048
+                useServerPrepStmts: true
+    jpa:
+        show-sql: false
+        # Tell Hibernate the dialect explicitly so it does not probe JDBC DatabaseMetaData while bootstrapping the EntityManagerFactory. For a schema with ~200 tables that
+        # metadata access means repeated database round-trips on every startup (slower the further the DB is), so skipping it shortens production startup. Default to PostgreSQL
+        # REMOVE_IN_ARTEMIS_11 (MySQL): the MYSQL override described below disappears with MySQL support
+        # (the production database going forward); MySQL deployments must override this with `spring.jpa.database: MYSQL` until MySQL support is removed.
+        database: POSTGRESQL
+        properties:
+            hibernate.boot.allow_jdbc_metadata_access: false
+    mail:
+        host: localhost
+        port: 25
+        username:
+        password:
+    thymeleaf:
+        cache: true
+
+# ===================================================================
+# To enable TLS in production, generate a certificate using:
+# keytool -genkey -alias artemis -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 3650
+#
+# You can also use Let's Encrypt:
+# https://maximilian-boehm.com/hp2121/Create-a-Java-Keystore-JKS-from-Let-s-Encrypt-Certificates.htm
+#
+# Then, modify the server.ssl properties so your "server" configuration looks like:
+#
+# server:
+#    port: 443
+#    ssl:
+#        key-store: classpath:config/tls/keystore.p12
+#        key-store-password: password
+#        key-store-type: PKCS12
+#        key-alias: Artemis
+#        # The ciphers suite enforce the security by deactivating some old and deprecated SSL cipher, this list was tested against SSL Labs (https://www.ssllabs.com/ssltest/)
+#        ciphers: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 ,TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 ,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 ,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,TLS_DHE_RSA_WITH_AES_256_CBC_SHA,TLS_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_AES_256_CBC_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA,TLS_RSA_WITH_CAMELLIA_256_CBC_SHA,TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA,TLS_RSA_WITH_CAMELLIA_128_CBC_SHA
+# ===================================================================
+server:
+    port: 8080
+    compression:
+        enabled: true
+        mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,image/svg+xml,application/wasm
+        min-response-size: 1024
+
+# ===================================================================
+# JHipster specific properties
+#
+# Full reference is available at: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+jhipster:
+    http:
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
+            timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
+    security:
+        authentication:
+            jwt:
+                # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
+                # As this is the PRODUCTION configuration, you MUST change the default key, and store it securely:
+                # - In the JHipster Registry (which includes a Spring Cloud Config server)
+                # - In a separate `application-prod.yml` file, in the same folder as your executable WAR file
+                # - In the `JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET` environment variable
+                # base64-secret: ""
+                # Token is valid 24 hours
+                token-validity-in-seconds: 86400 # Token is valid 24 hours
+                token-validity-in-seconds-for-remember-me: 604800 # Token is valid 7 days, so an inactive session ends after a week. An active session is silently extended, never past artemis.user-management.max-session-lifetime-in-seconds (30 days) after the login - the same maximum a single non-rotating 30-day token gave before
+    mail: # specific JHipster mail property, for standard properties see MailProperties
+        from: artemis@localhost
+        base-url: http://my-server-url-to-change # Modify according to your server's URL
+    audit-events:
+        # Nothing reads this key: audit events are pruned via artemis.audit-events.* above, and
+        # AutomaticVcsAccessLogCleanupService reads artemis.audit-events.retention-period, a different namespace, so it
+        # always falls back to its own default. Kept only so that removing it is a separate, deliberate change.
+        retention-period: 365
+
+# Properties to be exposed on the /info management endpoint
+info:
+    testServer: false  # false --> production, true --> test server, --> empty == local
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to false in production
+    textAssessmentAnalyticsEnabled: false
+    # The next three are required on every core node unless testServer is true
+    operatorName: # The organization operating Artemis, displayed on the About page
+    operatorAdminName: # Displayed on the About page, sent only when sendAdminDetails is true
+    universityName: # The university or institution, displayed on the About page
+    contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service only when sendAdminDetails is true
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
+

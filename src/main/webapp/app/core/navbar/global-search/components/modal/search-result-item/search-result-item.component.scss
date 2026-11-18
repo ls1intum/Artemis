@@ -1,0 +1,79 @@
+@use 'src/main/webapp/app/core/navbar/global-search/components/modal/search-list-row' as row;
+
+/* Search result item */
+.search-result-item {
+    border-bottom: 1px solid var(--global-search-border-color);
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease-in-out;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover,
+    &.selected {
+        background-color: var(--global-search-item-hover-bg);
+    }
+
+    &.selected {
+        border-left-color: var(--primary);
+    }
+}
+
+.result-icon {
+    @include row.icon-tile;
+}
+
+.result-title {
+    @include row.title;
+}
+
+.result-metadata {
+    font-size: 0.813rem;
+    line-height: 1.4;
+    color: var(--text-body-secondary);
+
+    fa-icon {
+        opacity: 0.7;
+    }
+}
+
+.result-description {
+    @include row.description;
+
+    color: var(--text-body-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-nav-hint {
+    top: 0.75rem;
+    right: 0.75rem;
+    color: var(--text-body-secondary);
+}
+
+.key-hint-small {
+    padding: 0.25rem 0.5rem;
+    background: var(--global-search-kbd-bg);
+    border: 1px solid var(--global-search-kbd-border);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    font-weight: 600;
+    box-shadow: 0 1px 3px color-mix(in srgb, black 12%, transparent);
+    min-width: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, var(--tumaet-ui-text-color) 60%, transparent);
+}
+
+// Entity type as the leading item on the muted metadata line: slightly weighted so it reads as the
+// "kind" without a chip. Inherits the metadata row's muted colour, so it stays quiet when repeated.
+.result-type {
+    font-weight: 500;
+    white-space: nowrap;
+}

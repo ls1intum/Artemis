@@ -1,0 +1,1077 @@
+package de.tum.cit.aet.artemis.core.util;
+
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.ibm.icu.text.CharsetDetector;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.FilePathInformation;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+
+public class FileUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
+
+    /** Everything a file name may not contain, replaced by an underscore. */
+    private static final Pattern UNSAFE_FILENAME_CHARACTER = Pattern.compile("[^a-zA-Z\\d.\\-]");
+
+    /** A run of dots in a file name, collapsed into one. */
+    private static final Pattern DOT_RUN = Pattern.compile("\\.+");
+
+    /** The characters of a timestamp that a file name may not contain, replaced by a hyphen. */
+    private static final Pattern TIMESTAMP_SEPARATOR = Pattern.compile("[:.]");
+
+    /** A line ending, in either of the two forms that need normalizing to a line feed. */
+    private static final Pattern LINE_ENDING = Pattern.compile("\\r\\n?");
+
+    public static final String DEFAULT_FILE_SUBPATH = "temp/";
+
+    /**
+     * The width of a column that stores a filename this class generates in full, rather than one that carries the name the user gave the uploaded file.
+     * <p>
+     * A column that stores a file reference used to be sized after the URL the file was served under, which is what made a REST rename a schema change. Now that a column holds
+     * nothing but a filename, the width follows from {@link #generateFilename} instead, and for the types below that arithmetic is closed:
+     *
+     * <pre>
+     * generateTargetFilenameBase(type)  at most 22   "DragAndDropBackground_", the longest prefix
+     * ZonedDateTime timestamp                   23   fixed width, "2026-09-07T12-34-56-789"
+     * separator                                  1   "_"
+     * UUID prefix                                8
+     * separator                                  1   "."
+     * file extension                    at most  9   "pages-tef", the longest allowed extension
+     *                                          ----
+     *                                            64
+     * </pre>
+     *
+     * The two columns declared with this width, {@code exam_user.signing_image_path} and {@code exam_user.student_image_path}, are well below that ceiling: a signature reaches
+     * 60 and a photo 55. The remaining 36 characters are headroom, so a longer type prefix or a newly allowed extension does not need a migration;
+     * {@code StoredFileReferenceTest} fails first if one ever would. Its check covers every file path type rather than those two, because the prefixes come from one switch and
+     * a new longest entry in it is what would break the sum.
+     * <p>
+     * This does <b>not</b> bound the other file reference columns, and none of them is narrowed to it. Four are written with {@code keepFilename} set, so their value embeds the
+     * name the user gave the uploaded file: {@code attachment.jhi_link}, {@code attachment.student_version}, {@code quiz_question.background_file_path} and
+     * {@code slide.slide_image_path}. Nothing in this application bounds that name, so their width is a cap on how long a file may be named rather than a number derived from
+     * the code. The remaining two, {@code course.course_icon} and {@code jhi_user.image_url}, do hold a generated name and would fit, but narrowing a column is a migration of
+     * its own and is not part of this change; they keep the width they have.
+     * <p>
+     * The Liquibase column definitions state the same number literally, in
+     * {@code src/main/resources/config/liquibase/history/v10/00000000000000_initial_schema.xml}, where both {@code exam_user} columns have been {@code varchar(100)} since the
+     * schema was created.
+     */
+    public static final int GENERATED_FILENAME_MAX_LENGTH = 100;
+
+    /**
+     * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private static final Set<String> allowedMarkdownFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf");
+
+    /**
+     * The global list of file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     * <p>
+     * Package-private rather than private because the longest entry is one of the terms of {@link #GENERATED_FILENAME_MAX_LENGTH}, and {@code StoredFileReferenceTest} reads it
+     * to check that sum rather than restating it.
+     */
+    static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
+            "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+
+    private static final byte[] PNG_SIGNATURE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' };
+
+    private static final byte[] JPEG_SIGNATURE = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF };
+
+    private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
+
+    /**
+     * These directories get falsely marked as files and should be ignored during copying.
+     */
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests", ".mvn");
+
+    /**
+     * Sanitizes the provided filename string.
+     * <ul>
+     * <li>Replaces all characters that are not letters (a-z, A-Z), digits (0-9), dots (.), or hyphens (-) with underscores (_).</li>
+     * <li>Collapses multiple consecutive dots (.) into a single dot (.) to avoid issues with file extensions or hidden files.</li>
+     * </ul>
+     *
+     * @param filename the original filename string to sanitize
+     * @return the sanitized filename, with invalid characters replaced
+     */
+    public static String sanitizeFilename(String filename) {
+        return DOT_RUN.matcher(UNSAFE_FILENAME_CHARACTER.matcher(filename).replaceAll("_")).replaceAll(".");
+    }
+
+    /**
+     * Helper method which handles the file creation for both normal file uploads and for markdown
+     *
+     * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
+     * @param keepFilename specifies if original file name should be kept
+     * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
+     * @return The external URI of the file
+     */
+    @NonNull
+    public static URI handleSaveFile(MultipartFile file, boolean keepFilename, boolean markdown) {
+        // check for file type
+        String filename = checkAndSanitizeFilename(file.getOriginalFilename());
+
+        validateExtension(filename, markdown);
+
+        final String filenamePrefix = markdown ? "Markdown_" : "Temp_";
+        final Path path = markdown ? FilePathConverter.getMarkdownFilePath() : FilePathConverter.getTempFilePath();
+
+        String generatedFilename = generateFilename(filenamePrefix, filename, keepFilename);
+        Path filePath = path.resolve(generatedFilename);
+
+        copyFile(file, filePath);
+
+        String currentFilename = filePath.getFileName().toString();
+        return URI.create(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH).resolve(currentFilename);
+    }
+
+    /**
+     * Handles the saving of a file in a conversation.
+     *
+     * @param file           The file to be uploaded.
+     * @param courseId       The ID of the course.
+     * @param conversationId The ID of the conversation.
+     * @return The URI of the saved file.
+     */
+    public static FilePathInformation handleSaveFileInConversation(MultipartFile file, Long courseId, Long conversationId) {
+        // TODO: Improve the access check. The course is already checked, but the user might not be a member of the conversation. The course may not belong to the conversation
+        String sanitizedOriginalFilename = checkAndSanitizeFilename(file.getOriginalFilename());
+
+        validateExtension(sanitizedOriginalFilename, true);
+
+        final Path path = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
+
+        String fileName = generateFilename("", sanitizedOriginalFilename, true);
+        Path filePath = path.resolve(fileName);
+
+        copyFile(file, filePath);
+
+        String currentFilename = filePath.getFileName().toString();
+        return new FilePathInformation(filePath, URI.create("courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename), sanitizedOriginalFilename);
+    }
+
+    /**
+     * Saves a file to the given path using a generated filename.
+     *
+     * @param file         the file to save
+     * @param basePath     the base path to save the file to
+     * @param filePathType the type of the file path
+     * @param keepFilename whether to keep the original filename or not
+     * @return the path where the file was saved
+     */
+    @NonNull
+    public static Path saveFile(MultipartFile file, Path basePath, FilePathType filePathType, boolean keepFilename) {
+        String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
+        validateExtension(sanitizedFilename, false);
+        String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), sanitizedFilename, keepFilename);
+        Path savePath = basePath.resolve(generatedFilename);
+        return saveFile(file, savePath);
+    }
+
+    /**
+     * Saves a PNG or JPEG image under a generated filename whose extension follows from the image's content.
+     * <p>
+     * The declared content type and the original filename both come from the client, and the extension decides the content type the file is served with later. Trusting
+     * either lets an SVG or HTML document with scripts be stored as a picture, so only the leading bytes of the content count here.
+     *
+     * @param file         the image to save
+     * @param basePath     the base path to save the image to
+     * @param filePathType the type of the file path
+     * @return the path where the image was saved
+     * @throws BadRequestAlertException if the content is neither a PNG nor a JPEG image
+     */
+    @NonNull
+    public static Path saveImageFile(MultipartFile file, Path basePath, FilePathType filePathType) {
+        String extension = detectRasterImageExtension(file).orElseThrow(() -> new BadRequestAlertException("The file is not a PNG or JPEG image.", "file", null, true));
+        String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), "image." + extension, false);
+        return saveFile(file, basePath.resolve(generatedFilename));
+    }
+
+    /**
+     * Determines from its leading bytes whether a file is a PNG or a JPEG image.
+     *
+     * @param file the uploaded file
+     * @return {@code png} or {@code jpg}, or empty if the content is neither
+     */
+    private static Optional<String> detectRasterImageExtension(MultipartFile file) {
+        byte[] header;
+        try (var inputStream = file.getInputStream()) {
+            header = inputStream.readNBytes(PNG_SIGNATURE.length);
+        }
+        catch (IOException e) {
+            log.error("Could not read uploaded file {}", file.getOriginalFilename(), e);
+            throw new InternalServerErrorException("Could not read file");
+        }
+        if (startsWith(header, PNG_SIGNATURE)) {
+            return Optional.of("png");
+        }
+        if (startsWith(header, JPEG_SIGNATURE)) {
+            return Optional.of("jpg");
+        }
+        return Optional.empty();
+    }
+
+    private static boolean startsWith(byte[] content, byte[] prefix) {
+        return content.length >= prefix.length && Arrays.equals(content, 0, prefix.length, prefix, 0, prefix.length);
+    }
+
+    /**
+     * Saves a file to the given path. If the file already exists, it will be <b>overwritten</b>. Make sure the path is <b>sanitized</b> and does not override files unexpectedly!
+     *
+     * @param file              the file to save
+     * @param fullSanitizedPath the full path to save the file to
+     * @return the path where the file was saved
+     */
+    @NonNull
+    public static Path saveFile(MultipartFile file, Path fullSanitizedPath) {
+        copyFile(file, fullSanitizedPath);
+        return fullSanitizedPath;
+    }
+
+    private static void copyFile(MultipartFile file, Path filePath) {
+        try {
+            // Reviewed false positive (Sonar S2083): callers pass a path built from sanitized file names, as the contract of saveFile requires,
+            // e.g. SlideSplitterService, where convertByteArrayToMultipart runs the name through sanitizeFilename.
+            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile()); // NOSONAR // codeql[java/path-injection]
+        }
+        catch (IOException e) {
+            log.error("Could not save file {}", filePath.getFileName(), e);
+            throw new InternalServerErrorException("Could not create file");
+        }
+    }
+
+    /**
+     * Nullsafe sanitation method for filenames.
+     *
+     * @param filename the filename to sanitize
+     * @return the sanitized filename
+     * @throws IllegalArgumentException if the filename is null
+     */
+    @NonNull
+    public static String checkAndSanitizeFilename(@Nullable String filename) {
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+
+        return sanitizeFilename(filename);
+    }
+
+    /**
+     * Validates the file extension of the given filename. If the markdown flag is set to true, only markdown file extensions are allowed.
+     *
+     * @param filename the filename to validate
+     * @param markdown whether the file is a markdown file
+     * @throws BadRequestAlertException if the file extension is not allowed
+     */
+    public static void validateExtension(String filename, boolean markdown) {
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions = markdown ? allowedMarkdownFileExtensions : allowedFileExtensions;
+
+        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
+        }
+    }
+
+    /**
+     * Generates a new filename based on the current time and either the supplied filename or a random UUID.
+     *
+     * @param filenamePrefix    the prefix of the filename
+     * @param sanitizedFilename the sanitized filename including the extension
+     * @param keepFilename      whether to keep the original filename or not
+     * @return the generated filename
+     */
+    public static String generateFilename(String filenamePrefix, String sanitizedFilename, boolean keepFilename) {
+        if (keepFilename) {
+            return filenamePrefix + timestampForFilename() + "_" + sanitizedFilename;
+        }
+        String fileExtension = FilenameUtils.getExtension(sanitizedFilename);
+        return filenamePrefix + timestampForFilename() + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+    }
+
+    /**
+     * The current time in the form a file name can carry it, with the characters a file name may not hold replaced.
+     *
+     * @return the timestamp
+     */
+    private static String timestampForFilename() {
+        return TIMESTAMP_SEPARATOR.matcher(ZonedDateTime.now().toString().substring(0, 23)).replaceAll("-");
+    }
+
+    /**
+     * Copies an existing non-temporary file to a target location.
+     *
+     * @param oldFilePath  the old file path
+     * @param targetFolder the folder that a file should be copied to
+     * @param filePathType the type of the file path
+     * @return the resulting file path or null on error
+     */
+    public static Path copyExistingFileToTarget(@NonNull Path oldFilePath, @NonNull Path targetFolder, FilePathType filePathType) {
+        if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
+            String filename = oldFilePath.getFileName().toString();
+            try {
+                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(filePathType), filename, false));
+                FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
+                log.debug("Moved File from {} to {}", oldFilePath, target);
+                return target;
+            }
+            catch (IOException e) {
+                log.error("Error moving file: {}", oldFilePath, e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves a single filename against a base directory and guarantees that the result stays inside that directory.
+     *
+     * <p>
+     * {@link #sanitizeFilename(String)} already replaces every path separator, so a sanitised name cannot traverse on
+     * its own. This method adds the containment check at the point of use, which is what makes the guarantee local and
+     * checkable: the resolved path is normalised and compared against the normalised base directory, so a caller that
+     * forgets to sanitise — or a future change that loosens the sanitiser — fails loudly instead of quietly reading or
+     * writing an arbitrary file.
+     *
+     * <p>
+     * The containment this gives is <em>lexical</em>: it compares path elements and does not resolve symlinks, so a
+     * link already present inside {@code baseDirectory} would still point elsewhere. Callers that create the file are
+     * responsible for opening it with {@link java.nio.file.StandardOpenOption#CREATE_NEW}, which refuses to follow an
+     * existing link, rather than relying on this check alone.
+     *
+     * @param baseDirectory the directory the resolved path has to stay within
+     * @param filename      the single filename to resolve against {@code baseDirectory}
+     * @return the resolved, normalised path, guaranteed to lie inside {@code baseDirectory}
+     * @throws IllegalArgumentException if the filename is blank or escapes {@code baseDirectory}
+     */
+    @NonNull
+    public static Path resolveWithinDirectoryElseThrow(@NonNull Path baseDirectory, @NonNull String filename) {
+        if (filename.isBlank()) {
+            throw new IllegalArgumentException("Invalid filename: must not be blank.");
+        }
+        Path normalisedBaseDirectory = baseDirectory.normalize();
+        Path resolvedPath = normalisedBaseDirectory.resolve(filename).normalize();
+        // startsWith() compares path elements, not characters, so a sibling directory sharing a name prefix cannot pass.
+        if (!resolvedPath.startsWith(normalisedBaseDirectory) || resolvedPath.equals(normalisedBaseDirectory)) {
+            throw new IllegalArgumentException("Invalid filename '%s': the resolved path escapes the expected directory.".formatted(filename));
+        }
+        return resolvedPath;
+    }
+
+    /**
+     * Writes a stream to a path that must not exist yet, creating any missing parent directories.
+     *
+     * <p>
+     * Opens with {@link StandardOpenOption#CREATE_NEW}, which maps to {@code O_CREAT | O_EXCL}. The kernel refuses
+     * that combination when the path already exists — including when it exists only as a symlink, and including a
+     * dangling one — so the write cannot be redirected through a link planted at the destination. This is the
+     * companion to {@link #resolveWithinDirectoryElseThrow(Path, String)}, whose containment check is lexical and
+     * therefore blind to symlinks on its own.
+     *
+     * @param inputStream the stream to write; closed by the caller
+     * @param target      the file to create
+     * @throws java.nio.file.FileAlreadyExistsException if {@code target} already exists, symlink included
+     * @throws IOException                              if creating the directories or writing fails
+     */
+    public static void writeNewFileElseThrow(@NonNull InputStream inputStream, @NonNull Path target) throws IOException {
+        Path parent = target.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        // Opened outside the try so that a failure of the open itself is NOT cleaned up: it throws
+        // FileAlreadyExistsException precisely when the path is somebody else's file or symlink, and that is the case
+        // this method exists to protect. Only once the open succeeds is the file ours to delete.
+        OutputStream outputStream = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        try (outputStream) {
+            inputStream.transferTo(outputStream);
+        }
+        catch (IOException | RuntimeException e) {
+            // CREATE_NEW creates the file before any byte is copied, so a failure part-way through would otherwise leave
+            // a truncated file behind. The caller only registers the path for deletion after this method returns, so
+            // nothing else would ever remove it.
+            try {
+                Files.deleteIfExists(target);
+            }
+            catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Sanitizes a file path by checking for invalid characters or path traversal.
+     *
+     * @param filePath the file path to sanitize
+     * @throws IllegalArgumentException if the file path is invalid
+     */
+    public static void sanitizeFilePathByCheckingForInvalidCharactersElseThrow(String filePath) {
+        URI uriToCheck = URI.create(filePath);
+        URI normalizedPath = uriToCheck.normalize();
+        if (!uriToCheck.equals(normalizedPath)) {
+            throw new IllegalArgumentException("Path is not valid!");
+        }
+    }
+
+    /**
+     * Generates a prefix for the filename based on the file path type
+     *
+     * @param filePathType the type of the file path
+     * @return the prefix ending with an underscore character as a separator
+     */
+    @NonNull
+    public static String generateTargetFilenameBase(@NonNull FilePathType filePathType) {
+        return switch (filePathType) {
+            case DRAG_AND_DROP_BACKGROUND -> "DragAndDropBackground_";
+            case DRAG_ITEM -> "DragItem_";
+            case COURSE_ICON -> "CourseIcon_";
+            case PROFILE_PICTURE -> "ProfilePicture_";
+            case EXAM_USER_SIGNATURE -> "ExamUserSignature_";
+            case EXAM_USER_IMAGE -> "ExamUserImage_";
+            case ATTACHMENT_UNIT -> "AttachmentUnit_";
+            case SLIDE -> "AttachmentUnitSlide_";
+            case STUDENT_VERSION_SLIDES -> "StudentVersionSlides_";
+            default -> "Unspecified_";
+        };
+    }
+
+    private static boolean pathContains(Path path, Path subPath) {
+        return path.normalize().toString().contains(subPath.normalize().toString());
+    }
+
+    /**
+     * Copies the given resources to the target directory.
+     *
+     * @param resources             The resources that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
+     */
+    public static void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        for (final Resource resource : resources) {
+            copyResource(resource, prefix, targetDirectory, keepParentDirectories);
+        }
+    }
+
+    /**
+     * Copies the given resource to the target directory.
+     *
+     * @param resource              The resource that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
+     */
+    public static void copyResource(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        final Path targetPath = generateTargetPath(resource, prefix, targetDirectory, keepParentDirectories);
+
+        if (isIgnoredDirectory(targetPath)) {
+            return;
+        }
+
+        FileUtils.copyInputStreamToFile(resource.getInputStream(), targetPath.toFile());
+
+        if (targetPath.endsWith("gradlew")) {
+            if (!targetPath.toFile().setExecutable(true)) {
+                log.warn("Could not mark {} as executable", targetPath);
+            }
+        }
+    }
+
+    private static Path generateTargetPath(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) throws IOException {
+        final Path filePath;
+        if (resource.isFile()) {
+            filePath = resource.getFile().toPath();
+        }
+        else {
+            final String url = URLDecoder.decode(resource.getURL().toString(), UTF_8);
+            filePath = Path.of(url);
+        }
+
+        return generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
+    }
+
+    /**
+     * Generates the target file path which a resource should be copied to.
+     * <p>
+     * Searches for {@code prefix} in the {@code source} and removes all path elements including and up to the prefix.
+     * The target file path is then determined by resolving the remaining path against the target directory.
+     *
+     * @param source              The path where the resource is copied from.
+     * @param prefix              The prefix that should be trimmed from the source path.
+     * @param targetDirectory     The base target directory.
+     * @param keepParentDirectory Keep directories in the path between prefix and filename.
+     * @return The target path where the resource should be copied to.
+     */
+    private static Path generateTargetPath(final Path source, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) {
+        if (!keepParentDirectory) {
+            return targetDirectory.resolve(source.getFileName());
+        }
+
+        final List<Path> sourcePathElements = getPathElements(source);
+        final List<Path> prefixPathElements = getPathElements(prefix);
+
+        final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
+
+        if (prefixStartIdx < 0) {
+            return targetDirectory.resolve(source);
+        }
+
+        final int startIdx = prefixStartIdx + prefixPathElements.size();
+        final Path relativeSource = source.subpath(startIdx, sourcePathElements.size());
+
+        return targetDirectory.resolve(relativeSource);
+    }
+
+    private static List<Path> getPathElements(final Path path) {
+        final List<Path> elements = new ArrayList<>();
+
+        for (final Path value : path) {
+            elements.add(value);
+        }
+
+        return elements;
+    }
+
+    /**
+     * Checks if the given path has been identified as a file, but it actually points to a directory.
+     *
+     * @param filePath The path to a file/directory.
+     * @return True, if the path is assumed to be a file but actually points to a directory.
+     */
+    private static boolean isIgnoredDirectory(final Path filePath) {
+        final String filename = filePath.getFileName().toString();
+        return IGNORED_DIRECTORY_SUFFIXES.stream().anyMatch(filename::endsWith);
+    }
+
+    /**
+     * This renames the directory at the old directory path to the new path
+     *
+     * @param oldDirectoryPath    the path of the folder that should be renamed
+     * @param targetDirectoryPath the path of the folder where the renamed folder should be located
+     * @throws IOException if the directory could not be renamed.
+     */
+    public static void renameDirectory(Path oldDirectoryPath, Path targetDirectoryPath) throws IOException {
+
+        if (!Files.exists(oldDirectoryPath)) {
+            throw new FilePathParsingException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
+        }
+        File oldDirectory = oldDirectoryPath.toFile();
+        File targetDirectory = targetDirectoryPath.toFile();
+
+        FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * Publishes a file or directory that was written under a temporary name by renaming it into place in one step.
+     *
+     * <p>
+     * The point is that the target never exists half written: either the rename happened or it did not. Apache's
+     * {@code FileUtils.moveFile} and {@code moveDirectory} cannot promise that, because they fall back to copying and
+     * deleting when the rename fails, and a copy that fails part way leaves an incomplete target behind that the
+     * caller's cleanup does not cover. This is the one place in the code base that is allowed to call
+     * {@link Files#move}, which {@code ArchitectureTest.testFileWriteUsage} otherwise rejects.
+     *
+     * <p>
+     * Both paths have to live on the same file store, which callers get by keeping the temporary name a sibling of the
+     * final one. They are not on the same store if that is not the case, and the move fails rather than silently
+     * copying.
+     *
+     * @param temporaryPath the path the content was written to
+     * @param targetPath    the path it should appear under, in the same directory
+     * @throws IOException if the rename fails, including when the two paths do not share a file store
+     */
+    public static void publishAtomically(Path temporaryPath, Path targetPath) throws IOException {
+        Files.move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    /**
+     * Look for sections that start and end with a section marker (e.g. %section-start% and %section-end%). Overrides the given file in filePath with a new file!
+     *
+     * @param filePath of file to look for replaceable sections in.
+     * @param sections of structure String (section name) / Boolean (keep content in section or remove it).
+     */
+    public static void replacePlaceholderSections(Path filePath, Map<String, Boolean> sections) {
+        Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
+        File file = filePath.toFile();
+        File tempFile = Path.of(filePath + "_temp").toFile();
+        if (!file.exists()) {
+            throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
+        }
+
+        try (var reader = Files.newBufferedReader(file.toPath(), UTF_8); var writer = Files.newBufferedWriter(tempFile.toPath(), UTF_8)) {
+            Map.Entry<Pattern, Boolean> matchingStartPattern = null;
+            String line = reader.readLine();
+            while (line != null) {
+                // If there is no starting pattern matched atm, check if the current line is a start pattern.
+                if (matchingStartPattern == null) {
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            matchingStartPattern = entry;
+                            break;
+                        }
+                    }
+                    // If a pattern is matched, don't write anything so that the section qualifier is removed.
+                    if (matchingStartPattern != null) {
+                        line = reader.readLine();
+                        continue;
+                    }
+                }
+                else {
+                    // If there is a starting pattern matched, check if an ending pattern is encountered.
+                    boolean endMatcherFound = false;
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            endMatcherFound = true;
+                            break;
+                        }
+                    }
+                    if (endMatcherFound) {
+                        matchingStartPattern = null;
+                        line = reader.readLine();
+                        continue;
+                    }
+                }
+
+                if (matchingStartPattern == null || matchingStartPattern.getValue()) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+
+                line = reader.readLine();
+            }
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
+        }
+        // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
+        try {
+            Files.delete(file.toPath());
+            FileUtils.moveFile(tempFile, filePath.toFile());
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
+        }
+    }
+
+    /**
+     * This replaces all occurrences of the target String with the replacement String in the given directory (recursive!)
+     *
+     * @param startPath         the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public static void replaceVariablesInDirectoryName(Path startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
+        }
+        String pathString = startPath.toString();
+        if (pathString.contains(targetString)) {
+            log.debug("Target String found, replacing..");
+            String targetPath = pathString.replace(targetString, replacementString);
+            final var path = Path.of(targetPath);
+            renameDirectory(startPath, path);
+            directory = path.toFile();
+        }
+
+        // Get all subdirectories
+        final var subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
+
+        if (subDirectories != null) {
+            for (String subDirectory : subDirectories) {
+                if (subDirectory.equalsIgnoreCase(".git")) {
+                    // Skip .git folder to avoid interfering with Git's internal file operations
+                    continue;
+                }
+                replaceVariablesInDirectoryName(directory.toPath().toAbsolutePath().resolve(subDirectory), targetString, replacementString);
+            }
+        }
+    }
+
+    /**
+     * This replaces all occurrences of the target String with the replacement String within a source file of a given directory (recursive!)
+     *
+     * @param startPath         the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public static void replaceVariablesInFilename(Path startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
+        }
+
+        // rename all files in the file tree
+        try (var files = Files.find(startPath, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
+            files.forEach(filePath -> {
+                try {
+                    // We expect the strings to be clean already, so the filename shouldn't change. If it does, we are on the safe side with the sanitation.
+                    String cleanFileName = sanitizeFilename(filePath.toString().replace(targetString, replacementString));
+                    FileUtils.moveFile(filePath.toFile(), Path.of(cleanFileName).toFile());
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+                }
+            });
+        }
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
+     * <p>
+     * {@link #replaceVariablesInFile(Path, Map) replaceVariablesInFile}
+     *
+     * @param startPath    the path where the start directory is located
+     * @param replacements the replacements that should be applied
+     */
+    public static void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) {
+        replaceVariablesInFileRecursive(startPath, replacements, List.of());
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
+     * <p>
+     * {@link #replaceVariablesInFile(Path, Map) replaceVariablesInFile}
+     *
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
+     * @param filesToIgnore the name of files for which no replacement should be done
+     */
+    public static void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
+        log.debug("Replace {} in files in directory {}", replacements, startPath);
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
+        }
+
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> current.toPath().resolve(name).toFile().isFile());
+        if (files != null) {
+            // filter out files that should be ignored
+            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
+            for (String file : files) {
+                replaceVariablesInFile(directory.toPath().toAbsolutePath().resolve(file), replacements);
+            }
+        }
+
+        // Recursive call: get all subdirectories
+        String[] subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
+        if (subDirectories != null) {
+            for (String subDirectory : subDirectories) {
+                if (subDirectory.equalsIgnoreCase(".git")) {
+                    // ignore files in the '.git' folder
+                    continue;
+                }
+                replaceVariablesInFileRecursive(directory.toPath().toAbsolutePath().resolve(subDirectory), replacements, filesToIgnore);
+            }
+        }
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
+     * order of the argument is the same
+     *
+     * @param filePath     the path where the file is located
+     * @param replacements the replacements that should be applied
+     */
+    public static void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
+        log.debug("Replace {} in file {}", replacements, filePath);
+        if (isBinaryFile(filePath.toString())) {
+            // do not try to read binary files with 'readString'
+            return;
+        }
+        try {
+            // Note: Java does not offer a good way to check if a file is binary or not. If the basic check above fails (e.g. due to a custom binary file from an instructor),
+            // but the file is still binary, we try to read it. In case the method readString fails, we only log this below, but continue, because the exception should NOT
+            // interrupt the ongoing process
+            String fileContent = Files.readString(filePath, UTF_8);
+            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+                fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
+            }
+            FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
+        }
+        catch (IOException ex) {
+            log.warn("Exception {} occurred when trying to replace {} in (binary) file {}", ex.getMessage(), replacements, filePath);
+            // continue
+        }
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
+     * <p>
+     * {@link #normalizeLineEndings(Path) normalizeLineEndings}
+     *
+     * @param startPath the path where the start directory is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public static void normalizeLineEndingsDirectory(Path startPath) throws IOException {
+        log.debug("Normalizing file endings in directory {}", startPath);
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
+        }
+
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
+        // Get all files in directory
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
+
+        for (File file : files) {
+            normalizeLineEndings(file.toPath().toAbsolutePath());
+        }
+    }
+
+    /**
+     * This normalizes all line endings to UNIX-line-endings in a specific file.
+     * '\r\n' gets replaced to '\n'
+     * '\r' gets replaced to '\n'
+     *
+     * @param filePath the path where the file is located
+     * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     */
+    public static void normalizeLineEndings(Path filePath) throws IOException {
+        log.debug("Normalizing line endings in file {}", filePath);
+        if (isBinaryFile(filePath.toString())) {
+            // do not try to read binary files with 'readString'
+            return;
+        }
+        // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
+        String fileContent = Files.readString(filePath, UTF_8);
+        fileContent = LINE_ENDING.matcher(fileContent).replaceAll("\n");
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
+    }
+
+    /**
+     * This converts all files to the UTF-8 encoding recursively from the startPath.
+     * <p>
+     * {@link #convertToUTF8(Path) convertToUTF8}
+     *
+     * @param startPath the path where the start directory is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public static void convertFilesInDirectoryToUtf8(Path startPath) throws IOException {
+        log.debug("Converting files in directory {} to UTF-8", startPath);
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
+        }
+
+        // Ignore the .git repository
+        IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
+        // Get all files in directory
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
+
+        for (File file : files) {
+            convertToUTF8(file.toPath());
+        }
+    }
+
+    /**
+     * This converts a specific file to the UTF-8 encoding.
+     * To determine the encoding of the file, the library com.ibm.icu.text is used.
+     *
+     * @param filePath the path where the file is located
+     * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     */
+    public static void convertToUTF8(Path filePath) throws IOException {
+        log.debug("Converting file {} to UTF-8", filePath);
+        byte[] contentArray = Files.readAllBytes(filePath);
+
+        Charset charset = detectCharset(contentArray);
+        log.debug("Detected charset for file {} is {}", filePath, charset.name());
+
+        String fileContent = new String(contentArray, charset);
+
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
+    }
+
+    /**
+     * Detect the charset of a byte array
+     *
+     * @param contentArray The content that should be checked
+     * @return The detected charset
+     */
+    public static Charset detectCharset(byte[] contentArray) {
+        CharsetDetector charsetDetector = new CharsetDetector();
+        charsetDetector.setText(contentArray);
+        String charsetName = charsetDetector.detect().getName();
+        return Charset.forName(charsetName);
+    }
+
+    /**
+     * create a directory at a given path
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     */
+    public static void createDirectory(Path path) {
+        try {
+            Files.createDirectories(path);
+        }
+        catch (IOException e) {
+            var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
+            log.info(error);
+        }
+    }
+
+    /**
+     * Serialize an object and write into file at a given path
+     *
+     * @param object       The object that is serialized and written into a file
+     * @param objectMapper The objectMapper that is used for serialization
+     * @param path         The path where the file will be written to
+     * @return Path to the written file
+     */
+    // No throws clause: Jackson 3 raises unchecked JacksonException, so callers that want to degrade rather than
+    // unwind have to name it explicitly.
+    public static Path writeObjectToJsonFile(Object object, JsonMapper objectMapper, Path path) {
+        objectMapper.writeValue(path.toFile(), object);
+        return path;
+    }
+
+    /**
+     * Merge the PDF files located in the given paths.
+     *
+     * @param paths             list of paths to merge
+     * @param mergedPdfFilename title of merged pdf file
+     * @return byte array of the merged file
+     */
+    public static Optional<byte[]> mergePdfFiles(List<Path> paths, String mergedPdfFilename) {
+        return PdfMergeUtil.mergePdfFiles(paths, mergedPdfFilename);
+    }
+
+    /**
+     * Deletes all specified files.
+     *
+     * @param filePaths A list of all paths to the files that should be deleted
+     */
+    public static void deleteFiles(List<Path> filePaths) {
+        for (Path filePath : filePaths) {
+            try {
+                Files.delete(filePath);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Convert byte[] to MultipartFile by using CommonsMultipartFile
+     *
+     * @param filename        file name to set file name
+     * @param extension       extension of the file (e.g .pdf or .png)
+     * @param streamByteArray byte array to save to the temp file
+     * @return multipartFile wrapper for the file stored on disk with a sanitized name
+     */
+    public static MultipartFile convertByteArrayToMultipart(String filename, String extension, byte[] streamByteArray) {
+        try {
+            String cleanFilename = sanitizeFilename(filename);
+            Path tempPath = FilePathConverter.getTempFilePath().resolve(cleanFilename + extension);
+            FileUtils.writeByteArrayToFile(tempPath.toFile(), streamByteArray);
+            File outputFile = tempPath.toFile();
+            FileItem fileItem = new DiskFileItem(cleanFilename, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
+
+            try (InputStream input = Files.newInputStream(outputFile.toPath()); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+                input.transferTo(fileItemOutputStream);
+            }
+            return new CommonsMultipartFile(fileItem);
+        }
+        catch (IOException e) {
+            log.error("Could not convert file {}.", filename, e);
+            throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
+        }
+    }
+
+    /**
+     * Counts the number of tokens in a file, stopping when the total token count reaches the minimum token size.
+     * The method reads the file content, splits it into tokens based on whitespace and common programming symbols,
+     * and counts the tokens until the minimum token size is reached.
+     *
+     * @param path             The path to the file to count tokens in
+     * @param minimumTokenSize The minimum number of tokens to count before stopping
+     * @param totalTokenCount  The initial token count (usually 0)
+     * @return The total number of tokens counted, or minimumTokenSize if there's an error reading the file
+     */
+    public static int countTokensInFile(Path path, int minimumTokenSize, int totalTokenCount) {
+        try {
+            String content = Files.readString(path);
+            // Split the content into tokens using a regex that matches whitespace and common programming symbols.
+            // This set of delimiters is chosen because it covers the most common token boundaries in programming languages.
+            String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
+
+            for (String token : tokens) {
+                // Count non-empty tokens
+                if (!token.trim().isEmpty()) {
+                    totalTokenCount++;
+                    if (totalTokenCount >= minimumTokenSize) {
+                        // Return totalTokenCount as soon as the minimum token size is reached
+                        break;
+                    }
+                }
+            }
+            return totalTokenCount;
+        }
+        catch (IOException e) {
+            log.warn("Failed to read file {}: {}", path, e.getMessage());
+            return minimumTokenSize;
+        }
+    }
+}

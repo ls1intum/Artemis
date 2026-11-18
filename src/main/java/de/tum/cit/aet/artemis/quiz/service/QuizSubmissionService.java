@@ -1,0 +1,771 @@
+package de.tum.cit.aet.artemis.quiz.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_PARTICIPATION;
+
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import jakarta.ws.rs.BadRequestException;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropMappingReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.DragAndDropMappingFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.DragAndDropSubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.DragAndDropSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedTextFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedTextFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
+
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
+
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final QuizExerciseRepository quizExerciseRepository;
+
+    private final ParticipationService participationService;
+
+    private final QuizBatchService quizBatchService;
+
+    private final QuizStatisticsService quizStatisticsService;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final Optional<LtiApi> ltiApi;
+
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
+            QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService,
+            QuizStatisticsService quizStatisticsService, StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            Optional<LtiApi> ltiApi) {
+        super(submissionVersionService);
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.resultRepository = resultRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
+        this.participationService = participationService;
+        this.quizBatchService = quizBatchService;
+        this.quizStatisticsService = quizStatisticsService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.websocketMessagingService = websocketMessagingService;
+        this.ltiApi = ltiApi;
+    }
+
+    /**
+     * Submits a quiz submission for practice mode, calculates scores, and creates a result.
+     * This method performs several steps to process a quiz submission in practice mode, including updating
+     * the submission properties, calculating scores, creating a result, and updating statistics.
+     * <p>
+     * The process includes:
+     * <p>
+     * <ol>
+     * <li><b>Updating Submission Properties:</b> Sets the submission as submitted, marks it as a manual submission,
+     * and records the current date and time as the submission date.</li>
+     * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
+     * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, links it to the submission, calculates its score, and records
+     * the current date and time as the completion date.</li>
+     * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
+     * <li><b>Updating Submission:</b> Links the submission to its participation and result.</li>
+     * <li><b>Notifying Statistics Subscribers:</b> Notifies open instructor pages that the on-demand statistics changed.</li>
+     * </ol>
+     *
+     * @param quizSubmission The quiz submission to be processed.
+     * @param quizExercise   The quiz exercise related to the submission.
+     * @param participation  The participation object associated with the quiz submission.
+     * @return The created {@link Result} after processing the quiz submission.
+     */
+    public Result submitForPractice(QuizSubmission quizSubmission, QuizExercise quizExercise, Participation participation) {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        // calculate scores
+        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+        // save parent submission object
+        quizSubmission = quizSubmissionRepository.save(quizSubmission);
+
+        // create result
+        Result result = new Result();
+        result.setExerciseId(quizExercise.getId());
+        result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now());
+        // The result owns the foreign key to its submission, so it is set before the result is written. This used to
+        // save the result first and attach the submission afterwards, which stored a result without a submission.
+        result.setSubmission(quizSubmission);
+        // calculate score and update result accordingly
+        result.evaluateQuizSubmission(quizExercise);
+        quizSubmission.addResult(result);
+        quizSubmission.setParticipation(participation);
+
+        // Save the result before the submission. The submission holds it in a collection that cascades, so saving the
+        // submission while the result is still unsaved would let the cascade write one row and this save another.
+        result = resultRepository.save(result);
+        quizSubmissionRepository.save(quizSubmission);
+
+        // Statistics are calculated on demand. Notify open instructor pages after the result and its score are durable.
+        quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());
+
+        log.debug("submit practice quiz finished: {}", quizSubmission);
+        return result;
+    }
+
+    /**
+     * Calculate the results for all participations of the given quiz exercise
+     *
+     * @param quizExerciseId the id of the quiz exercise for which the results should be calculated
+     */
+    public void calculateAllResults(long quizExerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
+        log.info("Calculating results for quiz {}", quizExercise.getId());
+        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseId(quizExercise.getId());
+        associateQuizSubmissionsWithStudentParticipations(participations);
+
+        participations.forEach(participation -> {
+            participation.setExercise(quizExercise);
+            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().findFirst();
+
+            if (quizSubmissionOptional.isEmpty()) {
+                return;
+            }
+            QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
+            quizSubmission.setParticipation(participation);
+
+            if (quizSubmission.isSubmitted()) {
+                if (quizSubmission.getType() == null) {
+                    quizSubmission.setType(SubmissionType.MANUAL);
+                }
+            }
+            else if (quizExercise.isQuizEnded()) {
+                quizSubmission.setSubmitted(true);
+                quizSubmission.setType(SubmissionType.TIMEOUT);
+                quizSubmission.setSubmissionDate(ZonedDateTime.now());
+            }
+
+            participation.setInitializationState(InitializationState.FINISHED);
+
+            Result result = new Result();
+            result.setExerciseId(quizExercise.getId());
+            result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            result.setCompletionDate(quizSubmission.getSubmissionDate());
+            result.setSubmission(quizSubmission);
+
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+            result.evaluateQuizSubmission(quizExercise);
+
+            quizSubmissionRepository.save(quizSubmission);
+            resultRepository.save(result);
+            studentParticipationRepository.save(participation);
+            quizSubmission.setResults(Set.of(result));
+
+            ltiApi.ifPresent(api -> api.onNewResult(participation));
+            sendQuizResultToUser(quizExerciseId, participation);
+        });
+        quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());
+    }
+
+    /**
+     * Fetches quiz submissions for the given student participations and associates them with the participations.
+     *
+     * @param participations The set of student participations to associate with quiz submissions.
+     */
+    private void associateQuizSubmissionsWithStudentParticipations(Set<StudentParticipation> participations) {
+        Set<Long> participationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+
+        List<QuizSubmission> submissions = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationIds(participationIds);
+
+        Map<Long, Set<QuizSubmission>> submissionsByParticipationId = submissions.stream().collect(Collectors.groupingBy(s -> s.getParticipation().getId(), Collectors.toSet()));
+
+        for (StudentParticipation participation : participations) {
+            Set<QuizSubmission> quizSubmissions = submissionsByParticipationId.getOrDefault(participation.getId(), Set.of());
+            Set<Submission> submissionSet = new HashSet<>(quizSubmissions);
+            participation.setSubmissions(submissionSet);
+        }
+    }
+
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        var user = participation.getParticipantIdentifier();
+        StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        websocketMessagingService.sendMessageToUser(user, QUIZ_PARTICIPATION.at(quizExerciseId), participationDTO);
+    }
+
+    /**
+     * Saves or submits a quiz submission for a live quiz mode based on the specified parameters.
+     * This method handles both saving interim quiz data and submitting final quiz responses
+     * depending on the `submitted` flag. The method performs the following steps:
+     * <p>
+     * 1. Logs the start of the operation and determines the log message based on the `submitted` flag.
+     * 2. Retrieves the quiz exercise by its ID and sets its quiz batches to null.
+     * 3. Finds the existing quiz submission for the specified user and exercise.
+     * 4. Checks if the existing submission is valid for live mode and throws an exception if not.
+     * 5. Builds a fresh submission entity from the request DTO, dropping any client-supplied references that
+     * no longer exist server-side (#12584): a stale id from a tab opened before a quiz re-import must not
+     * abort the entire save.
+     * 6. Sets back-references, preserves the existing submission id and batch, sets the submission date,
+     * links the participation, and persists.
+     *
+     * @param exerciseId    The ID of the quiz exercise.
+     * @param submissionDTO The quiz submission payload posted by the client.
+     * @param student       The user submitting the quiz.
+     * @param submitted     A boolean indicating whether the quiz is being submitted (true) or saved (false).
+     * @return The saved or submitted {@link QuizSubmission}.
+     * @throws QuizSubmissionException If there is an error during the quiz submission process.
+     * @throws EntityNotFoundException If the quiz exercise or submission cannot be found.
+     */
+    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmissionFromLiveClientDTO submissionDTO, User student, boolean submitted)
+            throws QuizSubmissionException {
+        String userLogin = student.getLogin();
+
+        String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
+
+        long start = System.nanoTime();
+        // Load questions eagerly so we can resolve the client-supplied ids (answer options, drag items,
+        // drop locations, short-answer spots) against the server-managed instances during conversion.
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        quizExercise.setQuizBatches(null);
+        // A submission always exists because the user has to start the participation before submitting, which creates a submission
+        var existingSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find quiz submission for exercise " + exerciseId + " and user " + userLogin));
+        checkSubmissionForLiveModeOrThrow(quizExercise, existingSubmission, userLogin, logText, start);
+
+        // Build a fresh entity from the DTO; references that don't resolve against the server-side quiz are dropped silently.
+        QuizSubmission quizSubmission = buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
+        quizSubmission.setSubmitted(submitted);
+
+        // make sure certain values are not overridden wrongly
+        quizSubmission.setId(existingSubmission.getId());
+        quizSubmission.setQuizBatch(existingSubmission.getQuizBatch());
+
+        // set submission date and link to participation
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        // make sure the participation is not overridden wrongly
+        var participation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, student).orElseThrow();
+        quizSubmission.setParticipation(participation);
+        // The requests of one student run one after the other: a save and a submit that arrive together must not both insert their answers
+        quizSubmission = quizSubmissionRepository.replaceAnswersOfUnsubmittedSubmission(quizSubmission);
+        quizSubmission.filterForStudentsDuringQuiz();
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
+
+        return quizSubmission;
+    }
+
+    /**
+     * Checks the validity of a quiz submission for live mode and throws an exception if any condition is not met.
+     * This method performs several validation steps to ensure that the quiz submission process adheres to the rules
+     * of the live quiz mode. The validations include:
+     * <p>
+     * 1. **Logging the Received Exercise**: Logs detailed information about the received quiz exercise, user, and processing time.
+     * 2. **Quiz Active Status Check**: Verifies that the quiz has started and has not ended.
+     * 3. **Existing Submission Check**: Ensures that the existing submission has not already been submitted.
+     * 4. **Quiz Mode Check**: Differentiates checks based on the quiz mode (synchronized or other modes):
+     * - For synchronized mode, ensures that the current batch allows submissions.
+     * - For other modes, verifies the student's batch association and its submission status.
+     * <p>
+     * Additionally, there is a placeholder for potential future checks to enhance security and validation.
+     *
+     * @param quizExercise       The quiz exercise being validated.
+     * @param existingSubmission The existing submission of the user for the quiz.
+     * @param userLogin          The login of the user attempting to submit the quiz.
+     * @param logText            The log text for debugging purposes.
+     * @param start              The start time of the submission process for logging duration.
+     * @throws QuizSubmissionException If any validation fails during the submission process.
+     */
+    private void checkSubmissionForLiveModeOrThrow(QuizExercise quizExercise, QuizSubmission existingSubmission, String userLogin, String logText, long start)
+            throws QuizSubmissionException {
+        // check if submission is still allowed
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, quizExercise.getId(), (System.nanoTime() - start) / 1000);
+        if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
+            throw new QuizSubmissionException("The quiz is not active");
+        }
+
+        if (existingSubmission.isSubmitted()) {
+            // the old submission has not yet been processed, so don't allow a new one yet
+            throw new QuizSubmissionException("You have already submitted the quiz");
+        }
+
+        if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            // the batch exists if the quiz is active, otherwise a new inactive batch is returned
+            if (!quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).isSubmissionAllowed()) {
+                throw new QuizSubmissionException("The quiz is not active");
+            }
+
+        }
+        else {
+            // in the other modes the resubmission checks are done at join time and the student-batch association is removed when processing a submission
+            var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, userLogin);
+
+            // there is no way of distinguishing these two error cases without an extra db query
+            if (batch.isEmpty()) {
+                throw new QuizSubmissionException("You did not join or have already submitted the quiz");
+            }
+
+            if (!batch.get().isSubmissionAllowed()) {
+                throw new QuizSubmissionException("The quiz is not active");
+            }
+        }
+
+        // TODO: add additional checks that may be beneficial
+        // for example it is possible for students that are not members of the course to submit the quiz
+        // but for performance reasons the checks may have to be done in the quiz submission service where no feedback for the students can be generated
+    }
+
+    /**
+     * Find StudentParticipation of the given quizExercise that was done by the given user
+     *
+     * @param quizExercise   the QuizExercise of which the StudentParticipation belongs to
+     * @param quizSubmission the QuizSubmission of which the participation to be set to
+     * @param user           the User of the StudentParticipation
+     * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
+     */
+    protected StudentParticipation getParticipation(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, user);
+
+        if (optionalParticipation.isEmpty()) {
+            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user.getLogin());
+            // TODO: think of better way to handle failure
+            throw new EntityNotFoundException("Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user "
+                    + user.getLogin() + " was not found!");
+        }
+        return optionalParticipation.get();
+    }
+
+    /**
+     * Set the participation of the quiz submission and then save the quiz submission to the database
+     *
+     * @param quizExercise              the QuizExercise of the participation of which the given quizSubmission belongs to
+     * @param quizSubmission            the QuizSubmission to be saved
+     * @param user                      the User of the participation of which the given quizSubmission belongs to
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
+     * @return saved QuizSubmission
+     */
+    @Override
+    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user, @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
+        // For exam submissions the participation was already resolved (and its ownership implicitly established) by the
+        // exam submission gate a few frames up, which handed it to the caller. Looking it up again would repeat the same
+        // row read on every quiz save.
+        // only the foreign key is needed from the gate's participation, which its id gives without a load
+        StudentParticipation participation = participationFromExamGate != null ? StudentParticipation.idOnlyReference(participationFromExamGate.id())
+                : this.getParticipation(quizExercise, quizSubmission, user);
+        // The save merges, so a client-supplied id has to belong to the resolved participation before it can drive an update.
+        // The exam gate already replaced the id with its participation's own submission when it resolved the participation.
+        if (participationFromExamGate == null && quizSubmission.getId() != null
+                && !quizSubmissionRepository.existsByIdAndParticipationId(quizSubmission.getId(), participation.getId())) {
+            throw new AccessForbiddenException();
+        }
+        quizSubmission.setParticipation(participation);
+        QuizSubmission savedQuizSubmission = quizSubmissionRepository.saveUpdatingStoredAnswers(quizSubmission, null);
+        savedQuizSubmission.filterForStudentsDuringQuiz();
+        return savedQuizSubmission;
+    }
+
+    private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,
+            Map<Long, QuizQuestion> quizQuestionMap) {
+        QuizQuestion quizQuestion = quizQuestionMap.get(submittedAnswer.questionId());
+        if (quizQuestion == null) {
+            throw new EntityNotFoundException("QuizQuestion with id " + submittedAnswer.questionId() + " not found");
+        }
+        if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+            MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+            multipleChoiceSubmittedAnswer.setQuizQuestion(multipleChoiceQuestion);
+            Set<AnswerOption> selectedAnswers = new HashSet<>();
+            for (Long answerOptionId : submittedAnswer.selectedOptions()) {
+                Optional<AnswerOption> answerOption = multipleChoiceQuestion.getAnswerOptions().stream().filter(option -> option.getId().equals(answerOptionId)).findFirst();
+                if (answerOption.isPresent()) {
+                    selectedAnswers.add(answerOption.get());
+                }
+                else {
+                    throw new EntityNotFoundException("AnswerOption with id " + answerOptionId + " not found in MultipleChoiceQuestion with id " + multipleChoiceQuestion.getId());
+                }
+            }
+            multipleChoiceSubmittedAnswer.setSelectedOptions(selectedAnswers);
+            return multipleChoiceSubmittedAnswer;
+        }
+        else {
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a MultipleChoiceQuestion");
+        }
+    }
+
+    private ShortAnswerSubmittedAnswer createShortAnswerSubmittedAnswerFromDTO(ShortAnswerSubmittedAnswerFromStudentDTO submittedAnswer, Map<Long, QuizQuestion> quizQuestionMap) {
+        QuizQuestion quizQuestion = quizQuestionMap.get(submittedAnswer.questionId());
+        if (quizQuestion == null) {
+            throw new EntityNotFoundException("QuizQuestion with id " + submittedAnswer.questionId() + " not found");
+        }
+        if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+            shortAnswerSubmittedAnswer.setQuizQuestion(shortAnswerQuestion);
+            Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
+            Map<Long, ShortAnswerSpot> spotMap = shortAnswerQuestion.getSpots().stream().collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
+            for (ShortAnswerSubmittedTextFromStudentDTO submittedText : submittedAnswer.submittedTexts()) {
+                ShortAnswerSpot spot = spotMap.get(submittedText.spotId());
+                if (spot != null) {
+                    ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+                    shortAnswerSubmittedText.setSpot(spot);
+                    shortAnswerSubmittedText.setText(submittedText.text());
+                    shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
+                    submittedTexts.add(shortAnswerSubmittedText);
+                }
+                else {
+                    throw new EntityNotFoundException(
+                            "ShortAnswerSpot with id " + submittedText.spotId() + " not found in ShortAnswerQuestion with id " + shortAnswerQuestion.getId());
+                }
+            }
+            shortAnswerSubmittedAnswer.setSubmittedTexts(submittedTexts);
+            return shortAnswerSubmittedAnswer;
+        }
+        else {
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a ShortAnswerQuestion");
+        }
+    }
+
+    private DragAndDropSubmittedAnswer createDragAndDropSubmittedAnswerFromDTO(DragAndDropSubmittedAnswerFromStudentDTO submittedAnswer, Map<Long, QuizQuestion> quizQuestionMap) {
+        QuizQuestion question = quizQuestionMap.get(submittedAnswer.questionId());
+        if (question == null) {
+            throw new EntityNotFoundException("DragAndDropQuestion with id " + submittedAnswer.questionId() + " not found");
+        }
+        if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = new DragAndDropSubmittedAnswer();
+            dragAndDropSubmittedAnswer.setQuizQuestion(dragAndDropQuestion);
+            Map<Long, DragItem> dragItemMap = dragAndDropQuestion.getDragItems().stream().collect(Collectors.toMap(DragItem::getId, Function.identity()));
+            Map<Long, DropLocation> dropLocationMap = dragAndDropQuestion.getDropLocations().stream().collect(Collectors.toMap(DropLocation::getId, Function.identity()));
+            Set<DragAndDropMapping> mappings = new HashSet<>();
+            for (DragAndDropMappingReEvaluateDTO mapping : submittedAnswer.mappings()) {
+                DragItem dragItem = dragItemMap.get(mapping.dragItemId());
+                DropLocation dropLocation = dropLocationMap.get(mapping.dropLocationId());
+                if (dragItem != null && dropLocation != null) {
+                    DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
+                    dragAndDropMapping.setDragItem(dragItem);
+                    dragAndDropMapping.setDropLocation(dropLocation);
+                    mappings.add(dragAndDropMapping);
+                }
+                else {
+                    throw new EntityNotFoundException("DragItem with id " + mapping.dragItemId() + " or DropLocation with id " + mapping.dropLocationId()
+                            + " not found in DragAndDropQuestion with id " + dragAndDropQuestion.getId());
+                }
+            }
+            dragAndDropSubmittedAnswer.setMappings(mappings);
+            return dragAndDropSubmittedAnswer;
+        }
+        else {
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a DragAndDropQuestion");
+        }
+    }
+
+    private boolean hasSubmittedAnswersForAllQuestions(QuizSubmissionFromStudentDTO quizSubmission, QuizExercise quizExercise) {
+        Set<Long> questionIdsInSubmission = quizSubmission.submittedAnswers().stream().map(SubmittedAnswerFromStudentDTO::getQuestionId).collect(Collectors.toSet());
+        Set<Long> questionIdsInExercise = quizExercise.getQuizQuestions().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
+        return questionIdsInSubmission.containsAll(questionIdsInExercise);
+    }
+
+    private boolean hasNoDuplicateSubmittedAnswers(QuizSubmissionFromStudentDTO quizSubmission) {
+        Set<Long> questionIdsInSubmission = new HashSet<>();
+        for (SubmittedAnswerFromStudentDTO submittedAnswer : quizSubmission.submittedAnswers()) {
+            if (!questionIdsInSubmission.add(SubmittedAnswerFromStudentDTO.getQuestionId(submittedAnswer))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Set<SubmittedAnswer> createSubmittedAnswersFromDTO(QuizSubmissionFromStudentDTO quizSubmission, QuizExercise quizExercise) {
+        Map<Long, QuizQuestion> quizQuestionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
+        Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
+        for (var submittedAnswerDTO : quizSubmission.submittedAnswers()) {
+            switch (submittedAnswerDTO) {
+                case MultipleChoiceSubmittedAnswerFromStudentDTO multipleChoiceSubmittedAnswerFromStudentDTO -> {
+                    MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = createMultipleChoiceSubmittedAnswerFromDTO(multipleChoiceSubmittedAnswerFromStudentDTO,
+                            quizQuestionMap);
+                    submittedAnswers.add(multipleChoiceSubmittedAnswer);
+                }
+                case ShortAnswerSubmittedAnswerFromStudentDTO shortAnswerSubmittedAnswerFromStudentDTO -> {
+                    ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = createShortAnswerSubmittedAnswerFromDTO(shortAnswerSubmittedAnswerFromStudentDTO, quizQuestionMap);
+                    submittedAnswers.add(shortAnswerSubmittedAnswer);
+                }
+                case DragAndDropSubmittedAnswerFromStudentDTO dragAndDropSubmittedAnswerFromStudentDTO -> {
+                    DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = createDragAndDropSubmittedAnswerFromDTO(dragAndDropSubmittedAnswerFromStudentDTO, quizQuestionMap);
+                    submittedAnswers.add(dragAndDropSubmittedAnswer);
+                }
+                default -> throw new BadRequestException("Unknown SubmittedAnswerFromStudentDTO type: " + submittedAnswerDTO.getClass().getName());
+            }
+        }
+        return submittedAnswers;
+    }
+
+    /**
+     * Creates a new {@link QuizSubmission} entity from a client-side DTO and validates its integrity.
+     * <p>
+     * This method performs the following steps:
+     * <ul>
+     * <li>Verifies that the DTO contains exactly one submitted answer for every question in the given quiz exercise.</li>
+     * <li>Rejects duplicate submitted answers for the same question.</li>
+     * <li>Instantiates domain {@link SubmittedAnswer} objects (multiple choice, short answer, drag and drop)
+     * from the provided DTOs and attaches them to a new {@link QuizSubmission}.</li>
+     * <li>Sets the back-reference from each created {@link SubmittedAnswer} to the new submission.</li>
+     * </ul>
+     *
+     * @param quizSubmission the DTO containing the student's submitted answers for all questions of the quiz
+     * @param quizExercise   the quiz exercise that defines the questions this submission answers
+     * @return a new, non-persisted {@link QuizSubmission} populated with the converted submitted answers
+     * @throws BadRequestException     if
+     *                                     <ul>
+     *                                     <li>the DTO does not contain a submitted answer for every question in the quiz exercise, or</li>
+     *                                     <li>the DTO contains more than one submitted answer for the same question, or</li>
+     *                                     <li>a submitted answer references an unknown or incompatible question type</li>
+     *                                     </ul>
+     * @throws EntityNotFoundException if a referenced question or inner element
+     *                                     (e.g.\ answer option, spot, drag item, drop location) cannot be found in the corresponding quiz question
+     */
+    public QuizSubmission createNewSubmissionFromDTO(QuizSubmissionFromStudentDTO quizSubmission, QuizExercise quizExercise) {
+        if (!hasSubmittedAnswersForAllQuestions(quizSubmission, quizExercise)) {
+            throw new BadRequestException("QuizSubmission does not contain submitted answers for all questions");
+        }
+        if (!hasNoDuplicateSubmittedAnswers(quizSubmission)) {
+            throw new BadRequestException("QuizSubmission contains duplicate submitted answers for the same question");
+        }
+        QuizSubmission newQuizSubmission = new QuizSubmission();
+        Set<SubmittedAnswer> submittedAnswers = createSubmittedAnswersFromDTO(quizSubmission, quizExercise);
+        newQuizSubmission.setSubmittedAnswers(submittedAnswers);
+        for (SubmittedAnswer submittedAnswer : submittedAnswers) {
+            submittedAnswer.setSubmission(newQuizSubmission);
+        }
+        return newQuizSubmission;
+    }
+
+    /**
+     * Build a fresh {@link QuizSubmission} entity from the rich entity-shaped JSON the live and exam clients post.
+     * <p>
+     * The conversion is intentionally lenient: any submitted answer whose question id is missing or no longer
+     * exists server-side is silently dropped, as is any individual selected option, drag mapping, or short-answer
+     * spot whose id can't be resolved against the loaded {@code quizExercise}. Submitted answers whose runtime
+     * subtype does not match the server-side question type are dropped as well. This mirrors the historical
+     * behaviour of the {@code sanitizeSubmittedAnswersAgainstQuestions} workaround introduced for #12584:
+     * a stale id from a tab opened before a quiz re-import must not abort the entire save.
+     *
+     * @param dto          the parsed request body; may be {@code null} or carry an empty / null answer set
+     * @param quizExercise the quiz exercise loaded with its questions (and their nested options/items/spots)
+     * @return a transient {@link QuizSubmission} with submitted answers wired to server-managed entities
+     */
+    public QuizSubmission buildSubmissionFromLiveClientDTO(QuizSubmissionFromLiveClientDTO dto, QuizExercise quizExercise) {
+        QuizSubmission submission = new QuizSubmission();
+        Set<SubmittedAnswer> answers = new HashSet<>();
+        submission.setSubmittedAnswers(answers);
+        if (dto == null) {
+            return submission;
+        }
+        // Preserve the client-supplied submission id so the test-exam PUT path can UPDATE the existing row instead of
+        // INSERT-ing a new one on every auto-save (preventMultipleSubmissions returns early for test exams). Live mode
+        // and regular-exam mode overwrite this id with the server-resolved one before persisting, so a client-supplied
+        // value never propagates on those paths.
+        if (dto.id() != null) {
+            submission.setId(dto.id());
+        }
+        if (dto.submittedAnswers() == null || dto.submittedAnswers().isEmpty()) {
+            return submission;
+        }
+        Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
+        for (SubmittedAnswerFromLiveClientDTO answerDTO : dto.submittedAnswers()) {
+            SubmittedAnswer answer = buildSubmittedAnswerLeniently(answerDTO, questionsById);
+            if (answer != null) {
+                answer.setSubmission(submission);
+                answers.add(answer);
+            }
+        }
+        return submission;
+    }
+
+    /**
+     * Build a single {@link SubmittedAnswer} for the training endpoint from the rich client JSON, given the
+     * already-loaded {@link QuizQuestion} the path identifies.
+     * <p>
+     * The answer's structural integrity is enforced strictly — a {@code null} payload or a runtime subtype that
+     * disagrees with the question's type results in a {@link BadRequestException}. The contents (selected
+     * options, mappings, submitted texts) are still resolved leniently against the question, dropping any
+     * sub-element whose id cannot be matched.
+     *
+     * @param dto          the parsed answer body; must not be {@code null}
+     * @param quizQuestion the question identified by the path parameter
+     * @return a transient {@link SubmittedAnswer} ready to be scored by the training service
+     * @throws BadRequestException if the dto is missing or its type does not match the question's type
+     */
+    public SubmittedAnswer convertSubmittedAnswerForTraining(SubmittedAnswerFromLiveClientDTO dto, QuizQuestion quizQuestion) {
+        if (dto == null) {
+            throw new BadRequestException("Submitted answer is required");
+        }
+        return switch (dto) {
+            case MultipleChoiceSubmittedAnswerFromLiveClientDTO mcDTO when quizQuestion instanceof MultipleChoiceQuestion mcQuestion ->
+                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion);
+            case DragAndDropSubmittedAnswerFromLiveClientDTO dndDTO when quizQuestion instanceof DragAndDropQuestion dndQuestion ->
+                buildDragAndDropSubmittedAnswer(dndDTO, dndQuestion);
+            case ShortAnswerSubmittedAnswerFromLiveClientDTO saDTO when quizQuestion instanceof ShortAnswerQuestion saQuestion ->
+                buildShortAnswerSubmittedAnswer(saDTO, saQuestion);
+            default -> throw new BadRequestException("Submitted answer type does not match the quiz question type");
+        };
+    }
+
+    private SubmittedAnswer buildSubmittedAnswerLeniently(SubmittedAnswerFromLiveClientDTO dto, Map<Long, QuizQuestion> questionsById) {
+        if (dto == null || dto.quizQuestion() == null || dto.quizQuestion().id() == null) {
+            return null;
+        }
+        QuizQuestion serverQuestion = questionsById.get(dto.quizQuestion().id());
+        if (serverQuestion == null) {
+            return null;
+        }
+        return switch (dto) {
+            case MultipleChoiceSubmittedAnswerFromLiveClientDTO mcDTO when serverQuestion instanceof MultipleChoiceQuestion mcQuestion ->
+                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion);
+            case DragAndDropSubmittedAnswerFromLiveClientDTO dndDTO when serverQuestion instanceof DragAndDropQuestion dndQuestion ->
+                buildDragAndDropSubmittedAnswer(dndDTO, dndQuestion);
+            case ShortAnswerSubmittedAnswerFromLiveClientDTO saDTO when serverQuestion instanceof ShortAnswerQuestion saQuestion ->
+                buildShortAnswerSubmittedAnswer(saDTO, saQuestion);
+            default -> null;
+        };
+    }
+
+    private MultipleChoiceSubmittedAnswer buildMultipleChoiceSubmittedAnswer(MultipleChoiceSubmittedAnswerFromLiveClientDTO dto, MultipleChoiceQuestion question) {
+        MultipleChoiceSubmittedAnswer answer = new MultipleChoiceSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        Set<AnswerOption> selected = new HashSet<>();
+        if (dto.selectedOptions() != null && !dto.selectedOptions().isEmpty()) {
+            Map<Long, AnswerOption> optionsById = question.getAnswerOptions().stream().filter(option -> option.getId() != null)
+                    .collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+            for (EntityIdRefDTO optionRef : dto.selectedOptions()) {
+                if (optionRef == null || optionRef.id() == null) {
+                    continue;
+                }
+                AnswerOption serverOption = optionsById.get(optionRef.id());
+                if (serverOption != null) {
+                    selected.add(serverOption);
+                }
+            }
+        }
+        answer.setSelectedOptions(selected);
+        return answer;
+    }
+
+    private DragAndDropSubmittedAnswer buildDragAndDropSubmittedAnswer(DragAndDropSubmittedAnswerFromLiveClientDTO dto, DragAndDropQuestion question) {
+        DragAndDropSubmittedAnswer answer = new DragAndDropSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        Set<DragAndDropMapping> mappings = new HashSet<>();
+        if (dto.mappings() != null && !dto.mappings().isEmpty()) {
+            Map<Long, DragItem> dragItemsById = question.getDragItems().stream().filter(item -> item.getId() != null)
+                    .collect(Collectors.toMap(DragItem::getId, Function.identity()));
+            Map<Long, DropLocation> dropLocationsById = question.getDropLocations().stream().filter(location -> location.getId() != null)
+                    .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
+            for (DragAndDropMappingFromLiveClientDTO mappingDTO : dto.mappings()) {
+                if (mappingDTO == null || mappingDTO.dragItem() == null || mappingDTO.dropLocation() == null || mappingDTO.dragItem().id() == null
+                        || mappingDTO.dropLocation().id() == null) {
+                    continue;
+                }
+                DragItem serverDragItem = dragItemsById.get(mappingDTO.dragItem().id());
+                DropLocation serverDropLocation = dropLocationsById.get(mappingDTO.dropLocation().id());
+                if (serverDragItem == null || serverDropLocation == null) {
+                    continue;
+                }
+                // Resolve against the server's own drag items / drop locations; setMappings stores only their (question-scoped) ids in the JSON selection.
+                DragAndDropMapping mapping = new DragAndDropMapping();
+                mapping.setDragItem(serverDragItem);
+                mapping.setDropLocation(serverDropLocation);
+                mappings.add(mapping);
+            }
+        }
+        answer.setMappings(mappings);
+        return answer;
+    }
+
+    private ShortAnswerSubmittedAnswer buildShortAnswerSubmittedAnswer(ShortAnswerSubmittedAnswerFromLiveClientDTO dto, ShortAnswerQuestion question) {
+        ShortAnswerSubmittedAnswer answer = new ShortAnswerSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
+        if (dto.submittedTexts() != null && !dto.submittedTexts().isEmpty()) {
+            Map<Long, ShortAnswerSpot> spotsById = question.getSpots().stream().filter(spot -> spot.getId() != null)
+                    .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
+            for (ShortAnswerSubmittedTextFromLiveClientDTO textDTO : dto.submittedTexts()) {
+                if (textDTO == null || textDTO.spot() == null || textDTO.spot().id() == null) {
+                    continue;
+                }
+                ShortAnswerSpot serverSpot = spotsById.get(textDTO.spot().id());
+                if (serverSpot == null) {
+                    continue;
+                }
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(serverSpot);
+                submittedText.setText(textDTO.text());
+                submittedText.setSubmittedAnswer(answer);
+                submittedTexts.add(submittedText);
+            }
+        }
+        answer.setSubmittedTexts(submittedTexts);
+        return answer;
+    }
+
+}

@@ -1,0 +1,21 @@
+<div class="flex max-h-[80svh] flex-col p-2.5">
+    <div class="min-h-0 flex-1 overflow-y-auto [scrollbar-color:var(--text-body-secondary)_transparent]">
+        @for (event of eventsToDisplay(); track event) {
+            <jhi-exam-live-event
+                [event]="event"
+                [showAcknowledge]="unacknowledgedEvents().includes(event)"
+                (onAcknowledge)="acknowledgeEvent(event)"
+                (onNavigate)="navigateToExercise(event)"
+            />
+        }
+    </div>
+    @if (unacknowledgedEvents().length === 0) {
+        <button type="button" tumAetUiButton severity="secondary" class="mt-2! w-full" (click)="closeOverlay()">Close</button>
+    }
+    @if (unacknowledgedEvents().length > 1) {
+        <button type="button" tumAetUiButton class="mt-2! w-full" (click)="acknowledgeAllUnacknowledgedEvents()">
+            <fa-icon [icon]="faCheck" />
+            <span jhiTranslate="artemisApp.exam.events.acknowledgeAll"></span>
+        </button>
+    }
+</div>

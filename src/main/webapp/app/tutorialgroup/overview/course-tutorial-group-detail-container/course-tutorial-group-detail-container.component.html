@@ -1,0 +1,20 @@
+<div>
+    @let tutorialGroupToPass = tutorialGroup();
+    @let courseIdToPass = courseId();
+    @let isMessagingEnabledToPass = isMessagingEnabled();
+    @if (courseIdToPass && tutorialGroupToPass && isMessagingEnabledToPass !== undefined) {
+        <div class="p-4! scrollable-content">
+            <jhi-tutorial-group-detail
+                [tutorialGroup]="tutorialGroupToPass"
+                [courseId]="courseIdToPass"
+                [isMessagingEnabled]="isMessagingEnabledToPass"
+                [loggedInUserAccessLevel]="TutorialGroupDetailManagementAccessLevel.STUDENT"
+                [isSidebarCollapsed]="isSidebarCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
+            />
+        </div>
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

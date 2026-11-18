@@ -1,0 +1,303 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, NgForm, NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
+const CHANNEL_NAME_PREFIX = '-- -!?-p --()';
+
+describe('TitleChannelNameComponent', () => {
+    let component: TitleChannelNameComponent;
+    let fixture: ComponentFixture<TitleChannelNameComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FormsModule, TitleChannelNameComponent, CustomNotIncludedInValidatorDirective],
+            providers: [NgForm, { provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TitleChannelNameComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    it('should display title and channel name input fields with correct content', async () => {
+        fixture.componentRef.setInput('title', 'Test');
+        fixture.componentRef.setInput('channelName', 'test');
+
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const titleInput = fixture.debugElement.query(By.css('#field_title'));
+        expect(titleInput).not.toBeNull();
+        expect(titleInput.nativeElement.value).toBe(component.title());
+
+        const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
+        expect(channelNameInput).not.toBeNull();
+        expect(channelNameInput.nativeElement.value).toBe(component.channelName());
+    });
+
+    it('should give keyboard-focusable help icons localized accessible names', async () => {
+        fixture.componentRef.setInput('titleHelpIconText', 'review.titleHelp');
+        fixture.componentRef.setInput('channelNameHelpIconText', 'review.channelHelp');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const icons = fixture.nativeElement.querySelectorAll('fa-icon[tabindex="0"]') as NodeListOf<HTMLElement>;
+        expect(Array.from(icons, (icon) => ({ role: icon.getAttribute('role'), name: icon.getAttribute('aria-label') }))).toEqual([
+            { role: 'img', name: 'review.titleHelp' },
+            { role: 'img', name: 'review.channelHelp' },
+        ]);
+    });
+
+    it('should associate a disallowed-title error with its own input and clear the association when valid', async () => {
+        fixture.componentRef.setInput('alreadyUsedTitles', new Set(['Taken']));
+        await fixture.whenStable();
+        const input = fixture.nativeElement.querySelector('#field_title') as HTMLInputElement;
+        input.value = 'Taken';
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const error = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
+        expect(error).not.toBeNull();
+        expect(error.id).toBeTruthy();
+        expect(input.getAttribute('aria-describedby')).toBe(error.id);
+
+        const other = TestBed.createComponent(TitleChannelNameComponent);
+        other.componentRef.setInput('alreadyUsedTitles', new Set(['Other taken']));
+        other.detectChanges();
+        await other.whenStable();
+        const otherInput = other.nativeElement.querySelector('#field_title') as HTMLInputElement;
+        otherInput.value = 'Other taken';
+        otherInput.dispatchEvent(new Event('input'));
+        other.detectChanges();
+        await other.whenStable();
+        expect(other.nativeElement.querySelector('[role="alert"]').id).not.toBe(error.id);
+        other.destroy();
+
+        input.value = 'Available';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+        expect(input.hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it.each(['field_title', 'field_channel_name'])('should expose touched validation errors for %s and clear them when corrected', async (fieldId) => {
+        await fixture.whenStable();
+        const input = fixture.nativeElement.querySelector(`#${fieldId}`) as HTMLInputElement;
+        const control = fixture.debugElement.query(By.css(`#${fieldId}`)).injector.get(NgModel);
+        expect(control.invalid).toBe(true);
+        expect(input.hasAttribute('aria-invalid')).toBe(false);
+
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(control.touched).toBe(true);
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+
+        input.value = 'Valid';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(control.valid).toBe(true);
+        expect(input.hasAttribute('aria-invalid')).toBe(false);
+    });
+
+    it.each([
+        ['titleValidationMessage', 'field_title', 'title-validation-message'],
+        ['channelNameValidationMessage', 'field_channel_name', 'channel-name-validation-message'],
+    ])('should render and associate the containing form message for %s until it is cleared', async (messageInput, fieldId, testId) => {
+        fixture.componentRef.setInput(messageInput, 'review.validationMessage');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const input = fixture.nativeElement.querySelector(`#${fieldId}`) as HTMLInputElement;
+        const error = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement;
+        expect(error.textContent).toBe('review.validationMessage');
+        expect(error.getAttribute('role')).toBe('alert');
+        expect(input.parentElement!.contains(error)).toBe(true);
+        expect(error.id).toBeTruthy();
+        expect(input.getAttribute('aria-describedby')).toBe(error.id);
+
+        fixture.componentRef.setInput(messageInput, undefined);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).toBeNull();
+        expect(input.hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('should only display title input field if channel name is hidden', () => {
+        fixture.componentRef.setInput('hideChannelName', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const titleInput = fixture.debugElement.query(By.css('#field_title'));
+        expect(titleInput).not.toBeNull();
+
+        const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
+        expect(channelNameInput).toBeNull();
+    });
+
+    it('should update channel name on title change', () => {
+        fixture.componentRef.setInput('title', 'test');
+        fixture.componentRef.setInput('channelName', 'test');
+        fixture.changeDetectorRef.detectChanges();
+
+        const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long name that is more than 30 characters';
+        const titleInput = fixture.debugElement.query(By.css('#field_title'));
+        titleInput.nativeElement.value = newTitle;
+        titleInput.nativeElement.dispatchEvent(new Event('input'));
+
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.title()).toBe(newTitle);
+        expect(component.channelName()).toBe('new-0123-too-long-name-that-is');
+    });
+
+    it('init prefix if undefined', () => {
+        component.ngOnInit();
+
+        expect(component.channelNamePrefix()).toBe('');
+    });
+
+    it('init channel name based on prefix and title', async () => {
+        fixture.componentRef.setInput('title', 'Test');
+        fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(component.channelName()).toBe('prefix-test');
+    });
+
+    it('init channel name based on prefix if title is undefined', async () => {
+        fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(component.channelName()).toBe('prefix-');
+    });
+
+    it('remove special characters and trailing hyphens from channel name on init with non-empty title', async () => {
+        fixture.componentRef.setInput('title', '-- -  t--=*+ -- ');
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(component.channelName()).toBe('-p-t');
+    });
+
+    it("don't remove trailing hyphens from channel name on init with empty title", async () => {
+        fixture.componentRef.setInput('title', '');
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(component.channelName()).toBe('-p-');
+    });
+
+    it("don't remove trailing hyphens from channel name on init with undefined title", async () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX + '-');
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(component.channelName()).toBe('-p-');
+    });
+
+    it('remove trailing hyphens from channel name on title edit', () => {
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
+
+        component.updateTitle('--t--(%&');
+
+        expect(component.channelName()).toBe('-p-t');
+    });
+
+    it("don't remove trailing hyphens from channel name on title edit if title empty", () => {
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
+
+        component.updateTitle('');
+
+        expect(component.channelName()).toBe('-p-');
+    });
+
+    it("don't remove trailing hyphens from channel name on channel name edit", () => {
+        fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX + '-');
+
+        component.formatChannelName('-p--t--');
+
+        expect(component.channelName()).toBe('-p--t--');
+    });
+
+    it("don't init channel name if not allowed", () => {
+        fixture.componentRef.setInput('title', 't');
+        fixture.componentRef.setInput('channelNamePrefix', 'p-');
+        fixture.componentRef.setInput('initChannelName', false);
+
+        component.ngOnInit();
+
+        expect(component.channelName()).toBeUndefined();
+    });
+    // Opt-in so lectures and exams, which render this same component, keep their labels unmarked.
+    describe('required marker', () => {
+        it('should not mark the labels by default', async () => {
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(fixture.debugElement.queryAll(By.css('.text-state-danger'))).toHaveLength(0);
+        });
+
+        it('should mark both the title and the channel name label when opted in', async () => {
+            fixture.componentRef.setInput('showRequiredMarker', true);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            const markers = fixture.debugElement.queryAll(By.css('.text-state-danger'));
+            expect(markers).toHaveLength(2);
+            expect((markers[0].nativeElement as HTMLElement).textContent).toBe('*');
+        });
+
+        it('should not mark the channel name label when the channel field is hidden', async () => {
+            fixture.componentRef.setInput('showRequiredMarker', true);
+            fixture.componentRef.setInput('hideChannelName', true);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(fixture.debugElement.queryAll(By.css('.text-state-danger'))).toHaveLength(1);
+        });
+    });
+    describe('isTitleDisallowed', () => {
+        it('should report the title as already used exactly while it is one of the used titles', () => {
+            fixture.componentRef.setInput('alreadyUsedTitles', new Set(['Taken']));
+            expect(component.isTitleDisallowed()).toBe(false);
+
+            // What typing into the title field does.
+            component.updateTitle('Taken');
+            expect(component.isTitleDisallowed()).toBe(true);
+
+            component.updateTitle('Free');
+            expect(component.isTitleDisallowed()).toBe(false);
+        });
+
+        it('should not count the title the form was opened with, as the title field does not', () => {
+            component.titleOnPageLoad.set('Original');
+            fixture.componentRef.setInput('alreadyUsedTitles', new Set(['Original', 'Taken']));
+
+            component.updateTitle('Original');
+            expect(component.isTitleDisallowed()).toBe(false);
+
+            component.updateTitle('Taken');
+            expect(component.isTitleDisallowed()).toBe(true);
+        });
+    });
+});

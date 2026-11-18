@@ -1,0 +1,445 @@
+package de.tum.cit.aet.artemis.atlas.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
+import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+@Conditional(AtlasEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.COMPETENCY_MANAGEMENT)
+@RestController
+@RequestMapping("api/atlas/")
+public class CompetencyResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private static final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
+
+    private static final String ENTITY_NAME = "competency";
+
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final UserRepository userRepository;
+
+    private final CompetencyRepository competencyRepository;
+
+    private final CompetencyService competencyService;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final CourseCompetencyService courseCompetencyService;
+
+    private final CompetencyValidationService competencyValidator;
+
+    public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
+            CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
+            CourseCompetencyService courseCompetencyService, CompetencyValidationService competencyValidator) {
+        this.courseRepository = courseRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
+        this.competencyRepository = competencyRepository;
+        this.competencyService = competencyService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencyService = courseCompetencyService;
+        this.competencyValidator = competencyValidator;
+    }
+
+    /**
+     * GET courses/:courseId/competencies : gets all the competencies of a course
+     *
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("courses/{courseId}/competencies")
+    @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List the competencies of a course", description = """
+            Returns the competencies of the course. Each one carries the caller's own learning progress. Links to \
+            exercises and lecture units are not included; get a single competency for those.""")
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> getCompetenciesWithProgress(@PathVariable long courseId) {
+        log.debug("REST request to get competencies for course with id: {}", courseId);
+        User user = userRepository.getUserWithAuthorities();
+        final var competencies = competencyService.findCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
+        return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
+    }
+
+    /**
+     * GET courses/:courseId/competencies/:competencyId : gets the competency with the specified id including its related exercises and lecture units
+     * This method also calculates the user progress
+     *
+     * @param competencyId the id of the competency to retrieve
+     * @param courseId     the id of the course to which the competency belongs
+     * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("courses/{courseId}/competencies/{competencyId}")
+    @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "Get one competency", description = "Returns a competency with the exercises and lecture units linked to it, as far as the caller may see them.")
+    public ResponseEntity<CourseCompetencyResponseDTO> getCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
+        log.info("REST request to get Competency : {}", competencyId);
+        var currentUser = userRepository.getUserWithAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
+        checkCourseForCompetency(course, competency);
+
+        courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
+
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.ofWithLearningObjects(competency));
+    }
+
+    /**
+     * POST courses/:courseId/competencies : creates a new competency.
+     *
+     * @param courseId          the id of the course to which the competency should be added
+     * @param competencyRequest the competency data that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new competency
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create a competency", description = """
+            Creates a competency in the course. The title (at most 255 characters) and the mastery threshold are \
+            required. To link the competency to lecture units or exercises, set competencyLinks on those objects; \
+            this endpoint does not link anything.""")
+    @ApiResponse(responseCode = "201", description = "The competency was created.")
+    public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
+            throws URISyntaxException {
+        return createCompetency(courseId, competencyRequest, false);
+    }
+
+    /**
+     * Creates a competency selected from Hyperion's programming-exercise checklist.
+     * The dedicated route makes AI provenance a server-owned decision instead of accepting it from the request body.
+     *
+     * @param courseId          the course receiving the competency
+     * @param competencyRequest the Hyperion-inferred competency selected by the editor
+     * @return the persisted AI-generated competency
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
+    @PostMapping("courses/{courseId}/competencies/generated-from-hyperion-checklist")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseCompetencyResponseDTO> createCompetencyGeneratedFromHyperionChecklist(@PathVariable long courseId,
+            @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) throws URISyntaxException {
+        return createCompetency(courseId, competencyRequest, true);
+    }
+
+    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi)
+            throws URISyntaxException {
+        log.debug("REST request to create Competency : {}", competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
+        competency.setGeneratedByAi(generatedByAi);
+        competencyValidator.checkForCreation(competency);
+
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+
+        final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId()))
+                .body(CourseCompetencyResponseDTO.of(persistedCompetency));
+    }
+
+    /**
+     * POST courses/:courseId/competencies/bulk : creates a number of new competencies
+     *
+     * @param courseId     the id of the course to which the competencies should be added
+     * @param competencies the competencies that should be created
+     * @return the ResponseEntity with status 201 (Created) and body the created competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/bulk")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create several competencies", description = "Creates all given competencies in one request. The request is rejected as a whole if one of them is invalid.")
+    @ApiResponse(responseCode = "201", description = "The competencies were created.")
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
+            @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+        return createCompetencies(courseId, competencies, false);
+    }
+
+    /**
+     * POST courses/:courseId/competencies/bulk/generated-from-description : creates competencies from Iris-generated course-description recommendations.
+     *
+     * @param courseId     the id of the course to which the competencies should be added
+     * @param competencies the Iris-generated competency recommendations selected by the editor
+     * @return the ResponseEntity with status 201 (Created) and body the created competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
+    @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
+            @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+        return createCompetencies(courseId, competencies, true);
+    }
+
+    /**
+     * Validates the complete batch before persisting it, sharing creation behavior between manual and AI recommendation routes.
+     * The calling route determines AI provenance instead of accepting that decision from the request body.
+     *
+     * @param courseId      the receiving course
+     * @param competencies  the requested competency definitions
+     * @param generatedByAi whether the calling route represents AI-generated recommendations
+     * @return the created competencies and their collection location
+     * @throws URISyntaxException if the collection location cannot be represented as a URI
+     */
+    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi)
+            throws URISyntaxException {
+        log.debug("REST request to create Competencies : {}", competencies);
+        var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
+        for (Competency competency : competencyEntities) {
+            competency.setGeneratedByAi(generatedByAi);
+            competencyValidator.checkForCreation(competency);
+        }
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+
+        var createdCompetencies = competencyService.createCompetencies(competencyEntities, course);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
+                .body(createdCompetencies.stream().map(CourseCompetencyResponseDTO::of).toList());
+    }
+
+    /**
+     * POST courses/:courseId/competencies/import : imports a new competency.
+     *
+     * @param courseId      the id of the course to which the competency should be imported to
+     * @param importOptions the options for the import
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/import")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseCompetencyResponseDTO> importCompetency(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to import a competency: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().size() != 1) {
+            throw new BadRequestAlertException("Exactly one competency must be imported", ENTITY_NAME, "noCompetency");
+        }
+        long competencyId = importOptions.competencyIds().iterator().next();
+
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+        var competencyToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
+        if (competencyToImport.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The competency is already added to this course", ENTITY_NAME, "competencyCycle");
+        }
+
+        Set<CompetencyWithTailRelation> createdCompetencies = competencyService.importCompetencies(course, Set.of(competencyToImport), importOptions);
+        Competency createdCompetency = (Competency) createdCompetencies.iterator().next().competency();
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + createdCompetency.getId()))
+                .body(CourseCompetencyResponseDTO.of(createdCompetency));
+    }
+
+    /**
+     * POST courses/:courseId/competencies/import/bulk : imports a number of competencies (and optionally their relations) into a course.
+     *
+     * @param courseId      the id of the course to which the competencies should be imported to
+     * @param importOptions the options for the import
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/import/bulk")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to import competencies: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().isEmpty()) {
+            throw new BadRequestAlertException("No competencies to import", ENTITY_NAME, "noCompetencies");
+        }
+
+        var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+
+        Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
+
+        // Pre-load the current user's course roles so the per-item checkHasAtLeastRoleInCourseElseThrow check below
+        // resolves in memory instead of one EXISTS query per imported competency's source course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        competenciesToImport.forEach(competencyToImport -> {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), user);
+            if (competencyToImport.getCourse().getId().equals(courseId)) {
+                throw new BadRequestAlertException("The competency is already added to this course", ENTITY_NAME, "competencyCycle");
+            }
+        });
+
+        Set<CompetencyWithTailRelation> importedCompetencies = competencyService.importCompetencies(course, competenciesToImport, importOptions);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
+    }
+
+    /**
+     * POST courses/{courseId}/competencies/import-all : Imports all competencies of the source course (and optionally their relations) into another.
+     *
+     * @param courseId      the id of the course to import into
+     * @param importOptions the options for the import
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/import-all")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to all competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
+
+        long sourceCourseId = CompetencyValidationService.sourceCourseIdForImport(importOptions, courseId, ENTITY_NAME);
+        var targetCourse = courseRepository.findByIdElseThrow(courseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
+
+        var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
+        Set<CompetencyWithTailRelation> importedCompetencies = competencyService.importCompetencies(targetCourse, competencies, importOptions);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
+    }
+
+    /**
+     * POST courses/:courseId/competencies/import-standardized : imports a number of standardized competencies (as competencies) into a course.
+     *
+     * @param courseId              the id of the course to which the competencies should be imported to
+     * @param competencyIdsToImport the ids of the standardized competencies that should be imported
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
+    @PostMapping("courses/{courseId}/competencies/import-standardized")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Import standardized competencies", description = "Adds competencies from the catalogue of standardized competencies to the course. The body is a list of catalogue ids.")
+    @ApiResponse(responseCode = "201", description = "The competencies were imported.")
+    public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
+            throws URISyntaxException {
+        log.info("REST request to import standardized competencies with ids: {}", competencyIdsToImport);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var importedCompetencies = competencyService.importStandardizedCompetencies(competencyIdsToImport, course);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
+                .body(importedCompetencies.stream().map(CompetencyImportResponseDTO::of).toList());
+    }
+
+    /**
+     * PUT courses/:courseId/competencies : Updates an existing competency.
+     *
+     * @param courseId          the id of the course to which the competency belongs
+     * @param competencyRequest the competency data to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated competency
+     */
+    @PutMapping("courses/{courseId}/competencies")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Update a competency", description = """
+            Replaces the editable fields of an existing competency. The id in the body identifies it, so send the \
+            full competency, not only the changed fields. Nothing is deleted.""")
+    public ResponseEntity<CourseCompetencyResponseDTO> updateCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) {
+        log.debug("REST request to update Competency : {}", competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
+        competencyValidator.checkForUpdate(competency);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        checkCourseForCompetency(course, existingCompetency);
+
+        var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
+
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.of(persistedCompetency));
+    }
+
+    /**
+     * DELETE courses/:courseId/competencies/:competencyId
+     *
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the competency to remove
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("courses/{courseId}/competencies/{competencyId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> deleteCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
+        log.info("REST request to delete a Competency : {}", competencyId);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
+        checkCourseForCompetency(course, competency);
+
+        courseCompetencyService.deleteCourseCompetency(competency, course);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+    }
+
+    /**
+     * Checks if the competency matches the course.
+     *
+     * @param course     The course for which to check the authorization role for
+     * @param competency The competency to be accessed by the user
+     */
+    private void checkCourseForCompetency(@NonNull Course course, @NonNull CourseCompetency competency) {
+        if (competency.getCourse() == null) {
+            throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
+        }
+        if (!competency.getCourse().getId().equals(course.getId())) {
+            throw new BadRequestAlertException("The competency does not belong to the correct course", ENTITY_NAME, "competencyWrongCourse");
+        }
+    }
+}

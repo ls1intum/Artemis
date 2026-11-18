@@ -1,0 +1,41 @@
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+@Injectable()
+export class NotificationInterceptor implements HttpInterceptor {
+    private alertService = inject(AlertService);
+
+    /**
+     * Identifies and handles a given HTTP request. If the event is a HttpResponse and contains an alert, the alert
+     * and its parameters are broadcasted to the AlertService.
+     * @param request The outgoing request object to handle.
+     * @param next The next interceptor in the chain, or the server
+     * if no interceptors remain in the chain.
+     * @returns An observable of the event stream.
+     */
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+        return next.handle(request).pipe(
+            tap((event: HttpEvent<unknown>) => {
+                if (event instanceof HttpResponse) {
+                    let alert: string | undefined = undefined;
+                    let alertParams: string | undefined = undefined;
+
+                    event.headers.keys().forEach((entry) => {
+                        if (entry.toLowerCase().endsWith('app-alert')) {
+                            alert = event.headers.get(entry) || undefined;
+                        } else if (entry.toLowerCase().endsWith('app-params')) {
+                            alertParams = decodeURIComponent(event.headers.get(entry)!.replace(/\+/g, ' '));
+                        }
+                    });
+
+                    if (alert) {
+                        this.alertService.success(alert, { param: alertParams });
+                    }
+                }
+            }),
+        );
+    }
+}

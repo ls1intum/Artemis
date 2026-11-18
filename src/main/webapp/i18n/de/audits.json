@@ -1,0 +1,33 @@
+{
+    "audits": {
+        "title": "Audits",
+        "logType": {
+            "general": "Anmeldungen",
+            "security": "Sicherheit",
+            "application": "Anwendung"
+        },
+        "notFound": "Kein Audit gefunden",
+        "filter": {
+            "title": "Nach Datum filtern",
+            "from": "von",
+            "to": "bis",
+            "button": {
+                "weeks": "Wochen",
+                "today": "heute",
+                "clear": "leeren",
+                "close": "abschließen"
+            }
+        },
+        "table": {
+            "header": {
+                "principal": "Nutzer:in",
+                "date": "Datum",
+                "status": "Stand",
+                "data": "Extra Informationen"
+            },
+            "data": {
+                "remoteAddress": "Remote-Adresse:"
+            }
+        }
+    }
+}

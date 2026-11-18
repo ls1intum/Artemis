@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "quizQuestionStatistic": {
+            "home": {
+                "title": "Fragestatistiken",
+                "createLabel": "Fragestatistik erstellen"
+            },
+            "created": "Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Fragestatistik gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Fragestatistik"
+            },
+            "ratedCorrectCounter": "Rated Correct Counter",
+            "unRatedCorrectCounter": "Un-Rated Correct Counter",
+            "question": "Frage"
+        }
+    }
+}

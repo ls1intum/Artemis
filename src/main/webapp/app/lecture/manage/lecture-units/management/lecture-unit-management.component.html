@@ -1,0 +1,247 @@
+@if (isLoading()) {
+    <div class="flex justify-center py-6" role="status">
+        <fa-icon [icon]="faSpinner" animation="spin" size="2x" aria-hidden="true" />
+        <span class="sr-only" jhiTranslate="loading"></span>
+    </div>
+}
+@if (!isLoading() && lecture(); as currentLecture) {
+    <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        @if (showCreationCard()) {
+            <jhi-unit-creation-card />
+        }
+        @if (lectureUnits().length) {
+            <ol
+                class="m-0 flex list-none flex-col gap-2 p-0"
+                cdkDropList
+                [cdkDropListDisabled]="editingUnitId() !== undefined"
+                (cdkDropListDropped)="drop($event)"
+                data-testid="lecture-unit-list"
+                [attr.aria-label]="'artemisApp.lectureUnit.management.list' | artemisTranslate"
+            >
+                @for (lectureUnit of lectureUnits(); track lectureUnit.id) {
+                    @let unitName = lectureUnitService.getLectureUnitName(lectureUnit) || '';
+                    @let isEditing = editingUnitId() !== undefined && lectureUnit.id === editingUnitId();
+                    <li
+                        class="lecture-unit-row rounded-lg"
+                        [class.lecture-unit-row-editing]="isEditing"
+                        [class.opacity-60]="editingUnitId() !== undefined && !isEditing"
+                        cdkDrag
+                        data-testid="lecture-unit"
+                        [attr.data-editing]="isEditing || null"
+                    >
+                        <div class="flex flex-wrap items-center gap-x-3.5 gap-y-2 py-2.5 ps-2 pe-3.5">
+                            <fa-icon [icon]="faGripVertical" class="lecture-unit-grip hidden sm:inline" [class.cursor-grab]="editingUnitId() === undefined" aria-hidden="true" />
+                            <fa-icon
+                                [icon]="getTypeIcon(lectureUnit)"
+                                [fixedWidth]="true"
+                                class="lecture-unit-type-icon text-lg max-sm:mt-1 max-sm:self-start"
+                                aria-hidden="true"
+                            />
+                            <div class="flex min-w-0 grow basis-40 flex-col gap-1.5">
+                                <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                                    <h4 class="m-0 min-w-0 text-base font-semibold break-words sm:truncate" data-testid="lecture-unit-name" [title]="unitName">{{ unitName }}</h4>
+                                    @if (isEditing) {
+                                        <tumaet-ui-tag severity="info" data-testid="lecture-unit-editing-tag"
+                                            ><fa-icon [icon]="faPencilAlt" class="me-1" /><span jhiTranslate="artemisApp.lectureUnit.management.editing"></span
+                                        ></tumaet-ui-tag>
+                                    }
+                                </div>
+                                <!-- The kind of item leads the row below the title, so the titles of all items start at the same place. -->
+                                <div class="flex flex-wrap items-center gap-1.5" data-testid="lecture-unit-tags">
+                                    <span class="lecture-unit-type me-1 text-xs font-medium uppercase" [jhiTranslate]="getTypeLabelKey(lectureUnit)"></span>
+                                    @let releaseDate = getLectureUnitReleaseDate(lectureUnit);
+                                    @if (releaseDate && isReleasedLater(lectureUnit)) {
+                                        <tumaet-ui-tag severity="warn">
+                                            <fa-icon [icon]="faEyeSlash" class="me-1" />{{
+                                                'artemisApp.lectureUnit.management.visibleFrom' | artemisTranslate: { date: (releaseDate | artemisDate) }
+                                            }}
+                                        </tumaet-ui-tag>
+                                    } @else if (releaseDate) {
+                                        <tumaet-ui-tag severity="secondary">
+                                            <fa-icon [icon]="faEye" class="me-1" />{{
+                                                'artemisApp.lectureUnit.management.visibleSince' | artemisTranslate: { date: (releaseDate | artemisDate) }
+                                            }}
+                                        </tumaet-ui-tag>
+                                    } @else {
+                                        <tumaet-ui-tag severity="secondary"
+                                            ><fa-icon [icon]="faEye" class="me-1" /><span jhiTranslate="artemisApp.lectureUnit.management.visible"></span
+                                        ></tumaet-ui-tag>
+                                    }
+                                    @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                        @if (getAttachmentVersion(lectureUnit); as version) {
+                                            <tumaet-ui-tag severity="secondary">{{ 'artemisApp.lectureUnit.management.version' | artemisTranslate: { version } }}</tumaet-ui-tag>
+                                        }
+                                        <!-- The transcription tag is left out while transcribing, which the processing tag already says. -->
+                                        @if (!isProcessingTranscribing(lectureUnit)) {
+                                            @if (isTranscriptionPending(lectureUnit)) {
+                                                <tumaet-ui-tag severity="info">
+                                                    <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
+                                                        jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"
+                                                    ></span>
+                                                </tumaet-ui-tag>
+                                            } @else if (isTranscriptionFailed(lectureUnit)) {
+                                                <tumaet-ui-tag severity="danger">
+                                                    <fa-icon [icon]="faExclamationTriangle" class="me-1" /><span
+                                                        jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"
+                                                    ></span>
+                                                </tumaet-ui-tag>
+                                            } @else if (hasTranscription(lectureUnit)) {
+                                                <tumaet-ui-tag severity="success">
+                                                    <fa-icon [icon]="faFileLines" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                                </tumaet-ui-tag>
+                                            }
+                                        }
+                                        <jhi-ingestion-status-badge [status]="processingStatus()[lectureUnit.id!]" [awaiting]="isAwaitingProcessing(lectureUnit)" />
+                                    }
+                                    @if (showCompetencies()) {
+                                        @for (competencyLink of lectureUnit.competencyLinks ?? []; track competencyLink.competency?.id) {
+                                            @if (competencyLink.competency?.title; as competencyTitle) {
+                                                <tumaet-ui-tag severity="info" data-testid="lecture-unit-competency">
+                                                    <fa-icon [icon]="faFlag" class="me-1" />{{ competencyTitle }}
+                                                </tumaet-ui-tag>
+                                            }
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div
+                                class="ms-auto flex shrink-0 items-center gap-0.5"
+                                role="group"
+                                [attr.aria-label]="'artemisApp.lectureUnit.management.actions' | artemisTranslate: { name: unitName }"
+                            >
+                                @if (currentLecture.isAtLeastInstructor && isOrchestrationAvailable(lectureUnit)) {
+                                    <jhi-atlas-orchestration-trigger [lectureUnitId]="lectureUnit.id!" [showLabel]="false" />
+                                }
+                                @if (currentLecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
+                                    @let retryLabel = 'artemisApp.lectureUnit.retryProcessing' | artemisTranslate;
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="warn"
+                                        variant="text"
+                                        size="small"
+                                        data-testid="lecture-unit-retry"
+                                        [disabled]="isRetryingProcessing()[lectureUnit.id!]"
+                                        [attr.aria-label]="retryLabel"
+                                        [tumAetUiTooltip]="retryLabel"
+                                        tumAetUiTooltipDescribesHost="false"
+                                        (click)="retryProcessing(lectureUnit)"
+                                    >
+                                        <fa-icon
+                                            [icon]="isRetryingProcessing()[lectureUnit.id!] ? faSpinner : faRepeat"
+                                            [animation]="isRetryingProcessing()[lectureUnit.id!] ? 'spin' : undefined"
+                                        />
+                                    </button>
+                                }
+                                @if (viewButtonAvailable()[lectureUnit.id!]) {
+                                    @let viewLabel = 'entity.action.view' | artemisTranslate;
+                                    <a
+                                        tumAetUiButton
+                                        severity="success"
+                                        variant="text"
+                                        size="small"
+                                        data-testid="lecture-unit-view"
+                                        [routerLink]="[
+                                            '/course-management',
+                                            currentLecture.course?.id,
+                                            'lectures',
+                                            currentLecture.id,
+                                            'unit-management',
+                                            'attachment-video-units',
+                                            lectureUnit.id,
+                                            'view',
+                                        ]"
+                                        [attr.aria-label]="viewLabel"
+                                        [tumAetUiTooltip]="viewLabel"
+                                        tumAetUiTooltipDescribesHost="false"
+                                    >
+                                        <fa-icon [icon]="faEye" />
+                                    </a>
+                                }
+                                @if (isEditing) {
+                                    <!-- The item saves itself while it is edited; Done sends what still waits and closes it once it is saved. -->
+                                    <button tumAetUiButton type="button" size="small" data-testid="lecture-unit-done" (click)="onDoneEditingClicked.emit(lectureUnit)">
+                                        <fa-icon [icon]="faCheck" />
+                                        <span jhiTranslate="artemisApp.lecture.unitEditor.done"></span>
+                                    </button>
+                                } @else if (editButtonAvailable(lectureUnit)) {
+                                    @let editLabel = 'entity.action.edit' | artemisTranslate;
+                                    @if (emitEditEvents()) {
+                                        <button
+                                            #editButton
+                                            tumAetUiButton
+                                            type="button"
+                                            severity="warn"
+                                            variant="text"
+                                            size="small"
+                                            class="edit"
+                                            data-testid="lecture-unit-edit"
+                                            [attr.data-unit-id]="lectureUnit.id"
+                                            [attr.aria-label]="editLabel"
+                                            [tumAetUiTooltip]="editLabel"
+                                            tumAetUiTooltipDescribesHost="false"
+                                            (click)="onEditButtonClicked(lectureUnit)"
+                                        >
+                                            <fa-icon [icon]="faPencilAlt" />
+                                        </button>
+                                    } @else {
+                                        <a
+                                            tumAetUiButton
+                                            severity="warn"
+                                            variant="text"
+                                            size="small"
+                                            class="edit"
+                                            data-testid="lecture-unit-edit"
+                                            [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
+                                            [attr.aria-label]="editLabel"
+                                            [tumAetUiTooltip]="editLabel"
+                                            tumAetUiTooltipDescribesHost="false"
+                                        >
+                                            <fa-icon [icon]="faPencilAlt" />
+                                        </a>
+                                    }
+                                }
+                                @if (currentLecture.isAtLeastInstructor) {
+                                    @let deleteLabel = 'entity.action.' + getActionType(lectureUnit) | artemisTranslate;
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="danger"
+                                        variant="text"
+                                        size="small"
+                                        data-testid="lecture-unit-delete"
+                                        jhiDeleteButton
+                                        [renderButtonStyle]="false"
+                                        [renderButtonText]="false"
+                                        [attr.aria-label]="deleteLabel"
+                                        [tumAetUiTooltip]="deleteLabel"
+                                        tumAetUiTooltipDescribesHost="false"
+                                        [actionType]="getActionType(lectureUnit)"
+                                        [entityTitle]="unitName"
+                                        [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                                        [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                                        [additionalChecks]="asksAboutTumLiveVideo(lectureUnit) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}"
+                                        (delete)="deleteLectureUnit(lectureUnit.id!, $event)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        @if (isEditing && editorTemplate(); as editor) {
+                            <div class="lecture-unit-editor p-3.5 sm:ps-12" data-testid="lecture-unit-editor">
+                                <ng-container [ngTemplateOutlet]="editor" [ngTemplateOutletContext]="{ $implicit: lectureUnit }" />
+                            </div>
+                        }
+                    </li>
+                }
+            </ol>
+        } @else {
+            <p class="lecture-unit-empty m-0" data-testid="lecture-unit-empty" jhiTranslate="artemisApp.lectureUnit.management.empty"></p>
+        }
+        @if (showDropZone()) {
+            <jhi-pdf-drop-zone heading="artemisApp.lecture.pdfUpload.dropZoneContentTitle" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        }
+    </div>
+}

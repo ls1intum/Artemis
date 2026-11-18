@@ -1,0 +1,97 @@
+<jhi-assessment-layout
+    [isLoading]="isLoading()"
+    [saveBusy]="saveBusy()"
+    [submitBusy]="submitBusy()"
+    [cancelBusy]="cancelBusy()"
+    [nextSubmissionBusy]="nextSubmissionBusy()"
+    [isTeamMode]="!!exercise?.teamMode"
+    [isAssessor]="isAssessor()"
+    [canOverride]="canOverride"
+    [result]="result()"
+    [assessmentsAreValid]="assessmentsAreValid()"
+    [complaint]="complaint()"
+    [exercise]="exercise"
+    [submission]="submission"
+    [isTestRun]="isTestRun()"
+    [exerciseDashboardLink]="exerciseDashboardLink()"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+    [correctionRound]="correctionRound()"
+    (save)="save()"
+    (onSubmit)="submit()"
+    (onCancel)="cancel()"
+    (nextSubmission)="nextSubmission()"
+    [highlightDifferences]="highlightDifferences()"
+    (highlightDifferencesChange)="highlightDifferences.set($event)"
+    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
+>
+    <jhi-feedback-suggestions-banner
+        jhiBannerSlot
+        [isLoading]="loadingFeedbackSuggestions()"
+        [hasAutomaticFeedback]="hasAutomaticFeedback()"
+        [isAssessor]="isAssessor()"
+        [resultCompletionDate]="result()?.completionDate"
+        [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+    />
+    @if (submission) {
+        <div class="flex flex-wrap">
+            <jhi-resizeable-container class="w-full">
+                <!--region Left Panel-->
+                <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore()" [course]="course()" />
+                <jhi-text-assessment-area
+                    left-body
+                    [submission]="submission!"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
+                    [(textBlockRefs)]="textBlockRefs"
+                    [readOnly]="readOnly"
+                    [highlightDifferences]="highlightDifferences()"
+                    (textBlockRefsChange)="validateFeedback()"
+                    (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
+                    [criteria]="exercise!.gradingCriteria"
+                />
+                <!--endregion-->
+                <!--region Right Panel-->
+                <fa-icon right-header [icon]="farListAlt" />&nbsp;
+                <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
+                <tumaet-ui-message right-body severity="info" class="mb-6! block text-center">
+                    <span jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></span>
+                </tumaet-ui-message>
+                <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
+                <!--endregion-->
+            </jhi-resizeable-container>
+        </div>
+        <div class="mt-4!">
+            @if (result() && result()!.id) {
+                <jhi-unreferenced-feedback
+                    [feedbacks]="unreferencedFeedback()"
+                    (feedbacksChange)="unreferencedFeedback.set($event)"
+                    [highlightDifferences]="highlightDifferences()"
+                    (feedbacksChange)="validateFeedback($event)"
+                    [readOnly]="readOnly"
+                    [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
+                    [maxPoints]="getTotalMaxPoints(exercise)"
+                />
+            }
+        </div>
+    } @else {
+        @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+            <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
+        } @else if (!loadingInitialSubmission()) {
+            <div>
+                @if (noNewSubmissions()) {
+                    <tumaet-ui-message severity="warn" class="mt-6! block text-center">
+                        <p jhiTranslate="artemisApp.textAssessment.notFound"></p>
+                        <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
+                            <span class="hidden md:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                        </a>
+                    </tumaet-ui-message>
+                }
+                @if (!noNewSubmissions()) {
+                    <p>No Submission for specified ID</p>
+                }
+            </div>
+        }
+    }
+</jhi-assessment-layout>

@@ -1,0 +1,184 @@
+package de.tum.cit.aet.artemis.iris;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+
+/**
+ * Tests for PyrisDTOService with uncommitted changes support
+ */
+class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest {
+
+    private static final String TEST_PREFIX = "pyrisdtoserviceuncommittedchanges";
+
+    @Autowired
+    private PyrisDTOService pyrisDTOService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    private ProgrammingExercise exercise;
+
+    private ProgrammingSubmission submission;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
+        activateIrisFor(course);
+        activateIrisFor(exercise);
+
+        // Create a programming submission
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        submission = ParticipationFactory.generateProgrammingSubmission(true);
+        participationUtilService.addSubmission(participation, submission);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_containsTypedAutomaticFeedback() {
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "pyrisTest");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "pyris failure message");
+        // load the submission the same way the Iris pipeline does
+        var loadedSubmission = programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId()).orElseThrow();
+
+        var dto = pyrisDTOService.toPyrisSubmissionDTO(loadedSubmission);
+
+        // the automatic feedback lives in the typed tables and must be synthesized into the Iris context
+        assertThat(dto.latestResult()).isNotNull();
+        assertThat(dto.latestResult().feedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.testCaseName()).isEqualTo("pyrisTest");
+            assertThat(feedback.text()).isEqualTo("pyris failure message");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_withUncommittedFiles_mergesCorrectly() {
+        // Arrange - Uncommitted files that should be included
+        var uncommittedFiles = Map.of("src/Main.java", "public class Main { // NEW uncommitted code }", "src/Utils.java", "public class Utils { // new file }");
+
+        // Act
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);
+
+        // Assert - Repository should contain uncommitted files
+        assertThat(result.repository()).containsAllEntriesOf(uncommittedFiles);
+        assertThat(result.repository().get("src/Main.java")).isEqualTo("public class Main { // NEW uncommitted code }");
+        assertThat(result.repository().get("src/Utils.java")).isEqualTo("public class Utils { // new file }");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_withEmptyUncommittedFiles_usesOnlyCommitted() {
+        // Arrange
+        var uncommittedFiles = Map.<String, String>of(); // Empty map
+
+        // Act
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);
+
+        // Assert - Should contain repository (committed files or empty)
+        assertThat(result.repository()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_withoutUncommitedFiles() {
+        // Act - Call original method without uncommitted files
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission);
+
+        // Assert - Should work normally
+        assertThat(result.repository()).isNotNull();
+        assertThat(result.id()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_onlyUncommittedFiles() {
+        // Arrange - Only uncommitted files
+        var uncommittedFiles = Map.of("src/Main.java", "public class Main { // all new }", "src/Utils.java", "public class Utils { }");
+
+        // Act
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);
+
+        // Assert - Should contain at least the uncommitted files
+        assertThat(result.repository()).containsAllEntriesOf(uncommittedFiles);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_uncommittedFileOverridesPriority() {
+        // Arrange - Multiple uncommitted files
+        var uncommittedFiles = Map.of("src/Main.java", "UNCOMMITTED_MAIN", "src/Utils.java", "UNCOMMITTED_UTILS", "src/Helper.java", "UNCOMMITTED_HELPER");
+
+        // Act
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);
+
+        // Assert - All uncommitted files should be present in the result
+        assertThat(result.repository().get("src/Main.java")).isEqualTo("UNCOMMITTED_MAIN");
+        assertThat(result.repository().get("src/Utils.java")).isEqualTo("UNCOMMITTED_UTILS");
+        assertThat(result.repository().get("src/Helper.java")).isEqualTo("UNCOMMITTED_HELPER");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testToPyrisSubmissionDTO_multipleUncommittedFiles() {
+        // Arrange - Multiple files with different paths
+        var uncommittedFiles = Map.of("src/de/tum/Main.java", "package de.tum; public class Main { }", "src/de/tum/model/User.java", "package de.tum.model; public class User { }",
+                "README.md", "# Updated README");
+
+        // Act
+        var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);
+
+        // Assert - All uncommitted files should be in repository
+        assertThat(result.repository()).containsAllEntriesOf(uncommittedFiles);
+        assertThat(result.repository()).containsKeys("src/de/tum/Main.java", "src/de/tum/model/User.java", "README.md");
+    }
+
+    @Test
+    void testToPyrisMessageDTOList_excludesStoredActivityTrailFromHistory() throws Exception {
+        var message = new IrisMessage();
+        message.setId(1L);
+        message.setSender(IrisMessageSender.LLM);
+        message.addContent(new IrisTextMessageContent("visible answer"));
+        var activity = new PyrisActivityDTO("activity-1", PyrisActivityKind.TOOL, "lecture_content_retrieval", PyrisActivityState.FINISHED, "Lecture 1", "2 chunks", 120L);
+        message.setToolActivity(List.of(activity));
+
+        var result = pyrisDTOService.toPyrisMessageDTOList(List.of(message));
+
+        String serializedHistory = JsonObjectMapper.get().writeValueAsString(result);
+        assertThat(serializedHistory).contains("visible answer");
+        assertThat(serializedHistory).doesNotContain("activities", "toolActivity", "tool_activity", "lecture_content_retrieval");
+    }
+}

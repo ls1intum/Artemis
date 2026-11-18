@@ -1,0 +1,178 @@
+package de.tum.cit.aet.artemis.lecture;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+
+class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "lecturetranscriptionresource";
+
+    @Autowired
+    private MockMvc restLectureTranscriptionMockMvc;
+
+    @Autowired
+    private LectureTranscriptionRepository lectureTranscriptionRepository;
+
+    @Autowired
+    private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    private Course course;
+
+    private Lecture lecture;
+
+    private AttachmentVideoUnit lectureUnit;
+
+    private User instructor;
+
+    @BeforeEach
+    void initTestCase() {
+        lectureTranscriptionRepository.deleteAll();
+
+        // Create test data
+        course = courseUtilService.createCourse();
+        instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
+
+        lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        lecture.setCourse(course);
+        lecture = lectureRepository.save(lecture);
+
+        lectureUnit = new AttachmentVideoUnit();
+        lectureUnit.setName("Test Video Unit");
+        lectureUnit.setLecture(lecture);
+        lecture.addLectureUnit(lectureUnit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        lectureUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_success() throws Exception {
+        // Create transcription
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1), new LectureTranscriptionSegment(5.0, 10.0, "This is a test", 1));
+        var transcription = new LectureTranscription("en", segments, lectureUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        // Perform GET request
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.lectureUnitId").value(lectureUnit.getId())).andExpect(jsonPath("$.language").value("en")).andExpect(jsonPath("$.segments").isArray())
+                .andExpect(jsonPath("$.segments[0].startTime").value(0.0)).andExpect(jsonPath("$.segments[0].endTime").value(5.0))
+                .andExpect(jsonPath("$.segments[0].text").value("Hello world")).andExpect(jsonPath("$.segments[1].startTime").value(5.0))
+                .andExpect(jsonPath("$.segments[1].endTime").value(10.0)).andExpect(jsonPath("$.segments[1].text").value("This is a test"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_notFound() throws Exception {
+        // Perform GET request for non-existent transcription
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_unitWithoutVideo_notFound() throws Exception {
+        // only an attachment video unit has a transcript, so the id of any other unit of the lecture is answered like an id without transcript
+        TextUnit textUnit = new TextUnit();
+        textUnit.setName("Text unit");
+        textUnit.setLecture(lecture);
+        lecture.addLectureUnit(textUnit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        long textUnitId = lecture.getLectureUnits().stream().filter(unit -> unit instanceof TextUnit).findFirst().orElseThrow().getId();
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", textUnitId)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void getTranscript_asStudent_forbidden() throws Exception {
+        // Students should not be able to access transcripts without proper permissions
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "enrolledstudent", roles = "USER")
+    void getTranscript_unitNotReleasedYet_forbiddenForStudents() throws Exception {
+        User enrolledStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "enrolledstudent");
+        userUtilService.enrollUserInCourse(enrolledStudent, course, CourseRole.STUDENT);
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+        lectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_unitNotReleasedYet_availableForStaff() throws Exception {
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+        lectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "enrolledstudent", roles = "USER")
+    void getTranscript_unitReleased_availableForStudents() throws Exception {
+        User enrolledStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "enrolledstudent");
+        userUtilService.enrollUserInCourse(enrolledStudent, course, CourseRole.STUDENT);
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk());
+    }
+
+    private LectureTranscription createCompletedTranscription() {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1));
+        var transcription = new LectureTranscription("en", segments, lectureUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        return transcription;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscriptStatus_manualTranscriptionCompleted() throws Exception {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1));
+        var transcription = new LectureTranscription("en", segments, lectureUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isOk())
+                .andExpect(content().string("COMPLETED"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscriptStatus_notFound() throws Exception {
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isNotFound());
+    }
+}

@@ -1,0 +1,179 @@
+<form name="editForm" role="form" novalidate>
+    <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
+    <tumaet-ui-message severity="info" class="mt-4! w-full" data-testid="lti-documentation-message">
+        <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
+        <a
+            href="https://docs.artemis.tum.de/instructor/integrations/lti-configuration"
+            target="_blank"
+            rel="external noopener noreferrer"
+            jhiTranslate="artemisApp.lti.edit.documentationLinkText"
+        ></a
+        >.
+    </tumaet-ui-message>
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-6!">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></tumaet-ui-tab>
+            <tumaet-ui-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></tumaet-ui-tab>
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels>
+            <tumaet-ui-tab-panel [value]="1">
+                <dt class="flex items-center">
+                    <h4 jhiTranslate="artemisApp.lti.dynamicRegistrationUrl"></h4>
+                    <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip" />
+                </dt>
+                <dd>
+                    <span>{{ getDynamicRegistrationUrl() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getDynamicRegistrationUrl()" />
+                </dd>
+                <tumaet-ui-table-layout class="mt-4!" [empty]="platforms().length === 0">
+                    <a tumAetUiTableEmptyActions tumAetUiButton size="small" [routerLink]="['/admin', 'lti-configuration', 'new']" data-testid="add-platform-empty-button">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
+                    </a>
+                    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                        <h4 class="mb-0 truncate text-base" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
+                        <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
+                        <span class="flex-1"></span>
+                        <a
+                            [attr.aria-label]="'artemisApp.lti13.addNewPlatform' | artemisTranslate"
+                            [routerLink]="['/admin', 'lti-configuration', 'new']"
+                            tumAetUiButton
+                            size="small"
+                            data-testid="add-platform-button"
+                        >
+                            <fa-icon [icon]="faPlus" />
+                            <span class="hidden md:inline" jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
+                        </a>
+                    </div>
+                    <table
+                        tumAetUiTable
+                        [sortField]="predicate()"
+                        [sortOrder]="ascending() ? 1 : -1"
+                        (sortChange)="onTableSort($event)"
+                        size="small"
+                        aria-describedby="lti-configuration-heading"
+                        data-testid="lti-platforms-table"
+                    >
+                        <thead>
+                            <tr class="whitespace-nowrap">
+                                <th [tumAetUiSortableColumn]="'id'">
+                                    <span jhiTranslate="global.field.id"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'customName'">
+                                    <span jhiTranslate="artemisApp.lti.customName"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'registrationId'">
+                                    <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'clientId'">
+                                    <span jhiTranslate="artemisApp.lti.clientId"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'originalURL'">
+                                    <span jhiTranslate="artemisApp.lti.toolUrl"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'authorizationUri'">
+                                    <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'jwkSetUri'">
+                                    <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
+                                </th>
+                                <th [tumAetUiSortableColumn]="'tokenUri'">
+                                    <span jhiTranslate="artemisApp.lti.tokenUri"></span>
+                                </th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (platform of platforms(); track platform.id) {
+                                <tr id="platform-{{ platform.id }}" data-testid="lti-platform-row">
+                                    <td>{{ platform.id }}</td>
+                                    <td>{{ platform.customName }}</td>
+                                    <td>{{ platform.registrationId }}</td>
+                                    <td>{{ platform.clientId }}</td>
+                                    <td>{{ platform.originalUrl }}</td>
+                                    <td>{{ platform.authorizationUri }}</td>
+                                    <td>{{ platform.jwkSetUri }}</td>
+                                    <td>{{ platform.tokenUri }}</td>
+                                    <td class="text-end">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a
+                                                [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="warn"
+                                                [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                                data-testid="edit-platform-button"
+                                            >
+                                                <fa-icon [icon]="faPencil" />
+                                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                            </a>
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="danger"
+                                                size="small"
+                                                [renderButtonStyle]="false"
+                                                jhiDeleteButton
+                                                (delete)="deleteLtiPlatform(platform.id!)"
+                                                [dialogError]="dialogError$"
+                                                data-testid="delete-platform-button"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <tumaet-ui-paginator
+                        tumAetUiTableFooter
+                        [page]="page() - 1"
+                        [pageSize]="itemsPerPage"
+                        [totalRecords]="totalItems()"
+                        [showRowsPerPage]="false"
+                        (pageChange)="onPageChange($event)"
+                    />
+                </tumaet-ui-table-layout>
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="2">
+                <dt>
+                    <span jhiTranslate="artemisApp.lti.deepLinkingUrl"></span>
+                </dt>
+                <dd>
+                    <span>{{ getDeepLinkingUrl() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getDeepLinkingUrl()" />
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.lti.toolUrl"></span>
+                </dt>
+                <dd>
+                    <span>{{ getToolUrl() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getToolUrl()" />
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.lti.keysetUrl"></span>
+                </dt>
+                <dd>
+                    <span>{{ getKeysetUrl() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getKeysetUrl()" />
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.lti.initiateLoginUrl"></span>
+                </dt>
+                <dd>
+                    <span>{{ getInitiateLoginUrl() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getInitiateLoginUrl()" />
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.lti.redirectUri"></span>
+                </dt>
+                <dd>
+                    <span>{{ getRedirectUri() }}</span>
+                    <jhi-copy-to-clipboard-button [copyText]="getRedirectUri()" />
+                </dd>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
+</form>

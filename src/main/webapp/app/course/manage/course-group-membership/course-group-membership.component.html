@@ -1,0 +1,9 @@
+@if (course() && courseRoleSlug()) {
+    <div *titleBarTitle>
+        <h5 class="mb-0">
+            {{ 'artemisApp.course.' + courseRoleSlug() | artemisTranslate }}
+        </h5>
+    </div>
+
+    <jhi-course-group [courseRoleSlug]="courseRoleSlug()!" [isAdmin]="isAdmin()" [course]="course()!" [removeUserFromGroup]="removeFromRole" />
+}

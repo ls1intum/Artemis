@@ -1,0 +1,344 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+
+describe('PdfPreviewDateBoxComponent', () => {
+    let component: PdfPreviewDateBoxComponent;
+    let fixture: ComponentFixture<PdfPreviewDateBoxComponent>;
+    let courseExerciseServiceMock: any;
+    let alertServiceMock: any;
+
+    const mockCourse = { id: 1, title: 'Test Course' };
+    const mockExercises = [
+        { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-01T10:00') },
+        { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-02T10:00') },
+        { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs('2024-02-03T10:00') },
+        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: undefined }, // Should be filtered out
+    ] as Exercise[];
+
+    const mockSelectedPages = [
+        { order: 1, id: '1', slideId: '1' },
+        { order: 2, id: '2', slideId: '2' },
+    ] as unknown as OrderedPage[];
+
+    beforeEach(async () => {
+        // The component fixes its minimum date when it is created, and the picker disables the days before it. Freeze the
+        // date before the 15th so that selecting the 15th in the calendar works whatever day the suite runs on.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date(2026, 5, 10, 12, 0, 0));
+
+        courseExerciseServiceMock = {
+            findAllExercisesWithDueDatesForCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
+        };
+
+        alertServiceMock = {
+            error: vi.fn(),
+        };
+
+        await TestBed.configureTestingModule({
+            imports: [PdfPreviewDateBoxComponent],
+            providers: [
+                { provide: CourseExerciseService, useValue: courseExerciseServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useValue: alertServiceMock },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(PdfPreviewDateBoxComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('courseId', mockCourse.id);
+        fixture.componentRef.setInput('selectedPages', mockSelectedPages);
+
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.clearAllMocks();
+    });
+
+    describe('Initialization', () => {
+        it('should create', () => {
+            expect(component).toBeTruthy();
+        });
+
+        it('should load exercises on init', async () => {
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse).toHaveBeenCalledWith(mockCourse.id);
+            expect(component.exercises()).toEqual(mockExercises);
+        });
+
+        it('should handle error when loading exercises', async () => {
+            courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(throwError(() => new Error('Failed')));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.exercises()).toEqual([]);
+            expect(alertServiceMock.error).toHaveBeenCalled();
+        });
+
+        it('should set isMultiplePages correctly', () => {
+            component.ngOnInit();
+            expect(component.isMultiplePages()).toBe(true);
+
+            fixture.componentRef.setInput('selectedPages', [{ order: 1, id: '1', slideId: '1' }]);
+            expect(component.isMultiplePages()).toBe(false);
+        });
+    });
+
+    describe('Exercise Processing', () => {
+        it('should correctly categorize and sort exercises', async () => {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 1);
+
+            const futureMockExercises = [
+                { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(1, 'day') },
+                { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(2, 'days') },
+                { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs(futureDate).add(3, 'days') },
+                { id: 4, type: ExerciseType.PROGRAMMING, dueDate: undefined },
+            ] as Exercise[];
+
+            courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            const categorized = component.categorizedExercises();
+            expect(categorized).toHaveLength(2);
+            expect(categorized[0].type).toBe(ExerciseType.QUIZ);
+            expect(categorized[0].exercises).toHaveLength(2);
+            expect(categorized[0].exercises[0].id).toBe(1); // Earlier date first
+            expect(categorized[1].type).toBe(ExerciseType.PROGRAMMING);
+            expect(categorized[1].exercises).toHaveLength(1); // Only one with dueDate
+        });
+    });
+
+    describe('Date Formatting', () => {
+        it('should format due date correctly', () => {
+            const testDate = dayjs('2024-01-15T14:30');
+            const formatted = component.formatDueDate(testDate);
+            expect(formatted).toBe('Jan 15, 2024 - 14:30');
+        });
+    });
+
+    describe('Selection Handling', () => {
+        it('should handle calendar selection', () => {
+            component.selectCalendar();
+
+            expect(component.calendarSelected()).toBe(true);
+            expect(component.exerciseSelected()).toBe(false);
+        });
+
+        it('should grey out the days before the minute the box was opened in', async () => {
+            component.selectCalendar();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            const picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance as TumAetUiDatePickerComponent;
+            expect(picker.min()!.isSame(dayjs(), 'minute')).toBe(true);
+        });
+
+        it('should handle exercise selection', () => {
+            component.selectExercise();
+
+            expect(component.calendarSelected()).toBe(false);
+            expect(component.exerciseSelected()).toBe(true);
+        });
+
+        it('should handle hide forever changes', () => {
+            component.calendarSelected.set(true);
+            component.exerciseSelected.set(true);
+            component.selectedExercise.set(mockExercises[0]);
+
+            component.onHideForeverChange(true);
+
+            expect(component.hideForever()).toBe(true);
+            expect(component.calendarSelected()).toBe(false);
+            expect(component.exerciseSelected()).toBe(false);
+            expect(component.selectedExercise()).toBeUndefined();
+        });
+    });
+
+    describe('Form Submission', () => {
+        let hiddenPagesOutputSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            hiddenPagesOutputSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
+        });
+
+        it('should emit hidden pages with forever date when hide forever is selected', () => {
+            component.hideForever.set(true);
+            fixture.componentRef.setInput('selectedPages', mockSelectedPages);
+            component.onSubmit();
+
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    slideId: '1',
+                    date: dayjs('9999-12-31'),
+                    exerciseId: undefined,
+                },
+                {
+                    slideId: '2',
+                    date: dayjs('9999-12-31'),
+                    exerciseId: undefined,
+                },
+            ]);
+        });
+
+        it('should emit hidden pages with selected calendar date', () => {
+            const testDate = dayjs().add(1, 'year').startOf('minute');
+
+            component.calendarSelected.set(true);
+            component.defaultDate.set(testDate);
+            fixture.componentRef.setInput('selectedPages', [{ order: 3, id: '3', slideId: '3' }]);
+
+            component.onSubmit();
+
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    slideId: '3',
+                    date: testDate,
+                    exerciseId: undefined,
+                },
+            ]);
+        });
+
+        it('should emit hidden pages with selected exercise due date and id', () => {
+            const futureDate = dayjs().add(1, 'year');
+            const futureExercise = {
+                id: 123,
+                type: ExerciseType.QUIZ,
+                dueDate: futureDate,
+            } as Exercise;
+
+            component.exerciseSelected.set(true);
+            component.selectedExercise.set(futureExercise);
+            fixture.componentRef.setInput('selectedPages', [
+                { order: 5, id: '5', slideId: '5' },
+                { order: 6, id: '6', slideId: '6' },
+            ]);
+
+            component.onSubmit();
+
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    slideId: '5',
+                    date: futureDate,
+                    exerciseId: 123,
+                },
+                {
+                    slideId: '6',
+                    date: futureDate,
+                    exerciseId: 123,
+                },
+            ]);
+        });
+
+        it('should not emit when no valid date option is selected', () => {
+            component.onSubmit();
+            expect(hiddenPagesOutputSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show error and not emit when calendar date is in the past', () => {
+            // Use a past date that will fail validation
+            const pastDate = dayjs('2020-01-01T10:00');
+            component.calendarSelected.set(true);
+            component.defaultDate.set(pastDate);
+
+            component.onSubmit();
+
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateError');
+            expect(hiddenPagesOutputSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Computed Properties', () => {
+        it('should correctly format page indices', () => {
+            fixture.componentRef.setInput('selectedPages', [
+                { order: 3, id: '3', slideId: '3' },
+                { order: 1, id: '1', slideId: '1' },
+                { order: 2, id: '2', slideId: '2' },
+            ]);
+            expect(component.pagesDisplay()).toBe('1, 2, 3');
+        });
+
+        it('should correctly show single page index', () => {
+            fixture.componentRef.setInput('selectedPages', [{ order: 3, id: '3', slideId: '3' }]);
+            expect(component.pagesDisplay()).toBe('3');
+        });
+    });
+    describe('Date picker', () => {
+        const picker = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="hide-until-date"]');
+        const dateError = (): HTMLElement | null => fixture.nativeElement.querySelector('#date-box-date-error');
+
+        function showCalendar() {
+            component.selectCalendar();
+            fixture.detectChanges();
+        }
+
+        it('should not render the date picker before the calendar is selected', () => {
+            expect(picker()).toBeNull();
+        });
+
+        it('should render the picker with the default date once the calendar is selected', () => {
+            showCalendar();
+
+            expect(picker()).not.toBeNull();
+            expect(component.defaultDate()).toBeDefined();
+            expect(dateError()).toBeNull();
+        });
+
+        it('should flag a date before the minimum and explain it', () => {
+            showCalendar();
+
+            component.defaultDate.set(dayjs().subtract(1, 'day'));
+            fixture.detectChanges();
+
+            expect(component.isBeforeMinDate()).toBe(true);
+            expect(dateError()).not.toBeNull();
+        });
+
+        it('should accept the default date and later dates', () => {
+            showCalendar();
+            expect(component.isBeforeMinDate()).toBe(false);
+
+            component.defaultDate.set(dayjs().add(2, 'day'));
+            fixture.detectChanges();
+
+            expect(component.isBeforeMinDate()).toBe(false);
+            expect(dateError()).toBeNull();
+        });
+
+        it('should take the day picked in the calendar as the selected date and keep its time', () => {
+            showCalendar();
+            const timeBefore = component.defaultDate()!.format('HH:mm');
+
+            const dayFifteen = Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-calendar td[role="gridcell"] button') as NodeListOf<HTMLButtonElement>).find(
+                (button) => button.textContent?.trim() === '15',
+            )!;
+            dayFifteen.click();
+            fixture.detectChanges();
+
+            expect(component.defaultDate()!.date()).toBe(15);
+            expect(component.defaultDate()!.format('HH:mm')).toBe(timeBefore);
+            expect(component.getSelectedDate()).toBe(component.defaultDate());
+        });
+    });
+});

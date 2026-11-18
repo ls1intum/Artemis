@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "multipleChoiceSubmittedAnswer": {
+            "home": {
+                "title": "Multiple Choice Submitted Answers",
+                "createLabel": "Create a new Multiple Choice Submitted Answer"
+            },
+            "created": "Created new Multiple Choice Submitted Answer with identifier {{ param }}",
+            "updated": "Updated Multiple Choice Submitted Answer with identifier {{ param }}",
+            "deleted": "Deleted Multiple Choice Submitted Answer with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Multiple Choice Submitted Answer {{ id }}?"
+            },
+            "detail": {
+                "title": "Multiple Choice Submitted Answer"
+            },
+            "selectedOptions": "Selected Options"
+        }
+    }
+}

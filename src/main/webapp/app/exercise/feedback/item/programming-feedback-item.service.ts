@@ -1,0 +1,248 @@
+import { FeedbackItemService, gradingInstructionFeedbackItem } from 'app/exercise/feedback/item/feedback-item-service';
+import { Service, inject } from '@angular/core';
+import {
+    Feedback,
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+} from 'app/assessment/shared/entities/feedback.model';
+import { TranslateService } from '@ngx-translate/core';
+import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
+import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';
+import { FeedbackItem, type FeedbackItemCodeReference } from 'app/exercise/feedback/item/feedback-item';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
+import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
+
+@Service()
+export class ProgrammingFeedbackItemService implements FeedbackItemService {
+    private translateService = inject(TranslateService);
+
+    create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
+        return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
+    }
+
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[] {
+        const feedbackGroups = getAllFeedbackGroups(exercise)
+            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
+            .filter((group: FeedbackGroup) => !group.isEmpty());
+
+        if (feedbackGroups.length === 1) {
+            feedbackGroups[0].open = true;
+        }
+
+        return feedbackGroups;
+    }
+
+    /**
+     * Creates a feedback item for feedback received for a programming exercise.
+     * @param feedback The feedback from which the feedback item should be created.
+     * @param showTestDetails
+     */
+    private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        if (Feedback.isSubmissionPolicyFeedback(feedback)) {
+            return this.createSubmissionPolicyFeedbackItem(feedback);
+        } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+            return this.createScaFeedbackItem(feedback, showTestDetails);
+        } else if (Feedback.isFeedbackSuggestion(feedback)) {
+            return this.createFeedbackSuggestionItem(feedback, showTestDetails);
+        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+            return this.createAutomaticFeedbackItem(feedback, showTestDetails);
+        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+            return this.createNonGradedFeedbackItem(feedback);
+        } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
+            return gradingInstructionFeedbackItem(feedback, this.translateService.instant(showTestDetails ? 'artemisApp.course.reviewer' : 'artemisApp.result.detail.feedback'));
+        } else {
+            return this.createReviewerFeedbackItem(feedback, showTestDetails);
+        }
+    }
+
+    /**
+     * Creates a feedback item from a submission policy feedback.
+     * @param feedback The submission policy feedback.
+     */
+    private createSubmissionPolicyFeedbackItem(feedback: Feedback): FeedbackItem {
+        const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
+
+        return {
+            color: 'primary',
+            type: 'Submission Policy',
+            name: this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.title'),
+            title: submissionPolicyTitle,
+            text: feedback.detailText,
+            positive: false,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    /**
+     * Creates a feedback item from a feedback generated from static code analysis.
+     * @param feedback A static code analysis feedback.
+     * @param showTestDetails
+     */
+    private createScaFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
+        const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+        const text = showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+
+        return {
+            type: 'Static Code Analysis',
+            name: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
+            title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', {
+                scaCategory,
+                location: this.getIssueLocation(scaIssue),
+            }),
+            text,
+            positive: false,
+            credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    /**
+     * Creates a feedback item from a feedback suggestion.
+     * @param feedback The feedback suggestion.
+     * @param showTestDetails
+     */
+    private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        // A feedback suggestion should look like a manual feedback
+        const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '');
+        const codeReference = this.getAiFeedbackCodeReference(feedback);
+        // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
+        // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
+        // linked grading instruction (see createGradingInstructionFeedbackItem).
+        const gradingInstructionText = feedback.gradingInstruction?.feedback;
+        const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
+        return {
+            type: 'Reviewer', // Treat it like normal feedback from the TA
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: titleWithoutIdentifier,
+            text,
+            positive: feedback.positive,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+            codeReference,
+        };
+    }
+
+    /**
+     * Creates a feedback item from a feedback generated from an automatic test case result.
+     * @param feedback A feedback received from an automatic test case.
+     * @param showTestDetails
+     */
+    private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        let title = undefined;
+        if (showTestDetails && feedback.testCase?.testName) {
+            if (feedback.positive === undefined) {
+                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.testCase.testName });
+            } else {
+                title = feedback.positive
+                    ? this.translateService.instant('artemisApp.result.detail.test.passed', { name: feedback.testCase.testName })
+                    : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.testCase.testName });
+            }
+        }
+        return {
+            type: 'Test',
+            name: this.translateService.instant('artemisApp.result.detail.test.name'),
+            title,
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    private createNonGradedFeedbackItem(feedback: Feedback): FeedbackItem {
+        const codeReference = this.getAiFeedbackCodeReference(feedback);
+        return {
+            type: 'Reviewer',
+            name: this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+            codeReference,
+        };
+    }
+
+    /**
+     * Creates a feedback item for a regular reviewer feedback not using a grading instruction.
+     * @param feedback The manual feedback from which the feedback item should be created.
+     * @param showTestDetails
+     */
+    private createReviewerFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        return {
+            type: 'Reviewer',
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: feedback.text,
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    /**
+     * Builds the location string for a static code analysis issue
+     * @param issue The sca issue
+     */
+    private getIssueLocation(issue: StaticCodeAnalysisIssue): string {
+        const lineText =
+            !issue.endLine || issue.startLine === issue.endLine
+                ? this.translateService.instant('artemisApp.result.detail.codeIssue.line', { line: issue.startLine })
+                : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', {
+                      from: issue.startLine,
+                      to: issue.endLine,
+                  });
+        if (issue.startColumn) {
+            const columnText =
+                !issue.endColumn || issue.startColumn === issue.endColumn
+                    ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { column: issue.startColumn })
+                    : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', {
+                          from: issue.startColumn,
+                          to: issue.endColumn,
+                      });
+            return `${issue.filePath} ${lineText} ${columnText}`;
+        }
+        return `${issue.filePath} ${lineText}`;
+    }
+
+    private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
+        const filePath = Feedback.getReferenceFilePath(feedback);
+        const lineRange = Feedback.getReferenceLineRange(feedback);
+        // A non-graded suggestion keeps Athena's 0-based lines, like the inline feedback of the code editor, so line 0 is its first line.
+        // Graded AI feedback numbers its lines from 1 (the Athena service only creates references with a line above 0).
+        // The panel counts from 1.
+        const isNonGraded = Feedback.isNonGradedFeedbackSuggestion(feedback);
+        const firstLine = isNonGraded ? 0 : 1;
+        if (!filePath || !lineRange || lineRange.start < firstLine) {
+            return undefined;
+        }
+        const legacyLineEnd = isNonGraded ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
+        const offset = 1 - firstLine;
+        const line = lineRange.start + offset;
+        const lineEnd = (legacyLineEnd ?? lineRange.end) + offset;
+        const codeReference: FeedbackItemCodeReference = { filePath, line };
+        if (lineEnd !== line) {
+            codeReference.lineEnd = lineEnd;
+        }
+        return codeReference;
+    }
+
+    private getLegacyAiFeedbackLineEnd(feedback: Feedback, filePath: string, lineStart: number): number | undefined {
+        const titlePrefix = `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File ${filePath} at lines `;
+        if (!feedback.text?.startsWith(titlePrefix)) {
+            return undefined;
+        }
+        const titleRange = feedback.text.slice(titlePrefix.length).match(/^(\d+)-(\d+)$/);
+        const titleStart = Number(titleRange?.[1]);
+        const titleEnd = Number(titleRange?.[2]);
+        if (!titleRange || titleStart !== lineStart || titleEnd < titleStart) {
+            return undefined;
+        }
+        return titleEnd;
+    }
+}

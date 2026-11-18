@@ -1,0 +1,47 @@
+name: 'Find E2E PR Comment'
+description: 'Find the existing E2E comment on a PR, if any'
+
+inputs:
+  pr-number:
+    description: 'PR number to search within'
+    required: true
+
+outputs:
+  pr-number:
+    description: 'The PR number normalised to empty string when not a PR (input is "0"), so callers can short-circuit.'
+    value: ${{ inputs.pr-number != '0' && inputs.pr-number || '' }}
+  comment-id:
+    description: 'The existing E2E comment ID (empty string if not found)'
+    value: ${{ steps.find-comment.outputs.result }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Find existing E2E comment
+      id: find-comment
+      if: inputs.pr-number != '0'
+      # A transient listComments API blip must not fail the (advisory) E2E job over a cosmetic
+      # lookup; on error the comment-id output is empty and the caller posts a fresh comment.
+      continue-on-error: true
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+      with:
+        result-encoding: string
+        script: |
+          const prNumber = Number(process.env.PR_NUMBER);
+          const marker = '<!-- E2E Test Results -->';
+          const MAX_PAGES = 50;
+          for (let page = 1; page <= MAX_PAGES; page++) {
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+              page,
+            });
+            if (!comments.length) break;
+            const found = comments.find(c => c.body && c.body.includes(marker));
+            if (found) return found.id;
+          }
+          return '';

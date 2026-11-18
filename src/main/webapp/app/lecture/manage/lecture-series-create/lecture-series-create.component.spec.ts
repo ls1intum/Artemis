@@ -1,0 +1,472 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { LectureSeriesCreateComponent } from './lecture-series-create.component';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { Router } from '@angular/router';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import { of, throwError } from 'rxjs';
+import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+
+describe('LectureSeriesCreateComponent', () => {
+    let fixture: ComponentFixture<LectureSeriesCreateComponent>;
+    let component: LectureSeriesCreateComponent;
+
+    let lectureServiceMock: { createSeries: ReturnType<typeof vi.fn> };
+    let alertServiceMock: { addErrorAlert: ReturnType<typeof vi.fn> };
+    let routerMock: { navigate: ReturnType<typeof vi.fn> };
+    let navigationUtilServiceMock: { navigateBack: ReturnType<typeof vi.fn> };
+
+    const testCourseId = 42;
+
+    beforeEach(async () => {
+        lectureServiceMock = {
+            createSeries: vi.fn(),
+        };
+        alertServiceMock = {
+            addErrorAlert: vi.fn(),
+        };
+        navigationUtilServiceMock = { navigateBack: vi.fn() };
+        routerMock = { navigate: vi.fn() };
+
+        await TestBed.configureTestingModule({
+            imports: [LectureSeriesCreateComponent, MockJhiTranslateDirective],
+            providers: [
+                { provide: LectureService, useValue: lectureServiceMock },
+                { provide: AlertService, useValue: alertServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useValue: routerMock },
+                { provide: ArtemisNavigationUtilService, useValue: navigationUtilServiceMock },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(LectureSeriesCreateComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('existingLectures', []);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('passes translation keys, not translated text, as the picker labels', () => {
+        // The picker translates its label itself, so a text that was translated beforehand would be looked up as a key.
+        const pickers = fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent));
+        expect(pickers.map((picker) => picker.componentInstance.labelName())).toEqual([
+            'artemisApp.lecture.createSeries.inputLabel.startDate',
+            'artemisApp.lecture.createSeries.inputLabel.endDate',
+            'artemisApp.lecture.createSeries.inputLabel.seriesEndDate',
+        ]);
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should set isSeriesEndDateInvalid to true when an initial lecture endDate is after or equal to seriesEndDate', async () => {
+        const initialLectureEndDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.endDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
+
+        initialLecture.endDate.set(seriesEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
+    });
+
+    it('should set isSeriesEndDateInvalid to true when an initial lecture startDate is after or equal to seriesEndDate', async () => {
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
+
+        initialLecture.startDate.set(seriesEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(component.isSeriesEndDateInvalid()).toBe(true);
+    });
+
+    it('should set isStartDateInvalid to true when same or after seriesEndDate', async () => {
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
+
+        initialLecture.startDate.set(seriesEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
+    });
+
+    it('should set isStartDateInvalid to true when same or after endDate', async () => {
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        initialLecture.endDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
+
+        initialLecture.startDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isStartDateInvalid()).toBe(true);
+    });
+
+    it('should set isEndDateInvalid to true when same or before startDate', async () => {
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        initialLecture.endDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
+
+        initialLecture.endDate.set(initialLectureStartDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
+    });
+
+    it('should set isEndDateInvalid to true when same or after seriesEndDate', async () => {
+        const initialLectureEndDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
+
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.endDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
+
+        initialLecture.endDate.set(seriesEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(initialLecture.isEndDateInvalid()).toBe(true);
+    });
+
+    it('should set all validation flags to false when dates are in correct order', async () => {
+        const initialLectureStartDate = dayjs('2025-01-11T11:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-11T12:00:00Z');
+        const seriesEndDate = dayjs('2025-01-25T00:00:00Z');
+
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        initialLecture.endDate.set(initialLectureEndDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        expect(component.isSeriesEndDateInvalid()).toBe(false);
+        expect(initialLecture.isStartDateInvalid()).toBe(false);
+        expect(initialLecture.isEndDateInvalid()).toBe(false);
+    });
+
+    it('should expose correct noDraftsGenerated based on lectureDrafts', async () => {
+        expect(component.noDraftsGenerated()).toBe(true);
+
+        const today = dayjs();
+        const seriesEndDate = today.add(30, 'day');
+        const initialLectureStartDate = today.add(1, 'day');
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.noDraftsGenerated()).toBe(false);
+    });
+
+    it('should initialize initialLectures with one element', async () => {
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+
+        const initialLecture = initialLectures[0];
+        expect(initialLecture.id).toBeDefined();
+        expect(initialLecture.startDate()).toBeUndefined();
+        expect(initialLecture.endDate()).toBeUndefined();
+    });
+
+    it('should add initialLecture', async () => {
+        component.addInitialLecture();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(2);
+
+        const firstInitialLecture = initialLectures[0];
+        expect(firstInitialLecture.id).toBeDefined();
+        expect(firstInitialLecture.startDate()).toBeUndefined();
+        expect(firstInitialLecture.endDate()).toBeUndefined();
+
+        const secondInitialLecture = initialLectures[1];
+        expect(secondInitialLecture.id).toBeDefined();
+        expect(secondInitialLecture.startDate()).toBeUndefined();
+        expect(secondInitialLecture.endDate()).toBeUndefined();
+    });
+
+    it('should remove initialLecture', async () => {
+        component.addInitialLecture();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        let initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(2);
+        const firstInitialLectureId = initialLectures[0].id;
+
+        component.removeInitialLecture(initialLectures[1]);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+        const firstInitialLecture = initialLectures[0];
+        expect(firstInitialLecture.id).toBe(firstInitialLectureId);
+    });
+
+    it('should delete lectureDraft', async () => {
+        const today = dayjs();
+        const seriesEndDate = today.add(14, 'day');
+        const initialLectureStartDate = today.add(3, 'day');
+        component.seriesEndDate.set(seriesEndDate);
+        const initialLecture = component.initialLectures()[0];
+        initialLecture.startDate.set(initialLectureStartDate);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        let lectureDrafts = component.lectureDrafts();
+        expect(lectureDrafts).toHaveLength(2);
+        const firstDraftId = lectureDrafts[0].id;
+
+        component.deleteLectureDraft(lectureDrafts[1]);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        lectureDrafts = component.lectureDrafts();
+        expect(lectureDrafts).toHaveLength(1);
+        const firstDraft = lectureDrafts[0];
+        expect(firstDraft.id).toBe(firstDraftId);
+    });
+
+    it('should navigate back on cancel', async () => {
+        const spy = vi.spyOn(navigationUtilServiceMock, 'navigateBack');
+        fixture.componentRef.setInput('courseId', testCourseId);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        component.cancel();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(['course-management', testCourseId, 'lectures']);
+    });
+
+    it('should generate drafts for initialLecture with only startDate', async () => {
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+
+        const now = dayjs();
+        const inThreeWeeks = now.add(2, 'weeks');
+        const firstInitialLecture = initialLectures[0];
+        firstInitialLecture.startDate.set(now);
+        component.seriesEndDate.set(inThreeWeeks);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.lectureDrafts()).toHaveLength(3);
+    });
+
+    it('should generate drafts for initialLecture with only endDate', async () => {
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+
+        const now = dayjs();
+        const inThreeWeeks = now.add(2, 'weeks');
+        const firstInitialLecture = initialLectures[0];
+        firstInitialLecture.endDate.set(now);
+        component.seriesEndDate.set(inThreeWeeks);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.lectureDrafts()).toHaveLength(3);
+    });
+
+    describe('date pickers', () => {
+        function field(id: string): HTMLInputElement {
+            return fixture.nativeElement.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        it('should render a labelled picker for start, end and series end date with stable ids', () => {
+            expect(field('start-date-1')).not.toBeNull();
+            expect(field('end-date-1')).not.toBeNull();
+            expect(field('series-end-date')).not.toBeNull();
+            const labelTargets = Array.from(fixture.nativeElement.querySelectorAll('label')).map((label) => (label as HTMLLabelElement).htmlFor);
+            expect(labelTargets).toEqual(['start-date-1', 'end-date-1', 'series-end-date']);
+        });
+
+        it('should write typed dates into the initial lecture and series end signals', () => {
+            type(field('start-date-1'), '10.03.2025 10:00');
+            type(field('end-date-1'), '10.03.2025 11:30');
+            type(field('series-end-date'), '31.03.2025');
+
+            const initialLecture = component.initialLectures()[0];
+            expect(initialLecture.startDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-10 10:00');
+            expect(initialLecture.endDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-10 11:30');
+            expect(component.seriesEndDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-31 00:00');
+        });
+
+        it('should mark the end field invalid when it is not after the start', async () => {
+            type(field('start-date-1'), '10.03.2025 10:00');
+            type(field('end-date-1'), '10.03.2025 09:00');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(field('end-date-1').getAttribute('aria-invalid')).toBe('true');
+            expect(field('start-date-1').getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('should not generate drafts while a typed date is not a date yet', async () => {
+            const initialLecture = component.initialLectures()[0];
+            initialLecture.startDate.set(dayjs('2025-03-10T10:00'));
+            component.seriesEndDate.set(dayjs('2025-03-31'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.lectureDrafts().length).toBeGreaterThan(0);
+
+            type(field('start-date-1'), '10.03.');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(initialLecture.isStartTextValid()).toBe(false);
+            expect(component.lectureDrafts()).toHaveLength(0);
+        });
+    });
+
+    describe('save()', () => {
+        const todayAt14 = dayjs().hour(14).minute(0).second(0).millisecond(0);
+        const seriesEndDate = todayAt14.add(14, 'day');
+        const firstInitialLectureStartDate = todayAt14.add(2, 'day');
+        const firstInitialLectureEndDate = todayAt14.add(2, 'day').add(2, 'hour');
+        const secondInitialLectureStartDate = todayAt14.add(5, 'day');
+        const secondInitialLectureEndDate = todayAt14.add(5, 'day').add(2, 'hour');
+        const createLecture = (id: number, title: string, startDate?: Dayjs, endDate?: Dayjs): Lecture => {
+            const lecture = new Lecture();
+            lecture.id = id;
+            lecture.title = title;
+            lecture.startDate = startDate;
+            lecture.endDate = endDate;
+            return lecture;
+        };
+
+        const existingLectures: Lecture[] = [createLecture(1, 'Lecture 1', todayAt14.add(3, 'day'), undefined), createLecture(2, 'Lecture 2', undefined, undefined)];
+
+        const expectedLectureDTOsWithoutExistingLectures: LectureSeriesCreateLectureDTO[] = [
+            new LectureSeriesCreateLectureDTO('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
+            new LectureSeriesCreateLectureDTO('Lecture 2', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
+            new LectureSeriesCreateLectureDTO('Lecture 3', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
+            new LectureSeriesCreateLectureDTO('Lecture 4', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
+        ];
+
+        const expectedLectureDTOsWithExistingLectures: LectureSeriesCreateLectureDTO[] = [
+            new LectureSeriesCreateLectureDTO('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
+            new LectureSeriesCreateLectureDTO('Lecture 3', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
+            new LectureSeriesCreateLectureDTO('Lecture 4', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
+            new LectureSeriesCreateLectureDTO('Lecture 5', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
+        ];
+
+        let isLoadingSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(async () => {
+            isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+            fixture.componentRef.setInput('courseId', testCourseId);
+            component.addInitialLecture();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            component.seriesEndDate.set(seriesEndDate);
+            const initialLectures = component.initialLectures();
+            const firstInitialLecture = initialLectures[0];
+            firstInitialLecture.startDate.set(firstInitialLectureStartDate);
+            firstInitialLecture.endDate.set(firstInitialLectureEndDate);
+            const secondInitialLecture = initialLectures[1];
+            secondInitialLecture.startDate.set(secondInitialLectureStartDate);
+            secondInitialLecture.endDate.set(secondInitialLectureEndDate);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should save new lectures', async () => {
+            lectureServiceMock.createSeries.mockReturnValue(of(void 0));
+
+            component.save();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
+            const [passedLectureSeriesCreateDTOs, passedCourseId] = lectureServiceMock.createSeries.mock.calls[0];
+            expect(passedCourseId).toBe(testCourseId);
+            expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithoutExistingLectures);
+
+            expect(isLoadingSpy).toHaveBeenCalledTimes(2);
+            expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+            expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+        });
+
+        it('should add correct alert if creating lectures fails', async () => {
+            fixture.componentRef.setInput('existingLectures', existingLectures);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            lectureServiceMock.createSeries.mockReturnValue(throwError(() => new Error('Creation failed')));
+
+            component.save();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
+            const [passedLectureSeriesCreateDTOs, passedLectureCreateCourseId] = lectureServiceMock.createSeries.mock.calls[0];
+            expect(passedLectureCreateCourseId).toBe(testCourseId);
+            expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithExistingLectures);
+            expect(alertServiceMock.addErrorAlert).toHaveBeenCalledTimes(1);
+            const alertStringKey = alertServiceMock.addErrorAlert.mock.calls[0][0];
+            expect(alertStringKey).toBe('artemisApp.lecture.createSeries.seriesCreationError');
+
+            expect(isLoadingSpy).toHaveBeenCalledTimes(2);
+            expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+            expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+        });
+    });
+});

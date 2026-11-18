@@ -1,0 +1,207 @@
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { By } from '@angular/platform-browser';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
+
+describe('LearningPathsTableComponent', () => {
+    let component: LearningPathsTableComponent;
+    let fixture: ComponentFixture<LearningPathsTableComponent>;
+    let learningPathApiService: LearningPathApiService;
+    let alertService: AlertService;
+    let getLearningPathInformationSpy: ReturnType<typeof vi.spyOn>;
+
+    const courseId = 1;
+
+    const searchResults = <SearchResult<LearningPathInformationDTO>>{
+        numberOfPages: 2,
+        resultsOnPage: generateResults(0, 100),
+    };
+
+    const pageable = <SearchTermPageableSearch>{
+        page: 1,
+        pageSize: 100,
+        searchTerm: '',
+        sortingOrder: 'ASCENDING',
+        sortedColumn: 'ID',
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [LearningPathsTableComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(TumAetUiDialogService),
+            ],
+        })
+            .overrideComponent(LearningPathsTableComponent, {
+                remove: { imports: [SearchHighlightComponent, FontAwesomeModule] },
+                add: { imports: [MockComponent(SearchHighlightComponent), MockComponent(FaIconComponent)] },
+            })
+            .compileComponents();
+
+        learningPathApiService = TestBed.inject(LearningPathApiService);
+        alertService = TestBed.inject(AlertService);
+
+        getLearningPathInformationSpy = vi.spyOn(learningPathApiService, 'getLearningPathInformation').mockResolvedValue(searchResults);
+
+        fixture = TestBed.createComponent(LearningPathsTableComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', courseId);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show the empty state only when no learning paths were found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        getLearningPathInformationSpy.mockResolvedValue(<SearchResult<LearningPathInformationDTO>>{ numberOfPages: 0, resultsOnPage: [] });
+        component.search('nobody');
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
+    it('should load learning paths', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const learningPathRows = fixture.nativeElement.querySelectorAll('tr');
+
+        expect(getLearningPathInformationSpy).toHaveBeenCalledExactlyOnceWith(courseId, pageable);
+
+        expect(component.learningPaths()).toEqual(searchResults.resultsOnPage);
+        expect(learningPathRows).toHaveLength(searchResults.resultsOnPage.length + 1);
+        expect(component.collectionSize()).toBe(searchResults.resultsOnPage.length * searchResults.numberOfPages);
+    });
+
+    it('should open competency graph modal', async () => {
+        const learningPathId = 1;
+        const openCompetencyGraphSpy = vi.spyOn(component, 'openCompetencyGraph');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const learningPathIdButton = fixture.debugElement.query(By.css(`#open-competency-graph-button-${learningPathId}`));
+        learningPathIdButton.nativeElement.click();
+        expect(openCompetencyGraphSpy).toHaveBeenCalledExactlyOnceWith(learningPathId, 'User 1');
+    });
+
+    it('should change page', async () => {
+        const onPageChangeSpy = vi.spyOn(component, 'setPage');
+        const getAverageProgressSpy = vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The paginator is zero-based while the service and the component are one-based.
+        fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).triggerEventHandler('pageChange', 1);
+        await fixture.whenStable();
+
+        expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
+        expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
+    });
+
+    it('should search for learning paths when the search term changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const searchField = fixture.debugElement.query(By.css('#learning-path-search'));
+        const searchPageable = { ...pageable, searchTerm: 'Search Term' };
+        searchField.nativeElement.value = 'Search Term';
+        searchField.nativeElement.dispatchEvent(new Event('input'));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, searchPageable);
+    });
+
+    it('should show error message when loading learning paths fails', async () => {
+        getLearningPathInformationSpy.mockRejectedValue(new Error('Error loading learning paths'));
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should format average progress to 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 42.567, courseId: 1, totalStudents: 5 };
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.averageProgress()).toBe(42.567);
+        expect(component.formattedAverageProgress()).toBe('42.57');
+    });
+
+    it('should handle undefined average progress in formatted property', async () => {
+        const error = new Error('Error loading average progress');
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.averageProgress()).toBeUndefined();
+        expect(component.formattedAverageProgress()).toBeUndefined();
+    });
+
+    it('should format whole numbers with 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 50.0, courseId: 1, totalStudents: 5 };
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.formattedAverageProgress()).toBe('50.00');
+    });
+
+    it('should set isLoading correctly', async () => {
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    function generateResults(start: number, end: number): LearningPathInformationDTO[] {
+        return Array.from({ length: end - start }, (_, i) => ({
+            id: i + start,
+            user: { name: `User ${i + start}`, login: `user${i + start}` },
+            progress: i + start,
+        }));
+    }
+});

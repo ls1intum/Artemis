@@ -1,0 +1,30 @@
+<tumaet-ui-tabs [value]="selectedComparison()" (valueChange)="selectComparison($event)">
+    <tumaet-ui-tab-list>
+        @for (submission of plagiarismCase()?.plagiarismSubmissions; track submission; let i = $index) {
+            <tumaet-ui-tab [value]="i" [attr.data-testid]="'plagiarism-comparison-tab-' + i">
+                {{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}
+            </tumaet-ui-tab>
+        }
+    </tumaet-ui-tab-list>
+    <tumaet-ui-tab-panels class="p-0!">
+        @for (submission of plagiarismCase()?.plagiarismSubmissions; track submission; let i = $index) {
+            <tumaet-ui-tab-panel [value]="i" [preserveContent]="visitedComparisons().has(i)">
+                <div class="my-2 text-center text-xl">
+                    {{ 'artemisApp.plagiarism.plagiarismCases.overallSimilarity' | artemisTranslate }}:
+                    <strong>{{ submission.plagiarismComparison?.similarity?.toFixed(1) }}%</strong>
+                </div>
+                <!-- The panel only attaches its content once its tab is shown, but Angular creates a projected component at once: without the guard every split view
+                     would load its comparison when the case opens. A visited comparison stays in the set, so its split view stays alive across tab switches. -->
+                @if (submission.plagiarismComparison && visitedComparisons().has(i)) {
+                    <jhi-plagiarism-split-view
+                        [comparison]="submission.plagiarismComparison"
+                        [exercise]="plagiarismCase()?.exercise!"
+                        [sortByStudentLogin]="forStudent() ? 'Your submission' : (plagiarismCase()?.student)!.login!"
+                        [splitControlSubject]="splitControlSubject"
+                        [forStudent]="forStudent()"
+                    />
+                }
+            </tumaet-ui-tab-panel>
+        }
+    </tumaet-ui-tab-panels>
+</tumaet-ui-tabs>

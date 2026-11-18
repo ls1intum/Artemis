@@ -1,0 +1,94 @@
+<jhi-exam-exercise-header titleKey="artemisApp.studentExamDetail.overview" />
+
+<div class="mx-auto flex w-full max-w-[1200px] flex-col items-center justify-center">
+    <div class="w-full overflow-x-auto">
+        <table tumAetUiTable striped data-testid="exercise-table" class="w-full">
+            <thead>
+                <tr>
+                    <th [style.width.%]="1">
+                        <span>#</span>
+                    </th>
+                    <th [style.width.%]="1">
+                        <span jhiTranslate="artemisApp.examParticipation.exerciseType"></span>
+                    </th>
+                    <th [style.width.%]="30">
+                        <span jhiTranslate="artemisApp.examParticipation.exerciseName"></span>
+                    </th>
+                    <th [style.width.%]="1">
+                        <span jhiTranslate="artemisApp.examParticipation.exercisePoints"></span>
+                    </th>
+                    <th [style.width.%]="showResultWidth()">
+                        <span jhiTranslate="artemisApp.examParticipation.examStatus"> </span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (item of examExerciseOverviewItems; track item; let i = $index) {
+                    <tr>
+                        <td>
+                            {{ i + 1 }}
+                        </td>
+                        <td>
+                            <div>
+                                <fa-icon
+                                    [tumAetUiTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate"
+                                    tumAetUiTooltipPlacement="right"
+                                    [icon]="getIcon(item.exercise.type)"
+                                />
+                            </div>
+                        </td>
+                        <td class="font-bold">
+                            <a
+                                class="w-full"
+                                (click)="openExercise(item.exercise)"
+                                #keyboardAction39
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                            >
+                                {{ item.exercise.exerciseGroup?.title }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ item.exercise.maxPoints }}
+                        </td>
+                        <td class="font-bold">
+                            <div class="flex items-center">
+                                <div
+                                    class="me-6!"
+                                    [class]="setExerciseIconStatus(item)"
+                                    [tumAetUiTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
+                                    tumAetUiTooltipPlacement="top"
+                                >
+                                    <fa-icon [icon]="item.icon!" />
+                                </div>
+                                <div>
+                                    @if (
+                                        item.exercise.studentParticipations !== undefined &&
+                                        item.exercise.type === ExerciseType.PROGRAMMING &&
+                                        item.exercise.studentParticipations.length > 0
+                                    ) {
+                                        <jhi-updating-result
+                                            id="jhi-updating-result-{{ i }}"
+                                            (showResult)="updateShowResultWidth()"
+                                            [exercise]="item.exercise"
+                                            [showUngradedResults]="true"
+                                            [showBadge]="true"
+                                            [participation]="item.exercise.studentParticipations[0]"
+                                            [personalParticipation]="true"
+                                            [showProgressBar]="true"
+                                            [showProgressBarBorder]="true"
+                                            class="me-2 block"
+                                        />
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

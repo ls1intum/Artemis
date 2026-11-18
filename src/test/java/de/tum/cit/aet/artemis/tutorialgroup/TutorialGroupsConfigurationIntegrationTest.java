@@ -1,0 +1,428 @@
+package de.tum.cit.aet.artemis.tutorialgroup;
+
+import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.ZonedDateTime;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
+
+class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
+
+    private static final String TEST_PREFIX = "tutorialgroupconfiguration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    Long exampleTutorialGroupId;
+
+    private Long courseId;
+
+    @BeforeEach
+    @Override
+    void setupTestScenario() {
+        super.setupTestScenario();
+        userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "instructor42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "instructor42"));
+        }
+        this.exampleTutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
+                        userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").orElseThrow()))
+                .getId();
+    }
+
+    @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void request_asTutor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void request_asStudent_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void request_asEditor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    void deletingTheCourse_deletesItsConfigurationAndFreePeriods() {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
+
+        // the configuration holds the key to its course, so the database removes it, and the free periods below it, with the course
+        courseRepository.deleteById(courseId);
+
+        assertThat(tutorialGroupsConfigurationRepository.findById(configuration.getId())).isEmpty();
+        assertThat(tutorialGroupFreePeriodRepository.findById(freePeriod.getId())).isEmpty();
+    }
+
+    @BeforeEach
+    void deleteExistingConfiguration() {
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        course.setTimeZone(exampleTimeZone);
+        courseRepository.save(course);
+        courseId = course.getId();
+
+    }
+
+    /** Puts the course back into the state of a course whose tutorial groups are not set up: the permanent row stays, without tutorial period dates. */
+    private void deleteExampleConfiguration() {
+        TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(courseId).orElse(null);
+        if (configuration != null) {
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
+        }
+    }
+
+    void testJustForInstructorEndpoints() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.FORBIDDEN);
+        this.deleteExampleConfiguration();
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)),
+                TutorialGroupConfigurationDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOneOfCourse_asStudent_shouldReturnTutorialGroupsConfiguration() throws Exception {
+        // given
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        // when
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
+        // then
+        var expected = TutorialGroupConfigurationDTO.of(configuration);
+        var normalizedActual = withNormalizedFreePeriods(configurationFromRequest);
+        assertThat(normalizedActual).isEqualTo(expected);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOneOfCourse_asStudent_shouldReturnNullBodyWhenConfigurationDoesNotExist() throws Exception {
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
+
+        assertThat(configurationFromRequest).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void create_asInstructor_shouldCreateTutorialGroupsConfiguration() throws Exception {
+        TutorialGroupConfigurationDTO configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId),
+                TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)), TutorialGroupConfigurationDTO.class, HttpStatus.CREATED);
+        assertThat(configurationFromRequest).isNotNull();
+        assertThat(configurationFromRequest.id()).isNotNull();
+        var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
+        this.assertConfigurationStructure(persisted, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void create_asInstructor_shouldReturnBadRequestWhenCourseHasNoTimeZone() throws Exception {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        course.setTimeZone(null);
+        courseRepository.save(course);
+
+        var exampleConfigDto = TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId));
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), exampleConfigDto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void create_invalidDateFormat_shouldReturnBadRequest() throws Exception {
+        var exampleConfig = buildExampleConfiguration(courseId);
+        // not in correct uuuu-MM-dd format
+        exampleConfig.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(exampleConfig), TutorialGroupConfigurationDTO.class,
+                HttpStatus.BAD_REQUEST);
+        exampleConfig = buildExampleConfiguration(courseId);
+        // not in correct uuuu-MM-dd format
+        exampleConfig.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(exampleConfig), TutorialGroupConfigurationDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
+        // given
+        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        // when
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)),
+                TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
+        // then
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void update_periodChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
+        // given
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+
+        // when
+        configuration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY.toString());
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void update_shouldReturnBadRequestWhenCourseIdMismatch() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var dto = TutorialGroupConfigurationDTO.of(configuration);
+
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(otherCourse.getId(), configuration.getId()), dto, TutorialGroupConfigurationDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void update_shouldReturnBadRequestWhenConfigurationIdMismatch() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+
+        var dto = TutorialGroupConfigurationDTO.of(configuration);
+
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_switchUseTutorialGroupSetting_shouldCreateAndThenDeleteTutorialGroupChannels() throws Exception {
+        // given
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
+        // when
+        configuration.setUseTutorialGroupChannels(false);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, false, true);
+        assertTutorialGroupChannelDoesNotExist(tutorialGroupWithSchedule);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_switchUsePublicChannelsSetting_shouldSwitchChannelModeOfTutorialGroupChannels() throws Exception {
+        // given
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
+        // when
+        configuration.setUsePublicTutorialGroupChannels(false);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, false);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_timeZoneChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
+        // given
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).orElseThrow();
+        this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), FIRST_SEPTEMBER_MONDAY_00_00);
+        tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FOURTH_AUGUST_MONDAY_00_00, FOURTH_AUGUST_MONDAY_00_00, "Holiday");
+
+        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
+        assertThat(sessions).hasSize(3);
+        var firstAugustMondaySession = sessions.getFirst();
+        var secondAugustMondaySession = sessions.get(1);
+        var firstSeptemberMondaySession = sessions.get(2);
+        this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroupWithSchedule.getId(), persistedSchedule);
+        this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, SECOND_AUGUST_MONDAY, tutorialGroupWithSchedule.getId(), persistedSchedule);
+        this.assertIndividualSessionIsActiveOnDate(firstSeptemberMondaySession, FIRST_SEPTEMBER_MONDAY_00_00, tutorialGroupWithSchedule.getId());
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(1);
+
+        // when
+        // change time zone to berlin and change the end period
+        var course = courseRepository.findByIdForUpdateElseThrow(courseId);
+        course.setTimeZone("Europe/Berlin");
+
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseId(courseId)).isPresent();
+
+        sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
+        assertThat(sessions).hasSize(2);
+        firstAugustMondaySession = sessions.getFirst();
+        secondAugustMondaySession = sessions.get(1);
+
+        this.assertTutorialGroupSessionProperties(firstAugustMondaySession, Optional.of(persistedSchedule.getId()), tutorialGroupWithSchedule.getId(),
+                getDateTimeInBerlinTimeZone(FIRST_AUGUST_MONDAY, defaultSessionStartHour), getDateTimeInBerlinTimeZone(FIRST_AUGUST_MONDAY, defaultSessionEndHour),
+                persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
+
+        this.assertTutorialGroupSessionProperties(secondAugustMondaySession, Optional.of(persistedSchedule.getId()), tutorialGroupWithSchedule.getId(),
+                getDateTimeInBerlinTimeZone(SECOND_AUGUST_MONDAY, defaultSessionStartHour), getDateTimeInBerlinTimeZone(SECOND_AUGUST_MONDAY, defaultSessionEndHour),
+                persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(0);
+
+    }
+
+    @Nested
+    class TutorialGroupConfigurationDTOTests {
+
+        @Nested
+        class OfTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenEntityIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.of(null)).isInstanceOf(NullPointerException.class);
+            }
+
+            @Test
+            void shouldReturnEmptyFreePeriodsWhenEntityFreePeriodsIsNull() {
+                var entity = new TutorialGroupsConfiguration();
+                entity.setId(5L);
+                entity.setTutorialPeriodStartInclusive("2024-01-01");
+                entity.setTutorialPeriodEndInclusive("2024-02-01");
+                entity.setUseTutorialGroupChannels(true);
+                entity.setUsePublicTutorialGroupChannels(true);
+                entity.setTutorialGroupFreePeriods(null);
+
+                var actual = TutorialGroupConfigurationDTO.of(entity);
+
+                assertThat(actual.tutorialGroupFreePeriods()).isEmpty();
+            }
+
+            @Test
+            void shouldMapFreePeriodsCorrectlyWhenEntityContainsFreePeriods() {
+                var freePeriod = new TutorialGroupFreePeriod();
+                freePeriod.setId(42L);
+                freePeriod.setStart(ZonedDateTime.parse("2024-01-10T10:00:00Z"));
+                freePeriod.setEnd(ZonedDateTime.parse("2024-01-10T12:00:00Z"));
+                freePeriod.setReason("Holiday");
+
+                var entity = new TutorialGroupsConfiguration();
+                entity.setId(7L);
+                entity.setTutorialPeriodStartInclusive("2024-01-01");
+                entity.setTutorialPeriodEndInclusive("2024-02-01");
+                entity.setUseTutorialGroupChannels(true);
+                entity.setUsePublicTutorialGroupChannels(true);
+                entity.setTutorialGroupFreePeriods(Set.of(freePeriod));
+
+                var actual = TutorialGroupConfigurationDTO.of(entity);
+
+                assertThat(actual.tutorialGroupFreePeriods()).hasSize(1);
+                var mapped = actual.tutorialGroupFreePeriods().iterator().next();
+
+                assertThat(mapped.id()).isEqualTo(42L);
+                assertThat(ZonedDateTime.parse(mapped.start())).isEqualTo(ZonedDateTime.parse("2024-01-10T10:00:00Z"));
+                assertThat(ZonedDateTime.parse(mapped.end())).isEqualTo(ZonedDateTime.parse("2024-01-10T12:00:00Z"));
+                assertThat(mapped.reason()).isEqualTo("Holiday");
+            }
+
+            @Test
+            void shouldSerializeAndDeserializeCorrectly() throws Exception {
+                JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
+
+                var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
+
+                var json = mapper.writeValueAsString(dto);
+                var back = mapper.readValue(json, TutorialGroupConfigurationDTO.class);
+
+                assertThat(back.tutorialPeriodStartInclusive()).isEqualTo("2024-01-01");
+                assertThat(back.tutorialPeriodEndInclusive()).isEqualTo("2024-02-01");
+                assertThat(back.useTutorialGroupChannels()).isTrue();
+                assertThat(back.usePublicTutorialGroupChannels()).isFalse();
+                assertThat(back.tutorialGroupFreePeriods()).isEmpty();
+            }
+        }
+
+        @Nested
+        class FreePeriodOfTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenFreePeriodEntityIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
+            }
+        }
+    }
+
+    private TutorialGroupConfigurationDTO withNormalizedFreePeriods(TutorialGroupConfigurationDTO dto) {
+        return new TutorialGroupConfigurationDTO(dto.id(), dto.tutorialPeriodStartInclusive(), dto.tutorialPeriodEndInclusive(), dto.useTutorialGroupChannels(),
+                dto.usePublicTutorialGroupChannels(), dto.tutorialGroupFreePeriods() == null ? Set.of() : dto.tutorialGroupFreePeriods());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void freePeriodValidationRejectsMalformedReversedAndOutOfBoundsIntervals() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+        var original = TutorialGroupConfigurationDTO.of(configuration);
+        String[][] cases = { { "invalid", "2022-08-10T10:00:00Z", "tutorialFreePeriodInvalidFormat" },
+                { "2022-08-15T10:00:00Z", "2022-08-14T10:00:00Z", "tutorialFreePeriodInvalidOrder" },
+                { "2022-07-01T10:00:00Z", "2022-07-02T10:00:00Z", "tutorialFreePeriodOutOfBounds" } };
+        for (String[] values : cases) {
+            var period = new TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO(null, values[0], values[1], "Invalid interval");
+            var dto = new TutorialGroupConfigurationDTO(original.id(), original.tutorialPeriodStartInclusive(), original.tutorialPeriodEndInclusive(),
+                    original.useTutorialGroupChannels(), original.usePublicTutorialGroupChannels(), java.util.Set.of(period));
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(getTutorialGroupsConfigurationPath(courseId, configuration.getId()))
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(dto)))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value(values[2]));
+        }
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(getTutorialGroupsConfigurationPath(courseId))
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(original)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("idExists"));
+        var reversed = new TutorialGroupConfigurationDTO(original.id(), original.tutorialPeriodEndInclusive(), original.tutorialPeriodStartInclusive(),
+                original.useTutorialGroupChannels(), original.usePublicTutorialGroupChannels(), java.util.Set.of());
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(getTutorialGroupsConfigurationPath(courseId, configuration.getId()))
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(reversed)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("tutorialPeriodInvalidOrder"));
+        var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
+        assertThat(persisted.getTutorialPeriodStartInclusive()).isEqualTo(original.tutorialPeriodStartInclusive());
+        assertThat(persisted.getTutorialPeriodEndInclusive()).isEqualTo(original.tutorialPeriodEndInclusive());
+        assertThat(persisted.getTutorialGroupFreePeriods()).isEmpty();
+    }
+
+}

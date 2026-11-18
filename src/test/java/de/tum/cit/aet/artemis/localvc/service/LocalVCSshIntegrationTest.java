@@ -1,0 +1,518 @@
+package de.tum.cit.aet.artemis.localvc.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.channels.UnresolvedAddressException;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.channel.ChannelExec;
+import org.apache.sshd.client.channel.ClientChannelEvent;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
+import org.apache.sshd.client.future.ConnectFuture;
+import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
+import org.apache.sshd.common.session.helpers.AbstractSession;
+import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+
+class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCSshIntegrationTest.class);
+
+    private static final String TEST_PREFIX = "localvcsshint";
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
+    @Value("${artemis.version-control.ssh-port}")
+    private int sshPort;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPushCommandWithoutSession() {
+
+        // this command arrives at the ssh server if you would manually push from the command line
+        String commandString = "git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
+        SshGitCommandFactoryService sshGitCommandFactory = (SshGitCommandFactoryService) sshServer.getCommandFactory();
+        SshGitCommand command = (SshGitCommand) sshGitCommandFactory.createGitCommand(commandString);
+        assertThatThrownBy(command::run).withFailMessage("Expected NullPointerException when running 'git-receive-pack' command without a session")
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDirectlyAuthenticateOverSsh() throws IOException, GeneralSecurityException {
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        try (SshClient client = SshClient.setUpDefaultClient()) {
+            client.start();
+
+            ClientSession session = connect(client, user, keyPair);
+            assertThat(session.isAuthenticated()).isTrue();
+        }
+    }
+
+    @NonNull
+    private ClientSession connect(SshClient client, User user, KeyPair keyPair) throws IOException {
+        try {
+            // avoid using any local host config which could confuse the test
+            client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
+
+            URI uri = URI.create(artemisServerUrl);
+            String host = uri.getHost();
+            log.info("Connecting to SSH server at {}:{} for user {}", host, sshPort, user.getName());
+            ConnectFuture connectFuture = client.connect(user.getName(), host, sshPort);
+            connectFuture.await(10, TimeUnit.SECONDS);
+
+            ClientSession session = connectFuture.getSession();
+            session.addPublicKeyIdentity(keyPair);
+
+            session.auth().verify(10, TimeUnit.SECONDS);
+            return session;
+        }
+        catch (IOException | UnresolvedAddressException e) {
+            log.error("Error during SSH connection", e);
+            // rethrow the exception to indicate failure to the caller for assertions
+            throw e;
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAuthenticationFailureBecauseKeyHasExpired() throws IOException, GeneralSecurityException {
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+        var userKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
+        userKey.setExpiryDate(ZonedDateTime.now().minusMonths(1L));
+        userSshPublicKeyRepository.save(userKey);
+
+        assertThatThrownBy(() -> {
+
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                connect(client, user, keyPair);
+            }
+        }).isInstanceOf(SshException.class);
+    }
+
+    /**
+     * An SSH key is a credential of its own, and nothing else on this path consults the account state, so without the
+     * check in {@code GitPublickeyAuthenticatorService} a deactivated user would keep read and write access to their
+     * repositories with a key issued earlier. Reactivating and connecting again shows the rejection came from the
+     * account state rather than from the key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAuthenticationFailureBecauseTheAccountIsDeactivated() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        try {
+            user.setActivated(false);
+            userTestRepository.save(user);
+
+            assertThatThrownBy(() -> authenticateOverSsh(user, keyPair)).isInstanceOf(SshException.class);
+        }
+        finally {
+            // Restored unconditionally, so a failing assertion cannot leave a deactivated fixture user behind.
+            user.setActivated(true);
+            userTestRepository.save(user);
+        }
+
+        assertThat(authenticateOverSsh(user, keyPair)).isTrue();
+    }
+
+    /**
+     * The soft-delete counterpart of {@link #testAuthenticationFailureBecauseTheAccountIsDeactivated()}: a soft-deleted
+     * account is the state an administrator leaves behind when removing a user, and it must close the SSH path too.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAuthenticationFailureBecauseTheAccountIsSoftDeleted() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        try {
+            user.setDeleted(true);
+            userTestRepository.save(user);
+
+            assertThatThrownBy(() -> authenticateOverSsh(user, keyPair)).isInstanceOf(SshException.class);
+        }
+        finally {
+            user.setDeleted(false);
+            userTestRepository.save(user);
+        }
+
+        assertThat(authenticateOverSsh(user, keyPair)).isTrue();
+    }
+
+    /**
+     * @param user    the user to authenticate as
+     * @param keyPair the key pair to offer
+     * @return whether the session ended up authenticated
+     * @throws IOException if the connection or the authentication itself fails
+     */
+    private boolean authenticateOverSsh(User user, KeyPair keyPair) throws IOException {
+        try (SshClient client = SshClient.setUpDefaultClient()) {
+            client.start();
+            return connect(client, user, keyPair).isAuthenticated();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAuthenticationFailure() {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = generateKeyPair();
+
+        User user = userTestRepository.getUser();
+
+        assertThatThrownBy(() -> {
+
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                connect(client, user, keyPair);
+            }
+        }).isInstanceOf(SshException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
+        try (var client = clientConnectToArtemisSshServer()) {
+            assertThat(client).isNotNull();
+            var user = userTestRepository.getUser();
+            var serverSession = getCurrentServerSession(user);
+
+            final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
+
+            // The following line is expected to throw a NullPointerException because the 'git-upload-pack' command might not be properly set up in the SshGitCommandFactoryService,
+            // or there could be a missing or incorrectly initialized dependency within the command execution process.
+            assertThatThrownBy(() -> setupCommand(uploadCommandString, (ServerSession) serverSession).run()).isInstanceOf(NullPointerException.class);
+
+            final var receiveCommandString = "git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
+
+            // The following command should not throw an exception as the 'git-receive-pack' command is likely properly set up and all dependencies are correctly initialized.
+            SshGitCommand receiveCommand = setupCommand(receiveCommandString, (ServerSession) serverSession);
+            receiveCommand.run();
+
+            // 1. Ensure that the session is still active after running the command.
+            assertThat(serverSession.isOpen()).isTrue();
+            // 2. Check that the command output stream is not null and contains expected output.
+            ByteArrayOutputStream outputStream = (ByteArrayOutputStream) receiveCommand.getOutputStream();
+            assertThat(outputStream).isNotNull();
+            assertThat(outputStream.size()).isGreaterThan(0); // Assuming the command produces some output
+
+            // 3. Verify cacheAttributesInSshSession stored who the command is for in the session during receive-pack execution
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("cacheAttributesInSshSession should cache the subject of the access log for the template repo").isNotNull();
+            assertThat(cachedSubject.mechanism()).isEqualTo(AuthenticationMechanism.SSH);
+            assertThat(cachedSubject.user().getLogin()).isEqualTo(user.getLogin());
+        }
+    }
+
+    /**
+     * Every git command shuts down the executor it was given when it ends. The commands share one pool, so each of them needs a wrapper of its own, otherwise the first command
+     * that ends makes every later command of the server fail. This goes through a real SSH session and real channels, one after the other.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSeveralGitCommandsOneAfterTheOtherOverTheSshServer() throws IOException, GeneralSecurityException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+        try (SshClient client = SshClient.setUpDefaultClient()) {
+            client.start();
+            try (ClientSession session = connect(client, user, keyPair)) {
+                for (int command = 1; command <= 3; command++) {
+                    try (ChannelExec channel = session.createExecChannel("git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'")) {
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        ByteArrayOutputStream errors = new ByteArrayOutputStream();
+                        channel.setIn(new ByteArrayInputStream(new byte[0]));
+                        channel.setOut(output);
+                        channel.setErr(errors);
+                        channel.open().verify(10, TimeUnit.SECONDS);
+                        assertThat(channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(20))).as("command %d ends, errors: %s", command, errors)
+                                .contains(ClientChannelEvent.CLOSED);
+
+                        assertThat(output.size()).as("the advertisement of the refs of command %d, errors: %s", command, errors).isGreaterThan(0);
+                        assertThat(errors.toString()).as("errors of command %d", command).doesNotContain("shut down").doesNotContain("busy");
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSshGitCommand_testsRepo_handlesEmptyParticipationGracefully() throws IOException, GeneralSecurityException {
+        try (var client = clientConnectToArtemisSshServer()) {
+            assertThat(client).isNotNull();
+            var user = userTestRepository.getUser();
+            var serverSession = getCurrentServerSession(user);
+
+            // Execute git-upload-pack for tests repository — tests repo has no student participation
+            // This verifies cacheAttributesInSshSession handles the empty Optional gracefully
+            final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + testsRepositorySlug + "'";
+
+            // The git-upload-pack command may throw NullPointerException from upload-pack IO setup,
+            // but cacheAttributesInSshSession must NOT throw when participation is empty
+            try {
+                SshGitCommand command = setupCommand(uploadCommandString, (ServerSession) serverSession);
+                command.run();
+            }
+            catch (NullPointerException e) {
+                // NPE expected from upload-pack IO setup (e.g. getErrorStream() returning null), not from cacheAttributesInSshSession
+                var stackTrace = Arrays.stream(e.getStackTrace()).map(StackTraceElement::getClassName).toList();
+                assertThat(stackTrace).as("NPE should not originate from LocalVCServletService").noneMatch(cls -> cls.contains("LocalVCServletService"));
+            }
+
+            // Verify the session survived without crashing
+            assertThat(serverSession.isOpen()).isTrue();
+
+            // When participation is absent, cacheAttributesInSshSession should NOT cache anything
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("No subject of the VCS access log should be cached when participation is absent").isNull();
+            var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
+            assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
+        }
+    }
+
+    /**
+     * An instructor who pushes commits into the repository of a student over ssh, as in the report that a push was recorded as a clone. Every operation writes one entry of its
+     * own kind, and the push carries the commit it delivered.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEachSshOperationIsLoggedOnceWithItsOwnKind(@TempDir Path tempDir) throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User instructor = userTestRepository.getUser();
+        SshdSessionFactory sessionFactory = sshSessionFactory(keyPair, tempDir);
+        String repositoryUri = "ssh://git@" + URI.create(artemisServerUrl).getHost() + ":" + sshPort + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+
+        try (Git clone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("clone").toFile())
+                .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+            // The entry is written when the command is over, which is just after the client has its answer, so the test waits for it.
+            assertThat(awaitAccessLog(participation.getId(), 1)).singleElement().satisfies(entry -> {
+                assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+                assertThat(entry.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
+                assertThat(entry.getUser().getId()).isEqualTo(instructor.getId());
+            });
+
+            String commit = localVCLocalCITestService.commitFile(tempDir.resolve("clone"), clone, "pushed-by-the-instructor.txt");
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            var entries = awaitAccessLog(participation.getId(), 2);
+            assertThat(entries).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE, RepositoryActionType.PUSH);
+            assertThat(entries.getLast().getCommitHash()).as("the push carries the commit it delivered").isEqualTo(commit);
+            assertThat(entries.getLast().getUser().getId()).isEqualTo(instructor.getId());
+
+            // A commit that arrives from elsewhere is transferred by the next fetch, which is a pull, once, whatever number of connections JGit opens.
+            try (Git otherClone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("other-clone").toFile())
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+                awaitAccessLog(participation.getId(), 3);
+                localVCLocalCITestService.commitFile(tempDir.resolve("other-clone"), otherClone, "pushed-from-elsewhere.txt");
+                otherClone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                        .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            }
+            awaitAccessLog(participation.getId(), 4);
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            assertThat(awaitAccessLog(participation.getId(), 5)).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE,
+                    RepositoryActionType.PUSH, RepositoryActionType.CLONE, RepositoryActionType.PUSH, RepositoryActionType.PULL);
+
+            // Fetching and pushing again moves nothing, which is still an access to the repository and is written, with the newest commit as it is now.
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterFetch = awaitAccessLog(participation.getId(), 6);
+            assertThat(afterFetch.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.READ);
+            assertThat(afterFetch.getLast().getCommitHash()).as("the newest commit is the one the previous pull received").isEqualTo(afterFetch.get(4).getCommitHash());
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterPush = awaitAccessLog(participation.getId(), 7);
+            assertThat(afterPush.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.WRITE);
+            assertThat(afterPush.getLast().getUser().getId()).isEqualTo(instructor.getId());
+        }
+    }
+
+    /**
+     * The entries that people caused. A build agent that clones for the build job of a push writes an entry of its own, with no user, at a moment nobody controls.
+     */
+    private List<VcsAccessLog> accessLogOfPeople(long participationId) {
+        return vcsAccessLogRepository.findAllByParticipationId(participationId).stream().filter(entry -> entry.getUser() != null).toList();
+    }
+
+    private List<VcsAccessLog> awaitAccessLog(long participationId, int count) {
+        await().atMost(Duration.ofSeconds(10)).until(() -> accessLogOfPeople(participationId).size() >= count);
+        return accessLogOfPeople(participationId);
+    }
+
+    private static SshdSessionFactory sshSessionFactory(KeyPair keyPair, Path sshHome) {
+        ServerKeyDatabase acceptsAnyServerKey = new ServerKeyDatabase() {
+
+            @Override
+            public List<PublicKey> lookup(String connectAddress, InetSocketAddress remoteAddress, Configuration config) {
+                return List.of();
+            }
+
+            @Override
+            public boolean accept(String connectAddress, InetSocketAddress remoteAddress, PublicKey serverKey, Configuration config, CredentialsProvider provider) {
+                return true;
+            }
+        };
+        return new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(sshHome.toFile()).setSshDirectory(sshHome.toFile())
+                .setDefaultKeysProvider(_ -> List.of(keyPair)).setServerKeyDatabase((_, _) -> acceptsAnyServerKey).build(null);
+    }
+
+    private SshGitCommand setupCommand(String commandString, ServerSession serverSession) {
+        SshGitCommandFactoryService sshGitCommandFactory = (SshGitCommandFactoryService) sshServer.getCommandFactory();
+        SshGitCommand command = (SshGitCommand) sshGitCommandFactory.createGitCommand(commandString);
+        command.setSession(serverSession);
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setInputStream(new ByteArrayInputStream(new byte[] {}));
+        return command;
+    }
+
+    /**
+     * Note: Don't count unattached sessions as a potential result from previous tests.
+     * See {@link org.apache.sshd.server.SshServer#getActiveSessions}
+     * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
+     */
+    private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+
+        // Capture baseline session count BEFORE connecting, scoped to the test user to avoid flakiness under parallel runs
+        var baselineServerSessions = sshServer.getActiveSessions();
+        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
+
+        SshClient client = SshClient.setUpDefaultClient();
+        client.start();
+
+        ClientSession clientSession = connect(client, user, keyPair);
+
+        // Get current session count AFTER connecting, scoped to the test user
+        var currentServerSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = currentServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
+        assertThat(clientSession.isAuthenticated()).isTrue();
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineAttachedSessionCount + 1);
+        return client;
+    }
+
+    private AbstractSession getCurrentServerSession(User user) {
+        var serverSessions = sshServer.getActiveSessions();
+        // parallel tests might create additional sessions, we need to be specific
+        var serverSession = serverSessions.stream().filter(session -> user.getName().equals(session.getUsername())).findFirst();
+
+        return serverSession.orElseThrow(() -> new IllegalStateException("No server session found for user " + user.getName()));
+    }
+
+    private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
+
+        User user = userTestRepository.getUser();
+        userSshPublicKeyRepository.deleteAll();
+
+        KeyPair rsaKeyPair = generateKeyPair();
+        String sshPublicKey = writePublicKeyToString(rsaKeyPair.getPublic(), user.getLogin() + "@host");
+
+        AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+        // Extract the PublicKey object
+        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
+        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
+
+        var userPublicSshKey = createNewPublicKey(keyHash, sshPublicKey, user);
+        userSshPublicKeyRepository.save(userPublicSshKey);
+        var fetchedKey = userSshPublicKeyRepository.findAllByUserId(user.getId());
+        assertThat(fetchedKey).isNotEmpty();
+        assertThat(fetchedKey.getFirst().getPublicKey()).isEqualTo(sshPublicKey);
+        return rsaKeyPair;
+    }
+
+    private String writePublicKeyToString(PublicKey publicKey, String comment) throws IOException, GeneralSecurityException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            // Assuming you have an instance of a class with the writePublicKey method
+            OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
+            writer.writePublicKey(publicKey, comment, outputStream);
+            return outputStream.toString();
+        }
+    }
+
+    private static KeyPair generateKeyPair() {
+        try {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            return keyGen.generateKeyPair();
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static UserSshPublicKey createNewPublicKey(String keyHash, String publicKey, User user) {
+        UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
+        userSshPublicKey.setLabel("Key 1");
+        userSshPublicKey.setPublicKey(publicKey);
+        userSshPublicKey.setKeyHash(keyHash);
+        userSshPublicKey.setUserId(user.getId());
+        userSshPublicKey.setCreationDate(ZonedDateTime.now());
+
+        return userSshPublicKey;
+    }
+}

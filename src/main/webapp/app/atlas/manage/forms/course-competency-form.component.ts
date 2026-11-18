@@ -1,0 +1,146 @@
+import { Component, InputSignal, effect, inject, input, output } from '@angular/core';
+import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { of } from 'rxjs';
+import { catchError, delay, map, switchMap } from 'rxjs/operators';
+import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+
+/**
+ * Async validator to make sure that a competency title is unique within a course.
+ */
+export const titleUniqueValidator = (courseCompetencyService: CourseCompetencyService, courseId: number, excludeCompetencyId?: number): AsyncValidatorFn => {
+    return (competencyTitleControl: AbstractControl<string | undefined>) => {
+        return of(competencyTitleControl.value).pipe(
+            delay(250),
+            switchMap((title) => {
+                return courseCompetencyService.getCourseCompetencyTitles(courseId, excludeCompetencyId).pipe(
+                    map((res) => {
+                        const competencyTitles = res.body!;
+                        if (title && competencyTitles.includes(title)) {
+                            return {
+                                titleUnique: { valid: false },
+                            };
+                        } else {
+                            return null;
+                        }
+                    }),
+                    catchError(() => of(null)),
+                );
+            }),
+        );
+    };
+};
+
+export interface CourseCompetencyFormData {
+    id?: number;
+    title?: string;
+    description?: string;
+    softDueDate?: dayjs.Dayjs;
+    taxonomy?: CompetencyTaxonomy;
+    optional?: boolean;
+    masteryThreshold?: number;
+}
+
+@Component({
+    template: '',
+})
+export abstract class CourseCompetencyFormComponent {
+    private fb = inject(FormBuilder);
+    private courseCompetencyService = inject(CourseCompetencyService);
+
+    abstract formData: InputSignal<CourseCompetencyFormData>;
+
+    isEditMode = input<boolean>(false);
+    isInConnectMode = input<boolean>(false);
+    isInSingleLectureMode = input<boolean>(false);
+    courseId = input<number>(0);
+    averageStudentScore = input<number>();
+    hasCancelButton = input<boolean>(false);
+
+    onCancel = output<void>();
+    formSubmitted = output<CourseCompetencyFormData>();
+
+    form!: FormGroup; // built in initializeForm(), called by subclasses before the form is rendered/read
+
+    private lastPopulatedId: number | undefined;
+
+    constructor() {
+        effect(() => {
+            if (!this.form) {
+                this.initializeForm();
+            }
+            this.updateTitleUniqueValidator();
+            // Populate the form only when a different entity loads. This effect also re-runs when courseId or the
+            // title validity change; re-applying the loaded values then would discard the user's in-progress edits.
+            const formData = this.formData();
+            if (this.isEditMode() && formData && formData.id !== this.lastPopulatedId) {
+                this.lastPopulatedId = formData.id;
+                this.form.patchValue(formData);
+            }
+        });
+    }
+
+    // Icons
+    protected readonly faTimes = faTimes;
+    protected readonly faQuestionCircle = faQuestionCircle;
+
+    get titleControl() {
+        return this.form.get('title');
+    }
+
+    get descriptionControl() {
+        return this.form.get('description');
+    }
+
+    get softDueDateControl() {
+        return this.form.get('softDueDate');
+    }
+
+    get optionalControl() {
+        return this.form.get('optional');
+    }
+
+    /**
+     * Updates description form on markdown change
+     * @param content markdown content
+     */
+    updateDescriptionControl(content: string) {
+        this.descriptionControl?.setValue(content);
+        this.descriptionControl?.markAsDirty();
+    }
+
+    protected initializeForm() {
+        if (this.form) {
+            return;
+        }
+        this.form = this.fb.nonNullable.group({
+            title: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)], []],
+            description: [undefined as string | undefined, [Validators.maxLength(10000)]],
+            softDueDate: [undefined],
+            taxonomy: [undefined as CompetencyTaxonomy | undefined],
+            masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
+            optional: [false],
+        });
+
+        this.updateTitleUniqueValidator();
+    }
+
+    protected updateTitleUniqueValidator() {
+        if (!this.form) {
+            return;
+        }
+        const excludeCompetencyId = this.isEditMode() ? this.formData()?.id : undefined;
+        this.titleControl?.setAsyncValidators(titleUniqueValidator(this.courseCompetencyService, this.courseId(), excludeCompetencyId));
+        this.titleControl?.updateValueAndValidity({ emitEvent: false });
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
+    }
+
+    get isSubmitPossible() {
+        return !this.form.invalid;
+    }
+}

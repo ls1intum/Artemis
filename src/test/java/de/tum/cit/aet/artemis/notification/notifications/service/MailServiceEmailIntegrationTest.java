@@ -1,0 +1,689 @@
+package de.tum.cit.aet.artemis.notification.notifications.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.mail.internet.MimeMessage;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+
+import com.icegreen.greenmail.junit5.GreenMailExtension;
+import com.icegreen.greenmail.util.ServerSetupTest;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageAreaSummaryDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
+import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
+import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
+import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import io.micrometer.registry.otlp.OtlpMeterRegistry;
+
+/**
+ * Integration tests for emails sent via {@link MailService} and {@link MailSendingService}.
+ * Uses GreenMail to verify template rendering, i18n resolution, and SMTP delivery
+ * for account-related emails and security notification emails.
+ */
+@Execution(ExecutionMode.SAME_THREAD)
+class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final int EMAIL_TIMEOUT_MS = 5000;
+
+    @RegisterExtension
+    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP.dynamicPort());
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private SpringTemplateEngine templateEngine;
+
+    @Autowired
+    private MailRetryQueueService mailRetryQueue;
+
+    @Autowired
+    private TestAccountEmailService testAccountEmailPolicy;
+
+    private MailSendingService testMailSendingService;
+
+    private MailService testMailService;
+
+    private User recipient;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        greenMail.reset();
+
+        var greenMailSender = new JavaMailSenderImpl();
+        greenMailSender.setHost("127.0.0.1");
+        greenMailSender.setPort(greenMail.getSmtp().getPort());
+
+        // Use production MessageSource to avoid test classpath shadowing
+        var mainMessageSource = new ReloadableResourceBundleMessageSource();
+        mainMessageSource.setBasename("file:src/main/resources/i18n/messages");
+        mainMessageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
+
+        var testTemplateEngine = new SpringTemplateEngine();
+        templateEngine.getTemplateResolvers().forEach(testTemplateEngine::addTemplateResolver);
+        testTemplateEngine.setMessageSource(mainMessageSource);
+
+        // Explicitly enable mail sending (bypass the "artemis@localhost" guard)
+        var mailEnabledProperties = new ArtemisProperties();
+        mailEnabledProperties.getMail().setFrom("test@greenmail.test");
+
+        testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine, mailRetryQueue, testAccountEmailPolicy);
+        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
+
+        testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
+
+        recipient = new User();
+        recipient.setEmail("user@greenmail.test");
+        recipient.setLangKey("en");
+        recipient.setLogin("testuser");
+        recipient.setFirstName("Jane");
+        recipient.setLastName("Doe");
+    }
+
+    @Test
+    void testContextDoesNotPollSharedMailSpyFromMetricsPublisher() {
+        assertThat(applicationContext.containsBean("mailHealthContributor")).isFalse();
+        assertThat(applicationContext.containsBean("mailHealthIndicator")).isFalse();
+        assertThat(applicationContext.getBeansOfType(OtlpMeterRegistry.class)).isEmpty();
+    }
+
+    // -- Activation email --
+
+    @Test
+    void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("testuser");
+        assertThat(body).contains("abc123-activation-key");
+        assertThat(body).contains("account/activate");
+    }
+
+    @Test
+    void activationEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("de-activation-key-456");
+        assertThat(body).contains("account/activate");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInMinutesInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 45L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 45 minutes").contains("deleted automatically");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 120L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 2 hours");
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSingularForOneHour() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 60L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 1 hour,");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 90L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 90 Minuten").contains("automatisch gelöscht");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 180L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 3 Stunden");
+    }
+
+    @Test
+    void activationEmail_shouldNotMentionADeadlineWhenCleanupIsDisabled() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 0L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("abc123-activation-key").doesNotContain("deleted automatically");
+    }
+
+    // -- Password reset email --
+
+    @Test
+    void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("id-for-789", "secret-for-789")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("id-for-789");
+        assertThat(body).contains("secret-for-789");
+        assertThat(body).contains("account/reset/finish");
+    }
+
+    @Test
+    void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("id-for-012", "secret-for-012")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("id-for-012");
+        assertThat(body).contains("secret-for-012");
+        assertThat(body).contains("account/reset/finish");
+    }
+
+    @Test
+    void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("", "")));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "styled-activation-key-123"));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    /**
+     * Asserts that a mail carries the shared Artemis chrome.
+     * <p>
+     * The account mails that contain a link are the ones a user is most likely to distrust, because each can arrive
+     * unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis mail is
+     * what makes them credible rather than suspicious, and they used to render as unstyled documents in the mail
+     * client's default serif font.
+     * <p>
+     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these can
+     * be switched off there, so the link would point at a setting that does not exist for them.
+     *
+     * @param body the rendered mail body
+     */
+    private static void assertUsesSharedArtemisLayout(String body) {
+        assertThat(body).as("the Artemis header with the logo").contains("<header>").contains("id=\"logo\"");
+        assertThat(body).as("the shared stylesheet, which sets the sans-serif font").contains("<style>").contains("font-family");
+        assertThat(body).as("the message body wrapper the shared css styles").contains("id=\"message-body\"");
+        assertThat(body).as("the favicon, at the path it is actually served from").contains("/logo/favicon.svg");
+        assertThat(body).as("no notification-settings footer on a mail that cannot be switched off").doesNotContain("<footer>");
+        // The logo has to come from this installation. It is a documented customization point, and pointing at the TUM
+        // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
+        assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
+        assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
+    }
+
+    // -- New login notification email --
+
+    @Test
+    void newLoginEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var contextVariables = createLoginEmailContext("Password", "17.02.2026", "10:30:00 (Europe/Berlin)", "Web Browser", "http://localhost:9000/account/password");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("Password");
+        assertThat(body).contains("17.02.2026");
+        assertThat(body).contains("10:30:00");
+        assertThat(body).contains("Web Browser");
+        assertThat(body).contains("account/password");
+    }
+
+    @Test
+    void newLoginEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+        var contextVariables = createLoginEmailContext("Passwort", "17.02.2026", "10:30:00 (Europe/Berlin)", "Webbrowser", "http://localhost:9000/account/password");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("Passwort");
+        assertThat(body).contains("17.02.2026");
+        assertThat(body).contains("Webbrowser");
+    }
+
+    // -- New passkey notification email --
+
+    @Test
+    void newPasskeyEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("user-settings/credentials");
+        assertThat(body).contains("Jane Doe");
+    }
+
+    @Test
+    void newPasskeyEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("user-settings/credentials");
+        assertThat(body).contains("Jane Doe");
+    }
+
+    // -- E-mail changed notification email --
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("Jane Doe");
+        assertThat(body).contains("was changed");
+    }
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("geändert");
+    }
+
+    @Test
+    void emailChangedEmail_shouldEscapeTheAddressRatherThanRenderItAsMarkup() throws Exception {
+        // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
+        // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "<script>alert(1)</script>@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).doesNotContain("<script>alert(1)</script>");
+        assertThat(body).contains("&lt;script&gt;");
+    }
+
+    // -- VCS access token expired notification email --
+
+    @Test
+    void vcsAccessTokenExpiredEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                new HashMap<>());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("user-settings/credentials");
+        assertThat(body).contains("Jane Doe");
+    }
+
+    @Test
+    void vcsAccessTokenExpiredEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                new HashMap<>());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("user-settings/credentials");
+        assertThat(body).contains("Jane Doe");
+    }
+
+    // -- SSH key expired notification email --
+
+    @Test
+    void sshKeyExpiredEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var sshKey = new UserSshPublicKey();
+        sshKey.setLabel("My Laptop Key");
+        sshKey.setKeyHash("SHA256:abc123hash");
+
+        var contextVariables = new HashMap<String, Object>();
+        contextVariables.put("sshKey", sshKey);
+        contextVariables.put("expiryDate", "17.02.2026 - 10:30:00");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning",
+                "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("My Laptop Key");
+        assertThat(body).contains("SHA256:abc123hash");
+        assertThat(body).contains("17.02.2026 - 10:30:00");
+        assertThat(body).contains("user-settings/credentials");
+    }
+
+    @Test
+    void sshKeyExpiredEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var sshKey = new UserSshPublicKey();
+        sshKey.setLabel("Mein Laptop Key");
+        sshKey.setKeyHash("SHA256:de456hash");
+
+        var contextVariables = new HashMap<String, Object>();
+        contextVariables.put("sshKey", sshKey);
+        contextVariables.put("expiryDate", "17.02.2026 - 10:30:00");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning",
+                "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("Mein Laptop Key");
+        assertThat(body).contains("SHA256:de456hash");
+        assertThat(body).contains("17.02.2026 - 10:30:00");
+        assertThat(body).contains("user-settings/credentials");
+    }
+
+    // -- Data export created email --
+
+    @Test
+    void dataExportCreatedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var dataExport = new DataExportEmailDTO(42L, recipient.getLogin());
+
+        testMailService.sendDataExportCreatedEmail(MailRecipientDTO.from(recipient), dataExport);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("privacy/data-exports/42");
+    }
+
+    @Test
+    void dataExportCreatedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var dataExport = new DataExportEmailDTO(99L, recipient.getLogin());
+
+        testMailService.sendDataExportCreatedEmail(MailRecipientDTO.from(recipient), dataExport);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("privacy/data-exports/99");
+    }
+
+    // -- Data export failed admin email --
+
+    @Test
+    void dataExportFailedAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var dataExport = new DataExportEmailDTO(1L, "faileduser");
+
+        testMailService.sendDataExportFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("Disk full"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("faileduser");
+        assertThat(body).contains("Disk full");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    @Test
+    void dataExportFailedAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var dataExport = new DataExportEmailDTO(2L, "fehlbenutzer");
+
+        testMailService.sendDataExportFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("Festplatte voll"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("fehlbenutzer");
+        assertThat(body).contains("Festplatte voll");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    // -- Data export email failed admin email --
+
+    @Test
+    void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var dataExport = new DataExportEmailDTO(3L, "emailfailuser");
+
+        testMailService.sendDataExportEmailFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("SMTP connection refused"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("emailfailuser");
+        assertThat(body).contains("SMTP connection refused");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    @Test
+    void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var dataExport = new DataExportEmailDTO(4L, "emailfehlnutzer");
+
+        testMailService.sendDataExportEmailFailedEmailToAdmin(MailRecipientDTO.from(recipient), dataExport, new RuntimeException("SMTP Verbindung abgelehnt"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("emailfehlnutzer");
+        assertThat(body).contains("SMTP Verbindung abgelehnt");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    // -- Successful data exports admin email --
+
+    @Test
+    void successfulDataExportsAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var dataExports = new LinkedHashSet<DataExportEmailDTO>();
+        dataExports.add(new DataExportEmailDTO(11L, "exportuser1"));
+        dataExports.add(new DataExportEmailDTO(12L, "exportuser2"));
+
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(recipient), dataExports);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("exportuser1");
+        assertThat(body).contains("exportuser2");
+    }
+
+    @Test
+    void successfulDataExportsAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var dataExports = new LinkedHashSet<DataExportEmailDTO>();
+        dataExports.add(new DataExportEmailDTO(21L, "exportnutzer1"));
+
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(recipient), dataExports);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("exportnutzer1");
+    }
+
+    // -- Build agent self-paused admin email --
+
+    @Test
+    void buildAgentSelfPausedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.from(recipient), "build-agent-01", 5);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("build-agent-01");
+        assertThat(body).contains("5");
+    }
+
+    @Test
+    void buildAgentSelfPausedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.from(recipient), "build-agent-02", 10);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("build-agent-02");
+        assertThat(body).contains("10");
+    }
+
+    // -- Vulnerability scan result email --
+
+    @Test
+    void vulnerabilityScanResultEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var vuln = new VulnerabilityDTO("CVE-2025-1234", "Test vulnerability summary", "details", "HIGH", 7.5, List.of(), List.of("2.0.0"), List.of());
+        var component = new ComponentWithVulnerabilitiesDTO("pkg:maven/com.example/test@1.0.0", List.of(vuln));
+        var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(component), 1, 0, 1, 0, 0, "2026-02-17T10:00:00Z");
+        var versionInfo = new ArtemisVersionDTO("7.8.0", "7.9.0", true, "https://github.com/ls1intum/Artemis/releases/tag/7.9.0", null, "2026-02-17");
+
+        testMailService.sendVulnerabilityScanResultEmail(MailRecipientDTO.from(recipient), vulnerabilities, versionInfo, true);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("CVE-2025-1234");
+        assertThat(body).contains("Test vulnerability summary");
+        assertThat(body).contains("pkg:maven/com.example/test@1.0.0");
+        assertThat(body).contains("7.8.0");
+        assertThat(body).contains("7.9.0");
+        assertThat(body).contains("2.0.0");
+        assertThat(body).contains("admin/dependencies");
+    }
+
+    @Test
+    void vulnerabilityScanResultEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(), 0, 0, 0, 0, 0, "2026-02-17T10:00:00Z");
+        var versionInfo = new ArtemisVersionDTO("7.8.0", null, false, null, null, "2026-02-17");
+
+        testMailService.sendVulnerabilityScanResultEmail(MailRecipientDTO.from(recipient), vulnerabilities, versionInfo, false);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("7.8.0");
+        assertThat(body).contains("admin/dependencies");
+    }
+
+    // -- Weekly feature usage digest --
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        // areas are named the way users know them, not by module
+        assertThat(body).contains("Programming exercises");
+        assertThat(body).contains("1500");
+        // the previous window was smaller, so the change has to read as a rise
+        assertThat(body).contains("+50%");
+        // an area nobody used is named rather than shown as a row of zeros
+        assertThat(body).contains("Lectures");
+        // features that only received automatic or system calls are called out, because that is what made them look used
+        assertThat(body).contains("only received automatic or system calls");
+        // the whole point of the mail is to get someone onto the page
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        // proves the German message keys exist too, including one per product area; a missing key would render as ??key??
+        assertThat(body).doesNotContain("??");
+        assertThat(body).contains("Nutzung pro Bereich");
+        assertThat(body).contains("Programmieraufgaben");
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldSayWhenNothingWasRecorded() throws Exception {
+        var empty = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 0, 0, 0, 0, 0, 0, 0, null, List.of(), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), empty);
+
+        String body = getDeliveredEmailBody();
+        // an empty deployment must not receive a table of zeros presented as a finding
+        assertThat(body).contains("No usage at all was recorded");
+        assertThat(body).doesNotContain("Usage per area");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldOmitTheChangeWhenThereIsNoPreviousData() throws Exception {
+        var area = new FeatureUsageAreaSummaryDTO(ProductArea.PROGRAMMING, 1500, 0, 900, 3, 10, 13, 1);
+        var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1500, 0, 60, 40, 20, 0, 2, null, List.of(area), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("n/a");
+        assertThat(body).doesNotContain("%</span>");
+    }
+
+    /**
+     * Every product area has to render by name in both languages, which a template that looks the name up by a computed
+     * key only proves when each area actually appears.
+     */
+    @Test
+    void featureUsageDigestEmail_shouldNameEveryProductAreaInBothLanguages() throws Exception {
+        for (String language : List.of("en", "de")) {
+            recipient.setLangKey(language);
+            var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1, 0, 1, 1, 0, 0, 0, null,
+                    List.of(new FeatureUsageAreaSummaryDTO(ProductArea.COURSES, 1, 0, 1, 0, 1, 1, 0)), List.of(ProductArea.values()));
+
+            testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
+
+            assertThat(getDeliveredEmailBody()).as("digest in %s", language).doesNotContain("??");
+            greenMail.purgeEmailFromAllMailboxes();
+        }
+    }
+
+    private static FeatureUsageDigestDTO featureUsageDigest() {
+        var programming = new FeatureUsageAreaSummaryDTO(ProductArea.PROGRAMMING, 1500, 1000, 900, 3, 10, 13, 1);
+        var exams = new FeatureUsageAreaSummaryDTO(ProductArea.EXAMS, 200, 400, 150, 0, 5, 11, 0);
+        return new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1700, 1400, 72, 50, 22, 4, 2, Instant.parse("2026-01-01T00:00:00Z"),
+                List.of(programming, exams), List.of(ProductArea.LECTURES, ProductArea.QUIZ));
+    }
+
+    private Map<String, Object> createLoginEmailContext(String authMethod, String loginDate, String loginTime, String requestOrigin, String resetLink) {
+        var contextVariables = new HashMap<String, Object>();
+        contextVariables.put("authenticationMethod", authMethod);
+        contextVariables.put("loginDate", loginDate);
+        contextVariables.put("loginTime", loginTime);
+        contextVariables.put("requestOrigin", requestOrigin);
+        contextVariables.put("resetLink", resetLink);
+        return contextVariables;
+    }
+
+    private String getDeliveredEmailBody() throws Exception {
+        assertThat(greenMail.waitForIncomingEmail(EMAIL_TIMEOUT_MS, 1)).isTrue();
+        MimeMessage[] messages = greenMail.getReceivedMessages();
+        assertThat(messages).hasSize(1);
+        return messages[0].getContent().toString();
+    }
+}

@@ -1,0 +1,66 @@
+<div class="flex flex-col gap-3.5">
+    @if (shouldNavigateOnSubmit()) {
+        <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
+    }
+    <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
+    <tumaet-ui-table-layout
+        class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
+        [loading]="isLoading()"
+        [empty]="exercisesAvailableForUnitCreation().length === 0 && !isLoading()"
+        [emptyTitle]="hasCourseExercises() ? 'artemisApp.exerciseUnit.createExerciseUnit.noExercises' : 'artemisApp.exerciseUnit.createExerciseUnit.noCourseExercises'"
+    >
+        <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+            <thead>
+                <tr>
+                    <th class="w-10"><span class="sr-only" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.select"></span></th>
+                    <th tumAetUiSortableColumn="type"><span jhiTranslate="artemisApp.exercise.type"></span></th>
+                    <th tumAetUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th tumAetUiSortableColumn="shortName"><span jhiTranslate="artemisApp.exercise.shortName"></span></th>
+                    <th tumAetUiSortableColumn="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate"></span></th>
+                    <th tumAetUiSortableColumn="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate"></span></th>
+                    <th tumAetUiSortableColumn="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDueDate"></span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (exercise of exercisesAvailableForUnitCreation(); track exercise.id) {
+                    @let selected = isExerciseSelectedForUnitCreation(exercise);
+                    <tr
+                        id="exercise-{{ exercise.id }}"
+                        class="cursor-pointer"
+                        [class.create-exercise-unit-selected]="selected"
+                        (click)="selectExerciseForUnitCreation(exercise)"
+                        (keydown.enter)="selectExerciseForUnitCreation(exercise)"
+                    >
+                        <td>
+                            <!-- The row toggles the selection for pointer users; the checkbox is the only tab stop per row; Enter on it bubbles to the row handler, so keyboard users toggle once. -->
+                            <tumaet-ui-checkbox
+                                [inputId]="'exercise-select-' + exercise.id"
+                                [ariaLabel]="exercise.title ?? ''"
+                                [checked]="selected"
+                                (click)="$event.stopPropagation()"
+                                (checkedChange)="selectExerciseForUnitCreation(exercise)"
+                            />
+                        </td>
+                        <td>{{ exercise.type ?? '' }}</td>
+                        <td>{{ exercise.title ?? '' }}</td>
+                        <td>{{ exercise.shortName ?? '' }}</td>
+                        <td>{{ exercise.releaseDate | artemisDate }}</td>
+                        <td>{{ exercise.dueDate | artemisDate }}</td>
+                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </tumaet-ui-table-layout>
+    <div class="flex flex-wrap gap-2">
+        <button tumAetUiButton id="createButton" type="button" [disabled]="exercisesToCreateUnitFor().length === 0" (click)="createExerciseUnits()">
+            <span jhiTranslate="entity.action.submit"></span>
+        </button>
+        @if (hasCancelButton()) {
+            <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+        }
+    </div>
+</div>

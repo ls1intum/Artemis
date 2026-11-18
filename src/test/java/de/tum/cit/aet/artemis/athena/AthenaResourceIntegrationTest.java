@@ -1,0 +1,534 @@
+package de.tum.cit.aet.artemis.athena;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.endsWith;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.match.MockRestRequestMatchers;
+import org.springframework.util.LinkedMultiValueMap;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionWithoutAssessmentDTO;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+class AthenaResourceIntegrationTest extends AbstractAthenaTest {
+
+    private static final String TEST_PREFIX = "athenaintegration";
+
+    @Value("${artemis.athena.secret}")
+    private String athenaSecret;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private TextSubmissionTestRepository textSubmissionRepository;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ModelingSubmissionTestRepository modelingSubmissionRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private LearnerProfileUtilService learnerProfileUtilService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateParticipationRepository;
+
+    private TextExercise textExercise;
+
+    private TextSubmission textSubmission;
+
+    private ProgrammingExercise programmingExercise;
+
+    private ProgrammingSubmission programmingSubmission;
+
+    private ModelingExercise modelingExercise;
+
+    private ModelingSubmission modelingSubmission;
+
+    @BeforeEach
+    @Override
+    protected void initTestCase() {
+        super.initTestCase();
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 0);
+
+        // Create learner profiles for test users
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+
+        var textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
+                true);
+        var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(studentParticipation);
+        textSubmission.setParticipation(studentParticipation);
+        textSubmissionRepository.save(textSubmission);
+
+        var programmingCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
+        // Allow manual results
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        var programmingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(programmingParticipation);
+        programmingSubmission.setParticipation(programmingParticipation);
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        var modelingCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
+        modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
+        modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(modelingParticipation);
+        modelingSubmission.setParticipation(modelingParticipation);
+        modelingSubmissionRepository.save(modelingSubmission);
+    }
+
+    @AfterEach
+    void cleanupRepositories() {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "A text submission")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsSuccessText(String text) throws Exception {
+        textSubmission.setText(text);
+        textSubmissionRepository.save(textSubmission);
+        var result = new Result().submission(textSubmission);
+        result.setExerciseId(textExercise.getId());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", MockRestRequestMatchers.jsonPath("$.submission.text").value(text == null ? "" : text),
+                MockRestRequestMatchers.jsonPath("$.latestSubmission.text").value(text == null ? "" : text));
+        List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
+                HttpStatus.OK, Feedback.class);
+        assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        List<Feedback> response = request.getList(
+                "/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
+                Feedback.class);
+        assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        List<Feedback> response = request.getList(
+                "/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
+                Feedback.class);
+        assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "text", "programming", "modeling" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsAthenaHttpError(String exerciseType) throws Exception {
+        var exercise = switch (exerciseType) {
+            case "text" -> textExercise;
+            case "programming" -> programmingExercise;
+            default -> modelingExercise;
+        };
+        var submission = switch (exerciseType) {
+            case "text" -> textSubmission;
+            case "programming" -> programmingSubmission;
+            default -> modelingSubmission;
+        };
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        var server = MockRestServiceServer.createServer(athenaRequestMockProvider.getRestTemplate());
+        server.expect(requestTo(endsWith("/feedback_suggestions"))).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        request.get("/api/athena/" + exerciseType + "-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/feedback-suggestions",
+                HttpStatus.SERVICE_UNAVAILABLE, List.class);
+        server.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetTextFeedbackSuggestionsNotFound() throws Exception {
+        request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetModelingFeedbackSuggestionsNotFound() throws Exception {
+        request.get("/api/athena/modeling-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        request.get("/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions",
+                HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        request.get("/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
+                List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsAthenaEnabled() throws Exception {
+        // Create example participation with submission
+        var participation = new StudentParticipation();
+        participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setExercise(programmingExercise);
+        participation = studentParticipationRepository.save(participation);
+        programmingSubmission.setParticipation(participation);
+        programmingSubmissionRepository.save(programmingSubmission);
+        // Create example result
+        var result = new Result();
+        result.setScore(1.0);
+        result.setSubmission(programmingSubmission);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setRated(true);
+        result.setExerciseId(programmingExercise.getId());
+        // Create example feedback so that Athena can process it
+        var feedback = new Feedback();
+        feedback.setCredits(1.0);
+        feedback.setResult(result);
+        result.setFeedbacks(List.of(feedback));
+
+        result = resultRepository.save(result);
+        feedbackRepository.save(feedback);
+
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        // Mock the async Athena /feedbacks call triggered when the result is submitted
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("programming");
+
+        result.setSubmission(null); // avoid sending the submission to the server, keep the payload small
+        Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class,
+                HttpStatus.OK);
+
+        assertThat(response).as("response is not null").isNotNull();
+        // Wait for the async sendFeedback call to complete and consume the mock expectation
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> athenaRequestMockProvider.verify());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
+    void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+
+        // Write the expected file into the real template, solution and tests repositories of the exercise.
+        for (String repositoryUri : List.of(programmingExercise.getTemplateRepositoryUri(), programmingExercise.getSolutionRepositoryUri(),
+                programmingExercise.getTestRepositoryUri())) {
+            localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(repositoryUri), Map.of("README.md", "Initial commit"), "Initial commit");
+        }
+
+        // Get repository contents as map from endpoint
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        Map<String, String> repoFiles = request.getMap("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class,
+                String.class, new LinkedMultiValueMap<>(), authHeaders);
+        assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
+    }
+
+    @Test
+    void testStudentRepositoryExportEndpoint() throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        // Create a programming student participation with a submission and result
+        var studentLogin = TEST_PREFIX + "student1";
+        var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, studentLogin);
+        programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+
+        // The participation already has a real LocalVC repository, so only the expected file has to be written into it.
+        var programmingStudentParticipation = programmingExerciseStudentParticipationTestRepository.findById(programmingSubmission.getParticipation().getId()).orElseThrow();
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(programmingStudentParticipation.getRepositoryUri()), Map.of("README.md", "Initial commit"),
+                "Initial commit");
+
+        // Call the internal endpoint with valid Athena auth and verify file map
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        Map<String, String> repoFiles = request.getMap(
+                "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/repository", HttpStatus.OK,
+                String.class, String.class, new LinkedMultiValueMap<>(), authHeaders);
+        assertThat(repoFiles).as("student export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md",
+                "Initial commit");
+    }
+
+    private @NonNull HttpHeaders getAuthHeaders(String athenaSecret) {
+        var authHeaders = new HttpHeaders();
+        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
+        return authHeaders;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
+    void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        // Expect status 503 because Athena is not enabled for the exercise
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
+    void testRepositoryExportEndpointsFailWithWrongAuthentication(String urlSuffix) throws Exception {
+        final var authHeaders = getAuthHeaders(athenaSecret + "-wrong");
+
+        // Expect status 403 because the Authorization header is wrong
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "repository/user", "repository/auxiliary" })
+    void testRepositoryExportEndpointsFailWithInvalidRepositoryType(String urlSuffix) throws Exception {
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.NOT_FOUND, Result.class, authHeaders);
+    }
+
+    // Removed legacy public endpoint test that expected BAD_REQUEST for invalid repository type
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testNextSubmissionToAssessIsTheOneAthenaProposed() throws Exception {
+        // The endpoint asks Athena which submission to hand out next, gated on the course's grading feedback setting.
+        // That setting is lazy, so the endpoint has to resolve it before the selection rather than only for the response.
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        var pastDueDateExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2),
+                ZonedDateTime.now().plusDays(1));
+        var firstSubmission = textExerciseUtilService.saveTextSubmission(pastDueDateExercise,
+                ParticipationFactory.generateTextSubmission("The first submission", Language.ENGLISH, true), TEST_PREFIX + "student1");
+        var proposedSubmission = textExerciseUtilService.saveTextSubmission(pastDueDateExercise,
+                ParticipationFactory.generateTextSubmission("The submission Athena picks", Language.ENGLISH, true), TEST_PREFIX + "student2");
+
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", proposedSubmission.getId());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lock", "true");
+        var selected = request.get("/api/text/exercises/" + pastDueDateExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmissionWithoutAssessmentDTO.class, params);
+
+        // Athena has to have been asked at all: without the configuration the endpoint skips it and picks at random,
+        // which would pass the id assertion below every other run.
+        athenaRequestMockProvider.verifySubmissionSelection();
+        assertThat(selected).isNotNull();
+        assertThat(selected.id()).as("the submission Athena proposed is handed out, not a random one").isEqualTo(proposedSubmission.getId());
+        assertThat(selected.id()).isNotEqualTo(firstSubmission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void feedbackSuggestionsRejectForeignTextAndExampleSubmissions() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var config = new CourseAthenaConfig();
+        config.setCourse(course);
+        config.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(config);
+        courseUtilService.saveWithConfigurations(course);
+        var foreignCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("ForeignAthena");
+        var foreignExercise = (TextExercise) foreignCourse.getExercises().iterator().next();
+        var foreignSubmission = participationUtilService.addSubmission(foreignExercise,
+                ParticipationFactory.generateTextSubmission("foreign private submission", Language.ENGLISH, true), TEST_PREFIX + "student2");
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("example text", textExercise, true));
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        long feedbackCount = feedbackRepository.count();
+        for (long id : List.of(foreignSubmission.getId(), example.getSubmission().getId())) {
+            request.performMvcRequest(get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + id + "/feedback-suggestions")).andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorKey").value("exerciseIdDoesNotMatch")).andExpect(jsonPath("$.entityName").value("Exercise"));
+        }
+        assertThat(feedbackRepository.count()).isEqualTo(feedbackCount);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void feedbackSuggestionsRejectForeignTemplateSubmission() throws Exception {
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var config = new CourseAthenaConfig();
+        config.setCourse(course);
+        config.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(config);
+        courseUtilService.saveWithConfigurations(course);
+        var foreignCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var foreignExercise = ExerciseUtilService.getFirstExerciseWithType(foreignCourse, ProgrammingExercise.class);
+        var template = templateParticipationRepository.findByIdElseThrow(foreignExercise.getTemplateParticipation().getId());
+        assertThat(template.getExercise().getId()).isEqualTo(foreignExercise.getId());
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(template);
+        programmingSubmissionRepository.save(submission);
+        long feedbackCount = feedbackRepository.count();
+        request.performMvcRequest(get("/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + submission.getId() + "/feedback-suggestions"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.errorKey").value("exerciseIdDoesNotMatch")).andExpect(jsonPath("$.entityName").value("Exercise"));
+        assertThat(feedbackRepository.count()).isEqualTo(feedbackCount);
+    }
+
+}

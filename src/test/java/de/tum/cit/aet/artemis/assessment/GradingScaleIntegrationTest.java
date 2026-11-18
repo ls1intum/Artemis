@@ -1,0 +1,870 @@
+package de.tum.cit.aet.artemis.assessment;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.assessment.domain.Bonus;
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+
+class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "gradingscale";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    private GradingScale courseGradingScale;
+
+    private GradingScale examGradingScale;
+
+    private Set<GradeStep> gradeSteps;
+
+    private Course course;
+
+    private Exam exam;
+
+    /**
+     * Initialize variables
+     */
+    @BeforeEach
+    void init() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
+
+        exam = examUtilService.addExamWithExerciseGroup(course, true);
+        courseGradingScale = new GradingScale();
+        courseGradingScale.setCourse(course);
+        examGradingScale = new GradingScale();
+        examGradingScale.setExam(exam);
+        gradeSteps = new HashSet<>();
+        courseGradingScale.setGradeSteps(gradeSteps);
+        examGradingScale.setGradeSteps(gradeSteps);
+    }
+
+    private GradingScaleUpdateDTO toDTO(GradingScale gradingScale, Integer coursePresentationScore) {
+        return toDTO(gradingScale, coursePresentationScore, null, null);
+    }
+
+    private GradingScaleUpdateDTO toDTO(GradingScale gradingScale, Integer coursePresentationScore, Integer courseMaxPoints, Integer examMaxPoints) {
+        Set<GradingScaleUpdateDTO.GradeStepDTO> gradeStepDTOs = gradingScale.getGradeSteps().stream().map(gs -> new GradingScaleUpdateDTO.GradeStepDTO(gs.getLowerBoundPercentage(),
+                gs.isLowerBoundInclusive(), gs.getUpperBoundPercentage(), gs.isUpperBoundInclusive(), gs.getGradeName(), gs.getIsPassingGrade())).collect(Collectors.toSet());
+        return new GradingScaleUpdateDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
+                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs, courseMaxPoints, coursePresentationScore, examMaxPoints);
+    }
+
+    /**
+     * The exam endpoints must refuse an exam that does not belong to the course of the path, even if the user is an instructor of that course
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExamGradingScaleEndpointsRejectExamOfOtherCourse() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Course otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        userUtilService.enrollUserInCourse(instructor, otherCourse, CourseRole.INSTRUCTOR);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        gradingScaleRepository.save(examGradingScale);
+
+        String url = "/api/assessment/courses/" + otherCourse.getId() + "/exams/" + exam.getId() + "/grading-scale";
+        request.get(url, HttpStatus.CONFLICT, GradingScaleDTO.class);
+        request.post(url, toDTO(examGradingScale, null), HttpStatus.CONFLICT);
+        request.put(url, toDTO(examGradingScale, null), HttpStatus.CONFLICT);
+        request.delete(url, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Test get request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetGradingScaleForCourseNotFound() throws Exception {
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
+    }
+
+    /**
+     * Test get request for a grading scale without instructor rights
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetGradingScale_shouldReturnForbiddenWhenUserIsNotInstructor() throws Exception {
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.FORBIDDEN, GradingScaleDTO.class);
+    }
+
+    /**
+     * Test get request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetGradingScaleForCourse() throws Exception {
+        courseGradingScale.setGradeSteps(Set.of());
+        gradingScaleRepository.save(courseGradingScale);
+
+        GradingScaleDTO foundGradingScale = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, GradingScaleDTO.class);
+
+        assertThat(foundGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").isEqualTo(GradingScaleDTO.of(courseGradingScale));
+    }
+
+    /**
+     * Test get request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetGradingScaleForExamNotFound() throws Exception {
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
+    }
+
+    /**
+     * Test get request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetGradingScaleForExam() throws Exception {
+        examGradingScale.setGradeSteps(Set.of());
+        gradingScaleRepository.save(examGradingScale);
+
+        GradingScaleDTO foundGradingScale = request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK,
+                GradingScaleDTO.class);
+
+        assertThat(foundGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").isEqualTo(GradingScaleDTO.of(examGradingScale));
+    }
+
+    /**
+     * Test post request for existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseGradingScaleAlreadyExists() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request for a grading scale without set grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
+        courseGradingScale.setGradeSteps(Set.of());
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post request for existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExamGradingScaleAlreadyExists() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request for a grading scale without set grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
+        examGradingScale.setGradeSteps(Set.of());
+
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request with invalid grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseInvalidGradeSteps() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request with invalid presentation configuration for basic presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseInvalidBasicPresentationConfiguration() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber and presentationsWeight must be null.
+        courseGradingScale.setPresentationsNumber(1);
+        courseGradingScale.setPresentationsWeight(20.0);
+        GradingScaleUpdateDTO dto1 = toDTO(courseGradingScale, 2);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto1, HttpStatus.BAD_REQUEST);
+        courseGradingScale.setPresentationsNumber(null);
+        courseGradingScale.setPresentationsWeight(null);
+
+        // The presentationScore must be above 0.
+        GradingScaleUpdateDTO dto2 = toDTO(courseGradingScale, -1);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto2, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseInvalidGradedPresentationConfiguration() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        // The presentationsNumber must be above 0. The presentationsWeight must be between 0 and 99.
+        course.setPresentationScore(null);
+        courseGradingScale.setPresentationsNumber(0);
+        courseGradingScale.setPresentationsWeight(120.0);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+
+        // Test with null presentationsWeight
+        courseGradingScale.setPresentationsNumber(2);
+        courseGradingScale.setPresentationsWeight(null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request with invalid presentation configuration for graded presentations
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, 5);
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, GradingScaleDTO.class,
+                HttpStatus.CREATED);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * Test post-request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourse() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.CREATED);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * Test post-request for a grading scale with plagiarism and no-participation special grades
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleWithSpecialGrades() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPlagiarismGrade("Plagiarism");
+        courseGradingScale.setNoParticipationGrade("NoParticipation");
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.CREATED);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * Test post-request with invalid grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExamInvalidGradeSteps() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test post-request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExam() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
+                toDTO(examGradingScale, null), GradingScaleDTO.class, HttpStatus.CREATED);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * A course max points value above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 10000, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsCoursePresentationScoreAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 10000), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A presentations number above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsPresentationsNumberAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPresentationsNumber(10000);
+        courseGradingScale.setPresentationsWeight(50.0);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * An exam max points value above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 10000);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score of 0 is valid (it disables the feature) and must stay accepted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseAllowsCoursePresentationScoreZero() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.CREATED);
+    }
+
+    /**
+     * A course max points value exactly at the allowed limit must be accepted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseAcceptsCourseMaxPointsAtLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 9999, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * An exam max points value exactly at the allowed limit must be accepted through the grading scale path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForExamAcceptsExamMaxPointsAtLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 9999);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * A negative course max points value must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsNegativeCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), -1, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course max points value above the allowed limit must also be rejected on the update path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 10000, null);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * An exam max points value above the allowed limit must also be rejected on the update path, which otherwise
+     * writes the value directly to the exam and bypasses the numeric limit check in ExamResource.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradingScaleRepository.save(examGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 10000);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course max points value of 0 must be rejected, because the lower bound is now 1 (0 points is not a meaningful
+     * grading configuration and would divide by zero in downstream score calculations).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsCourseMaxPointsZero() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 0, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score exactly at the new limit (100) must be accepted, one above it (101) rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseHandlesCoursePresentationScoreBoundary() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 101), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 100), HttpStatus.CREATED);
+    }
+
+    /**
+     * A presentations number exactly at the new limit (100) must be accepted, one above it (101) rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseHandlesPresentationsNumberBoundary() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPresentationsWeight(50.0);
+
+        // Graded presentations require basic presentations (course presentation score) to be disabled, so pass 0.
+        courseGradingScale.setPresentationsNumber(101);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.BAD_REQUEST);
+
+        courseGradingScale.setPresentationsNumber(100);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.CREATED);
+    }
+
+    /**
+     * A fractional JSON number for an integer point field must be rejected instead of being silently truncated.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsDecimalCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        ObjectNode body = request.getObjectMapper().valueToTree(toDTO(courseGradingScale, course.getPresentationScore(), 10, null));
+        body.put("courseMaxPoints", 10.5);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", body, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A decimal value passed as a JSON string for an integer point field must also be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSaveGradingScaleForCourseRejectsDecimalStringCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        ObjectNode body = request.getObjectMapper().valueToTree(toDTO(courseGradingScale, course.getPresentationScore(), 10, null));
+        body.put("courseMaxPoints", "10.5");
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", body, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test put request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnNotFound() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Test put request with invalid grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForCourseInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test put request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForCourse() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.OK);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * Test put request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnNotFound() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Test put request with invalid grade steps
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForExamInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradingScaleRepository.save(examGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Test put request for a grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateGradingScaleForExam() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+
+        GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
+                toDTO(examGradingScale, null), GradingScaleDTO.class, HttpStatus.OK);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
+    }
+
+    /**
+     * Test delete request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteGradingScaleForCourseNotFound() throws Exception {
+        request.delete("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Test delete request for grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteGradingScaleForCourse() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+
+        request.delete("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK);
+    }
+
+    /**
+     * Test delete request for non-existing grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteGradingScaleForExamNotFound() throws Exception {
+        request.delete("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Test delete request for grading scale
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteGradingScaleForExam() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.delete("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK);
+    }
+
+    /**
+     * Test delete request for a course should delete the grading scale of that course as well
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesGradingScale() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
+
+        Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
+        assertThat(foundGradingScale).isEmpty();
+    }
+
+    /**
+     * Test delete request for exam should delete the grading scale of that exam as well
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteExamDeletesGradingScale() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+
+        Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
+        assertThat(foundGradingScale).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
+        course.setTitle("abcdefghijklmnop");
+        courseRepository.save(course);
+        exam.setTitle("abcdefghijklmnop");
+        examRepository.save(exam);
+
+        String url = "/api/assessment/grading-scales";
+        var search = pageableSearchUtilService.configureSearch("abcdefghijklmnop");
+        search.setPageSize(100);
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(courseGradingScale);
+
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+
+        examGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(examGradingScale);
+
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
+
+        String url = "/api/assessment/grading-scales";
+        var search = pageableSearchUtilService.configureSearch("");
+        search.setPageSize(100);
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(courseGradingScale);
+
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+
+        examGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(examGradingScale);
+
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    /**
+     * Test if a grade step is contained in a grade step set
+     *
+     * @param gradeSteps      the grade step set
+     * @param gradeStepToTest the grade step
+     * @return true if it is contained and false otherwise
+     */
+    private static boolean isGradeStepInSet(Set<GradeStepDTO> gradeSteps, GradeStepDTO gradeStepToTest) {
+        for (GradeStepDTO gradeStep : gradeSteps) {
+            if (equalGradeSteps(gradeStep, gradeStepToTest)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Tests if two grade steps are equal by comparing all attributes but the ids and grading scales
+     *
+     * @param gradeStep1 the first grade step
+     * @param gradeStep2 the second grade step
+     * @return true if grade steps are equal and false otherwise
+     */
+    private static boolean equalGradeSteps(GradeStepDTO gradeStep1, GradeStepDTO gradeStep2) {
+        return gradeStep1.isPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.lowerBoundInclusive() == gradeStep2.lowerBoundInclusive()
+                && gradeStep1.upperBoundInclusive() == gradeStep2.upperBoundInclusive() && gradeStep1.lowerBoundPercentage() == gradeStep2.lowerBoundPercentage()
+                && gradeStep1.upperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.gradeName().equals(gradeStep2.gradeName());
+    }
+
+    @Nested
+    class GradingScaleDTOTest {
+
+        @Test
+        void shouldCreateDTOWhenEntityIsValid() {
+            gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+            examGradingScale.setGradeSteps(gradeSteps);
+            exam.setExamMaxPoints(null);
+            examRepository.save(exam);
+            GradingScaleDTO dto = GradingScaleDTO.of(examGradingScale);
+
+            assertThat(dto).isNotNull();
+            assertThat(dto.gradeSteps().gradeSteps()).hasSize(examGradingScale.getGradeSteps().size());
+        }
+
+        @Test
+        void shouldReturnEmptyBonusSetWhenBonusIsNull() {
+            gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+            examGradingScale.setGradeSteps(gradeSteps);
+            exam.setExamMaxPoints(null);
+            examRepository.save(exam);
+            examGradingScale.setBonusFrom(null);
+
+            GradingScaleDTO dto = GradingScaleDTO.of(examGradingScale);
+            assertThat(dto.bonusFrom()).isEmpty();
+        }
+
+        @Test
+        void shouldThrowBadRequestWhenSourceGradingScaleIsNull() {
+
+            Bonus bonus = new Bonus();
+            bonus.setWeight(5.0);
+            bonus.setSourceGradingScale(null);
+
+            assertThatThrownBy(() -> GradingScaleDTO.BonusDTO.of(bonus)).isInstanceOf(InternalServerErrorException.class)
+                    .hasMessageContaining("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.");
+        }
+    }
+}

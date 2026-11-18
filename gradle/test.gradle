@@ -1,0 +1,261 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+import java.time.Duration
+
+// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+tasks.withType(Test).configureEach {
+
+    // Hard backstop against a hung test/deadlock. On timeout the build fails as `failure`, not the
+    // opaque `cancelled` a GitHub job-timeout produces, so the merge gate shows a real failure. A global
+    // JUnit per-method timeout is deliberately NOT used: SAME_THREAD cannot interrupt a deadlock, and
+    // SEPARATE_THREAD breaks the ~288 tests relying on the thread-bound Spring SecurityContext
+    // (@WithMockUser).
+    //
+    // 70 minutes rather than the 55 this was set to when the hang ladder was introduced. The median run
+    // is ~30 min, but wall time roughly doubles on a loaded runner. Measured on 2026-09-04: green runs
+    // of 29, 29, 30, 30, 31, 33, 45, 48 and 51 minutes, and four runs killed here at 57 to 58 minutes
+    // with zero test failures, each still completing tests seconds before the kill. 55 sat about six
+    // minutes above the legitimate maximum run_with_hang_dump.sh already documents ("40-49 min on a
+    // loaded runner"), so a load spike failed the build instead of a defect.
+    //
+    // This does not weaken hang detection, because this timer never told a hang from a slow run.
+    // run_with_hang_dump.sh does, by watching for output silence, and still dumps threads from about
+    // minute 45. What is left for this bound to catch is a hang that keeps producing output, and it
+    // stays under the job's own 80-minute cap so that case still fails as a Gradle failure.
+    timeout = Duration.ofMinutes(70)
+
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+    // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
+    // See: https://github.com/weaviate/java-client?tab=readme-ov-file#gson-and-reflective-access-to-internal-jdk-classes
+    // This is harmless: it only opens java.lang to classpath code within the same JVM process and does not expand the attack surface for remote exploits.
+    jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+    // Force UTC timezone for the test JVM. PostgreSQL's TIMESTAMP WITHOUT TIME ZONE columns
+    // in @SecondaryTable mappings can shift values by the JVM timezone offset during Hibernate
+    // round-trips. Combined with hibernate.jdbc.time_zone=UTC and the PostgreSQL session
+    // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
+    // and PostgreSQL.
+    jvmArgs += "-Duser.timezone=UTC"
+
+    // Pass weaviate server version to integration tests
+    systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
+    // Lets FeatureUsageAnnotationTest rewrite the generated feature usage catalogue document on demand:
+    // ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+    systemProperty 'updateFeatureUsageCatalogue', System.getProperty('updateFeatureUsageCatalogue', 'false')
+
+    // Opt-in performance benchmarks are skipped unless explicitly requested, because they are far too slow for CI.
+    // Enable with: ./gradlew test --tests "*BenchmarkTest" -Dartemis.benchmark=true -x webapp
+    if (System.getProperty('artemis.benchmark') != null) {
+        systemProperty 'artemis.benchmark', System.getProperty('artemis.benchmark')
+    }
+
+    // Pin the Ryuk container image version (Testcontainers reads this env var)
+    environment 'TESTCONTAINERS_RYUK_CONTAINER_IMAGE', "testcontainers/ryuk:${findProperty('ryuk_version')}"
+
+    // Pass Docker image versions from .env to integration tests as system properties
+    // (e.g. MYSQL_VERSION=9.6.0 becomes -Dmysql.version=9.6.0, usable in Spring YAML as ${mysql.version})
+    // Parsed by gradle/env.gradle, applied in build.gradle
+    rootProject.envProperties.each { key, value ->
+        // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
+        systemProperty key.toLowerCase().replaceAll('_', '.'), value
+    }
+
+    // Forward Gradle command-line -D properties to the test JVM for database type selection.
+    // Default: PostgreSQL via Testcontainers (Docker required). The default is set in
+    // src/test/resources/config/application.yml (zonky.test.database.type: POSTGRES).
+    // Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker), or =MYSQL for MySQL.
+    def dbType = System.getProperty('zonky.test.database.type')
+    if (dbType) {
+        systemProperty 'zonky.test.database.type', dbType
+        // Override Hibernate dialect to match the selected test database.
+        switch (dbType.toUpperCase()) {
+            // REMOVE_IN_ARTEMIS_11 (MySQL): remove the MYSQL database type
+            case 'MYSQL':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.MySQLDialect'
+                systemProperty 'spring.jpa.database', 'MYSQL'
+                break
+            case 'H2':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.H2Dialect'
+                systemProperty 'spring.jpa.database', 'h2'
+                break
+            // PostgreSQL is the default from application.yml, no override needed
+        }
+    }
+
+    // a collection to track failedTests
+    ext.failedTests = []
+
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.FAILED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+    }
+
+    addTestListener([
+        beforeTest: { descriptor -> },
+        beforeSuite: { suite -> },
+        afterTest: { descriptor, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                var failedTest = "${descriptor.className}::${descriptor.name}"
+                logger.debug("Adding " + failedTest + " to failedTests...")
+                failedTests << failedTest
+            }
+        },
+        afterSuite: { suite, result ->
+            if (!suite.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = "|  ", endItem = "  |"
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+                // logs each failed test
+                if (!failedTests.empty) {
+                    logger.lifecycle("Failed tests:")
+                    failedTests.each { failedTest ->
+                        println("${failedTest}")
+                    }
+                }
+            }
+        },
+    ] as TestListener)
+}
+
+// Allow using in jacoco.gradle
+ext {
+    includedTestTags = System.getProperty("includeTags")
+    includedTags = !includedTestTags ? new String[]{} : includedTestTags.split(",") as String[]
+    includedModulesTag = System.getProperty("includeModules")
+    includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
+
+    includedTestClassesProperty = System.getProperty("artemis.test.classes")
+    includedTestClasses = includedTestClassesProperty == null ? [] : includedTestClassesProperty.split(",", -1).toList()
+    if (includedTestClassesProperty != null) {
+        if (includedTestClasses.isEmpty() || includedTestClasses.any { name ->
+            !(name ==~ /de\.tum\.cit\.aet\.artemis(?:\.[A-Za-z_][A-Za-z0-9_]*)+/) ||
+                !file("src/test/java/${name.replace('.', '/')}.java").isFile()
+        }) {
+            throw new GradleException("artemis.test.classes must contain existing exact server test class names (no wildcards or methods)")
+        }
+        if (includedTags.size() > 0 || includedModules.size() > 0 || System.getProperty("artemis.test.bucket")) {
+            throw new GradleException("artemis.test.classes cannot be combined with includeTags, includeModules or artemis.test.bucket")
+        }
+    }
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0 && includedTestClassesProperty == null
+    // One shard of a full run: a JUnit tag expression naming the bucket(s) this invocation is responsible for.
+    // Unlike includeTags it does not change what a full run means - the same suites and files are excluded - it only
+    // narrows a full run to part of it, so that the shards of one build together cover exactly what one build covers.
+    testBucket = System.getProperty("artemis.test.bucket")
+    BasePath = "de/tum/cit/aet/artemis"
+}
+
+
+// Execute the test cases: ./gradlew test
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
+// Execute an affected class plan: ./gradlew test -Dartemis.test.classes="de.tum.cit.aet.artemis.account.AccountIntegrationTest"
+// Execute one shard of a full run: ./gradlew test -Dartemis.test.bucket="BucketIndependent" (see .github/workflows/ci-test.yml)
+test {
+    if (runAllTests || includedModules.size() > 0 || includedTestClassesProperty != null) {
+        // Module selection narrows the ordinary suite; it must not opt into the
+        // long-running nightly/integration suites excluded by a full CI run.
+        useJUnitPlatform() {
+            excludeTags "nightly-lti"
+        }
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+    if (runAllTests) {
+        useJUnitPlatform() {
+            // Sharded run: the same full run, restricted to the buckets this shard owns.
+            if (testBucket) {
+                includeTags testBucket
+            }
+        }
+    } else if (includedTestClassesProperty != null) {
+        useJUnitPlatform()
+        filter { testFilter ->
+            includedTestClasses.each { name ->
+                testFilter.includeTestsMatching(name)
+                testFilter.includeTestsMatching(name + '$*')
+            }
+            // The plan also inventories inherited architecture tags and source
+            // readers. Keep these global families even for hand-written plans.
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.*.architecture.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.authorization.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.service.featureusage.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.service.distributed.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.videosource.service.GocastLoggingSafetyTest")
+        }
+    } else if (includedModules.size() == 0) {
+        // not running all tests, but not module-specific ones -> use tags
+        useJUnitPlatform() {
+            includeTags includedTags
+        }
+    } else {
+        useJUnitPlatform()
+        // Core checks scan controllers, feature usage and cache types across module boundaries.
+        // Architecture checks and Gocast's handler lookup also have no static import edge from a
+        // changed leaf controller. Keep the ordinary nightly/IT exclusions above.
+        filter { testFilter ->
+            (includedModules.toList() + ["shared", "core"]).unique().each { val ->
+                testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
+            }
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.*.architecture.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.videosource.service.GocastLoggingSafetyTest")
+        }
+    }
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "6g" // maximum heap size
+}
+
+// Convenience tasks for running the full test suite against specific databases via Testcontainers:
+//   ./gradlew testMysql -x webapp     - Run all tests against MySQL (Docker required)
+//   ./gradlew testPostgres -x webapp  - Run all tests against PostgreSQL (Docker required)
+//
+// These tasks set the Zonky database type and Hibernate dialect/platform so that Spring Boot
+// uses a Testcontainers-managed database. The database container is automatically started and
+// stopped by Zonky. Connection pooling and timezone handling are configured by
+// TestDataSourcePoolConfig, and PostgreSQL tmpfs is configured by PostgresTmpfsContainerCustomizer.
+//
+// Note: The default 'test' task already uses PostgreSQL (configured in application.yml).
+// These convenience tasks are equivalent but explicit. To use H2 instead:
+//   ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// REMOVE_IN_ARTEMIS_11 (MySQL): remove the testMysql task
+['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
+ 'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
+    tasks.register("test${name}", Test) {
+        description = "Run tests against ${name} (via Testcontainers)"
+        group = 'verification'
+        testClassesDirs = testing.suites.test.sources.output.classesDirs
+        classpath = testing.suites.test.sources.runtimeClasspath
+        useJUnitPlatform {
+            // Match the default `test` task: nightly suites are opt-in via -DincludeTags='nightly-lti'.
+            excludeTags "nightly-lti"
+        }
+        exclude "**/*IT*", "**/*IntTest*"
+        testLogging.showStandardStreams = true
+        reports.html.required = false
+        minHeapSize = "2g"
+        maxHeapSize = "6g"
+        systemProperty 'zonky.test.database.type', config[0]
+        systemProperty 'spring.jpa.database-platform', config[1]
+        systemProperty 'spring.jpa.database', config[2]
+    }
+}
+
+// Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
+apply from: "gradle/jacoco.gradle"

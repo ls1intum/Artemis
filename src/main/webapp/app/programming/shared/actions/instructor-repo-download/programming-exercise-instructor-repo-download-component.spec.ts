@@ -1,0 +1,53 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { provideTranslateService } from '@ngx-translate/core';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { RepositoryType } from '../../code-editor/model/code-editor.model';
+
+describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
+    let component: ProgrammingExerciseInstructorRepoDownloadComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseInstructorRepoDownloadComponent>;
+    let service: ProgrammingExerciseService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ProgrammingExerciseInstructorRepoDownloadComponent, MockComponent(ButtonComponent)],
+            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }, provideTranslateService()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ProgrammingExerciseInstructorRepoDownloadComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(ProgrammingExerciseService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
+    });
+
+    it('should not download when there is no exercise', () => {
+        const spy = vi.spyOn(service, 'exportInstructorRepository');
+        component.exportRepository();
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should download the repos', () => {
+        fixture.componentRef.setInput('exerciseId', 1);
+        const repoTypes: RepositoryType[] = [RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS, RepositoryType.AUXILIARY];
+        repoTypes.forEach((repoType) => {
+            const exportInstructorRepositorySpy = vi.spyOn(service, 'exportInstructorRepository');
+            fixture.componentRef.setInput('repositoryType', repoType);
+            component.exportRepository();
+            expect(exportInstructorRepositorySpy).toHaveBeenCalledOnce();
+            exportInstructorRepositorySpy.mockRestore();
+        });
+    });
+});

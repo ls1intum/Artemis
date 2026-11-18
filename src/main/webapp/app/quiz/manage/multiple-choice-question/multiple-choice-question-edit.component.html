@@ -1,0 +1,240 @@
+<div class="edit-mc-question">
+    @if (!reEvaluationInProgress()) {
+        <div class="question-options question-card-header" [hidden]="showPreview()">
+            <button
+                type="button"
+                class="question-collapse text-(--body-color)"
+                (click)="toggleCollapse()"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="question-title">
+                <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
+                    data-testid="mc-question-title"
+                    tumAetUiInput
+                    [(ngModel)]="question().title"
+                    (ngModelChange)="questionUpdated.emit()"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                />
+            </div>
+            <div class="question-card-header-inputs">
+                <div class="question-score">
+                    <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                    <jhi-points-input
+                        inputId="score"
+                        class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                        fluid
+                        [(ngModel)]="question().points!"
+                        (ngModelChange)="questionUpdated.emit()"
+                        [min]="0"
+                        [max]="MAX_POINTS"
+                    />
+                </div>
+                <div class="question-action-buttons">
+                    @if (hyperionEnabled()) {
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            severity="warn"
+                            variant="outlined"
+                            class="question-action-btn question-action-btn--refine"
+                            data-testid="quiz-question-refine"
+                            attr.aria-label="{{ 'artemisApp.quizExercise.refineQuestion' | artemisTranslate }}"
+                            (click)="refineAndExpand()"
+                        >
+                            <fa-icon [icon]="faWandMagicSparkles" />
+                        </button>
+                    }
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
+                        class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
+                        (click)="deleteQuestion()"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+                <div class="question-type">
+                    <span class="question-type-badge question-type-badge--mc">MC</span>
+                </div>
+            </div>
+        </div>
+    } @else {
+        <div class="question-card-header-reevaluation">
+            <button
+                type="button"
+                class="question-collapse text-(--body-color)"
+                (click)="toggleCollapse()"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="question-reevaluation-title">
+                <input
+                    tumAetUiInput
+                    [(ngModel)]="question().title"
+                    (ngModelChange)="questionUpdated.emit()"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                    attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                />
+                <button
+                    tumAetUiButton
+                    variant="outlined"
+                    severity="secondary"
+                    type="button"
+                    (click)="resetQuestionTitle()"
+                    [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faUndo" />
+                </button>
+            </div>
+            <div class="question-type">
+                <span class="question-type-badge question-type-badge--mc">MC</span>
+            </div>
+            <div jhi-question-reevaluation-actions class="question-reevaluation-actions" (moveUp)="moveUp()" (moveDown)="moveDown()" (resetQuestion)="resetQuestion()"></div>
+        </div>
+    }
+
+    <div class="question-card-body" [hidden]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
+        <div class="question-options" [class]="reEvaluationInProgress() ? 'question-options--row flex-wrap! items-center justify-start! m-0' : ''" [hidden]="showPreview()">
+            <div [class]="reEvaluationInProgress() ? 'w-full px-3! md:w-1/3' : ''">
+                <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                    <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                    <tumaet-ui-select
+                        [options]="scoringTypeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ariaLabel]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                        [(ngModel)]="question().scoringType"
+                        (ngModelChange)="questionUpdated.emit()"
+                        [disabled]="question().singleChoice ?? false"
+                    />
+                    @if (!reEvaluationInProgress()) {
+                        <jhi-quiz-scoring-info-modal />
+                    }
+                </div>
+            </div>
+            @if (reEvaluationInProgress()) {
+                <div class="w-full px-3! md:w-1/6">
+                    <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                        <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                        <jhi-points-input
+                            [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            fluid
+                            [ngModel]="question().points"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="true"
+                        />
+                    </div>
+                </div>
+            }
+            <div [class]="reEvaluationInProgress() ? 'w-full px-3! md:w-1/4' : ''">
+                <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox inputId="{{ 'cbRandomizeOrderMC' + questionIndex() }}" [(ngModel)]="question().randomizeOrder" (changed)="questionUpdated.emit()" />
+                        <label for="{{ 'cbRandomizeOrderMC' + questionIndex() }}" jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"></label>
+                    </div>
+                </div>
+            </div>
+            @if (!reEvaluationInProgress()) {
+                <div class="flex items-center [&>*]:mx-1">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
+                            inputId="{{ 'cbSingleChoiceMC' + questionIndex() }}"
+                            [(ngModel)]="question().singleChoice"
+                            (changed)="onSingleChoiceChanged(); questionUpdated.emit()"
+                        />
+                        <label for="{{ 'cbSingleChoiceMC' + questionIndex() }}" jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"></label>
+                        <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate" />
+                    </div>
+                </div>
+            }
+            @if (reEvaluationInProgress()) {
+                <div class="flex w-full items-center gap-2 px-3! md:w-1/4">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
+                        [hidden]="question().invalid"
+                        (click)="question().invalid = true"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
+                        [hidden]="!question().invalid"
+                        [disabled]="question().invalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+                    ></button>
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction186
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                    >
+                        <fa-icon [icon]="faTrash" size="2x" />
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="markupEditorArea">
+            <div class="question-content">
+                @if (!reEvaluationInProgress()) {
+                    <jhi-markdown-editor-monaco
+                        #markdownEditor
+                        [markdown]="questionEditorText()"
+                        [showPreviewButton]="true"
+                        [showVisualButton]="true"
+                        [domainActions]="multipleChoiceActions"
+                        (markdownChange)="changesInMarkdown()"
+                        (textWithDomainActionsFound)="domainActionsFound($event)"
+                        (onLeaveVisualTab)="onLeaveVisualTab()"
+                        [showDefaultPreview]="false"
+                        class="h-auto"
+                    >
+                        <!-- Preview -->
+                        <ng-container id="previewMonaco">
+                            @if (showMultipleChoiceQuestionPreview()) {
+                                <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
+                            }
+                            <hr />
+                        </ng-container>
+                        <!-- End of Preview-->
+                        <!-- Visual -->
+                        <ng-container id="visual">
+                            @if (showMultipleChoiceQuestionVisual()) {
+                                <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
+                            }
+                        </ng-container>
+                        <!-- End of Visual -->
+                    </jhi-markdown-editor-monaco>
+                } @else {
+                    <jhi-multiple-choice-visual-question #visual [question]="question()" [reEvaluationInProgress]="true" (questionChanged)="changesInVisualMode()" />
+                }
+            </div>
+        </div>
+    </div>
+</div>

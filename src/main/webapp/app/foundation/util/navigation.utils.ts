@@ -1,0 +1,235 @@
+import { Service, inject } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { filter, skip, take } from 'rxjs/operators';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+@Service()
+export class ArtemisNavigationUtilService {
+    private router = inject(Router);
+    private location = inject(Location);
+
+    private onFirstPage = true;
+
+    constructor() {
+        const router = this.router;
+
+        router.events
+            .pipe(
+                filter((e) => e instanceof NavigationEnd),
+                skip(1),
+                take(1),
+            )
+            .subscribe(() => {
+                this.onFirstPage = false;
+            });
+    }
+
+    /**
+     * Navigates to the last page if possible or to the fallback url if not
+     * @param fallbackUrl Url to navigate to if current page is first navigation
+     */
+    navigateBack(fallbackUrl?: (string | number)[]) {
+        if (!this.onFirstPage) {
+            this.location.back();
+        } else if (fallbackUrl) {
+            void this.router.navigate(fallbackUrl);
+        }
+    }
+
+    /**
+     * Navigates to the last page if possible or to the fallback url if not. If the optional element is present, it is appended to the fallback url
+     * @param fallbackUrl Url to navigate to if current page is first navigation
+     * @param optionalLastElement last element of the url or nothing
+     */
+    navigateBackWithOptional(fallbackUrl: string[], optionalLastElement: string | undefined) {
+        if (optionalLastElement) {
+            fallbackUrl.push(optionalLastElement);
+        }
+        this.navigateBack(fallbackUrl);
+    }
+
+    /**
+     * Navigate to exercise detail page after creating or editing it.
+     * @param exercise the updated or created exercise
+     */
+    navigateForwardFromExerciseUpdateOrCreation(exercise?: Exercise) {
+        if (exercise?.exerciseGroup?.exam?.course?.id) {
+            // If an exercise group is set we are in exam mode
+            void this.router.navigate([
+                'course-management',
+                exercise.exerciseGroup.exam.course.id,
+                'exams',
+                exercise.exerciseGroup.exam.id!,
+                'exercise-groups',
+                exercise.exerciseGroup.id!,
+                exercise.type! + '-exercises',
+                exercise.id,
+            ]);
+        } else if (exercise?.course?.id) {
+            void this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
+        } else {
+            // Fallback
+            this.navigateBack();
+        }
+    }
+
+    /**
+     * Navigate to exercise detail page if cancelling the update or creation
+     * Either
+     * - move back in the history
+     * - if in exam mode, go to the exercise group view
+     * - go to exercises overview
+     * @param exercise the updated or created exercise
+     */
+    navigateBackFromExerciseUpdate(exercise?: Exercise) {
+        let fallback: (string | number)[] | undefined = undefined;
+        if (exercise?.exerciseGroup?.exam?.course?.id) {
+            // If an exercise group is set we are in exam mode
+            fallback = ['/course-management', exercise.exerciseGroup.exam.course.id, 'exams', exercise.exerciseGroup.exam.id!, 'exercise-groups'];
+        } else if (exercise?.course?.id) {
+            fallback = ['/course-management', exercise.course.id, 'exercises'];
+        }
+        this.navigateBack(fallback);
+    }
+
+    replaceNewWithIdInUrl(url: string, id: number) {
+        const newUrl = url.slice(0, -3) + id;
+        let path = newUrl;
+        try {
+            const parsed = new URL(newUrl, window.location.origin || window.location.href);
+            path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        } catch {
+            // Fallback keeps the existing path when URL parsing fails
+        }
+        this.location.go(path.startsWith('/') ? path : `/${path}`);
+    }
+
+    /**
+     * Opens the target page in a new tab
+     * @param route the target route
+     * @param params the query params of the target route
+     */
+    routeInNewTab(route: unknown[], params?: Params): void {
+        const url = this.router.serializeUrl(this.router.createUrlTree(route, params));
+        window.open(url, '_blank');
+    }
+}
+
+export const getLinkToSubmissionAssessment = (
+    exerciseType: ExerciseType,
+    courseId: number,
+    exerciseId: number,
+    participationId: number | undefined,
+    submissionId: number | 'new',
+    examId: number | undefined,
+    exerciseGroupId: number | undefined,
+    resultId?: number,
+): string[] => {
+    if (examId && exerciseGroupId) {
+        const route = [
+            '/course-management',
+            courseId.toString(),
+            'exams',
+            examId.toString(),
+            'exercise-groups',
+            exerciseGroupId.toString(),
+            exerciseType + '-exercises',
+            exerciseId.toString(),
+            'submissions',
+            submissionId.toString(),
+            'assessment',
+        ];
+        if (resultId) {
+            route[route.length - 1] += 's';
+            route.push(resultId.toString());
+        }
+        return route;
+    } else {
+        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+    }
+};
+
+export const getExerciseDashboardLink = (courseId: number, exerciseId: number, examId = 0, isTestRun = false): string[] => {
+    if (isTestRun) {
+        return ['/course-management', courseId.toString(), 'exams', examId.toString(), 'test-runs', 'assess'];
+    }
+
+    return examId > 0
+        ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'assessment-dashboard', exerciseId.toString()]
+        : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];
+};
+
+export const getLocalRepositoryLink = (
+    courseId: number,
+    exerciseId: number,
+    repositoryType: RepositoryType,
+    participationId: number,
+    exerciseGroupId: number = 0,
+    examId = 0,
+): string[] => {
+    const suffix = ['programming-exercises', exerciseId.toString(), 'repository', repositoryType, participationId.toString()];
+
+    return examId > 0
+        ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'exercise-groups', exerciseGroupId.toString(), ...suffix]
+        : ['/course-management', courseId.toString(), ...suffix];
+};
+
+/**
+ * The link that opens the repository of a participation in the editable code editor of the course management.
+ * <p>
+ * The student route `/courses/:courseId/exercises/programming-exercises/:exerciseId/code-editor/:participationId` is the
+ * exercise page of the viewer: it always shows the participation of the viewer, so it redirects an instructor to their own
+ * participation, or shows no editor at all when they never started the exercise. It cannot show the code of a student.
+ *
+ * @param courseId        the id of the course
+ * @param exerciseId      the id of the programming exercise
+ * @param participationId the id of the participation whose repository is opened
+ * @param exerciseGroupId the id of the exercise group, for an exam exercise
+ * @param examId          the id of the exam, for an exam exercise
+ */
+export const getOnlineEditorLink = (courseId: number, exerciseId: number, participationId: number, exerciseGroupId: number = 0, examId = 0): string[] => {
+    const suffix = ['programming-exercises', exerciseId.toString(), 'code-editor', 'participations', participationId.toString()];
+
+    return examId > 0
+        ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'exercise-groups', exerciseGroupId.toString(), ...suffix]
+        : ['/course-management', courseId.toString(), ...suffix];
+};
+
+/**
+ * A generic method which navigates into a subpage of an exam exercise
+ * @router the router th component uses to navigate into different webpages
+ * @subPage the subpage of an exercise which we want to navigate into, e.g. participations
+ */
+export const navigateToExamExercise = (
+    navigationUtilService: ArtemisNavigationUtilService,
+    courseId: number,
+    examId: number,
+    exerciseGroupId: number,
+    exerciseType: ExerciseType,
+    exerciseId: number,
+    subPage: string,
+): void => {
+    setTimeout(() => {
+        navigationUtilService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
+    }, 1000);
+};
+
+/**
+ * Checks router hierarchy to find a given paramKey, starting from the current ActivatedRouteSnapshot
+ * and traversing the parents.
+ * @param route the active route
+ * @param paramKey the desired key of route.snapshot.params
+ */
+export const findParamInRouteHierarchy = (route: ActivatedRoute, paramKey: string): string | undefined => {
+    let currentRoute: ActivatedRoute | null = route;
+    while (currentRoute) {
+        const paramValue = currentRoute.snapshot.params[paramKey];
+        if (paramValue !== undefined) {
+            return paramValue;
+        }
+        currentRoute = currentRoute.parent;
+    }
+    return undefined;
+};

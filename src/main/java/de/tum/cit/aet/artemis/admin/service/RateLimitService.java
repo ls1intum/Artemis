@@ -1,0 +1,282 @@
+package de.tum.cit.aet.artemis.admin.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getPeerIpAddress;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+
+import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.ConsumptionProbe;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+
+@Profile(PROFILE_CORE)
+@Service
+@Lazy
+public class RateLimitService {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
+
+    // Bucket4J proxy that connects rate-limit buckets to Hazelcast for cluster-wide synchronization
+    private final ProxyManager<String> proxyManager;
+
+    private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
+
+    private final RateLimitConfigurationService configurationService;
+
+    private final FeatureToggleService featureToggleService;
+
+    public RateLimitService(ProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
+        this.proxyManager = proxyManager;
+        this.configurationService = configurationService;
+        this.featureToggleService = featureToggleService;
+    }
+
+    /**
+     * Enforces rate limiting by consuming 1 token from a per-minute bucket.
+     * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     * @throws RateLimitExceededException if the rate limit is exceeded
+     */
+    public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
+        // Skip rate limiting if disabled globally or disabled via feature toggle, except for a limit that cannot be disabled
+        if (isSwitchedOff(rpmType)) {
+            log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
+            return;
+        }
+
+        // An exempt address consumes no tokens at all, rather than getting a larger bucket: a load
+        // generator drives thousands of requests from one address, and any finite bucket would still
+        // throttle it partway through a run and quietly turn the measurement into a measurement of the
+        // limiter.
+        if (configurationService.isExempt(clientId)) {
+            log.debug("Client {} is exempt from rate limiting, skipping enforcement at {}", clientId, rpmType.name());
+            return;
+        }
+
+        Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType));
+        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
+            long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
+            if (rpmType.isRejectionLogged()) {
+                log.warn("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            }
+            else {
+                // a limit that exists to bound the log must not write a line for every request that it rejects
+                log.debug("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            }
+            throw new RateLimitExceededException(seconds);
+        }
+
+        log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
+    }
+
+    /**
+     * Checks whether a client still has budget for a rate limit type without spending any of it.
+     * <p>
+     * Pairs with {@link #consumePerMinute} for a check whose cost falls on failure rather than on use. The build agent
+     * clone-token check works that way: it runs ahead of the rate limiter for every git read carrying a Basic header,
+     * and the work it protects - a scan of the distributed processing jobs - has to be refused once a caller has spent
+     * its budget, but must not charge the agents whose builds depend on it. Spending on decline instead keeps the limit
+     * a bound on guessing rather than a cap on build throughput.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     * @return whether the client may still be served, {@code true} when rate limiting is off or the client is exempt
+     */
+    public boolean hasRemainingBudget(IPAddress clientId, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
+            return true;
+        }
+        return getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
+    }
+
+    /**
+     * Spends one token of a client's budget for a rate limit type, without throwing when it is already empty.
+     * <p>
+     * The counterpart of {@link #hasRemainingBudget}: the caller has already decided what to do, and only records that
+     * this client used up an attempt.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     */
+    public void consumePerMinute(IPAddress clientId, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+    }
+
+    /**
+     * Gives one token back to the budget of a client for a rate limit type, up to the capacity of the bucket.
+     * <p>
+     * The counterpart of {@link #enforcePerMinute} for a check that is spent before it runs, so that parallel requests cannot pass it together, and
+     * that costs nothing once it turns out to be legitimate.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     */
+    public void refundPerMinute(IPAddress clientId, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
+    }
+
+    /**
+     * Reserves one token of the budget of a key before the work starts, and refuses the request when none is left.
+     * <p>
+     * For a limit that is not about the client address but about what is being tried, such as the failed password logins of one account. The token is taken
+     * before the credentials are verified, so that concurrent requests cannot all pass a check that has not spent anything yet. The caller gives the token
+     * back with {@link #refundBudget} when the verification does not count as a failure. Exempt client addresses are not consulted, as the key is not an address.
+     *
+     * @param key     what is limited, for example the lower-cased login name
+     * @param rpmType the rate limit type to determine the RPM configuration
+     * @throws RateLimitExceededException if the budget of the key is empty
+     */
+    public void enforceBudget(String key, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType)) {
+            return;
+        }
+        ConsumptionProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
+            long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
+            // Keys can originate in request bodies; report the limit and retry delay without logging untrusted identifiers.
+            log.warn("Rate limit exceeded at {}, retry after {} seconds", rpmType.name(), seconds);
+            throw new RateLimitExceededException(seconds);
+        }
+    }
+
+    /**
+     * Gives back the token that {@link #enforceBudget} reserved, because the verification succeeded or failed for a reason that does not count.
+     *
+     * @param key     what is limited, for example the lower-cased login name
+     * @param rpmType the rate limit type to determine the RPM configuration
+     */
+    public void refundBudget(String key, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
+    }
+
+    /**
+     * Reserves one token of the budget of failed checks of a shared secret of an external service for the calling address, and refuses the check when the
+     * address has used up its budget.
+     * <p>
+     * Call this before comparing the secret and {@link #refundServiceCredentialBudget()} when the comparison succeeds, so that a caller that presents the right
+     * secret spends nothing. The address is the TCP peer, which a sender cannot choose.
+     *
+     * @throws RateLimitExceededException if the address has used up its budget of failed checks
+     */
+    public void requireServiceCredentialBudget() {
+        enforcePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    }
+
+    /**
+     * Gives back the token reserved by {@link #requireServiceCredentialBudget()}, because the secret was right.
+     */
+    public void refundServiceCredentialBudget() {
+        refundPerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    }
+
+    /**
+     * Whether the limit of a type is not enforced because rate limiting is disabled. A type that is always enforced is never switched off.
+     */
+    private boolean isSwitchedOff(RateLimitType rpmType) {
+        return !rpmType.isAlwaysEnforced() && (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit));
+    }
+
+    private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
+        return getOrCreatePerMinuteBucket(String.valueOf(clientId), rpmType, rpm);
+    }
+
+    private Bucket getOrCreatePerMinuteBucket(String key, RateLimitType rpmType, int rpm) {
+        BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
+        // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.
+        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + key, () -> cfg);
+    }
+
+    /**
+     * Resolves the client identifier from the current HTTP request.
+     *
+     * <p>
+     * The address is the one the servlet container resolved for the request, see {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest}.
+     * </p>
+     *
+     * @return the cleaned client IP address
+     */
+    public IPAddress resolveClientId() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            log.warn("Unable to resolve HTTP request context for rate limiting");
+            return null;
+        }
+
+        final String ipString = getIpStringFromRequest(request);
+        // The parser reads an empty string as the loopback address, which must not become a shared budget
+        IPAddress address = ipString.isBlank() ? null : new IPAddressString(ipString).getAddress();
+
+        if (address == null) {
+            log.warn("Failed to parse IP address '{}' for rate limiting", ipString);
+        }
+
+        return address;
+    }
+
+    /**
+     * Resolves the address of the TCP peer of the current request, which a sender cannot choose.
+     *
+     * <p>
+     * Like {@link #resolveClientId()}, this never reads {@code X-Forwarded-For} or any other header itself, so a sender cannot pick a new
+     * rate limit budget for every request, or pick an exempt address, by sending a header. The address is what Tomcat concluded:
+     * with {@code server.forward-headers-strategy: native} it believes the forwarding headers only of the proxies in
+     * {@code server.tomcat.remoteip.internal-proxies}, which by default are the private networks. Behind a reverse proxy
+     * outside of them, every client has the address of the proxy until that setting names it.
+     * </p>
+     *
+     * @return the address of the peer, or {@code null} if there is no request or the address cannot be parsed
+     */
+    public IPAddress resolvePeerId() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            log.warn("Unable to resolve HTTP request context for rate limiting");
+            return null;
+        }
+        // nobody is trusted to forward an address here, so the header is never consulted
+        IPAddress address = getPeerIpAddress(request, _ -> false).orElse(null);
+        if (address == null) {
+            log.warn("Failed to parse the peer address {} for rate limiting", request.getRemoteAddr());
+        }
+        return address;
+    }
+
+    private HttpServletRequest currentRequest() {
+        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+        if (attrs == null) {
+            return null;
+        }
+        return (HttpServletRequest) attrs.resolveReference(RequestAttributes.REFERENCE_REQUEST);
+    }
+}

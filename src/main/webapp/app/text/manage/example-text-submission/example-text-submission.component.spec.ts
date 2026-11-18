@@ -1,0 +1,628 @@
+/**
+ * Tests for ExampleTextSubmissionComponent.
+ * Verifies the component's behavior for creating, editing, and assessing example text submissions.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
+import { State } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
+import { ExampleTextSubmissionComponent } from 'app/text/manage/example-text-submission/example-text-submission.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { DebugElement } from '@angular/core';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('ExampleTextSubmissionComponent', () => {
+    let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
+    let debugElement: DebugElement;
+    let comp: ExampleTextSubmissionComponent;
+    let exerciseService: ExerciseService;
+    let exampleSubmissionService: ExampleSubmissionService;
+    let assessmentsService: TextAssessmentService;
+    let alertService: AlertService;
+
+    const EXERCISE_ID = 1;
+    const EXAMPLE_SUBMISSION_ID = 2;
+    const SUBMISSION_ID = 3;
+    let exercise: TextExercise;
+    let exampleSubmission: ExampleSubmission;
+    let result: Result;
+    let submission: TextSubmission;
+    let activatedRouteSnapshot: ActivatedRouteSnapshot;
+
+    beforeEach(async () => {
+        const route: ActivatedRoute = {
+            snapshot: {
+                paramMap: convertToParamMap({ exerciseId: EXERCISE_ID }),
+                queryParamMap: convertToParamMap({}),
+            },
+        } as any;
+        await TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                FaIconComponent,
+                ExampleTextSubmissionComponent,
+                MockDirective(TranslateDirective),
+                MockComponent(ResizeableContainerComponent),
+                MockComponent(ScoreDisplayComponent),
+                MockComponent(TextAssessmentAreaComponent),
+                MockComponent(AssessmentInstructionsComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(ConfirmAutofocusButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: route,
+                },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        })
+            .overrideComponent(ExampleTextSubmissionComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        HelpIconComponent,
+                        ConfirmAutofocusButtonComponent,
+                        ResizeableContainerComponent,
+                        ScoreDisplayComponent,
+                        TextAssessmentAreaComponent,
+                        AssessmentInstructionsComponent,
+                        UnreferencedFeedbackComponent,
+                        ArtemisTranslatePipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(ConfirmAutofocusButtonComponent),
+                        MockComponent(ResizeableContainerComponent),
+                        MockComponent(ScoreDisplayComponent),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(AssessmentInstructionsComponent),
+                        MockComponent(UnreferencedFeedbackComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        activatedRouteSnapshot = TestBed.inject(ActivatedRoute).snapshot;
+        exerciseService = TestBed.inject(ExerciseService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        assessmentsService = TestBed.inject(TextAssessmentService);
+        alertService = TestBed.inject(AlertService);
+        exercise = new TextExercise(undefined, undefined);
+        exercise.id = EXERCISE_ID;
+        exercise.title = 'Test case exercise';
+        exampleSubmission = new ExampleSubmission();
+        exampleSubmission.id = EXAMPLE_SUBMISSION_ID;
+        result = new Result();
+        submission = result.submission = exampleSubmission.submission = new TextSubmission();
+        submission.id = SUBMISSION_ID;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it.each([
+        [false, false, false, true, 'for-staff', 'instructor'],
+        [true, false, false, true, 'for-exam-management', 'instructor'],
+        [true, false, false, false, 'for-exam-management', 'training'],
+        [false, false, false, false, 'for-staff', 'training'],
+        [true, true, false, true, 'for-exam-assessment', 'training'],
+        [true, false, true, true, 'for-exam-assessment', 'training'],
+    ] as const)(
+        'should select the known source and viewing purpose before loading (exam=%s, readOnly=%s, complete=%s, instructor=%s)',
+        async (exam, readOnly, complete, instructor, suffix, purpose) => {
+            const knownRoute = new MockActivatedRoute({
+                courseId: 7,
+                exerciseId: EXERCISE_ID,
+                exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+                ...(exam ? { examId: 9, exerciseGroupId: 8 } : {}),
+                ...(readOnly ? { readOnly: true } : {}),
+                ...(complete ? { toComplete: true } : {}),
+            });
+            TestBed.inject(ActivatedRoute).snapshot = activatedRouteSnapshot = knownRoute.snapshot;
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(instructor);
+            vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+            const getResult = vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+            await comp['initializeExampleTextSubmissionComponent']();
+            const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url.startsWith('api/exercise/exercises/'));
+            request.flush({ id: EXERCISE_ID, type: 'text', course: { id: 7 } });
+            expect(request.request.url).toBe(`api/exercise/exercises/${EXERCISE_ID}/${suffix}`);
+            expect(getResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, purpose);
+        },
+    );
+
+    it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        // THEN
+        expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, 'instructor');
+        expect(comp.state.constructor.name).toBe('EditState');
+    });
+
+    it('should mark text blocks not included in the example submission correctly', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
+        // @ts-ignore
+        activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        submission.blocks = [textBlock1, textBlock2];
+        submission.text = '123456789';
+        const feedback = Feedback.forText(textBlock2, 3, 'Test');
+        result.feedbacks = [feedback];
+
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+        await fixture.whenStable();
+
+        // THEN
+        verifyBlockIsInUnReferencedState(comp.textBlockRefs[0]);
+        verifyBlockIsInUnReferencedState(comp.textBlockRefs[1]);
+        verifyBlockIsInReferencedState(comp.textBlockRefs[2]);
+    });
+
+    const verifyBlockIsInReferencedState = (block: TextBlockRef) => {
+        expect(block.deletable).toBe(false);
+        expect(block.selectable).toBe(true);
+        expect(block.highlighted).toBe(true);
+    };
+
+    const verifyBlockIsInUnReferencedState = (block: TextBlockRef) => {
+        expect(block.deletable).toBe(true);
+        expect(block.selectable).toBe(false);
+        expect(block.highlighted).toBe(false);
+    };
+
+    it('should not fail while fetching submission with null result for existing example submission in tutorial submission mode', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        // @ts-ignore
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        // THEN
+        expect(comp.result()).not.toBeNull();
+        expect(comp.result()!.submission).toBe(comp.submission);
+    });
+
+    it('should only fetch exercise for new example submission and stay in new state', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        // THEN
+        expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
+        expect(comp.state.constructor.name).toBe('NewState');
+    });
+
+    it('passes referenced and unreferenced feedback to example assessment usage hints', () => {
+        vi.spyOn(comp, 'ngOnInit').mockImplementation(() => {});
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.submission = submission;
+        comp.state = State.forExistingAssessmentWithContext(comp);
+        const reference = TextBlockRef.new();
+        reference.initFeedback();
+        comp.textBlockRefs = [reference];
+        const unreferenced = new Feedback();
+        comp.unreferencedFeedback.set([unreferenced]);
+        fixture.detectChanges();
+        const area = debugElement.query(By.directive(TextAssessmentAreaComponent)).componentInstance as TextAssessmentAreaComponent;
+        expect(area.allFeedbacks()).toEqual([reference.feedback, unreferenced]);
+    });
+
+    it('should switch state when starting assessment', async () => {
+        // GIVEN
+        vi.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        comp.exercise = exercise;
+        comp.exercise!.isAtLeastInstructor = true;
+        comp.exampleSubmission = exampleSubmission;
+        comp.submission = submission;
+
+        // WHEN
+        await comp.startAssessment();
+
+        // THEN
+        expect(comp.state.constructor.name).toBe('NewAssessmentState');
+    });
+
+    it('should save assessment', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
+        comp.exampleSubmission = exampleSubmission;
+        comp.submission = submission;
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        submission.blocks = [textBlock1, textBlock2];
+        submission.text = '123456789';
+        comp.result.set(result);
+        const feedback = Feedback.forText(textBlock1, 0, 'Test');
+        result.feedbacks = [feedback];
+        comp.state.edit();
+        comp.state.assess();
+        comp['prepareTextBlocksAndFeedbacks']();
+        comp.validateFeedback();
+        vi.spyOn(assessmentsService, 'saveExampleAssessment').mockReturnValue(httpResponse(result));
+
+        // WHEN
+        fixture.detectChanges();
+        debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
+
+        // THEN
+        expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
+    });
+
+    it('should not save the assessment when it is invalid', () => {
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+        comp.saveAssessments();
+
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('editing submission from assessment state switches state', async () => {
+        // GIVEN
+        comp.exercise = exercise;
+        comp.exercise!.isAtLeastEditor = true;
+        comp.exampleSubmission = exampleSubmission;
+        comp.submission = submission;
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        submission.blocks = [textBlock1, textBlock2];
+        submission.text = '123456789';
+        comp.result.set(result);
+        const feedback = Feedback.forText(textBlock1, 0, 'Test');
+        result.feedbacks = [feedback];
+        comp.state = State.forExistingAssessmentWithContext(comp);
+        comp['prepareTextBlocksAndFeedbacks']();
+        comp.validateFeedback();
+        vi.spyOn(assessmentsService, 'deleteExampleAssessment').mockReturnValue(of(undefined));
+
+        // WHEN
+        fixture.detectChanges();
+        await fixture.whenStable();
+        comp.editSubmission();
+        await fixture.whenStable();
+
+        // THEN
+        expect(comp.state.constructor.name).toBe('EditState');
+        expect(assessmentsService.deleteExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
+        expect(comp.submission?.blocks).toBeUndefined();
+        expect(comp.submission?.results).toBeUndefined();
+        expect(comp.submission?.latestResult).toBeUndefined();
+        expect(comp.result()).toBeUndefined();
+        expect(comp.textBlockRefs).toHaveLength(0);
+        expect(comp.unusedTextBlockRefs).toHaveLength(0);
+    });
+
+    it('should verify correct tutorial submission', async () => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
+        // @ts-ignore
+        activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(httpResponse(exercise));
+        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        submission.blocks = [textBlock1, textBlock2];
+        submission.text = '123456789';
+        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        comp.textBlockRefs[0].initFeedback();
+        comp.textBlockRefs[0].feedback!.credits = 2;
+        comp.validateFeedback();
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
+        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
+
+        // WHEN
+        fixture.detectChanges();
+        debugElement.query(By.css('#checkAssessment')).nativeElement.click();
+
+        // THEN
+        expect(exerciseService.findForStaff).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID, 'training');
+        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
+    });
+
+    it('should not check the assessment when it is invalid', () => {
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+        comp.checkAssessment();
+
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('when wrong tutor assessment, upon server response should mark feedback as incorrect', async () => {
+        // GIVEN
+        const textBlockRefA = TextBlockRef.new();
+        textBlockRefA.block!.id = 'ID';
+        const feedbackA = new Feedback();
+        feedbackA.reference = textBlockRefA.block!.id;
+        feedbackA.detailText = 'feedbackA';
+        textBlockRefA.feedback = feedbackA;
+
+        const textBlockRefB = TextBlockRef.new();
+        const feedbackB = new Feedback();
+        feedbackB.detailText = 'feebbackB';
+        textBlockRefB.feedback = feedbackB;
+
+        comp.textBlockRefs = [textBlockRefA, textBlockRefB];
+
+        expect(feedbackA.correctionStatus).toBeUndefined();
+        expect(feedbackB.correctionStatus).toBeUndefined();
+
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
+        const feedbackError = {
+            reference: feedbackA.reference,
+            type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+        };
+        const errorResponse = new HttpErrorResponse({
+            error: { errorKey: 'invalid_assessment', skipAlert: true, errors: [feedbackError] },
+            status: 400,
+        });
+
+        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+        await fixture.whenStable();
+
+        comp.checkAssessment();
+        await fixture.whenStable();
+
+        // THEN
+        expect(feedbackA.correctionStatus).toBe(FeedbackCorrectionErrorType.INCORRECT_SCORE);
+        expect(feedbackB.correctionStatus).toBe('CORRECT');
+    });
+
+    it('should create new example submission', async () => {
+        comp.submission = submission;
+        comp.exercise = exercise;
+        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
+        const alertSuccessSpy = vi.spyOn(alertService, 'success');
+        // Mock the navigation util to avoid window.location.href regex matching issues
+        vi.spyOn(comp['navigationUtilService'], 'replaceNewWithIdInUrl').mockImplementation(() => {});
+
+        comp.createNewExampleTextSubmission();
+        await fixture.whenStable();
+
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not create example submission', async () => {
+        comp.submission = submission;
+        comp.exercise = exercise;
+        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+        comp.createNewExampleTextSubmission();
+        await fixture.whenStable();
+
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should read and understood', () => {
+        // GIVEN
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
+        const dto: TutorParticipationDTO = {
+            id: 1,
+            exerciseId: EXERCISE_ID,
+            tutorId: 3,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+        };
+        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const alertSpy = vi.spyOn(alertService, 'success');
+
+        const router = TestBed.inject(Router);
+        const routerSpy = vi.spyOn(router, 'navigate');
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+
+        // WHEN
+        fixture.detectChanges();
+        comp.readAndUnderstood();
+
+        // THEN
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
+        expect(routerSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should go back with exam', async () => {
+        // GIVEN
+        const router = TestBed.inject(Router);
+        const routerSpy = vi.spyOn(router, 'navigate');
+        const examExercise = {
+            id: EXERCISE_ID,
+            exerciseGroup: {
+                id: 20,
+                exam: {
+                    id: 30,
+                    course: { id: 40 },
+                },
+            },
+        } as TextExercise;
+
+        comp.exercise = examExercise;
+
+        // WHEN
+        await comp['initializeExampleTextSubmissionComponent']();
+
+        comp.toComplete.set(true);
+
+        await comp.back();
+
+        comp.toComplete.set(false);
+
+        await comp.back();
+
+        // THEN
+        expect(routerSpy).toHaveBeenCalledTimes(2);
+        expect(routerSpy).toHaveBeenNthCalledWith(1, ['/course-management', examExercise.exerciseGroup?.exam?.course?.id, 'assessment-dashboard', examExercise.id]);
+
+        expect(routerSpy).toHaveBeenNthCalledWith(2, [
+            '/course-management',
+            examExercise.exerciseGroup?.exam?.course?.id,
+            'exams',
+            examExercise.exerciseGroup?.exam?.id,
+            'exercise-groups',
+            examExercise.exerciseGroup?.id,
+            'text-exercises',
+            examExercise.id,
+            'example-submissions',
+        ]);
+    });
+
+    it('should update example text submission', () => {
+        // GIVEN
+        const alertSuccessSpy = vi.spyOn(alertService, 'success');
+        const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
+        exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
+        comp.unsavedSubmissionChanges.set(true);
+
+        // WHEN
+        comp.updateExampleTextSubmission();
+
+        // THEN
+        expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
+        expect(comp.exampleSubmission).toEqual(exampleSubmission);
+        expect(comp.unsavedSubmissionChanges()).toBe(false);
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
+    });
+
+    const httpResponse = (body: any) => of(new HttpResponse({ body }));
+});

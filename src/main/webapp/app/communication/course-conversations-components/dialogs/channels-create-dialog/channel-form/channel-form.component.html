@@ -1,0 +1,121 @@
+@if (form) {
+    <form class="flex flex-col gap-4!" [formGroup]="form" (ngSubmit)="submitForm()">
+        <!-- CHANNEL NAME -->
+        <tumaet-ui-form-field
+            [label]="'artemisApp.dialogs.createChannel.channelForm.nameInput.label' | artemisTranslate"
+            controlId="name"
+            required
+            [invalid]="!!nameControl?.invalid && (!!nameControl?.dirty || !!nameControl?.touched)"
+        >
+            <tumaet-ui-input-group>
+                <tumaet-ui-input-group-addon>
+                    <jhi-channel-icon [isPublic]="isPublicControl?.value" [isAnnouncementChannel]="isisAnnouncementChannelControl?.value" />
+                </tumaet-ui-input-group-addon>
+                <input
+                    id="name"
+                    type="text"
+                    tumAetUiInput
+                    cdkFocusInitial
+                    formControlName="name"
+                    [attr.aria-label]="'artemisApp.dialogs.createChannel.channelForm.nameInput.label' | artemisTranslate"
+                    [placeholder]="'artemisApp.dialogs.createChannel.channelForm.nameInput.placeholder' | artemisTranslate"
+                />
+            </tumaet-ui-input-group>
+            <div tumAetUiFormFieldError data-testid="channel-name-error">
+                @if (nameControl?.errors?.required) {
+                    <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
+                }
+                @if (nameControl?.errors?.maxlength) {
+                    <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '20' }"></div>
+                }
+                @if (!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern) {
+                    <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
+                }
+            </div>
+        </tumaet-ui-form-field>
+        <!-- DESCRIPTION -->
+        <tumaet-ui-form-field
+            [label]="'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label' | artemisTranslate"
+            controlId="description"
+            [hint]="'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp' | artemisTranslate"
+            [invalid]="!!descriptionControl?.invalid && (!!descriptionControl?.dirty || !!descriptionControl?.touched)"
+        >
+            <input
+                id="description"
+                type="text"
+                tumAetUiInput
+                formControlName="description"
+                [attr.aria-label]="'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label' | artemisTranslate"
+            />
+            <div tumAetUiFormFieldError>
+                @if (descriptionControl?.errors?.maxlength) {
+                    <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
+                }
+            </div>
+        </tumaet-ui-form-field>
+        <!--Public Channel / Private Channel -->
+        <div class="flex flex-col gap-2">
+            <span id="isPublicLabel" class="text-sm font-medium" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></span>
+            <tumaet-ui-select-button
+                data-testid="channel-visibility-select"
+                aria-labelledby="isPublicLabel"
+                aria-describedby="isPublicHelp"
+                formControlName="isPublic"
+                [options]="visibilityOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+            <small id="isPublicHelp" class="text-xs text-muted-color" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"></small>
+        </div>
+        <!-- Course-Wide Channel -->
+        <div class="flex flex-col gap-2">
+            <span id="isCourseWideChannelLabel" class="text-sm font-medium" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.label"></span>
+            <tumaet-ui-select-button
+                data-testid="channel-scope-select"
+                aria-labelledby="isCourseWideChannelLabel"
+                aria-describedby="isCourseWideChannelHelp"
+                formControlName="isCourseWideChannel"
+                [options]="scopeOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+            <small
+                id="isCourseWideChannelHelp"
+                class="text-xs text-muted-color"
+                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.explanation"
+            ></small>
+        </div>
+        <!--Announcement Channel, which only instructors can create -->
+        @if (canCreateAnnouncementChannel()) {
+            <div class="flex flex-col gap-2">
+                <span
+                    id="isAnnouncementChannelLabel"
+                    class="text-sm font-medium"
+                    jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.label"
+                ></span>
+                <tumaet-ui-select-button
+                    data-testid="channel-type-select"
+                    aria-labelledby="isAnnouncementChannelLabel"
+                    aria-describedby="isAnnouncementChannelHelp"
+                    formControlName="isAnnouncementChannel"
+                    [options]="typeOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                />
+                <small
+                    id="isAnnouncementChannelHelp"
+                    class="text-xs text-muted-color"
+                    jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.explanation"
+                ></small>
+            </div>
+        }
+        <div class="flex justify-end">
+            <button type="submit" id="submitButton" tumAetUiButton [disabled]="!isSubmitPossible">
+                <span jhiTranslate="artemisApp.dialogs.createChannel.channelForm.createButton"></span>
+            </button>
+        </div>
+    </form>
+}

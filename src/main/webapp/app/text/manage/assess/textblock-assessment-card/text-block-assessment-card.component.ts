@@ -1,0 +1,120 @@
+import { GradingInstructionUsageWarningComponent } from 'app/assessment/manage/grading-instruction-usage-warning/grading-instruction-usage-warning.component';
+import { Component, Injector, afterNextRender, effect, inject, input, output, viewChild } from '@angular/core';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
+import { ActivatedRoute } from '@angular/router';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+
+type OptionalTextBlockRef = TextBlockRef | undefined;
+
+@Component({
+    selector: 'jhi-text-block-assessment-card',
+    templateUrl: './text-block-assessment-card.component.html',
+    styleUrls: ['./text-block-assessment-card.component.scss'],
+    imports: [TextBlockFeedbackEditorComponent, GradingInstructionUsageWarningComponent],
+})
+export class TextBlockAssessmentCardComponent {
+    private route = inject(ActivatedRoute);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    private injector = inject(Injector);
+
+    textBlockRef = input.required<TextBlockRef>();
+    allFeedbacks = input<Feedback[]>([]);
+    selected = input<boolean>(false);
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    criteria = input<GradingCriterion[]>();
+    /** Moves the focus to the feedback editor as soon as it is rendered, e.g. for a block that was just selected manually. */
+    focusFeedback = input<boolean>(false);
+
+    didSelect = output<OptionalTextBlockRef>();
+    didChange = output<TextBlockRef>();
+    didDelete = output<TextBlockRef>();
+    /** Emits once a requested focus was handled, whether or not an editor was available to receive it. */
+    didHandleFocusFeedback = output<TextBlockRef>();
+    // optional, because the editor is only rendered while the block has feedback or is selected
+    feedbackEditor = viewChild(TextBlockFeedbackEditorComponent);
+
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
+        effect(() => {
+            if (this.focusFeedback()) {
+                afterNextRender(
+                    () => {
+                        if (!this.readOnly()) {
+                            this.feedbackEditor()?.focus();
+                        }
+                        this.didHandleFocusFeedback.emit(this.textBlockRef());
+                    },
+                    { injector: this.injector },
+                );
+            }
+        });
+    }
+
+    /**
+     * Select a text block
+     * @param {boolean} autofocus - Enable autofocus (defaults to true)
+     */
+    select(autofocus = true): void {
+        if (this.readOnly()) {
+            return;
+        }
+        const textBlockRef = this.textBlockRef();
+        if (textBlockRef && !textBlockRef.selectable) {
+            return;
+        }
+
+        this.didSelect.emit(textBlockRef);
+        textBlockRef.initFeedback();
+
+        if (autofocus) {
+            setTimeout(() => this.feedbackEditor()?.focus());
+            if (!this.selected() && textBlockRef.feedback?.type === FeedbackType.MANUAL) {
+                this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+            }
+        }
+    }
+
+    /**
+     * Unselect a text block
+     */
+    unselect(): void {
+        this.didSelect.emit(undefined);
+        const textBlockRef = this.textBlockRef();
+        delete textBlockRef.feedback;
+        if (textBlockRef.block!.type === TextBlockType.MANUAL && textBlockRef.deletable) {
+            this.didDelete.emit(textBlockRef);
+        }
+        this.feedbackDidChange();
+    }
+
+    /**
+     * Hook to indicate that feedback did change
+     */
+    feedbackDidChange(): void {
+        this.didChange.emit(this.textBlockRef());
+    }
+
+    /**
+     * Connects the structured grading instructions with the feedback of a text block
+     * @param {Event} event - The drop event
+     */
+    connectStructuredGradingInstructionsWithTextBlock(event: Event) {
+        const textBlockRef = this.textBlockRef();
+        if (!textBlockRef.selectable) {
+            return;
+        }
+        this.select();
+        if (textBlockRef.feedback) {
+            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(textBlockRef.feedback, event);
+        }
+        this.feedbackDidChange();
+    }
+}

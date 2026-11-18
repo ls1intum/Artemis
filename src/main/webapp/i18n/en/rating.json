@@ -1,0 +1,18 @@
+{
+    "artemisApp": {
+        "rating": {
+            "label": "How useful is this feedback to you?"
+        },
+        "ratingList": {
+            "exercise": "Exercise",
+            "exerciseType": "Exercise Type",
+            "rating": "Rating",
+            "actions": "Actions",
+            "assessmentType": "Assessment Type",
+            "openSubmission": "Show the submission",
+            "title": "List of ratings",
+            "pageTitle": "Ratings",
+            "noRatingToShow": "There are no ratings yet."
+        }
+    }
+}

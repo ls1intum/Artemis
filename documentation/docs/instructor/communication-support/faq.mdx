@@ -1,0 +1,101 @@
+---
+id: faq
+title: FAQs
+sidebar_label: FAQs
+last_reviewed: 2026-11-05
+---
+
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import instructorViewImg from './assets/faq/instructor-view.png';
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import importDesktopImg from './assets/faq/import-desktop-light.png';
+import importMobileImg from './assets/faq/import-mobile-dark.png';
+
+## What Are FAQs in Artemis?
+
+Artemis supports the coordination and management of FAQs (Frequently Asked Questions) within a course. These FAQs offer quick and clear answers to common questions from students, helping to streamline communication and make important information easily accessible.
+
+To set up and manage FAQs, instructors can navigate to the **FAQ** page in the course administration section.
+Before using the FAQ feature, a configuration step is required. Please ensure that the FAQ functionality is enabled in the course settings.
+
+<TumLiveVideo src="61395" title="Overview of Artemis FAQ management" />
+
+## FAQ Management
+
+The FAQ overview provides a user-friendly interface for managing questions.
+
+At the top of the page, instructors can search for specific FAQs or filter them by topic. Below that, a list of all existing FAQs is shown in a table, making it easy to view and edit entries.
+
+There is also a button to create new FAQs.
+When Iris is enabled for the course, accepted FAQs are synchronized automatically in the background when you create or edit them. Deleted FAQs are removed from Iris in the background. Saving and deleting FAQs does not wait for Iris to respond.
+
+If Iris is temporarily unavailable, you can continue managing FAQs. Artemis checks for missing, changed, and removed FAQs every 10 minutes and retries synchronization. Larger backlogs can take several runs to process.
+
+<Image src={instructorViewImg} alt="FAQ management with search, category filters, and the accepted question with its category" size={ImageSize.large} />
+
+## FAQ Table Details
+
+Each FAQ is displayed in a table row with these columns:
+
+1. **ID** – links to the edit page of the FAQ.
+2. **Question title** – the question itself.
+3. **Question answer** – the corresponding response.
+4. **State** – shows whether the FAQ is accepted, proposed, etc.
+5. **Categories** – the topic or category to which the FAQ belongs, helping to organize and filter questions.
+6. A last column without a heading contains buttons to interact with the FAQ (e.g., edit or delete).
+
+The number of visible action buttons depends on the user’s role:
+
+Tutors can propose new FAQs and edit those that are still in the Proposed state, but they cannot approve or delete any FAQs.
+
+<TumLiveVideo src="61396" title="Tutor FAQ Management" />
+
+Instructors can edit or delete any FAQ. They can approve FAQs that are in the *Proposed* state, changing their status to *Accepted*.
+
+<TumLiveVideo src="61397" title="Instructor FAQ Management" />
+
+## Creating FAQs
+
+FAQs can be created manually. Each FAQ consists of a question and an answer.
+The question is shown as a heading, and the answer is presented as a formatted paragraph.
+
+- The **title** is entered in a plain text field.
+- The **answer** supports the full Markdown editor used in Artemis.
+- The **categories** field allows instructors to assign the FAQ to one or two topics, which helps students find relevant questions more easily.
+
+## Importing FAQs
+
+Instructors can reuse existing FAQs by selecting **Import FAQs** on the FAQ management page.
+Search by question, answer, or course name to find FAQs from other courses you can access.
+Each result shows its source course and status; expand **Preview answer** to read the answer before selecting it.
+
+Select one or more FAQs using the checkboxes, or use **Select all on this page**.
+Your selection is retained when you search again or move to another page.
+The selection count includes FAQs selected on all pages; **Clear selection** removes the entire selection.
+Choose **Import selected** to copy the selected FAQs into the current course.
+The imported FAQs retain their questions, answers, categories, and statuses; the source FAQs remain unchanged.
+
+Search results follow the normal FAQ visibility rules: published FAQs are visible to course members,
+while unpublished FAQs require teaching staff access in the source course.
+Access is checked again when importing.
+
+<Image src={importDesktopImg} alt="FAQ import dialog with source courses, answer preview, and multiple selected FAQs" size={ImageSize.large} />
+
+The dialog also supports narrow screens and dark mode:
+
+<Image src={importMobileImg} alt="FAQ import dialog in dark mode on a phone, with the selection count and import action visible" size={ImageSize.small} />
+
+## Additional IRIS Features: Automatic FAQ Rewriting
+
+**Prerequisite:** You need to set up a working **IRIS** instance in your Artemis application.
+You can find a guide on how to do this in the *IRIS setup guide*.
+The following video shows how to enable IRIS in your course:
+
+<TumLiveVideo src="61403" title="Enabling IRIS for FAQ" />
+
+When IRIS is enabled, you can use an integrated feature to automatically refine your FAQs.
+With just one click, IRIS checks your FAQ answers for grammar issues and unclear phrasing.
+It analyzes the text, suggests improvements, and automatically updates the answer field with a more polished version to save you time and ensure high-quality responses.
+In addition, a **consistency check** is performed to ensure that the answer aligns with existing FAQs.
+
+<TumLiveVideo src="61398" title="IRIS Automatic FAQ Rewriting" />

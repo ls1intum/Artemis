@@ -1,0 +1,29 @@
+<tumaet-ui-dialog [(visible)]="isVisible" [dismissableMask]="true" size="medium" [header]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate">
+    <table tumAetUiTable>
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></th>
+            <td jhiTranslate="artemisApp.quizExercise.matchLetterCase.explanation"></td>
+        </tr>
+
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.matchPercentage.explanationTitle"></th>
+            <td jhiTranslate="artemisApp.quizExercise.matchPercentage.explanation"></td>
+        </tr>
+    </table>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+    </ng-template>
+</tumaet-ui-dialog>
+<div>
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        (click)="open()"
+        [attr.aria-label]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
+        [attr.title]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
+    >
+        <fa-icon [icon]="farQuestionCircle" />
+    </button>
+</div>

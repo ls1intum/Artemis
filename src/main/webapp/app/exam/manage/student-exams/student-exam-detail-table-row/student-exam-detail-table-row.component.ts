@@ -1,0 +1,130 @@
+import { Component, effect, input, signal } from '@angular/core';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+
+@Component({
+    selector: '[jhi-student-exam-detail-table-row]',
+    templateUrl: './student-exam-detail-table-row.component.html',
+    providers: [],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, ArtemisTranslatePipe, TumAetUiButtonDirective],
+})
+export class StudentExamDetailTableRowComponent {
+    exercise = input.required<Exercise>();
+    examId = input.required<number>();
+    isTestRun = input.required<boolean>();
+    course = input.required<Course>();
+    busy = input.required<boolean>();
+    studentExam = input.required<StudentExam>();
+    achievedPointsPerExercise = input.required<{
+        [exerciseId: number]: number;
+    }>();
+
+    courseId!: number; // set via effect from the required course input
+    studentParticipation?: StudentParticipation;
+    readonly submission = signal<Submission | undefined>(undefined);
+    readonly result = signal<Result | undefined>(undefined);
+    openingAssessmentEditorForNewSubmission = false;
+    readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
+    getIcon = getIcon;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            if (exercise.studentParticipations?.[0]) {
+                this.studentParticipation = exercise.studentParticipations[0];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                if (this.studentParticipation.submissions?.length! > 0) {
+                    this.submission.set(this.studentParticipation.submissions![0]);
+                }
+                const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
+                if (allResults.length > 0) {
+                    this.result.set(allResults[0]);
+                }
+            }
+            const course = this.course();
+            if (course && course.id) {
+                this.courseId = course.id;
+            }
+        });
+    }
+
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param exercise
+     * @param submission
+     * @param resultId
+     */
+    getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
+        let route;
+        if (!exercise || !exercise.type) {
+            return;
+        }
+
+        if (submission) {
+            this.openingAssessmentEditorForNewSubmission = true;
+            route = getLinkToSubmissionAssessment(
+                exercise.type,
+                this.courseId,
+                exercise.id!,
+                this.studentParticipation?.id,
+                submission.id!,
+                this.examId(),
+                exercise.exerciseGroup?.id,
+                resultId,
+            );
+            this.openingAssessmentEditorForNewSubmission = false;
+        }
+        return route;
+    }
+
+    /**
+     * Gets the bonus points from the given exercise according to its includedInOverallScore value.
+     * @param exercise exercise with or without bonus points
+     */
+    getBonusPoints(exercise?: Exercise): number | undefined {
+        if (!exercise) {
+            return 0;
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return exercise.bonusPoints;
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return exercise.maxPoints;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Gets the max points from the given exercise according to its includedInOverallScore value.
+     * @param exercise relevant exercise
+     */
+    getMaxPoints(exercise?: Exercise): number | undefined {
+        if (!exercise) {
+            return 0;
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return exercise.maxPoints;
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+            default:
+                return 0;
+        }
+    }
+}

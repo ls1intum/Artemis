@@ -1,0 +1,37 @@
+<div class="flex justify-between">
+    @let currentCourseId = courseId();
+    @let currentSidebarData = sidebarData();
+    @if (currentCourseId && currentSidebarData) {
+        <div [class.sidebar-collapsed]="isCollapsed()">
+            <jhi-sidebar
+                [itemSelected]="itemSelected()"
+                [courseId]="currentCourseId"
+                [sidebarData]="currentSidebarData"
+                [collapseState]="DEFAULT_COLLAPSE_STATE"
+                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [inlineFilterLabel]="tutorialGroups()?.length ? 'artemisApp.courseOverview.sidebar.freeSpotsOnly' : undefined"
+                [(inlineFilterActive)]="freeSpotsOnly"
+                [pageTitle]="pageTitle()"
+                [showSidebarToggle]="true"
+                [isSidebarCollapsed]="isCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
+            />
+        </div>
+
+        @if (itemSelected()) {
+            <!-- flex-1 min-w-0 rather than a viewport width: the panel shares the row with the sidebar. -->
+            <div class="module-bg min-w-0 flex-1 rounded-lg">
+                <router-outlet (activate)="onSubRouteActivate($event)" />
+            </div>
+        } @else {
+            <div class="module-bg flex min-w-0 flex-1 flex-col rounded-lg p-4!">
+                @if (isCollapsed()) {
+                    <div>
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
+                <div class="my-auto w-full text-center" jhiTranslate="artemisApp.courseOverview.tutorialGroups.selectTutorialGroup"></div>
+            </div>
+        }
+    }
+</div>

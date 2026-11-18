@@ -1,0 +1,697 @@
+package de.tum.cit.aet.artemis.exam;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
+
+import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+
+class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "examregistrationtest";
+
+    /** Student not enrolled in the test course; exercises the not-in-course branches. */
+    private static final String OTHER_PREFIX = "examregistrationother";
+
+    public static final String STUDENT_111 = TEST_PREFIX + "student111";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamRegistrationService examRegistrationService;
+
+    @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    private Course course1;
+
+    private Exam exam1;
+
+    private Exam testExam1;
+
+    private Exam testExamWithSupervisedSession1;
+
+    private static final int NUMBER_OF_STUDENTS = 3;
+
+    private static final int NUMBER_OF_TUTORS = 1;
+
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
+
+    private User student1;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
+        userUtilService.addUsers(OTHER_PREFIX, 1, 0, 0, 0); // outsider student — never enrolled in course
+
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        exam1 = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam1, "exam1 channel");
+        testExam1 = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession1 = examUtilService.addTestExamWithSupervisedSession(course1);
+        examUtilService.addStudentExamForTestExam(testExam1, student1);
+        examUtilService.addStudentExamForTestExam(testExamWithSupervisedSession1, student1);
+
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+    }
+
+    @AfterEach
+    void tearDown() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        participantScoreScheduleService.shutdown();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testIndividualGenerationReusesRealExamAndPreservesMultipleTestExamAttempts() {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        StudentExam first = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(studentExamService.generateIndividualStudentExam(exam, student1).getId()).isEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(1);
+
+        exam.setExamMode(ExamMode.TEST);
+        examRepository.save(exam);
+        StudentExam attempt = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(attempt.getId()).isNotEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPropagatesInvalidExerciseGroupFailure() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        // A new mandatory group without an exercise is an incomplete instructor configuration.
+        // Generating the new student's exam must surface the failure rather than report pending success.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "Empty mandatory group");
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 1);
+        examRepository.save(exam);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactly(existing.getId());
+        assertThat(examUserRepository.findUserIdsByExamId(exam.getId())).contains(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRejectedAfterExamEnd() throws Exception {
+        exam1.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        request.postWithoutLocation(base + "/students", List.of(student), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(base + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+        assertThat(examUserRepository.findAllByExamId(exam1.getId())).isEmpty();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId(), course1.getId(),
+                CourseRole.STUDENT)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).hasSize(2).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testBulkRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId()))
+                .containsExactlyInAnyOrderElementsOf(examUserRepository.findUserIdsByExamId(exam.getId()));
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPreparesExercisesBeforeStartAfterProgressCacheExpires() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        studentExamService.generateStudentExams(exam);
+        studentExamService.startExercises(exam.getId()).join();
+        studentExamService.invalidateExerciseStartStatus(exam.getId());
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        long examId = exam.getId();
+        var exerciseIds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(exercise -> exercise.getId()).toList();
+        long expectedParticipations = 2L * exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(exerciseIds.stream()
+                .mapToLong(exerciseId -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exerciseId, examId)).sum())
+                .isEqualTo(expectedParticipations));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRechecksPreparationThatCompletesWhileResolvingStudents() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        studentExamService.generateMissingStudentExams(exam);
+        assertThat(studentExamService.getExerciseStartStatusOfExam(examId)).isEmpty();
+        String login = TEST_PREFIX + "fastprepstudent";
+        var ldapStudent = new LdapUserDto().firstName("Fast").lastName("Preparation").login(login).registrationNumber("79870122").email(login + "@tum.de");
+        doAnswer(invocation -> {
+            // Registration has begun, but user resolution can take long enough for a first preparation to finish.
+            studentExamService.startExercises(examId).join();
+            studentExamService.invalidateExerciseStartStatus(examId);
+            return Optional.of(ldapStudent);
+        }).when(ldapUserService).findByLogin(login);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students", List.of(new StudentDTO(login, "", "", "", "")), HttpStatus.OK, null);
+
+        var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(userUtilService.getUserByLogin(login).getId(), examId, false).orElseThrow();
+        int expectedExercises = exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(expectedExercises));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
+        int studentCountBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        assertThat(userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
+                .hasSize(studentCountBefore + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterUsersInExam_duplicateRowsForSameUserCreateSingleExamUser() throws Exception {
+        // exam_user has no unique constraint on (exam_id, student_id), so a request (or an imported CSV) listing the same
+        // user twice must be deduplicated in the service: two rows would both be persisted and then break
+        // findByExamIdAndUserId, which returns an Optional.
+        Exam exam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam, "duplicate-rows-channel");
+        String login = OTHER_PREFIX + "student1";
+        User student = userUtilService.getUserByLogin(login);
+
+        var firstRow = new ExamUserDTO(login, "", "", "", "", "", "101", "11", false, false, false, false, "", null, null, null, null, null, null, null);
+        // Second row repeats the user with a new room but a blank seat: the last non-blank value wins per field.
+        var secondRow = new ExamUserDTO(login, "", "", "", "", "", "202", "", false, false, false, false, "", null, null, null, null, null, null, null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(firstRow, secondRow), HttpStatus.OK, null);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        assertThat(storedExam.getExamUsers()).as("the duplicated user is registered exactly once").hasSize(1);
+        // Would throw IncorrectResultSizeDataAccessException if duplicates had been persisted.
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId()).orElseThrow();
+        assertThat(examUser.getPlannedRoom()).as("last non-blank room wins").isEqualTo("202");
+        assertThat(examUser.getPlannedSeat()).as("blank seat in the later row does not clear the earlier one").isEqualTo("11");
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterUserInExam_studentExamGenerated() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        examRepository.save(exam);
+
+        Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
+        assertThat(studentExamsBefore).isEmpty();
+
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+
+        Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
+        assertThat(studentExamsAfter).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentToExam_testExam() throws Exception {
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveStudentToExam_testExam() throws Exception {
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentToSupervisedSessionExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", List.of(student), HttpStatus.OK,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveStudentFromSupervisedSessionExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", List.of(student), HttpStatus.OK,
+                null);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterUsersInExam() throws Exception {
+        var savedExam = examUtilService.addExam(course1);
+
+        List<String> registrationNumbers = Arrays.asList("1111111", "1111112", "1111113");
+        List<User> students = userUtilService.setRegistrationNumberOfStudents(registrationNumbers, TEST_PREFIX);
+
+        User student1 = students.getFirst();
+        User student2 = students.get(1);
+        User student3 = students.get(2);
+
+        var registrationNumber3WithTypo = "1111113" + "0";
+        var registrationNumber4WithTypo = "1111115" + "1";
+        var registrationNumber99 = "1111199";
+        var registrationNumber111 = "1111100";
+        var emptyRegistrationNumber = "";
+
+        // mock the ldap service
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber3WithTypo);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(emptyRegistrationNumber);
+        doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber4WithTypo);
+
+        var ldapUser111Dto = new LdapUserDto().registrationNumber(registrationNumber111).firstName(STUDENT_111).lastName(STUDENT_111).login(STUDENT_111)
+                .email(STUDENT_111 + "@tum.de");
+        doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
+
+        userUtilService.createAndSaveUser("student99"); // not registered for the course
+        userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
+
+        User student99 = userTestRepository.findOneWithAuthoritiesByLogin("student99").orElseThrow();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
+
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        var examUserDtoNonExisting = new StudentDTO("nonExistingStudent", "", "", "", "");
+        var nonExistingResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoNonExisting),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(nonExistingResult.notFoundStudents()).hasSize(1);
+
+        Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
+        ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
+        assertThat(storedExam.getExamUsers()).containsExactly(examUserStudent1);
+
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
+        storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
+        assertThat(storedExam.getExamUsers()).isEmpty();
+
+        var studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber(student1.getRegistrationNumber());
+        var studentDto2 = UserFactory.generateStudentDTOWithRegistrationNumber(student2.getRegistrationNumber());
+        var studentDto3 = new StudentDTO(student3.getLogin(), null, null, registrationNumber3WithTypo, null); // explicit typo, should be a registration failure later
+        var studentDto4 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber4WithTypo); // explicit typo, should fall back to login name later
+        var studentDto10 = UserFactory.generateStudentDTOWithRegistrationNumber(null); // completely empty
+
+        var studentDto99 = new StudentDTO(student99.getLogin(), null, null, registrationNumber99, null);
+        var studentDto111 = new StudentDTO(null, null, null, registrationNumber111, null);
+
+        // Add a student with login but empty registration number
+        var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto4, studentDto99, studentDto111, studentDto10);
+
+        // now we register all these students for the exam.
+        // all students get registered if they can be found in the LDAP
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", studentsToRegister,
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder(registrationNumber4WithTypo, null);
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
+        // TODO check audit events stored properly
+
+        storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
+
+        // now a new user student101 should exist
+        var student111 = userUtilService.getUserByLogin(STUDENT_111);
+
+        var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
+        var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId()).orElseThrow();
+        var examUser3 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student3.getId()).orElseThrow();
+        var examUser99 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student99.getId()).orElseThrow();
+        var examUser111 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student111.getId()).orElseThrow();
+
+        assertThat(storedExam.getExamUsers()).containsExactlyInAnyOrder(examUser1, examUser2, examUser3, examUser99, examUser111);
+
+        for (var examUser : storedExam.getExamUsers()) {
+            // all registered users must have access to the course
+            assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(examUser.getUser().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+        }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(savedExam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterLDAPUsersInExam() throws Exception {
+        var savedExam = examUtilService.addExam(course1);
+        String student100 = TEST_PREFIX + "student100";
+        String student200 = TEST_PREFIX + "student200";
+        String student300 = TEST_PREFIX + "student300";
+
+        // setup mocks
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).login(student100).registrationNumber("100000").email(student100 + "@tum.de");
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByLogin(student100);
+
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).login(student200).registrationNumber("200000").email(student200 + "@tum.de");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByAnyEmail(student200 + "@tum.de");
+
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).login(student300).registrationNumber("3000000").email(student300 + "@tum.de");
+        doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
+
+        // user with login
+        StudentDTO dto1 = new StudentDTO(student100, student100, student100, null, null);
+        // user with email
+        StudentDTO dto2 = new StudentDTO(null, student200, student200, null, student200 + "@tum.de");
+        // user with registration number
+        StudentDTO dto3 = new StudentDTO(null, student300, student300, "3000000", null);
+        // user without anything
+        StudentDTO dto4 = new StudentDTO(null, null, null, null, null);
+
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(dto1, dto2, dto3, dto4), ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactly(dto4.registrationNumber());
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToExam_testExam() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, ExamRegistrationResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToSupervisedSessionExam() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToSupervisedSessionExam_supervisedSessionEnded() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        testExamWithSupervisedSession1.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExamWithSupervisedSession1.setEndDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession1.setWorkingTime(3600);
+        examRepository.save(testExamWithSupervisedSession1);
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveAllStudentsFromExam_testExam() throws Exception {
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveAllStudentsFromSupervisedSessionExam() throws Exception {
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteStudentThatDoesNotExist() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddAllRegisteredUsersToExam() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        Channel channel = examUtilService.addExamChannel(exam, "testchannel");
+
+        // Remove student99 if they were accidentally enrolled by the prefix-based enrollment from a
+        // previous @BeforeEach run (2nd-run persistence bug), so the baseline count is predictable.
+        // Use addStudent (not createAndSaveUser) so student99 gets ROLE_USER authority — the
+        // findAllByCourseIdAndCourseRolesInWithAuthorities query requires a LEFT JOIN FETCH on authorities.
+        userUtilService.addStudent(TEST_PREFIX + "student99"); // not registered for the course
+        User student99 = userUtilService.getUserByLogin(TEST_PREFIX + "student99");
+        userUtilService.unenrollUserFromCourse(student99, course1);
+
+        int numberOfStudentsInCourse = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+
+        userUtilService.enrollUserInCourse(student99, course1, CourseRole.STUDENT);
+        userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+
+        var examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
+        assertThat(examUser99).isEmpty();
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+
+        exam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
+
+        // the course students + our custom student99
+        assertThat(exam.getExamUsers()).hasSize(numberOfStudentsInCourse + 1);
+        assertThat(exam.getExamUsers()).contains(examUser99.orElseThrow());
+        verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam.getId());
+
+        Channel channelFromDB = channelRepository.findChannelByExamId(exam.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getExam()).isEqualTo(exam);
+        assertThat(channelFromDB.getName()).isEqualTo(channel.getName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterCourseStudents_testExam() throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterCourseStudents_supervisedSessionExam() throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/register-course-students", null, HttpStatus.OK,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testIsUserRegisteredForExam() {
+        var examUser = new ExamUser();
+        examUser.setExam(exam1);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        exam1.addExamUser(examUser);
+        final var exam = examRepository.save(exam1);
+        final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), student1.getId());
+        final var isCurrentUserRegistered = examRegistrationService.isCurrentUserRegisteredForExam(exam.getId());
+        assertThat(isUserRegistered).isTrue();
+        assertThat(isCurrentUserRegistered).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterPlainStudentToExam_successful() throws Exception {
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
+
+        assertThat(storedExam.getExamUsers()).contains(examUser);
+    }
+
+    // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckRegistrationOrRegisterStudentToTestExam_noTestExam() {
+        assertThatThrownBy(
+                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
+                .isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
+    void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
+        assertThatThrownBy(
+                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(OTHER_PREFIX + "student1")))
+                .isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+        var examUser = new ExamUser();
+        examUser.setExam(testExam);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        testExam.addExamUser(examUser);
+        testExam = examRepository.save(testExam);
+        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
+        Exam testExamReloaded = examRepository.findByIdWithExamUsersElseThrow(testExam.getId());
+        assertThat(testExamReloaded.getExamUsers()).contains(examUser);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterStaffInExam_rejectedButRealStudentRegistered() throws Exception {
+        var savedExam = examUtilService.addExam(course1);
+
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "2000001");
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "editor1", "2000002");
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "tutor1", "2000003");
+
+        var studentDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000001");
+        var editorDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000002");
+        var tutorDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000003");
+
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(studentDto, editorDto, tutorDto), ExamRegistrationResultDTO.class, HttpStatus.OK);
+
+        assertThat(result.rejectedStaffUsers()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder("2000002", "2000003");
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+
+        Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), student.getId())).isPresent();
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), editor.getId())).isEmpty();
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), tutor.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterCourseStudents_doesNotRegisterStaff() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam, "staff-filter-channel");
+
+        // user holding BOTH the STUDENT and the EDITOR course role, so the student lookup returns them but they must be rejected as staff
+        User dualRole = userUtilService.createAndSaveUser(TEST_PREFIX + "dualrole");
+        userUtilService.enrollUserInCourse(dualRole, course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(dualRole, course1, CourseRole.EDITOR);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+
+        exam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        assertThat(examUserRepository.findByExamIdAndUserId(exam.getId(), dualRole.getId())).isEmpty();
+
+        // a normal course student is still registered
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId())).isPresent();
+    }
+}

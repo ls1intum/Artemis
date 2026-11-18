@@ -1,0 +1,184 @@
+---
+name: Deploy Artemis with Ansible
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Branch to deploy'
+        required: true
+      commit_sha:
+        description: 'Commit SHA to deploy'
+        required: true
+      environment_name:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging1.artemis.cit.tum.de
+          - staging2.artemis.cit.tum.de
+          - artemis.tum.de
+      triggered_by:
+        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
+        required: false
+        type: string
+
+concurrency: ${{ github.event.inputs.environment_name }}
+
+env:
+  # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
+  build_workflow_name: ci.yml
+
+# Default-deny; each job opts into the minimum scope it needs.
+permissions: {}
+
+jobs:
+  check-build-status:
+    runs-on: [self-hosted, artemis-prod-deployment]
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      build_workflow_run_id: ${{ steps.resolve.outputs.run-id }}
+    env:
+      BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+      COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
+    steps:
+      - name: Print inputs
+        env:
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
+        run: |
+          set -Eeuo pipefail
+          echo "Branch: $BRANCH_NAME"
+          echo "Commit SHA: $COMMIT_SHA"
+          echo "Environment: $ENVIRONMENT_NAME"
+          echo "Triggered by: $TRIGGERED_BY"
+
+      # Check out only the resolver action, from the workflow's own ref (Helios dispatches this
+      # workflow from the branch being deployed). Run-resolution is a build-correctness helper.
+      - name: Check out resolver action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/actions/resolve-artifact-run
+          sparse-checkout-cone-mode: false
+
+      # Resolve the CI run that actually carries Artemis.war for this exact commit — enumerating all
+      # runs for the SHA rather than trusting `.workflow_runs[0]`, which fails when a superseded or
+      # artifact-less run for the same commit sorts first (Helios#1196).
+      - name: Resolve build run for the commit
+        id: resolve
+        uses: ./.github/actions/resolve-artifact-run
+        with:
+          workflow: ${{ env.build_workflow_name }}
+          sha: ${{ github.event.inputs.commit_sha }}
+          branch: ${{ github.event.inputs.branch_name }}
+          artifact-name: Artemis.war
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: check-build-status
+    runs-on: [self-hosted, artemis-prod-deployment]
+    permissions:
+      contents: read  # checkout
+      actions: read   # download-artifact by run-id
+    environment:
+      name: ${{ github.event.inputs.environment_name }}
+      url: ${{ vars.DEPLOYMENT_URL }}
+    env:
+      DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY }}
+      DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY }}
+      DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+      DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
+      HEALTH_CHECK_URL: "${{ vars.DEPLOYMENT_URL }}/management/health"
+      WORKFLOW_RUN_ID: ${{ needs.check-build-status.outputs.build_workflow_run_id }}
+
+    steps:
+      - name: Setup SSH and Known Hosts
+        env:
+          DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Write private key
+          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          # Write known hosts
+          echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Checkout Artemis-Ansible repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: 'ls1intum/artemis-ansible'
+
+      - name: Check out Python dependency lock
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: artemis-dependency-lock
+          sparse-checkout: .github/python-dependencies
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      - name: Install Artemis-Ansible dependencies
+        run: |
+          python3 -m pip install --require-hashes -r artemis-dependency-lock/.github/python-dependencies/requirements.txt
+          ansible-galaxy collection install -r requirements.yml --force
+          ansible-galaxy install -r requirements.yml --force
+          ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml
+
+      - name: Download artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Artemis.war
+          path: /tmp/artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ env.WORKFLOW_RUN_ID  }}
+
+      - name: Deploy Artemis
+        env:
+          ANSIBLE_PLAYBOOK_PATH: ${{ vars.ANSIBLE_PLAYBOOK_PATH }}
+        run: |
+          WAR_FILE=$(ls -1 /tmp/artifact/*.war | head -n 1)
+
+          ansible-playbook "$ANSIBLE_PLAYBOOK_PATH" -e artemis_version="$WAR_FILE" -e ansible_user="$DEPLOYMENT_USER"
+
+      # The ansible role itself already waits for node 1 individually (management/info, up to
+      # 10 minutes) before restarting the other nodes, so ansible-playbook failing already
+      # catches a node that never comes back up. This check is complementary, not redundant:
+      # it goes through the real public/load-balanced URL (all nodes, through nginx) rather than
+      # a single node's actuator endpoint, and /management/health runs deeper checks (DB, disk
+      # space, etc.) than /management/info's static build metadata.
+      - name: Verify deployment health
+        run: |
+          for tool in curl jq; do
+            if ! command -v "$tool" > /dev/null; then
+              echo "::error::'$tool' is required for the deployment health check but is not installed on this runner."
+              exit 1
+            fi
+          done
+
+          attempts=0
+          max_attempts=30
+          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge "$max_attempts" ]; then
+              echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5-10 minutes, depending on how quickly each attempt fails) following deployment."
+              exit 1
+            fi
+            echo "Waiting for $HEALTH_CHECK_URL to report healthy (attempt $attempts/$max_attempts)..."
+            sleep 10
+          done
+          echo "Deployment health check passed: $HEALTH_CHECK_URL reports UP."
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_ed25519
+          rm -rf /tmp/artifact/*

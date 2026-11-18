@@ -1,0 +1,25 @@
+import { Service } from '@angular/core';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { Range } from 'app/foundation/util/utils';
+
+@Service()
+export class PlagiarismInspectorService {
+    /**
+     * Filters the given comparisons and returns only those that have a similarity within the range [minimumSimilarity, maximumSimilarity)
+     * Note: similarities are defined as doubles between 0 and 100
+     * @param range the similarity range the comparisons should be filtered against
+     * @param comparisons the comparisons that should be filtered
+     */
+    filterComparisons(range: Range, comparisons?: PlagiarismComparison[]): PlagiarismComparison[] {
+        if (!comparisons) {
+            return [];
+        }
+        let filterFunction;
+        if (range.upperBound === 100) {
+            filterFunction = (comparison: PlagiarismComparison) => comparison.similarity >= range.lowerBound && comparison.similarity <= range.upperBound;
+        } else {
+            filterFunction = (comparison: PlagiarismComparison) => comparison.similarity >= range.lowerBound && comparison.similarity < range.upperBound;
+        }
+        return comparisons.filter(filterFunction);
+    }
+}

@@ -1,0 +1,207 @@
+import { UMLModel, importDiagram } from '@tumaet/apollon';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-modeling-submission-exam',
+    templateUrl: './modeling-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
+    styleUrls: ['./modeling-exam-submission.component.scss'],
+    // change deactivation must be triggered manually
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        ExamExerciseHeaderComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        ModelingEditorComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
+})
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private examParticipationService = inject(ExamParticipationService);
+
+    exerciseType = ExerciseType.MODELING;
+
+    modelingEditor = viewChild.required(ModelingEditorComponent);
+
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
+    studentSubmission = input.required<ModelingSubmission>();
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
+
+    exercise = input.required<ModelingExercise>();
+    readonly umlModel = signal<UMLModel>(undefined!); // input model for Apollon
+
+    // explicitly needed to track if submission.isSynced is changed, otherwise component
+    // does not update the state due to onPush strategy
+    isSubmissionSynced = input<boolean>();
+    saveCurrentExercise = output<void>();
+
+    readonly explanationText = signal<string>(undefined!); // current explanation text
+
+    // nodes and edges of the diagram as last loaded from the submission or handed to a save; Apollon also notifies on
+    // selection and focus changes, and only a difference to this content is an edit that leaves the answer unsaved
+    private syncedDiagram = ModelingExamSubmissionComponent.diagramContent();
+
+    // `isSynced` is mutated in place, so the overlay only follows it when this reads the service-wide sync-state version
+    // (see ExerciseSaveButtonComponent and the exam navigation sidebar, which show the same state).
+    protected readonly savedStatus = computed(
+        () => {
+            this.examParticipationService.submissionSyncVersion();
+            return {
+                isChanged: !this.studentSubmission().isSynced,
+                isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
+            };
+        },
+        { equal: (a, b) => a.isChanged === b.isChanged && a.isSaving === b.isSaving },
+    );
+
+    // Icons
+    protected readonly faListAlt = faListAlt;
+
+    ngOnInit(): void {
+        // show submission answers in UI
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
+        this.updateViewFromSubmission();
+    }
+
+    /**
+     * Updates the problem statement html of the currently loaded modeling exercise which is part of the user's student exam.
+     * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
+     */
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
+        this.problemStatementHtml.set(newProblemStatementHtml);
+    }
+
+    getSubmission(): Submission {
+        return this.studentSubmission();
+    }
+
+    getExerciseId(): number | undefined {
+        return this.exercise().id;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise();
+    }
+
+    updateViewFromSubmission(): void {
+        if (this.studentSubmission()) {
+            if (this.studentSubmission().model) {
+                // Updates the Apollon editor model state (view) with the latest modeling submission
+                this.umlModel.set(importDiagram(parseJson(this.studentSubmission().model!)));
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(this.umlModel());
+            }
+            // Updates explanation text with the latest submission
+            this.explanationText.set(this.studentSubmission().explanationText ?? '');
+        }
+    }
+
+    /**
+     * Updates the model of the submission with the current Apollon editor model state (view)
+     * Updates the explanation text of the submission with the current explanation
+     */
+    public updateSubmissionFromView(): void {
+        const currentModel = this.modelingEditor()?.getCurrentModel();
+        if (!currentModel) {
+            return;
+        }
+
+        const diagramJson = JSON.stringify(currentModel);
+
+        if (this.studentSubmission()) {
+            if (diagramJson) {
+                this.studentSubmission().model = diagramJson;
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(currentModel);
+            }
+            this.studentSubmission().explanationText = this.explanationText();
+        }
+    }
+
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the submission is NOT synced), false otherwise.
+     */
+    public hasUnsavedChanges(): boolean {
+        return !this.studentSubmission().isSynced!;
+    }
+
+    /**
+     * The exercise is still active if it's due date hasn't passed yet.
+     */
+    get isActive(): boolean {
+        return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
+    }
+
+    modelChanged(model: UMLModel) {
+        if (ModelingExamSubmissionComponent.diagramContent(model) === this.syncedDiagram) {
+            return;
+        }
+        this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
+    }
+
+    // Changes isSynced to false and updates explanation text
+    explanationChanged(explanation: string) {
+        this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
+        this.explanationText.set(explanation);
+    }
+
+    setSubmissionVersion(submission: SubmissionVersion): void {
+        this.submissionVersion = submission;
+        this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Updates the model and explanation text with the latest submission version.
+     * It extracts the model and explanation text from the submission version and updates the view.
+     */
+    private updateViewFromSubmissionVersion(): void {
+        if (this.submissionVersion?.content) {
+            // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
+            // and need to remove the content that was added before the string is saved to the db to get valid JSON
+            let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
+            model = model.replace('Model: ', '');
+            // updates the Apollon editor model state (view) with the latest modeling submission
+            this.umlModel.set(importDiagram(parseJson(model)));
+            // same as above regarding the string operations
+            const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
+            this.explanationText.set(this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '');
+        }
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
+    }
+
+    private static diagramContent(model?: Pick<UMLModel, 'nodes' | 'edges'>): string {
+        return JSON.stringify([model?.nodes ?? [], model?.edges ?? []]);
+    }
+}

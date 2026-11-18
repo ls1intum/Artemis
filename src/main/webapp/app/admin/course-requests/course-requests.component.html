@@ -1,0 +1,276 @@
+<div class="w-full px-4! py-6!">
+    <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
+    <div *adminTitleBarActions>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="load()" [disabled]="loading()" data-testid="refresh-button">
+            <fa-icon [icon]="faSync" />
+            <span jhiTranslate="health.refresh.button"></span>
+        </tumaet-ui-button>
+    </div>
+    <p class="text-muted-color mb-4!" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
+
+    <!-- Pending Requests Table -->
+    <h4 class="mb-4!" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>
+    <div class="mb-12! overflow-x-auto">
+        <table tumAetUiTable size="small" [striped]="true" data-testid="pending-table">
+            <thead>
+                <tr>
+                    <th scope="col" class="min-w-52" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
+                    <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.previousInstructor"></th>
+                    <th scope="col" class="w-full min-w-40" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (request of pendingRequests(); track request.id) {
+                    <tr>
+                        <td>
+                            <div class="font-semibold">{{ request.title }}</div>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <ng-container [ngTemplateOutlet]="courseRequestFlags" [ngTemplateOutletContext]="{ $implicit: request }" />
+                            </div>
+                        </td>
+                        <td class="whitespace-nowrap">{{ request.semester }}</td>
+                        <td>
+                            <dl class="mb-0! grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
+                                <dd class="mb-0! ms-0!">{{ request.startDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
+                                <dd class="mb-0! ms-0!">{{ request.endDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.admin.created"></dt>
+                                <dd class="mb-0! ms-0! text-muted-color">{{ request.createdDate | artemisDate: 'short' }}</dd>
+                            </dl>
+                        </td>
+                        <td>
+                            @let requester = request.requester;
+                            @if (requester?.login) {
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold no-underline">
+                                    {{ requester?.name || requester?.login }}
+                                </a>
+                            } @else {
+                                <div class="font-semibold">{{ requester?.name || requester?.login }}</div>
+                            }
+                            <div class="text-muted-color wrap-anywhere">{{ requester?.email }}</div>
+                        </td>
+                        <td>
+                            @let instructorCourses = request.instructorCourses ?? [];
+                            @if (instructorCourses.length > 0) {
+                                <button
+                                    tumAetUiButton
+                                    type="button"
+                                    variant="text"
+                                    severity="success"
+                                    size="small"
+                                    class="cursor-pointer whitespace-nowrap"
+                                    [tumAetUiPopoverTrigger]="instructorCoursesPopover"
+                                    data-testid="instructor-courses-button"
+                                >
+                                    <!-- The font weight lives on an inner span: the button's own font-weight is set by the kit and wins over a utility here. -->
+                                    <span class="font-semibold whitespace-nowrap underline decoration-dotted underline-offset-4">
+                                        {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: instructorCourses.length } }}
+                                    </span>
+                                    <span class="sr-only">{{ 'artemisApp.courseRequest.admin.instructorCoursesShow' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faChevronDown" size="xs" aria-hidden="true" />
+                                </button>
+                                <tumaet-ui-popover
+                                    #instructorCoursesPopover
+                                    placement="bottom"
+                                    [ariaLabel]="'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate"
+                                >
+                                    <div class="w-80 max-w-[calc(100vw-2rem)] text-sm" data-testid="instructor-courses-popover">
+                                        <!-- A div, not a heading: unlayered Bootstrap heading rules would beat the utilities, and the panel already carries this text as its accessible name. -->
+                                        <div class="mb-2 font-semibold">{{ 'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate }}</div>
+                                        <!-- Capped and scrollable: a requester with many courses must not grow the popover past the viewport. -->
+                                        <ul class="m-0 flex max-h-64 list-none flex-col gap-2 overflow-y-auto p-0" data-testid="instructor-courses-list">
+                                            @for (course of instructorCourses; track course.id) {
+                                                <li class="break-words" data-testid="instructor-course">
+                                                    <a [routerLink]="['/course-management', course.id]" class="font-semibold no-underline">{{
+                                                        course.title || course.shortName
+                                                    }}</a>
+                                                    <div class="text-xs text-muted-color">{{ course.shortName }} &middot; {{ course.semester }}</div>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </tumaet-ui-popover>
+                            } @else {
+                                <span>{{ 'artemisApp.courseRequest.admin.instructorCourseCountNo' | artemisTranslate }}</span>
+                            }
+                        </td>
+                        <td class="break-words">{{ request.reason }}</td>
+                        <td class="text-end">
+                            <div class="flex items-center justify-end gap-2">
+                                <tumaet-ui-button
+                                    severity="warn"
+                                    size="small"
+                                    (clicked)="openEditModal(request)"
+                                    [tumAetUiTooltip]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
+                                    [ariaLabel]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
+                                    data-testid="edit-button"
+                                >
+                                    <fa-icon [icon]="faPencil" />
+                                    <span class="hidden 2xl:inline" jhiTranslate="artemisApp.courseRequest.admin.edit"></span>
+                                </tumaet-ui-button>
+                                <tumaet-ui-button
+                                    severity="success"
+                                    size="small"
+                                    (clicked)="accept(request)"
+                                    [tumAetUiTooltip]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
+                                    [ariaLabel]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
+                                    data-testid="accept-button"
+                                >
+                                    <fa-icon [icon]="faCheck" />
+                                    <span class="hidden 2xl:inline" jhiTranslate="artemisApp.courseRequest.admin.accept"></span>
+                                </tumaet-ui-button>
+                                <tumaet-ui-button
+                                    severity="danger"
+                                    size="small"
+                                    (clicked)="openRejectModal(request)"
+                                    [tumAetUiTooltip]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
+                                    [ariaLabel]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
+                                    data-testid="reject-button"
+                                >
+                                    <fa-icon [icon]="faTimes" />
+                                    <span class="hidden 2xl:inline" jhiTranslate="artemisApp.courseRequest.admin.reject"></span>
+                                </tumaet-ui-button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (pendingRequests().length === 0 && !loading()) {
+            <tumaet-ui-empty-state variant="plain" data-testid="pending-empty" [title]="'artemisApp.courseRequest.admin.noPendingRequests' | artemisTranslate" />
+        }
+    </div>
+
+    <!-- Decided Requests Table -->
+    <h4 class="mb-4!" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="decidedRequests().length === 0 && !loading()" emptyTitle="artemisApp.courseRequest.admin.noDecidedRequests">
+        <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
+            <thead>
+                <tr>
+                    <th scope="col" class="min-w-52" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
+                    <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
+                    <th scope="col" class="w-full min-w-40" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
+                    <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.decision"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (request of decidedRequests(); track request.id) {
+                    <tr>
+                        <td>
+                            <div class="font-semibold">{{ request.title }}</div>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <ng-container [ngTemplateOutlet]="courseRequestFlags" [ngTemplateOutletContext]="{ $implicit: request }" />
+                                <tumaet-ui-tag
+                                    [severity]="badgeSeverity(request.status)"
+                                    [value]="'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate"
+                                />
+                            </div>
+                        </td>
+                        <td class="whitespace-nowrap">{{ request.semester }}</td>
+                        <td>
+                            <dl class="mb-0! grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
+                                <dd class="mb-0! ms-0!">{{ request.startDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
+                                <dd class="mb-0! ms-0!">{{ request.endDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.admin.processed"></dt>
+                                <dd class="mb-0! ms-0! text-muted-color">{{ request.processedDate | artemisDate: 'short' }}</dd>
+                            </dl>
+                        </td>
+                        <td>
+                            @let requester = request.requester;
+                            @if (requester?.login) {
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold no-underline">
+                                    {{ requester?.name || requester?.login }}
+                                </a>
+                            } @else {
+                                <div class="font-semibold">{{ requester?.name || requester?.login }}</div>
+                            }
+                            <div class="text-muted-color wrap-anywhere">{{ requester?.email }}</div>
+                        </td>
+                        <td class="break-words">{{ request.reason }}</td>
+                        <td class="break-words">
+                            @if (request.status === CourseRequestStatus.REJECTED) {
+                                <div class="text-state-danger font-semibold">
+                                    {{ 'artemisApp.courseRequest.status.' + request.status | artemisTranslate }}
+                                </div>
+                                <div>{{ request.decisionReason }}</div>
+                            } @else if (request.status === CourseRequestStatus.ACCEPTED && request.createdCourseId) {
+                                <a [routerLink]="['/course-management', request.createdCourseId]" class="no-underline whitespace-nowrap">
+                                    <fa-icon [icon]="faExternalLinkAlt" class="me-1" />
+                                    <span jhiTranslate="artemisApp.courseRequest.admin.link"></span>
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="decidedPage() - 1"
+            [pageSize]="decidedPageSize"
+            [totalRecords]="totalDecidedCount()"
+            [showRowsPerPage]="false"
+            (pageChange)="onDecidedPaginatorChange($event)"
+        />
+    </tumaet-ui-table-layout>
+</div>
+
+<tumaet-ui-dialog [(visible)]="rejectModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}">
+    <div class="flex flex-col gap-2 mb-4!">
+        <label class="font-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
+        <textarea
+            id="rejectReason"
+            tumAetUiTextarea
+            rows="4"
+            class="w-full"
+            [ngModel]="decisionReason()"
+            (ngModelChange)="decisionReason.set($event)"
+            [placeholder]="'artemisApp.courseRequest.admin.rejectReasonPlaceholder' | artemisTranslate"
+        ></textarea>
+        @if (reasonInvalid()) {
+            <small class="text-state-danger" data-testid="reject-reason-error" jhiTranslate="entity.validation.required"></small>
+        }
+    </div>
+    <ng-template #footer>
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="rejectModalVisible.set(false)" data-testid="cancel-reject-button">{{
+            'entity.action.cancel' | artemisTranslate
+        }}</tumaet-ui-button>
+        <tumaet-ui-button severity="danger" size="small" (clicked)="reject()" data-testid="confirm-reject-button">
+            <fa-icon [icon]="faTimes" />
+            <span>{{ 'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate }}</span>
+        </tumaet-ui-button>
+    </ng-template>
+</tumaet-ui-dialog>
+
+<tumaet-ui-dialog [(visible)]="editModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.editTitle' | artemisTranslate }}">
+    <form [formGroup]="editForm" novalidate>
+        <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
+    </form>
+    <ng-template #footer>
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="editModalVisible.set(false)" data-testid="cancel-edit-button">{{
+            'entity.action.cancel' | artemisTranslate
+        }}</tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="saveEdit()" [disabled]="isSubmittingEdit()" data-testid="save-edit-button">
+            <fa-icon [icon]="faCheck" />
+            <span>{{ 'entity.action.save' | artemisTranslate }}</span>
+        </tumaet-ui-button>
+    </ng-template>
+</tumaet-ui-dialog>
+
+<ng-template #courseRequestFlags let-request>
+    <span class="text-muted-color">{{ request.shortName }}</span>
+    @if (request.testCourse) {
+        <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+    } @else if (request.gradeRelevant === false) {
+        <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
+    }
+</ng-template>

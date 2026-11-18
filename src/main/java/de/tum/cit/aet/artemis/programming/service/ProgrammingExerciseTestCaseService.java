@@ -1,0 +1,193 @@
+package de.tum.cit.aet.artemis.programming.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ProgrammingExerciseTestCaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseService.class);
+
+    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
+
+    private final AuditEventRepository auditEventRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, AuditEventRepository auditEventRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService) {
+        this.testCaseRepository = testCaseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
+        this.auditEventRepository = auditEventRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
+    }
+
+    /**
+     * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
+     *
+     * @param exerciseId                              of exercise the test cases belong to.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
+     * @return the updated test cases.
+     * @throws EntityNotFoundException if the programming exercise could not be found.
+     */
+    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) throws EntityNotFoundException {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+
+        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
+        Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
+        List<String> gradingConfigurationChanges = new ArrayList<>();
+        for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
+            Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream().filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.id()))
+                    .findFirst();
+            if (matchingTestCaseOpt.isEmpty()) {
+                continue;
+            }
+
+            ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
+            recordGradingConfigurationChange(gradingConfigurationChanges, matchingTestCase, programmingExerciseTestCaseDTO);
+            matchingTestCase.setWeight(programmingExerciseTestCaseDTO.weight());
+            matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.visibility());
+            matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.bonusMultiplier());
+            matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.bonusPoints());
+
+            validateTestCase(matchingTestCase);
+            updatedTests.add(matchingTestCase);
+        }
+
+        if (!isTestCaseWeightSumValid(existingTestCases)) {
+            throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError", true);
+        }
+
+        testCaseRepository.saveAll(updatedTests);
+        logGradingConfigurationChanges(programmingExercise, gradingConfigurationChanges);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+        // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
+        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        return updatedTests;
+    }
+
+    /**
+     * Records a human-readable old-to-new diff of the grading-relevant test case attributes. Since
+     * test-case credits and visibility of automatic feedback are derived from this configuration at read
+     * time (they are not stored per feedback anymore), the audit log is what keeps historical grading
+     * configurations reconstructible.
+     */
+    private static void recordGradingConfigurationChange(List<String> changes, ProgrammingExerciseTestCase testCase, ProgrammingExerciseTestCaseDTO update) {
+        StringBuilder change = new StringBuilder();
+        if (!Objects.equals(testCase.getWeight(), update.weight())) {
+            change.append(" weight ").append(testCase.getWeight()).append(" -> ").append(update.weight());
+        }
+        if (!Objects.equals(testCase.getVisibility(), update.visibility())) {
+            change.append(" visibility ").append(testCase.getVisibility()).append(" -> ").append(update.visibility());
+        }
+        if (!Objects.equals(testCase.getBonusMultiplier(), update.bonusMultiplier())) {
+            change.append(" bonusMultiplier ").append(testCase.getBonusMultiplier()).append(" -> ").append(update.bonusMultiplier());
+        }
+        if (!Objects.equals(testCase.getBonusPoints(), update.bonusPoints())) {
+            change.append(" bonusPoints ").append(testCase.getBonusPoints()).append(" -> ").append(update.bonusPoints());
+        }
+        if (!change.isEmpty()) {
+            changes.add(testCase.getTestName() + ":" + change);
+        }
+    }
+
+    private void logGradingConfigurationChanges(ProgrammingExercise exercise, List<String> changes) {
+        if (changes.isEmpty()) {
+            return;
+        }
+        String user = SecurityUtils.getCurrentUserLogin().orElse("system");
+        var auditEvent = new AuditEvent(user, Constants.UPDATE_GRADING_CONFIGURATION, "exercise=" + exercise.getId(), "changes=" + String.join("; ", changes));
+        auditEventRepository.add(auditEvent);
+        log.info("User {} updated the grading configuration of exercise {}: {}", user, exercise.getId(), String.join("; ", changes));
+    }
+
+    /**
+     * Checks if the sum of test case weights is valid.
+     *
+     * @param testCases of the exercise.
+     * @return true, if the sum of weights is not negative.
+     */
+    public static boolean isTestCaseWeightSumValid(Set<ProgrammingExerciseTestCase> testCases) {
+        if (testCases.isEmpty()) {
+            return true;
+        }
+        double testWeightsSum = testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).filter(Objects::nonNull).sum();
+        return testWeightsSum >= 0;
+    }
+
+    private static void validateTestCase(ProgrammingExerciseTestCase testCase) {
+        if (testCase.getWeight() == null || testCase.getBonusMultiplier() == null || testCase.getBonusPoints() == null || testCase.getVisibility() == null) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings that are null.",
+                    "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName(), "skipAlert", true));
+        }
+        if (testCase.getWeight() < 0 || testCase.getBonusMultiplier() < 0 || testCase.getBonusPoints() < 0) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative values.",
+                    "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName(), "skipAlert", true));
+        }
+    }
+
+    /**
+     * Reset all tests to their initial configuration
+     *
+     * @param programmingExercise that shall be reset
+     * @return test cases that have been reset
+     */
+    public List<ProgrammingExerciseTestCase> reset(ProgrammingExercise programmingExercise) {
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(programmingExercise.getId());
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setWeight(1.0);
+            testCase.setBonusMultiplier(1.0);
+            testCase.setBonusPoints(0.0);
+            testCase.setVisibility(programmingExercise.getDefaultTestCaseVisibility());
+        }
+        List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
+
+        // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
+        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(programmingExercise.getId());
+        return updatedTestCases;
+    }
+
+    public void logTestCaseReset(@NonNull User user, @NonNull ProgrammingExercise exercise, @NonNull Course course) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User {} requested to reset the grading configuration for exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
+    }
+}

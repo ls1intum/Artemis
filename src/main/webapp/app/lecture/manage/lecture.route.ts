@@ -1,0 +1,73 @@
+import { Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
+import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
+import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
+import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
+import { LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
+import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
+
+export const lectureRoutes: Routes = [
+    {
+        path: '',
+        loadComponent: () => import('./lecture/lecture.component').then((m) => m.LectureComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.lecture.home.title',
+        },
+        canActivate: [UserRouteAccessService, LectureGuard],
+    },
+    {
+        // Create a new path without a component defined to prevent the LectureComponent from being always rendered
+        path: '',
+        canActivate: [LectureGuard],
+        children: [
+            {
+                path: 'new',
+                loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'global.generic.create',
+                },
+                canActivate: [UserRouteAccessService],
+                canDeactivate: [hasLectureUnsavedChangesGuard],
+            },
+            {
+                path: ':lectureId',
+                loadComponent: () => import('./lecture-detail/lecture-detail.component').then((m) => m.LectureDetailComponent),
+                resolve: {
+                    lecture: LectureResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'artemisApp.lecture.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':lectureId',
+                children: [
+                    {
+                        path: 'edit',
+                        loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
+                        resolve: {
+                            course: CourseManagementResolve,
+                            lecture: LectureResolve,
+                        },
+                        data: {
+                            authorities: IS_AT_LEAST_EDITOR,
+                            pageTitle: 'global.generic.edit',
+                        },
+                        canActivate: [UserRouteAccessService],
+                        canDeactivate: [hasLectureUnsavedChangesGuard],
+                    },
+                    ...lectureUnitRoute,
+                ],
+            },
+        ],
+    },
+];

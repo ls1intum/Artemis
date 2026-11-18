@@ -1,0 +1,157 @@
+package de.tum.cit.aet.artemis.programming.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.ALL_BUILDS_TRIGGERED;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.EXERCISE_SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SELECTED_BUILDS_RUN_COMPLETED;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SUBMISSION_PROCESSING;
+
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ProgrammingMessagingService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
+
+    private final GroupNotificationService groupNotificationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ResultWebsocketService resultWebsocketService;
+
+    private final Optional<LtiApi> ltiApi;
+
+    private final TeamRepository teamRepository;
+
+    private final Optional<PyrisEventApi> pyrisEventApi;
+
+    private final ParticipationRepository participationRepository;
+
+    public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
+            ParticipationRepository participationRepository) {
+        this.groupNotificationService = groupNotificationService;
+        this.websocketMessagingService = websocketMessagingService;
+        this.resultWebsocketService = resultWebsocketService;
+        this.ltiApi = ltiApi;
+        this.teamRepository = teamRepository;
+        this.pyrisEventApi = pyrisEventApi;
+        this.participationRepository = participationRepository;
+    }
+
+    public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.RUNNING);
+        // Send a notification to the client to inform the instructor about started builds.
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
+    }
+
+    public void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.COMPLETED);
+        // Send a notification to the client to inform the instructor about the completed builds.
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
+    }
+
+    /**
+     * Tells the clients that watch the exercise that a run of selected participations has queued its last build, without the
+     * notification to the instructors that the run of all builds sends. The rebuild of selected participations uses it so that the
+     * client can keep its retry action busy until then.
+     * <p>
+     * The message names the run. Several runs of one exercise may overlap, and a client must not take the end of another run for its own.
+     *
+     * @param programmingExercise the exercise whose builds were queued
+     * @param runId               the run that is done
+     */
+    public void notifyAboutCompletedSelectedBuildRun(ProgrammingExercise programmingExercise, String runId) {
+        websocketMessagingService.sendMessage(SELECTED_BUILDS_RUN_COMPLETED.at(programmingExercise.getId()), new SelectedBuildRunDTO(runId));
+    }
+
+    /**
+     * Notify user about new result.
+     *
+     * @param result        the result created from the result returned from the CI system.
+     * @param participation the participation for which the result was created.
+     */
+    public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getSubmission().getParticipation());
+        // notify user via websocket
+        resultWebsocketService.broadcastNewResult((Participation) participation, result);
+
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            // do not try to report results for template or solution participations
+            ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
+            // Inform Iris about the submission status (when certain conditions are met)
+            notifyIrisAboutSubmissionStatus(result);
+        }
+    }
+
+    /**
+     * Notify Iris about the submission status for the given result and student participation.
+     * <p>
+     * If the submission was successful, Iris will be informed about the successful submission.
+     * If the submission failed, Iris will be informed about the submission failure.
+     * Iris will only be informed about the submission status if the participant is a user.
+     *
+     * @param result the result for which Iris should be informed about the submission status
+     */
+    private void notifyIrisAboutSubmissionStatus(Result result) {
+        pyrisEventApi.ifPresent(eventApi -> {
+            // Inform event service about the new result
+            try {
+                eventApi.trigger(new NewResultEvent(result));
+            }
+            catch (Exception e) {
+                log.error("Could not trigger service for result {}", result.getId(), e);
+            }
+        });
+    }
+
+    /**
+     * Notifies the user about the processing of a submission.
+     * This method sends a notification to the user that their submission is processing
+     * It handles both student participations and template/solution participations.
+     *
+     * @param submission      the submission processing data transfer object containing the submission details
+     * @param exerciseId      the ID of the exercise associated with the submission
+     * @param participationId the ID of the participation associated with the submission
+     */
+    public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
+        Participation participation = participationRepository.findWithProgrammingExerciseById(participationId).orElseThrow();
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team) {
+                // Eagerly load the team with students so their information can be used for the messages below
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING.at(), submission));
+        }
+
+        // Staff track processing for all participations on the exercise topic.
+        websocketMessagingService.sendMessage(EXERCISE_SUBMISSION_PROCESSING.at(exerciseId), submission);
+    }
+}

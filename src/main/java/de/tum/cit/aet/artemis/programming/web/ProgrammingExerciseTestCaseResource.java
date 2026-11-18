@@ -1,0 +1,180 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import io.swagger.v3.oas.annotations.Operation;
+
+/**
+ * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
+ * PUT or DELETE.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_GRADING_CONFIGURATION)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExerciseTestCaseResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseResource.class);
+
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final UserRepository userRepository;
+
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+
+    private final ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard;
+
+    public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
+            ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, ExerciseVersionService exerciseVersionService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard) {
+        this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userRepository = userRepository;
+        this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+    }
+
+    /**
+     * Get the exercise's test cases for the given exercise id.
+     *
+     * @param exerciseId of the exercise.
+     * @return the found test cases or an empty list if no test cases were found.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/test-cases")
+    @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "List the test cases of a programming exercise", description = """
+            Returns the test cases of a programming exercise with their ids, weights, bonus settings and visibility. Use the ids to \
+            change weights and visibility. Test cases exist once the build has run against the test repository. Exercises of exams \
+            cannot be read with a personal access token.""")
+    public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> getTestCases(@PathVariable Long exerciseId) {
+        log.debug("REST request to get test cases for programming exercise {}", exerciseId);
+        if (AgentDraftRules.isTokenRequest()) {
+            AgentDraftRules.rejectExamExercise(programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exerciseId));
+        }
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
+        Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        return ResponseEntity.ok(testCaseDTOs);
+    }
+
+    /**
+     * Update the changeable fields of the provided test case dtos.
+     * We don't transfer the whole test case object here, because we need to make sure that only weights and visibility can be updated!
+     * Will only return test case objects in the response that could be updated.
+     *
+     * @param exerciseId                              of exercise the test cases belong to.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
+     * @return the set of test cases for the given programming exercise.
+     */
+    @PatchMapping("programming-exercises/{exerciseId}/update-test-cases")
+    @EnforceAtLeastEditorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Set the weights and visibility of test cases", description = """
+            Changes weight, bonusMultiplier, bonusPoints and visibility of existing test cases, identified by id. Test cases themselves \
+            come from the tests in the test repository when the build runs; they cannot be created here. A request with a personal \
+            access token can change only an exercise that students cannot see yet and that has no student participations.""")
+    public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> updateTestCases(@PathVariable Long exerciseId,
+            @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
+        log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
+        var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise);
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
+            Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
+            // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
+            if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
+                programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
+            }
+
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
+            return ResponseEntity.ok(updatedTests.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet()));
+        }
+    }
+
+    /**
+     * Use with care: Resets all test cases of an exercise to their initial configuration
+     * Set all test case weights to 1, all bonus multipliers to 1, all bonus points to 0 and visibility to always.
+     *
+     * @param exerciseId the id of the exercise to reset the test case weights of.
+     * @return the updated set of test cases for the programming exercise.
+     */
+    @PatchMapping("programming-exercises/{exerciseId}/test-cases/reset")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<List<ProgrammingExerciseTestCaseResponseDTO>> resetTestCases(@PathVariable long exerciseId) {
+        log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
+            programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
+
+            List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
+            return ResponseEntity.ok(testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList());
+        }
+    }
+}

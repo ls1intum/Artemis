@@ -1,0 +1,70 @@
+<div>
+    @if (questionsLoaded()) {
+        @if (!isRated()) {
+            <tumaet-ui-dialog
+                [visible]="showUnratedConfirmation()"
+                (visibleChange)="showUnratedConfirmation.set($event)"
+                [closable]="false"
+                [closeOnEscape]="false"
+                size="small"
+                [header]="'artemisApp.quizQuestion.unratedConfirmationTitle' | artemisTranslate"
+            >
+                <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
+
+                <ng-template #footer>
+                    <button tumAetUiButton type="button" severity="secondary" (click)="cancelUnratedPractice()">
+                        <span jhiTranslate="global.generic.no"></span>
+                    </button>
+                    <button tumAetUiButton type="button" (click)="confirmUnratedPractice()">
+                        <span jhiTranslate="global.generic.yes"></span>
+                    </button>
+                </ng-template>
+            </tumaet-ui-dialog>
+        }
+
+        @if (currentQuestion(); as question) {
+            @if (question.type === MULTIPLE_CHOICE) {
+                <jhi-multiple-choice-question
+                    [question]="question"
+                    [selectedAnswerOptions]="selectedAnswerOptions()"
+                    (selectedAnswerOptionsChange)="selectedAnswerOptions.set($event)"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
+                />
+            }
+            @if (question.type === SHORT_ANSWER) {
+                <jhi-short-answer-question
+                    [question]="question"
+                    [submittedTexts]="shortAnswerSubmittedTexts()"
+                    (submittedTextsChange)="shortAnswerSubmittedTexts.set($event)"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
+                    [forceSampleSolution]="false"
+                />
+            }
+            @if (question.type === DRAG_AND_DROP) {
+                <jhi-drag-and-drop-question
+                    [question]="question"
+                    [mappings]="dragAndDropMappings()"
+                    (mappingsChange)="dragAndDropMappings.set($event)"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
+                    [forceSampleSolution]="false"
+                />
+            }
+        }
+        @if (!submitted()) {
+            <jhi-button id="submit-question" class="ms-2" (onClick)="onSubmit()" [title]="'artemisApp.exercise.submit'" />
+        }
+        @if (submitted()) {
+            @if (isLastQuestion()) {
+                <jhi-button class="ms-2" (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.endTraining'" />
+            } @else {
+                <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'artemisApp.exercise.nextQuestion'" />
+            }
+        }
+    }
+</div>

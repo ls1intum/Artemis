@@ -1,0 +1,281 @@
+import { Component, inject } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ImportComponent } from 'app/shared-ui/import/import.component';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
+import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
+import { vi } from 'vitest';
+
+@Component({ template: '' })
+class DummyImportComponent extends ImportComponent<BaseEntity> {
+    constructor() {
+        const pagingService = inject(DummyPagingService);
+        super(pagingService);
+    }
+}
+describe('ImportComponent', () => {
+    let fixture: ComponentFixture<DummyImportComponent>;
+    let comp: DummyImportComponent;
+    let pagingService: DummyPagingService;
+    let sortService: SortService;
+    let searchStub: ReturnType<typeof vi.spyOn>;
+    let sortByPropertyStub: ReturnType<typeof vi.spyOn>;
+    let dialogRef: TumAetUiDialogRef;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+
+    let searchResult: SearchResult<BaseEntity>;
+    let state: SearchTermPageableSearch;
+
+    const content: BaseEntity = { id: 2 };
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as TumAetUiDialogRef;
+
+        // Return the promise so the test framework awaits setup; otherwise `comp`/`searchStub` can be stale
+        // across tests, which - now that ngOnInit performs a search - leaks spurious paging-service calls.
+        return TestBed.configureTestingModule({
+            imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent)],
+            providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: TumAetUiDialogRef, useValue: dialogRef }],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(DummyImportComponent);
+                comp = fixture.componentInstance;
+                pagingService = TestBed.inject(DummyPagingService);
+                sortService = TestBed.inject(SortService);
+
+                searchStub = vi.spyOn(pagingService, 'search');
+                sortByPropertyStub = vi.spyOn(sortService, 'sortByProperty');
+            });
+    });
+
+    afterEach(() => {
+        // Destroy the fixture so its (takeUntilDestroyed) search subscriptions are torn down and cannot fire
+        // into a later test.
+        fixture?.destroy();
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
+
+    beforeEach(() => {
+        searchResult = { numberOfPages: 3, resultsOnPage: [content] };
+        state = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: 'initialSearchTerm',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'ID',
+            ...searchResult,
+        };
+        searchStub.mockReturnValue(of(searchResult));
+    });
+
+    it('should initialize the content', () => {
+        fixture.detectChanges();
+        expect(comp.content()).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+    });
+
+    it('should initialize the subjects', () => {
+        const searchSpy = vi.spyOn(comp, 'performSearch' as any);
+
+        fixture.detectChanges();
+
+        expect(searchSpy).toHaveBeenCalledTimes(2);
+        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 0);
+        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300);
+    });
+
+    const setStateAndCallOnInit = (middleExpectation: () => void) => {
+        comp.state = { ...state };
+        comp.ngOnInit();
+        // ngOnInit now performs an initial load (see the initial-search regression test below). Flush and
+        // ignore it here so the assertions in each test only observe the search caused by their own action.
+        vi.advanceTimersByTime(300);
+        searchStub.mockClear();
+        middleExpectation();
+        expect(comp.content()).toEqual(searchResult);
+        comp.sortRows();
+        expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
+    };
+
+    it('should perform a single initial search on init so the table is not empty by default', () => {
+        // Regression test for #13266: opening an import dialog must load the available entities immediately
+        // (previously the table stayed empty until the user interacted with search/sort/pagination), and it
+        // must do so with exactly one request. Drive it through the Angular lifecycle (detectChanges) so
+        // ngOnInit runs exactly once, mirroring production.
+        comp.state = { ...state };
+
+        fixture.detectChanges();
+        vi.advanceTimersByTime(300);
+
+        expect(searchStub).toHaveBeenCalledOnce();
+        expect(searchStub).toHaveBeenCalledWith(comp.state, undefined);
+        expect(comp.content()).toEqual(searchResult);
+    });
+
+    it('should set content to paging result on sort', () => {
+        expect(comp.listSorting).toBe(false);
+        setStateAndCallOnInit(() => {
+            comp.listSorting = true;
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
+            expect(comp.listSorting).toBe(true);
+        });
+    });
+
+    it('should set content to paging result on pageChange', () => {
+        expect(comp.page).toBe(1);
+        setStateAndCallOnInit(() => {
+            comp.onPageChange(5);
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
+            expect(comp.page).toBe(5);
+        });
+    });
+
+    it('should set content to paging result on search', () => {
+        expect(comp.searchTerm).toBe('');
+        setStateAndCallOnInit(() => {
+            const givenSearchTerm = 'givenSearchTerm';
+            comp.searchTerm = givenSearchTerm;
+            vi.advanceTimersByTime(10);
+            expect(searchStub).not.toHaveBeenCalled();
+            vi.advanceTimersByTime(290);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
+            expect(comp.searchTerm).toEqual(givenSearchTerm);
+        });
+    });
+
+    it('should set content to paging result on sortedColumn change', () => {
+        expect(comp.sortedColumn).toBe('ID');
+        setStateAndCallOnInit(() => {
+            comp.sortedColumn = 'TITLE';
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
+            expect(comp.sortedColumn).toBe('TITLE');
+        });
+    });
+
+    it('should return tracked id', () => {
+        expect(comp.trackId(0, content)).toEqual(content.id);
+    });
+
+    it('should close the dialog', () => {
+        // WHEN
+        comp.clear();
+
+        // THEN
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith();
+    });
+
+    it('should close the dialog with result', () => {
+        // GIVEN
+        const exam = { id: 1 } as Exam;
+        // WHEN
+        comp.selectImport(exam);
+
+        // THEN
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith(exam);
+    });
+
+    it('should change the page on active modal', () => {
+        const defaultPageSize = 10;
+        const numberOfPages = 5;
+        const pagingServiceSpy = vi.spyOn(pagingService, 'search');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<Exam>));
+
+        fixture.detectChanges();
+
+        let expectedPageNumber = 1;
+        comp.onPageChange(expectedPageNumber);
+        vi.advanceTimersByTime(0);
+        expect(comp.page).toBe(expectedPageNumber);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
+
+        expectedPageNumber = 2;
+        comp.onPageChange(expectedPageNumber);
+        vi.advanceTimersByTime(0);
+        expect(comp.page).toBe(expectedPageNumber);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
+
+        // Page number should be changed unless it is falsy.
+        comp.onPageChange(0);
+        vi.advanceTimersByTime(0);
+        expect(comp.page).toBe(expectedPageNumber);
+
+        // Number of times onPageChange is called with a truthy value.
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('onTableSort applies the requested column and direction in one search', () => {
+        setStateAndCallOnInit(() => {
+            comp.onTableSort({ field: 'TITLE', order: 1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE', sortingOrder: SortingOrder.ASCENDING }, undefined);
+        });
+    });
+
+    it('onTableSort applies a descending order for -1', () => {
+        setStateAndCallOnInit(() => {
+            comp.onTableSort({ field: 'TITLE', order: -1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE', sortingOrder: SortingOrder.DESCENDING }, undefined);
+        });
+    });
+
+    it('onTableSort ignores a sort event without a field', () => {
+        setStateAndCallOnInit(() => {
+            searchStub.mockClear();
+            comp.onTableSort({ field: '', order: 1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should sort rows with default values', () => {
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
+
+        fixture.detectChanges();
+        comp.sortRows();
+
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
+    });
+
+    it('should call createOptions when performing a search request', () => {
+        // @ts-ignore (the method is protected but exists)
+        const createOptionsSpy = vi.spyOn(comp, 'createOptions').mockReturnValue({ test: true });
+        setStateAndCallOnInit(() => {
+            comp.searchTerm = state.searchTerm = 'newSearchTerm';
+            vi.advanceTimersByTime(300);
+            expect(searchStub).toHaveBeenCalledWith({ ...state }, { test: true });
+            expect(createOptionsSpy).toHaveBeenCalled();
+        });
+    });
+
+    it('should call onSearchResult after performing a search request', () => {
+        // @ts-ignore (the method is protected but exists)
+        const onSearchResultSpy = vi.spyOn(comp, 'onSearchResult');
+        setStateAndCallOnInit(() => {
+            comp.searchTerm = state.searchTerm = 'newSearchTerm';
+            vi.advanceTimersByTime(300);
+            expect(searchStub).toHaveBeenCalledWith({ ...state }, undefined);
+            expect(onSearchResultSpy).toHaveBeenCalled();
+        });
+    });
+});

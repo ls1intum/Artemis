@@ -1,0 +1,214 @@
+{
+  "version": "3.0.0",
+  "type": "ObjectDiagram",
+  "size": {
+    "width": 680,
+    "height": 520
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "cf26446e-06ea-4e25-99c4-ded25948e856": {
+      "id": "cf26446e-06ea-4e25-99c4-ded25948e856",
+      "name": "Vulcano",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "8b99b905-fd77-4911-9292-a2a663bce464"
+      ]
+    },
+    "8b99b905-fd77-4911-9292-a2a663bce464": {
+      "id": "8b99b905-fd77-4911-9292-a2a663bce464",
+      "name": "blub()",
+      "type": "ObjectMethod",
+      "owner": "cf26446e-06ea-4e25-99c4-ded25948e856",
+      "bounds": {
+        "x": 0,
+        "y": 80,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28": {
+      "id": "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28",
+      "name": "TheCar",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 210,
+        "y": 290,
+        "width": 200,
+        "height": 130
+      },
+      "attributes": [
+        "07f577f2-03b5-4e7a-8828-12da70af314a",
+        "c0075bc0-c476-491c-a922-a78b060f2142"
+      ],
+      "methods": [
+        "f04e70be-a7d5-47a6-b906-1253ff5a9567"
+      ]
+    },
+    "07f577f2-03b5-4e7a-8828-12da70af314a": {
+      "id": "07f577f2-03b5-4e7a-8828-12da70af314a",
+      "name": "fast",
+      "type": "ObjectAttribute",
+      "owner": "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28",
+      "bounds": {
+        "x": 210,
+        "y": 330,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "c0075bc0-c476-491c-a922-a78b060f2142": {
+      "id": "c0075bc0-c476-491c-a922-a78b060f2142",
+      "name": "speedy",
+      "type": "ObjectAttribute",
+      "owner": "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28",
+      "bounds": {
+        "x": 210,
+        "y": 360,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "f04e70be-a7d5-47a6-b906-1253ff5a9567": {
+      "id": "f04e70be-a7d5-47a6-b906-1253ff5a9567",
+      "name": "drive()",
+      "type": "ObjectMethod",
+      "owner": "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28",
+      "bounds": {
+        "x": 210,
+        "y": 390,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "55684e12-73c3-4c26-b326-4eba0fa65e16": {
+      "id": "55684e12-73c3-4c26-b326-4eba0fa65e16",
+      "name": "TheCar2",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 480,
+        "y": 290,
+        "width": 200,
+        "height": 100
+      },
+      "attributes": [
+        "b3bf773d-d451-486f-ab02-725bbc443617"
+      ],
+      "methods": [
+        "19374141-6f88-4122-9212-ca1b9f9078bf"
+      ]
+    },
+    "b3bf773d-d451-486f-ab02-725bbc443617": {
+      "id": "b3bf773d-d451-486f-ab02-725bbc443617",
+      "name": "nice4",
+      "type": "ObjectAttribute",
+      "owner": "55684e12-73c3-4c26-b326-4eba0fa65e16",
+      "bounds": {
+        "x": 480,
+        "y": 330,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "19374141-6f88-4122-9212-ca1b9f9078bf": {
+      "id": "19374141-6f88-4122-9212-ca1b9f9078bf",
+      "name": "stop()12312",
+      "type": "ObjectMethod",
+      "owner": "55684e12-73c3-4c26-b326-4eba0fa65e16",
+      "bounds": {
+        "x": 480,
+        "y": 360,
+        "width": 200,
+        "height": 30
+      }
+    }
+  },
+  "relationships": {
+    "ea1a2901-eefd-4ffe-a64c-b8e84f977c48": {
+      "id": "ea1a2901-eefd-4ffe-a64c-b8e84f977c48",
+      "name": "",
+      "type": "ObjectLink",
+      "owner": null,
+      "bounds": {
+        "x": 100,
+        "y": 110,
+        "width": 110,
+        "height": 245
+      },
+      "path": [
+        {
+          "x": 110,
+          "y": 245
+        },
+        {
+          "x": 0,
+          "y": 245
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "ad1eb8af-adb7-4ea4-a377-86ebc49b2f28"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "cf26446e-06ea-4e25-99c4-ded25948e856"
+      }
+    },
+    "7a5d9537-6ad6-4ace-bb0b-d2be946133c4": {
+      "id": "7a5d9537-6ad6-4ace-bb0b-d2be946133c4",
+      "name": "",
+      "type": "ObjectLink",
+      "owner": null,
+      "bounds": {
+        "x": 100,
+        "y": 0,
+        "width": 480,
+        "height": 290
+      },
+      "path": [
+        {
+          "x": 480,
+          "y": 290
+        },
+        {
+          "x": 480,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "55684e12-73c3-4c26-b326-4eba0fa65e16"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "cf26446e-06ea-4e25-99c4-ded25948e856"
+      }
+    }
+  },
+  "assessments": {}
+}

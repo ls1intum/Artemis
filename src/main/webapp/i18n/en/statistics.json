@@ -1,0 +1,80 @@
+{
+    "statistics": {
+        "statistics-title": "Statistics",
+        "amountOfStudents": "# of students",
+        "span": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "quarter": "Quarter",
+            "year": "Year"
+        },
+        "spanLabel": "Time range",
+        "title": "User Statistics",
+        "course_statistics_title": "Course statistics",
+        "submissions": "Submissions",
+        "active_users": "Active users",
+        "logged_in_users": "Logged-in users",
+        "released_exercises": "Released exercises",
+        "exercises_due": "Exercises due",
+        "conducted_exams": "Conducted exams",
+        "exam_participations": "Exam participants",
+        "exam_registrations": "Exam registrations",
+        "active_tutors": "Active tutors",
+        "created_results": "Created results",
+        "created_feedbacks": "Created feedbacks",
+        "posts": "Created Posts",
+        "resolved_posts": "Resolved Posts",
+        "score_distribution": "Score distribution",
+        "scoreDistributionChartAriaLabel": "Bar chart showing how many participants fall into each score range",
+        "submissionsTitle": "# of submissions",
+        "active_usersTitle": "# of users",
+        "logged_in_usersTitle": "# of users",
+        "released_exercisesTitle": "# of exercises",
+        "exercises_dueTitle": "# of exercises",
+        "conducted_examsTitle": "# of exams",
+        "exam_participationsTitle": "# of exam participants",
+        "exam_registrationsTitle": "# of exam registrations",
+        "active_tutorsTitle": "# of tutors",
+        "created_resultsTitle": "# of results",
+        "created_feedbacksTitle": "# of feedbacks",
+        "postsTitle": "# of created posts",
+        "resolved_postsTitle": "# of resolved posts",
+        "score_distributionTitle": "% of students"
+    },
+    "calendar_week": "CW",
+    "overview": {
+        "weeksAgo": "{{ amount }} weeks ago",
+        "weekAgo": "1 week ago",
+        "currentWeek": "current week"
+    },
+    "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+    },
+    "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+    },
+    "exercise-statistics": {
+        "title": "Exercise Statistics",
+        "averageScore": "Average Score",
+        "participationRate": "Participation Rate",
+        "resolved_posts": "Resolved Posts"
+    }
+}

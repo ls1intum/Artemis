@@ -1,0 +1,38 @@
+<div class="inline-flex flex-wrap items-center">
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="!exercise().difficulty ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="!exercise().difficulty"
+        (click)="setDifficulty(undefined)"
+        jhiTranslate="artemisApp.exercise.noLevel"
+    ></button>
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="exercise().difficulty === DifficultyLevel.EASY ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.EASY"
+        (click)="setDifficulty(DifficultyLevel.EASY)"
+        jhiTranslate="artemisApp.exercise.easy"
+    ></button>
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="exercise().difficulty === DifficultyLevel.MEDIUM ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.MEDIUM"
+        (click)="setDifficulty(DifficultyLevel.MEDIUM)"
+        jhiTranslate="artemisApp.exercise.medium"
+    ></button>
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="exercise().difficulty === DifficultyLevel.HARD ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.HARD"
+        (click)="setDifficulty(DifficultyLevel.HARD)"
+        jhiTranslate="artemisApp.exercise.hard"
+    ></button>
+</div>

@@ -1,0 +1,452 @@
+{
+    "artemisApp": {
+        "competency": {
+            "created": "Competency created",
+            "deleted": "Competency deleted",
+            "updated": "Competency updated",
+            "competencyButton": "Competencies",
+            "title": "Title",
+            "description": "Description",
+            "taxonomy": "Taxonomy",
+            "softDueDate": "Recommended until",
+            "optional": "Optional",
+            "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
+            "course": "Course",
+            "progress": "Progress",
+            "progressDescription": "The progress is influenced by the percentage of completed lecture content and your score in the exercises.",
+            "mastery": "Mastery",
+            "masteryDescription": "A weighted metric of your progress, which shows your overall advancement towards competency mastery.",
+            "masteredStudents": "Mastered students",
+            "mastered": "Mastered",
+            "competencies": "Competencies",
+            "confidenceReasons": {
+                "NO_REASON": "The confidence is roughly the same as the mastery",
+                "RECENT_SCORES_LOWER": "Since your recent scores are lower than your average in the competency, the mastery is lower than the progress",
+                "RECENT_SCORES_HIGHER": "Since your recent scores are higher than your average in the competency, the mastery is higher than the progress",
+                "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
+                "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
+                "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress",
+                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture content that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
+                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture content that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
+            },
+            "table": {
+                "panelHeader": "Your advancement"
+            },
+            "manage": {
+                "title": "Competency Management",
+                "search": "Search Competencies",
+                "noSearchResults": "No competencies match your search",
+                "importButton": "Import competencies",
+                "importFromCoursesButton": "Import from other courses",
+                "importAllButton": "Import all competencies of a course",
+                "importStandardizedButton": "Import standardized competencies",
+                "createButton": "Create competency",
+                "generateButton": "Generate Competencies",
+                "suggestionsButton": "AI Suggestions",
+                "empty": "No competencies exist for this course",
+                "noSuggestions": "No competency suggestions found. Try updating the course description to get better suggestions.",
+                "deleteRelationModalTitle": "Confirm Delete",
+                "deleteRelationModalText": "Are you sure you want to delete the relation between \"{{titleTail}}\" and \"{{titleHead}}\"?"
+            },
+            "import": {
+                "title": "Import Competencies",
+                "searchTableHeader": "Search Competencies",
+                "searchTableEmpty": "Found no competencies matching your search",
+                "selectedTableHeader": "Selected Competencies",
+                "selectedTableEmpty": "No competencies selected to import",
+                "importRelations": "Import Relations?",
+                "search": {
+                    "title": "Competency Search",
+                    "labelCompetencyTitle": "Competency Title",
+                    "labelCompetencyDescription": "Competency Description",
+                    "labelCourseTitle": "Course title",
+                    "labelCourseSemester": "Semester",
+                    "showAdvancedSearch": "Show advanced search",
+                    "hideAdvancedSearch": "Hide advanced search"
+                },
+                "table": {
+                    "TITLE": "Title",
+                    "DESCRIPTION": "Description",
+                    "COURSE_TITLE": "Course Title",
+                    "SEMESTER": "Semester"
+                },
+                "success": "Imported {{ numCompetencies }} competencies."
+            },
+            "generate": {
+                "title": "Generate Competency Recommendations",
+                "listTitle": "Competency Recommendations",
+                "viewedLabel": "Viewed",
+                "deleteModalTitle": "Confirm Delete",
+                "deleteModalText": "Are you sure you want to delete \"{{title}}\"?",
+                "saveModalTitle": "Confirm Save",
+                "saveModalText": "You have not viewed all recommendations, do you still want to continue?",
+                "errorWarning": "You may not save because some competencies are invalid",
+                "loading": "Generating competency recommendations...",
+                "courseDescription": {
+                    "title": "Enter a Course Description",
+                    "placeholder": "Please enter a course description",
+                    "requiredValidationError": "Course description must not be empty",
+                    "minlengthValidationError": "Course description must be at least {{min}} characters long",
+                    "maxlengthValidationError": "Course description is limited to {{max}} characters",
+                    "regenerate": "Generate again",
+                    "regenerateTooltip": "Generate additional Competency Recommendations",
+                    "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course.",
+                    "success": "Generated {{ noOfCompetencies }} competency recommendations.",
+                    "warning": "No competency recommendations could be generated. If the issue persists, contact the administrators."
+                }
+            },
+            "importAll": {
+                "title": "Import all Competencies from another course",
+                "search": "Search for a course",
+                "table": {
+                    "TITLE": "Title",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Short Name",
+                    "doImport": "Select"
+                },
+                "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
+                "warning": "No competencies were found for course \"{{ courseTitle }}\"."
+            },
+            "create": {
+                "title": "Create a new competency",
+                "titlePlaceholder": "Give the competency a title",
+                "titleRequiredValidationError": "A competency needs to have a title",
+                "titleMaxLengthValidationError": "A competency title is limited to {{max}} characters",
+                "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
+                "softDueDate": "Recommended date of completion",
+                "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
+                "connectWithLectureUnits": "Link the competency with lecture content"
+            },
+            "edit": {
+                "title": "Edit a competency"
+            },
+            "link": {
+                "title": "Linked Competencies",
+                "lectureUnit": "Optionally link this lecture content to one or more competencies.",
+                "exercise": "Optionally link this exercise to one or more competencies.",
+                "weightTooltip": "The relevance of this learning object for the competency.",
+                "weightLabels": {
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High"
+                }
+            },
+            "competencyCard": {
+                "connectedLectureUnits": "Linked Lecture Content",
+                "connectedLectureUnitsExplanation": "The following lecture content is linked to this competency:",
+                "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Progress)",
+                "exerciseNote": "Please note that we take always the last submission into account for exercises. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
+                "delete": {
+                    "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the competency for confirmation.",
+                    "buttonText": "Delete"
+                },
+                "remove": "Remove",
+                "achieved": "achieved",
+                "progressUnavailable": "Progress calculation is currently only available for competencies linked to lecture content.",
+                "noUnitsConnected": "This competency is not linked to any lecture content",
+                "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
+                "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
+                "softDueDate": "Recommended"
+            },
+            "competencyContribution": {
+                "title": "Related Competencies",
+                "weightIconTooltips": {
+                    "low": "Low relevance for the competency",
+                    "medium": "Medium relevance for the competency",
+                    "high": "High relevance for the competency"
+                }
+            },
+            "competencyPopover": {
+                "connectedCompetencies": "Linked Competencies",
+                "explanation": "This lecture content helps you to achieve the following competencies: ",
+                "noCompetencies": "No competencies are linked with this lecture content! "
+            }
+        },
+        "courseCompetency": {
+            "title": "Title",
+            "course": "Course",
+            "description": "Description",
+            "taxonomy": "Taxonomy",
+            "softDueDate": "Recommended until",
+            "masteryThreshold": "Mastery threshold",
+            "manage": {
+                "importAllButton": "Import all of a course",
+                "editRelationsButton": "Edit relations",
+                "helpButton": "Help"
+            },
+            "importSettings": {
+                "importRelationsLabel": "Import relations",
+                "importRelationsTooltip": "Imports all relations between the course competencies",
+                "importExercisesLabel": "Import exercises",
+                "importExercisesTooltip": "Imports all exercises of the course competencies or links them to the imported course competency if an exercise with that name already exists",
+                "importLecturesLabel": "Import lectures",
+                "importLecturesTooltip": "Imports all related lecture content of the course competencies or links them to the imported course competency if a lecture content with that name already exists",
+                "referenceDateLabel": "Reference date",
+                "referenceDateTooltip": "The reference date is used to calculate the dates of the imported resources. The earliest date of this type is set to the reference date and all other dates are set relative to this date.",
+                "referenceDateTextInvalid": "The reference date contains text that is not a date. Please correct or clear it before selecting a course.",
+                "referenceDateTypeLabel": "Reference date type",
+                "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture content as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
+                "referenceDateType": {
+                    "noSelection": "-- Choose a reference date first --",
+                    "releaseDate": "Release date",
+                    "dueDate": "Due date"
+                }
+            },
+            "importAll": {
+                "title": "Import all Competencies and Prerequisites from another course",
+                "success": "Imported {{ noOfCompetencies }} competencies and prerequisites from course \"{{ courseTitle }}\".",
+                "warning": "No competencies or prerequisites were found for course \"{{ courseTitle }}\".",
+                "table": {
+                    "title": "Courses",
+                    "columns": {
+                        "TITLE": "Title",
+                        "SHORT_NAME": "Short Name",
+                        "SEMESTER": "Semester"
+                    }
+                }
+            },
+            "create": {
+                "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",
+                "suggestedTaxonomy": "Suggested",
+                "averageMastery": "Average competency mastery of students",
+                "averageStudentScore": "Average student mastery",
+                "selectLecture": "Select a Lecture",
+                "noLectures": "This course has no lectures",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} content linked)",
+                "lectureUnitTable": {
+                    "type": "Type",
+                    "name": "Lecture Unit",
+                    "releaseDate": "Release Date",
+                    "lecture": "Lecture",
+                    "scoreAchievedByStudent": "Your score",
+                    "averageScoreAchievedByStudent": "Average score of participant",
+                    "totalPointsAchievable": "Achievable points",
+                    "noOfParticipants": "Number of participants",
+                    "participationRate": "Participation Rate"
+                }
+            },
+            "taxonomies": {
+                "REMEMBER": "Remember",
+                "UNDERSTAND": "Understand",
+                "APPLY": "Apply",
+                "ANALYZE": "Analyze",
+                "EVALUATE": "Evaluate",
+                "CREATE": "Create",
+                "none": "No Taxonomy"
+            },
+            "keywords": {
+                "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",
+                "UNDERSTAND": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
+                "APPLY": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
+                "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
+                "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
+                "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "relations": {
+                "modalTitle": "Course competency relations",
+                "relationTypes": {
+                    "ASSUMES": "Requires",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                },
+                "form": {
+                    "headCourseCompetencyLabel": "Head course competency",
+                    "headCourseCompetencyDefaultOption": "Select head course competency",
+                    "tailCourseCompetencyLabel": "Tail course competency",
+                    "tailCourseCompetencyDefaultOption": "Select tail course competency",
+                    "relationTypeLabel": "Relation Type",
+                    "relationTypeDefaultOption": "Select relation type",
+                    "deleteRelationButtonLabel": "Delete Relation",
+                    "updateRelationButtonLabel": "Update Relation",
+                    "createRelationButtonLabel": "Create Relation",
+                    "cyclicDependencyError": "You cannot create a cyclic dependency between course competencies."
+                },
+                "graph": {
+                    "nodeTypes": {
+                        "competency": "C",
+                        "prerequisite": "P"
+                    },
+                    "tooltips": {
+                        "competency": "This node represents a Competency",
+                        "prerequisite": "This node represents a Prerequisite"
+                    }
+                }
+            },
+            "featureExplanation": {
+                "title": "Introduction to course competencies",
+                "adaptiveLearning": {
+                    "title1": "What is Adaptive Learning?",
+                    "paragraph1": "Adaptive learning tailors educational content to each student's unique needs, adjusting in real-time based on their performance. By providing personalized support and challenges, it helps students learn more efficiently, stay engaged, and achieve mastery at their own pace.",
+                    "paragraph2": "In Artemis course competencies are the foundation for Adaptive Learning. They are overarching learning objectives that can be obtained by interacting with different lectures and exercises. Based on these competency models Artemis can offer students personalized learning paths that fit their individual needs.",
+                    "title2": "Why?",
+                    "paragraph3": "Competency-based education empowers students to master skills at their own pace, ensuring real progress and confidence. It creates a personalized, engaging learning experience that leads to better outcomes and long-term success. So, even without enabling learning paths, students benefit from being able to track their progress.",
+                    "paragraph4": "With learning paths, students receive recommendations to support their learning efforts. Making it easier for them to master all the required competencies of a course."
+                },
+                "courseCompetencyCreation": {
+                    "title": "How to create a course competency?",
+                    "paragraph1": "In general we distinguish between a competency and a prerequisite.",
+                    "paragraph2": "To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should master the connected learning objects.",
+                    "paragraph3": "You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.",
+                    "paragraph4": "Finally, you can directly link lecture content to the competency. While you can also connect exercises to a competency, this must be done in the exercise edit/creation view.",
+                    "paragraph5": "In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more information on this process, please refer to the user <a href={{ link }} target=\"_blank\">manual for Artemis.</a>"
+                },
+                "courseCompetencyRelations": {
+                    "title": "What are course competency relationships?",
+                    "paragraph1": "Course competencies can support or rely on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or REQUIRE each other. Detailed descriptions of these relationships are provided below.",
+                    "paragraph2": "In summary:",
+                    "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />REQUIRE means one skill is a prerequisite for another.",
+                    "paragraph4": "To create these relationships, open the 'Edit Relations' window. In this window, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "relationVideoParagraph": {
+                        "first": "Your browser doesn't support HTML5 video. Here is a ",
+                        "link": "link to the video",
+                        "last": " instead."
+                    },
+                    "relationTitle1": "1. MATCH",
+                    "relationParagraph1": "This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.",
+                    "exampleLabel": "Example:",
+                    "relationParagraph2": "Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might \"MATCH\" with balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core competency (balance) is the same in both scenarios.",
+                    "relationTitle2": "2. EXTEND",
+                    "relationParagraph3": "This relationship means one competency adds complexity or expands on another. In other words, once you have mastered one competency, you can move on to mastering the extended one, which takes that skill further.",
+                    "relationParagraph4": "Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that \"EXTENDS\" into riding around curves and turns. Competency B builds upon Competency A by adding the need to navigate changes in direction while maintaining balance and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios.",
+                    "relationTitle3": "3. REQUIRES",
+                    "relationParagraph5": "This relationship implies that one competency relies on another being already mastered. To perform the more advanced competency, the learner must first have the underlying skill or knowledge.",
+                    "relationParagraph6": "Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill \"REQUIRES\" that the learner has already mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill."
+                }
+            }
+        },
+        "prerequisite": {
+            "title": "Prerequisites",
+            "created": "Prerequisite created",
+            "deleted": "Prerequisite deleted",
+            "updated": "Prerequisite updated",
+            "optional": "Optional",
+            "optionalDescription": "Optional prerequisites are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
+            "manage": {
+                "title": "Prerequisite Management",
+                "createButton": "Create prerequisite",
+                "importButton": "Import prerequisites",
+                "importFromCoursesButton": "Import from other courses",
+                "deleted": "Prerequisite deleted",
+                "delete": {
+                    "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
+                },
+                "search": "Search Prerequisites",
+                "noSearchResults": "No prerequisites match your search",
+                "importAllButton": "Import all prerequisites of a course",
+                "importStandardizedButton": "Import standardized competencies",
+                "empty": "No prerequisites exist for this course"
+            },
+            "import": {
+                "title": "Import Prerequisites",
+                "success": "Imported {{ numPrerequisites }} prerequisites.",
+                "selectedTableHeader": "Selected Prerequisites",
+                "selectedTableEmpty": "No competencies selected to import as prerequisites"
+            },
+            "create": {
+                "title": "Create a new prerequisite",
+                "titlePlaceholder": "Give the prerequisite a title",
+                "titleRequiredValidationError": "A prerequisite needs to have a title",
+                "titleMaxLengthValidationError": "A prerequisite title is limited to {{max}} characters",
+                "descriptionMaxLengthValidationError": "A prerequisite description is limited to {{max}} characters",
+                "softDueDate": "Recommended date of completion",
+                "softDueDateHint": "Guide students by selecting when you expect them to have mastered this prerequisite. This is not a hard deadline.",
+                "connectWithLectureUnits": "Link the prerequisite with lecture content"
+            },
+            "edit": {
+                "title": "Edit a Prerequisite"
+            },
+            "importAll": {
+                "title": "Import all Prerequisites from another course",
+                "success": "Imported {{ noOfCompetencies }} prerequisites from course \"{{ courseTitle }}\".",
+                "warning": "No prerequisites were found for course \"{{ courseTitle }}\"."
+            },
+            "competencyCard": {
+                "delete": {
+                    "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
+                }
+            }
+        },
+        "learningPath": {
+            "learningPathButton": "Learning Paths",
+            "breadcrumbs": {
+                "lectureUnit": "Lecture Content",
+                "exercise": "Exercise"
+            },
+            "manageLearningPaths": {
+                "title": "Learning Path Management",
+                "health": {
+                    "missing": {
+                        "title": "Missing Learning Paths",
+                        "body": "Some students have not generated their learning paths yet. This is not critical. Their learning paths will be created once they request their learning path for the first time.",
+                        "action": "Generate",
+                        "hint": "Generate missing Learning Paths"
+                    },
+                    "noCompetencies": {
+                        "title": "No Competencies",
+                        "body": "You have not created competencies yet. Learning paths are composed of the competencies students have to fulfill. Go to the competency management tab to create new competencies or import existing ones.",
+                        "action": "Competency Management",
+                        "hint": "Go to competency management"
+                    },
+                    "noRelations": {
+                        "title": "No Relations",
+                        "body": "You have not configured relations between competencies. Learning paths use this information about the structure of the learning materials to reliably provide high quality recommendations to students. Go to the competency management tab to configure competency relations.",
+                        "action": "Competency Management",
+                        "hint": "Go to competency management"
+                    }
+                },
+                "isDisabled": "Learning Paths are currently disabled for this course.",
+                "enable": "Enable Learning Paths",
+                "enableHint": "The creation of learning paths for every student may take a moment.",
+                "search": "Search:",
+                "table": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Progress"
+                }
+            },
+            "sideBar": {
+                "hide": "Hide Learning Path",
+                "show": "Show Learning Path",
+                "header": "Learning Path"
+            },
+            "participate": {
+                "viewProgress": "View current progress details",
+                "noTaskSelected": "Currently you have no lecture content or exercise selected.",
+                "prevHint": "Go to previous recommendation",
+                "nextHint": "Go to next recommendation"
+            },
+            "graph": {
+                "progressNav": {
+                    "header": "Learning Path",
+                    "refresh": "Refresh",
+                    "center": "Center view"
+                },
+                "legend": {
+                    "competencyEnd": {
+                        "title": "Competency end",
+                        "tooltip": "This is the end of a competency. The nodes between the competency start and end help you to master this competency."
+                    },
+                    "matchStart": {
+                        "title": "Branch",
+                        "tooltip": "It's up to you with which competency you're going to continue. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "matchEnd": {
+                        "title": "Convergence",
+                        "tooltip": "Here the different competencies join again. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "learningObject": {
+                        "title": "Pending lecture content / exercise",
+                        "tooltip": "A lecture content or exercise that has not been sufficiently solved."
+                    },
+                    "completedLearningObject": {
+                        "title": "Completed lecture content / exercise",
+                        "tooltip": "A lecture content or exercise that has been sufficiently solved."
+                    }
+                }
+            }
+        }
+    }
+}

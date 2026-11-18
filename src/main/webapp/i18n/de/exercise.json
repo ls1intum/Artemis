@@ -1,0 +1,465 @@
+{
+    "artemisApp": {
+        "exercise": {
+            "home": {
+                "title": "Übungen",
+                "createLabel": "Übung erstellen"
+            },
+            "sections": {
+                "general": "Allgemein",
+                "mode": "Modus",
+                "grading": "Bewertung",
+                "problem": "Aufgabe",
+                "solution": "Lösung"
+            },
+            "details": "Aufgabendetails",
+            "addCriterion": "Bewertungskriterium hinzufügen",
+            "resultsPerPage": "{{number}} Ergebnisse pro Seite",
+            "showAllResults": "Zeige alle Ergebnisse",
+            "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
+            "searchForTeams": "Suche nach Team (Kurz-)Namen oder nach Studierenden-Logins/Namen (Komma getrennt)",
+            "created": "Übung erstellt mit ID {{ param }}",
+            "updated": "Übung aktualisiert mit ID {{ param }}",
+            "deleted": "Übung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll die Übung <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
+                "testCourse": "Testkurses",
+                "realCourse": "echten Kurses",
+                "summary": {
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "content": "Aufgabeninhalte und Verknüpfungen",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberOfStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Abgaben",
+                    "numberOfStudentExams": "Klausuren von Studierenden, die diese Aufgabe enthalten",
+                    "numberOfResults": "Ergebnisse",
+                    "numberOfAssessments": "Manuelle Bewertungen",
+                    "numberOfComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberOfPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberOfCommunicationPosts": "Beiträge im Aufgabenkanal",
+                    "numberOfAnswerPosts": "Antworten im Aufgabenkanal",
+                    "numberOfExampleSubmissions": "Beispielabgaben",
+                    "numberOfCompetencyLinks": "Verknüpfte Kompetenzen",
+                    "numberOfLectureUnitLinks": "Verknüpfte Vorlesungseinheiten",
+                    "numberOfBuilds": "Build-Jobs"
+                }
+            },
+            "reset": {
+                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            },
+            "detail": {
+                "title": "Übung"
+            },
+            "versionHistory": {
+                "title": "Versionsverlauf",
+                "timeline": {
+                    "title": "Versionen",
+                    "loadMore": "Mehr laden",
+                    "empty": "Noch keine Versionen verfügbar."
+                },
+                "snapshot": {
+                    "empty": "Wähle eine Version aus, um die Metadaten anzuzeigen.",
+                    "sharedTitle": "Aufgaben-Metadaten"
+                },
+                "errors": {
+                    "invalidExerciseId": "Die Seite konnte nicht geladen werden.",
+                    "timelineLoadFailed": "Der Versionsverlauf konnte nicht geladen werden.",
+                    "snapshotLoadFailed": "Die Versionsdaten konnten nicht geladen werden."
+                }
+            },
+            "import": {
+                "attention": "Achtung! ",
+                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "embeddedFilesWarning": "Alle eingebetteten Dateien sind erst nach dem Import in der Aufgabenstellung verfügbar.",
+                "search": "Suche nach einer Aufgabe",
+                "loading": "Lade...",
+                "searchInCourses": "Suche in Kursen?",
+                "searchInExams": "Suche in Klausuren?",
+                "preview": {
+                    "title": "Vorschau: {{ title }}",
+                    "buttonLabel": "Vorschau von {{ title }}",
+                    "backToList": "Zurück zur Liste",
+                    "loadFailed": "Die Vorschau konnte nicht geladen werden."
+                },
+                "table": {
+                    "title": "Titel",
+                    "language": "Sprache",
+                    "course": "Kurs",
+                    "exam": "Klausur",
+                    "examQuestion": "Klausuraufgabe",
+                    "doImport": "Importieren"
+                },
+                "tabTitle": "Von dieser Instanz"
+            },
+            "importFromFile": {
+                "tabTitle": "Aus einer Datei",
+                "description": "Wähle eine Zip-Datei, die du mit Exportieren in der Aufgabenübersicht eines Kurses heruntergeladen hast. Artemis öffnet dann den Aufgabeneditor mit den Einstellungen aus der Datei, sodass du sie vor dem Speichern prüfen kannst.",
+                "uploadForImport": "Aufgabe aus Datei importieren",
+                "fileCountError": "Wähle genau eine Datei.",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
+                "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
+                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
+                "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
+            },
+            "exercise": "Aufgabe",
+            "results": "Ergebnisse",
+            "actions": "Aktionen",
+            "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
+            "problemStatement": "Aufgabenstellung",
+            "problemStatementEditor": "Aufgabenstellung (Editor)",
+            "emptyProblemStatement": "(Keine Aufgabenstellung)",
+            "emptyProblemStatementPreview": {
+                "title": "Noch keine Aufgabenstellung",
+                "description": "Die Aufgabenstellung für diese Übung wurde noch nicht erstellt."
+            },
+            "instructions": "Anweisungen",
+            "exampleSolution": "Beispiellösung",
+            "emptyExampleSolution": "(Keine Beispiellösung)",
+            "exampleSolutionPublicationDateRequiresExampleSolution": "Füge eine Beispiellösung hinzu oder entferne ihr Veröffentlichungsdatum.",
+            "assessmentCriterion": "Bewertungskriterium",
+            "assessmentInstructions": "Bewertungsanweisungen",
+            "assessmentInstruction": "Bewertungsanweisung: ",
+            "structuredAssessmentInstructions": "Strukturierte Bewertungsanweisungen",
+            "addAssessmentCriterion": "Bewertungskriterium hinzufügen",
+            "deleteAssessmentCriterion": "Bewertungskriterium löschen",
+            "resetAssessmentCriterionTitle": "Titel des Bewertungskriteriums zurücksetzen",
+            "resetAssessmentInstruction": "Bewertungsanweisung zurücksetzen",
+            "deleteAssessmentInstruction": "Bewertungsanweisung löschen",
+            "addAssessmentInstruction": "Bewertungsanweisung hinzufügen",
+            "limit": "Begrenzung",
+            "dragDropInstruction": "Drag-and-Drop Bewertungsanweisung zum Feedback-Element",
+            "gradingScale": "Skala",
+            "instructionDescription": "Beschreibung (Tutor:innen)",
+            "credits": "Credits",
+            "feedback": "Feedback (Studierende)",
+            "editText": "Als Text bearbeiten",
+            "assessmentCriteriaGeneration": {
+                "generate": "Bewertungskriterien generieren",
+                "generating": "Wird generiert…",
+                "success": "Bewertungskriterien wurden generiert.",
+                "disabledProblemStatement": "Füge vor der Generierung von Bewertungskriterien eine Aufgabenstellung hinzu.",
+                "disabledMaxPoints": "Lege vor der Generierung eine gültige maximale Punktzahl größer als null fest.",
+                "disabledBonusPoints": "Lege vor der Generierung von Bewertungskriterien eine endliche Bonuspunktzahl von null oder größer fest.",
+                "invalidSyntax": "Der Text der Bewertungsanweisungen konnte nicht verarbeitet werden. Korrigiere vor der Generierung die Syntax.",
+                "confirmationHeader": "Bewertungskriterien ersetzen?",
+                "confirmation": "Neue Bewertungskriterien ersetzen alle aktuell strukturierten Kriterien. Der allgemeine Text der Bewertungsanweisungen bleibt erhalten.",
+                "confirmationUsed": "Das Speichern dieser Änderungen kann eine Neubewertung vorhandener Bewertungen erfordern.",
+                "replaceAndGenerate": "Ersetzen und generieren"
+            },
+            "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
+            "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
+            "gradingScaleHint": "Kurzes Label für diese Leistungsstufe, vergleichbar mit einer Likert-Stufe. Beispiele: ausgezeichnet, gut, durchschnittlich, schlecht. Nur Tutor:innen sehen dies, Studierende nicht.",
+            "descriptionHint": "Hinweise nur für Tutor:innen, wann diese Skalenstufe anzuwenden ist. Studierende sehen dies nicht.",
+            "feedbackHint": "Das Feedback ist ein erläuternder Text an Studierende, um ihr Leistungsniveau besser zu verstehen.",
+            "gradingScalePlaceholder": "z. B. Gut",
+            "criterionTitlePlaceholder": "Kriteriumstitel",
+            "descriptionPlaceholder": "Wann soll ein:e Tutor:in diese Stufe anwenden?",
+            "feedbackPlaceholder": "Was soll die oder der Studierende lesen?",
+            "title": "Titel",
+            "shortName": "Kurzname",
+            "release": "Veröffentlichung",
+            "releaseDate": "Veröffentlichungsdatum",
+            "start": "Start",
+            "startDate": "Startdatum",
+            "due": "Frist",
+            "dueDate": "Einreichungsfrist",
+            "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum und, falls vorhanden, dem Startdatum sein. Bitte überprüfe deine Auswahl nochmal.",
+            "dateForRunningTestsAfterDueDate": "Testausführungsdatum nach Einreichungsfrist",
+            "startDateError": "Startdatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal.",
+            "assessmentDue": "Bewertungsfrist",
+            "assessmentDueDate": "Einreichungsfrist der Bewertung",
+            "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal.",
+            "assessmentDueDateRequiresDueDate": "Eine Einreichungsfrist muss gesetzt sein, bevor eine Bewertungsfrist gesetzt werden kann.",
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Du kannst aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
+            "dates": "Termine",
+            "dateNotSet": "Kein Datum gesetzt",
+            "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
+            "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
+            "timelineDateInvalidTooltip": "Das eingegebene Datum ist ungültig. Bitte das Format TT.MM.JJJJ HH:mm verwenden.",
+            "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
+            "exampleSolutionPublicationDateError": "Das Veröffentlichungsdatum der Beispiellösung muss nach dem Veröffentlichungsdatum, dem Startdatum, der Einreichungsfrist und der Bewertungsfrist liegen, sofern diese gesetzt sind. Bitte überprüfe deine Auswahl nochmal.",
+            "points": "Punktzahl",
+            "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
+            "bonusPoints": "Bonuspunkte",
+            "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
+            "includedInOverallScoreCourseLabel": "Diese Aufgabe bei der Berechnung des Kursergebnisses einbeziehen",
+            "includedInOverallScoreExamLabel": "Diese Aufgabe bei der Berechnung des Klausurergebnisses einbeziehen",
+            "includedInOverallScore": "Miteinbezogen in Ergebnis",
+            "includedCompletely": "Miteinbezogen",
+            "categoriesTooltip": "Du kannst bis zu drei Kategorien pro Aufgabe definieren (Kategorie eingeben und ENTER drücken, oder Kommas nutzen, um mehrere Werte zu trennen). Du bist frei in der Wahl, allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierende sichtbar sind.",
+            "includedCompletelyTooltip": "Alle erzielten Punkte und Bonuspunkte in dieser Aufgabe zählen zu dem Kurs- bzw. Klausurergebnis!",
+            "includedAsBonus": "Bonus",
+            "includedAsBonusTooltip": "Alle erzielten Punkte in dieser Aufgabe zählen zu dem Kurs- bzw. Klausurergebnis als Bonuspunkte!",
+            "notIncluded": "Optional",
+            "notIncludedTooltip": "Keine der in dieser Aufgabe erzielten Punkte zählen zu dem Kurs- bzw. Klausurergebnis!",
+            "yes": "Ja",
+            "bonus": "Bonus",
+            "no": "Nein",
+            "createAction": "Erstellen",
+            "importAction": "Importieren",
+            "difficulty": "Schwierigkeit",
+            "noLevel": "Keine Angabe",
+            "easy": "Leicht",
+            "medium": "Mittel",
+            "hard": "Schwer",
+            "mode": "Modus",
+            "modeTooltip": "Der Bearbeitungsmodus einer Aufgabe bestimmt, ob Studierende alleine oder in Teams daran arbeiten. ACHTUNG: Dies kann später nicht mehr geändert werden!",
+            "modes": {
+                "individual": "Individuell",
+                "team": "Team"
+            },
+            "teamAssignmentConfig": {
+                "teamSize": "Team-Größe",
+                "teamSizeTooltip": "Empfehlung für die Tutor:innen bezüglich minimaler und maximaler Anzahl an Studierenden pro Team.",
+                "participants": "Mitglieder"
+            },
+            "categories": "Kategorien",
+            "noCategory": "Keine Kategorie",
+            "selectCategories": "Kategorien auswählen",
+            "participation": "Teilnahme",
+            "participations": "Teilnahmen",
+            "submissions": "Einreichungen",
+            "teams": "Teams",
+            "complaints": "Beschwerden",
+            "export": {
+                "options": "Exportoptionen:",
+                "names": "Namen exportieren",
+                "results": {
+                    "title": "Ergebnisse exportieren",
+                    "withoutTestCases": "Ohne Testfälle",
+                    "withTestCases": "Mit Testfällen",
+                    "withTestCasesAndFeedback": "Mit Testfällen<br />und Feedback",
+                    "withTestCasesTooltip": "Damit werden zusätzliche Informationen über bestandene und nicht bestandene Testfälle, für jeden Eintrag, hinzugefügt.",
+                    "withTestCasesAndFeedbackTooltip": "Damit werden Informationen über die Testfälle und ihre Feedbacks hinzugefügt.",
+                    "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
+                }
+            },
+            "startTraining": "Training starten",
+            "nextQuestion": "Nächste Frage",
+            "endTraining": "Training beenden",
+            "submit": "Einreichen",
+            "refresh": "Aktualisieren",
+            "course": "Kurs",
+            "type": "Typ",
+            "mcqType": "Multiple-Choice Fragen",
+            "dndType": "Drag und Drop Fragen",
+            "personalRepositoryClone": "Dein persönliches Repository wurde eingerichtet. Klicke auf den <i>Code</i>-Button!",
+            "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
+            "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
+            "feedbackRequestSent": "Deine Feedbackanfrage wurde gesendet.",
+            "feedbackRequestAlreadySent": "Deine Feedbackanfrage wurde bereits gesendet.",
+            "noSubmissionExists": "Um eine Feedbackanfrage zu senden, brauchst du mindestens eine Abgabe.",
+            "lockRepositoryWarning": "Dein Repository wird gesperrt. Du kannst erst weiterarbeiten wenn deine Feedbackanfrage beantwortet wird.",
+            "feedbackRequestAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Anfragen einreichen.",
+            "feedbackRequestPendingChanges": "Du hast nicht gespeicherte Änderungen. Bitte reiche eine neue Abgabe ein, bevor du erneut einreichst.",
+            "maxAthenaResultsReached": "Du hast die maximale Anzahl an KI-Feedbackanfragen erreicht.",
+            "athenaFeedbackSuccessful": "KI-Feedback für {{title}} wurde erfolgreich generiert. Klicke auf das Ergebnis, um Details zu sehen.",
+            "athenaFeedbackFailed": "Etwas ist schiefgelaufen... KI-Feedback konnte im Moment nicht generiert werden",
+            "submissionAlreadyHasAthenaResult": "Für diese Abgabe liegt bereits ein KI-Ergebnis vor. Bitte reiche eine neue Abgabe ein, bevor du erneut KI-Feedback anfragst.",
+            "noAthenaFeedbackOnEmptySubmission": "Du kannst kein KI-Feedback für eine leere Abgabe anfordern.",
+            "aiFeedbackPopover": {
+                "title": "KI-Feedback",
+                "description": "Du kannst KI-generiertes Feedback zu deiner Abgabe anfordern. Dieses Feedback ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
+                "selectedAiType": "Deine aktuelle KI-Auswahl: {{ type }}",
+                "aiType": {
+                    "CLOUD_AI": "Cloud KI",
+                    "LOCAL_AI": "Lokale KI"
+                }
+            },
+            "startError": "<strong>Uh oh! Etwas ist schiefgelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
+            "name": "Name",
+            "studentId": "Login",
+            "teamShortName": "Kurzname",
+            "completionDate": "Abgabedatum",
+            "lastResult": "Letztes Ergebnis",
+            "submissionCount": "Abgaben",
+            "score": "Punktzahl",
+            "duration": "Dauer",
+            "filter": "Filter",
+            "scoresFilter": "Filter: {{ filter }}",
+            "showBuildFailed": "Fehlgeschlagene Builds",
+            "showUnsuccessful": "Nicht erfolgreiche",
+            "showSuccessful": "Erfolgreiche",
+            "showManual": "Manuelle",
+            "showAutomatic": "Automatische",
+            "showLocked": "Gesperrte Bewertungen",
+            "showAll": "Alle",
+            "showFailed": "Letzte Einreichung ohne Ergebnis",
+            "showNoSubmissions": "Nur ohne Einreichungen",
+            "showNoPracticeMode": "Nur bewertete Abgaben",
+            "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
+            "showingOfResults": "Zeigt {{ filtered }} von {{ total }} ({{ percent }}%) Bewertungen",
+            "tagPlaceholder": "+ Kategorie",
+            "isProgramming": "Das ist eine Programmieraufgabe",
+            "isModeling": "Das ist eine Modellierungsaufgabe",
+            "isQuiz": "Das ist eine Quizaufgabe",
+            "isText": "Das ist eine Textaufgabe",
+            "isFileUpload": "Das ist eine Datei-Upload-Aufgabe",
+            "notificationText": "Was wurde geändert?",
+            "submissionSuccessful": "Die Einreichung war erfolgreich",
+            "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",
+            "lateSubmissionResultReceived": "Artemis hat ein unbewertetes Ergebnis für eine verspätete Einreichung erhalten. Bitte scrolle nach unten zur Ergebnishistorie, um deine Punktzahl zu sehen.",
+            "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
+            "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
+            "presentationScoreEnabled": {
+                "title": "Präsentation",
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutor:innen auf der Seite \"Teilnahmen\" dieser Übung einen Punkt für Präsentation von Studierenden eintragen."
+            },
+            "codeEditorSync": {
+                "newCommitAlert": "Neuer Commit erkannt — Ein neuer Commit wurde in dieses Repository gepusht. Speichere und übermittle zuerst deine Änderungen, dann lade die Seite neu, um die neueste Version zu laden."
+            },
+            "metadataSync": {
+                "conflictTitle": "Konflikte bei Übungsmetadaten",
+                "conflictIntro": "Während du die Übung bearbeitet hast, wurde eine neue Übungsversion gespeichert. Wähle, welche eingehenden Werte übernommen werden sollen.",
+                "conflictAuthor": "Aktualisiert von ",
+                "useIncoming": "Eingehenden Wert verwenden für",
+                "useIncomingValue": "Eingehenden Wert verwenden",
+                "useCurrentValue": "Aktuellen Wert verwenden",
+                "yourValue": "Dein Wert",
+                "incomingValue": "Eingehender Wert",
+                "keepLocal": "Eingehende Änderungen ignorieren und fortfahren",
+                "keepAllLocal": "Alle meine Werte behalten",
+                "applyAllIncoming": "Alle eingehenden Werte übernehmen",
+                "applySelections": "Auswahl übernehmen",
+                "untitledCriterion": "Unbenanntes Kriterium",
+                "snapshotFetchFailed": "Die neueste Übungsversion konnte nicht geladen werden. Bitte lade die Seite neu, um die aktuellen Änderungen zu sehen.",
+                "fields": {
+                    "buildConfig": {
+                        "sequentialTestRuns": "Sequenzielle Testläufe",
+                        "buildPlanConfiguration": "Build-Plan-Konfiguration",
+                        "buildScript": "Build-Skript",
+                        "checkoutSolutionRepository": "Lösungsrepository auschecken",
+                        "testCheckoutPath": "Tests-Checkout-Pfad",
+                        "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
+                        "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
+                        "timeoutSeconds": "Timeout (Sekunden)",
+                        "dockerFlags": "Docker-Flags",
+                        "theiaImage": "Theia-Image",
+                        "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
+                        "allowBranching": "Branching erlauben",
+                        "branchRegex": "Branch-Regex",
+                        "buildTimeWindowStart": "Beginn des Build-Zeitfensters",
+                        "buildTimeWindowEnd": "Ende des Build-Zeitfensters"
+                    }
+                }
+            },
+            "errors": {
+                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden",
+                "projectTypeCouldNotBeDetermined": "Der Projekttyp konnte nicht bestimmt werden, bitte wechsle zum erweiterten Modus und wähle den Projekttyp manuell aus.",
+                "deactivatedExerciseType": {
+                    "label": "Deaktivierter Aufgabentyp",
+                    "tooltip": "Dieser Aufgabentyp ist derzeit deaktiviert. Die Bearbeitung wird nicht unterstützt. Du solltest dich an die Systemadministration von Artemis wenden."
+                }
+            },
+            "form": {
+                "title": {
+                    "undefined": "Du musst einen Titel angeben.",
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen.",
+                    "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt.",
+                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein.",
+                    "minlength": "Der Titel muss mindestens {{ min }} Zeichen lang sein."
+                },
+                "channelName": {
+                    "empty": "Du musst einen Kanalnamen angeben."
+                },
+                "shortName": {
+                    "undefined": "Du musst einen Kurznamen angeben.",
+                    "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten.",
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                    "maxlength": "Der Kurzname darf höchstens 36 Zeichen lang sein.",
+                    "disallowedValue": "Der Kurzname wird bereits für eine andere Aufgabe genutzt."
+                },
+                "packageName": {
+                    "undefined": "Du musst einen Package-Namen angeben.",
+                    "pattern": {
+                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\".",
+                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\".",
+                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\".",
+                        "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
+                        "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",
+                        "DART": "Der Package-Name muss ein kleingeschriebener Dart-Identifier sein, z.B. \"exercise01\"."
+                    },
+                    "maxlength": "Der Package-Name darf nicht mehr als {{ max }} Zeichen enthalten."
+                },
+                "points": {
+                    "undefined": "Du musst die Punkte angeben.",
+                    "customMin": "Die Punkte müssen mindestens 1 betragen.",
+                    "customMax": "Die Punkte dürfen höchstens 9999 betragen."
+                },
+                "bonusPoints": {
+                    "undefined": "Du musst die Bonuspunkte angeben.",
+                    "customMin": "Die Bonuspunkte müssen mindestens 0 betragen.",
+                    "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen."
+                },
+                "minTeamSize": {
+                    "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die minimale Teamgröße darf nicht mehr als 99 Personen betragen.",
+                    "required": "Du musst die minimale Teamgröße angeben."
+                },
+                "maxTeamSize": {
+                    "min": "Die maximale Teamgröße darf nicht weniger als eine Person betragen.",
+                    "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen.",
+                    "required": "Du musst die maximale Teamgröße angeben."
+                },
+                "timeline": {
+                    "required": "'{{ dateName }}' ist erforderlich.",
+                    "order": "'{{ dateName }}' muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+                    "strictOrder": "'{{ dateName }}' muss nach allen vorhergehenden Daten liegen.",
+                    "invalidInput": "'{{ dateName }}' ist kein gültiges Datum. Bitte nutze das Format TT.MM.JJJJ HH:mm.",
+                    "otherRequired": "'{{ dateName }}' kann erst gesetzt werden, wenn das vorausgesetzte Datum gesetzt ist."
+                },
+                "maxPenalty": {
+                    "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen."
+                },
+                "continuousPlagiarismControl": {
+                    "similarityThreshold": {
+                        "pattern": "Der Ähnlichkeitsschwellenwert muss zwischen 0 % und 100 % liegen."
+                    },
+                    "minimumScore": {
+                        "customMin": "Die Mindestpunktzahl muss zwischen 0 % und 100 % liegen."
+                    },
+                    "minimumSize": {
+                        "customMin": "Die Mindestgröße muss eine positive Zahl sein."
+                    },
+                    "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod": {
+                        "pattern": "Der Antwortzeitraum muss zwischen 7 und 31 Tagen liegen."
+                    }
+                }
+            },
+            "exam": "Klausur",
+            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
+            "update": {
+                "warning": {
+                    "warning": "Warnung: Diese Änderungen können Probleme verursachen",
+                    "saveExerciseWithoutReevaluation": "Speichern ohne Neubewertung",
+                    "problems": "Um Inkonsistenzen zwischen bestehendem und zukünftigem Feedback, das mit der betroffenen Benotungshinweis verbunden ist, zu vermeiden, muss die Aufgabe neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
+                    "instructionDeleted": "Benotungshinweise gelöscht",
+                    "creditChanged": "Punkte-Bewertung im Benotungshinweis geändert",
+                    "usageCountChanged": "Nutzungsanzahl im Benotungshinweis geändert",
+                    "confirmText": "Möchtest du diese Änderungen speichern oder nochmal ändern?",
+                    "reevaluateExercise": "Speichern mit Neubewertung",
+                    "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",
+                    "information": "Wenn du keine Neubewertung auslösen möchtest, können wir die Konsistenz des Feedbacks, das mit dem Benotungshinweis zusammenhängt, nicht mehr garantieren."
+                }
+            },
+            "isUsedForTutorial": "Tutor:in muss überprüfen",
+            "action": "Aktion",
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
+        }
+    }
+}

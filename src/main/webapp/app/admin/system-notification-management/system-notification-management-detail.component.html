@@ -1,0 +1,25 @@
+@if (notification(); as notif) {
+    <div>
+        <h5 *adminTitleBarTitle id="system-notification-detail-heading" class="mb-0">
+            <span jhiTranslate="artemisApp.systemNotification.systemNotification"></span>
+            [{{ notif.id }}]
+        </h5>
+        <dl class="grid grid-cols-1 gap-y-2 md:grid-cols-12" data-testid="system-notification-details">
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="global.field.id"></span></dt>
+            <dd class="md:col-span-9">{{ notif.id }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.title"></span></dt>
+            <dd class="md:col-span-9">{{ notif.title }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.text"></span></dt>
+            <dd class="md:col-span-9">{{ notif.text }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.type"></span></dt>
+            <dd class="md:col-span-9">{{ notif.type }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.expireDate"></span></dt>
+            <dd class="md:col-span-9">{{ notif.expireDate | artemisDate }}</dd>
+        </dl>
+        <a [attr.aria-label]="'entity.action.edit' | artemisTranslate" id="editButton" [routerLink]="['edit']" tumAetUiButton size="small" severity="warn">
+            <fa-icon [icon]="faPencil" />
+            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+        </a>
+    </div>
+}
+<router-outlet />

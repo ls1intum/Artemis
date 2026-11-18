@@ -1,0 +1,58 @@
+package de.tum.cit.aet.artemis.core.aspects;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+
+/**
+ * This abstract class is used to test the aspect that enforces the role of the user for a specific resource.
+ * It provides a method to set up the course and other required resources.
+ */
+public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIntegrationIndependentTest {
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    @Autowired
+    protected CourseUtilService courseUtilService;
+
+    protected Course course;
+
+    abstract String getTestPrefix();
+
+    abstract String getOtherPrefix();
+
+    /**
+     * Method is executed before each test to perform default and custom setup.
+     */
+    @BeforeEach
+    void setup() {
+        defaultSetup();
+        customSetup();
+    }
+
+    /**
+     * Creates other required resources.
+     */
+    abstract void customSetup();
+
+    /**
+     * Creates a course and 4 users (one per role) for the course and 4 users (one per role) for another course.
+     */
+    void defaultSetup() {
+        // create users of course
+        userUtilService.addUsers(getTestPrefix(), 1, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(getTestPrefix());
+
+        // create users of other course
+        // Users of the "other" course - not enrolled in the main course by design (tests 403 paths)
+        userUtilService.addStudent(getOtherPrefix() + "student1");
+        userUtilService.addTeachingAssistant(getOtherPrefix() + "tutor1");
+        userUtilService.addEditor(getOtherPrefix() + "editor1");
+        userUtilService.addInstructor(getOtherPrefix() + "instructor1");
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:test-client-sbom-67890",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "component": {
+      "name": "artemis-client",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "group": "@angular",
+      "name": "core",
+      "version": "17.0.0",
+      "type": "library",
+      "purl": "pkg:npm/@angular/core@17.0.0",
+      "description": "Angular Core",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "group": "@angular",
+      "name": "common",
+      "version": "17.0.0",
+      "type": "library",
+      "purl": "pkg:npm/@angular/common@17.0.0",
+      "description": "Angular Common",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  ]
+}

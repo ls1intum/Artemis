@@ -1,0 +1,107 @@
+import dayjs from 'dayjs';
+
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../../../support/constants';
+
+import { dayjsToString, generateUUID, readResponseJson, trimDate } from '../../../support/utils';
+import { test } from '../../../support/fixtures';
+import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
+import { admin } from '../../../support/users';
+
+// Common primitives
+/** The data of a new test exam, taken when a test starts, so that the dates are relative to that moment and nothing is shared between tests. */
+const newExamData = () => ({
+    title: 'exam' + generateUUID(),
+    visibleDate: dayjs(),
+    startDate: dayjs().add(1, 'day'),
+    endDate: dayjs().add(2, 'day'),
+    workingTime: 5,
+    numberOfExercises: 4,
+    maxPoints: 40,
+    startText: 'Exam start text',
+    endText: 'Exam end text',
+    confirmationStartText: 'Exam confirmation start text',
+    confirmationEndText: 'Exam confirmation end text',
+});
+
+const course = { id: SEED_COURSES.testExam.id } as any;
+
+test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
+    let exam: Exam;
+
+    test('Creates a test exam', async ({ login, page, examManagement, examCreation }) => {
+        const examData = newExamData();
+        await login(admin);
+        await page.goto(`/course-management/${course.id}/exams/new`);
+        await examCreation.setTitle(examData.title);
+        await examCreation.setTestMode();
+        await examCreation.setVisibleDate(examData.visibleDate);
+        await examCreation.setStartDate(examData.startDate);
+        await examCreation.setEndDate(examData.endDate);
+        await examCreation.setWorkingTime(examData.workingTime);
+        await examCreation.setNumberOfExercises(examData.numberOfExercises);
+        await examCreation.setExamMaxPoints(examData.maxPoints);
+
+        await examCreation.setStartText(examData.startText);
+        await examCreation.setEndText(examData.endText);
+        await examCreation.setConfirmationStartText(examData.confirmationStartText);
+        await examCreation.setConfirmationEndText(examData.confirmationEndText);
+
+        const examResponse = await examCreation.submit();
+        exam = { ...(await readResponseJson(examResponse)), course };
+        expect(examResponse.status()).toBe(201);
+        expect(exam.title).toBe(examData.title);
+        expect(exam.examMode).toBe(ExamMode.TEST);
+        expect(trimDate(String(exam.visibleDate))).toBe(trimDate(dayjsToString(examData.visibleDate)));
+        expect(trimDate(String(exam.startDate))).toBe(trimDate(dayjsToString(examData.startDate)));
+        expect(trimDate(String(exam.endDate))).toBe(trimDate(dayjsToString(examData.endDate)));
+        expect(exam.workingTime).toBe(examData.workingTime * 60);
+        expect(exam.numberOfExercisesInExam).toBe(examData.numberOfExercises);
+        expect(exam.examMaxPoints).toBe(examData.maxPoints);
+        expect(exam.startText).toBe(examData.startText);
+        expect(exam.endText).toBe(examData.endText);
+        expect(exam.confirmationStartText).toBe(examData.confirmationStartText);
+        expect(exam.confirmationEndText).toBe(examData.confirmationEndText);
+        await page.waitForURL(`**/exams/${exam.id}**`);
+        await expect(examManagement.getExamTitle().getByText(examData.title)).toBeVisible();
+    });
+
+    test.describe('Test exam deletion', () => {
+        let title: string;
+
+        test.beforeEach(async ({ login, examAPIRequests }) => {
+            await login(admin);
+            title = 'exam' + generateUUID();
+            const examConfig = {
+                course,
+                title,
+                examMode: ExamMode.TEST,
+            };
+            exam = await examAPIRequests.createExam(examConfig);
+        });
+
+        test('Deletes an existing test exam', async ({ page, examDetails, examManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
+            const response = await examDetails.deleteExam(title);
+            expect(response.status()).toBe(202);
+
+            // The user is taken back to the exam list, which no longer offers the test exam ...
+            await page.waitForURL(`**/course-management/${course.id}/exams`);
+            await expect(examManagement.getExamSelector(title)).toHaveCount(0);
+            // ... and the server no longer knows it.
+            const lookup = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}`);
+            expect(lookup.status()).toBe(404);
+        });
+    });
+
+    test.afterEach('Delete exam if exists', async ({ examAPIRequests }) => {
+        if (exam?.id) {
+            try {
+                await examAPIRequests.deleteExam(exam);
+            } catch {
+                // Exam may already be deleted by the test
+            }
+        }
+    });
+});

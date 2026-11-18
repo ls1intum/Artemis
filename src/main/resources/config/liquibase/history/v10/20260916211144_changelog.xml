@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260916211144_changelog.xml">
+
+    <!--
+    Drops ten secondary indexes that no query can use. An analysis of the database structure found
+    each of them redundant for one of three reasons, none of which depends on how much data an
+    instance holds.
+
+    Group 1 - a leftmost prefix of a composite index that already exists
+
+        submission.FKeap67y7pxd6ffvwbs6d6sfhmq (participation_id)
+          -> idx_submission_participation_submission_date (participation_id, submission_date DESC)
+        result.fk_result_submission_id (submission_id)
+          -> idx_result_submission_completion_date (submission_id, completion_date DESC)
+        participation.fk_participation_student_id (student_id)
+          -> UK6skuc03gvp2gw5lyji5lu0v0v (student_id, exercise_id, initialization_state, attempt)
+        participation.fk_participation_team_id (team_id)
+          -> UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS (team_id, exercise_id, initialization_state)
+
+      With the narrow index ignored, EXPLAIN shows every lookup falling through to the composite as
+      the same covering index lookup, at practically the same cost.
+
+      All four back a foreign key and carry its name. MySQL accepts any index with the referencing
+      column leftmost, so the drops succeed and the constraint survives; a foreign key whose only
+      index is the one being dropped fails with ERROR 1553 instead. PostgreSQL never requires one.
+
+      They are restricted to MySQL and PostgreSQL because H2, which the bean-instantiation startup
+      check boots on, refuses the drop even when a replacement exists. Changelog 20260410144433
+      restricts a drop for the same reason.
+
+    Group 2 - too few distinct values to be selective
+
+        result.result_rated (rated)                                 2 distinct values
+        submission.jhi_type (jhi_type)                              6 distinct values
+        submission.submission_discriminator (discriminator)         4 distinct values
+        build_job.idx_build_job_result (build_job_result)           4 distinct values
+        participation.participation_discriminator (discriminator)   3 distinct values
+
+      Every query filtering on these also filters on exercise_id, participation_id or submission_id,
+      and EXPLAIN shows the optimizer choosing that index and applying these columns as a post-filter.
+
+      Note that idx_build_job_result indexes the build_job_result status column. The index backing
+      fk_build_job_result is idx_build_job_result_id, which is kept.
+
+    Group 3 - selective, but no query has the shape that would use it
+
+        result.result_assessment_type (assessment_type)
+
+      The optimizer does pick this index for a query that filters on assessment_type alone and
+      selects only indexed columns. Artemis has no such query: every JPQL query mentioning
+      assessmentType pairs it with a selective driver or with a date range that has its own index,
+      and projects columns the index does not carry.
+
+    All ten are created by 00000000000000_initial_schema.xml, which cannot be edited without
+    invalidating recorded checksums, so - as with changelog 20260816213553 - fresh installations
+    create them and drop them again here. Each changeset is one DDL guarded by an indexExists
+    precondition, so a schema that never had an index marks it as run instead of failing startup,
+    and each carries an explicit rollback because Liquibase cannot infer one for dropIndex.
+
+    DROP INDEX is an INPLACE metadata-only operation on MySQL 8.0+ and PostgreSQL, so this runs in
+    milliseconds regardless of table size.
+    -->
+
+    <changeSet id="20260916211144-01-drop-submission-participation-fk-index" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="submission" indexName="FKeap67y7pxd6ffvwbs6d6sfhmq"/>
+        </preConditions>
+        <dropIndex tableName="submission" indexName="FKeap67y7pxd6ffvwbs6d6sfhmq"/>
+        <rollback>
+            <createIndex tableName="submission" indexName="FKeap67y7pxd6ffvwbs6d6sfhmq">
+                <column name="participation_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-02-drop-result-submission-fk-index" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="result" indexName="fk_result_submission_id"/>
+        </preConditions>
+        <dropIndex tableName="result" indexName="fk_result_submission_id"/>
+        <rollback>
+            <createIndex tableName="result" indexName="fk_result_submission_id">
+                <column name="submission_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-03-drop-participation-student-fk-index" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="participation" indexName="fk_participation_student_id"/>
+        </preConditions>
+        <dropIndex tableName="participation" indexName="fk_participation_student_id"/>
+        <rollback>
+            <createIndex tableName="participation" indexName="fk_participation_student_id">
+                <column name="student_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-04-drop-participation-team-fk-index" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="participation" indexName="fk_participation_team_id"/>
+        </preConditions>
+        <dropIndex tableName="participation" indexName="fk_participation_team_id"/>
+        <rollback>
+            <createIndex tableName="participation" indexName="fk_participation_team_id">
+                <column name="team_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-05-drop-result-rated-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="result" indexName="result_rated"/>
+        </preConditions>
+        <dropIndex tableName="result" indexName="result_rated"/>
+        <rollback>
+            <createIndex tableName="result" indexName="result_rated">
+                <column name="rated"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-06-drop-submission-jhi-type-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="submission" indexName="jhi_type"/>
+        </preConditions>
+        <dropIndex tableName="submission" indexName="jhi_type"/>
+        <rollback>
+            <createIndex tableName="submission" indexName="jhi_type">
+                <column name="jhi_type"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-07-drop-submission-discriminator-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="submission" indexName="submission_discriminator"/>
+        </preConditions>
+        <dropIndex tableName="submission" indexName="submission_discriminator"/>
+        <rollback>
+            <createIndex tableName="submission" indexName="submission_discriminator">
+                <column name="discriminator"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-08-drop-build-job-result-status-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="build_job" indexName="idx_build_job_result"/>
+        </preConditions>
+        <dropIndex tableName="build_job" indexName="idx_build_job_result"/>
+        <rollback>
+            <createIndex tableName="build_job" indexName="idx_build_job_result">
+                <column name="build_job_result"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-09-drop-participation-discriminator-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="participation" indexName="participation_discriminator"/>
+        </preConditions>
+        <dropIndex tableName="participation" indexName="participation_discriminator"/>
+        <rollback>
+            <createIndex tableName="participation" indexName="participation_discriminator">
+                <column name="discriminator"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916211144-11-drop-result-assessment-type-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="result" indexName="result_assessment_type"/>
+        </preConditions>
+        <dropIndex tableName="result" indexName="result_assessment_type"/>
+        <rollback>
+            <createIndex tableName="result" indexName="result_assessment_type">
+                <column name="assessment_type"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

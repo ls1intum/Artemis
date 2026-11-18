@@ -1,0 +1,28 @@
+{
+    "login": {
+        "title": "Sign in",
+        "divider": "or",
+        "form": {
+            "password": "Password",
+            "password.placeholder": "Password",
+            "rememberme": "Remember me",
+            "acceptTerms": "Accept terms",
+            "button": "Sign in"
+        },
+        "messages": {
+            "error": {
+                "authentication": "<strong>Failed to sign in!</strong> Please check your credentials and try again."
+            }
+        },
+        "password": {
+            "forgot": "Forgot password?"
+        },
+        "ide": {
+            "confirmation": "Do you want to store your credentials in your IDE?\nThis will make importing your exercises a lot easier!",
+            "title": "Log in to your IDE"
+        }
+    },
+    "logout": {
+        "failed": "The logout was unsuccessful due to the following error: {{error}}. If the issue persists please reload the page."
+    }
+}

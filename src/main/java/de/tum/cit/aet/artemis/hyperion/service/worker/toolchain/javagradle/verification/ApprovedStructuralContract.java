@@ -1,0 +1,531 @@
+package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.thoughtworks.qdox.JavaProjectBuilder;
+import com.thoughtworks.qdox.model.JavaAnnotatedElement;
+import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaConstructor;
+import com.thoughtworks.qdox.model.JavaField;
+import com.thoughtworks.qdox.model.JavaMethod;
+import com.thoughtworks.qdox.model.JavaParameter;
+import com.thoughtworks.qdox.model.JavaType;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.GenericApi;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleAttribute;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleClass;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleConstructor;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleMethod;
+
+/**
+ * Typed structural contract parsed and validated at the SPEC gate.
+ * <p>
+ * The SPEC format already requires exact Java signatures in fenced {@code java} blocks. Parsing those blocks with the same QDox model as Artemis's structure-oracle generator
+ * gives later verification an immutable authority whose owner, type kind, relationships and overloads never depend on agent-authored solution code.
+ */
+final class ApprovedStructuralContract {
+
+    private static final Pattern SKELETON_ELLIPSIS = Pattern.compile("\\{\\s*\\.\\.\\.\\s*}");
+
+    private static final Pattern TYPE_NAME = Pattern.compile("[\\w$.]+");
+
+    private static final Pattern JAVA_BLOCK = Pattern.compile("```java([^`]*+(?:`(?!``)[^`]*+)*+)```", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern STUDENT_CREATES_MARKER = Pattern.compile("@studentCreates\\b");
+
+    /** Ares reads an absent key differently from an empty array, so the oracle omits only the keys that are {@code null} and keeps every empty array and empty text. */
+    private static final JsonMapper ORACLE_MAPPER = JsonMapper.builder().changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .build();
+
+    private final Map<String, JavaClass> types;
+
+    private ApprovedStructuralContract(Map<String, JavaClass> types) {
+        this.types = Map.copyOf(types);
+    }
+
+    static ParseResult parse(String specification, Set<String> requiredTypes) {
+        return parse(specification, requiredTypes, requiredTypes);
+    }
+
+    static ParseResult parse(String specification, Set<String> requiredTypes, Set<String> structurallyGradedTypes) {
+        JavaProjectBuilder builder = new JavaProjectBuilder();
+        List<String> errors = new ArrayList<>();
+        Matcher blocks = JAVA_BLOCK.matcher(section(specification, "## Public API"));
+        int blockCount = 0;
+        long ownershipMarkers = 0;
+        while (blocks.find()) {
+            blockCount++;
+            ownershipMarkers += STUDENT_CREATES_MARKER.matcher(blocks.group(1)).results().count();
+            try {
+                builder.addSource(new StringReader(normalizeSkeleton(blocks.group(1))));
+            }
+            catch (RuntimeException exception) {
+                errors.add("Java Public API block " + blockCount + " is not parseable: " + singleLine(exception.getMessage()));
+            }
+        }
+        if (blockCount == 0) {
+            errors.add("## Public API needs fenced ```java blocks containing exact type and member signatures");
+        }
+        long ownedMembers = builder.getClasses().stream().mapToLong(type -> type.getMethods().stream().filter(ApprovedStructuralContract::studentCreates).count()
+                + type.getConstructors().stream().filter(ApprovedStructuralContract::studentCreates).count()).sum();
+        if (ownershipMarkers != ownedMembers) {
+            errors.add("Each @studentCreates marker must be a Javadoc block tag immediately before one constructor or method declaration. "
+                    + "Line comments, ordinary comments, fields, and type declarations do not assign member ownership. Keep the complete final signature, including throws "
+                    + "clauses: the tag omits the whole member from the template, not part of its signature.");
+        }
+
+        Map<String, JavaClass> parsed = new LinkedHashMap<>();
+        for (JavaClass type : builder.getClasses()) {
+            if (!requiredTypes.contains(type.getSimpleName())) {
+                errors.add(type.getSimpleName() + " is declared in ## Public API but has no row in ## Design");
+                continue;
+            }
+            JavaClass duplicate = parsed.putIfAbsent(type.getSimpleName(), type);
+            if (duplicate != null) {
+                errors.add(type.getSimpleName() + " is declared more than once in ## Public API");
+            }
+        }
+        for (String expectedType : requiredTypes.stream().sorted().toList()) {
+            JavaClass type = parsed.get(expectedType);
+            if (type == null) {
+                errors.add(expectedType + " needs one exact Java declaration in its ## Public API block");
+                continue;
+            }
+            if (!type.isPublic()) {
+                errors.add(expectedType + " must be declared public because students create it as a top-level graded type");
+            }
+            List<String> unsupportedTypeModifiers = type.getModifiers().stream().filter(modifier -> Set.of("final", "sealed", "non-sealed").contains(modifier)).toList();
+            boolean structuralOwner = structurallyGradedTypes.contains(expectedType) || type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
+                    || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates);
+            boolean boundedParameters = type.getTypeParameters().stream().anyMatch(parameter -> parameter.getBounds() != null && !parameter.getBounds().isEmpty());
+            if (structuralOwner && (type.isRecord() || !unsupportedTypeModifiers.isEmpty() || boundedParameters)) {
+                errors.add(expectedType
+                        + " uses a record, bounded type parameter, or final/sealed type modifier that the structural grader cannot enforce exactly. Use a public class, "
+                        + "interface, or enum with an explicit contract; unbounded class type parameters are supported.");
+            }
+            boolean unsupportedExecutable = type.getMethods().stream().anyMatch(method -> method.isVarArgs() || !method.getTypeParameters().isEmpty())
+                    || type.getConstructors().stream().anyMatch(constructor -> constructor.isVarArgs() || !constructor.getTypeParameters().isEmpty());
+            if (structuralOwner && unsupportedExecutable) {
+                errors.add(expectedType + " uses a varargs or generic method/constructor that the structural grader cannot enforce exactly. Use explicit parameter types.");
+            }
+            List<String> privateMembers = new ArrayList<>();
+            if (!type.isRecord()) {
+                type.getMethods().stream().filter(JavaMethod::isPrivate).map(JavaMethod::getName).forEach(privateMembers::add);
+                type.getConstructors().stream().filter(JavaConstructor::isPrivate).map(constructor -> expectedType).forEach(privateMembers::add);
+                type.getFields().stream().filter(JavaField::isPrivate).map(JavaField::getName).forEach(privateMembers::add);
+            }
+            if (!privateMembers.isEmpty()) {
+                errors.add(expectedType + " exposes private implementation details in ## Public API: " + privateMembers + ". Keep only contract-visible signatures.");
+            }
+            List<String> packagePrivateMembers = new ArrayList<>();
+            if (!type.isRecord()) {
+                type.getMethods().stream().filter(method -> !method.isPrivate() && !isContractVisible(method)).map(JavaMethod::getName).forEach(packagePrivateMembers::add);
+                type.getConstructors().stream().filter(constructor -> !constructor.isPrivate() && !isContractVisible(constructor)).map(constructor -> expectedType)
+                        .forEach(packagePrivateMembers::add);
+                type.getFields().stream().filter(field -> !field.isPrivate() && !isContractVisible(field)).map(JavaField::getName).forEach(packagePrivateMembers::add);
+            }
+            if (!packagePrivateMembers.isEmpty()) {
+                errors.add(expectedType + " contains package-private signatures in ## Public API: " + packagePrivateMembers
+                        + ". Make contract members public/protected or remove implementation details.");
+            }
+        }
+        return new ParseResult(new ApprovedStructuralContract(parsed), List.copyOf(errors));
+    }
+
+    /**
+     * Writes the structure oracle that Ares' structural tests read for the given types.
+     *
+     * @param packageName   the package of the exercise, written into every class entry
+     * @param includedTypes the simple names of the types to include
+     * @return the pretty printed JSON array of the included types ordered by name, {@code [ ]} when there are none
+     */
+    String toOracle(String packageName, Set<String> includedTypes) {
+        List<StructuralOracleEntry> oracle = types.values().stream().filter(type -> includedTypes.contains(type.getSimpleName()))
+                .sorted((left, right) -> left.getSimpleName().compareTo(right.getSimpleName())).map(type -> toEntry(type, packageName, types.keySet())).toList();
+        try {
+            return ORACLE_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(oracle);
+        }
+        catch (Exception exception) {
+            throw new IllegalStateException("The approved structural contract could not be serialized", exception);
+        }
+    }
+
+    /**
+     * Writes the structure oracle for every type of the contract.
+     *
+     * @param packageName the package of the exercise, written into every class entry
+     * @return the pretty printed JSON array of all types ordered by name
+     */
+    String toOracle(String packageName) {
+        return toOracle(packageName, types.keySet());
+    }
+
+    Set<String> typeNames() {
+        return types.keySet();
+    }
+
+    Set<String> studentCreatedMemberOwners() {
+        return types.values().stream().filter(type -> type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
+                || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates)).map(JavaClass::getSimpleName).collect(Collectors.toSet());
+    }
+
+    List<String> templateDependencies(Set<String> templateTypes, Set<String> absentTypes) {
+        List<String> conflicts = new ArrayList<>();
+        for (String owner : templateTypes) {
+            for (String absent : absentTypes) {
+                Pattern name = Pattern.compile("(?<![\\w$])" + Pattern.quote(absent) + "(?![\\w$])");
+                if (canonicalSurface(types.get(owner), types.keySet(), true).stream().anyMatch(part -> name.matcher(part).find())) {
+                    conflicts.add(owner + "->" + absent);
+                }
+            }
+        }
+        return List.copyOf(conflicts);
+    }
+
+    private static boolean studentCreates(JavaAnnotatedElement member) {
+        return member.getTagByName("studentCreates") != null;
+    }
+
+    List<String> solutionSurfaceReasons(Map<String, String> solutionFiles) {
+        return repositorySurfaceReasons(solutionFiles, types.keySet(), "solution");
+    }
+
+    List<String> templateSurfaceReasons(Map<String, String> templateFiles, Set<String> includedTypes) {
+        return repositorySurfaceReasons(templateFiles, includedTypes, "template");
+    }
+
+    private List<String> repositorySurfaceReasons(Map<String, String> repositoryFiles, Set<String> includedTypes, String repository) {
+        JavaProjectBuilder builder = new JavaProjectBuilder();
+        List<String> reasons = new ArrayList<>();
+        if (repositoryFiles != null) {
+            repositoryFiles.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java")).forEach(entry -> {
+                try {
+                    builder.addSource(new StringReader(entry.getValue()));
+                }
+                catch (RuntimeException exception) {
+                    reasons.add("the " + repository + " source " + entry.getKey() + " is not structurally parseable: " + singleLine(exception.getMessage()));
+                }
+            });
+        }
+        Map<String, JavaClass> actualTypes = new LinkedHashMap<>();
+        builder.getClasses().stream().filter(type -> includedTypes.contains(type.getSimpleName())).forEach(type -> {
+            JavaClass duplicate = actualTypes.putIfAbsent(type.getSimpleName(), type);
+            if (duplicate != null) {
+                reasons.add("the " + repository + " declares more than one type named " + type.getSimpleName() + "; the approved API owner is ambiguous");
+            }
+        });
+        List<String> unexpectedPublicTypes = builder.getClasses().stream().filter(JavaClass::isPublic).map(JavaClass::getSimpleName).filter(type -> !types.containsKey(type))
+                .sorted().toList();
+        if (!unexpectedPublicTypes.isEmpty()) {
+            reasons.add("the " + repository + " exposes public type(s) absent from the approved Design/Public API contract: " + unexpectedPublicTypes
+                    + ". Keep implementation helpers package-private or declare intentional exercise types in the specification.");
+        }
+        for (Map.Entry<String, JavaClass> expected : types.entrySet()) {
+            if (!includedTypes.contains(expected.getKey())) {
+                continue;
+            }
+            JavaClass actual = actualTypes.get(expected.getKey());
+            if (actual == null) {
+                reasons.add("the " + repository + " does not declare the approved Public API type " + expected.getKey());
+                continue;
+            }
+            Set<String> expectedSurface = canonicalSurface(expected.getValue(), types.keySet(), "template".equals(repository));
+            Set<String> actualSurface = canonicalSurface(actual, types.keySet(), false);
+            Set<String> missing = new LinkedHashSet<>(expectedSurface);
+            missing.removeAll(actualSurface);
+            Set<String> extra = new LinkedHashSet<>(actualSurface);
+            extra.removeAll(expectedSurface);
+            if (!missing.isEmpty() || !extra.isEmpty()) {
+                reasons.add("the " + repository + " public API for " + expected.getKey() + " differs from the approved SPEC (missing " + missing + ", extra " + extra
+                        + "). Remove invented overloads/public helpers and implement the exact approved type kind, relationships, and signatures; private helpers remain allowed.");
+            }
+        }
+        return List.copyOf(reasons);
+    }
+
+    private static StructuralOracleEntry toEntry(JavaClass type, String packageName, Set<String> exerciseTypes) {
+        // Ares matches modifiers exactly; allow implicit type flags while requiring the approved visibility.
+        List<String> classModifiers = type.isPublic() ? List.of("public", "optional: abstract", "optional: interface", "optional: final", "optional: strictfp") : null;
+        JavaClass superclass = type.getSuperJavaClass();
+        String superclassName = superclass != null && !"java.lang.Object".equals(superclass.getCanonicalName()) ? superclass.getSimpleName() : null;
+        List<String> interfaces = type.getInterfaces().isEmpty() ? null : type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList();
+        OracleClass classProperties = new OracleClass(type.getSimpleName(), packageName, classModifiers, type.isInterface(), type.isEnum(),
+                type.isAbstract() && !type.isInterface(), superclassName, interfaces);
+
+        List<OracleMethod> methods = type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleMethod).toList();
+        List<OracleAttribute> attributes = type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
+                .map(ApprovedStructuralContract::toOracleAttribute).toList();
+        List<OracleConstructor> constructors = new ArrayList<>(
+                type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleConstructor).toList());
+        if (constructors.isEmpty() && !type.isInterface() && !type.isEnum()) {
+            constructors.add(new OracleConstructor(List.of("public"), null));
+        }
+        List<String> enumValues = type.getFields().stream().filter(JavaField::isEnumConstant).map(JavaField::getName).toList();
+        return new StructuralOracleEntry(classProperties, genericApi(type, exerciseTypes), nullIfEmpty(methods), nullIfEmpty(attributes), nullIfEmpty(constructors),
+                nullIfEmpty(enumValues));
+    }
+
+    @Nullable
+    private static GenericApi genericApi(JavaClass type, Set<String> exerciseTypes) {
+        List<String> signatures = new ArrayList<>();
+        JavaType superclass = type.getSuperClass();
+        if (type.isEnum()) {
+            signatures.add("superclass:" + canonicalTypeName("java.lang.Enum<" + type.getCanonicalName() + ">", exerciseTypes, type.getPackageName()));
+        }
+        else if (superclass != null && !"java.lang.Object".equals(superclass.getFullyQualifiedName())) {
+            signatures.add("superclass:" + genericShape(superclass, type, exerciseTypes));
+        }
+        type.getImplements().stream().map(supertype -> "interface:" + genericShape(supertype, type, exerciseTypes)).forEach(signatures::add);
+        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(method -> "method:" + method.getName() + genericParameters(method.getParameters(), type, exerciseTypes) + ":"
+                        + genericShape(method.getReturnType(), type, exerciseTypes) + ":throws="
+                        + method.getExceptionTypes().stream().map(exception -> genericShape(exception, type, exerciseTypes)).sorted().toList())
+                .forEach(signatures::add);
+        type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(constructor -> "constructor:" + genericParameters(constructor.getParameters(), type, exerciseTypes) + ":throws="
+                        + constructor.getExceptionTypes().stream().map(exception -> genericShape(exception, type, exerciseTypes)).sorted().toList())
+                .forEach(signatures::add);
+        if (type.getConstructors().isEmpty() && !type.isInterface() && !type.isEnum()) {
+            signatures.add("constructor:[]:throws=[]");
+        }
+        type.getFields().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(field -> "field:" + field.getName() + ":" + genericShape(field.getType(), type, exerciseTypes)).forEach(signatures::add);
+        if (type.getTypeParameters().isEmpty() && signatures.stream().noneMatch(signature -> signature.contains("<") || signature.contains(":throws="))) {
+            return null;
+        }
+        return new GenericApi(type.getTypeParameters().size(), exerciseTypes.stream().sorted().toList(), signatures);
+    }
+
+    private static List<String> genericParameters(List<JavaParameter> parameters, JavaClass owner, Set<String> exerciseTypes) {
+        return parameters.stream().map(parameter -> genericShape(parameter.getType(), owner, exerciseTypes)).toList();
+    }
+
+    private static String genericShape(JavaType type, JavaClass owner, Set<String> exerciseTypes) {
+        // QDox resolves a source type variable named Object to java.lang.Object. Identify variables from source spelling,
+        // while retaining resolved names for imported classes; shortening names first would merge those distinct types.
+        Pattern names = TYPE_NAME;
+        Matcher source = names.matcher(type.getGenericValue());
+        Matcher resolved = names.matcher(type.getGenericCanonicalName());
+        List<String> variables = owner.getTypeParameters().stream().map(variable -> variable.getName()).toList();
+        StringBuilder shape = new StringBuilder();
+        while (resolved.find()) {
+            if (!source.find()) {
+                throw new IllegalStateException("QDox generic source and resolved type shapes differ");
+            }
+            int variable = variables.indexOf(source.group());
+            resolved.appendReplacement(shape, Matcher.quoteReplacement(variable >= 0 ? "$" + variable : resolved.group()));
+        }
+        resolved.appendTail(shape);
+        return canonicalTypeName(shape.toString(), exerciseTypes, owner.getPackageName()).replace(", ", ",");
+    }
+
+    private static Set<String> canonicalSurface(JavaClass type, Set<String> exerciseTypes, boolean template) {
+        String exercisePackage = type.getPackageName();
+        Set<String> surface = new LinkedHashSet<>();
+        surface.add("type:" + typeKind(type) + ":modifiers=" + type.getModifiers().stream().sorted().toList() + ":parameters="
+                + type.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":extends="
+                + superclass(type, exerciseTypes) + ":implements="
+                + type.getImplements().stream().map(interfaceType -> canonicalType(interfaceType, exerciseTypes, exercisePackage)).sorted().toList());
+        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).filter(method -> !template || !studentCreates(method))
+                .map(method -> "method:" + relevantModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()) + ":"
+                        + method.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":"
+                        + canonicalType(method.getReturnType(), exerciseTypes, exercisePackage) + ":" + method.getName()
+                        + exactParameterTypes(method.getParameters(), exerciseTypes, exercisePackage) + ":throws="
+                        + method.getExceptionTypes().stream().map(exception -> canonicalType(exception, exerciseTypes, exercisePackage)).sorted().toList())
+                .forEach(surface::add);
+        type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
+                .map(field -> "field:" + relevantModifiers(field.getModifiers(), field.getDeclaringClass().isInterface(), false, field.isStatic()) + ":"
+                        + canonicalType(field.getType(), exerciseTypes, exercisePackage) + ":" + field.getName())
+                .forEach(surface::add);
+        List<JavaConstructor> declaredConstructors = type.getConstructors().stream().filter(constructor -> !template || !studentCreates(constructor)).toList();
+        declaredConstructors.stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(constructor -> "constructor:" + relevantModifiers(constructor.getModifiers(), false, false, false)
+                        + constructor.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList()
+                        + exactParameterTypes(constructor.getParameters(), exerciseTypes, exercisePackage) + ":throws="
+                        + constructor.getExceptionTypes().stream().map(exception -> canonicalType(exception, exerciseTypes, exercisePackage)).sorted().toList())
+                .forEach(surface::add);
+        if (declaredConstructors.isEmpty() && !type.isInterface() && !type.isEnum() && !type.isRecord() && (type.isPublic() || type.isProtected())) {
+            surface.add("constructor:" + (type.isPublic() ? "[public]" : "[protected]") + "[][]:throws=[]");
+        }
+        type.getFields().stream().filter(JavaField::isEnumConstant).map(field -> "enum:" + field.getName()).forEach(surface::add);
+        return Set.copyOf(surface);
+    }
+
+    private static String typeKind(JavaClass type) {
+        if (type.isRecord()) {
+            return "record";
+        }
+        if (type.isInterface()) {
+            return "interface";
+        }
+        if (type.isEnum()) {
+            return "enum";
+        }
+        return "class";
+    }
+
+    private static String superclass(JavaClass type, Set<String> exerciseTypes) {
+        JavaType superclass = type.getSuperClass();
+        return superclass == null || "java.lang.Object".equals(superclass.getFullyQualifiedName()) ? "" : canonicalType(superclass, exerciseTypes, type.getPackageName());
+    }
+
+    private static List<String> relevantModifiers(List<String> declared, boolean interfaceOwner, boolean defaultMethod, boolean staticMethod) {
+        return effectiveModifiers(declared, interfaceOwner, defaultMethod, staticMethod).stream()
+                .filter(modifier -> Set.of("public", "protected", "static", "final", "abstract", "default").contains(modifier)).sorted().toList();
+    }
+
+    private static List<String> parameterTypes(List<JavaParameter> parameters) {
+        return parameters.stream().map(parameter -> parameter.getType().getValue()).toList();
+    }
+
+    private static List<String> exactParameterTypes(List<JavaParameter> parameters, Set<String> exerciseTypes, String exercisePackage) {
+        return parameters.stream().map(parameter -> canonicalType(parameter.getType(), exerciseTypes, exercisePackage) + (parameter.isVarArgs() ? "..." : "")).toList();
+    }
+
+    /**
+     * QDox preserves the spelling used at each source site in {@code getGenericValue()}. The approved SPEC commonly uses a fully qualified JDK type while normal Java source
+     * imports it, so comparing that spelling rejects a semantically identical API. Compare resolved generic names instead, while reducing exercise-owned types back to their
+     * stable simple names because SPEC blocks have no package declaration.
+     */
+    private static String canonicalType(JavaType type, Set<String> exerciseTypes, String exercisePackage) {
+        return canonicalTypeName(type.getGenericCanonicalName(), exerciseTypes, exercisePackage);
+    }
+
+    private static String canonicalTypeName(String typeName, Set<String> exerciseTypes, String exercisePackage) {
+        String canonical = typeName;
+        if (exercisePackage != null && !exercisePackage.isBlank()) {
+            for (String exerciseType : exerciseTypes) {
+                Pattern qualifiedType = Pattern.compile("(?<![\\w$])" + Pattern.quote(exercisePackage + "." + exerciseType) + "(?![\\w$])");
+                canonical = qualifiedType.matcher(canonical).replaceAll(exerciseType);
+            }
+        }
+        // Public-API skeletons contain declarations only, not package/import boilerplate. QDox therefore leaves a skeleton's ordinary `List<T>` spelling
+        // unresolved while resolving the same imported type in repository source to `java.util.List<T>`. Normalize the two Java namespaces implicitly available to these
+        // skeletons, except where the exercise itself owns the colliding simple name. Other library types remain fully qualified, so unrelated same-named APIs cannot match.
+        for (String implicitPackage : List.of("java.lang.", "java.util.")) {
+            Matcher matcher = Pattern.compile("(?<![\\w$])" + Pattern.quote(implicitPackage) + "([A-Z][\\w$]*)(?![\\w$])").matcher(canonical);
+            StringBuilder normalized = new StringBuilder();
+            while (matcher.find()) {
+                String simpleName = matcher.group(1);
+                matcher.appendReplacement(normalized, Matcher.quoteReplacement(exerciseTypes.contains(simpleName) ? matcher.group() : simpleName));
+            }
+            matcher.appendTail(normalized);
+            canonical = normalized.toString();
+        }
+        return canonical;
+    }
+
+    private static OracleMethod toOracleMethod(JavaMethod method) {
+        return new OracleMethod(method.getName(), effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()),
+                oracleParameters(method.getParameters(), method.getDeclaringClass()), simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
+    }
+
+    private static OracleAttribute toOracleAttribute(JavaField field) {
+        return new OracleAttribute(field.getName(), effectiveFieldModifiers(field), simpleErasedType(field.getType(), field.getDeclaringClass()));
+    }
+
+    private static OracleConstructor toOracleConstructor(JavaConstructor constructor) {
+        return new OracleConstructor(new ArrayList<>(constructor.getModifiers()), oracleParameters(constructor.getParameters(), constructor.getDeclaringClass()));
+    }
+
+    /** The erased simple type names of the parameters, or {@code null} when there are none because the oracle leaves the key out. */
+    @Nullable
+    private static List<String> oracleParameters(List<JavaParameter> parameters, JavaClass owner) {
+        return parameters.isEmpty() ? null : parameters.stream().map(parameter -> simpleErasedType(parameter.getType(), owner)).toList();
+    }
+
+    /**
+     * Ares's structural oracle schema uses erased simple Java names (for example {@code List}, not {@code java.util.List<String>}). Exact source-surface comparison separately
+     * uses resolved canonical generic names; conflating the two representations makes ordinary imported collection APIs impossible to satisfy.
+     */
+    private static String simpleErasedType(JavaType type, JavaClass owner) {
+        String name = type.getFullyQualifiedName();
+        int array = name.indexOf('[');
+        String suffix = array < 0 ? "" : name.substring(array);
+        String component = array < 0 ? name : name.substring(0, array);
+        if (owner.getTypeParameters().stream().anyMatch(parameter -> parameter.getName().equals(component))) {
+            return "Object" + suffix;
+        }
+        int packageSeparator = component.lastIndexOf('.');
+        return (packageSeparator < 0 ? component : component.substring(packageSeparator + 1)) + suffix;
+    }
+
+    private static List<String> effectiveModifiers(List<String> declared, boolean interfaceOwner, boolean defaultMethod, boolean staticMethod) {
+        LinkedHashSet<String> modifiers = new LinkedHashSet<>(declared);
+        if (interfaceOwner && !modifiers.contains("private")) {
+            modifiers.add("public");
+            if (!defaultMethod && !staticMethod) {
+                modifiers.add("abstract");
+            }
+        }
+        return List.copyOf(modifiers);
+    }
+
+    private static List<String> effectiveFieldModifiers(JavaField field) {
+        LinkedHashSet<String> modifiers = new LinkedHashSet<>(field.getModifiers());
+        if (field.getDeclaringClass().isInterface()) {
+            modifiers.add("public");
+            modifiers.add("static");
+            modifiers.add("final");
+        }
+        return List.copyOf(modifiers);
+    }
+
+    // QDox 2.2 carries enum modifiers into its first member (for example [public, private, final]).
+    // Explicit private visibility wins; otherwise a valid implementation is rejected as invented API.
+    private static boolean isContractVisible(JavaMethod method) {
+        return !method.isPrivate() && (method.isPublic() || method.isProtected() || method.getDeclaringClass().isInterface());
+    }
+
+    private static boolean isContractVisible(JavaConstructor constructor) {
+        return !constructor.isPrivate() && (constructor.isPublic() || constructor.isProtected());
+    }
+
+    private static boolean isContractVisible(JavaField field) {
+        return !field.isPrivate() && (field.isPublic() || field.isProtected() || field.getDeclaringClass().isInterface());
+    }
+
+    /** The list, or {@code null} when it is empty because the oracle leaves the key out. */
+    @Nullable
+    private static <T> List<T> nullIfEmpty(List<T> values) {
+        return values.isEmpty() ? null : values;
+    }
+
+    private static String normalizeSkeleton(String source) {
+        return SKELETON_ELLIPSIS.matcher(source).replaceAll("{}");
+    }
+
+    private static String section(String document, String heading) {
+        int start = document.indexOf(heading);
+        if (start < 0) {
+            return "";
+        }
+        int next = document.indexOf("\n## ", start + heading.length());
+        return next < 0 ? document.substring(start) : document.substring(start, next);
+    }
+
+    private static String singleLine(String message) {
+        return message == null ? "unknown parser error" : message.replace('\n', ' ').replace('\r', ' ').strip();
+    }
+
+    record ParseResult(ApprovedStructuralContract contract, List<String> errors) {
+
+        boolean valid() {
+            return errors.isEmpty();
+        }
+    }
+}

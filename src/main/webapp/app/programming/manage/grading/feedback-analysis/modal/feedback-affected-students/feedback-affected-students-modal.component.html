@@ -1,0 +1,51 @@
+<div class="modal-header">
+    <h4 class="modal-title" [jhiTranslate]="TRANSLATION_BASE + '.header'"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+    <div>
+        <span [jhiTranslate]="TRANSLATION_BASE + '.description'" [translateValues]="{ count: feedbackDetail().count }"></span>
+    </div>
+    @if (isLoading()) {
+        <div class="row justify-content-center p-2">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    } @else {
+        <tumaet-ui-table-layout class="mt-3 [--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]" [empty]="participation().length === 0">
+            <table tumAetUiTable size="small" striped>
+                <thead>
+                    <tr>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.name'"></th>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.login'"></th>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.repository'"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of participation(); track item) {
+                        <tr>
+                            <td>{{ item.firstName }} {{ item.lastName }}</td>
+                            <td>{{ item.login }}</td>
+                            <td>
+                                <jhi-code-button
+                                    class="ms-2"
+                                    size="small"
+                                    [allowOnlineIde]="false"
+                                    [exerciseId]="exerciseId()"
+                                    [repositoryUri]="item.repositoryURI"
+                                    [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
+                                    [vcsAccessTokenSourceInfo]="{
+                                        returnedTokenType: 'repository-token',
+                                        repositoryType: RepositoryType.USER,
+                                        participationId: item.participationId,
+                                    }"
+                                />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </tumaet-ui-table-layout>
+    }
+</div>

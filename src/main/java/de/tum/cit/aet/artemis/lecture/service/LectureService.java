@@ -1,0 +1,573 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@Service
+public class LectureService {
+
+    /** The title Artemis gives a lecture it created without one. */
+    private static final Pattern DEFAULT_LECTURE_NAME = Pattern.compile("^Lecture (\\d+)$");
+
+    /** The channel name that follows from such a title. */
+    private static final Pattern DEFAULT_LECTURE_CHANNEL_NAME = Pattern.compile("^lecture-lecture-(\\d+)$");
+
+    private final LectureRepository lectureRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ChannelRepository channelRepository;
+
+    private final ChannelService channelService;
+
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
+
+    private final Optional<CompetencyApi> competencyApi;
+
+    private final ExerciseService exerciseService;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final Optional<IrisChatSessionApi> irisChatSessionApi;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    private final YouTubeUrlService youTubeUrlService;
+
+    private final SlideRepository slideRepository;
+
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
+            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.lectureRepository = lectureRepository;
+        this.authCheckService = authCheckService;
+        this.channelRepository = channelRepository;
+        this.channelService = channelService;
+        this.contentProcessingApi = contentProcessingApi;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRelationApi = competencyRelationApi;
+        this.competencyApi = competencyApi;
+        this.exerciseService = exerciseService;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.irisChatSessionApi = irisChatSessionApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.youTubeUrlService = youTubeUrlService;
+        this.slideRepository = slideRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+    }
+
+    /**
+     * Search for all lectures fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
+     * It only returns results for which the user (at least editor) has access to the course.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available lectures
+     * @return A wrapper object containing a list of all found lectures and the total number of pages
+     */
+    public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LECTURE);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Lecture> lecturePage;
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
+            lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+        }
+        else {
+            lecturePage = lectureRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getId(), pageable);
+        }
+        return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
+    }
+
+    /**
+     * Deletes the given lecture (with its lecture units).
+     *
+     * @param lecture                  the lecture to be deleted
+     * @param updateCompetencyProgress whether the competency progress should be updated
+     */
+    public void delete(Lecture lecture, boolean updateCompetencyProgress) {
+        // Clean up external processing resources (delete from Pyris)
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
+        List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+
+        if (!attachmentVideoUnitList.isEmpty()) {
+            contentProcessingApi.ifPresent(api -> api.handleUnitsDeletion(attachmentVideoUnitList));
+        }
+
+        if (updateCompetencyProgress && competencyProgressApi.isPresent()) {
+            var api = competencyProgressApi.get();
+            lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
+                    .forEach(lectureUnit -> api.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
+        }
+
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
+        channelService.deleteChannel(lectureChannel);
+
+        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
+
+        // Remove any Iris chat sessions referencing this lecture. Since the unified iris_session
+        // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
+        irisChatSessionApi.ifPresent(api -> api.deleteAllForLecture(lecture.getId()));
+
+        // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
+        // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
+            service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        });
+
+        // Removing the lecture cascades to its units, and each attachment video unit cascades to its attachment. An
+        // attachment no longer names a lecture of its own, so this is the only path that reaches one, and the
+        // ON DELETE RESTRICT constraint that used to make the order of these deletions matter is gone with the column.
+        lectureRepository.deleteById(lecture.getId());
+    }
+
+    /**
+     * Retrieves a detailed {@link Lecture} for a given lecture ID and user.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Fetches the lecture with its units.</li>
+     * <li>Ensures the lecture is linked to a valid course.</li>
+     * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
+     * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
+     * <li>Filters the lecture content to match the user’s access rights.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Combines lecture details, user-specific completion data, and optional competencies into a user-tailored view. It enforces data integrity,
+     * supports optional enrichment, and ensures proper access control.
+     *
+     * @param lectureId the ID of the lecture
+     * @param user      the user requesting lecture details
+     * @return the filtered {@link LectureDetailsDTO} object
+     * @throws BadRequestAlertException if the lecture is not linked to a course
+     */
+    public LectureDetailsDTO getForDetails(long lectureId, User user) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
+        }
+        Set<LectureUnitCompletion> completionsForLectureAndUser = lectureUnitRepository.findCompletionsForLectureAndUser(lectureId, user.getId());
+        Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), identity()));
+
+        lecture.getLectureUnits().forEach(lectureUnit -> {
+            LectureUnitCompletion completion = byUnit.get(lectureUnit.getId());
+            lectureUnit.setCompletedUsers(completion != null ? Set.of(completion) : Set.of());
+        });
+        competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
+        Lecture filteredLecture = filterLectureContentForUser(lecture, user);
+        return convertToLectureDetailsDTO(filteredLecture);
+    }
+
+    /**
+     * Filters a {@link Lecture} object’s content based on the user's access rights.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
+     * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
+     * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
+     * <li>Filters lecture units based on user permissions and updates each with completion status and competencies.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
+     * access control and information completeness for the dashboard.
+     *
+     * @param lecture the {@link Lecture} to filter which includes lecture units with their competency links
+     * @param user    the user requesting access
+     * @return the filtered {@link Lecture}
+     */
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
+        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+        // hibernate sometimes adds nulls into the list of lecture units to keep the order
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
+                .map(ExerciseUnit::getExercise).collect(Collectors.toSet());
+
+        Set<Long> exerciseIdsUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user).stream().map(Exercise::getId)
+                .collect(Collectors.toSet());
+        Map<Long, Exercise> exerciseIdToExercise = exerciseService.loadExercisesWithInformationForDashboard(exerciseIdsUserIsAllowedToSee, user).stream()
+                .collect(Collectors.toMap(Exercise::getId, Function.identity()));
+
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
+            case null -> false;
+            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                    && exerciseIdToExercise.containsKey(exerciseUnit.getExercise().getId());
+            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+        }).peek(lectureUnit -> {
+            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+            // lecture units already contain the competency links, so we do not need to load them again
+            if (lectureUnit instanceof ExerciseUnit exerciseUnit) {
+                Exercise exercise = exerciseUnit.getExercise();
+                // we replace the exercise with one that contains all the information needed for correct display
+                Exercise exerciseWithInfo = exerciseIdToExercise.get(exercise.getId());
+                if (exerciseWithInfo != null) {
+                    exerciseUnit.setExercise(exerciseWithInfo);
+                }
+                // re-add the competencies already loaded with the exercise unit
+                exerciseUnit.getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
+            }
+        }).toList();
+
+        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+        return lecture;
+    }
+
+    private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
+        LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(), null);
+        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull)
+                .map(lectureUnit -> mapLectureUnit(lectureUnit, lectureReference)).toList();
+        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                courseDTO, lectureUnits);
+    }
+
+    private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
+        // the discussion section reads this switch, and neither details query fetches the lazy configuration
+        courseAthenaConfigRepository.attachTo(course);
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getCourseInformationSharingConfiguration(),
+                course.isAthenaFormativeFeedbackEnabled());
+    }
+
+    private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
+        return mapAttachment(attachment, attachment.getDisplayPageNumbers());
+    }
+
+    private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment, List<Integer> displayPageNumbers) {
+        return new LectureDetailsDTO.AttachmentDTO(attachment.getId(), attachment.getName(), attachment.getLink(), attachment.getReleaseDate(), attachment.getUploadDate(),
+                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion(), displayPageNumbers);
+    }
+
+    /**
+     * Aligns {@code displayPageNumbers} with the student version of the PDF, which has hidden slides removed.
+     * <p>
+     * The raw list is indexed by slide number of the full (instructor) PDF (index 0 = slide 1), the same deck PyRIS detected
+     * the numbers on. The student PDF (what learners actually see) drops the currently hidden slides, so the entries of those
+     * slides must be removed and the rest compacted, mirroring {@code AttachmentService.generateStudentVersionPdf}. This keeps
+     * the client mapping "list index + 1 = student PDF page" correct, and a display page number that only existed on a hidden
+     * slide simply disappears, so video-slide synchronization treats it as non-existent.
+     *
+     * @param unit               the attachment video unit the display page numbers belong to
+     * @param displayPageNumbers the full-deck display page numbers, or {@code null}
+     * @return the display page numbers aligned with the student PDF, or {@code null} if the input was {@code null}
+     */
+    private List<Integer> alignDisplayPageNumbersWithStudentVersion(AttachmentVideoUnit unit, List<Integer> displayPageNumbers) {
+        if (displayPageNumbers == null || displayPageNumbers.isEmpty()) {
+            return displayPageNumbers;
+        }
+        Set<Integer> hiddenSlideNumbers = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unit.getId()).stream().map(Slide::getSlideNumber)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        if (hiddenSlideNumbers.isEmpty()) {
+            return displayPageNumbers;
+        }
+        List<Integer> visibleDisplayPageNumbers = new ArrayList<>();
+        for (int index = 0; index < displayPageNumbers.size(); index++) {
+            int slideNumber = index + 1; // displayPageNumbers is 0-based indexed by slide number
+            if (!hiddenSlideNumbers.contains(slideNumber)) {
+                visibleDisplayPageNumbers.add(displayPageNumbers.get(index));
+            }
+        }
+        return visibleDisplayPageNumbers;
+    }
+
+    /**
+     * Checks that the lecture unit is available for the user, i.e. that the user is at least a teaching assistant of the course, or a student of the course and the release
+     * date of the lecture unit has passed.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the requesting user
+     * @throws AccessForbiddenException if the lecture unit is not available for the user
+     */
+    public void checkLectureUnitVisibleToUserElseThrow(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+    }
+
+    /**
+     * Loads a single lecture unit the way the lecture details page projects it, for the user requesting it.
+     * <p>
+     * The unit's lecture reference carries the course, since this response has no lecture envelope around it. Exercise
+     * units carry the exercise as the course overview projects it, including the user's participations.
+     *
+     * @param lectureUnitId the id of the lecture unit
+     * @param user          the user requesting the unit; decides the completion flag and the participations
+     * @return the projected lecture unit
+     */
+    public LectureDetailsDTO.LectureUnitDetailsDTO getUnitForDetails(long lectureUnitId, User user) {
+        LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        // The unit has to be available for the requesting user, as for the units listed on the lecture details page
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+        lectureUnit.setCompleted(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnitId, user.getId()).isPresent());
+        if (lectureUnit instanceof ExerciseUnit exerciseUnit && exerciseUnit.getExercise() != null) {
+            exerciseService.loadExercisesWithInformationForDashboard(Set.of(exerciseUnit.getExercise().getId()), user).stream().findFirst().ifPresent(exerciseUnit::setExercise);
+        }
+        Lecture lecture = lectureUnit.getLecture();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(lecture.getId(), lecture.isTutorialLecture(),
+                mapCourse(lecture.getCourse()));
+        return mapLectureUnit(lectureUnit, lectureReference);
+    }
+
+    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit, LectureDetailsDTO.LectureReferenceDTO lectureReference) {
+        List<LectureDetailsDTO.CompetencyLinkDTO> competencyLinks = lectureUnit.getCompetencyLinks() == null ? List.of()
+                : lectureUnit.getCompetencyLinks().stream().filter(Objects::nonNull).map(this::mapCompetencyLink).toList();
+        boolean completed = lectureUnit.isCompleted();
+        boolean visibleToStudents = lectureUnit.isVisibleToStudents();
+
+        switch (lectureUnit) {
+            case AttachmentVideoUnit attachmentVideoUnit -> {
+                LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment())
+                        .map(attachment -> mapAttachment(attachment, alignDisplayPageNumbersWithStudentVersion(attachmentVideoUnit, attachment.getDisplayPageNumbers())))
+                        .orElse(null);
+                Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(attachmentVideoUnit.getVideoSource());
+                VideoSourceType videoSourceType = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+                String youtubeVideoId = ytId.orElse(null);
+                return new LectureDetailsDTO.AttachmentUnitDTO(attachmentVideoUnit.getId(), lectureReference, attachmentVideoUnit.getName(),
+                        resolveReleaseDate(attachmentVideoUnit), completed, visibleToStudents, competencyLinks, attachmentDTO, attachmentVideoUnit.getDescription(),
+                        attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
+            }
+            case ExerciseUnit exerciseUnit -> {
+                ExerciseOverviewDTO exerciseOverview = Optional.ofNullable(exerciseUnit.getExercise()).map(ExerciseOverviewDTO::of).orElse(null);
+                return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
+                        visibleToStudents, competencyLinks, exerciseOverview, null);
+            }
+            case TextUnit textUnit -> {
+                return new LectureDetailsDTO.TextUnitDTO(textUnit.getId(), lectureReference, textUnit.getName(), textUnit.getReleaseDate(), completed, visibleToStudents,
+                        competencyLinks, textUnit.getContent(), null);
+            }
+            case OnlineUnit onlineUnit -> {
+                return new LectureDetailsDTO.OnlineUnitDTO(onlineUnit.getId(), lectureReference, onlineUnit.getName(), onlineUnit.getReleaseDate(), completed, visibleToStudents,
+                        competencyLinks, onlineUnit.getDescription(), onlineUnit.getSource(), null);
+            }
+            default -> {
+            }
+        }
+        throw new IllegalArgumentException("Unsupported lecture unit type: " + lectureUnit.getClass().getSimpleName());
+    }
+
+    private ZonedDateTime resolveReleaseDate(AttachmentVideoUnit attachmentVideoUnit) {
+        ZonedDateTime releaseDate = attachmentVideoUnit.getReleaseDate();
+        if (releaseDate != null) {
+            return releaseDate;
+        }
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        return attachment != null ? attachment.getReleaseDate() : null;
+    }
+
+    private LectureDetailsDTO.CompetencyLinkDTO mapCompetencyLink(CompetencyLectureUnitLink competencyLink) {
+        CourseCompetency competency = competencyLink.getCompetency();
+        LectureDetailsDTO.CompetencyDTO competencyDTO = competency != null
+                ? new LectureDetailsDTO.CompetencyDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy())
+                : null;
+        return new LectureDetailsDTO.CompetencyLinkDTO(competencyDTO, competencyLink.getWeight(), competencyLink.isGeneratedByAi());
+    }
+
+    /**
+     * Retrieves a {@link LectureCalendarEventDTO} for each {@link Lecture} associated to the given courseId.
+     * Each DTO encapsulates the startDate and endDate of the respective lecture.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs.
+     *
+     * @param courseId the ID of the course
+     * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, Language language) {
+        Set<LectureCalendarEventDTO> dtos = lectureRepository.getLectureCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, language).stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives calendar events from the given {@link LectureCalendarEventDTO}. Expects at least one of startDate and endDate of the LectureCalendarEventDTO to be non-null-
+     *
+     * @param dto      the dto from which to derive the event
+     * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @throws IllegalArgumentException if both startDate and endDate of the LectureCalendarEventDTO are null
+     * @return the derived event
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, Language language) {
+        ZonedDateTime startDate = dto.startDate();
+        ZonedDateTime endDate = dto.endDate();
+
+        boolean noDatesAvailable = startDate == null && endDate == null;
+        if (noDatesAvailable) {
+            throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
+        }
+
+        boolean onlyEndDateAvailable = startDate == null && endDate != null;
+        if (onlyEndDateAvailable) {
+            String titlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            return Set.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
+        }
+
+        boolean onlyStartDateAvailable = startDate != null && endDate == null;
+        if (onlyStartDateAvailable) {
+            String titlePrefix = "Start: ";
+            return Set
+                    .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
+        }
+
+        final int TWELVE_HOURS_IN_MINUTES = 12 * 60;
+        boolean lectureLengthExceedsTwelveHours = Duration.between(startDate, endDate).abs().toMinutes() > TWELVE_HOURS_IN_MINUTES;
+        if (lectureLengthExceedsTwelveHours) {
+            String startTitlePrefix = "Start: ";
+            CalendarEventDTO startDto = new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, startTitlePrefix + dto.title(),
+                    dto.startDate(), null, null, null);
+            String endTitlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            CalendarEventDTO endDto = new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, endTitlePrefix + dto.title(), dto.endDate(), null,
+                    null, null);
+            return Set.of(startDto, endDto);
+        }
+
+        return Set.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+    }
+
+    /**
+     * Corrects the default names of lectures and their corresponding channels for a given course after a lecture series has been created.
+     * <p>
+     * When {@link LectureResource#createLectureSeries} is called, Artemis generates new lectures, assigns them default titles,
+     * and creates channels with corresponding default names. A default lecture title follows the pattern {@code "Lecture ${index}"},
+     * while a default channel name uses the pattern {@code "lecture-lecture-${index}"}. Here, {@code ${index}} represents the lecture’s
+     * position within the sequence of all lectures in the course ordered like this:
+     * <p>
+     * Lectures are ordered according to the first non-null value of {@code startDate} or {@code endDate}. Lectures with neither of these
+     * are placed at the end of the sequence and ordered by their ID to ensure a stable sorting.
+     * <p>
+     * When {@code createLectureSeries()} is called multiple times, the existing numbering may become inconsistent due to the newly
+     * inserted lectures. This method corrects such inconsistencies by reapplying the proper numbering.
+     *
+     * @param courseId the ID of the course whose lecture and channel names should be corrected
+     */
+    public void correctDefaultLectureAndChannelNames(long courseId) {
+        Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
+        Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Comparator<Lecture> lectureComparator = Comparator
+                .comparing((Lecture lecture) -> lecture.getStartDate() != null ? lecture.getStartDate() : lecture.getEndDate(), Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Lecture::getId);
+        List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
+
+        Set<Lecture> lecturesToUpdate = new HashSet<>();
+        Set<Channel> channelsToUpdate = new HashSet<>();
+
+        for (int index = 0; index < existingLectures.size(); index++) {
+            Lecture lecture = existingLectures.get(index);
+            String newTitle = "Lecture " + (index + 1);
+            if (DEFAULT_LECTURE_NAME.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+                lecture.setTitle(newTitle);
+                lecturesToUpdate.add(lecture);
+            }
+            Channel channel = lectureToChannelMap.get(lecture.getId());
+            String channelName = channel.getName();
+            String newChannelName = "lecture-lecture-" + (index + 1);
+            if (channelName != null && DEFAULT_LECTURE_CHANNEL_NAME.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+                channel.setName(newChannelName);
+                channelsToUpdate.add(channel);
+            }
+        }
+
+        lectureRepository.saveAll(existingLectures);
+        channelRepository.saveAll(existingLectureChannels);
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            lecturesToUpdate.forEach(lecture -> service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
+            channelsToUpdate.forEach(channel -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
+        });
+    }
+}

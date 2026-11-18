@@ -1,0 +1,441 @@
+package de.tum.cit.aet.artemis.course.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
+import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.EnrollmentService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseOverviewExerciseService;
+import de.tum.cit.aet.artemis.course.service.CourseService;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import io.swagger.v3.oas.annotations.Operation;
+
+/**
+ * REST controller for providing courses in the student view.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.COURSE_OVERVIEW)
+@RestController
+@RequestMapping({ "api/course/" })
+public class CourseOverviewResource {
+
+    private static final String ENTITY_NAME = "course";
+
+    private static final String COMPLAINT_ENTITY_NAME = "complaint";
+
+    private static final Logger log = LoggerFactory.getLogger(CourseOverviewResource.class);
+
+    private final CourseService courseService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final EnrollmentService enrollmentService;
+
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
+    private final ComplaintService complaintService;
+
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final TeamRepository teamRepository;
+
+    private final CourseAvailableTabsService courseAvailableTabsService;
+
+    private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
+
+    private final CourseOverviewExerciseService courseOverviewExerciseService;
+
+    private final Optional<LtiApi> ltiApi;
+
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
+    public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+            EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, Optional<ExamRepositoryApi> examRepositoryApi,
+            ComplaintService complaintService, TeamRepository teamRepository, CourseAvailableTabsService courseAvailableTabsService,
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService, Optional<LtiApi> ltiApi,
+            Optional<TutorialGroupApi> tutorialGroupApi, CourseAthenaConfigRepository courseAthenaConfigRepository, CourseConfigurationRepository courseConfigurationRepository) {
+        this.courseService = courseService;
+        this.courseRepository = courseRepository;
+        this.authCheckService = authCheckService;
+        this.enrollmentService = enrollmentService;
+        this.userRepository = userRepository;
+        this.courseScoreCalculationService = courseScoreCalculationService;
+        this.examRepositoryApi = examRepositoryApi;
+        this.complaintService = complaintService;
+        this.teamRepository = teamRepository;
+        this.courseAvailableTabsService = courseAvailableTabsService;
+        this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
+        this.courseOverviewExerciseService = courseOverviewExerciseService;
+        this.ltiApi = ltiApi;
+        this.tutorialGroupApi = tutorialGroupApi;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
+    }
+
+    /**
+     * GET /courses/{courseId}/for-overview : returns the course itself, without any of its content.
+     * <p>
+     * This is what the course overview container needs: the course record and its notification count. Exercises,
+     * lectures, exams, participations and scores are deliberately not included — each tab loads what it needs, and which
+     * tabs to offer comes from {@link #getCourseAvailableTabs}. Entering a course therefore no longer pays for content
+     * the user may never look at.
+     *
+     * @param courseId the id of the course
+     * @return the course and its notification count
+     */
+    @GetMapping("courses/{courseId}/for-overview")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseForOverviewDTO> getCourseForOverview(@PathVariable long courseId) {
+        log.debug("REST request to get course {} for the course overview", courseId);
+        // Membership is decided by an indexed EXISTS on the login, so the successful path never materialises the course
+        if (!authCheckService.isAtLeastStudentInCourse(courseId)) {
+            denyAccessOrOfferEnrollment(courseId);
+        }
+        long userId = userRepository.getUserIdElseThrow();
+        long notificationCount = userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, courseId);
+        CourseForOverviewDTO overview = courseRepository.findForOverview(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return ResponseEntity.ok(overview.withNotificationCount(notificationCount));
+    }
+
+    /**
+     * Refuses access to a course, offering enrollment when the user could still enroll in it.
+     * <p>
+     * The exceptional path, and the only one that loads the course: the enrollment check needs its organizations and
+     * prerequisites. The alert exception is skipAlert so the client can redirect to the enrollment page rather than
+     * show a plain access error.
+     *
+     * @param courseId the course being refused
+     */
+    private void denyAccessOrOfferEnrollment(long courseId) {
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
+        Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        if (enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course)) {
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
+                    "noAccessButCouldEnroll", true);
+        }
+        throw new AccessForbiddenException(ENTITY_NAME, courseId);
+    }
+
+    /**
+     * GET /courses/{courseId}/exercises-for-overview : returns the user's exercises for the course, with participations,
+     * submissions, results and the derived scores.
+     * <p>
+     * Only the exercises tab (and the statistics tab, which reads the same scores) needs this, so it is loaded on demand
+     * rather than on every course entry. Exercise, participation, submission, result, and score inputs are projected
+     * directly from the database.
+     *
+     * @param courseId the id of the course
+     * @return the exercises and scores for the requesting user
+     */
+    @GetMapping("courses/{courseId}/exercises-for-overview")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseExercisesForOverviewDTO> getCourseExercisesForOverview(@PathVariable long courseId) {
+        long timeNanoStart = System.nanoTime();
+        log.debug("REST request to get the exercises of course {} for the course overview", courseId);
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        CourseExercisesForOverviewDTO overview = courseOverviewExerciseService.getCourseExercisesForOverview(course, user);
+        log.info("courses/{}/exercises-for-overview finished in {} for {} exercise(s) for user {}", courseId, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                overview.exercises().size(), user.getLogin());
+        return ResponseEntity.ok(overview);
+    }
+
+    /**
+     * GET /courses/{courseId}/available-tabs : returns which course overview tabs are available to the requesting user.
+     * <p>
+     * This is the single source of truth for tab availability: the client renders the course sidebar from it and decides
+     * whether a tab may be opened. It only issues indexed existence/count queries (no exercises, lectures, exams, scores
+     * or participations are loaded), so it can run before the course content is fetched.
+     *
+     * @param courseId the id of the course
+     * @return the tabs available to the requesting user
+     */
+    @GetMapping("courses/{courseId}/available-tabs")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseAvailableTabsDTO> getCourseAvailableTabs(@PathVariable long courseId) {
+        log.debug("REST request to get the available course tabs for course {}", courseId);
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        // Refused the same way as for-overview, which the container requests in parallel. A plain access error here
+        // would surface as a danger toast next to that request's silent one and bury the enrollment offer, so a user
+        // following a shared link to a course they may still join would see "not authorized" and an empty page.
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            denyAccessOrOfferEnrollment(courseId);
+        }
+        return ResponseEntity.ok(courseAvailableTabsService.getAvailableTabs(course, user));
+    }
+
+    /**
+     * GET /courses/for-dropdown
+     *
+     * @return contains all courses the user has access to with id, title and icon
+     */
+    @GetMapping("courses/for-dropdown")
+    @EnforceAtLeastStudent
+    @AllowedScopes(AgentScope.COURSES_READ)
+    @Operation(summary = "List your courses", description = "Returns the id, title and icon of every active course the caller belongs to. Use the ids in the paths of the other operations.")
+    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final var courses = courseService.findAllActiveForUser(user);
+        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
+        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /courses/for-dashboard
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a DTO containing a list of courses (the user has access to) including all exercises with participation,
+     *         submission and result, etc. for the user. In addition, the
+     *         DTO contains the total scores for the course, the scores per exercise
+     *         type for each exercise, and the participation result for each participation.
+     */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
+    @GetMapping("courses/for-dashboard")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
+        long timeNanoStart = System.nanoTime();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
+        Set<Course> courses = courseService.findAllForDashboardWithExercisesForUser(user);
+        log.debug("courseService.findAllForDashboardWithExercisesForUser done");
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
+
+        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
+        Set<Exam> activeExams;
+        if (examRepositoryApi.isPresent()) {
+            activeExams = examRepositoryApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                    ZonedDateTime.now().plusHours(1));
+        }
+        else {
+            activeExams = Set.of();
+        }
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
+        for (Course course : courses) {
+            // Passing null here for the grading scale is fine. This only leads to presentation scores not being considered which doesn't matter for the dashboard.
+            // Not fetching plagiarism cases before the calculation also affects calculation as plagiarism cases are not considered in the scores, but this is fine for the
+            // dashboard.
+            // We prefer to have better performance for 99.9% of the users without plagiarism cases over accurate scores for the 0.1% of users with plagiarism cases.
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId());
+            coursesForDashboard.add(courseForDashboardDTO);
+        }
+        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
+        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams.stream().map(ActiveExamForCourseDashboardDTO::of).collect(Collectors.toSet()));
+        return ResponseEntity.ok(dto);
+    }
+
+    private void logDuration(Collection<Course> courses, User user, long timeNanoStart, String path) {
+        if (log.isInfoEnabled()) {
+            Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+            Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+            int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
+            int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
+            log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
+        }
+    }
+
+    /**
+     * GET /courses/for-notifications
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the set of courses (the user has access to)
+     */
+    @FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/for-notifications")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseWithIdDTO>> getCoursesForNotifications() {
+        log.debug("REST request to get all Courses the user has access to");
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        return ResponseEntity.ok(courseService.findAllActiveForUser(user).stream().map(course -> new CourseWithIdDTO(course.getId())).collect(Collectors.toSet()));
+    }
+
+    /**
+     * GET /courses/:courseId : get the "id" course.
+     *
+     * @param courseId the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<CourseManagementDTO> getCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.STUDENT));
+    }
+
+    /**
+     * Returns the course settings and counts required by tutors and editors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed tutor projection
+     */
+    @GetMapping("courses/{courseId}/for-tutor")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForTutor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.TUTOR));
+    }
+
+    /**
+     * Returns the complete course management settings for instructors.
+     *
+     * @param courseId the course to retrieve
+     * @return the fixed instructor projection
+     */
+    @GetMapping("courses/{courseId}/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<CourseManagementDTO> getCourseForInstructor(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadCourse(courseId, CourseProjection.INSTRUCTOR));
+    }
+
+    private enum CourseProjection {
+        STUDENT, TUTOR, INSTRUCTOR
+    }
+
+    private CourseManagementDTO loadCourse(Long courseId, CourseProjection projection) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        // Each configuration owns its course key and is read only by the projection that needs it.
+        OnlineCourseConfiguration onlineConfiguration = null;
+        TutorialGroupsConfiguration tutorialConfiguration = null;
+        boolean presentationAssessmentsEnabled = false;
+        if (projection == CourseProjection.INSTRUCTOR) {
+            courseAthenaConfigRepository.attachTo(course);
+            courseConfigurationRepository.attachTo(course);
+            presentationAssessmentsEnabled = course.getPresentationAssessmentsEnabled();
+            onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
+        }
+        else if (projection == CourseProjection.TUTOR) {
+            presentationAssessmentsEnabled = courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).orElse(false);
+        }
+        if (projection != CourseProjection.STUDENT) {
+            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
+            userRepository.setUserCountsForCourse(course);
+        }
+        return CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration, presentationAssessmentsEnabled);
+    }
+
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/title")
+    @EnforceAtLeastStudentInCourse
+    @ResponseBody
+    public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
+        final var title = courseRepository.getCourseTitle(courseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET courses/{courseId}/allowed-complaints: Get the number of complaints that a student or team is still allowed to submit in the given course.
+     * It is determined by the max. complaint limit and the current number of open or rejected complaints of the student or team in the course.
+     * Students use their personal complaints for individual exercises and team complaints for team-based exercises, i.e. each student has
+     * maxComplaints for personal complaints and additionally maxTeamComplaints for complaints by their team in the course.
+     *
+     * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
+     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
+     */
+    @FeatureUsage(UserFeature.COMPLAINTS)
+    @GetMapping("courses/{courseId}/allowed-complaints")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
+        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
+        User user = userRepository.getUser();
+        Participant participant = user;
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getComplaintsEnabled()) {
+            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
+        }
+        if (teamMode) {
+            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
+            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
+        }
+        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+        return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
+    }
+}

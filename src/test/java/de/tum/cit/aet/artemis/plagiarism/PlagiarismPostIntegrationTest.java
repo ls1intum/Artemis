@@ -1,0 +1,434 @@
+package de.tum.cit.aet.artemis.plagiarism;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
+
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import tools.jackson.databind.JsonNode;
+
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+
+class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "postintegration";
+
+    @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    private List<Post> existingPosts;
+
+    private List<Post> existingPlagiarismPosts;
+
+    private List<Post> postsBelongingToExercise;
+
+    private Long courseId;
+
+    private Exercise exercise;
+
+    private Channel exerciseChannel;
+
+    private Long plagiarismCaseId;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+
+        // initialize test setup and get all existing posts (there are 8 posts with lecture context (4 per lecture), 8 with exercise context (4 per exercise),
+        // 1 plagiarism case, 4 with course-wide context and 3 with conversation initialized - initialized): 24 posts in total
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX);
+
+        existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
+
+        List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
+                .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
+
+        // filter existing posts with the first exercise context
+        exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
+        exercise = exerciseChannel.getExercise();
+        postsBelongingToExercise = existingExercisePosts.stream().filter(post -> (post.getConversation().getId().equals(exerciseChannel.getId()))).toList();
+
+        // filter existing posts with plagiarism context
+        existingPlagiarismPosts = existingPostsAndConversationPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).toList();
+
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        course = courseRepository.saveAndFlush(course);
+        assertThat(course.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+
+        courseId = course.getId();
+
+        plagiarismCaseId = existingPlagiarismPosts.getFirst().getPlagiarismCase().getId();
+
+        // We do not need the stub, and it leads to flakyness
+        reset(javaMailSender);
+    }
+
+    // POST
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPostingNotAllowedIfDisabledSetting() throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
+
+        Post postToSave = createPostWithoutContext();
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        postToSave.setPlagiarismCase(plagiarismCase);
+
+        PlagiarismPostCreationResponseDTO notCreatedPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave),
+                PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedPost).isNull();
+        long[] conversationIds = new long[] { exerciseChannel.getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
+        assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1, false));
+
+        // conversation participants should not be notified
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
+    }
+
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateCoursePostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
+
+        Post postToSave = createPostWithoutContext();
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        postToSave.setPlagiarismCase(plagiarismCase);
+        postToSave.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
+                    HttpStatus.BAD_REQUEST);
+            return;
+        }
+
+        JsonNode createdPostJson = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), JsonNode.class,
+                HttpStatus.CREATED);
+
+        String raw = createdPostJson.toString();
+        assertThat(raw).doesNotContain("email");
+        assertThat(raw).doesNotContain("registrationNumber");
+        assertThat(raw).doesNotContain("\"login\"");
+
+        long createdPostId = createdPostJson.get("id").asLong();
+        Post persistedPost = postRepository.findByIdElseThrow(createdPostId);
+        checkCreatedPost(postToSave, persistedPost);
+        List<Post> plagiarismPosts = postRepository.findPostsByPlagiarismCaseId(persistedPost.getPlagiarismCase().getId());
+        assertThat(plagiarismPosts).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreatePlagiarismPost() throws Exception {
+        doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
+
+        Post postToSave = createPostWithoutContext();
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        postToSave.setPlagiarismCase(plagiarismCase);
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(postToSave), PlagiarismPostCreationResponseDTO.class,
+                HttpStatus.CREATED);
+
+        List<Post> updatedPlagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(plagiarismCase.getId());
+        assertThat(updatedPlagiarismCasePosts).hasSize(1);
+        verify(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreatePostWithoutPlagiarismCase_badRequest() throws Exception {
+        Course course = conversationUtilService.createCourseWithPostsDisabled();
+        courseId = course.getId();
+        Post postToSave = createPostWithoutContext();
+        var invalidDto = new PlagiarismPostCreationDTO(postToSave.getContent(), postToSave.getTitle(), true, false, null);
+
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidDto, PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreatePostWithoutPlagiarismCase_FailFast() {
+        Course course = conversationUtilService.createCourseWithPostsDisabled();
+        courseId = course.getId();
+        Post postToSave = createPostWithoutContext();
+
+        assertThatThrownBy(() -> PlagiarismPostCreationDTO.of(postToSave)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("The post must be associated with a plagiarism case.");
+    }
+
+    // UPDATE
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testEditPost_asTutor() throws Exception {
+        Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEditPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        // update post of student1 (index 0)--> OK
+        Post postToUpdate = editExistingPost(existingPosts.getFirst());
+        postToUpdate.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                    new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
+
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.OK);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
+        assertThat(updatedPost.id()).isEqualTo(postToUpdate.getId());
+        assertThat(updatedPost.title()).isEqualTo(postToUpdate.getTitle());
+        assertThat(updatedPost.content()).isEqualTo(postToUpdate.getContent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEditPost_asStudent_forbidden() throws Exception {
+        // update post from another student (index 1)--> forbidden
+        Post postToNotUpdate = editExistingPost(existingPosts.getFirst());
+
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToNotUpdate.getTitle(), postToNotUpdate.getContent()), PostResponseDTO.class, HttpStatus.FORBIDDEN);
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    // Note: the previous testEditPostWithIdIsNull_badRequest case is no longer expressible — the request DTO
+    // has no id field, so the body/path-id mismatch path it used to exercise cannot be reached. Building the URL
+    // with a null path variable would yield "/posts/null" which produces a different (Spring path-binding) 400 —
+    // not the case the test intended to cover.
+
+    // GET
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<PostResponseDTO> returnedPosts = getPosts(params);
+        // get the number of posts with a certain plagiarism context
+        assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
+        assertThat(returnedPosts.getFirst().authorRole()).isEqualTo(UserRole.INSTRUCTOR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<PostResponseDTO> returnedPosts = getPosts(params);
+        // get the number of posts with certain plagiarism context
+        assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent_Forbidden() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
+        assertThat(returnedPosts).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, PostResponseDTO.class, params);
+        assertThat(returnedPosts).isNull();
+    }
+
+    // DELETE
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testDeletePost_asTutor_forbidden() throws Exception {
+        Post postToNotDelete = existingPlagiarismPosts.getFirst();
+
+        request.delete("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
+        assertThat(postRepository.findById(postToNotDelete.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeletePost_asInstructor() throws Exception {
+        Post postToNotDelete = existingPlagiarismPosts.getFirst();
+
+        request.delete("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.OK);
+        assertThat(postRepository.findById(postToNotDelete.getId())).isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateAndDeletePost_postOfOtherCourse_conflict() throws Exception {
+        // the user is an instructor of the course in the path, but the post belongs to the plagiarism case of another course
+        Course otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        Post post = existingPlagiarismPosts.getFirst();
+
+        request.putWithResponseBody("/api/plagiarism/courses/" + otherCourse.getId() + "/posts/" + post.getId(),
+                new PlagiarismPostUpdateRequestDTO(post.getTitle(), "changed content"), PostResponseDTO.class, HttpStatus.CONFLICT);
+        request.delete("/api/plagiarism/courses/" + otherCourse.getId() + "/posts/" + post.getId(), HttpStatus.CONFLICT);
+        assertThat(postRepository.findById(post.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteNonExistentPosts_asTutor_notFound() throws Exception {
+        // try to delete non-existing post
+        request.delete("/api/plagiarism/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);
+    }
+
+    // HELPER METHODS
+
+    private Post createPostWithoutContext() {
+        Post post = new Post();
+        post.setTitle("Title Post");
+        post.setContent("Content Post");
+        post.setVisibleForStudents(true);
+        post.setDisplayPriority(DisplayPriority.NONE);
+        return post;
+    }
+
+    private Post editExistingPost(Post postToUpdate) {
+        postToUpdate.setTitle("New Title");
+        postToUpdate.setContent("New Test Post");
+        postToUpdate.setVisibleForStudents(false);
+        return postToUpdate;
+    }
+
+    private void checkCreatedPost(Post expectedPost, Post createdPost) {
+        // check if the post was created with id
+        assertThat(createdPost).isNotNull();
+        assertThat(createdPost.getId()).isNotNull();
+
+        // check if title, content, creation date are set correctly on creation
+        assertThat(createdPost.getTitle()).isEqualTo(expectedPost.getTitle());
+        assertThat(createdPost.getContent()).isEqualTo(expectedPost.getContent());
+        assertThat(createdPost.getCreationDate()).isNotNull();
+
+        // check if default values are set correctly on creation
+        assertThat(createdPost.getAnswers()).isEmpty();
+        assertThat(createdPost.getReactions()).isEmpty();
+        assertThat(createdPost.getDisplayPriority()).isEqualTo(expectedPost.getDisplayPriority());
+
+        // check if plagiarismCase is set correctly on creation
+        assertThat(createdPost.getPlagiarismCase()).isEqualTo(expectedPost.getPlagiarismCase());
+    }
+
+    @NonNull
+    private List<PostResponseDTO> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, PostResponseDTO.class, params);
+        conversationUtilService.assertPostDtoSensitiveInformationHidden(returnedPosts);
+        return returnedPosts;
+    }
+
+    protected static List<Arguments> userMentionProvider() {
+        return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void plagiarismMutationsRejectOrdinaryPostsWithoutChangingThem() throws Exception {
+        var post = postsBelongingToExercise.getFirst();
+        assertThat(post.getPlagiarismCase()).isNull();
+        String title = post.getTitle();
+        String content = post.getContent();
+        Long conversationId = post.getConversation().getId();
+        String url = "/api/plagiarism/courses/" + courseId + "/posts/" + post.getId();
+        long casesBefore = plagiarismCaseRepository.count();
+        clearInvocations(websocketMessagingService);
+        // The plagiarism repository excludes conversation messages before the service inspects their plagiarism case.
+        request.put(url, new PlagiarismPostUpdateRequestDTO("changed", "changed"), HttpStatus.NOT_FOUND);
+        request.performMvcRequest(delete(url)).andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
+        assertThat(plagiarismCaseRepository.count()).isEqualTo(casesBefore);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        var unchanged = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(unchanged.getTitle()).isEqualTo(title);
+        assertThat(unchanged.getContent()).isEqualTo(content);
+        assertThat(unchanged.getConversation().getId()).isEqualTo(conversationId);
+        assertThat(unchanged.getPlagiarismCase()).isNull();
+    }
+
+}

@@ -1,0 +1,95 @@
+<div class="transcript-column">
+    <div class="transcript-header">
+        <!-- Search Box -->
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <fa-icon [icon]="faSearch" class="search-icon" />
+                <input
+                    tumAetUiInput
+                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | artemisTranslate"
+                    type="text"
+                    class="search-input"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | artemisTranslate"
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="onSearchQueryChange($event)"
+                />
+                @if (searchQuery()) {
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        type="button"
+                        class="clear-button"
+                        (click)="clearSearch()"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                }
+            </div>
+
+            <!-- Search Navigation -->
+            @if (isSearchActive()) {
+                <div class="search-nav">
+                    <span class="search-results">
+                        @if (searchResultsCount() > 0) {
+                            {{ currentSearchIndex() + 1 }} / {{ searchResultsCount() }}
+                        } @else {
+                            {{ 'artemisApp.attachmentVideoUnit.videoPlayer.noResults' | artemisTranslate }}
+                        }
+                    </span>
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        type="button"
+                        class="nav-button"
+                        (click)="previousSearchResult()"
+                        [disabled]="searchResultsCount() === 0"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.previousResult' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronUp" />
+                    </button>
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        type="button"
+                        class="nav-button"
+                        (click)="nextSearchResult()"
+                        [disabled]="searchResultsCount() === 0"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.nextResult' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="transcript-list" #transcriptList>
+        @for (segment of filteredSegments(); track segment.startTime) {
+            <div
+                class="transcript-line"
+                [id]="'segment-' + segment.startTime"
+                (click)="onSegmentClick(segment.startTime)"
+                [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
+                [class.search-result]="isCurrentSearchResult(segment)"
+                [innerHTML]="highlightText(segment.text)"
+                [attr.aria-current]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime ? true : null"
+                #keyboardAction54
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction54.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction54.click() : undefined"
+            ></div>
+        }
+        @if (filteredSegments().length === 0 && transcriptSegments().length > 0) {
+            <div class="no-results" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.noMatchingTranscript">No matching transcript found</div>
+        }
+    </div>
+</div>

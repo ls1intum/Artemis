@@ -1,0 +1,16 @@
+{
+  "tool": "LINTR",
+  "issues": [
+    {
+      "filePath": "R/hello.R",
+      "startLine": 16,
+      "endLine": 16,
+      "startColumn": 1,
+      "endColumn": 2,
+      "rule": "object_name_linter",
+      "category": "Lint",
+      "message": "Variable and function name style should match snake_case or symbols.",
+      "priority": "note"
+    }
+  ]
+}

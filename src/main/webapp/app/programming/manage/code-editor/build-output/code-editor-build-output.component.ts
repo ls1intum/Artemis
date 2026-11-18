@@ -1,0 +1,308 @@
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
+import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
+import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { parseJson } from 'app/foundation/util/json.util';
+import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ResultService } from 'app/exercise/result/result.service';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+
+@Component({
+    selector: 'jhi-code-editor-build-output',
+    templateUrl: './code-editor-build-output.component.html',
+    styleUrls: ['./code-editor-build-output.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
+})
+export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
+    private buildLogService = inject(CodeEditorBuildLogService);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private submissionService = inject(CodeEditorSubmissionService);
+
+    participation = input.required<Participation>();
+    secondaryHeader = input<boolean>(false);
+    readonly collapsed = input(false);
+
+    onAnnotations = output<Array<Annotation>>();
+    onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();
+    onError = output<string>();
+
+    readonly isBuilding = signal(false);
+    readonly rawBuildLogs = signal(new BuildLogEntryArray());
+    // Accepted websocket updates can mutate the same result object while changing its compilation state.
+    readonly result = signal<Result | undefined>(undefined, { equal: () => false });
+
+    readonly emptyStateTranslationKey = computed(() => {
+        const result = this.result();
+        return result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.compilationSucceeded(result)
+            ? 'artemisApp.editor.buildOutputOnlyOnFailure'
+            : 'artemisApp.editor.noBuildOutput';
+    });
+
+    private resultSubscription?: Subscription;
+    private inputResultSubscription?: Subscription;
+    // Preserve deduplication across input-triggered resubscriptions to the cached result BehaviorSubject.
+    private lastHandledResultKey?: string;
+    private submissionSubscription?: Subscription;
+
+    // Icons
+    faChevronDown = faChevronDown;
+    faCircleNotch = faCircleNotch;
+    faTerminal = faTerminal;
+
+    /**
+     * Stable key controlling when build logs are (re-)fetched: participation, latest result and compilation state. It
+     * deliberately excludes the participation/result object references, so the effect below does not re-run (and
+     * re-fetch the build logs) when the input is replaced by an equivalent object — which otherwise loops and floods
+     * the server (see PR #12976).
+     */
+    private readonly resultFetchKey = computed(() => {
+        const participation = this.participation();
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        return results.length ? this.getResultBuildStateKey(findLatestResult(results)) : `${participation.id}:none`;
+    });
+
+    constructor() {
+        effect((onCleanup) => {
+            // Depend ONLY on the stable identity key, not on the participation object reference. The participation
+            // input gets replaced with a fresh object (same id, same latest result) on unrelated change-detection
+            // cycles; reacting to that re-ran this effect and re-fetched the build logs on every cycle — an infinite
+            // loop that floods the server and crashes the tab (see PR #12976). Running the setup + fetch untracked
+            // keeps the effect's dependency confined to the key, so only a genuine participation/result/state change re-runs it.
+            this.resultFetchKey();
+            untracked(() => {
+                const participation = this.participation();
+                this.setupResultWebsocket();
+
+                // If the participation has results, fetch the result details to decide if the build log should be shown
+                if (getAllResultsOfAllSubmissions(participation.submissions).length) {
+                    const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
+                    this.lastHandledResultKey = this.getResultBuildStateKey(latestResult);
+                    if (latestResult && (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA || this.compilationSucceeded(latestResult))) {
+                        // Feedback detail readiness must not keep compiler output from an earlier state visible.
+                        this.result.set(latestResult);
+                        this.rawBuildLogs.set(new BuildLogEntryArray());
+                        this.extractAnnotations();
+                    }
+                    const subscription = of(latestResult)
+                        .pipe(
+                            switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(participation, result) : of(result))),
+                            tap((result) => {
+                                this.result.set(result);
+                            }),
+                            switchMap((result) => this.fetchBuildResults(result)),
+                            map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
+                            tap((buildLogsFromServer: BuildLogEntryArray) => {
+                                this.rawBuildLogs.set(buildLogsFromServer);
+                            }),
+                            catchError(() => {
+                                this.rawBuildLogs.set(new BuildLogEntryArray());
+                                return of();
+                            }),
+                        )
+                        .subscribe(() => this.extractAnnotations());
+                    this.inputResultSubscription = subscription;
+                    onCleanup(() => subscription.unsubscribe());
+                }
+            });
+        });
+    }
+
+    ngOnInit(): void {
+        this.setupSubmissionWebsocket();
+    }
+
+    /**
+     * Extracts annotations from
+     * - the build logs as compilation errors
+     * - the result feedbacks as static code analysis issues
+     * and emits them to the parent component
+     */
+    private extractAnnotations() {
+        const exercise: ProgrammingExercise | undefined = getExercise(this.participation());
+        const buildLogErrors = this.rawBuildLogs().extractErrors(exercise?.programmingLanguage, exercise?.projectType);
+        const codeAnalysisIssues = (this.result()!.feedbacks || [])
+            .filter(Feedback.isStaticCodeAnalysisFeedback)
+            .map<StaticCodeAnalysisIssue>((feedback) => parseJson<StaticCodeAnalysisIssue>(feedback.detailText!));
+        const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
+            text: issue.message || '',
+            fileName: issue.filePath || '',
+            // TODO: Support endLine and endColumn
+            row: (issue.startLine || 1) - 1,
+            column: (issue.startColumn || 1) - 1,
+            type: 'warning', // TODO encode type in feedback
+            timestamp: this.result()?.completionDate ? new Date(this.result()!.completionDate!.toString()).valueOf() : 0,
+        }));
+        this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisAnnotations]);
+    }
+
+    /**
+     * Subscribe to incoming submissions, translating to the state isBuilding = true (a pending submission without result exists) vs = false (no pending submission).
+     */
+    private setupSubmissionWebsocket() {
+        this.submissionSubscription = this.submissionService
+            .getBuildingState()
+            .pipe(
+                tap((isBuilding: boolean) => {
+                    this.isBuilding.set(isBuilding);
+                }),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Set up the websocket for retrieving build results.
+     * Updates build logs when the result identity or compilation readiness changes.
+     */
+    private setupResultWebsocket() {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        const inputResult = findLatestResult(getAllResultsOfAllSubmissions(this.participation().submissions));
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation().id!, true)
+            .pipe(
+                // The service's BehaviorSubject initially replays a cached value. The current input owns the
+                // initial state for that same result; later live updates and different result IDs still apply.
+                filter((result, index) => index !== 0 || !inputResult || (result !== inputResult && (inputResult.id === undefined || result?.id !== inputResult.id))),
+                // Ignore initial null/undefined result from service
+                filter((result) => !!result),
+                // The per-participation result subject is a BehaviorSubject that can re-emit the same result many
+                // times (websocket re-delivery / republication via notifyAllResultSubscribers). Without this guard
+                // every emission triggered a fresh `buildlogs` fetch — and because of the switchMap below, each new
+                // emission cancelled the in-flight request — flooding the server with thousands of (cancelled)
+                // requests and pegging the client until it crashed (reported on PR #12967, fixed here). Only react
+                // when result identity or compilation readiness changes. Snapshot the primitive key before comparison,
+                // because a publisher may mutate and re-emit the same result object.
+                map((result) => ({ result, stateKey: this.getResultBuildStateKey(result) })),
+                filter(({ stateKey }) => stateKey !== this.lastHandledResultKey),
+                tap(({ stateKey }) => {
+                    this.lastHandledResultKey = stateKey;
+                }),
+                map(({ result }) => result),
+                tap((result) => {
+                    this.inputResultSubscription?.unsubscribe();
+                    this.inputResultSubscription = undefined;
+                    this.result.set(result);
+                }),
+                switchMap((result) => this.fetchBuildResults(result)),
+                map((buildLogsFromServer) => buildLogsFromServer ?? []),
+                tap((buildLogsFromServer: BuildLogEntry[]) => {
+                    this.rawBuildLogs.set(BuildLogEntryArray.fromBuildLogs(buildLogsFromServer));
+                }),
+                catchError(() => {
+                    this.onError.emit('failedToLoadBuildLogs');
+                    this.rawBuildLogs.set(new BuildLogEntryArray());
+                    return of(undefined);
+                }),
+            )
+            .subscribe(() => this.extractAnnotations());
+    }
+
+    /**
+     * @function loadAndAttachResultDetails
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
+     */
+    loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
+        return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
+            map((res) => res?.body ?? undefined),
+            map((feedbacks: Feedback[] | undefined) => {
+                result.feedbacks = feedbacks;
+                return result;
+            }),
+            catchError(() => of(result)),
+        );
+    }
+
+    /**
+     * @function getBuildLogs
+     * @desc Gets the buildlogs for the current participation
+     */
+    getBuildLogs() {
+        return this.buildLogService.getBuildLogs();
+    }
+
+    /**
+     * Decides if the build log should be shown.
+     * Fetch the build logs if a result is available and no submission is available or the submission could not be build
+     * @param result
+     */
+    fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | undefined> {
+        const compilationSucceeded = this.compilationSucceeded(result);
+        if (
+            result &&
+            result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
+            !compilationSucceeded &&
+            (!result.submission || ('buildFailed' in result.submission && result.submission.buildFailed === true))
+        ) {
+            return this.getBuildLogs();
+        } else {
+            return of([]);
+        }
+    }
+
+    private compilationSucceeded(result?: Result): boolean {
+        const submission = this.resolveSubmission(result);
+        return !!submission && 'buildFailed' in submission && submission.buildFailed === false;
+    }
+
+    /** Includes submission readiness without depending on participation/result object references. */
+    private getResultBuildStateKey(result?: Result): string {
+        const submission = this.resolveSubmission(result);
+        const buildFailed = submission && 'buildFailed' in submission ? submission.buildFailed : undefined;
+        // Only unknown states differ by DTO shape: an absent back-reference permits the legacy log lookup.
+        const readiness = buildFailed === true ? 'failed' : buildFailed === false ? 'successful' : result?.submission ? 'unknown-attached' : 'unknown-detached';
+        return `${this.participation().id}:${result?.id ?? 'pending'}:${result?.assessmentType ?? 'unknown'}:${readiness}`;
+    }
+
+    /** Student editor DTOs nest results under submissions and omit the reverse reference. */
+    private resolveSubmission(result?: Result): Submission | undefined {
+        if (!result) {
+            return undefined;
+        }
+        return (
+            result.submission ??
+            this.participation().submissions?.find((submission) =>
+                submission.results?.some((candidate) => candidate === result || (result.id !== undefined && candidate.id === result.id)),
+            )
+        );
+    }
+
+    /**
+     * @function toggleEditorCollapse
+     * @desc Calls the parent (editorComponent) toggleCollapse method
+     * @param event
+     */
+    toggleEditorCollapse(event: MouseEvent) {
+        this.onToggleCollapse.emit({
+            event,
+            horizontal: false,
+        });
+    }
+
+    ngOnDestroy() {
+        this.inputResultSubscription?.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+    }
+}

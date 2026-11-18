@@ -1,0 +1,81 @@
+import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import dayjs from 'dayjs/esm';
+import { Submission, SubmissionWithParticipationDTO } from 'app/exercise/shared/entities/submission/submission.model';
+import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+
+export class Result implements BaseEntity {
+    public id?: number;
+    public completionDate?: dayjs.Dayjs;
+    public successful?: boolean;
+
+    /**
+     * Current score in percent i.e., between 1 - 100
+     * - Can be larger than 100 if bonus points are available
+     */
+    public score?: number;
+    public assessmentType?: AssessmentType;
+    /** Which correction round this result belongs to: 0 for the first correction, 1 for the second. Unset for automatic results. */
+    public correctionRound?: number;
+    public rated?: boolean;
+    public hasComplaint?: boolean;
+    public exampleResult?: boolean;
+    public assessmentNote?: AssessmentNote;
+    public testCaseCount?: number;
+    public passedTestCaseCount?: number;
+    public codeIssueCount?: number;
+    public buildJobId?: string;
+
+    public submission?: Submission;
+    public assessor?: User;
+    public feedbacks?: Feedback[];
+
+    // helper attributes
+    public durationInMinutes?: number;
+
+    constructor() {
+        this.successful = false; // default value
+    }
+
+    /**
+     * Checks whether the given result has an assessment note that is not empty.
+     * @param that the result of which the presence of an assessment note is being checked
+     *
+     * @return true if the assessment note exists and is not empty, false otherwise
+     */
+    public static hasNonEmptyAssessmentNote(that: Result | undefined): boolean {
+        return that ? !!that.assessmentNote?.note?.length : false;
+    }
+}
+/**
+ * Checks whether the given result is a practice result.
+ * A practice result is a result that belongs to a test run of student participation.
+ * @param result the result to check
+ * @return true if the result is a practice result, false otherwise
+ */
+export function isPracticeResult(result: Result | undefined): boolean {
+    let studentParticipation: StudentParticipation | undefined;
+    if (result?.submission?.participation instanceof StudentParticipation) {
+        studentParticipation = result.submission.participation;
+    }
+    return studentParticipation?.testRun ?? false;
+}
+
+/**
+ * DTO representing a simple result which is used in complaint dto.
+ */
+export class ResultSimpleDTO {
+    public id?: number;
+    public completionDate?: dayjs.Dayjs;
+    public score?: number;
+    public rated?: boolean;
+    public successful?: boolean;
+    public assessmentType?: AssessmentType;
+    public submission?: SubmissionWithParticipationDTO;
+    public assessor?: UserPublicInfoDTO;
+    public feedbacks?: FeedbackDTO[];
+    public exerciseTitle?: string;
+}

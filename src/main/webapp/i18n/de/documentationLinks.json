@@ -1,0 +1,29 @@
+{
+    "artemisApp": {
+        "documentationLinks": {
+            "prefix": "Öffne die Dokumentation für ",
+            "course": "Kurse.",
+            "lecture": "Vorlesungen.",
+            "exercise": "Aufgaben.",
+            "quiz": "Quiz-Aufgaben.",
+            "model": "Modellierungs-Aufgaben.",
+            "programming": "Programmieraufgaben.",
+            "sshsetup": "SSH Setup.",
+            "text": "Text-Aufgaben.",
+            "fileupload": "Dateiupload-Aufgaben.",
+            "notifications": "Benachrichtigungen.",
+            "competencies": "Kompetenzen.",
+            "standardizedcompetencies": "standardisierte Kompetenzen.",
+            "generatecompetencies": "das Generieren von Kompetenzen.",
+            "communications": "Kommunikation.",
+            "exams": "Klausuren.",
+            "plagiarismchecks": "Plagiatsfälle.",
+            "grading": "die Benotung.",
+            "units": "Vorlesungsinhalte.",
+            "assessment": "Bewertungen.",
+            "statistics": "Statistiken.",
+            "studentstatistics": "Statistiken.",
+            "suspiciousbehavior": "verdächtiges Verhalten."
+        }
+    }
+}

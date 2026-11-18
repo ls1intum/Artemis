@@ -1,0 +1,121 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Comparator;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+
+class LectureServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "lservicetest";
+
+    @Autowired
+    private LectureService lectureService;
+
+    @Autowired
+    private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
+    private Course course;
+
+    private Lecture lecture;
+
+    private User student;
+
+    private User editor;
+
+    @BeforeEach
+    void initTestCase() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 1, 0);
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
+        // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
+        course = courseRepository.findWithLecturesAndLectureUnitsById(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId()).orElseThrow();
+        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
+
+        assertThat(lecture).isNotNull();
+        assertThat(lecture.getLectureUnits()).isNotEmpty();
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testPageableResults() {
+        // the database should contain 2 lectures (see courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
+        // to enable a proper search after title, we change it
+
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testPageableResults"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
+
+        SearchTermPageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
+        pageable.setSortedColumn("ID");
+        pageable.setPageSize(1);
+
+        SearchResultPageDTO<Lecture> result1 = lectureService.getAllOnPageWithSize(pageable, editor);
+        assertThat(result1.getNumberOfPages()).isEqualTo(2);
+        assertThat(result1.getResultsOnPage()).doesNotContain(lecture);
+
+        pageable.setPage(2);
+        SearchResultPageDTO<Lecture> result2 = lectureService.getAllOnPageWithSize(pageable, editor);
+        assertThat(result2.getResultsOnPage()).containsExactly(lecture);
+    }
+
+    private SearchResultPageDTO<Lecture> searchQueryWithUser(String query, User user) {
+        SearchTermPageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(query);
+        return lectureService.getAllOnPageWithSize(pageable, user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetLecturesPageable() {
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testGetLecturesPageable"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
+
+        SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), editor);
+        assertThat(result.getNumberOfPages()).isEqualTo(1);
+        assertThat(result.getResultsOnPage()).contains(lecture);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetLecturesPageable_notFound() {
+        SearchResultPageDTO<Lecture> result = searchQueryWithUser("VeryLongNameThatDoesNotExist", editor);
+        assertThat(result.getNumberOfPages()).isZero();
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLecturesPageable_unauthorized() {
+        SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), student);
+        assertThat(result.getNumberOfPages()).isZero();
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+}

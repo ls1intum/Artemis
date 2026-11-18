@@ -1,0 +1,624 @@
+package de.tum.cit.aet.artemis.exam.domain;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
+
+@Entity
+@Table(name = "exam")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class Exam extends DomainObject {
+
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    /**
+     * This enum indicates the type of the exam
+     */
+    @Column(name = "exam_mode", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ExamMode examMode = ExamMode.REAL;
+
+    @Deprecated(forRemoval = true)
+    @Column(name = "test_exam")
+    private boolean testExam;
+
+    /**
+     * This boolean indicates whether attendance is checked during exam
+     */
+    @Column(name = "exam_with_attendance_check")
+    private boolean examWithAttendanceCheck;
+
+    /**
+     * student can see the exam in the UI from this date onwards
+     */
+    @Column(name = "visible_date", nullable = false)
+    private ZonedDateTime visibleDate;
+
+    /**
+     * student can start working on exam from this date onwards
+     */
+    @Column(name = "start_date", nullable = false)
+    private ZonedDateTime startDate;
+
+    /**
+     * student can work on exam until this date
+     */
+    @Column(name = "end_date", nullable = false)
+    private ZonedDateTime endDate;
+
+    @Column(name = "publish_results_date")
+    private ZonedDateTime publishResultsDate;
+
+    @Column(name = "exam_student_review_start")
+    private ZonedDateTime examStudentReviewStart;
+
+    @Column(name = "exam_student_review_end")
+    private ZonedDateTime examStudentReviewEnd;
+
+    /**
+     * The date from which students can see the summary (submission overview) of their submitted exam.
+     * If null, the summary is available immediately after submission (default behavior).
+     */
+    @Column(name = "exam_summary_publication_date")
+    private ZonedDateTime examSummaryPublicationDate;
+
+    /**
+     * The duration in which the students can do final submissions before the exam ends in seconds
+     */
+    @Column(name = "grace_period", columnDefinition = "integer default 180")
+    private Integer gracePeriod = 180;
+
+    /**
+     * The default working time for an exam in seconds.
+     * (The individual working time of a student is stored in {@link StudentExam})
+     */
+    @Column(name = "working_time")
+    private int workingTime;
+
+    @Column(name = "start_text")
+    private String startText;
+
+    @Column(name = "end_text")
+    private String endText;
+
+    @Column(name = "confirmation_start_text")
+    private String confirmationStartText;
+
+    @Column(name = "confirmation_end_text")
+    private String confirmationEndText;
+
+    @Column(name = "max_points")
+    private Integer examMaxPoints;
+
+    @Column(name = "randomize_exercise_order")
+    private Boolean randomizeExerciseOrder;
+
+    /**
+     * From all exercise groups connected to the exam, this number of exercises is randomly
+     * chosen when generating the specific exam for the {@link #examUsers}
+     */
+    @Column(name = "number_of_exercises_in_exam")
+    private Integer numberOfExercisesInExam;
+
+    @Column(name = "number_of_correction_rounds", columnDefinition = "integer default 1")
+    private Integer numberOfCorrectionRoundsInExam;
+
+    @Column(name = "examiner")
+    private String examiner;
+
+    @Column(name = "module_number")
+    private String moduleNumber;
+
+    @Column(name = "course_name")
+    private String courseName;
+
+    @Nullable
+    @Column(name = "example_solution_publication_date")
+    private ZonedDateTime exampleSolutionPublicationDate;
+
+    @ManyToOne
+    @JoinColumn(name = "course_id", nullable = false)
+    @Parent
+    private Course course;
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderColumn(name = "exercise_group_order")
+    @JsonIgnoreProperties(value = "exam", allowSetters = true)
+    private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exam")
+    private Set<StudentExam> studentExams = new HashSet<>();
+
+    @Column(name = "exam_archive_path")
+    private String examArchivePath;
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exam")
+    private Set<ExamUser> examUsers = new HashSet<>();
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("examRoomExamAssignments_exam")
+    private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
+
+    @Transient
+    private Long numberOfExamUsersTransient;
+
+    /**
+     * Used for receiving the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
+
+    @Transient
+    private Integer quizExamMaxPoints;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(@NonNull String title) {
+        this.title = title.strip();
+    }
+
+    public ExamMode getExamMode() {
+        return examMode;
+    }
+
+    public void setExamMode(ExamMode examMode) {
+        this.examMode = examMode == null ? ExamMode.REAL : examMode;
+        this.testExam = this.examMode != ExamMode.REAL;
+    }
+
+    public boolean isExamWithAttendanceCheck() {
+        return examWithAttendanceCheck;
+    }
+
+    public void setExamWithAttendanceCheck(boolean examWithAttendanceCheck) {
+        this.examWithAttendanceCheck = examWithAttendanceCheck;
+    }
+
+    @NonNull
+    public ZonedDateTime getVisibleDate() {
+        return visibleDate;
+    }
+
+    public void setVisibleDate(@NonNull ZonedDateTime visibleDate) {
+        this.visibleDate = visibleDate;
+    }
+
+    @NonNull
+    public ZonedDateTime getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(@NonNull ZonedDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    @NonNull
+    public ZonedDateTime getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(@NonNull ZonedDateTime endDate) {
+        this.endDate = endDate;
+    }
+
+    /**
+     * @return the duration of the exam in seconds
+     */
+    @JsonIgnore
+    public int getDuration() {
+        return Math.toIntExact(Duration.between(getStartDate(), getEndDate()).toSeconds());
+    }
+
+    public ZonedDateTime getPublishResultsDate() {
+        return publishResultsDate;
+    }
+
+    public void setPublishResultsDate(ZonedDateTime publishResultsDate) {
+        this.publishResultsDate = publishResultsDate;
+    }
+
+    public ZonedDateTime getExamStudentReviewStart() {
+        return examStudentReviewStart;
+    }
+
+    public void setExamStudentReviewStart(ZonedDateTime examStudentReviewStart) {
+        this.examStudentReviewStart = examStudentReviewStart;
+    }
+
+    public ZonedDateTime getExamStudentReviewEnd() {
+        return examStudentReviewEnd;
+    }
+
+    public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
+        this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public ZonedDateTime getExamSummaryPublicationDate() {
+        return examSummaryPublicationDate;
+    }
+
+    public void setExamSummaryPublicationDate(ZonedDateTime examSummaryPublicationDate) {
+        this.examSummaryPublicationDate = examSummaryPublicationDate;
+    }
+
+    public Integer getGracePeriod() {
+        return gracePeriod;
+    }
+
+    public void setGracePeriod(int gracePeriod) {
+        this.gracePeriod = gracePeriod;
+    }
+
+    public int getWorkingTime() {
+        return workingTime;
+    }
+
+    public void setWorkingTime(int workingTime) {
+        this.workingTime = workingTime;
+    }
+
+    public String getStartText() {
+        return startText;
+    }
+
+    public void setStartText(String startText) {
+        this.startText = startText;
+    }
+
+    public String getEndText() {
+        return endText;
+    }
+
+    public void setEndText(String endText) {
+        this.endText = endText;
+    }
+
+    public String getConfirmationStartText() {
+        return confirmationStartText;
+    }
+
+    public void setConfirmationStartText(String confirmationStartText) {
+        this.confirmationStartText = confirmationStartText;
+    }
+
+    public String getConfirmationEndText() {
+        return confirmationEndText;
+    }
+
+    public void setConfirmationEndText(String confirmationEndText) {
+        this.confirmationEndText = confirmationEndText;
+    }
+
+    public int getExamMaxPoints() {
+        return this.examMaxPoints == null ? 0 : this.examMaxPoints;
+    }
+
+    public void setExamMaxPoints(Integer examMaxPoints) {
+        this.examMaxPoints = examMaxPoints;
+    }
+
+    public Integer getNumberOfExercisesInExam() {
+        return numberOfExercisesInExam;
+    }
+
+    public void setNumberOfExercisesInExam(Integer numberOfExercisesInExam) {
+        this.numberOfExercisesInExam = numberOfExercisesInExam;
+    }
+
+    public Integer getNumberOfCorrectionRoundsInExam() {
+        return this.numberOfCorrectionRoundsInExam != null ? this.numberOfCorrectionRoundsInExam : 1;
+    }
+
+    public void setNumberOfCorrectionRoundsInExam(Integer numberOfCorrectionRoundsInExam) {
+        this.numberOfCorrectionRoundsInExam = numberOfCorrectionRoundsInExam;
+    }
+
+    public Boolean getRandomizeExerciseOrder() {
+        return randomizeExerciseOrder;
+    }
+
+    public void setRandomizeExerciseOrder(Boolean randomizeExerciseOrder) {
+        this.randomizeExerciseOrder = randomizeExerciseOrder;
+    }
+
+    public String getExaminer() {
+        return examiner;
+    }
+
+    public void setExaminer(String examiner) {
+        this.examiner = examiner;
+    }
+
+    public String getModuleNumber() {
+        return moduleNumber;
+    }
+
+    public void setModuleNumber(String moduleNumber) {
+        this.moduleNumber = moduleNumber;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public List<ExerciseGroup> getExerciseGroups() {
+        return exerciseGroups;
+    }
+
+    public void setExerciseGroups(List<ExerciseGroup> exerciseGroups) {
+        this.exerciseGroups = exerciseGroups;
+    }
+
+    public void addExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroups.add(exerciseGroup);
+        exerciseGroup.setExam(this);
+    }
+
+    public void removeExerciseGroup(ExerciseGroup exerciseGroup) {
+        this.exerciseGroups.remove(exerciseGroup);
+        exerciseGroup.setExam(null);
+    }
+
+    public Set<StudentExam> getStudentExams() {
+        return studentExams;
+    }
+
+    public void setStudentExams(Set<StudentExam> studentExams) {
+        this.studentExams = studentExams;
+    }
+
+    public void addStudentExam(StudentExam studentExam) {
+        this.studentExams.add(studentExam);
+        studentExam.setExam(this);
+    }
+
+    public void removeStudentExam(StudentExam studentExam) {
+        this.studentExams.remove(studentExam);
+        studentExam.setExam(null);
+    }
+
+    public Set<ExamUser> getExamUsers() {
+        return examUsers;
+    }
+
+    @JsonIgnore
+    public Set<User> getRegisteredUsers() {
+        return this.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+    }
+
+    public void setExamUsers(Set<ExamUser> examUsers) {
+        this.examUsers = examUsers;
+    }
+
+    public Set<ExamRoomExamAssignment> getExamRoomAssignments() {
+        return examRoomExamAssignments;
+    }
+
+    public void setExamRoomAssignments(Set<ExamRoomExamAssignment> examRoomExamAssignments) {
+        this.examRoomExamAssignments = examRoomExamAssignments;
+    }
+
+    public void addExamUser(ExamUser examUser) {
+        this.examUsers.add(examUser);
+        examUser.setExam(this);
+    }
+
+    public void removeExamUser(ExamUser examUser) {
+        this.examUsers.remove(examUser);
+        examUser.setExam(null);
+    }
+
+    public Long getNumberOfExamUsers() {
+        return this.numberOfExamUsersTransient;
+    }
+
+    public void setNumberOfExamUsers(Long numberOfExamUsersTransient) {
+        this.numberOfExamUsersTransient = numberOfExamUsersTransient;
+    }
+
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
+    }
+
+    /**
+     * check if students are allowed to see this exam
+     *
+     * @return true, if students are allowed to see this exam, otherwise false
+     */
+    @JsonIgnore
+    public boolean isVisibleToStudents() {
+        return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if the exam has started
+     *
+     * @return true, if the exam has started, otherwise false
+     */
+    @JsonIgnore
+    public boolean isStarted() {
+        return startDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if results of exam are published
+     *
+     * @return true, if the results are published, false if not published or not set!
+     */
+    @JsonIgnore
+    public boolean resultsPublished() {
+        if (publishResultsDate == null) {
+            return false;
+        }
+        return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to students.
+     * <p>
+     * If no publication date is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once the publication
+     * date has passed. As a safeguard it is always available once the results are published, so a misconfigured date can never hide the overview after grades are out.
+     *
+     * @return true if the exam summary may be shown to students, false otherwise
+     */
+    @JsonIgnore
+    public boolean isExamSummaryPublished() {
+        // test exams are self-service practice with no shift concern; their summary is always available
+        if (!examMode.isReal() || examSummaryPublicationDate == null) {
+            return true;
+        }
+        return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
+    }
+
+    /**
+     * Checks if the exam has completely ended even for students with time extensions
+     *
+     * @return true if the exam writing time of the student with the longest extension has been exceeded
+     */
+    @JsonIgnore
+    public boolean isAfterLatestStudentExamEnd() {
+        return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
+    }
+
+    /**
+     * Checks whether the current exam should behave like a test exam. This means it is repeatable.
+     * Student exams and exercises are prepared when the user starts the exam.
+     *
+     * @param now the current time
+     * @return true if is a test exam or a test exam with a supervised session and the supervised session is over
+     */
+    @JsonIgnore
+    public boolean isTestOrPractice(ZonedDateTime now) {
+        return isTestOrPractice(examMode, getSupervisedSessionEndDate(), now);
+    }
+
+    /**
+     * Checks whether an exam mode behaves like a test exam at the given time.
+     *
+     * @param examMode                 the configured exam mode
+     * @param supervisedSessionEndDate the end of the supervised session
+     * @param now                      the time to check
+     * @return true if this is a test exam or the supervised session has ended
+     */
+    public static boolean isTestOrPractice(ExamMode examMode, ZonedDateTime supervisedSessionEndDate, ZonedDateTime now) {
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SUPERVISED_SESSION && !now.isBefore(supervisedSessionEndDate);
+    }
+
+    @JsonIgnore
+    public ZonedDateTime getSupervisedSessionEndDate() {
+        return supervisedSessionEndDate(startDate, workingTime);
+    }
+
+    /**
+     * Calculates the end of a test exam's supervised session.
+     *
+     * @param startDate   the start of the supervised session
+     * @param workingTime the configured working time in seconds
+     * @return the end of the supervised session
+     */
+    public static ZonedDateTime supervisedSessionEndDate(ZonedDateTime startDate, int workingTime) {
+        return startDate.plusSeconds(workingTime);
+    }
+
+    @JsonIgnore
+    public boolean hasExamArchive() {
+        return examArchivePath != null && !examArchivePath.isEmpty();
+    }
+
+    @Nullable
+    public ZonedDateTime getExampleSolutionPublicationDate() {
+        return exampleSolutionPublicationDate;
+    }
+
+    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
+    }
+
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.READ_ONLY)
+    public Integer getQuizExamMaxPoints() {
+        return quizExamMaxPoints;
+    }
+
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.WRITE_ONLY)
+    public void setQuizExamMaxPoints(Integer quizExamMaxPoints) {
+        this.quizExamMaxPoints = quizExamMaxPoints;
+    }
+
+    /**
+     * Returns the exam title in a form that is safe to use in file or directory names.
+     *
+     * @return the sanitized exam title, or a stable unique fallback if the title has no ASCII representation
+     */
+    @JsonIgnore
+    public String getSanitizedExamTitle() {
+        // exam titles are non-nullable, but may sanitize to an empty string when they consist only of non-ASCII letters
+        // (sanitizeStringForFileName reduces the input to ASCII). Fall back to a stable, unique name in that case.
+        String sanitizedTitle = this.title == null ? "" : StringUtil.sanitizeStringForFileName(this.title);
+        if (sanitizedTitle.isBlank()) {
+            return getId() != null ? "exam_" + getId() : "exam";
+        }
+        return sanitizedTitle;
+    }
+}

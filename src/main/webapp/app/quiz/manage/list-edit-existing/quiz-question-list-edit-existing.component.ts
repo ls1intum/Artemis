@@ -1,0 +1,519 @@
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { orderBy } from 'lodash-es';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/confirm-import-invalid-questions-modal/quiz-confirm-import-invalid-questions-modal.component';
+import { TranslateService } from '@ngx-translate/core';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
+import { strFromU8 } from 'fflate';
+import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
+import { KeyValuePipe } from '@angular/common';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FileService } from 'app/foundation/service/file.service';
+import { parseJson } from 'app/foundation/util/json.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiDialogService,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
+
+export enum State {
+    COURSE = 'Course',
+    EXAM = 'Exam',
+    FILE = 'File',
+}
+
+@Component({
+    selector: 'jhi-quiz-question-list-edit-existing',
+    templateUrl: './quiz-question-list-edit-existing.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    styleUrls: ['../../shared/quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTooltipDirective,
+        QuizQuestionPreviewComponent,
+    ],
+})
+export class QuizQuestionListEditExistingComponent {
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
+    private fileService = inject(FileService);
+    private courseManagementService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+
+    show = input<boolean>();
+    courseId = input<number>();
+    filePool = input<Map<string, { path?: string; file: File }>>();
+
+    onQuestionsAdded = output<Array<QuizQuestion>>();
+    onFilesAdded = output<Map<string, { path: string; file: File }>>();
+
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly State = State;
+    readonly stateTexts = ['artemisApp.quizExercise.fromACourse', 'artemisApp.quizExercise.fromAnExam', 'artemisApp.quizExercise.fromAFile'];
+
+    readonly currentState = signal<State>(State.COURSE);
+    selectedCourseId?: number;
+    selectedExamId?: number;
+    readonly courses = signal<Course[]>([]);
+    readonly exams = signal<Exam[]>([]);
+    readonly allExistingQuestions = signal<QuizQuestion[]>([]);
+    readonly existingQuestions = signal<QuizQuestion[]>([]);
+    readonly sortField = signal('');
+    readonly sortOrder = signal(1);
+    readonly sortedQuestions = computed(() => {
+        const field = this.sortField();
+        if (!field) {
+            // Keep the order returned by the server until the user picks a column.
+            return this.existingQuestions();
+        }
+        const key = (question: QuizQuestion): string => String((field === 'exercise' ? question.exercise?.title : question[field as 'title' | 'type']) ?? '').toLowerCase();
+        return orderBy(this.existingQuestions(), [key], [this.sortOrder() === 1 ? 'asc' : 'desc']);
+    });
+    searchQueryText?: string;
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
+    readonly importFile = signal<File | undefined>(undefined);
+    readonly importFileName = signal<string>('');
+    readonly previewVisible = signal(false);
+    readonly previewQuestion = signal<QuizQuestion | undefined>(undefined);
+    protected readonly faEye = faEye;
+
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.sortField.set(event.field);
+        this.sortOrder.set(event.order);
+    }
+
+    constructor() {
+        effect(() => {
+            if (this.show()) {
+                this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
+                    this.courses.set(res.body!);
+                });
+                this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((res: HttpResponse<Exam[]>) => {
+                    this.exams.set(res.body!);
+                });
+            }
+        });
+    }
+
+    setCurrentState(state: State) {
+        this.currentState.set(state);
+    }
+
+    /**
+     * Callback function for when a user selected a Course from the Dropdown list from 'Add existing questions'
+     * Populates list of quiz exercises for the selected course
+     */
+    onCourseSelect() {
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
+        if (!this.selectedCourseId) {
+            return;
+        }
+        const selectedCourse = this.courses().find((course) => course.id === Number(this.selectedCourseId))!;
+        this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'COURSE'),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * Callback function for when a user selected an Exam from the Dropdown list from 'Add existing questions'
+     * Populates list of quiz exercises for the selected exam
+     */
+    onExamSelect(): void {
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
+        if (!this.selectedExamId) {
+            return;
+        }
+
+        /** Search the selected exam by id in all available exams **/
+        const selectedExam = this.exams().find((exam) => exam.id === Number(this.selectedExamId))!;
+
+        // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
+        this.quizExerciseService.findAllForExam(selectedExam.id!).subscribe({
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'EXAM'),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * Opens the preview dialog for the given question so that it can be looked at before it is selected for the import.
+     * @param question the existing question to preview
+     */
+    openPreview(question: QuizQuestion): void {
+        this.previewQuestion.set(question);
+        this.previewVisible.set(true);
+    }
+
+    /**
+     * Selects the previewed question for the import and closes the preview dialog.
+     */
+    addPreviewedQuestion(): void {
+        const question = this.previewQuestion();
+        if (question) {
+            question.exportQuiz = true;
+        }
+        this.previewVisible.set(false);
+    }
+
+    /**
+     * Applies filter on questions shown in add existing questions view.
+     */
+    applyFilter() {
+        const existingQuestions: QuizQuestion[] = [];
+        for (const question of this.allExistingQuestions()) {
+            if (!this.searchQueryText || this.searchQueryText === '' || question.title!.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
+                if (this.mcqFilterEnabled && question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                    existingQuestions.push(question);
+                }
+                if (this.dndFilterEnabled && question.type === QuizQuestionType.DRAG_AND_DROP) {
+                    existingQuestions.push(question);
+                }
+                if (this.shortAnswerFilterEnabled && question.type === QuizQuestionType.SHORT_ANSWER) {
+                    existingQuestions.push(question);
+                }
+            }
+        }
+        this.existingQuestions.set(existingQuestions);
+    }
+
+    /**
+     * Assigns the uploaded import file
+     * @param event object containing the uploaded file
+     */
+    setImportFile(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList?.length) {
+            this.importFile.set(fileList[0]);
+            this.importFileName.set(fileList[0].name);
+        }
+    }
+
+    /**
+     * Imports a json quiz file and adds questions to current quiz exercise.
+     */
+    async importQuiz() {
+        if (!this.importFile()) {
+            return;
+        }
+
+        const fileName = this.importFile()!.name;
+        const fileExtension = fileName.split('.').last()?.toLowerCase();
+
+        if (fileExtension === 'zip') {
+            await this.handleZipFile();
+        } else {
+            this.handleJsonFile();
+        }
+    }
+    handleJsonFile() {
+        const fileReader = this.generateFileReader();
+        fileReader.onload = () => this.onFileLoadImport(fileReader);
+        fileReader.readAsText(this.importFile()!);
+    }
+
+    async handleZipFile() {
+        try {
+            const zipEntries = await readZipEntries(this.importFile()!);
+            const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
+            if (jsonFiles.length === 0) {
+                throw new Error('No JSON file found in the ZIP archive.');
+            }
+
+            const images = this.extractImagesFromZip(zipEntries);
+            const jsonContent = strFromU8(zipEntries[jsonFiles[0]]);
+            await this.processJsonContent(jsonContent, images);
+        } catch (error) {
+            alert('Import Quiz Failed! Invalid zip file.');
+            return;
+        }
+    }
+    extractImagesFromZip(zipEntries: ZipEntries): Map<string, File> {
+        const images: Map<string, File> = new Map();
+        for (const [fileName, data] of Object.entries(zipEntries)) {
+            if (!fileName.endsWith('.json')) {
+                const lastDotIndex = fileName.lastIndexOf('.');
+                const fileNameNoExtension = lastDotIndex === -1 ? fileName : fileName.substring(0, lastDotIndex);
+                const imageFile = new File([data], fileName);
+                images.set(fileNameNoExtension, imageFile);
+            }
+        }
+        return images;
+    }
+
+    async processJsonContent(jsonContent: string, images: Map<string, File> = new Map()) {
+        try {
+            const questions = parseJson<QuizQuestion[]>(jsonContent);
+            await this.addQuestions(questions, images);
+            // Clearing html elements
+            this.importFile.set(undefined);
+            this.importFileName.set('');
+            const control = document.getElementById('importFileInput') as HTMLInputElement;
+            if (control) {
+                control.value = '';
+            }
+        } catch (e) {
+            alert('Import Quiz Failed! Invalid quiz file.');
+            return;
+        }
+    }
+
+    async onFileLoadImport(fileReader: FileReader) {
+        await this.processJsonContent(fileReader.result as string);
+    }
+    /**
+     * Move file reader creation to separate function to be able to mock
+     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     */
+    generateFileReader() {
+        return new FileReader();
+    }
+
+    /**
+     * Adds selected quizzes to current quiz exercise
+     */
+    async addExistingQuestions() {
+        const quizQuestions: QuizQuestion[] = [];
+        for (const question of this.existingQuestions()) {
+            if (question.exportQuiz) {
+                quizQuestions.push(question);
+            }
+        }
+        this.selectedCourseId = undefined;
+        this.selectedExamId = undefined;
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
+        await this.addQuestions(quizQuestions);
+    }
+
+    /**
+     * Adds given questions to current quiz exercise.
+     * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
+     * Caution: All "invalid" flags are also removed.
+     * Images are duplicated for drag and drop questions.
+     * @param quizQuestions questions to be added to currently edited quiz exercise
+     */
+    async addQuestions(quizQuestions: Array<QuizQuestion>, images: Map<string, File> = new Map()) {
+        const invalidQuizQuestionMap = checkForInvalidFlaggedQuestions(quizQuestions);
+        const validQuizQuestions = quizQuestions.filter((quizQuestion) => !invalidQuizQuestionMap[quizQuestion.id!]);
+        const invalidQuizQuestions = quizQuestions.filter((quizQuestion) => invalidQuizQuestionMap[quizQuestion.id!]);
+        if (invalidQuizQuestions.length > 0) {
+            const ref = this.dialogService.open<QuizConfirmImportInvalidQuestionsModalComponent, boolean, { invalidFlaggedQuestions: ValidationReason[] }>(
+                QuizConfirmImportInvalidQuestionsModalComponent,
+                {
+                    size: 'medium',
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    showHeader: false,
+                    ariaLabel: this.translateService.instant('artemisApp.quizExercise.importWarningShort'),
+                    data: {
+                        invalidFlaggedQuestions: invalidQuizQuestions.map((question, index) => {
+                            return {
+                                translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
+                                translateValues: { index: index + 1 },
+                            };
+                        }),
+                    },
+                },
+            );
+            ref?.onClose.subscribe(async (confirmed: boolean | undefined) => {
+                if (confirmed) {
+                    const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
+                    return this.handleConversionOfExistingQuestions(newQuizQuestions, images);
+                }
+            });
+        } else {
+            return this.handleConversionOfExistingQuestions(validQuizQuestions, images);
+        }
+    }
+
+    /**
+     * Find all QuizQuestions that belong to the given list of QuizExercise and add them to allExistingQuestions. Then, call applyFilter
+     *
+     * @param quizExercises the list of QuizExercise of which the QuizQuestions are to be retrieved and added
+     * @param source the audience of the list request that produced these rows, which carry no course or exam group context
+     */
+    private applyQuestionsAndFilter(quizExercises: QuizExercise[], source: 'COURSE' | 'EXAM') {
+        for (const quizExercise of quizExercises) {
+            (source === 'EXAM' ? this.quizExerciseService.findForExam(quizExercise.id!) : this.quizExerciseService.find(quizExercise.id!)).subscribe((quizExerciseResponse) => {
+                if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
+                    for (const question of quizExerciseResponse.quizQuestions) {
+                        question.exercise = quizExercise;
+                        this.allExistingQuestions.update((questions) => [...questions, question]);
+                    }
+                }
+                this.applyFilter();
+            });
+        }
+    }
+
+    /**
+     * Convert the given list of existing QuizQuestions to a list of new QuizQuestions
+     *
+     * @param existingQuizQuestions the list of existing QuizQuestions to be converted
+     * @param images if a zip file was provided, the images exported will be used to create the Dnd
+     * @return the list of new QuizQuestions
+     */
+    private async handleConversionOfExistingQuestions(existingQuizQuestions: Array<QuizQuestion>, images: Map<string, File> = new Map()) {
+        const newQuizQuestions = new Array<QuizQuestion>();
+        const files: Map<string, { path: string; file: File }> = new Map<string, { path: string; file: File }>();
+        // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
+        // This removes all ids, duplicates images for drag-and-drop questions, and clears the exercise reference.
+        let questionIndex = 0;
+        for (const question of existingQuizQuestions) {
+            const sourceQuestionId = question.id;
+            // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
+            question.exercise = undefined;
+            question.invalid = false;
+            question.id = undefined;
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                mcQuestion.answerOptions!.forEach((answerOption) => {
+                    answerOption.id = undefined;
+                    answerOption.invalid = false;
+                });
+            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
+                // Get image from the old question and duplicate it on the server and then save new image to the question,
+                const backgroundImageFile: File | undefined = images.get(`q${questionIndex}_background`);
+                if (backgroundImageFile) {
+                    const backgroundFile = backgroundImageFile;
+                    files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
+                    dndQuestion.backgroundFilePath = backgroundFile.name;
+                } else {
+                    const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool());
+                    files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
+                    dndQuestion.backgroundFilePath = backgroundFile.name;
+                }
+
+                // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
+                // This tempID is used for keep tracking of mappings by server. The server removes tempID and generated a new id,
+                dndQuestion.dropLocations!.forEach((dropLocation) => {
+                    dropLocation.tempID = dropLocation.id;
+                    dropLocation.id = undefined;
+                    dropLocation.invalid = false;
+                });
+                let dragItemCounter = 0;
+                for (const dragItem of dndQuestion.dragItems || []) {
+                    // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
+                    if (dragItem.pictureFilePath) {
+                        const exportedDragItemFile: File | undefined = images.get(`q${questionIndex}_dragItem-${dragItemCounter}`);
+                        if (exportedDragItemFile) {
+                            files.set(exportedDragItemFile.name, { path: dragItem.pictureFilePath, file: exportedDragItemFile });
+                            dragItem.pictureFilePath = exportedDragItemFile.name;
+                        } else {
+                            const storedPicturePath = dragItem.pictureFilePath;
+                            const downloadPath =
+                                sourceQuestionId !== undefined && dragItem.id !== undefined
+                                    ? `drag-and-drop/questions/${sourceQuestionId}/drag-items/${dragItem.id}/${storedPicturePath.substring(storedPicturePath.lastIndexOf('/') + 1)}`
+                                    : storedPicturePath;
+                            const dragItemFile = await this.fileService.getFile(downloadPath, this.filePool());
+                            files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
+                            dragItem.pictureFilePath = dragItemFile.name;
+                        }
+                    }
+                    dragItemCounter += 1;
+                    dragItem.tempID = dragItem.id;
+                    dragItem.id = undefined;
+                    dragItem.invalid = false;
+                }
+                for (const correctMapping of dndQuestion.correctMappings || []) {
+                    // Following fields are not required for dnd question. They will be generated by the server,
+                    correctMapping.id = undefined;
+                    correctMapping.dragItemIndex = undefined;
+                    correctMapping.dropLocationIndex = undefined;
+                    correctMapping.invalid = false;
+
+                    // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
+                    const correctMappingDragItem = correctMapping.dragItem!;
+                    if (correctMappingDragItem.pictureFilePath) {
+                        correctMappingDragItem.pictureFilePath = dndQuestion.dragItems?.filter((dragItem) => dragItem.tempID === correctMappingDragItem.id)?.[0].pictureFilePath;
+                    }
+                    correctMappingDragItem.tempID = correctMappingDragItem?.id;
+                    correctMapping.dragItem!.id = undefined;
+                    correctMapping.dropLocation!.tempID = correctMapping.dropLocation!.id;
+                    correctMapping.dropLocation!.id = undefined;
+                }
+            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                const shortAnswerQuestion = question as ShortAnswerQuestion;
+
+                // For Spots, Solutions and CorrectMappings we need to provide tempID,
+                // This tempID is used for keep tracking of mappings by server. The server removes tempID and generated a new id,
+                shortAnswerQuestion.spots!.forEach((spot) => {
+                    spot.tempID = spot.id;
+                    spot.id = undefined;
+                    spot.invalid = false;
+                });
+                shortAnswerQuestion.solutions!.forEach((solution) => {
+                    solution.tempID = solution.id;
+                    solution.id = undefined;
+                    solution.invalid = false;
+                });
+                shortAnswerQuestion.correctMappings!.forEach((correctMapping) => {
+                    // Following fields are not required for short answer question. They will be generated by the server,
+                    correctMapping.id = undefined;
+                    correctMapping.shortAnswerSolutionIndex = undefined;
+                    correctMapping.shortAnswerSpotIndex = undefined;
+                    correctMapping.invalid = false;
+
+                    correctMapping.solution!.tempID = correctMapping.solution!.id;
+                    correctMapping.solution!.id = undefined;
+                    correctMapping.spot!.tempID = correctMapping.spot!.id;
+                    correctMapping.spot!.id = undefined;
+                });
+            }
+            newQuizQuestions.push(question);
+            questionIndex += 1;
+        }
+        if (files.size > 0) {
+            this.onFilesAdded.emit(files);
+        }
+        this.onQuestionsAdded.emit(newQuizQuestions);
+    }
+}

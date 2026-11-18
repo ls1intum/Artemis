@@ -1,0 +1,154 @@
+---
+id: exports
+title: Exports
+sidebar_label: Exports
+last_reviewed: 2026-11-03
+---
+
+Artemis lets you download your own work and your own data. As a student you can export three things:
+
+| Export                                                              | Where                                      | What you get                                        |
+|---------------------------------------------------------------------|--------------------------------------------|-----------------------------------------------------|
+| [Your repository](#download-your-repository)                          | Source view of your repository               | ZIP of your submitted code                          |
+| [The example solution](#download-the-example-solution)                | Exercise page, after the solution is released | ZIP of the solution code                            |
+| [Your user data](#export-user-data-gdpr-data-export)                  | Privacy statement, in the page footer        | ZIP with everything Artemis stores about you        |
+
+Instructors and tutors have further exports available, for example course archives and bulk repository downloads.
+Those are listed in the full [Exports and archives](/instructor/course-management/exports) reference.
+
+## Download your repository
+
+On the read-only view of your repository, headed **Source**, you can download it as a ZIP file with the
+**Download Repository** button. To get there, open the exercise, press **Code**, then the arrow icon beside the
+repository address. The archive contains the code exactly as you submitted it.
+
+:::note
+This download contains your files but not the `.git` directory, so it is a copy of your code rather than a Git
+repository with your commit history. If you want the history, clone the repository with Git instead, as described in
+[Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle). Your commit history is also part of
+the [data export](#export-user-data-gdpr-data-export).
+:::
+
+## Download the example solution
+
+Once your instructor has published the example solution, the exercise page offers a **Download Example Solution**
+button that gives you the solution repository as a ZIP file. Before that date the button is not available to students.
+
+If the exercise is configured to release the tests together with the example solution, the test repository can be
+downloaded the same way.
+
+## Export user data (GDPR Data Export)
+
+You can request a complete export of all data Artemis stores about you. This export is provided in accordance with Article 15 of the GDPR (Right of Access).
+
+### How to request a data export
+
+1. Follow **Privacy** in the page footer to open the privacy statement
+2. Follow the **Data Export** link in it
+3. Click **Request data export** and confirm by typing your login
+4. Once the export has been created, you will receive an email with a download link
+
+You can request one export at a time. After you have downloaded it, or after Artemis has deleted it, the page shows
+the date from which you may request the next one.
+
+:::info
+The export process may take a few minutes depending on the amount of data. The download link will be valid for a limited time.
+:::
+
+### Data included in the export
+
+The data export contains a ZIP file with the following categories of data:
+
+#### General User Information (`general_user_information.csv`)
+- Your login name
+- Full name
+- Email address
+- Registration number (if applicable)
+
+#### Exercise Participations and Submissions
+For each course you participated in, the export includes:
+- **Programming exercises**: One folder per participation holding your code and a working `.git` directory, so your
+  full commit history is included
+- **Modeling exercises**: Your diagrams as PDF files
+- **Text exercises**: Your submitted text
+- **Quiz exercises**: Your answers and results
+- **File upload exercises**: Your uploaded files
+- **Results and feedback**: Grades and feedback received on each exercise
+
+#### Exam Participations
+- Exam submissions and results (if the results publication date has passed)
+- Feedback received on exam exercises
+
+#### Communication Data (`messages_posts_reactions.csv`)
+For each course:
+- Messages and posts you authored
+- Thread replies (answer posts) you created
+- Reactions you added to posts and answers
+
+#### Saved Posts (`saved_posts.csv`)
+- Posts and answers you bookmarked/saved for later
+- Status of each saved post (in progress, completed, archived)
+
+#### Notification Settings (`notification_settings.csv`)
+- Your global notification preferences
+
+#### Conversation Participations (`conversation_participations.csv`)
+- All conversations you are a member of (channels, group chats, direct messages)
+- Your role in each conversation (moderator status)
+- Conversation preferences (muted, hidden, favorited)
+
+#### Tutorial Group Registrations (`tutorial_group_registrations.csv`)
+If tutorial groups are enabled:
+- Tutorial groups you are enrolled in
+- Course associations
+- Registration type (instructor-registered or self-enrolled)
+
+#### Presentation Assessments (`presentation_assessments.csv`)
+If you presented in a course that uses presentation assessments:
+- Course and title of the presentation
+- Date, language and mode (online or in person), including location or meeting link
+- Maximum points and the points you achieved
+- The remark the instructors entered about your presentation
+
+#### AI Tutor Interactions (`iris_chat_sessions.json`)
+If Iris (AI tutor) is enabled:
+- All chat sessions with the AI tutor
+- Messages exchanged (both your questions and AI responses)
+- Timestamps and feedback provided
+
+#### Learner Profiles (`learner_profiles.csv`)
+If learning analytics is enabled:
+- Your learning preferences per course
+- Goal orientation settings
+- Time investment preferences
+- Repetition intensity settings
+
+#### Competency Progress (`competency_progress.csv`)
+If competency-based learning is enabled:
+- Your progress on each competency
+- Confidence levels
+- Last modification timestamps
+
+#### Science Events (`science_events.csv`)
+If Artemis holds science events for you (see [Science Data Collection](/student/progress-analytics/science-data-collection)):
+- One row per event, with the columns `timestamp`, `event_type`, `course_id` and `resource_id`
+- The interactions recorded while you contributed data to a course, such as opening a lecture, an exercise or your learning path
+- Your decisions per course: `SCIENCE__OPT_IN` when you agreed, `SCIENCE__OPT_OUT` when you declined or withdrew, and `SCIENCE__DATA_DELETED` when you deleted recorded data for that course
+- Interactions recorded before Artemis asked for consent per course
+- An empty `course_id` for events Artemis could not assign to a course
+
+#### Plagiarism Cases
+If you were involved in plagiarism cases:
+- Case details and verdicts
+- Associated evidence
+
+### Additional Information
+
+The export also includes a `README.md` file with information about:
+- Purposes of data processing
+- Categories of personal data
+- Recipients of your data
+- Data storage period
+- Your rights under GDPR
+- Source of personal data
+- Information about automatic decision-making

@@ -1,0 +1,35 @@
+.chat-history-item {
+    border-radius: 6px;
+
+    &:hover,
+    &:focus-within {
+        background-color: var(--iris-accent-background);
+    }
+
+    &--selected {
+        background-color: var(--iris-tertiary-background);
+    }
+
+    &__menu-trigger {
+        opacity: 0;
+
+        // The menu opens in an overlay outside the row, so keep its trigger visible while it is open.
+        &[aria-expanded='true'] {
+            opacity: 1;
+        }
+    }
+
+    &:hover,
+    &:focus-within,
+    &--selected {
+        .chat-history-item__menu-trigger {
+            opacity: 1;
+        }
+    }
+}
+
+@media (hover: none) {
+    .chat-history-item__menu-trigger {
+        opacity: 1;
+    }
+}

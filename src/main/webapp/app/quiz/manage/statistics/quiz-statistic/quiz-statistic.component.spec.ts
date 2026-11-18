@@ -1,0 +1,360 @@
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
+import { provideHttpClient } from '@angular/common/http';
+import { Observable, Subject, of } from 'rxjs';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+const question = { id: 1 };
+const course = { id: 2 } as Course;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
+
+const route = { params: of({ courseId: 2, exerciseId: 42 }) };
+
+const quizQuestionStatOne = { type: 'multiple-choice' as const, ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
+const quizQuestionStatTwo = { type: 'multiple-choice' as const, ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
+
+describe('QuizStatisticComponent', () => {
+    let comp: QuizStatisticComponent;
+    let fixture: ComponentFixture<QuizStatisticComponent>;
+    let quizService: QuizExerciseService;
+    let accountService: MockAccountService;
+    let websocketService: MockWebsocketService;
+    let router: Router;
+    let quizServiceFindSpy: MockInstance<QuizExerciseService['findStatisticsOverview']>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ChangeDetectorRef),
+                provideHttpClient(),
+            ],
+        })
+            .overrideTemplate(QuizStatisticComponent, '')
+            .compileComponents();
+
+        quizService = TestBed.inject(QuizExerciseService);
+        accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+        router = TestBed.inject(Router);
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        vi.clearAllMocks();
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
+    });
+
+    describe('onInit', () => {
+        beforeEach(() => {
+            // Clear all mocks before each test
+            vi.clearAllMocks();
+            // Recreate component for clean state in these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            // Re-setup the quizServiceFindSpy after clearing
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
+        });
+
+        it('should call functions on Init', async () => {
+            // setup
+            const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
+            vi.spyOn(comp, 'loadData');
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
+            ];
+            quizExercise.participantsRated = 42;
+            accountService.isAtLeastTutor.set(true);
+
+            // call
+            comp.ngOnInit();
+            await fixture.whenStable();
+
+            // check
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
+            expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
+        });
+
+        it('should ignore a superseded initial overview response', () => {
+            accountService.isAtLeastTutor.set(true);
+            const initialRequest = new Subject<QuizStatisticsOverviewResponse>();
+            const refreshRequest = new Subject<QuizStatisticsOverviewResponse>();
+            quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
+            const initialOverview = cloneWith(quizExercise, { participantsRated: 1 });
+            const refreshedOverview = cloneWith(quizExercise, { participantsRated: 2 });
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            refreshRequest.next(refreshedOverview);
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+
+            initialRequest.next(initialOverview);
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+        });
+
+        it('should cancel superseded overview requests and the active request on destroy', () => {
+            accountService.isAtLeastTutor.set(true);
+            let nextRequestId = 0;
+            const cancelledRequestIds: number[] = [];
+            quizServiceFindSpy.mockImplementation(
+                () =>
+                    new Observable(() => {
+                        const requestId = nextRequestId++;
+                        return () => cancelledRequestIds.push(requestId);
+                    }),
+            );
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            websocketService.emit('/topic/statistic/42', 42);
+            expect(cancelledRequestIds).toEqual([0, 1]);
+
+            fixture.destroy();
+            expect(cancelledRequestIds).toEqual([0, 1, 2]);
+        });
+
+        it('should not load QuizSuccess if not authorised', async () => {
+            // setup
+            accountService.isAtLeastTutor.set(false);
+
+            // call
+            comp.ngOnInit();
+            await fixture.whenStable();
+
+            // check
+            expect(quizServiceFindSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('loadQuizSuccess', () => {
+        beforeEach(() => {
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
+        });
+
+        it('should set data', () => {
+            // setup
+            const loadDataSpy = vi.spyOn(comp, 'loadData');
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
+            ];
+            quizExercise.participantsRated = 42;
+            accountService.isAtLeastTutor.set(true);
+
+            // call
+            comp.loadQuizSuccess(quizExercise);
+
+            // check
+            expect(comp.quizExercise()).toBe(quizExercise);
+            expect(comp.maxScore).toBe(11);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call navigate to courses if called by student', () => {
+            // setup
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
+            ];
+            quizExercise.participantsRated = 42;
+            accountService.isAtLeastTutor.set(false);
+            const routerSpy = vi.spyOn(router, 'navigate');
+
+            // call
+            comp.loadQuizSuccess(quizExercise);
+
+            // check
+            expect(routerSpy).toHaveBeenCalledWith(['/courses']);
+        });
+    });
+
+    describe('calculateMaxScore', () => {
+        beforeEach(() => {
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
+        });
+
+        it('should return MaxScore by looping over scores', () => {
+            // setup
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 1, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 2, invalid: false },
+            ];
+            comp.quizExercise.set(quizExercise);
+            accountService.isAtLeastTutor.set(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
+
+            // call
+            comp.loadQuizSuccess(quizExercise);
+
+            // check
+            expect(comp.maxScore).toBe(3);
+        });
+
+        it('should return MaxScore be using quizExercise.maxScore', () => {
+            // setup
+            quizExercise.quizQuestions = undefined;
+            quizExercise.maxPoints = 42;
+            comp.quizExercise.set(quizExercise);
+            accountService.isAtLeastTutor.set(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
+
+            // call
+            comp.loadQuizSuccess(quizExercise);
+
+            // check
+            expect(comp.maxScore).toBe(42);
+        });
+    });
+
+    describe('loadData', () => {
+        beforeEach(() => {
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+        });
+
+        it('should use values of quizExercise and rated data', () => {
+            // setup
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
+            ];
+            quizExercise.participantsRated = 42;
+            comp.quizExercise.set(quizExercise);
+            // setup
+            const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
+            comp.rated = true;
+            comp.maxScore = 1;
+
+            // call
+            comp.loadData();
+
+            // check
+            expect(updateChartSpy).toHaveBeenCalledOnce();
+            expect(comp.ratedData).toEqual([1, 2, 17]);
+            expect(comp.unratedData).toEqual([3, 4, 39]);
+            expect(comp.data).toEqual([1, 2, 17]);
+            expect(comp.participants).toBe(42);
+        });
+
+        it('should use values of quizExercise and unrated data', () => {
+            // setup
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
+            ];
+            quizExercise.participantsRated = 42;
+            comp.quizExercise.set(quizExercise);
+            comp.rated = false;
+            comp.maxScore = 1;
+
+            // call
+            comp.loadData();
+
+            // check
+            expect(comp.unratedData).toEqual([3, 4, 39]);
+            expect(comp.data).toEqual([3, 4, 39]);
+        });
+
+        it('should use zero counters for questions without calculated statistics', () => {
+            quizExercise.quizQuestions = [{ points: 5, invalid: false }];
+            quizExercise.participantsRated = 0;
+            comp.quizExercise.set(quizExercise);
+            comp.rated = true;
+            comp.maxScore = 5;
+
+            expect(() => comp.loadData()).not.toThrow();
+            expect(comp.ratedData).toEqual([0, 0]);
+            expect(comp.unratedData).toEqual([0, 0]);
+        });
+
+        it('should use defaults if no quizQuestions are not set', () => {
+            // setup
+            const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
+            quizExercise.quizQuestions = [];
+            quizExercise.participantsRated = 42;
+            comp.rated = true;
+            comp.maxScore = 1;
+            comp.quizExercise.set(quizExercise);
+
+            // call
+            comp.loadData();
+
+            // check
+            expect(updateChartSpy).toHaveBeenCalledOnce();
+            expect(comp.ratedData).toEqual([0]);
+            expect(comp.unratedData).toEqual([0]);
+            expect(comp.data).toEqual([0]);
+            expect(comp.participants).toBe(42);
+        });
+    });
+
+    it('should switch rated', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        const loadDataMock = vi.spyOn(comp, 'loadDataInDiagram').mockImplementation(() => {});
+        comp.rated = true;
+
+        comp.switchRated();
+
+        expect(loadDataMock).toHaveBeenCalledOnce();
+        expect(comp.rated).toBe(false);
+    });
+
+    it('should format correctly', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        comp.participants = 100;
+
+        // the data label formatter is wired into the chart config
+        const datum = { seriesIndex: 0, index: 0, label: '', value: 30 };
+
+        expect(comp.chartConfig().dataLabels!.formatter(30, datum)).toBe('30 (30%)');
+
+        // without participants the percentage cannot be computed and falls back to 0%
+        comp.participants = 0;
+
+        expect(comp.chartConfig().dataLabels!.formatter(30, datum)).toBe('30 (0%)');
+    });
+
+    it('uses the correct-solutions tooltip for question bars and the average tooltip for the last bar', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        // two question bars plus the trailing average bar
+        comp.data = [10, 20, 15];
+        const tooltip = comp.chartConfig().tooltip as TumAetUiChartTooltipConfig;
+
+        expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '', value: 10 })).toContain('tooltip.correctSolutions');
+        expect(tooltip.label!({ seriesIndex: 0, index: 2, label: '', value: 15 })).toContain('tooltip.average');
+    });
+});

@@ -1,0 +1,507 @@
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
+import { notUndefined } from 'app/foundation/util/string-pure.utils';
+import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
+import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { Observable, of } from 'rxjs';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+type ExampleSubmissionResponseType = EntityResponseType;
+
+@Component({
+    selector: 'jhi-example-text-submission',
+    templateUrl: './example-text-submission.component.html',
+    styleUrls: ['./example-text-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        ConfirmAutofocusButtonComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TextAssessmentAreaComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+    ],
+})
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private exerciseService = inject(ExerciseService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+
+    readonly isNewSubmission = signal(false);
+    areNewAssessments = true;
+
+    // Is set to true, if there are any changes to the submission.text or exampleSubmissionusedForTutorial
+    readonly unsavedSubmissionChanges = signal(false);
+    private exerciseId!: number; // set in ngOnInit() from the route paramMap before any read
+    private exampleSubmissionId!: number; // set in ngOnInit() from the route paramMap before any read
+    exampleSubmission = new ExampleSubmission();
+    readonly assessmentsAreValid = signal(false);
+    readonly result = signal<Result | undefined>(undefined);
+    readonly unreferencedFeedback = signal<Feedback[]>([]);
+    readonly totalScore = signal<number>(undefined!);
+    readonly readOnly = signal<boolean>(undefined!);
+    readonly toComplete = signal<boolean>(undefined!);
+    // The State machine assigns `context.state` through the Context interface, so the plain property API must stay;
+    // the signal backing makes the async state transitions schedule zoneless change detection.
+    private readonly stateSignal = signal<State>(State.initialWithContext(this));
+    get state(): State {
+        return this.stateSignal();
+    }
+    set state(value: State) {
+        this.stateSignal.set(value);
+    }
+    SubmissionButtonStates = SubmissionButtonStates;
+    AssessButtonStates = AssessButtonStates;
+    readonly ButtonType = ButtonType;
+    UIStates = UIStates;
+    readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
+    ExampleSubmissionMode = ExampleSubmissionMode;
+
+    protected readonly trainingModeOptions = computed(() => {
+        this.languageChange();
+        return [
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.readAndConfirm'), value: ExampleSubmissionMode.READ_AND_CONFIRM },
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.assessCorrectly'), value: ExampleSubmissionMode.ASSESS_CORRECTLY },
+        ];
+    });
+    readonly referencedBlocksInExampleSubmission = signal<string[]>([]);
+
+    // Icons
+    faSave = faSave;
+    faEdit = faEdit;
+    farListAlt = faListAlt;
+
+    constructor() {
+        super();
+        this.textBlockRefs = [];
+        this.unusedTextBlockRefs = [];
+        this.submission = new TextSubmission();
+    }
+
+    private get referencedFeedback(): Feedback[] {
+        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined);
+    }
+
+    private get assessments(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback()];
+    }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
+    /**
+     * Reads route params and loads the example submission on initialWithContext.
+     */
+    override ngOnInit(): void {
+        void this.initializeExampleTextSubmissionComponent();
+    }
+
+    private async initializeExampleTextSubmissionComponent(): Promise<void> {
+        await super.initializeTextAssessmentBaseComponent();
+        // (+) converts string 'id' to a number
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
+        this.readOnly.set(!!this.route.snapshot.queryParamMap.get('readOnly'));
+        this.toComplete.set(!!this.route.snapshot.queryParamMap.get('toComplete'));
+
+        if (exampleSubmissionId === 'new') {
+            this.isNewSubmission.set(true);
+            this.exampleSubmissionId = -1;
+        } else {
+            this.exampleSubmissionId = +exampleSubmissionId!;
+        }
+        this.loadAll();
+    }
+
+    /**
+     * Loads the exercise.
+     * Also loads the example submission if the new parameter is not set.
+     */
+    private loadAll(): void {
+        const training = this.readOnly() || this.toComplete();
+        const exam = this.route.snapshot.paramMap.has('examId');
+        const exerciseSource = exam
+            ? training
+                ? this.exerciseService.findForExamAssessment(this.exerciseId)
+                : this.exerciseService.findForExamManagement(this.exerciseId)
+            : this.exerciseService.findForStaff(this.exerciseId);
+        exerciseSource.subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
+            this.exercise = exerciseResponse.body!;
+        });
+
+        if (this.isNewSubmission()) {
+            return; // We don't need to load anything else
+        }
+        this.state.edit();
+
+        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+            this.exampleSubmission = exampleSubmissionResponse.body!;
+            this.submission = this.exampleSubmission.submission;
+            await this.fetchExampleResult();
+            if (this.toComplete()) {
+                this.state = State.forCompletion(this);
+                this.restrictSelectableTextBlocks();
+                this.textBlockRefs.forEach((ref) => delete ref.feedback);
+                this.validateFeedback();
+            } else if (this.result()?.id) {
+                this.state = State.forExistingAssessmentWithContext(this);
+            }
+            if (this.exampleSubmission.usedForTutorial) {
+                this.selectedMode.set(ExampleSubmissionMode.ASSESS_CORRECTLY);
+            } else {
+                this.selectedMode.set(ExampleSubmissionMode.READ_AND_CONFIRM);
+            }
+        });
+    }
+
+    private restrictSelectableTextBlocks() {
+        this.textBlockRefs.forEach((ref) => {
+            if (ref.block && this.referencedBlocksInExampleSubmission().includes(ref.block.id!)) {
+                ref.selectable = true;
+                ref.highlighted = true;
+                ref.deletable = false;
+            } else {
+                ref.selectable = false;
+                ref.highlighted = false;
+                ref.deletable = true;
+            }
+        });
+    }
+
+    private exampleResultPurpose(): 'training' | 'instructor' {
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        return !this.readOnly() && !this.toComplete() && this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'training';
+    }
+
+    private fetchExampleResult(): Promise<void> {
+        return new Promise((resolve) => {
+            this.assessmentsService
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                .getExampleResult(this.exerciseId, this.submission?.id!, this.exampleResultPurpose())
+                .pipe(filter(notUndefined))
+                .subscribe((result) => {
+                    if (result && result.id) {
+                        this.result.set(result);
+                        this.exampleSubmission.submission = this.submission = result.submission;
+                        this.updateExampleAssessmentSolution(result);
+                    } else {
+                        if (result && !result.id) {
+                            this.updateExampleAssessmentSolution(result);
+                        }
+                        const newResult = new Result();
+                        newResult.submission = this.submission;
+                        this.result.set(newResult);
+                        this.submission!.results = [newResult];
+                    }
+                    this.prepareTextBlocksAndFeedbacks();
+                    this.areNewAssessments = this.assessments.length <= 0;
+                    this.validateFeedback();
+                    resolve();
+                });
+        });
+    }
+
+    /**
+     * Creates the example submission.
+     */
+    createNewExampleTextSubmission(): void {
+        const newExampleSubmission = new ExampleSubmission();
+        newExampleSubmission.submission = this.submission!;
+        newExampleSubmission.exercise = this.exercise;
+        newExampleSubmission.usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
+
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
+            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.exampleSubmission.exercise = this.exercise;
+                this.exampleSubmissionId = this.exampleSubmission.id!;
+                this.submission = this.exampleSubmission.submission;
+                this.isNewSubmission.set(false);
+                this.unsavedSubmissionChanges.set(false);
+                this.state.edit();
+
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                this.navigationUtilService.replaceNewWithIdInUrl(window.location.href, this.exampleSubmissionId);
+
+                this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+            },
+            error: this.alertService.error,
+        });
+    }
+
+    /**
+     * Updates the example submission.
+     */
+    updateExampleTextSubmission(): void {
+        this.saveSubmissionIfNeeded().subscribe({
+            next: () => {
+                this.state.edit();
+                this.alertService.success('artemisApp.exampleSubmission.saveSuccessful');
+            },
+            error: this.alertService.error,
+        });
+    }
+
+    saveSubmissionIfNeeded(): Observable<ExampleSubmissionResponseType> {
+        // If there are no unsaved changes, no need for server call
+        if (!this.unsavedSubmissionChanges()) {
+            return of(new HttpResponse<ExampleSubmission>());
+        }
+
+        return this.exampleSubmissionService.update(this.exampleSubmissionForNetwork(), this.exerciseId).pipe(
+            tap((exampleSubmissionResponse) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.unsavedSubmissionChanges.set(false);
+            }),
+        );
+    }
+
+    public async startAssessment(): Promise<void> {
+        this.exampleSubmissionService
+            .prepareForAssessment(this.exerciseId, this.exampleSubmissionId)
+            .pipe(
+                mergeMap(() => {
+                    return this.exampleSubmissionService.get(this.exampleSubmissionId);
+                }),
+            )
+            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.submission = this.exampleSubmission.submission;
+
+                const newResult = new Result();
+                newResult.submission = this.submission;
+                this.result.set(newResult);
+                this.submission!.results = [newResult];
+                this.prepareTextBlocksAndFeedbacks();
+                this.areNewAssessments = this.assessments.length <= 0;
+                this.validateFeedback();
+                this.state.assess();
+            });
+    }
+
+    /**
+     * Checks if the score boundaries have been respected and save the assessment.
+     */
+    public saveAssessments(): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid()) {
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        this.saveSubmissionIfNeeded()
+            .pipe(switchMap(() => this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback)))
+            .subscribe({
+                next: (response) => {
+                    this.result.set(response.body!);
+                    this.areNewAssessments = false;
+                    this.state.assess();
+                    this.alertService.success('artemisApp.textAssessment.saveSuccessful');
+                },
+                error: this.alertService.error,
+            });
+    }
+
+    /**
+     * Redirects back to the assessment dashboard if route param readOnly or toComplete is set.
+     * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
+     */
+    async back(): Promise<void> {
+        const courseId = getCourseFromExercise(this.exercise)?.id;
+        // check if exam exercise
+        if (this.exercise?.exerciseGroup) {
+            const examId = this.exercise.exerciseGroup.exam?.id;
+            const exerciseGroupId = this.exercise.exerciseGroup.id;
+            if (this.readOnly() || this.toComplete()) {
+                await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
+            } else {
+                await this.router.navigate([
+                    '/course-management',
+                    courseId,
+                    'exams',
+                    examId,
+                    'exercise-groups',
+                    exerciseGroupId,
+                    'text-exercises',
+                    this.exerciseId,
+                    'example-submissions',
+                ]);
+            }
+        } else {
+            if (this.readOnly() || this.toComplete()) {
+                void this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
+            } else {
+                void this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
+            }
+        }
+    }
+
+    /**
+     * Checks the assessment of the tutor to the example submission tutorial.
+     * The tutor is informed if its assessment is different from the one of the instructor.
+     */
+    checkAssessment(): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid()) {
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
+    }
+
+    /**
+     * Mark all referenced and unreferenced feedback as 'CORRECT'
+     */
+    markAllFeedbackToCorrect() {
+        this.textBlockRefs
+            .map((ref) => ref.feedback)
+            .filter((feedback) => feedback != undefined)
+            .concat(this.unreferencedFeedback())
+            .forEach((feedback) => {
+                feedback.correctionStatus = 'CORRECT';
+            });
+    }
+
+    markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
+        correctionErrors.forEach((correctionError) => {
+            const textBlockRef = this.textBlockRefs.find((ref) => ref.feedback?.reference === correctionError.reference);
+            if (textBlockRef != undefined && textBlockRef.feedback != undefined) {
+                textBlockRef.feedback.correctionStatus = correctionError.type;
+            } else {
+                const unreferencedFeedbackToBeMarked = this.unreferencedFeedback().find((feedback) => feedback.reference === correctionError.reference);
+                if (unreferencedFeedbackToBeMarked) {
+                    unreferencedFeedbackToBeMarked.correctionStatus = correctionError.type;
+                }
+            }
+        });
+    }
+
+    private exampleSubmissionForNetwork() {
+        const exampleSubmission = deepClone(this.exampleSubmission);
+        // `?? new TextSubmission()` keeps the previous behaviour: `Object.assign({}, undefined)` produced an empty
+        // object rather than undefined, which the branches below then mutate.
+        exampleSubmission.submission = deepClone(this.submission) ?? new TextSubmission();
+
+        if (this.result()) {
+            // Non-null assertion is safe inside this branch; the signal read above established the result exists.
+            const result = deepClone(this.result()!);
+            setLatestSubmissionResult(exampleSubmission.submission, result);
+            result.feedbacks = this.assessments;
+            delete result?.submission;
+        } else {
+            delete exampleSubmission.submission.results;
+            delete exampleSubmission.submission.latestResult;
+        }
+
+        return exampleSubmission;
+    }
+
+    /**
+     * Validate the feedback of the assessment
+     */
+    validateFeedback(): void {
+        this.assessmentsAreValid.set(this.assessments.length > 0);
+        this.totalScore.set(this.computeTotalScore(this.assessments));
+    }
+
+    /**
+     * After the tutor declared that they read and understood the example submission a corresponding submission will be added to the
+     * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
+     */
+    readAndUnderstood(): void {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
+            this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
+            void this.back();
+        });
+    }
+
+    private prepareTextBlocksAndFeedbacks() {
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result()?.feedbacks || []);
+        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
+
+        if (!this.toComplete()) {
+            this.unreferencedFeedback.set(this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED) ?? []);
+        }
+    }
+
+    editSubmission(): void {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+        this.assessmentsService.deleteExampleAssessment(this.exercise!.id!, this.exampleSubmission?.id!).subscribe(() => {
+            delete this.submission?.blocks;
+            if (this.submission && this.submission.results) {
+                this.submission.results = undefined;
+                this.submission.latestResult = undefined;
+            }
+            this.result.set(undefined);
+            this.textBlockRefs = [];
+            this.unusedTextBlockRefs = [];
+            this.state.edit();
+        });
+    }
+
+    onModeChange(mode: ExampleSubmissionMode) {
+        this.selectedMode.set(mode);
+        this.unsavedSubmissionChanges.set(true);
+        this.exampleSubmission.usedForTutorial = mode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+    }
+
+    private updateExampleAssessmentSolution(result: Result) {
+        if (result && result.feedbacks) {
+            this.referencedBlocksInExampleSubmission.set(
+                result.feedbacks.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference).map((feedback) => feedback.reference!) || [],
+            );
+        }
+    }
+}

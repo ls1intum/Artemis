@@ -1,0 +1,330 @@
+import { Component, OnDestroy, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { Subject } from 'rxjs';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
+import { Student } from 'app/openapi/model/student';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-users-import-dialog',
+    templateUrl: './users-import-dialog.component.html',
+    styleUrls: ['./users-import-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        HelpIconComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        ArtemisTranslatePipe,
+    ],
+})
+export class UsersImportDialogComponent implements OnDestroy {
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private courseManagementService = inject(CourseManagementService);
+    private adminUserService = inject(AdminUserService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
+
+    readonly ActionType = ActionType;
+    readonly dialogVisible = signal<boolean>(false);
+    readonly importCompleted = output<void>();
+
+    courseId = input<number>();
+    courseRoleSlug = input<string>();
+    exam = input<Exam | undefined>();
+    tutorialGroup = input<TutorialGroup | undefined>();
+    examUserMode = input<boolean>(false);
+    adminUserMode = input<boolean>(false);
+
+    readonly usersToImport = signal<StudentDTO[]>([]);
+    readonly examUsersToImport = signal<ExamUserDTO[]>([]);
+    readonly previewUsers = computed<ExamUserDTO[]>(() => (this.examUserMode() ? this.examUsersToImport() : this.usersToImport()));
+    notFoundUsers: Partial<StudentDTO>[] = [];
+    rejectedStaffUsers: Partial<StudentDTO>[] = [];
+
+    readonly isParsing = signal(false);
+    readonly validationError = signal<string | undefined>(undefined);
+    readonly noUsersFoundError = signal<boolean | undefined>(undefined);
+    readonly isImporting = signal(false);
+    readonly hasImported = signal(false);
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faCheck = faCheck;
+    faCircleNotch = faCircleNotch;
+    faUpload = faUpload;
+    faArrowRight = faArrowRight;
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
+    }
+
+    private resetDialog() {
+        this.usersToImport.set([]);
+        this.examUsersToImport.set([]);
+        this.notFoundUsers = [];
+        this.rejectedStaffUsers = [];
+        this.hasImported.set(false);
+        this.validationError.set(undefined);
+        this.noUsersFoundError.set(undefined);
+    }
+
+    async onCSVFileSelect(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            this.resetDialog();
+            const file = input.files[0];
+            this.isParsing.set(true);
+            try {
+                if (this.examUserMode()) {
+                    const result = await readExamUserDTOsFromCSVFile(file);
+                    if (!result.ok) {
+                        this.validationError.set(result.invalidRowIndices.join(', '));
+                        input.value = '';
+                        return;
+                    }
+
+                    const examUsers = result.examUsers;
+                    if (examUsers.length === 0) {
+                        this.noUsersFoundError.set(true);
+                        input.value = '';
+                        return;
+                    }
+
+                    this.examUsersToImport.set(result.examUsers);
+                } else {
+                    const result = await readStudentDTOsFromCSVFile(file);
+                    if (!result.ok) {
+                        this.validationError.set(result.invalidRowIndices.join(', '));
+                        input.value = '';
+                        return;
+                    }
+
+                    const students = result.students;
+                    if (students.length === 0) {
+                        this.noUsersFoundError.set(true);
+                        input.value = '';
+                        return;
+                    }
+
+                    this.usersToImport.set(result.students);
+                }
+            } catch {
+                this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+                input.value = '';
+            } finally {
+                this.isParsing.set(false);
+            }
+        }
+    }
+
+    /**
+     * Sends the import request to the server with the list of users to be imported
+     */
+    importUsers() {
+        this.isImporting.set(true);
+        const tutorialGroup = this.tutorialGroup();
+        const courseGroup = this.courseRoleSlug();
+        const exam = this.exam();
+        const courseId = this.courseId();
+
+        if (tutorialGroup) {
+            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport()).subscribe({
+                next: (students: Array<Student>) => {
+                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(students || []);
+                    this.onSaveSuccess(convertedStudents);
+                },
+                error: () => this.onSaveError(),
+            });
+        } else if (courseGroup && !exam) {
+            this.courseManagementService.addUsersToCourseRole(courseId!, this.usersToImport(), courseGroup).subscribe({
+                next: (res) => this.onSaveSuccess(res.body || []),
+                error: () => this.onSaveError(),
+            });
+        } else if (!courseGroup && exam) {
+            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
+                next: (res) => {
+                    const result = res.body;
+                    this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
+                },
+                error: () => this.onSaveError(),
+            });
+        } else if (this.adminUserMode()) {
+            // convert StudentDTO to User
+            const artemisUsers = this.usersToImport().map((student) => cloneWith(student, { visibleRegistrationNumber: student.registrationNumber }));
+            this.adminUserService.importAll(artemisUsers).subscribe({
+                next: (res) => {
+                    const convertedStudents = res.body?.map((user) => cloneWith(user, { registrationNumber: user.visibleRegistrationNumber })) || [];
+                    this.onSaveSuccess(convertedStudents);
+                },
+                error: () => this.onSaveError(),
+            });
+        } else {
+            this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+            this.isImporting.set(false);
+        }
+    }
+
+    /**
+     * Helper method to convert the generated Student DTOs to non-generated StudentDTOs
+     * This is needed as long as not all methods in this component are converted to use the generated Student DTO.
+     * @param response DTOs converted to @link{StudentDTO}
+     */
+    private convertGeneratedDtoToNonGenerated(response: Array<Student>): Partial<StudentDTO>[] {
+        const nonGeneratedDtos: Partial<StudentDTO>[] = [];
+        if (response) {
+            for (const student of response) {
+                nonGeneratedDtos.push({
+                    login: student.login,
+                    firstName: student.firstName,
+                    lastName: student.lastName,
+                    registrationNumber: student.registrationNumber,
+                    email: student.email,
+                });
+            }
+        }
+        return nonGeneratedDtos;
+    }
+
+    /**
+     * True if this user was successfully imported, false otherwise
+     * @param user The user to be checked
+     */
+    wasImported(user: StudentDTO): boolean {
+        return this.hasImported() && !this.wasNotFound(user) && !this.wasRejectedStaff(user);
+    }
+
+    /**
+     * True if this user could not be imported because it was not found
+     * @param user The user to be checked
+     */
+    wasNotFound(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.notFoundUsers?.length === 0) {
+            return false;
+        }
+
+        for (const notFound of this.notFoundUsers) {
+            if (
+                (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
+                (notFound.login?.length && notFound.login === user.login) ||
+                (notFound.email?.length && notFound.email === user.email)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * True if this user could not be imported because it is staff
+     * @param user The user to be checked
+     */
+    wasRejectedStaff(user: StudentDTO): boolean {
+        if (!this.hasImported() || this.rejectedStaffUsers?.length === 0) {
+            return false;
+        }
+
+        for (const rejected of this.rejectedStaffUsers) {
+            if (
+                (rejected.registrationNumber?.length && rejected.registrationNumber === user.registrationNumber) ||
+                (rejected.login?.length && rejected.login === user.login) ||
+                (rejected.email?.length && rejected.email === user.email)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Number of Users that were successfully imported
+     */
+    get numberOfUsersImported(): number {
+        return !this.hasImported()
+            ? 0
+            : this.examUserMode()
+              ? this.examUsersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected
+              : this.usersToImport().length - this.numberOfUsersNotFound - this.numberOfStaffRejected;
+    }
+
+    /**
+     * Number of users which could not be imported
+     */
+    get numberOfUsersNotFound(): number {
+        return !this.hasImported() ? 0 : this.notFoundUsers.length;
+    }
+
+    /**
+     * Number of staff users which could not be imported
+     */
+    get numberOfStaffRejected(): number {
+        return !this.hasImported() ? 0 : this.rejectedStaffUsers.length;
+    }
+
+    get isSubmitDisabled(): boolean {
+        return this.examUserMode() ? this.isImporting() || !this.examUsersToImport()?.length : this.isImporting() || !this.usersToImport()?.length;
+    }
+
+    /**
+     * Callback method that is called when the import request was successful
+     * @param notFoundUsers - List of users that could NOT be imported since they were not found
+     * @param rejectedStaffUsers - List of users that could NOT be imported since they are staff
+     */
+    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[], rejectedStaffUsers: Partial<StudentDTO>[] = []) {
+        this.isImporting.set(false);
+        this.hasImported.set(true);
+        this.notFoundUsers = notFoundUsers || [];
+        this.rejectedStaffUsers = rejectedStaffUsers;
+    }
+
+    /**
+     * Callback method that is called when the import request failed
+     */
+    onSaveError() {
+        this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+        this.isImporting.set(false);
+    }
+
+    open(): void {
+        this.resetDialog();
+        this.dialogVisible.set(true);
+    }
+
+    close(): void {
+        this.dialogVisible.set(false);
+    }
+
+    clear() {
+        this.close();
+    }
+
+    onFinish() {
+        this.close();
+        this.importCompleted.emit();
+    }
+}

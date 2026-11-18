@@ -1,0 +1,132 @@
+@if (activeConversation(); as activeConversation) {
+    @if (course()) {
+        <div>
+            <div class="flex flex-wrap justify-between">
+                <div class="flex items-center px-4!">
+                    <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="me-2 min-[576px]:hidden!" (click)="openSidebar()">
+                        <fa-icon [icon]="faChevronLeft" />
+                    </button>
+                    <h4
+                        class="pointer mb-0 inline-block rounded py-2 info"
+                        data-testid="conversation-name"
+                        (click)="openConversationDetailDialog($event, INFO)"
+                        #keyboardAction9
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                    >
+                        @if (activeConversationAsChannel(); as activeConversationAsChannel) {
+                            <jhi-channel-icon [isPublic]="activeConversationAsChannel.isPublic!" [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!" />
+                        }
+                        @if (getAsGroupChat(activeConversation)) {
+                            <fa-icon [icon]="faPeopleGroup" size="xs" />
+                        }
+                        @if (getAsOneToOneChat(activeConversation) && otherUser(); as otherUser) {
+                            <jhi-profile-picture
+                                [imageSizeInRem]="'2'"
+                                [fontSizeInRem]="'0.9'"
+                                [imageId]="'sidebar-profile-picture'"
+                                [defaultPictureId]="'sidebar-default-profile-picture'"
+                                [isGray]="false"
+                                [authorId]="otherUser.id"
+                                [authorName]="otherUser.name"
+                                class="me-2"
+                                [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
+                                [isEditable]="false"
+                            />
+                        }
+                        {{ conversationService.getConversationName(activeConversation, true) }}
+                    </h4>
+                </div>
+                @if (activeConversationAsChannel(); as activeConversationAsChannel) {
+                    @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
+                        <div class="p-2">
+                            <a
+                                tumAetUiButton
+                                severity="info"
+                                size="small"
+                                [routerLink]="['/courses', course()!.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
+                                jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                                [translateValues]="{ title: activeConversationAsChannel.tutorialGroupTitle }"
+                            ></a>
+                        </div>
+                    }
+                }
+                <div class="flex flex-wrap gap-2 px-4! py-2">
+                    <!-- Todo: Small Screens Support -->
+                    <div class="flex flex-wrap items-center" role="toolbar">
+                        <div class="me-1 flex items-center">
+                            @if (pinnedMessageCount() > 0) {
+                                <div class="pinned-messages-button">
+                                    <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="togglePinnedMessages()">
+                                        @if (showPinnedMessages()) {
+                                            <jhi-emoji class="fs-x-small" emoji="x" />
+                                        } @else {
+                                            <jhi-emoji emoji="pushpin" />
+                                        }
+                                        <span>
+                                            {{
+                                                showPinnedMessages()
+                                                    ? ('artemisApp.communication.showing' | artemisTranslate) +
+                                                      (pinnedMessageCount() === 1
+                                                          ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                          : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
+                                                    : pinnedMessageCount() === 1
+                                                      ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                      : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
+                                            }}
+                                        </span>
+                                    </button>
+                                </div>
+                            }
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="search" (click)="toggleSearchBar()">
+                                <fa-icon [icon]="faSearch" />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1" role="toolbar">
+                        @if (activeConversationAsChannel()?.subTypeReferenceId) {
+                            <a
+                                id="subTypeReferenceRouterLink"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [jhiTranslate]="channelSubTypeReferenceTranslationKey() ?? ''"
+                                [routerLink]="channelSubTypeReferenceRouterLink()"
+                            >
+                            </a>
+                        }
+                        <tumaet-ui-button-group>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                class="members"
+                                (click)="openConversationDetailDialog($event, MEMBERS)"
+                            >
+                                <fa-icon [icon]="faUserGroup" /> {{ activeConversation.numberOfMembers || 0 }}
+                            </button>
+                            @if (canAddUsers(activeConversation)) {
+                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="addUsers" (click)="openAddUsersDialog($event)">
+                                    <fa-icon [icon]="faUserPlus" />
+                                </button>
+                            }
+                        </tumaet-ui-button-group>
+                    </div>
+                </div>
+            </div>
+            @if (activeConversationAsChannel(); as activeConversationAsChannel) {
+                @if (activeConversationAsChannel.topic && activeConversationAsChannel.topic.length > 0) {
+                    <div class="flex justify-between px-2 text-muted-color">
+                        <span data-testid="conversation-topic" class="inline-block max-w-full">{{ activeConversationAsChannel.topic }}</span>
+                    </div>
+                }
+            }
+        </div>
+    }
+}

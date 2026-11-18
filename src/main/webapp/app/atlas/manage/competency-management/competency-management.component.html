@@ -1,0 +1,66 @@
+<div>
+    <div class="flex flex-wrap">
+        <div *titleBarTitle class="flex items-center justify-center">
+            <jhi-course-title-bar-title title="artemisApp.competency.manage.title" />
+            <button tumAetUiButton size="small" severity="success" type="button" class="ms-4!" (click)="openCourseCompetencyExplanation()">
+                <fa-icon [icon]="faCircleQuestion" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.helpButton"></span>
+            </button>
+        </div>
+        <div *titleBarActions class="ms-auto justify-end">
+            @if (irisEnabled()) {
+                <a tumAetUiButton size="small" severity="primary" id="generateButton" [routerLink]="['/course-management', courseId(), 'competency-management', 'generate']">
+                    <fa-icon [icon]="faRobot" />
+                    <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
+                </a>
+            }
+            <button tumAetUiButton size="small" severity="warn" type="button" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
+                <fa-icon [icon]="faEdit" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButton"></span>
+            </button>
+            <button tumAetUiButton size="small" severity="secondary" type="button" data-testid="courseCompetencyImportAllButton" (click)="openImportAllModal()">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
+            </button>
+        </div>
+    </div>
+    @if (isLoading()) {
+        <div class="flex justify-center">
+            <tumaet-ui-progress-spinner [style.width.rem]="2" [style.height.rem]="2" [ariaLabel]="'loading' | artemisTranslate" />
+        </div>
+    }
+    <jhi-competency-management-table
+        [courseId]="courseId()"
+        [courseCompetencies]="competencies()"
+        [competencyType]="CourseCompetencyType.COMPETENCY"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+        (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
+    />
+    <jhi-competency-management-table
+        [courseId]="courseId()"
+        [courseCompetencies]="prerequisites()"
+        [competencyType]="CourseCompetencyType.PREREQUISITE"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+        (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
+    />
+
+    <!-- Floating Agent Chat Button -->
+    @if (agentChatEnabled()) {
+        <button
+            tumAetUiButton
+            size="small"
+            severity="primary"
+            rounded
+            type="button"
+            class="agent-chat-button"
+            (click)="openAgentChatModal()"
+            [attr.aria-label]="'AI Assistant'"
+            title="Chat with AI Assistant"
+            id="agent-chat-button"
+        >
+            <fa-icon [icon]="faRobot" />
+        </button>
+    }
+</div>

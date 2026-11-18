@@ -1,0 +1,14 @@
+<jhi-lecture-unit-card
+    [courseId]="courseId()"
+    [lectureUnit]="lectureUnit()"
+    [icon]="faUpRightFromSquare"
+    [showViewIsolatedButton]="true"
+    [viewIsolatedButtonLabel]="'artemisApp.onlineUnit.doOpen'"
+    [isPresentationMode]="isPresentationMode()"
+    [deepLink]="matchedDeepLink()"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
+    (onShowIsolated)="handleIsolatedView()"
+>
+    {{ this.lectureUnit().description }}
+</jhi-lecture-unit-card>

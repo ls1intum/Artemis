@@ -1,0 +1,37 @@
+.edit-quiz-re-evaluate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 100px;
+
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
+        .background-file,
+        .drag-item-file {
+            display: flex;
+        }
+
+        .drag-item-file {
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    }
+}
+
+.edit-quiz-re-evaluate .question-card-body {
+    padding-right: 1.5rem;
+}
+
+.edit-quiz-footer {
+    height: 80px;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    border-top: 1px solid var(--border-color);
+    background: var(--edit-quiz-footer-background);
+}

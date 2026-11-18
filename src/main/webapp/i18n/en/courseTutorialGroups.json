@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "breadcrumb": {
+            "title": "Tutorial Groups"
+        },
+        "pages": {
+            "courseTutorialGroups": {
+                "title": "Your Tutorial Groups",
+                "noRegistrations": "You are not registered to any tutorial group in this course."
+            },
+            "courseTutorialGroupDetail": {
+                "title": "Tutorial Group Details",
+                "sections": {
+                    "general": "General Information"
+                }
+            },
+            "courseTutorialGroupOverview": {
+                "title": "Tutorial Groups Overview",
+                "sidePanel": {
+                    "header": "Course Information",
+                    "numberOfGroups": "Number of Tutorial Groups: ",
+                    "numberOfRegistrations": "Number of Registrations: "
+                },
+                "freeDaySidePanel": {
+                    "header": "Days without Tutorial Groups"
+                }
+            }
+        },
+        "tutorialGroupCard": {
+            "teachingAssistant": "Tutor: {{ name }}"
+        }
+    }
+}

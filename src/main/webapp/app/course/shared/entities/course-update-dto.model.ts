@@ -1,0 +1,150 @@
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { Course } from './course.model';
+import type { CourseInformationSharingConfiguration, Language } from './course.model';
+import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+
+/**
+ * DTO for creating a new course.
+ * Mirrors the server-side CourseCreateDTO to send only the necessary fields.
+ * Note: No 'id' field since this is for creation.
+ */
+export interface CourseCreateDTO {
+    // Basic info
+    title: string;
+    shortName: string;
+    description?: string;
+    semester?: string;
+
+    // Dates (as ISO strings for server)
+    startDate?: string;
+    endDate?: string;
+    enrollmentStartDate?: string;
+    enrollmentEndDate?: string;
+    unenrollmentEndDate?: string;
+
+    // Configuration flags
+    testCourse: boolean;
+    onlineCourse?: boolean;
+    language?: Language;
+    defaultProgrammingLanguage?: ProgrammingLanguage;
+
+    // Complaint settings
+    maxComplaints?: number;
+    maxTeamComplaints?: number;
+    maxComplaintTimeDays: number;
+    maxRequestMoreFeedbackTimeDays: number;
+    maxComplaintTextLimit: number;
+    maxComplaintResponseTextLimit: number;
+
+    // UI settings
+    color?: string;
+    enrollmentEnabled?: boolean;
+    enrollmentConfirmationMessage?: string;
+    unenrollmentEnabled: boolean;
+
+    // Course features
+    learningPathsEnabled: boolean;
+    presentationAssessmentsEnabled: boolean;
+    presentationScore?: number;
+    maxPoints?: number;
+    accuracyOfScores?: number;
+    timeZone?: string;
+    courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+
+    // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
+    gradeRelevant: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
+}
+
+/**
+ * Converts a Course entity to a CourseCreateDTO for sending to the server.
+ *
+ * @param course the course entity to convert
+ * @returns a CourseCreateDTO with only the fields needed for creation
+ */
+export function toCourseCreateDTO(course: Course): CourseCreateDTO {
+    return {
+        // Basic info
+        title: course.title!,
+        shortName: course.shortName!,
+        description: course.description,
+        semester: course.semester,
+
+        // Dates (converted to ISO strings)
+        startDate: convertDateFromClient(course.startDate),
+        endDate: convertDateFromClient(course.endDate),
+        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
+
+        // Configuration flags
+        testCourse: course.testCourse ?? false,
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+
+        // Complaint settings
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
+        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
+
+        // UI settings
+        color: course.color,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
+
+        // Course features
+        learningPathsEnabled: course.learningPathsEnabled ?? false,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+
+        // Grade-relevance defaults to true when the course has no explicit configuration yet.
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
+    };
+}
+
+/**
+ * DTO for updating an existing course.
+ * Mirrors the server-side CourseUpdateDTO to send only the necessary fields.
+ */
+export interface CourseUpdateDTO extends CourseCreateDTO {
+    id: number;
+    courseIcon?: string;
+    courseInformationSharingMessagingCodeOfConduct?: string;
+    onboardingDone: boolean;
+    dataRetentionHold: boolean;
+}
+
+/**
+ * Converts a Course entity to a CourseUpdateDTO for sending to the server.
+ *
+ * @param course the course entity to convert
+ * @returns a CourseUpdateDTO with only the fields needed for update
+ */
+export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
+    return cloneWith(toCourseCreateDTO(course), {
+        id: course.id!,
+        courseIcon: course.courseIcon,
+        courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
+        onboardingDone: course.onboardingDone ?? false,
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+    });
+}

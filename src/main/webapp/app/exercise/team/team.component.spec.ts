@@ -1,0 +1,173 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TeamComponent } from 'app/exercise/team/team.component';
+import { TeamService } from 'app/exercise/team/team.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { mockExercise, mockTeam, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
+
+/**
+ * The component under test uses signal-based state (`team`, `exercise`, `isLoading`, ...).
+ * Lifecycle is driven via `fixture.detectChanges()` rather than calling `comp.ngOnInit()`
+ * manually, because Angular's auto-detected zoneless change detection invokes lifecycle
+ * hooks automatically when CD runs. Calling `ngOnInit()` manually in addition would cause
+ * duplicate subscriptions / spy invocations.
+ */
+describe('TeamComponent', () => {
+    let comp: TeamComponent;
+    let fixture: ComponentFixture<TeamComponent>;
+    let router: Router;
+    const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
+    let accountService: AccountService;
+    let identityStub: ReturnType<typeof vi.spyOn>;
+    let exerciseService: ExerciseService;
+    let teamService: TeamService;
+    let alertService: AlertService;
+    let courseStorageService: CourseStorageService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                MockProvider(SessionStorageService),
+                MockProvider(LocalStorageService),
+                TeamService,
+                ExerciseService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        accountService = TestBed.inject(AccountService);
+        identityStub = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+        fixture = TestBed.createComponent(TeamComponent);
+        comp = fixture.componentInstance;
+        alertService = TestBed.inject(AlertService);
+        router = TestBed.inject(Router);
+        teamService = TestBed.inject(TeamService);
+        exerciseService = TestBed.inject(ExerciseService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it.each(['student', 'staff'] as const)('should select and pass the explicit %s team overview purpose from the route', (purpose) => {
+        vi.spyOn(router, 'url', 'get').mockReturnValue(purpose === 'staff' ? '/course-management/1/exercises/2/teams/3' : '/courses/1/exercises/2/teams/3');
+        const body = { ...mockExercise, isAtLeastInstructor: true };
+        const student = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body })));
+        const staff = vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body })));
+        vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse({ body: mockTeam })));
+        const route = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        route.setParameters({ courseId: 1, exerciseId: 2, teamId: 3 });
+        const view = TestBed.createComponent(TeamComponent).componentInstance;
+        view.ngOnInit();
+        expect(view.overviewPurpose).toBe(purpose);
+        expect(purpose === 'staff' ? staff : student).toHaveBeenCalledExactlyOnceWith(2);
+        expect(purpose === 'staff' ? student : staff).not.toHaveBeenCalled();
+        expect(view.exercise()?.id).toBe(mockExercise.id);
+    });
+
+    describe('ngOnInit', () => {
+        it('should set team and exercise from services and call find on exerciseService to retreive exercise', async () => {
+            const findSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(comp.exercise()).toEqual(mockExercise);
+            expect(comp.team()).toEqual(mockTeam);
+            expect(comp.isTeamOwner()).toBe(false);
+            expect(findSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should add the fetched exercise to course storage without dropping existing course content', async () => {
+            const existingExercise = { id: 2, type: ExerciseType.TEXT } as Exercise;
+            courseStorageService.updateCourse({ id: 1, title: 'Course', exercises: [existingExercise] } as Course);
+            const fetchedExercise = { ...mockExercise, type: ExerciseType.PROGRAMMING } as Exercise;
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: fetchedExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseStorageService.getCourse(1)).toMatchObject({
+                title: 'Course',
+                exercises: [existingExercise, fetchedExercise],
+            });
+        });
+
+        it('should call alert service error when exercise service fails', async () => {
+            const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404, message: 'not found' })));
+            const alertServiceStub = vi.spyOn(alertService, 'error');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(exerciseStub).toHaveBeenCalledOnce();
+            expect(alertServiceStub).toHaveBeenCalledOnce();
+            expect(comp.isLoading()).toBe(false);
+        });
+
+        it('should call alert service error when team service fails', async () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            const teamStub = vi.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404, message: 'not found' })));
+            const alertServiceStub = vi.spyOn(alertService, 'error');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(teamStub).toHaveBeenCalledOnce();
+            expect(alertServiceStub).toHaveBeenCalledOnce();
+            expect(comp.isLoading()).toBe(false);
+        });
+    });
+
+    describe('ngOnInit with team owner', () => {
+        it('should set team owner true if user is team owner', async () => {
+            identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 } as User));
+            fixture = TestBed.createComponent(TeamComponent);
+            comp = fixture.componentInstance;
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(comp.isTeamOwner()).toBe(true);
+        });
+    });
+
+    describe('onTeamUpdate', () => {
+        it('should update team to given team', () => {
+            comp.onTeamUpdate(mockTeams[1]);
+            expect(comp.team()).toEqual(mockTeams[1]);
+        });
+    });
+
+    describe('onTeamDelete', () => {
+        it('should go to teams overview on delete', async () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            comp.onTeamDelete();
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
+        });
+    });
+});

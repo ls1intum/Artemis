@@ -1,0 +1,47 @@
+<div class="mcq-container">
+    <div class="mcq-question" [id]="questionLabelId">{{ mcqData().question }}</div>
+    <div class="mcq-options" role="radiogroup" [attr.aria-labelledby]="questionLabelId">
+        @for (option of options(); track $index) {
+            <label class="mcq-option-row">
+                <input
+                    type="radio"
+                    class="mcq-option-input"
+                    [name]="questionLabelId"
+                    [value]="$index"
+                    [checked]="selectedIndex() === $index"
+                    [disabled]="submitted()"
+                    (change)="selectOption($index)"
+                />
+                <span
+                    class="mcq-option"
+                    [class.selected]="selectedIndex() === $index && !submitted()"
+                    [class.correct]="submitted() && option.correct"
+                    [class.incorrect]="submitted() && selectedIndex() === $index && !option.correct"
+                >
+                    <span class="mcq-option-label">{{ option.label }}</span>
+                    <span class="mcq-option-text">{{ option.text }}</span>
+                    @if (submitted() && (option.correct || selectedIndex() === $index)) {
+                        <span aria-hidden="true">{{ option.correct ? '✓' : '×' }}</span>
+                        <span class="sr-only" [jhiTranslate]="option.correct ? 'artemisApp.iris.mcq.correct' : 'artemisApp.iris.mcq.incorrect'"></span>
+                    }
+                </span>
+            </label>
+        }
+    </div>
+    @if (!submitted()) {
+        <button tumAetUiButton severity="primary" type="button" class="mcq-submit" [disabled]="selectedIndex() === undefined" (click)="submit()">
+            <span jhiTranslate="artemisApp.iris.mcq.submit"></span>
+        </button>
+    }
+    @if (submitted()) {
+        <div #feedback tabindex="-1" class="mcq-feedback">
+            <tumaet-ui-message [severity]="correctAnswer() ? 'success' : 'error'">
+                <span [jhiTranslate]="correctAnswer() ? 'artemisApp.iris.mcq.correct' : 'artemisApp.iris.mcq.incorrect'"></span>
+            </tumaet-ui-message>
+        </div>
+        <div class="mcq-explanation">
+            <strong jhiTranslate="artemisApp.iris.mcq.explanation"></strong>
+            <jhi-iris-citation-text [text]="mcqData().explanation" [citationInfo]="citationInfo()" />
+        </div>
+    }
+</div>

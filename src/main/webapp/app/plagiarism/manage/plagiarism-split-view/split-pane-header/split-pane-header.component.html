@@ -1,0 +1,46 @@
+<div class="split-pane-header">
+    <div
+        class="split-pane-header-top"
+        [class.active]="showFiles()"
+        [class.clickable]="hasFiles()"
+        (click)="toggleShowFiles(true)"
+        [attr.aria-expanded]="hasFiles() ? showFiles() : null"
+        #keyboardAction2
+        [attr.role]="hasFiles() ? 'button' : null"
+        [attr.tabindex]="hasFiles() ? 0 : null"
+        (keydown.enter)="hasFiles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="hasFiles() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="hasFiles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
+        @if (hasActiveFile()) {
+            <div class="split-pane-header-file-name">
+                <fa-icon class="file-arrow-down" [icon]="faChevronDown" />
+                <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
+            </div>
+        }
+        <div>{{ studentLogin() || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
+    </div>
+    @if (showFiles()) {
+        <ul (mouseleave)="toggleShowFiles(true, false)" class="split-pane-header-files">
+            @for (file of files(); track file; let idx = $index) {
+                <li
+                    class="split-pane-header-file"
+                    (mouseenter)="triggerMouseEnter(file, idx)"
+                    (click)="handleFileSelect(file, idx, true)"
+                    [class.hover]="idx === hoveredFileIndex()"
+                    #keyboardAction14
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
+                >
+                    <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
+                </li>
+            }
+            @if (!hasFiles()) {
+                <li jhiTranslate="artemisApp.plagiarism.noFilesFound"></li>
+            }
+        </ul>
+    }
+</div>

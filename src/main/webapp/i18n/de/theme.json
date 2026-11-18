@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "theme": {
+            "darkMode": "Dunkler Modus",
+            "lightMode": "Heller Modus",
+            "sync": "Mit Betriebssystem synchronisieren"
+        }
+    }
+}

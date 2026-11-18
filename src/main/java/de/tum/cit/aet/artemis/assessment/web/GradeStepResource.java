@@ -1,0 +1,265 @@
+package de.tum.cit.aet.artemis.assessment.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
+import de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+
+/**
+ * REST controller for managing grade steps of a grading scale
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.GRADING_KEYS)
+@RestController
+@RequestMapping("api/assessment/")
+public class GradeStepResource {
+
+    private static final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final GradingScaleRepository gradingScaleRepository;
+
+    private final GradeStepRepository gradeStepRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final UserRepository userRepository;
+
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
+            CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            StudentParticipationRepository studentParticipationRepository) {
+        this.gradingScaleRepository = gradingScaleRepository;
+        this.gradeStepRepository = gradeStepRepository;
+        this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
+        this.examRepositoryApi = examRepositoryApi;
+        this.userRepository = userRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * GET /courses/{courseId}/grading-scale/grade-steps : Find all grade steps for the grading scale of a course
+     *
+     * @param courseId the course to which the grading scale belongs
+     * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
+     */
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
+    @GetMapping("courses/{courseId}/grading-scale/grade-steps")
+    @EnforceAtLeastStudent
+    public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all grade steps for course: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale.get(), course.getMaxPoints(), course.getTitle());
+        return ResponseEntity.ok(gradeStepsDTO);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps : Find all grade steps for the grading scale of an exam
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to which the grading scale belongs
+     * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
+     */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
+    @EnforceAtLeastStudent
+    public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get all grade steps for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
+        User user = userRepository.getUserWithAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam exam = api.findByIdElseThrow(examId);
+        if (!courseId.equals(exam.getCourse().getId())) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        if (exam.getExamMode().isReal() && !exam.resultsPublished()) {
+            throw new AccessForbiddenException();
+        }
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getExamMaxPoints(), exam.getTitle());
+        return ResponseEntity.ok(gradeStepsDTO);
+    }
+
+    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, Integer maxPoints, String title) {
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
+        for (GradeStep gradeStep : gradeSteps) {
+            gradeStep.setGradingScale(null);
+        }
+        var newGradeSteps = gradeSteps.stream().map(GradeStepDTO::of).collect(Collectors.toSet());
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), newGradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
+                gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
+    }
+
+    /**
+     * GET /courses/{courseId}/grading-scale/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course by ID
+     *
+     * @param courseId    the course to which the grading scale belongs
+     * @param gradeStepId the grade step within the grading scale
+     * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
+     */
+    @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
+        log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        checkGradeStepBelongsToGradingScale(gradeStep, gradingScale);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
+    }
+
+    /**
+     * GET /courses/{courseId}/grading-scale/exams/{examId}/grade-steps/{gradeStepId} : Find a grade step for the grading scale of a course
+     *
+     * @param courseId    the course to which the exam belongs
+     * @param examId      the exam to which the grading scale belongs
+     * @param gradeStepId the grade step within the grading scale
+     * @return ResponseEntity with status 200 (Ok) with body the grade steps if the grading scale and grade step exist and 404 (Not found) otherwise
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
+        log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        if (!api.findCourseIdById(examId).filter(courseId::equals).isPresent()) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
+        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
+        checkGradeStepBelongsToGradingScale(gradeStep, gradingScale);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
+    }
+
+    private void checkGradeStepBelongsToGradingScale(GradeStep gradeStep, GradingScale gradingScale) {
+        if (gradeStep.getGradingScale() == null || !gradeStep.getGradingScale().getId().equals(gradingScale.getId())) {
+            throw new AccessForbiddenException("The grade step does not belong to the grading scale");
+        }
+    }
+
+    /**
+     * GET /courses/{courseId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
+     *
+     * @param courseId        the course to which the grading scale belongs
+     * @param gradePercentage the grade percentage the has to be mapped to a grade step
+     * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
+     */
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
+    @GetMapping("courses/{courseId}/grading-scale/match-grade-step")
+    @EnforceAtLeastStudent
+    public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
+        log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        Optional<GradingScale> optionalGradingScale = gradingScaleRepository.findByCourseId(courseId);
+        if (optionalGradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradingScale gradingScale = optionalGradingScale.get();
+        GradeStep gradeStep;
+        if (!studentParticipationRepository.existsByCourseIdAndStudentId(courseId, user.getId())) {
+            gradeStep = new GradeStep();
+            gradeStep.setGradeName(gradingScale.getNoParticipationGradeOrDefault());
+        }
+        else if (plagiarismCaseApi.isPresent() && plagiarismCaseApi.get().findByCourseIdAndStudentId(courseId, user.getId()).stream()
+                .anyMatch(plagiarismCase -> PlagiarismVerdict.PLAGIARISM.equals(plagiarismCase.getVerdict()))) {
+            gradeStep = new GradeStep();
+            gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
+        }
+        else {
+            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale);
+        }
+        GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradingScale.getGradeType());
+        return ResponseEntity.ok(gradeDTO);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
+     *
+     * @param courseId        the course to which the exam belongs
+     * @param examId          the exam to which the grading scale belongs
+     * @param gradePercentage the grade percentage the has to be mapped to a grade step
+     * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
+     */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
+    @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
+    @EnforceAtLeastStudent
+    public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
+        log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
+        User user = userRepository.getUserWithAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        Exam exam = api.findByIdElseThrow(examId);
+        if (!courseId.equals(exam.getCourse().getId())) {
+            throw new AccessForbiddenException("The exam does not belong to the course");
+        }
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        else if (!exam.resultsPublished()) {
+            throw new AccessForbiddenException();
+        }
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get());
+        GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
+        return ResponseEntity.ok(gradeDTO);
+    }
+}

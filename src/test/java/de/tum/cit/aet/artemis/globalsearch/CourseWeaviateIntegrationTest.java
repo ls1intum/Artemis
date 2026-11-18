@@ -1,0 +1,105 @@
+package de.tum.cit.aet.artemis.globalsearch;
+
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+
+/**
+ * Integration tests for course Weaviate indexing.
+ * <p>
+ * Verifies that courses are correctly upserted and deleted in Weaviate
+ * when created, updated, or deleted.
+ * <p>
+ * Tests are skipped when Docker is not available or the Weaviate container failed to start.
+ */
+@EnabledIf("isWeaviateEnabled")
+class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "courseweaviateint";
+
+    @Autowired
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    @Autowired
+    private WeaviateService weaviateService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    private Course course;
+
+    static boolean isWeaviateEnabled() {
+        return weaviateContainer != null && weaviateContainer.isRunning();
+    }
+
+    @BeforeEach
+    void setUp() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpsertCourse_indexesInWeaviate() throws Exception {
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+
+        assertCourseExistsInWeaviate(weaviateService, course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpsertCourse_updatesPropertiesInWeaviate() throws Exception {
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+        assertCourseExistsInWeaviate(weaviateService, course);
+
+        // Update the course title. Persist it, since the dispatcher re-derives the entity from the database at dispatch time
+        course.setTitle("Updated Course Title");
+        courseRepository.save(course);
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+
+        awaitIndexing(() -> {
+            var properties = queryCourseProperties(weaviateService, course.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Updated Course Title");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpsertCourse_storesShortNameAndDescription() throws Exception {
+        course.setShortName("TST");
+        course.setDescription("A test course description");
+        courseRepository.save(course);
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+
+        awaitIndexing(() -> {
+            var properties = queryCourseProperties(weaviateService, course.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.SHORT_NAME)).isEqualTo("TST");
+            assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo("A test course description");
+        });
+    }
+}

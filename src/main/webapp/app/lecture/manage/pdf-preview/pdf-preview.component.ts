@@ -1,0 +1,934 @@
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Subject, Subscription, exhaustMap, filter, map, take, timeout, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
+import type { PdfDocumentObject } from '@embedpdf/models';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
+import { finalize } from 'rxjs/operators';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+
+interface PdfOperationBase {
+    timestamp: dayjs.Dayjs;
+}
+
+interface MergePdfOperation extends PdfOperationBase {
+    type: 'MERGE';
+    data: { sourceId: string; pageCount: number };
+}
+
+interface DeletePdfOperation extends PdfOperationBase {
+    type: 'DELETE';
+    data: { slideIds: string[] };
+}
+
+interface HidePdfOperation extends PdfOperationBase {
+    type: 'HIDE';
+    data: { pages: HiddenPage[] };
+}
+
+interface ShowPdfOperation extends PdfOperationBase {
+    type: 'SHOW';
+    data: { slideIds: string[] };
+}
+
+interface ReorderPdfOperation extends PdfOperationBase {
+    type: 'REORDER';
+    data: { pageOrder: { slideId: string; order: number }[] };
+}
+
+type PdfOperation = MergePdfOperation | DeletePdfOperation | HidePdfOperation | ShowPdfOperation | ReorderPdfOperation;
+
+export interface PDFSource {
+    id: string;
+    /** The document handle opened in the shared PDFium engine (cached by {@link id}). */
+    doc: PdfDocumentObject;
+    url: string;
+}
+
+export interface OrderedPage {
+    initialIndex: number;
+    slideId: string;
+    order: number;
+    sourcePdfId: string;
+    sourceIndex: number;
+    /** Handle of the source document this page belongs to, used by the thumbnail grid to render it. */
+    sourceDoc: PdfDocumentObject;
+}
+
+export interface HiddenPage {
+    slideId: string;
+    date: dayjs.Dayjs;
+    exerciseId: number | undefined;
+}
+
+export interface HiddenPageMap {
+    [slideId: string]: {
+        date: dayjs.Dayjs;
+        exerciseId: number | undefined;
+    };
+}
+
+@Component({
+    selector: 'jhi-pdf-preview-component',
+    templateUrl: './pdf-preview.component.html',
+    styleUrls: ['./pdf-preview.component.scss'],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTooltipDirective,
+        PdfPreviewThumbnailGridComponent,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        RouterModule,
+        DeleteButtonDirective,
+        TranslateDirective,
+        ConfirmAutofocusButtonComponent,
+        PdfPreviewDateBoxComponent,
+    ],
+})
+export class PdfPreviewComponent implements OnInit, OnDestroy {
+    // Injected services
+    private readonly route = inject(ActivatedRoute);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly alertService = inject(AlertService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
+    fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+    showPopover = viewChild.required<TumAetUiPopoverComponent>('showPagePopover');
+
+    attachmentVideoUnitSub?: Subscription;
+
+    FOREVER = dayjs('9999-12-31');
+
+    protected readonly ButtonType = ButtonType;
+    protected readonly Object = Object;
+    protected readonly Array = Array;
+
+    readonly courseId = signal<number>(undefined!);
+
+    // Signals
+    attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    isPdfLoading = signal<boolean>(false);
+    attachmentToBeEdited = signal<Attachment | undefined>(undefined);
+    currentPdfUrl = signal<string | undefined>(undefined);
+    totalPages = signal<number>(0);
+    isAppendingFile = signal<boolean>(false);
+    isFileChanged = signal<boolean>(false);
+    selectedPages = signal<Set<OrderedPage>>(new Set());
+    initialHiddenPages = signal<HiddenPageMap>({});
+    hiddenPages = signal<HiddenPageMap>({});
+    isSaving = signal<boolean>(false);
+    pageOrder = signal<OrderedPage[]>([]);
+    sourcePDFs = signal<Map<string, PDFSource>>(new Map());
+    hasOperations = signal<boolean>(false);
+    operations = signal<PdfOperation[]>([]);
+
+    // Computed properties
+    allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
+    pageOrderChanged = computed(() => {
+        return this.pageOrder().some((page, index) => page.initialIndex !== index + 1);
+    });
+    hasHiddenPages = computed(() => Object.keys(this.hiddenPages()).length > 0);
+    hasHiddenSelectedPages = computed(() => {
+        return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
+    });
+    private readonly hasPdfContentChanges = computed(() => {
+        return (
+            this.isFileChanged() ||
+            this.pageOrderChanged() ||
+            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
+        );
+    });
+
+    hasChanges = computed(() => {
+        return this.hasPdfContentChanges() || this.hiddenPagesChanged() || this.pageOrderChanged();
+    });
+    sortedHiddenSelectedPages = computed(() => {
+        return Array.from(this.selectedPages())
+            .filter((page) => this.hiddenPages()[page.slideId])
+            .sort((a, b) => a.order - b.order);
+    });
+
+    /** Set once the page is left, after which a request that completes late must not navigate. */
+    private isDestroyed = false;
+
+    dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    protected readonly faCancel = faCancel;
+    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faExclamationCircle = faExclamationCircle;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faEye = faEye;
+    protected readonly faEyeSlash = faEyeSlash;
+    protected readonly faSave = faSave;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+
+    ngOnInit() {
+        this.isPdfLoading.set(true);
+        this.courseId.set(Number(this.route?.parent?.snapshot.paramMap.get('courseId')));
+        this.route.data.subscribe((data) => {
+            if ('attachmentVideoUnit' in data) {
+                this.attachmentVideoUnit.set(data.attachmentVideoUnit);
+                if (data.attachmentVideoUnit.slideMetadataPending) {
+                    this.attachmentVideoUnitSub = timer(0, 1000)
+                        .pipe(
+                            exhaustMap(() => this.attachmentVideoUnitService.findById(data.attachmentVideoUnit.id, data.attachmentVideoUnit.lecture.id)),
+                            map((response) => response.body),
+                            filter((unit): unit is AttachmentVideoUnit => !!unit && !unit.slideMetadataPending),
+                            take(1),
+                            timeout({ first: 60_000 }),
+                        )
+                        .subscribe({
+                            next: (unit) => this.initializeAttachmentVideoUnit(unit),
+                            error: (error) => {
+                                this.isPdfLoading.set(false);
+                                onError(this.alertService, error);
+                            },
+                        });
+                } else {
+                    this.initializeAttachmentVideoUnit(data.attachmentVideoUnit);
+                }
+            } else {
+                this.isPdfLoading.set(false);
+            }
+        });
+    }
+
+    /** Initializes the editor only once its slide metadata belongs to the current PDF revision. */
+    private initializeAttachmentVideoUnit(unit: AttachmentVideoUnit): void {
+        this.attachmentVideoUnit.set(unit);
+        const slides = unit.slides ?? [];
+        const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
+            slides.filter((page) => page.hidden).map((page) => [page.id, { date: dayjs(page.hidden), exerciseId: page.exercise?.id }]),
+        );
+        this.initialHiddenPages.set(hiddenPagesMap);
+        this.hiddenPages.set(deepClone(hiddenPagesMap));
+        this.fetchPdfFile(slides);
+    }
+
+    /**
+     * Fetches the PDF file of the attachment video unit currently being previewed.
+     * @param slides The slides of the attachment video unit
+     */
+    private fetchPdfFile(slides?: Slide[]): void {
+        this.attachmentVideoUnitSub = this.attachmentVideoUnitService
+            .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
+            .pipe(finalize(() => this.isPdfLoading.set(false)))
+            .subscribe({
+                next: (blob: Blob) => this.processPdfBlob(blob, slides),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    /**
+     * Processes a PDF blob by creating a URL object and loading the PDF.
+     * @param blob The PDF file as a Blob
+     * @param existingSlides Optional array of existing slides
+     */
+    private processPdfBlob(blob: Blob, existingSlides?: Slide[]): void {
+        const url = URL.createObjectURL(blob);
+        this.currentPdfUrl.set(url);
+
+        blob.arrayBuffer()
+            .then((arrayBuffer) => {
+                void this.loadPdf(url, arrayBuffer, 'original', existingSlides);
+            })
+            .catch((error) => {
+                onError(this.alertService, error);
+                this.isPdfLoading.set(false);
+            });
+    }
+
+    /**
+     * Loads a PDF from a provided URL and creates/updates page order.
+     * @param fileUrl The URL of the file to load
+     * @param arrayBuffer The PDF file as an ArrayBuffer
+     * @param sourceId Identifier for the source PDF, or 'original' for the initial PDF
+     * @param existingSlides Optional array of existing slides (for attachmentVideoUnit)
+     * @param append Whether to append the new pages to existing ones
+     */
+    async loadPdf(fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string = 'original', existingSlides?: Slide[], append: boolean = false): Promise<void> {
+        this.isPdfLoading.set(true);
+        try {
+            const engine = await this.pdfEngineService.getEngine();
+            const doc = await engine.openDocumentBuffer({ id: sourceId, content: arrayBuffer }).toPromise();
+            const pageCount = doc.pageCount;
+
+            this.sourcePDFs.update((sources) => {
+                const newSources = new Map(sources);
+                newSources.set(sourceId, { id: sourceId, doc, url: fileUrl });
+                return newSources;
+            });
+
+            this.totalPages.set(this.totalPages() + pageCount);
+
+            if (append) {
+                this.operations.update((ops) => [
+                    ...ops,
+                    {
+                        type: 'MERGE',
+                        timestamp: dayjs(),
+                        data: {
+                            sourceId,
+                            pageCount,
+                        },
+                    },
+                ]);
+                this.hasOperations.set(true);
+
+                const currentPageCount = this.pageOrder().length;
+                const newPages: OrderedPage[] = [];
+
+                for (let i = 0; i < pageCount; i++) {
+                    newPages.push({
+                        slideId: `temp_${Date.now()}_${i}`,
+                        initialIndex: currentPageCount + i + 1,
+                        order: currentPageCount + i + 1,
+                        sourcePdfId: sourceId,
+                        sourceIndex: i,
+                        sourceDoc: doc,
+                    });
+                }
+
+                this.pageOrder.update((pages) => [...pages, ...newPages]);
+                this.isFileChanged.set(true);
+            } else if (existingSlides && existingSlides.length > 0) {
+                const orderedPages: OrderedPage[] = existingSlides.map((slide) => ({
+                    initialIndex: slide.slideNumber!,
+                    slideId: slide.id!.toString(),
+                    order: slide.slideNumber!,
+                    sourcePdfId: sourceId,
+                    sourceIndex: slide.slideNumber! - 1,
+                    sourceDoc: doc,
+                }));
+
+                orderedPages.sort((a, b) => a.order - b.order);
+                this.pageOrder.set(orderedPages);
+            } else {
+                const orderedPages: OrderedPage[] = [];
+
+                for (let i = 0; i < pageCount; i++) {
+                    orderedPages.push({
+                        initialIndex: i + 1,
+                        slideId: `temp_${Date.now()}_${i}`,
+                        order: i + 1,
+                        sourcePdfId: sourceId,
+                        sourceIndex: i,
+                        sourceDoc: doc,
+                    });
+                }
+
+                this.pageOrder.set(orderedPages);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isPdfLoading.set(false);
+        }
+    }
+
+    ngOnDestroy() {
+        this.isDestroyed = true;
+        this.attachmentVideoUnitSub?.unsubscribe();
+
+        const sources = this.sourcePDFs();
+        sources.forEach((source) => {
+            URL.revokeObjectURL(source.url);
+        });
+
+        // Close the documents opened in the shared PDFium engine so their ids are freed and memory is released.
+        if (sources.size > 0) {
+            this.pdfEngineService
+                .getEngine()
+                .then((engine) => {
+                    sources.forEach((source) => {
+                        engine
+                            .closeDocument(source.doc)
+                            .toPromise()
+                            .catch(() => {});
+                    });
+                })
+                .catch(() => {});
+        }
+    }
+
+    constructor() {
+        effect(() => {
+            this.hiddenPagesChanged();
+        });
+    }
+
+    /**
+     * Triggers the file input to select files.
+     */
+    triggerFileInput(): void {
+        this.fileInput().nativeElement.click();
+    }
+
+    /**
+     * Compares the initial and current hidden pages to determine if there have been any changes.
+     *
+     * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
+     */
+    hiddenPagesChanged() {
+        const initial = this.initialHiddenPages();
+        const current = this.hiddenPages();
+        return JSON.stringify(initial) !== JSON.stringify(current);
+    }
+
+    /**
+     * Retrieves an array of hidden page objects directly from the hiddenPages signal.
+     *
+     * @returns An array of HiddenPage objects representing the hidden pages.
+     */
+    getHiddenPages(): HiddenPage[] {
+        return Object.entries(this.hiddenPages()).map(([slideId, pageData]) => ({
+            slideId,
+            date: pageData.date,
+            exerciseId: pageData.exerciseId ?? undefined,
+        }));
+    }
+
+    /**
+     * Builds the bytes of a PDF composed of the given pages, in order, by importing each page from its
+     * source document in the shared PDFium engine. This replaces the previous pdf-lib replay pipeline:
+     * because every {@link OrderedPage} already knows its source document and original page index, the final
+     * document is simply a merge of those pages in the desired order (PDFium preserves the requested order).
+     *
+     * @param order the pages to include, in their final order
+     * @returns the serialized PDF as an ArrayBuffer
+     */
+    private async buildPdfBytes(order: OrderedPage[]): Promise<ArrayBuffer> {
+        const engine = await this.pdfEngineService.getEngine();
+        const mergeConfigs = order.map((page) => ({ docId: page.sourcePdfId, pageIndices: [page.sourceIndex] }));
+        const merged = await engine.mergePages(mergeConfigs).toPromise();
+        return merged.content;
+    }
+
+    /**
+     * Wraps serialized PDF bytes in a {@link File} for upload.
+     */
+    private bytesToFile(bytes: ArrayBuffer, fileName: string, isStudentVersion: boolean = false): File {
+        const suffix = isStudentVersion ? '_student' : '';
+        return new File([bytes], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
+    }
+
+    /**
+     * Produces the instructor PDF (all pages in their final order) and, when requested, the student PDF
+     * (the same order with hidden pages removed). Both are built from the final page order, which already
+     * reflects every delete/reorder/merge operation.
+     */
+    async applyOperations(studentVersion: boolean = false): Promise<{
+        instructorBytes: ArrayBuffer;
+        studentBytes: ArrayBuffer | undefined;
+    }> {
+        if (!this.sourcePDFs().get('original')) {
+            throw new Error('Original PDF source not found');
+        }
+
+        const finalOrder = await this.getFinalPageOrder();
+        if (finalOrder.length === 0) {
+            throw new Error('Cannot save a PDF without pages');
+        }
+        const instructorBytes = await this.buildPdfBytes(finalOrder);
+
+        let studentBytes: ArrayBuffer | undefined = undefined;
+        if (studentVersion) {
+            const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
+            if (hiddenSlideIds.size > 0) {
+                const visibleOrder = finalOrder.filter((page) => !hiddenSlideIds.has(page.slideId));
+                if (visibleOrder.length === 0) {
+                    // Every page is hidden: a student PDF would be empty (a 0-page document), so reject the save
+                    // instead of uploading an invalid student version.
+                    throw new Error('Cannot create a student version with no visible pages');
+                }
+                studentBytes = await this.buildPdfBytes(visibleOrder);
+            }
+        }
+
+        return { instructorBytes, studentBytes };
+    }
+
+    /**
+     * Updates the attachment with both instructor and student versions
+     * Refactored version combining updateAttachmentWithFile and updateAttachmentVideoUnitStudentVersion
+     */
+    async updateAttachmentWithFile(): Promise<void> {
+        // Validate hidden slides dates before proceeding
+        if (!this.validateHiddenSlidesDates()) {
+            return;
+        }
+
+        this.isSaving.set(true);
+
+        if (this.attachmentVideoUnit() && this.hasCompletePersistedSlideSet() && !this.hasPdfContentChanges()) {
+            if (this.hiddenPagesChanged()) {
+                const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
+                if (this.pageOrder().length > 0 && this.pageOrder().every((page) => hiddenSlideIds.has(page.slideId))) {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+                        error: 'Cannot create a student version with no visible pages',
+                    });
+                    return;
+                }
+                try {
+                    await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
+                    this.finishSaving();
+                } catch {
+                    // The helper already handles user-facing error state.
+                }
+            } else {
+                this.finishSaving();
+            }
+            return;
+        }
+
+        try {
+            const pdfName = this.attachmentVideoUnit()?.name ?? '';
+            const { instructorBytes, studentBytes } = await this.applyOperations(true);
+            const needsPdfContentUpdate = this.hasPdfContentChanges() || !this.hasCompletePersistedSlideSet();
+            const instructorPdfFile = needsPdfContentUpdate ? this.bytesToFile(instructorBytes, pdfName) : undefined;
+
+            if (instructorPdfFile && instructorPdfFile.size > MAX_FILE_SIZE) {
+                this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
+                this.isSaving.set(false);
+                return;
+            }
+
+            if (this.attachmentVideoUnit()) {
+                const hiddenPages = this.getHiddenPages();
+                const studentPdfFile = studentBytes && hiddenPages.length > 0 ? this.bytesToFile(studentBytes, pdfName, true) : undefined;
+                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages, studentPdfFile);
+                this.finishSaving();
+            }
+        } catch (error) {
+            this.isSaving.set(false);
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: message });
+        }
+    }
+
+    /**
+     * Updates an attachment video unit without changing the stored PDF files.
+     */
+    private async updateAttachmentVideoUnitWithoutFile(hiddenPages: HiddenPage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const attachmentVideoUnit = this.attachmentVideoUnit();
+            if (!attachmentVideoUnit?.attachment || !attachmentVideoUnit.lecture || attachmentVideoUnit.lecture.id === undefined || attachmentVideoUnit.id === undefined) {
+                const error = new Error('Cannot update attachment video unit without attachment, lecture, and id');
+                this.isSaving.set(false);
+                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                reject(error);
+                return;
+            }
+
+            const formData = new FormData();
+            const attachmentVideoUnitWithoutFile = hydrate(new AttachmentVideoUnit(), attachmentVideoUnit, {
+                attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: attachmentVideoUnit.videoSource ?? '',
+            });
+
+            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
+            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment));
+            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
+
+            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture.id, attachmentVideoUnit.id, formData).subscribe({
+                next: () => resolve(),
+                error: (error) => {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    reject(error);
+                },
+            });
+        });
+    }
+
+    /**
+     * Updates an attachment video unit
+     */
+    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[], studentPdfFile?: File): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const attachmentVideoUnitToUpdate = this.attachmentVideoUnit();
+            if (
+                !attachmentVideoUnitToUpdate?.attachment ||
+                !attachmentVideoUnitToUpdate.lecture ||
+                attachmentVideoUnitToUpdate.lecture.id === undefined ||
+                attachmentVideoUnitToUpdate.id === undefined
+            ) {
+                reject(new Error('Cannot update attachment video unit without attachment, lecture, and id'));
+                return;
+            }
+
+            const lectureId = attachmentVideoUnitToUpdate.lecture.id;
+            const attachmentVideoUnitId = attachmentVideoUnitToUpdate.id;
+            this.attachmentToBeEdited.set(attachmentVideoUnitToUpdate.attachment);
+            this.attachmentToBeEdited()!.uploadDate = dayjs();
+
+            const formData = new FormData();
+            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
+            const attachmentVideoUnit = hydrate(new AttachmentVideoUnit(), attachmentVideoUnitToUpdate, {
+                attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: this.attachmentVideoUnit()!.videoSource ?? '',
+            });
+            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
+
+            const submitUpdate = (finalPageOrder?: OrderedPage[]) => {
+                if (instructorPdfFile) {
+                    formData.append('file', instructorPdfFile);
+                }
+                if (studentPdfFile) {
+                    formData.append('studentVersion', studentPdfFile);
+                }
+                if (finalPageOrder) {
+                    formData.append(
+                        'pageOrder',
+                        new Blob(
+                            [
+                                JSON.stringify(
+                                    finalPageOrder.map((page) => ({
+                                        slideId: page.slideId,
+                                        order: page.order,
+                                    })),
+                                ),
+                            ],
+                            { type: 'application/json' },
+                        ),
+                    );
+                }
+
+                this.attachmentVideoUnitService.update(lectureId, attachmentVideoUnitId, formData).subscribe({
+                    next: () => resolve(),
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                        reject(error);
+                    },
+                });
+            };
+
+            if (instructorPdfFile) {
+                void this.getFinalPageOrder().then((finalPageOrder) => {
+                    submitUpdate(finalPageOrder);
+                });
+            } else {
+                submitUpdate();
+            }
+        });
+    }
+
+    private hasCompletePersistedSlideSet(): boolean {
+        return this.pageOrder().length === this.totalPages() && this.pageOrder().every((page) => !page.slideId.startsWith('temp_'));
+    }
+
+    /**
+     * Finishes the saving process and resets state
+     */
+    private finishSaving(): void {
+        this.isSaving.set(false);
+        this.operations.set([]);
+        this.hasOperations.set(false);
+        this.isFileChanged.set(false);
+        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        this.navigateBack();
+    }
+
+    /**
+     * Calculate the final page order after applying all operations
+     * @returns Promise<OrderedPage[]> The final page order
+     */
+    async getFinalPageOrder(): Promise<OrderedPage[]> {
+        let workingPageOrder = [...this.pageOrder()];
+
+        const sortedOperations = [...this.operations()].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
+
+        for (const operation of sortedOperations) {
+            if (operation.type === 'DELETE') {
+                const { slideIds } = operation.data;
+                workingPageOrder = workingPageOrder.filter((page) => !slideIds.includes(page.slideId));
+            } else if (operation.type === 'REORDER') {
+                const { pageOrder } = operation.data;
+                const orderMap = new Map();
+                pageOrder.forEach((item: { slideId: string; order: number }) => {
+                    orderMap.set(item.slideId, item.order);
+                });
+
+                for (const page of workingPageOrder) {
+                    if (orderMap.has(page.slideId)) {
+                        page.order = orderMap.get(page.slideId);
+                    }
+                }
+
+                workingPageOrder.sort((a, b) => a.order - b.order);
+            }
+        }
+
+        return workingPageOrder.map((page, index) => cloneWith(page, { order: index + 1 }));
+    }
+
+    /**
+     * Deletes the attachment video unit currently being previewed.
+     * @returns A Promise that resolves when the deletion process is completed.
+     */
+    async deleteAttachmentFile() {
+        if (this.attachmentVideoUnit()) {
+            this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
+                next: () => {
+                    this.navigateBack();
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                },
+            });
+        }
+    }
+
+    /**
+     * Deletes selected slides by removing them from the page order and hidden pages.
+     */
+    deleteSelectedSlides() {
+        try {
+            this.isPdfLoading.set(true);
+            const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
+
+            this.operations.update((ops) => [
+                ...ops,
+                {
+                    type: 'DELETE',
+                    timestamp: dayjs(),
+                    data: { slideIds },
+                },
+            ]);
+
+            const remainingPages = this.pageOrder().filter((page) => !slideIds.includes(page.slideId));
+
+            const updatedPageOrder = remainingPages.map((page, index) => cloneWith(page, { order: index + 1 }));
+
+            this.operations.update((ops) => [
+                ...ops,
+                {
+                    type: 'REORDER',
+                    timestamp: dayjs().add(1, 'millisecond'), // Just after the DELETE
+                    data: {
+                        pageOrder: updatedPageOrder.map((page) => ({
+                            slideId: page.slideId,
+                            order: page.order,
+                        })),
+                    },
+                },
+            ]);
+
+            this.hasOperations.set(true);
+
+            this.pageOrder.set(updatedPageOrder);
+
+            this.hiddenPages.update((current) => {
+                const updated = deepClone(current);
+                slideIds.forEach((id) => delete updated[id]);
+                return updated;
+            });
+
+            this.isFileChanged.set(true);
+            this.selectedPages.set(new Set());
+        } catch (error) {
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: message });
+        } finally {
+            this.isPdfLoading.set(false);
+            this.dialogErrorSource.next('');
+        }
+    }
+
+    /**
+     * Adds a selected PDF file at the end of the current PDF document.
+     * @param event - The event containing the file input.
+     */
+    async mergePDF(event: Event): Promise<void> {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (file!.type !== 'application/pdf') {
+            this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
+            input.value = '';
+            return;
+        }
+        this.isPdfLoading.set(true);
+        this.isAppendingFile.set(true);
+        let objectUrl: string | undefined = undefined;
+        try {
+            const newPdfBytes = await file!.arrayBuffer();
+            objectUrl = URL.createObjectURL(file!);
+            const mergeSourceId = `merge_${Date.now()}`;
+            await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
+            this.selectedPages.set(new Set());
+        } catch (error) {
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: message });
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        } finally {
+            this.isPdfLoading.set(false);
+            this.fileInput().nativeElement.value = '';
+        }
+    }
+
+    /**
+     * Shows previously hidden pages by removing them from the hidden pages map
+     * @param selectedPages The set of pages to be made visible
+     */
+    showPages(selectedPages: Set<OrderedPage>): void {
+        const slideIds = Array.from(selectedPages).map((page) => page.slideId);
+
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'SHOW',
+                timestamp: dayjs(),
+                data: { slideIds },
+            },
+        ]);
+        this.hasOperations.set(true);
+
+        this.hiddenPages.update((current) => {
+            const updated = deepClone(current);
+            slideIds.forEach((id) => delete updated[id]);
+            return updated;
+        });
+
+        this.selectedPages.set(new Set());
+    }
+    /**
+     * Handles the reception of one or more hidden pages from the date box component
+     * @param hiddenPageData A single HiddenPage or an array of HiddenPages
+     */
+    hidePages(hiddenPageData: HiddenPage | HiddenPage[]): void {
+        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
+
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'HIDE',
+                timestamp: dayjs(),
+                data: { pages },
+            },
+        ]);
+        this.hasOperations.set(true);
+
+        this.hiddenPages.update((currentMap) => {
+            const updatedMap = deepClone(currentMap);
+            pages.forEach((page) => {
+                updatedMap[page.slideId] = {
+                    date: page.date,
+                    exerciseId: page.exerciseId,
+                };
+            });
+            return updatedMap;
+        });
+
+        this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Validates that all hidden slide dates are valid (not in the past)
+     * @returns true if all dates are valid, false otherwise
+     */
+    private validateHiddenSlidesDates(): boolean {
+        const now = dayjs();
+        const hiddenPagesMap = this.hiddenPages();
+
+        // Find affected pages by mapping slideIds to page orders for error messages
+        const slideIdToOrderMap = new Map<string, number>();
+        this.pageOrder().forEach((page) => {
+            slideIdToOrderMap.set(page.slideId, page.order);
+        });
+
+        // Collect invalid pages to show in error message
+        const invalidPageOrders: number[] = [];
+
+        for (const [slideId, pageData] of Object.entries(hiddenPagesMap)) {
+            // Check if the date is in the past
+            if (pageData.date.isBefore(now)) {
+                const pageOrder = slideIdToOrderMap.get(slideId);
+                if (pageOrder !== undefined) {
+                    invalidPageOrders.push(pageOrder);
+                }
+            }
+        }
+
+        // If we found invalid pages, show error and return false
+        if (invalidPageOrders.length > 0) {
+            invalidPageOrders.sort((a, b) => a - b);
+            const pagesList = invalidPageOrders.join(', ');
+            this.alertService.error('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: pagesList });
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Handles page order changes from the thumbnail grid component
+     * @param newOrder The new page order
+     */
+    onPageOrderChange(newOrder: OrderedPage[]): void {
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'REORDER',
+                timestamp: dayjs(),
+                data: {
+                    pageOrder: newOrder.map((page) => ({
+                        slideId: page.slideId,
+                        order: page.order,
+                    })),
+                },
+            },
+        ]);
+        this.hasOperations.set(true);
+
+        this.pageOrder.set(newOrder);
+    }
+
+    /**
+     * Goes back to the page the user came from, such as the lecture editor, or else to the content page of the lecture the unit belongs to.
+     * A save or deletion that completes after the user left the page does not go back once more from wherever the user is now.
+     */
+    navigateBack(): void {
+        if (this.isDestroyed) {
+            return;
+        }
+        this.navigationUtilService.navigateBack(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id!, 'unit-management']);
+    }
+}

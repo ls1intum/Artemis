@@ -1,0 +1,10 @@
+<h3 jhiTranslate="artemisApp.codeOfConduct.title">Code of Conduct</h3>
+<div [jhiMarkdown]="course().courseInformationSharingMessagingCodeOfConduct || ''"></div>
+<ul>
+    @for (user of responsibleContacts(); track user) {
+        <li>
+            {{ user.name }} (<a href="mailto:{{ user.email }}">{{ user.email }}</a
+            >)
+        </li>
+    }
+</ul>

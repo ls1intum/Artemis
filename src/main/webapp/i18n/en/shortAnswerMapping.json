@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "shortAnswerMapping": {
+            "home": {
+                "title": "Short Answer Mappings",
+                "createLabel": "Create a new Short Answer Mapping"
+            },
+            "created": "Created new Short Answer Mapping with identifier {{ param }}",
+            "updated": "Updated Short Answer Mapping with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Mapping with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Mapping {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Mapping"
+            },
+            "shortAnswerSpotIndex": "Short Answer Spot Index",
+            "shortAnswerSolutionIndex": "Short Answer Solution Index",
+            "invalid": "Invalid",
+            "solution": "Solution",
+            "spot": "Spot",
+            "question": "Question"
+        }
+    }
+}

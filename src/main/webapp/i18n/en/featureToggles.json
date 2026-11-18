@@ -1,0 +1,222 @@
+{
+    "features": {
+        "title": "Features"
+    },
+    "artemisApp": {
+        "features": {
+            "title": "Features",
+            "active": "Active",
+            "inactive": "Inactive",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "viewDocumentation": "View documentation",
+            "jumpTo": "Jump to:",
+            "profileFeatures": {
+                "title": "Profile-Based Features",
+                "shortTitle": "Profiles",
+                "description": "These features are controlled by Spring profiles and must be activated in the service configuration. Changes require a server restart."
+            },
+            "moduleFeatures": {
+                "title": "Module Features",
+                "shortTitle": "Modules",
+                "description": "These features are controlled by module configuration in application-prod.yml. Changes require a server restart."
+            },
+            "dynamicToggles": {
+                "title": "Runtime Feature Toggles",
+                "shortTitle": "Toggles",
+                "description": "Enable or disable features for all users. Changes take effect immediately without server restart."
+            },
+            "profiles": {
+                "localci": {
+                    "name": "Local CI",
+                    "description": "Enables the local continuous integration system for building and testing programming submissions."
+                },
+                "buildagent": {
+                    "name": "Integrated Build Agent",
+                    "description": "Enables the integrated build agent on the server node for Local CI, eliminating the need for separate build agent nodes."
+                },
+                "jenkins": {
+                    "name": "Jenkins CI",
+                    "description": "Enables Jenkins as the continuous integration system for programming exercise builds."
+                }
+            },
+            "modules": {
+                "iris": {
+                    "name": "Iris (AI Assistant)",
+                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
+                },
+                "atlas": {
+                    "name": "Atlas (Adaptive Learning)",
+                    "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
+                },
+                "atlasllm": {
+                    "name": "Atlas AI (LLM)",
+                    "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
+                },
+                "hyperion": {
+                    "name": "Hyperion (AI Authoring)",
+                    "description": "Enables AI assistance for problem statements, quizzes, FAQs, and quiz variants."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion (Programming Exercise Generation)",
+                    "description": "Enables AI-assisted generation of complete programming exercises and variants with an AI Worker."
+                },
+                "deimos": {
+                    "name": "Deimos (Malicious Participation Analysis)",
+                    "description": "Enables the Deimos module that lets instructors screen programming-exercise participations for malicious behavior using an LLM."
+                },
+                "exam": {
+                    "name": "Exam Mode",
+                    "description": "Enables exam mode for conducting secure online assessments with proctoring features."
+                },
+                "plagiarism": {
+                    "name": "Plagiarism Detection",
+                    "description": "Enables plagiarism detection using JPlag for text, modeling, and programming exercises."
+                },
+                "text": {
+                    "name": "Text Exercises",
+                    "description": "Enables text exercises with manual and automated assessment capabilities."
+                },
+                "modeling": {
+                    "name": "Modeling Exercises",
+                    "description": "Enables UML diagram exercises using the Apollon editor with automatic similarity comparison."
+                },
+                "fileupload": {
+                    "name": "File Upload Exercises",
+                    "description": "Enables file upload exercises for submitting documents, images, and other files."
+                },
+                "lecture": {
+                    "name": "Lectures",
+                    "description": "Enables lecture management with units, slides, videos, and attachments."
+                },
+                "tutorialgroup": {
+                    "name": "Tutorial Groups",
+                    "description": "Enables tutorial group management for organizing students and tutors."
+                },
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
+                },
+                "sharing": {
+                    "name": "Exercise Sharing",
+                    "description": "Enables sharing and importing of programming exercises between courses and institutions."
+                },
+                "lti": {
+                    "name": "LTI Integration",
+                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
+                },
+                "athena": {
+                    "name": "Athena (AI Assessment)",
+                    "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
+                },
+                "apollon": {
+                    "name": "Apollon (Modeling)",
+                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
+                },
+                "ldap": {
+                    "name": "LDAP Authentication & Synchronization",
+                    "description": "Enables LDAP-based authentication and user synchronization for verifying credentials and fetching user details from institutional directory services."
+                },
+                "saml2": {
+                    "name": "SAML2 Authentication",
+                    "description": "Enables SAML2-based single sign-on (SSO) authentication through identity providers."
+                },
+                "passkey": {
+                    "name": "Passkey Authentication",
+                    "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
+                },
+                "passkey-admin": {
+                    "name": "Passkey Required for Admin Features",
+                    "description": "When enabled, administrators must authenticate with a passkey to access admin features. Requires Passkey Authentication to be active."
+                }
+            },
+            "toggles": {
+                "ProgrammingExercises": {
+                    "name": "Programming Exercises",
+                    "description": "Allows instructors to create programming exercises with automatic assessment through CI/CD pipelines.",
+                    "disableWarning": "Students will not be able to participate in programming exercises. Existing submissions remain accessible."
+                },
+                "PlagiarismChecks": {
+                    "name": "Plagiarism Detection",
+                    "description": "Enables plagiarism detection for text, modeling, and programming exercises using JPlag.",
+                    "disableWarning": "Instructors will not be able to run plagiarism checks on exercises."
+                },
+                "Exports": {
+                    "name": "Data Exports",
+                    "description": "Allows exporting course data, exam results, and student submissions.",
+                    "disableWarning": "Users will not be able to export course or exam data."
+                },
+                "LearningPaths": {
+                    "name": "Learning Paths",
+                    "description": "Enables personalized learning paths based on competencies and student progress.",
+                    "disableWarning": "Students will not see personalized learning path recommendations."
+                },
+                "Science": {
+                    "name": "Science Data Collection",
+                    "description": "Collects anonymized usage data for research purposes to improve learning outcomes.",
+                    "disableWarning": "No usage data will be collected for research analysis."
+                },
+                "StandardizedCompetencies": {
+                    "name": "Competency Import",
+                    "description": "Allows instructors to import competencies from standardized frameworks (e.g., curricula, qualification profiles) and link them to course competencies for better alignment with educational standards.",
+                    "disableWarning": "Instructors will not be able to import or link standardized competencies to their courses."
+                },
+                "TutorSuggestions": {
+                    "name": "AI Tutor Suggestions",
+                    "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
+                    "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
+                },
+                "AtlasAgent": {
+                    "name": "Atlas Agent",
+                    "description": "Lets instructors build and maintain course competencies with AI. The AI Competency Assistant in Competency Management proposes competencies, relations and exercise links and saves them after the instructor approves. Atlas can also change competencies and their exercise and lecture-unit links without asking first: when an instructor clicks \"Suggest competencies\", or automatically in courses where an administrator turned on Atlas auto-orchestration. Course content, including example solutions, is sent to the configured language model. Requires the Atlas AI (LLM) module.",
+                    "disableWarning": "Instructors can no longer use the AI Competency Assistant or the \"Suggest competencies\" button, and automatic competency updates stop in all courses. Existing competencies are not changed."
+                },
+                "LectureContentProcessing": {
+                    "name": "Lecture Unit Indexing",
+                    "description": "Indexes lecture units for Iris: transcribes videos, extracts slide content from PDFs, and ingests both into the vector store so Iris can answer questions about them.",
+                    "disableWarning": "Disabling lecture unit indexing stops new lecture units from being indexed, including retries, backfill, and reconciliation. Running jobs finish, and nothing already indexed is removed."
+                },
+                "RateLimit": {
+                    "name": "API Rate Limiting",
+                    "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
+                    "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
+                },
+                "AutonomousTutor": {
+                    "name": "Autonomous Tutor",
+                    "description": "Enables the Iris-powered autonomous tutor that automatically responds to student posts in course channels with contextually relevant answers.",
+                    "disableWarning": "The autonomous tutor will not automatically respond to student posts. Students will need to wait for manual tutor responses."
+                },
+                "GlobalSearch": {
+                    "name": "Global Search",
+                    "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
+                    "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "PresentationAssessments": {
+                    "name": "Presentations",
+                    "description": "Enables instructors to create and assess presentations.",
+                    "disableWarning": "Instructors will not be able to access or manage presentation assessments. Existing presentation data remains stored."
+                },
+                "Deimos": {
+                    "name": "Deimos Analysis",
+                    "description": "Enables manual malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
+                },
+                "IrisProactiveStruggle": {
+                    "name": "Iris Proactive Struggle Detection",
+                    "description": "Lets Iris watch for students who are stuck in a programming exercise and offer help unprompted. Instructors switch it on per course; this switch decides whether they can.",
+                    "disableWarning": "Iris will not offer help on its own in any course. Students can still start a chat themselves, and a course keeps its own setting for when this is switched back on."
+                },
+                "GlobalSearchReconcile": {
+                    "name": "Global Search Reconcile",
+                    "description": "Periodically re-syncs the global search index against the database: indexes entities the search index never confirmed holding, repairs ones whose stored content has drifted from what was last written, and removes an entity's row once it is directly confirmed deleted or no longer visible. Every removal here is confirmed against the database itself, unlike \"Remove Orphaned Entries\" below, which infers removals from the index alone.",
+                    "disableWarning": "Search results may go stale where an entity was never indexed, its content has drifted, or it was deleted or hidden, until this is switched back on."
+                },
+                "GlobalSearchReconcileOrphan": {
+                    "name": "Global Search Reconcile: Remove Orphaned Entries",
+                    "description": "Scans the global search index for entries whose entity no longer exists and removes them, inferred from the index alone rather than confirmed per entity against the database. Switch on Global Search Reconcile first and observe it before enabling this.",
+                    "disableWarning": "Search results may include entries for entities that were deleted, until this is switched back on."
+                }
+            }
+        }
+    }
+}

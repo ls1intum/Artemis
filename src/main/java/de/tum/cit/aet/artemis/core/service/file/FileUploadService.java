@@ -1,0 +1,112 @@
+package de.tum.cit.aet.artemis.core.service.file;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.api.ConversationFileAccessApi;
+import de.tum.cit.aet.artemis.core.domain.FileUpload;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
+import de.tum.cit.aet.artemis.core.service.FileService;
+
+@Lazy
+@Service
+@Profile(PROFILE_CORE)
+public class FileUploadService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUploadService.class);
+
+    private final FileUploadRepository fileUploadRepository;
+
+    private final FileService fileService;
+
+    private final ConversationFileAccessApi conversationFileAccessApi;
+
+    public FileUploadService(FileUploadRepository fileUploadRepository, FileService fileService, ConversationFileAccessApi conversationFileAccessApi) {
+        this.fileUploadRepository = fileUploadRepository;
+        this.fileService = fileService;
+        this.conversationFileAccessApi = conversationFileAccessApi;
+    }
+
+    /**
+     * Checks that the conversation belongs to the course and that the user takes part in it or that it is a course-wide channel.
+     *
+     * @param courseId       the id of the course in the request path
+     * @param conversationId the id of the conversation in the request path
+     * @param userId         the id of the requesting user
+     * @throws AccessForbiddenException if the user is not allowed to use the files of the conversation
+     */
+    public void checkCanAccessConversationFilesElseThrow(long courseId, long conversationId, long userId) {
+        conversationFileAccessApi.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userId);
+    }
+
+    /**
+     * Checks that the user may read a file of a conversation, see {@link ConversationFileAccessApi#checkCanReadConversationFileElseThrow}.
+     *
+     * @param courseId       the id of the course in the request path
+     * @param conversationId the id of the conversation in the request path
+     * @param filename       the name of the file in the request path
+     * @param user           the requesting user
+     * @throws AccessForbiddenException if the user is not allowed to read the file
+     */
+    public void checkCanReadConversationFileElseThrow(long courseId, long conversationId, String filename, User user) {
+        conversationFileAccessApi.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, user);
+    }
+
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param path           Url with which the upload is accessed
+     * @param serverFilePath file path on the server, used for deletion
+     * @param fileName       filename that is returned when downloading it
+     * @param entityId       the id of the attached entity
+     * @param entityType     type of the entity, to identify
+     */
+    public void createFileUpload(String path, String serverFilePath, String fileName, Long entityId, FileUploadEntityType entityType) {
+        var fileUpload = new FileUpload(path, serverFilePath, fileName, entityId, entityType);
+
+        fileUploadRepository.save(fileUpload);
+    }
+
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param path public path that the file upload is accessed with
+     *
+     * @return the file upload if found
+     */
+    public Optional<FileUpload> findByPath(String path) {
+        return Optional.ofNullable(fileUploadRepository.findFileUploadByPath(path));
+    }
+
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param fileUploads deletes all these file uploads from the database and from the storage
+     */
+    public void deleteFileUploads(List<FileUpload> fileUploads) {
+        for (var fileUpload : fileUploads) {
+            try {
+                var path = Path.of(fileUpload.getServerFilePath());
+                fileService.schedulePathForDeletion(path, 1);
+            }
+            catch (InvalidPathException e) {
+                log.error("Deleting the file {} did not work because it does not exist", fileUpload.getPath());
+            }
+        }
+
+        fileUploadRepository.deleteAll(fileUploads);
+    }
+}

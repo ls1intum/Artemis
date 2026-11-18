@@ -1,0 +1,35 @@
+import { AfterViewInit, Component, ElementRef, computed, inject, input, output } from '@angular/core';
+import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
+import { CourseCompetencyGraphNode, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-course-competency-relation-node',
+    imports: [TranslateDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
+    templateUrl: './course-competency-relation-node.component.html',
+    styleUrl: './course-competency-relation-node.component.scss',
+})
+export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
+    private readonly element = inject(ElementRef);
+
+    protected readonly CourseCompetencyType = CourseCompetencyType;
+    // height of node element in pixels
+    private readonly nodeHeight = 45.59;
+
+    courseCompetencyNode = input.required<CourseCompetencyGraphNode>();
+    readonly courseCompetencyType = computed(() => this.courseCompetencyNode().data.type!);
+
+    readonly onSizeSet = output<SizeUpdate>();
+
+    ngAfterViewInit(): void {
+        this.setDimensions(this.element);
+    }
+
+    setDimensions(element: ElementRef): void {
+        const width: number = element.nativeElement.offsetWidth;
+        const height = this.nodeHeight;
+        this.onSizeSet.emit({ id: `${this.courseCompetencyNode().id}`, dimension: { height, width } });
+    }
+}

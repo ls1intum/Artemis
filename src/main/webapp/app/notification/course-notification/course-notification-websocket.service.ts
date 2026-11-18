@@ -1,0 +1,138 @@
+import { OnDestroy, Service, inject } from '@angular/core';
+import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
+import { Subject, Subscription } from 'rxjs';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+
+/**
+ * Service for handling course notification websocket connections.
+ * Manages websocket subscriptions for course notifications and propagates
+ * received notifications to the appropriate services.
+ */
+@Service()
+export class CourseNotificationWebsocketService implements OnDestroy {
+    private websocketService = inject(WebsocketService);
+    private courseNotificationService = inject(CourseNotificationService);
+    private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
+
+    private courseWebsocketSubscriptions: Record<number, Subscription> = {};
+    private websocketNotificationSubject = new Subject<CourseNotification>();
+    private userSubscription: Subscription | undefined;
+    private coursesSubscription: Subscription | undefined = undefined;
+
+    private currentUser: User | undefined;
+
+    public websocketNotification$ = this.websocketNotificationSubject.asObservable();
+
+    constructor() {
+        this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (!user) {
+                this.cleanupSubscriptions();
+                this.currentUser = undefined;
+            } else if (this.currentUser === undefined || this.currentUser.id !== user.id) {
+                this.cleanupSubscriptions();
+                this.currentUser = user;
+                this.subscribeToUserCourses();
+            }
+        });
+    }
+
+    /**
+     * Clean up all subscriptions when the service is destroyed
+     */
+    ngOnDestroy(): void {
+        this.cleanupSubscriptions();
+        this.userSubscription?.unsubscribe();
+    }
+
+    /**
+     * Subscribes to all courses for the current user
+     */
+    private subscribeToUserCourses(): void {
+        if (this.coursesSubscription) {
+            this.coursesSubscription.unsubscribe();
+        }
+
+        this.coursesSubscription = this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+            if (!courses) {
+                return;
+            }
+
+            const courseIds = new Set(courses.map((course) => course.id).filter((id): id is number => id !== undefined && Number.isSafeInteger(id) && id > 0));
+            for (const id of Object.keys(this.courseWebsocketSubscriptions)) {
+                const courseId = Number(id);
+                if (!courseIds.has(courseId)) {
+                    this.courseWebsocketSubscriptions[courseId].unsubscribe();
+                    delete this.courseWebsocketSubscriptions[courseId];
+                }
+            }
+            courseIds.forEach((courseId) => this.subscribeToCourseTopic(courseId));
+        });
+    }
+
+    /**
+     * Creates a websocket subscription for the specified course.
+     * Handles incoming notifications by converting them to CourseNotification objects,
+     * adding them to the notification service, and emitting them via subject.
+     *
+     * @param courseId - The ID of the course to subscribe to
+     * @returns The websocket subscription
+     */
+    private subscribeToCourseTopic(courseId: number): Subscription {
+        if (this.courseWebsocketSubscriptions[courseId]) {
+            return this.courseWebsocketSubscriptions[courseId];
+        }
+        this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+            if (!notification || notification.courseId !== courseId) {
+                return;
+            }
+            const category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
+            const status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
+            // Skip malformed or forward-incompatible payloads whose category/status do not map to a known enum value.
+            if (category === undefined || status === undefined) {
+                return;
+            }
+            const courseNotification = new CourseNotification(
+                notification.notificationId!,
+                notification.courseId,
+                notification.notificationType!,
+                category,
+                status,
+                convertDateFromServer(notification.creationDate)!,
+                notification.courseTitle,
+                notification.courseIconUrl,
+                notification.payload!,
+                notification.relativeWebAppUrl!,
+            );
+            this.courseNotificationService.addNotification(courseId, courseNotification);
+            this.websocketNotificationSubject.next(courseNotification);
+        });
+
+        return this.courseWebsocketSubscriptions[courseId];
+    }
+
+    /**
+     * Cleans up all websocket and course subscriptions
+     */
+    private cleanupSubscriptions(): void {
+        if (this.coursesSubscription) {
+            this.coursesSubscription.unsubscribe();
+            this.coursesSubscription = undefined;
+        }
+
+        Object.keys(this.courseWebsocketSubscriptions).forEach((courseId) => {
+            const numericCourseId = Number(courseId);
+            if (this.courseWebsocketSubscriptions[numericCourseId]) {
+                this.courseWebsocketSubscriptions[numericCourseId].unsubscribe();
+                delete this.courseWebsocketSubscriptions[numericCourseId];
+            }
+        });
+    }
+}

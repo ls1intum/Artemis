@@ -1,0 +1,531 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration will be overridden by the Spring profile you use,
+# for example application-dev.yml if you use the "dev" profile.
+#
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
+logging:
+    pattern:
+        correlation: ""
+    level:
+        ROOT: INFO
+        de.tum.cit.aet.artemis: INFO
+        tech.jhipster: INFO
+        org.springframework.web.socket.config: INFO
+        liquibase: INFO
+        de.jplag.Submission: ERROR
+        de.jplag.logging: WARN
+        de.jplag.reporting: WARN
+    logback:
+        rollingpolicy:
+            max-history: 90
+            total-size-cap: "10GB"
+
+artemis:
+    version: #project.version#
+    file-upload-path: uploads
+    feedback:
+        max-feedback-length: 20000  # Maximum length for feedback text before truncation
+    submission-export-path: exports
+    temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
+    bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
+    external-system-request:
+        batch-size: 50  # wait the time below after 50 requests
+        batch-waiting-time: 30000   # in ms = 30s
+    iosAppId: "T7PP2KY2B6.de.tum.cit.ase.artemis"
+    androidAppPackage: "de.tum.cit.aet.artemis"
+    androidSha256CertFingerprints:
+      release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+      debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
+
+    # activate the following line if you want to support push notifications for the mobile clients.
+    # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
+    # push-notification-relay: https://hermes-prod.artemis.cit.tum.de
+
+    continuous-integration:
+        # Defines the used docker images for certain programming languages.
+        # For each language at least the `default` image has to be defined.
+        # This `default` option will be overridden by more specific project type
+        # definitions.
+        build:
+            default-docker-flags:
+                - flag: --cpus
+                  value: 2
+                # Set `memory-swap` and `memory` to the same value to turn off SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                - flag: --memory
+                  value: 2g
+                - flag: --memory-swap
+                  value: 2g
+                - flag: --pids-limit
+                  value: 1000
+            images:
+                java:
+                    # possible overrides: maven, gradle
+                    default: "ls1tum/artemis-maven-template:java25-5"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
+                kotlin:
+                    # possible overrides: maven, gradle
+                    default: "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1"
+                empty:
+                    default: "ubuntu:24.04"
+                python:
+                    default: "ls1tum/artemis-python-docker:v1.1.0"
+                c:
+                    # possible overrides: gcc, fact
+                    default: "ls1tum/artemis-c-minimal-docker:1.0.0"
+                    fact: "ls1tum/artemis-fact-minimal-docker:1.1.0"
+                haskell:
+                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v22.37.0"
+                vhdl:
+                    default: "ghcr.io/ls1intum/artemis-vhdl-docker:v1.0.0"
+                assembler:
+                    default: "ghcr.io/ls1intum/artemis-assembler-docker:v1.0.0"
+                swift:
+                    # possible overrides: xcode
+                    default: "ghcr.io/ls1intum/artemis-swift-swiftlint-docker:v1.1.0"
+                ocaml:
+                    default: "ls1tum/artemis-ocaml-docker:v1"
+                rust:
+                    default: "ghcr.io/ls1intum/artemis-rust-docker:v1.2.1"
+                javascript:
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.1"
+                r:
+                    default: "ghcr.io/ls1intum/artemis-r-docker:v1.2.0"
+                bash:
+                    default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
+                c_plus_plus:
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
+                c_sharp:
+                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.1.0"
+                typescript:
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.1"
+                go:
+                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.1.0"
+                matlab:
+                    default: "mathworks/matlab:r2024b"
+                ruby:
+                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.2"
+                dart:
+                    default: "ghcr.io/ls1intum/artemis-dart-docker:v1.1.0"
+
+        # The following properties are used to configure the Artemis build agent.
+        # The build agent is responsible for executing the buildJob to test student submissions.
+        build-agent:
+            # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
+            short-name: "artemis-build-agent-1"
+            display-name: "Artemis Build Agent 1"
+
+    compatible-versions:
+      android:
+        min: "3.0.0"
+        recommended: "3.0.0"
+      ios:
+        min: "3.0.0"
+        recommended: "3.0.0"
+
+    # Theia configuration for online IDE functionality
+    theia:
+        enabled: false
+        portal-url: https://your-theia-instance.com
+
+        # Theia IDE images available for the different programming languages
+        images:
+            # Upper level key is the language category (must match the language key in the programming-exercise configuration)
+          java:
+            # Lower level key can be multiple flavors of the image, e.g. version, tag, or additional dependencies
+            java17: "my-kubernetes-appdefinition"
+            # Add more flavors here (e.g. Java-11, Java-8, etc.)
+            # Add more languages here (e.g. c, python, etc.)
+            c:
+              C: "my-kubernetes-appdefinition"
+
+
+    # Iris / Pyris configuration for AI-powered features
+    iris:
+        enabled: false # Set this to true in prod if you want to use Iris
+        url: # Set this in production environment (e.g., https://pyris.example.com)
+        secret-token: # Set this in production environment
+        response-streaming-enabled: true
+        ratelimit:
+            # Use -1 for both values to indicate unlimited (no rate limiting)
+            # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
+            default-limit: -1
+            default-timeframe-hours: -1
+
+    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    deimos:
+        enabled: false
+        executor:
+            core-pool-size: 2
+            max-pool-size: 4
+            queue-capacity: 25
+        llm:
+            base-url: https://gpu.aet.cit.tum.de
+            api-key: dummy
+            model: openai/gpt-oss-120b
+            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+            completions-path: /api/chat/completions
+            temperature: 0
+
+    weaviate:
+        enabled: false
+
+    # Default security configuration for internal endpoints accessed by other Artemis components
+    # Currently set to allow all IPs. Adjust as necessary for your deployment.
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
+
+
+
+management:
+    endpoints:
+        web:
+            base-path: /management
+            exposure:
+                include:
+                  - configprops
+                  - env
+                  - health
+                  - info
+                  - artemismetrics
+                  - logfile
+                  - loggers
+                  - prometheus
+                  - threaddump
+    info:
+        git:
+            mode: full
+        java:
+            enabled: true
+        env:
+            # Disabled on purpose: Spring's built-in EnvironmentInfoContributor exposed every info.* property twice (camelCase from YAML + all-lowercase from an INFO_*
+            # env-var override, e.g. testServer + testserver) on /management/info. The info.* namespace is instead exposed by DeduplicatedEnvironmentInfoContributor,
+            # which performs the same binding but collapses such case-variant duplicates to the camelCase key the client consumes. Do not re-enable without removing it.
+            enabled: false
+    health:
+        mail:
+            enabled: false # When using the MailService, configure an SMTP server and set this to true
+        ldap:
+            enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
+        config:
+            enabled: false # Disabled because we do not use a Spring Cloud Config Server
+        refresh:
+            enabled: false # Disabled because we do not use a refresh scope
+    prometheus:
+        # Prometheus is the default metrics server
+        metrics:
+            export:
+                enabled: true
+                step: 60
+    otlp:
+        # spring-boot-starter-opentelemetry (used for LLM tracing, see application-artemis.yml) puts
+        # micrometer-registry-otlp on the classpath, and Spring Boot then auto-configures an OTLP push meter
+        # registry that is enabled by default and pushes to http://localhost:4318/v1/metrics every step. Artemis
+        # is scraped by Prometheus and runs no OTLP collector, so every step logged a ConnectException warning.
+        # Disabling metrics export does not affect OTLP tracing, which is configured separately.
+        metrics:
+            export:
+                enabled: false
+    metrics:
+        distribution:
+            percentiles-histogram:
+                all: true
+        tags:
+            application: ${spring.application.name}
+        web:
+            server:
+                # Artemis exposes ~1000 REST endpoint mappings, far more than Micrometer's default budget of 100
+                # distinct `uri` tag values. Once that budget is exhausted, Micrometer logs
+                # "Reached the maximum number of 'uri' tags for 'http.server.requests'" once and then silently
+                # stops creating timers for every endpoint it sees for the first time afterwards, so production
+                # loses request metrics for an arbitrary subset of the API. The tags are templated
+                # (`/api/../{id}`), not raw paths, so the value is bounded by the number of mappings.
+                max-uri-tags: 1200
+    observations:
+        http:
+            server:
+                requests:
+                    name: http.server.requests
+
+spring: #disabled by default, you must enable it
+    mail:
+        properties:
+            # Without a timeout the mail library waits forever for an SMTP server that stopped answering and blocks the thread
+            # that sends (milliseconds)
+            mail.smtp.connectiontimeout: 10000
+            mail.smtp.timeout: 30000
+            mail.smtp.writetimeout: 30000
+    ai:
+        model:
+            chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
+            audio.speech: none
+            audio.transcription: none
+            embedding: none
+            image: none
+            moderation:  none
+    application:
+        name: Artemis
+    jmx:
+        enabled: false
+    cloud:
+        config:
+            import-check:
+                enabled: false
+        refresh:
+            enabled: false # Not required in Artemis
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: deferred
+    jpa:
+        open-in-view: false
+        show-sql: false
+        hibernate:
+            ddl-auto: none
+            naming:
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+                implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
+        properties:
+            hibernate.connection.provider_disables_autocommit: true
+            hibernate.generate_statistics: false
+            hibernate.order_inserts: true
+            hibernate.order_updates: true
+            hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
+            hibernate.query.in_clause_parameter_padding: true
+            # Compiled HQL plans are expensive to build and Artemis has more distinct queries than the 2048 default
+            # holds, so plans were being evicted and recompiled under load. A heap histogram taken during a 2000
+            # student exam found 762k ANTLR parser objects live, which is the recompilation showing up as garbage.
+            hibernate.query.plan_cache_max_size: 4096
+            hibernate.query.plan_parameter_metadata_max_size: 256
+            # Hibernate L2 cache is intentionally disabled cluster-wide. See documentation/docs/developer/guidelines/caching.mdx.
+            # Spring @Cacheable continues to use HazelcastCacheManager directly, independent of L2.
+            hibernate.cache.use_second_level_cache: false
+            hibernate.cache.use_query_cache: false
+            # Still consumed by HazelcastConfiguration for the Hazelcast instance name.
+            hibernate.cache.hazelcast.instance_name: Artemis
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.jdbc.time_zone: UTC
+            hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 2
+            jakarta.persistence.validation.mode: none # disable validation for faster startup
+    liquibase:
+        contexts: prod
+    messages:
+        basename: i18n/messages
+    main:
+        allow-bean-definition-overriding: false
+        allow-circular-references: false
+        lazy-initialization: true
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                # A ThreadPoolExecutor only creates a thread beyond the core size once the queue is full, so a large
+                # queue in front of a small core pool means the pool never grows: core-size 2 with a 10000 queue ran
+                # every @Async task in Artemis on two threads and let a 10000-deep backlog build before the third was
+                # created. Sizing the core pool for the work and keeping the queue short is the way round that
+                # actually uses the pool.
+                core-size: 16
+                max-size: 50
+                queue-capacity: 500
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                size: 2
+    threads:
+        virtual:
+            enabled: true
+    thymeleaf:
+        mode: HTML
+    output:
+        ansi:
+            enabled: always
+    servlet:
+        multipart:
+            # Reviewed false positive (Sonar S5693): the limits are set explicitly and 20MB is the largest upload the product supports.
+            max-file-size: 20MB # NOSONAR - this should match the value in /webapp/app/foundation/constants/input.constants.ts MAX_FILE_SIZE
+            max-request-size: 20MB # NOSONAR
+    lifecycle:
+        timeout-per-shutdown-phase: 10
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
+    hazelcast:
+        interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
+        port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
+        localInstances: false # Whether the other instances are expected locally (in dev mode) or external
+        phone:
+            home:
+                enabled: false
+        slow:
+            operation:
+                detector:
+                    enabled: true
+    beaninfo:
+        ignore: true
+
+hazelcast:
+    phone:
+        home:
+            enabled: false
+
+springdoc:
+  api-docs: # Having these endpoints publicly available is a security risk, so we disable them by default
+    path: /api-docs
+    enabled: false
+  swagger-ui:
+    path: api.html
+    operationsSorter: method
+    enabled: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+server:
+    servlet:
+        session:
+            cookie:
+                http-only: true
+    shutdown: graceful
+    forward-headers-strategy: native
+
+# Properties to be exposed on the /management/info endpoint via DeduplicatedEnvironmentInfoContributor.
+# Define keys in camelCase here; INFO_* environment-variable overrides (necessarily all-lowercase) are case-normalized back to these camelCase keys.
+info:
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to false
+    textAssessmentAnalyticsEnabled: false
+    studentExamStoreSessionData: true
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
+
+# ===================================================================
+# JHipster specific properties
+#
+# Full reference is available at: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+jhipster:
+    clientApp:
+        name: 'artemisApp'
+    # By default CORS is disabled. Uncomment to enable.
+    #cors:
+        #allowed-origin-patterns: "*"
+        #allowed-methods: "*"
+        #allowed-headers: "*"
+        #exposed-headers: "Authorization,Link,X-Total-Count"
+        #allow-credentials: true
+        #max-age: 1800
+    mail:
+        from: artemis@localhost
+    registry:
+        password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+    http:
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
+            timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
+    cache: # Cache configuration
+        hazelcast: # Hazelcast distributed cache
+            time-to-live-seconds: 3600
+            backup-count: 1
+            # Fixed data-member count for Hyperion job/save map protection; worker clients do not count.
+            # When generation is enabled, every member must use the same value and all members must be present.
+            expected-data-member-count: 1
+
+# =======================================================================================
+# EUREKA CONFIGURATION (Service Discovery via JHipster Registry)
+# =======================================================================================
+# Eureka is used for service discovery, allowing Artemis nodes (core servers and build agents)
+# to find each other dynamically. The JHipster Registry acts as the Eureka server.
+#
+# Key use cases:
+# - Build agents discover core nodes to establish Hazelcast client connections
+# - Core nodes discover other core nodes for Hazelcast cluster formation
+# - Load balancers can use Eureka to find healthy instances
+# =======================================================================================
+eureka:
+    client:
+        region: default
+        shouldEnforceRegistrationAtInit: false
+        enabled: false
+        service-url:
+            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
+        healthcheck:
+            enabled: false
+        fetch-registry: true
+        register-with-eureka: true
+        instance-info-replication-interval-seconds: 15
+        registry-fetch-interval-seconds: 15
+        use-dns-for-fetching-service-urls: false
+    instance:
+        prefer-ip-address: true
+        appname: Artemis
+        instanceId: Artemis:1
+        # -----------------------------------------------------------------------------------
+        # EUREKA LEASE/HEARTBEAT CONFIGURATION
+        # -----------------------------------------------------------------------------------
+        # These settings control how quickly the Eureka server (JHipster Registry) detects
+        # that an Artemis instance (core node or build agent) has gone offline.
+        #
+        # How it works:
+        # - Each instance sends a heartbeat to Eureka every 'lease-renewal-interval-in-seconds'
+        # - If Eureka doesn't receive a heartbeat within 'lease-expiration-duration-in-seconds',
+        #   the instance is marked as DOWN and eventually evicted from the registry
+        #
+        # Values chosen (10s interval, 30s expiration):
+        # - Balanced between fast detection and tolerance for brief network issues
+        # - Allows for 3 missed heartbeats before declaring an instance as DOWN
+        # - More conservative than Hazelcast (5s/15s) because Eureka handles service discovery
+        #   across potentially less reliable networks, and false-positive deregistrations
+        #   can cause unnecessary service disruption
+        # - Still fast enough to remove crashed instances within ~30-45 seconds
+        #
+        # Note: The actual eviction time also depends on the Eureka server's eviction interval
+        # (configured on the JHipster Registry side, typically runs every 60 seconds by default)
+        #
+        # Comparison with Hazelcast timeouts:
+        # - Hazelcast client heartbeat: 5s interval, 15s timeout (for real-time build agent status)
+        # - Eureka lease: 10s interval, 30s timeout (for service discovery, more tolerant)
+        # -----------------------------------------------------------------------------------
+        lease-renewal-interval-in-seconds: 10
+        lease-expiration-duration-in-seconds: 30
+        status-page-url-path: ${management.endpoints.web.base-path}/info
+        health-check-url-path: ${management.endpoints.web.base-path}/health
+        metadata-map:
+            zone: primary # This is needed for the load balancer
+            profile: ${spring.profiles.active}
+            version: #project.version#
+            git-version: ${git.commit.id.describe:}
+            git-commit: ${git.commit.id.abbrev:}
+            git-branch: ${git.branch:}
+
+# Helios configuration
+# It is enabled and all the values are set by the ansible
+# Refer to the ansible repository https://github.com/ls1intum/artemis-ansible
+helios:
+  status:
+    enabled: false

@@ -1,0 +1,115 @@
+{
+    "artemisApp": {
+        "exerciseAssessmentDashboard": {
+            "home": {
+                "title": "Exercise Assessment Dashboard"
+            },
+            "participation": {
+                "instructionsReviewed": "You have reviewed the instructions. You may now read the example submissions"
+            },
+            "pageHeader": "Exercise Assessment Dashboard for:",
+            "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
+            "yourStatus": "Your status",
+            "tutorParticipationStatus": {
+                "title": {
+                    "NOT_PARTICIPATED": "Not participated",
+                    "REVIEWED_INSTRUCTIONS": "Have read the instructions",
+                    "TRAINED": "Trained on example submissions",
+                    "COMPLETED": "Completed assessing students submissions"
+                },
+                "description": {
+                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them.",
+                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training.",
+                    "TRAINED": "Now you can start assessing students' submissions.",
+                    "COMPLETED": ""
+                }
+            },
+            "secondCorrection": "Second correction",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "youAssessedSoFar": "You have assessed {{numberOfTutorAssessments}} submissions so far",
+            "needToReadGradingInstructions": "You need to read the assessment instructions before starting assessing",
+            "readGradingInstructions": "Read assessment instructions",
+            "startYourParticipation": "Start manual assessment",
+            "gradingInstructions": "Assessment instructions",
+            "structuredGradingInstructions": "Structured assessment instructions",
+            "problemStatement": "Problem statement",
+            "exampleSolution": "Example solution",
+            "exampleSolutionExplanation": "Example solution explanation",
+            "close": "Close",
+            "readAndUnderstood": "I have read and understood the instructions",
+            "toRead": "to read",
+            "toReview": "to review",
+            "totalExamples": "There are {{total}} example submissions: {{toRead}} to read and {{toAssess}} to assess.",
+            "totalExampleSubmissions": "There are {{total}} example submissions: {{toRead}} to read and {{toAssess}} to assess.",
+            "readSubmissions": "Read submissions",
+            "start": "Start",
+            "continue": "Continue",
+            "readingExampleSubmissions": "reading example submissions",
+            "readExampleSubmission": "Read example submissions",
+            "assessedSubmissions": "Assessed submissions",
+            "assessingExampleSubmission": "assessing example submissions",
+            "assessExampleSubmission": "Assess example submission",
+            "studentsSubmissions": "Students' submissions",
+            "studentsSubmissionsExam": "Students' submissions, Correction Round: {{round}}",
+            "testRunSubmissions": "Test Run submissions",
+            "submissionDate": "Submission date",
+            "responseTime": "Response time",
+            "status": "Status",
+            "pleaseContactIfUnclear": "In case something is unclear, please contact an instructor before you start assessing.",
+            "result": "Result",
+            "score": "Score",
+            "action": "Action",
+            "assessmentNotPossibleYetTooltip": "Assessment is possible from {{ date }}",
+            "continueAssessment": "Continue assessment",
+            "openAssessment": "Open assessment",
+            "startAssessment": "Start new assessment",
+            "noSubmissions": "There are currently no submissions for you to grade.",
+            "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
+            "complaints": "Complaints",
+            "noComplaints": "There are no complaints at the moment.",
+            "noComplaintsDisplayed": "There are no complaints at the moment (excluding complaints about your own assessments)",
+            "evaluateComplaint": "Evaluate the complaint",
+            "showComplaint": "Show the complaint",
+            "moreFeedback": "More Feedback Requests",
+            "noMoreFeedbackRequests": "There are no requests at the moment.",
+            "noMoreFeedbackRequestsDisplayed": "There are no requests at the moment (excluding request about your own assessments)",
+            "evaluateMoreFeedbackRequest": "Evaluate the request",
+            "showMoreFeedbackRequests": "Show the request",
+            "numberOfUnassessedSubmissions": "Unassessed submissions",
+            "numberOfOpenComplaints": "Open complaints",
+            "exerciseInformation": "Exercise information",
+            "totalYours": "Total | Yours",
+            "stats": {
+                "intime": "On time",
+                "late": "Late"
+            },
+            "numberOfSubmissions": "Total submissions",
+            "numberOfAssessedSubmissions": "Assessed submissions",
+            "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",
+            "numberOfResolvedComplaints": "Resolved complaints",
+            "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
+            "nextAssessment": "Assess next submission",
+            "programmingExercise": {
+                "exampleSolution": "Example solution repository",
+                "goToRepo": "Go to repository"
+            },
+            "language": "Language",
+            "languages": {
+                "ENGLISH": "English",
+                "GERMAN": "German",
+                "UNKNOWN": "Unknown"
+            },
+            "complaintHint": "Shows complaints about other tutors' assessments. Note: complaints about your own assessments will not be displayed here.",
+            "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
+            "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
+            "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
+            "correctionRoundNotYetEnabled": "This correction round is not yet enabled.",
+            "openAssessments": "Open assessments",
+            "closedAssessments": "Closed assessments",
+            "ratings": "Ratings",
+            "exerciseDetails": "Exercise Details"
+        }
+    }
+}

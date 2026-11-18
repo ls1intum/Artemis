@@ -1,0 +1,187 @@
+@if (plagiarismCase(); as plagiarismCase) {
+    <div class="plagiarism-case">
+        <div class="case-header">
+            <div jhi-plagiarism-case-header [plagiarismCase]="plagiarismCase">
+                <div class="flex w-full! items-center px-3! min-[992px]:w-1/2! min-[1200px]:w-1/4! min-[1200px]:justify-end">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="secondary"
+                        class="m-1"
+                        (click)="printPlagiarismCase()"
+                        [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.print' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faPrint" />
+                    </button>
+                    <tumaet-ui-button-group class="m-1 print:hidden">
+                        <a
+                            tumAetUiButton
+                            [routerLink]="['/course-management', courseId(), getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
+                            data-testid="plagiarism-case-exercise-link"
+                        >
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise"></span>
+                        </a>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            [attr.aria-label]="'entity.actions' | artemisTranslate"
+                            [tumAetUiMenuTrigger]="exerciseActionsMenu"
+                            data-testid="plagiarism-case-exercise-actions"
+                        >
+                            <fa-icon [icon]="faChevronDown" />
+                        </button>
+                    </tumaet-ui-button-group>
+                    <ng-template #exerciseActionsMenu>
+                        <tumaet-ui-menu [attr.aria-label]="'entity.actions' | artemisTranslate">
+                            <a
+                                tumAetUiMenuItem
+                                [routerLink]="['/course-management', courseId(), getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
+                            >
+                                <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
+                            </a>
+                        </tumaet-ui-menu>
+                    </ng-template>
+                </div>
+            </div>
+        </div>
+        <div class="case-body">
+            <section>
+                <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
+                @if (posts(); as posts) {
+                    @if (posts.length > 0) {
+                        <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
+                    }
+                }
+                @if ((!posts() || posts()!.length === 0) && createdPost()) {
+                    <div>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            (click)="createEditModal.open()"
+                            jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"
+                            data-testid="plagiarism-case-notify-student"
+                        ></button>
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost()" [createOverride]="createPlagiarismPost" (onCreate)="onStudentNotified($event)" />
+                    </div>
+                }
+            </section>
+            <section class="print:hidden">
+                <h2 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
+                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.text"></p>
+                <div class="verdict-container">
+                    <tumaet-ui-tabs [(value)]="activeTab">
+                        <tumaet-ui-tab-list>
+                            <tumaet-ui-tab [value]="1" data-testid="plagiarism-verdict-tab-plagiarism">
+                                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"></span>
+                            </tumaet-ui-tab>
+                            <tumaet-ui-tab [value]="2" data-testid="plagiarism-verdict-tab-point-deduction">
+                                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></span>
+                            </tumaet-ui-tab>
+                            <tumaet-ui-tab [value]="3" data-testid="plagiarism-verdict-tab-warning">
+                                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></span>
+                            </tumaet-ui-tab>
+                        </tumaet-ui-tab-list>
+                        <tumaet-ui-tab-panels class="p-0!">
+                            <tumaet-ui-tab-panel [value]="1" class="block pt-6" preserveContent>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription"></p>
+                                <div class="flex flex-wrap items-center">
+                                    <jhi-confirm-button
+                                        title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
+                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                        [translateText]="true"
+                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                                        (onConfirm)="saveVerdict()"
+                                    />
+                                    <jhi-confirm-button
+                                        title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
+                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                        class="mx-1"
+                                        [translateText]="true"
+                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                                        (onConfirm)="saveNoPlagiarismVerdict()"
+                                    />
+                                </div>
+                            </tumaet-ui-tab-panel>
+                            <tumaet-ui-tab-panel [value]="2" class="block pt-6" preserveContent>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription"></p>
+                                <div class="flex flex-wrap items-center">
+                                    <tumaet-ui-input-group class="w-auto">
+                                        <input
+                                            tumAetUiInput
+                                            [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate"
+                                            type="number"
+                                            [ngModel]="verdictPointDeduction()"
+                                            (ngModelChange)="verdictPointDeduction.set($event)"
+                                            min="0"
+                                            max="100"
+                                            [readonly]="!!plagiarismCase.verdict"
+                                            [disabled]="!!plagiarismCase.verdict"
+                                        />
+                                        <tumaet-ui-input-group-addon>%</tumaet-ui-input-group-addon>
+                                    </tumaet-ui-input-group>
+                                    <jhi-confirm-button
+                                        title="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"
+                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                        tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
+                                        class="mx-1"
+                                        [translateText]="true"
+                                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction() < 0 || verdictPointDeduction() > 100 || !isStudentNotified()"
+                                        (onConfirm)="savePointDeductionVerdict()"
+                                    />
+                                </div>
+                            </tumaet-ui-tab-panel>
+                            <tumaet-ui-tab-panel [value]="3" class="block pt-6" preserveContent>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warningDescription"></p>
+                                <div class="flex flex-col gap-4!">
+                                    <textarea
+                                        tumAetUiInput
+                                        [attr.aria-label]="'accessibility.verdictMessage' | artemisTranslate"
+                                        rows="5"
+                                        cols="80"
+                                        maxlength="1000"
+                                        [ngModel]="verdictMessage()"
+                                        (ngModelChange)="verdictMessage.set($event)"
+                                        [disabled]="!!plagiarismCase.verdict"
+                                        [readonly]="!!plagiarismCase.verdict"
+                                    ></textarea>
+                                    <div>
+                                        <jhi-confirm-button
+                                            title="artemisApp.plagiarism.plagiarismCases.verdict.warning"
+                                            confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                            confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                            tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
+                                            [translateText]="true"
+                                            [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                                            (onConfirm)="saveWarningVerdict()"
+                                        />
+                                    </div>
+                                </div>
+                            </tumaet-ui-tab-panel>
+                        </tumaet-ui-tab-panels>
+                    </tumaet-ui-tabs>
+                    @if (!isStudentNotified()) {
+                        <div class="disabled-overlay">
+                            <fa-icon [icon]="faInfo" [fixedWidth]="true" />
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified"></span>
+                        </div>
+                    }
+                    @if (isStudentNotified() && plagiarismCase.verdict) {
+                        <div class="disabled-overlay">
+                            <fa-icon [icon]="faCheck" [fixedWidth]="true" />
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.alreadyDecided"></span>
+                        </div>
+                    }
+                </div>
+            </section>
+            <section>
+                <h3 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
+                <div class="w-full px-3!">
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
+                </div>
+            </section>
+        </div>
+    </div>
+}

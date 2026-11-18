@@ -1,0 +1,395 @@
+<div class="flex h-full flex-col gap-2">
+    <div *titleBarTitle class="flex items-center gap-4!">
+        <h5 class="my-0!">
+            <span jhiTranslate="artemisApp.examManagement.students"></span>
+        </h5>
+    </div>
+
+    @if (statisticsLoadingFailed()) {
+        <div class="flex items-center gap-2" role="alert">
+            <span class="text-state-danger" jhiTranslate="artemisApp.examManagement.examStudents.statisticsFailed"></span>
+            <button tumAetUiButton type="button" severity="secondary" (click)="retryExamStatistics()" jhiTranslate="entity.action.retry"></button>
+        </div>
+    }
+
+    <div class="flex min-h-0 flex-1 flex-col" data-testid="exam-students-table">
+        <tumaet-ui-table
+            [columns]="columns()"
+            [rows]="rows()"
+            [totalRecords]="totalRows()"
+            [loading]="isLoading()"
+            [rowActions]="rowActionsRef"
+            [showSearch]="false"
+            [pageSize]="10"
+            fill
+            emptyMessage="artemisApp.dataTable.search.noResults"
+            (dataRequest)="loadExamStudents($event)"
+        >
+            <tumaet-ui-search-field
+                tumAetUiTableToolbar
+                class="min-w-24 max-w-lg grow"
+                data-testid="exam-students-search"
+                placeholder="artemisApp.studentExams.searchForStudents"
+                (valueChange)="onSearchInput($event)"
+            />
+            <tumaet-ui-select
+                tumAetUiTableToolbar
+                class="w-48 max-w-full shrink-0"
+                size="small"
+                data-testid="exam-students-filter"
+                [options]="examStudentFilterOptions()"
+                optionLabel="label"
+                optionValue="value"
+                showClear
+                [ngModel]="selectedFilter()"
+                [placeholder]="'artemisApp.exercise.filter' | artemisTranslate"
+                [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate"
+                (selectionChange)="onFilterSelected($event)"
+            />
+        </tumaet-ui-table>
+    </div>
+</div>
+
+<ng-template titleBarActions>
+    <jhi-exam-students-menu-button
+        [model]="manageStudentsMenuActions()"
+        label="artemisApp.examManagement.examStudents.menu.manageStudents"
+        [buttonIcon]="faUserPen"
+        [disabled]="isTestExam()"
+        severity="secondary"
+    />
+    <jhi-exam-students-menu-button
+        [model]="examLogisticsMenuActions()"
+        label="artemisApp.examManagement.examStudents.menu.examLogistics"
+        [buttonIcon]="faThLarge"
+        [disabled]="isTestExam() || !hasRegisteredUsers()"
+        severity="secondary"
+    />
+    <jhi-exam-students-menu-button
+        [model]="studentExamsMenuActions()"
+        label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
+        [buttonIcon]="faFilePen"
+        [disabled]="isTestExam() || hasExamStarted() || !hasRegisteredUsers()"
+        severity="secondary"
+    />
+    @if (hasRegisteredUsers()) {
+        <button
+            type="button"
+            #individualExamsStatusButton
+            tumAetUiButton
+            size="small"
+            variant="outlined"
+            [severity]="isTestExam() ? 'info' : examPreparationsComplete() ? 'success' : 'warn'"
+            [tumAetUiPopoverTrigger]="individualExamsStatusPopover"
+            [tumAetUiTooltip]="'artemisApp.studentExams.individualExamsStatus' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
+            [attr.aria-label]="'artemisApp.studentExams.individualExamsStatus' | artemisTranslate"
+        >
+            @if (isTestExam()) {
+                <fa-icon [icon]="faCircleInfo" />
+            } @else if (examPreparationsComplete()) {
+                <fa-icon [icon]="faCheck" />
+            } @else {
+                <fa-icon [icon]="faTriangleExclamation" />
+            }
+        </button>
+        <tumaet-ui-popover #individualExamsStatusPopover [ariaLabel]="'artemisApp.studentExams.individualExamsStatus' | artemisTranslate" placement="bottom">
+            <div class="flex w-96 max-w-full flex-col gap-6!">
+                <h6 class="my-0!" jhiTranslate="artemisApp.studentExams.individualExamsStatus"></h6>
+                <jhi-student-exam-status [isTestExam]="isTestExam()" [hasStudentsWithoutExam]="isMissingIndividualExams()" />
+                @if (!isTestExam() && !isMissingIndividualExams()) {
+                    <div class="flex flex-col gap-2">
+                        @if (isAllExercisesPrepared()) {
+                            <tumaet-ui-tag class="w-full" severity="success">
+                                <span class="flex w-full items-center gap-2">
+                                    <fa-icon [icon]="faCheck" />
+                                    <span jhiTranslate="artemisApp.studentExams.allExercisesPrepared"></span>
+                                </span>
+                            </tumaet-ui-tag>
+                        } @else {
+                            <tumaet-ui-tag class="w-full" severity="warn">
+                                <span class="flex w-full items-center gap-2">
+                                    <fa-icon [icon]="faTriangleExclamation" />
+                                    <span jhiTranslate="artemisApp.studentExams.notAllExercisesPrepared"></span>
+                                </span>
+                            </tumaet-ui-tag>
+                        }
+                        @let exPrepStatus = exercisePreparationStatus();
+                        @if (exPrepStatus) {
+                            <div class="flex flex-col gap-1" [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate">
+                                <tumaet-ui-progress-bar
+                                    [value]="exercisePreparationPercentage()"
+                                    [severity]="exPrepStatus.failed ? 'warn' : 'success'"
+                                    [showValue]="false"
+                                    [ariaLabel]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate"
+                                />
+                                <div class="flex flex-wrap items-center justify-center gap-1 text-sm">
+                                    @let exPrepPercentage = exercisePreparationPercentage();
+                                    <span>
+                                        {{ exPrepPercentage }}% {{ exPrepStatus.finished }} / {{ exPrepStatus.overall }}
+                                        {{ 'artemisApp.studentExams.exercisePreparationProgress.exams' | artemisTranslate }}
+                                    </span>
+                                    @if (exPrepStatus.failed) {
+                                        <span> ({{ exPrepStatus.failed }} {{ 'artemisApp.studentExams.exercisePreparationProgress.failed' | artemisTranslate }}) </span>
+                                    }
+                                    |
+                                    @if (exPrepStatus.participationCount) {
+                                        <span>
+                                            {{ exPrepStatus.participationCount }}
+                                            {{ 'artemisApp.studentExams.exercisePreparationProgress.participations' | artemisTranslate }} |
+                                        </span>
+                                    }
+                                    @let exPrepEta = exercisePreparationEta();
+                                    @if (exPrepEta) {
+                                        <span>{{ exPrepEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span>
+                                    }
+                                    @if (!exPrepEta && exPrepPercentage === 100) {
+                                        <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished"></span>
+                                    }
+                                    @if (!exPrepEta && exPrepPercentage < 100) {
+                                        <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta"></span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </tumaet-ui-popover>
+    }
+</ng-template>
+
+<!-- Row action buttons -->
+<ng-template #rowActionsRef let-examUser>
+    <div class="flex justify-end gap-1">
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            [tumAetUiTooltip]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+            data-testid="reseat-student-button"
+            (click)="reseatingDialog.openDialog(toExamUserForReseating(examUser))"
+            [disabled]="isTestExam()"
+        >
+            <fa-icon [icon]="faChair" />
+        </button>
+        @if (exam().id && examUser.studentExamId) {
+            <a
+                tumAetUiButton
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                [attr.aria-label]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                [routerLink]="['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId]"
+            >
+                <fa-icon [icon]="faEye" />
+            </a>
+        } @else {
+            <!-- A disabled button gets no pointer events, so the tooltip sits on the wrapper. -->
+            <span class="inline-flex" [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
+                    disabled
+                    [attr.aria-label]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faEye" />
+                </button>
+            </span>
+        }
+        <button
+            type="button"
+            tumAetUiButton
+            data-testid="remove-student-button"
+            severity="danger"
+            variant="outlined"
+            size="small"
+            [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
+            [disabled]="isTestExam()"
+            (click)="openRemoveStudentDialog(examUser)"
+        >
+            <fa-icon [icon]="faUserMinus" />
+        </button>
+    </div>
+</ng-template>
+
+<!-- Cell templates -->
+
+<ng-template #plainTemplate let-cell>
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">{{ cell.value }}</span>
+</ng-template>
+
+<ng-template #imageTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        <img
+            [id]="dto.id"
+            data-testid="student-image"
+            [attr.data-login]="dto.login"
+            [attr.data-has-image]="!!dto.studentImagePath"
+            class="max-w-15"
+            [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage"
+            [alt]="dto.name || ''"
+            loading="lazy"
+            decoding="async"
+        />
+    </span>
+</ng-template>
+
+<ng-template #studentDetailsTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (isAdmin()) {
+            <a class="block text-inherit no-underline hover:underline" [routerLink]="['/admin/user-management', dto.login]">
+                <ng-container [ngTemplateOutlet]="studentDetailsContent" [ngTemplateOutletContext]="{ $implicit: dto }" />
+            </a>
+        } @else {
+            <ng-container [ngTemplateOutlet]="studentDetailsContent" [ngTemplateOutletContext]="{ $implicit: dto }" />
+        }
+    </span>
+</ng-template>
+
+<ng-template #studentDetailsContent let-dto>
+    <div class="flex flex-col">
+        <div class="mb-1 flex items-center gap-1">
+            <fa-icon [icon]="faIdCard" />
+            <span>{{ dto.name }}</span>
+        </div>
+        <div class="flex items-center gap-1 text-muted-color">
+            <fa-icon [icon]="faUser" />
+            <span>{{ dto.login }}</span>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #roomTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (dto.actualRoom) {
+            <div>
+                <del [title]="'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate">{{ dto.plannedRoom }}</del>
+                <span class="ms-1" [title]="'artemisApp.exam.examUsers.actualRoom' | artemisTranslate">{{ dto.actualRoom }}</span>
+            </div>
+        } @else if (dto.plannedRoom) {
+            <span [title]="'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate">{{ dto.plannedRoom }}</span>
+        } @else {
+            <span>-</span>
+        }
+    </span>
+</ng-template>
+
+<ng-template #seatTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (dto.actualSeat) {
+            <div>
+                <del [title]="'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate">{{ dto.plannedSeat }}</del>
+                <span class="ms-1" [title]="'artemisApp.exam.examUsers.actualSeat' | artemisTranslate">{{ dto.actualSeat }}</span>
+            </div>
+        } @else if (dto.plannedSeat) {
+            <span [title]="'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate">{{ dto.plannedSeat }}</span>
+        } @else {
+            <span>-</span>
+        }
+    </span>
+</ng-template>
+
+<ng-template #attendanceTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (attendanceCheckFailed(dto)) {
+            <div [title]="'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate">
+                <fa-icon [icon]="faTimes" size="2x" class="text-state-danger" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}</span>
+            </div>
+        } @else if (attendanceCheckPassed(dto)) {
+            <div [title]="'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate">
+                <fa-icon [icon]="faCheck" size="2x" class="text-state-success" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}</span>
+            </div>
+        } @else if (didNotAttendExam(dto)) {
+            <div [title]="'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate">
+                <fa-icon [icon]="faUserTimes" size="2x" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}</span>
+            </div>
+        }
+    </span>
+</ng-template>
+
+<ng-template #workingTimeTemplate let-cell>
+    @let se = toStudentExam(cell.data);
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (se) {
+            @if (isTestExam()) {
+                <jhi-test-exam-working-time [studentExam]="se" />
+            } @else {
+                <jhi-student-exam-working-time [studentExam]="se" />
+            }
+        } @else {
+            <span>-</span>
+        }
+    </span>
+</ng-template>
+
+<ng-template #progressTemplate let-cell>
+    @let dto = cell.data;
+    <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
+        @if (dto.progress === 'inconsistent') {
+            <tumaet-ui-tag severity="danger">{{ 'artemisApp.examManagement.examStudents.table.progressInconsistent' | artemisTranslate }}</tumaet-ui-tag>
+        } @else if (dto.progress === 'submitted' && dto.submissionDate) {
+            <tumaet-ui-tag severity="success"
+                >{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ dto.submissionDate | artemisDate }}</tumaet-ui-tag
+            >
+        } @else if (dto.progress === 'submitted') {
+            <tumaet-ui-tag severity="success"><span jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted"></span></tumaet-ui-tag>
+        } @else if (dto.progress === 'started') {
+            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted"></span></tumaet-ui-tag>
+        } @else if (dto.progress === 'notStarted') {
+            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted"></span></tumaet-ui-tag>
+        } @else {
+            <tumaet-ui-tag severity="warn"><span jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing"></span></tumaet-ui-tag>
+        }
+    </span>
+</ng-template>
+
+<jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" />
+<jhi-users-import-dialog [courseId]="courseId()" [exam]="exam()" [examUserMode]="true" (importCompleted)="reloadStudentsView()" />
+<jhi-students-export-dialog [courseId]="courseId()" [exam]="exam()" />
+<jhi-student-upload-images-dialog [courseId]="courseId()" [exam]="exam()" (finished)="reloadStudentsView()" />
+<jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
+<jhi-user-registration-modal
+    titleKey="artemisApp.examManagement.examStudents.addDialog.title"
+    [searchFn]="searchUsersForExamFn"
+    [registerFn]="registerUsersForExamFn"
+    (registered)="reloadStudentsView()"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeStudentDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="studentToRemove()?.login || ''"
+    deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+    deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
+    [additionalChecks]="removeStudentChecks"
+    [requireConfirmationOnlyForAdditionalChecks]="true"
+    [dialogError]="dialogError$"
+    (confirmed)="removeFromExam(studentToRemove()!, $event)"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeAllDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="exam().title || ''"
+    deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
+    deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
+    [additionalChecks]="removeStudentChecks"
+    [dialogError]="dialogError$"
+    (confirmed)="removeAllStudents($event)"
+/>
+<tumaet-ui-confirm-dialog />

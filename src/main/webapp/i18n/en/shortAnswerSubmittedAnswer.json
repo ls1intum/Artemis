@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "shortAnswerSubmittedAnswer": {
+            "home": {
+                "title": "Short Answer Submitted Answers",
+                "createLabel": "Create a new Short Answer Submitted Answer"
+            },
+            "created": "Created new Short Answer Submitted Answer with identifier {{ param }}",
+            "updated": "Updated Short Answer Submitted Answer with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Submitted Answer with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Submitted Answer {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Submitted Answer"
+            },
+            "submittedTexts": "Submitted Texts"
+        }
+    }
+}

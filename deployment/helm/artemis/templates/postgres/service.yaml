@@ -1,0 +1,18 @@
+{{- if .Values.postgresql.deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.postgresName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "artemis.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+{{- end }}

@@ -1,0 +1,99 @@
+import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+/**
+ * Supported execution conditions for a build phase.
+ * Note: Matches BuildPhaseCondition.java
+ */
+export const BUILD_PHASE_CONDITION = {
+    ALWAYS: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.always',
+    AFTER_DUE_DATE: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.afterDueDate',
+};
+
+export type BuildPhaseCondition = keyof typeof BUILD_PHASE_CONDITION;
+
+/**
+ * Editable build phase configuration shown in the custom build plan editor.
+ * Note: Matches BuildPhaseDTO.java
+ */
+export interface BuildPhase {
+    name: string;
+    script: string;
+    condition: BuildPhaseCondition;
+    forceRun: boolean;
+    resultPaths: string[];
+}
+
+/**
+ * Complete serialized build plan configuration stored on the exercise.
+ * Note: Matches BuildPlanPhasesDTO.java
+ */
+export interface BuildPlanPhases {
+    phases: BuildPhase[];
+    dockerImage?: string;
+}
+
+export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
+export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post_action']);
+
+export function hasExpectedTestsBeforeDueDate(phase: BuildPhase | undefined): boolean {
+    return !!phase && (phase.resultPaths?.length ?? 0) > 0 && phase.condition !== 'AFTER_DUE_DATE';
+}
+
+export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases | undefined {
+    if (json == undefined) {
+        return undefined;
+    }
+    let data;
+    try {
+        data = parseJson(json);
+    } catch {
+        return undefined;
+    }
+    if (!isBuildPlanPhases(data)) {
+        return undefined;
+    }
+    return cloneWith(data, {
+        phases: data.phases.map((parsed: BuildPhase) =>
+            cloneWith(parsed, {
+                script: parsed.script ?? '',
+                condition: parsed.condition ?? 'ALWAYS',
+                forceRun: parsed.forceRun ?? false,
+                resultPaths: parsed.resultPaths ?? [],
+            }),
+        ),
+    });
+}
+
+function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const v = value as { phases?: unknown; dockerImage?: unknown };
+    return Array.isArray(v.phases) && v.phases.every(isBuildPhase) && (v.dockerImage == null || typeof v.dockerImage === 'string');
+}
+
+function isBuildPhase(value: unknown): value is BuildPhase {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const v = value as { name?: unknown; script?: unknown; condition?: unknown; forceRun?: unknown; resultPaths?: unknown };
+    return (
+        typeof v.name === 'string' &&
+        // a blank script is dropped on write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO, so a stored plan can have a phase
+        // with no script key at all. Treat it like the other optional fields and default it below, otherwise a single such
+        // phase makes isBuildPlanPhases reject the whole plan and the exercise opens as an empty editor.
+        (v.script === undefined || typeof v.script === 'string') &&
+        (v.condition === undefined || isBuildPhaseCondition(v.condition)) &&
+        (v.forceRun === undefined || typeof v.forceRun === 'boolean') &&
+        (v.resultPaths === undefined || isResultPaths(v.resultPaths))
+    );
+}
+
+function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
+    return typeof value === 'string' && value in BUILD_PHASE_CONDITION;
+}
+
+function isResultPaths(resultPaths: unknown): resultPaths is string[] {
+    return Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string');
+}

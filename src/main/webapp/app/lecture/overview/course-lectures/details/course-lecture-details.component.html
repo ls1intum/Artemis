@@ -1,0 +1,120 @@
+@if (isLoading()) {
+    <div class="flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+}
+@if (lecture(); as lecture) {
+    <div class="flex flex-col h-full overflow-hidden">
+        <!--
+            The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the
+            lecture page reads like the other student pages; the start and end dates sit with the description instead.
+            `px-*` rather than `p-*`, so the !important spacing of `p-*` does not overrule the class's vertical padding.
+        -->
+        <div class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-4!">
+            @if (isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            }
+            <h5 class="mb-0 truncate">
+                <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
+                {{ lecture.title }}
+            </h5>
+        </div>
+
+        <!--
+            Same split as the exercise page: the lecture content on the left, communication and Iris as panels on the
+            right that collapse to an icon rail. The panels component supplies the card and its scrolling, so the
+            content below carries neither.
+        -->
+        <jhi-resizable-panels class="flex-1 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="lecture-details-split">
+            <ng-template jhiPanel [label]="'artemisApp.courseOverview.lectureDetails.lectureContent'" [icon]="faChalkboardTeacher">
+                <!-- Above the description rather than inside it, so the dates still show for a lecture without one. -->
+                <div class="flex flex-row flex-wrap gap-2 mb-2">
+                    @for (informationBoxData of informationBoxData(); track informationBoxData.title) {
+                        <jhi-information-box [informationBoxData]="informationBoxData">
+                            <ng-container contentComponent>
+                                @if (informationBoxData.content.type === 'dateTime') {
+                                    <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
+                                }
+                            </ng-container>
+                        </jhi-information-box>
+                    }
+                </div>
+                @if (lecture.description) {
+                    <div class="flex flex-wrap mb-2 mt-2 items-baseline">
+                        <div class="w-auto">
+                            <h3 class="text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap mb-2 markdown-preview">
+                        <div class="w-full markdown-preview" [jhiMarkdown]="lecture.description"></div>
+                    </div>
+                }
+                <!-- LECTURE UNITS START-->
+                @if (lecture.lectureUnits) {
+                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-4!">
+                        <div class="w-auto">
+                            <h3 class="mb-0 text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                        </div>
+                        @if (hasPdfLectureUnit()) {
+                            <button
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="solid"
+                                size="small"
+                                type="button"
+                                id="downloadButton"
+                                class="w-auto rounded-full"
+                                (click)="downloadMergedFiles()"
+                                jhiTranslate="artemisApp.courseOverview.lectureDetails.downloadMergedPdf"
+                            ></button>
+                        }
+                    </div>
+                }
+                @for (lectureUnit of lectureUnits(); track lectureUnit.id) {
+                    <div class="flex flex-wrap m-0 mt-4!" [attr.data-unit-id]="lectureUnit.id">
+                        <div class="min-w-0 flex-1 p-0">
+                            @switch (lectureUnit.type) {
+                                @case (LectureUnitType.EXERCISE) {
+                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture.course!" />
+                                }
+                                @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                    <jhi-attachment-video-unit
+                                        [courseId]="courseId()!"
+                                        [lectureUnit]="lectureUnit"
+                                        [deepLink]="deepLink()"
+                                        [irisSettings]="irisSettings()"
+                                        [contextsProvider]="contextsProvider"
+                                        (onCompletion)="completeLectureUnit($event)"
+                                    />
+                                }
+                                @case (LectureUnitType.TEXT) {
+                                    <jhi-text-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
+                                }
+                                @case (LectureUnitType.ONLINE) {
+                                    <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
+                                }
+                                @default {}
+                            }
+                        </div>
+                    </div>
+                }
+                <!-- LECTURE UNITS END-->
+            </ng-template>
+
+            @if (showIris()) {
+                <ng-template #irisLogoTpl>
+                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                </ng-template>
+                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
+                    <jhi-iris-base-chatbot class="h-full" [layout]="'embedded'" [isChatHistoryAvailable]="false" [contextProvider]="contextProvider()" />
+                </ng-template>
+            }
+
+            @if (showDiscussion()) {
+                <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
+                    <jhi-discussion-section [lecture]="lecture" [embedded]="true" />
+                </ng-template>
+            }
+        </jhi-resizable-panels>
+    </div>
+}

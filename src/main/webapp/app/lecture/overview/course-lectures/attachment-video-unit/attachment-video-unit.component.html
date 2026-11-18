@@ -1,0 +1,206 @@
+<jhi-lecture-unit-card
+    [courseId]="courseId()"
+    [lectureUnit]="lectureUnit()"
+    [icon]="getAttachmentIcon()"
+    [showViewIsolatedButton]="hasDownloadableFile()"
+    [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
+    [showFullscreenButton]="hasFullscreenContent()"
+    [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
+    [viewIsolatedButtonIcon]="faDownload"
+    viewIsolatedButtonSeverity="secondary"
+    [isPresentationMode]="isPresentationMode()"
+    [deepLink]="matchedDeepLink()"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
+    (onShowIsolated)="handleDownload()"
+    (onShowOriginalVersion)="handleOriginalVersion()"
+    (onFullscreen)="openFullscreen()"
+>
+    @if (lectureUnit()?.description) {
+        <div>
+            {{ lectureUnit().description }}
+        </div>
+    }
+
+    @if (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link)) {
+        @if (lectureUnit()?.description && !isFullscreen()) {
+            <hr />
+        }
+        @if (lectureUnit().attachment?.uploadDate) {
+            <div>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+                {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.version) {
+            <div>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+                {{ lectureUnit().attachment?.version }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.link) {
+            <div>
+                <span class="font-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+                {{ getFileName() }}
+            </div>
+        }
+    }
+
+    <!-- Video block: rendered as the top panel (split) or inline within the main content (no split). -->
+    <ng-template #videoBlock>
+        @if (!!rawVideoSource() || !!youtubeVideoId()) {
+            @if (
+                (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
+                !isFullscreen()
+            ) {
+                <hr />
+            }
+            @if (isLoading()) {
+                <div class="flex justify-center p-4!">
+                    <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.videoPlayer.loading' | artemisTranslate" />
+                </div>
+            } @else if (playlistUrl() && !playerFailed()) {
+                <div class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
+                    <jhi-video-player
+                        [videoUrl]="playlistUrl()!"
+                        [transcriptSegments]="transcriptSegments()"
+                        [initialTimestamp]="videoInitialTimestamp()"
+                        (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        (playerFailed)="onPlayerFailed()"
+                    />
+                </div>
+            } @else if (youtubeVideoId() && !playerFailed()) {
+                <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                    <jhi-youtube-player
+                        [videoId]="youtubeVideoId()!"
+                        [transcriptSegments]="transcriptSegments()"
+                        [initialTimestamp]="videoInitialTimestamp()"
+                        (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        (playerFailed)="onPlayerFailed()"
+                    />
+                </div>
+            } @else {
+                <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                    <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'relative [&>iframe]:absolute [&>iframe]:inset-0 aspect-video'">
+                        <iframe
+                            [class]="isFullscreen() ? 'video-iframe' : 'rounded w-full h-full border-0'"
+                            [src]="iframeFallbackUrl() | safeResourceUrl"
+                            allow="fullscreen"
+                            [title]="lectureUnit().name || ('artemisApp.attachmentVideoUnit.videoPlayer.iframeTitle' | artemisTranslate)"
+                        ></iframe>
+                    </div>
+                </div>
+            }
+        }
+    </ng-template>
+
+    <!-- PDF block: rendered as the bottom panel (split) or inline within the main content (no split). -->
+    <ng-template #pdfBlock>
+        @if (hasPdf()) {
+            @if ((lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) && !isFullscreen()) {
+                <hr />
+            }
+            @if (pdfLoadError()) {
+                <tumaet-ui-message severity="error" class="m-4!">
+                    <span class="text-state-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
+                </tumaet-ui-message>
+            } @else if (pdfUrl()) {
+                <div class="pdf-viewer-spacing">
+                    @if (showPdfSpinner()) {
+                        <div class="flex justify-center p-4! pdf-loading-spinner">
+                            <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate" />
+                        </div>
+                    }
+                    <jhi-pdf-viewer
+                        [class.pdf-viewer-loading]="showPdfSpinner()"
+                        [pdfUrl]="pdfUrl()!"
+                        [uploadDate]="lectureUnit().attachment?.uploadDate"
+                        [version]="lectureUnit().attachment?.version"
+                        [initialPage]="pdfInitialPage()"
+                        (currentPageChange)="onPdfCurrentPageChange($event)"
+                        (pageRendered)="onPdfPageRendered($event)"
+                        (loadError)="onPdfLoadError($event)"
+                        (downloadRequested)="handleDownload()"
+                        (isFullscreenChange)="onPdfFullscreenChange($event)"
+                    />
+                </div>
+            }
+        }
+    </ng-template>
+
+    <jhi-lecture-unit-fullscreen-layout
+        [isCollapsed]="isCollapsed()"
+        [showSidebar]="showIrisSidebar()"
+        [dialogAriaLabel]="fullscreenAriaLabel()"
+        [sidebarAriaLabel]="irisSidebarAriaLabel()"
+        [hasNestedFullscreen]="hasPdfFullscreen()"
+        [verticalSplit]="verticalSplitConfig()"
+        [horizontalSplit]="horizontalSplitConfig()"
+        (splitSizesChange)="onVerticalSplitSizesChange($event)"
+        (horizontalSplitSizesChange)="onHorizontalSplitSizesChange($event)"
+        (fullscreenChange)="onFullscreenChange($event)"
+    >
+        <!--
+            The projection slots must be unconditional direct children: Angular's `ng-content select` does not
+            match projectable content nested inside @if/@else control flow, so wrapping these divs in @if left the
+            fullscreen-layout's content-main slot empty (nothing rendered inline). The split-vs-combined choice is
+            made inside each slot instead, so the video/pdf blocks are only instantiated in the active layout.
+        -->
+        <div content-top class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
+            }
+        </div>
+        <div content-bottom class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
+            }
+        </div>
+        <div content-main class="main-content">
+            @if (!horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
+            }
+        </div>
+
+        <div content-sidebar class="sidebar-content">
+            @if (showIrisSidebar()) {
+                <div class="iris-sidebar__header">
+                    @if (synchronizationAvailable()) {
+                        <div class="lecture-sync">
+                            <label class="lecture-sync-toggle" for="lecture-sync-toggle">
+                                <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
+                                <tumaet-ui-toggle-switch
+                                    inputId="lecture-sync-toggle"
+                                    [ngModel]="synchronizeVideoAndSlides()"
+                                    (ngModelChange)="onSynchronizationToggleChange($event)"
+                                />
+                            </label>
+                            @if (syncDisabledByPointOut(); as notice) {
+                                <span
+                                    class="lecture-sync__notice"
+                                    role="status"
+                                    jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.disabledByPointOut"
+                                    [translateValues]="{ page: notice.page, time: notice.time }"
+                                ></span>
+                            }
+                        </div>
+                    }
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        class="iris-sidebar__close-button"
+                        type="button"
+                        [attr.aria-label]="closeFullscreenAriaLabel()"
+                        (click)="closeFullscreen()"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                </div>
+                <jhi-lecture-chatbot [lectureId]="lectureId()" [contextsProvider]="ownContextsProvider()" [isContextSelectionAvailable]="false" />
+            }
+        </div>
+    </jhi-lecture-unit-fullscreen-layout>
+</jhi-lecture-unit-card>

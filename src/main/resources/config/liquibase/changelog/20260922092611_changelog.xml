@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Per-type count of consecutive orphan-sweep ticks a type's orphan ratio has come back over the abort
+        threshold. A single suspicious reading never deletes anything; a second one on an unrelated later tick,
+        sampling a different slice of the type's rows, is what earns the pass's trust that it is real rather than
+        a stale scan or a transient bug. Nullable and left blank on existing rows: an absent streak means nothing
+        has looked suspicious yet, which is the correct starting state either way.
+    -->
+    <changeSet id="20260922092611-1" author="nayerkotry">
+        <addColumn tableName="searchable_entity_reconcile_state">
+            <column name="orphan_abort_streaks" type="varchar(1000)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

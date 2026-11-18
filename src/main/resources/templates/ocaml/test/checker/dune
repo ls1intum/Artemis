@@ -1,0 +1,6 @@
+(executable
+ (name checker)
+ (flags
+  (:standard -warn-error -A))
+ (libraries compiler-libs.common)
+ (promote))

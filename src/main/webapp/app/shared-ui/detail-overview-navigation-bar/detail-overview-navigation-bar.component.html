@@ -1,0 +1,9 @@
+<nav aria-label="{{ 'artemisApp.exerciseDetail.sections' | artemisTranslate }}">
+    <div class="section-link-container">
+        @for (headline of sectionHeadlines(); track headline) {
+            <a [routerLink]="[]" [fragment]="headline.id" queryParamsHandling="preserve" (click)="onSectionClick($event, headline.id)">
+                {{ headline.translationKey | artemisTranslate }}
+            </a>
+        }
+    </div>
+</nav>

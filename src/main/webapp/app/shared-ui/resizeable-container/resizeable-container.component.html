@@ -1,0 +1,81 @@
+<div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
+    <!--region LEFT SIDE-->
+    <div class="left rounded-[0.15rem] bg-surface-raised" [class]="isExerciseParticipation() ? 'border-0' : 'border border-border'" data-testid="resizeable-container-left">
+        @if (!isExerciseParticipation()) {
+            <div class="pane-header bg-primary text-white">
+                <ng-content select="span[left-header]" />
+                <span class="flex-auto"></span>
+                <ng-content select="jhi-score-display[left-header]" />
+            </div>
+        }
+        <div class="left-body pane-body" [class]="leftBodyIsFlush() ? 'p-0!' : 'p-4!'">
+            <ng-content select="[left-body]" />
+        </div>
+    </div>
+    <!--endregion LEFT SIDE-->
+    <!--region RIGHT SIDE-->
+    @if (!examTimeline() && showRightPanel()) {
+        @if (collapsed() && !expandProblemStatement()) {
+            <div
+                class="collapsed right text-white bg-primary"
+                data-testid="resizeable-container-collapsed"
+                (click)="collapsed.set(!collapsed())"
+                [attr.aria-expanded]="!collapsed()"
+                #keyboardAction19
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+            >
+                <fa-icon [icon]="faChevronLeft" />
+                <div class="header">
+                    <ng-container *ngTemplateOutlet="rightHeaderSpan" />
+                </div>
+                <fa-icon [icon]="faChevronLeft" />
+            </div>
+        } @else {
+            <div
+                class="expanded right"
+                jhiResizable
+                [resizableEdges]="{ left: '.draggable-left' }"
+                [resizableConstraints]="{ minWidth: 215, maxWidth: 1500 }"
+                [style.width]="isBeingPrinted() ? 'fit-content' : '30vw'"
+            >
+                <div class="draggable-left panel-divider-x" data-testid="resizeable-container-divider"></div>
+                <div class="pane flex flex-col rounded-[0.15rem] border border-border bg-surface-raised" data-testid="resizeable-container-right">
+                    <div
+                        class="pane-header text-white bg-primary"
+                        (click)="collapsed.set(!collapsed())"
+                        [attr.aria-expanded]="!collapsed()"
+                        #keyboardAction38
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
+                    >
+                        <h3 class="pane-title">
+                            <span class="me-1">
+                                <ng-content select="fa-icon[right-header]" />
+                            </span>
+                            <ng-container *ngTemplateOutlet="rightHeaderSpan" />
+                            <ng-container *ngTemplateOutlet="Highlighter" />
+                        </h3>
+                        <fa-icon id="right-header-icon" [icon]="faChevronRight" />
+                    </div>
+                    <div class="pane-body p-4!">
+                        <ng-content select="[right-body]" />
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    <ng-template #rightHeaderSpan>
+        <ng-content select="span[right-header]" />
+    </ng-template>
+    <ng-template #Highlighter>
+        <ng-content select="jhi-exam-exercise-update-highlighter" />
+    </ng-template>
+    <!--endregion RIGHT SIDE-->
+</div>

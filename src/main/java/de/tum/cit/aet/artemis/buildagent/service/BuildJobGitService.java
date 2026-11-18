@@ -1,0 +1,474 @@
+package de.tum.cit.aet.artemis.buildagent.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.SshConfigStore;
+import org.eclipse.jgit.transport.SshConstants;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import de.tum.cit.aet.artemis.localvc.service.AbstractGitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
+
+/**
+ * Git service specifically for build agents to clone and manage repositories during build job execution.
+ * <p>
+ * This service extends {@link AbstractGitService} and provides build-agent-specific Git operations,
+ * including repository cloning and commit checkout. It supports two authentication mechanisms:
+ * <ul>
+ * <li><b>SSH authentication</b>: the key pair the agent generates at startup and publishes to the core nodes</li>
+ * <li><b>Username/password authentication</b>: HTTP(S) with the configured build-agent git credentials</li>
+ * </ul>
+ * <p>
+ * <b>Usage in Build Jobs:</b>
+ * <ul>
+ * <li>{@link #cloneRepository} - Clones assignment, test, solution, and auxiliary repositories</li>
+ * <li>{@link #checkoutRepositoryAtCommit} - Checks out specific commits (e.g., student submissions)</li>
+ * <li>{@link #getExistingCheckedOutRepositoryByLocalPath} - Retrieves already-cloned repositories</li>
+ * <li>{@link #deleteLocalRepository} - Cleans up cloned repositories after build completion</li>
+ * </ul>
+ * <p>
+ * <b>Choosing a mechanism:</b>
+ * {@code artemis.version-control.build-agent-use-ssh} selects one of the two, and there is no fallback between them:
+ * with ssh, a missing private key path or url template fails startup rather than reverting to https, and without ssh,
+ * missing credentials fail startup rather than reverting to a key. On a core node the same property governs only
+ * whether the credential pair still grants build agents repository-wide read; a registered agent's public key is
+ * accepted either way.
+ *
+ * @see BuildJobExecutionService
+ * @see AbstractGitService
+ */
+@Profile(PROFILE_BUILDAGENT)
+@Lazy(false)
+@Service
+public class BuildJobGitService extends AbstractGitService {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
+
+    // Optional on purpose: an agent that authenticates with an ssh key or with per-build-job clone tokens never uses
+    // this credential pair, and then must not have to configure one.
+    @Value("${artemis.version-control.build-agent-git-username:}")
+    private String buildAgentGitUsername;
+
+    @Value("${artemis.version-control.build-agent-git-password:}")
+    private String buildAgentGitPassword;
+
+    /**
+     * This agent's own name, presented as the git username so that the core node knows whose token it is checking and
+     * can log the clone against the right agent. It is an identifier, not a secret: the token is what authenticates.
+     */
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    /**
+     * The clone token of the build job this thread is currently executing, if any.
+     * <p>
+     * Thread scoped rather than passed as a parameter because the credential is needed inside
+     * {@link #authenticate(TransportCommand)}, which the inherited git operations reach without carrying any build job
+     * context: {@link AbstractGitService#getLastCommitHash} is one such caller. A build job occupies exactly one
+     * executor thread from start to finish, so the scope matches the job's lifetime precisely.
+     */
+    private static final ThreadLocal<String> CURRENT_CLONE_TOKEN = new ThreadLocal<>();
+
+    @Value("${artemis.version-control.build-agent-use-ssh:false}")
+    private boolean useSshForBuildAgent;
+
+    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
+    private Optional<String> gitSshPrivateKeyPath;
+
+    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
+    private Optional<String> sshUrlTemplate;
+
+    /**
+     * Per-transport-phase JGit timeout (in seconds) for build-agent SSH clones. The previous hardcoded value of 5
+     * seconds tripped on multi-repo (auxiliary-repository) builds, where every SSH read pays per-command
+     * authorization and can legitimately take longer than that.
+     */
+    @Value("${artemis.version-control.build-agent-clone-timeout-seconds:60}")
+    private int buildAgentCloneTimeoutSeconds;
+
+    private CredentialsProvider credentialsProvider;
+
+    private JGitKeyCache jgitKeyCache;
+
+    protected TransportConfigCallback sshCallback;
+
+    private SshdSessionFactory sshdSessionFactory;
+
+    /**
+     * Initializes the BuildJobGitService, in particular which authentication mechanism is used, and fails startup when
+     * the configuration for the selected mechanism is incomplete. Failing here rather than at clone time keeps the
+     * error next to the setting that caused it.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
+    @PostConstruct
+    public void init() {
+        if (useSsh()) {
+            log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories.");
+            if (sshUrlTemplate.isEmpty()) {
+                throw new RuntimeException("No SSH url template was set but should use SSH for build agent authentication.");
+            }
+            if (gitSshPrivateKeyPath.isEmpty()) {
+                throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
+            }
+            configureSsh();
+            return;
+        }
+        // Missing credentials are no longer fatal: over https a build job normally carries its own clone token, which
+        // is the preferred mechanism and needs no configured credential at all. The pair only still matters for a job
+        // queued by a core node that has not been upgraded yet and therefore issued no token, which is a transient
+        // state during a rolling upgrade. Warn rather than refuse to start, so the desirable configuration - no shared
+        // secret anywhere - is not the one that fails.
+        if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+            log.warn("No build agent git username and password were set and {} is false, so this agent authenticates purely with per-build-job clone tokens. A build job queued "
+                    + "by a core node that does not issue tokens yet will fail to clone until that node is upgraded.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            return;
+        }
+        log.info("BuildJobGitService will use per-build-job clone tokens where a job provides one, and otherwise fall back to the configured git username and password. That "
+                + "fallback is deprecated; set {} to true here and on every core node to authenticate with an ssh key instead.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+    }
+
+    /**
+     * Binds a build job's clone token to the calling thread for the duration of that job.
+     * <p>
+     * Must be paired with {@link #clearCloneTokenForCurrentThread()} in a {@code finally} block: executor threads are
+     * reused, so a token left behind would be presented for the next job, whose repositories it does not cover.
+     *
+     * @param cloneToken the token of the build job about to run, may be null for a job that carries none
+     */
+    public void setCloneTokenForCurrentThread(@Nullable String cloneToken) {
+        if (cloneToken == null) {
+            CURRENT_CLONE_TOKEN.remove();
+        }
+        else {
+            CURRENT_CLONE_TOKEN.set(cloneToken);
+        }
+    }
+
+    /**
+     * Releases the clone token bound to the calling thread.
+     */
+    public void clearCloneTokenForCurrentThread() {
+        CURRENT_CLONE_TOKEN.remove();
+    }
+
+    protected boolean useSsh() {
+        return useSshForBuildAgent;
+    }
+
+    /**
+     * Configures the SSH settings for the JGit SSH session factory.
+     */
+    protected void configureSsh() {
+        CredentialsProvider.setDefault(new CustomCredentialsProvider());
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, localVCBaseUri);
+        jgitKeyCache = new JGitKeyCache();
+        sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
+        sshCallback = transport -> {
+            if (transport instanceof SshTransport sshTransport) {
+                transport.setTimeout(buildAgentCloneTimeoutSeconds);
+                sshTransport.setSshSessionFactory(sshdSessionFactory);
+            }
+            else {
+                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
+            }
+        };
+    }
+
+    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, URI gitUri) {
+        // @formatter:off
+        return new SshdSessionFactoryBuilder()
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
+            .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
+            .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
+        // @formatter:on
+    }
+
+    /**
+     * Cleanup SSH resources when the service is destroyed.
+     * Closes the JGit key cache and SSH session factory to release resources.
+     */
+    @PreDestroy
+    public void cleanup() {
+        if (useSsh()) {
+            jgitKeyCache.close();
+            sshdSessionFactory.close();
+        }
+    }
+
+    /**
+     * Custom credentials provider for SSH authentication.
+     * <p>
+     * This provider automatically accepts host key verification prompts (YesNoType credentials),
+     * which allows connecting to new hosts without manual confirmation. This is necessary for
+     * automated build agents that may connect to various Git servers.
+     * <p>
+     * <b>Security Note:</b> This trusts all host keys, which is acceptable in controlled
+     * environments but should be used with caution in untrusted networks.
+     */
+    static class CustomCredentialsProvider extends CredentialsProvider {
+
+        @Override
+        public boolean isInteractive() {
+            return false;
+        }
+
+        @Override
+        public boolean supports(CredentialItem... items) {
+            return true;
+        }
+
+        /**
+         * Handles credential requests, automatically accepting host key verification prompts.
+         * This allows SSH connections to proceed without manual host key confirmation.
+         */
+        @Override
+        public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+            for (CredentialItem item : items) {
+                if (item instanceof CredentialItem.YesNoType yesNoItem) {
+                    yesNoItem.setValue(true);
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Custom SSH configuration store that disables strict host key checking for the configured Git server.
+     * <p>
+     * This is used to allow SSH connections without requiring the host to be in the known_hosts file,
+     * which simplifies deployment in containerized environments where known_hosts may not persist.
+     */
+    record CustomSshConfigStore(URI gitUri) implements SshConfigStore {
+
+        @Override
+        public HostConfig lookup(String hostName, int port, String userName) {
+            return new HostConfig() {
+
+                @Override
+                public String getValue(String key) {
+                    return null;
+                }
+
+                @Override
+                public List<String> getValues(String key) {
+                    return List.of();
+                }
+
+                @Override
+                public Map<String, String> getOptions() {
+                    log.debug("getOptions: {}:{}", hostName, port);
+                    if (hostName.equals(gitUri.getHost())) {
+                        return Map.of(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                    }
+                    else {
+                        return Map.of();
+                    }
+                }
+
+                @Override
+                public Map<String, List<String>> getMultiValuedOptions() {
+                    return Map.of();
+                }
+            };
+        }
+
+        @Override
+        public HostConfig lookupDefault(String hostName, int port, String userName) {
+            return lookup(hostName, port, userName);
+        }
+    }
+
+    /**
+     * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
+     * is
+     * used.
+     * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
+     * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
+     *
+     * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} for which to get the URI
+     * @return the URI (SSH, HTTP(S), or local path)
+     * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
+     */
+    @Override
+    protected URI getGitUri(LocalVCRepositoryUri localVCRepositoryUri) throws URISyntaxException {
+        return useSsh() ? getSshUri(localVCRepositoryUri, sshUrlTemplate) : localVCRepositoryUri.getURI();
+    }
+
+    /**
+     * Checkout at the given repository at the given commit hash
+     *
+     * @param repository the repository to check out the commit in
+     * @param commitHash the hash of the commit to check out
+     */
+    public void checkoutRepositoryAtCommit(Repository repository, String commitHash) {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(commitHash).call();
+        }
+        catch (GitAPIException e) {
+            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
+        }
+    }
+
+    /**
+     * Clone a repository from the given URI to the given local path
+     *
+     * @param repoUri   the URI of the repository to clone
+     * @param localPath the local path to clone the repository to
+     * @return the cloned repository
+     * @throws GitAPIException      if the repository could not be cloned
+     * @throws GitException         if the repository could not be cloned
+     * @throws InvalidPathException if the local path is invalid
+     * @throws IOException          if the local path could not be deleted
+     * @throws URISyntaxException   if the URI is invalid
+     */
+    public Repository cloneRepository(LocalVCRepositoryUri repoUri, Path localPath) throws GitAPIException, GitException, InvalidPathException, IOException, URISyntaxException {
+        var gitUriAsString = getGitUriAsString(repoUri);
+        log.debug("Cloning from {} to {}", gitUriAsString, localPath);
+        // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
+        FileUtils.deleteDirectory(localPath.toFile());
+        CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+        cloneWithoutSymbolicLinks(cloneCommand);
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
+    }
+
+    /**
+     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
+     * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     *
+     * @param localPath           to git repo on server.
+     * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
+     * @param defaultBranch       the name of the branch that should be used as default branch
+     * @return the git repository in the localPath or **null** if it does not exist on the server.
+     */
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch) {
+        try {
+            return openCheckedOutRepositoryFromFileSystem(localPath, remoteRepositoryUri, defaultBranch);
+        }
+        catch (IOException | InvalidRefNameException ex) {
+            log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Configures authentication for a Git transport command.
+     * <p>
+     * With ssh, the key callback. Over https, the clone token of the build job running on this thread, which is valid
+     * only for that job's repositories and only while the job is running. The configured username and password are a
+     * deprecated fallback, used only for a job that carries no token.
+     *
+     * @param command the transport command to authenticate
+     * @param <C>     the type of Git command
+     * @return the authenticated command
+     */
+    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
+        if (useSsh()) {
+            return command.setTransportConfigCallback(sshCallback);
+        }
+        return command.setCredentialsProvider(getCredentialsProvider());
+    }
+
+    /**
+     * Returns the credentials to present for an https git operation.
+     * <p>
+     * Not cached, unlike the fallback below: the token changes with every build job, so a cached provider would send
+     * the previous job's credential.
+     *
+     * @return the credentials provider for the current build job
+     */
+    private CredentialsProvider getCredentialsProvider() {
+        String cloneToken = CURRENT_CLONE_TOKEN.get();
+        if (cloneToken != null) {
+            // The username identifies which agent is asking so the core node can find the right jobs and log the
+            // clone; the token is the part that authenticates.
+            return new UsernamePasswordCredentialsProvider(buildAgentShortName, cloneToken);
+        }
+        warnIfNoCredentialCanAuthorize();
+        return getCachedFallbackCredentialsProvider();
+    }
+
+    /**
+     * Returns a cached credentials provider for the deprecated username/password authentication.
+     * The provider is created once and reused, since these credentials never change while the agent runs.
+     *
+     * @return the cached credentials provider
+     */
+    private CredentialsProvider getCachedFallbackCredentialsProvider() {
+        if (credentialsProvider == null) {
+            credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
+        }
+        return credentialsProvider;
+    }
+
+    /**
+     * Says why the git operation about to run cannot be authorized, when neither mechanism is available for it.
+     * <p>
+     * Deliberately not inside {@link #getCachedFallbackCredentialsProvider()}: that provider is built once and reused
+     * for the lifetime of the agent, so a warning there would be logged for the first affected build job and for no
+     * other. The one that matters is the build failing hours later, whose log would then explain nothing. Each line
+     * here corresponds to a git operation that is about to fail, so the volume is bounded by the failures it explains.
+     */
+    private void warnIfNoCredentialCanAuthorize() {
+        if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+            log.warn("This build job carries no clone token and no build agent git credentials are configured, so the git operation will not be authorized. Either the core node "
+                    + "that queued the job predates per-build-job clone tokens, in which case upgrading it resolves this, or it is configured with credentials this agent does "
+                    + "not have.");
+        }
+    }
+
+    @Override
+    protected LsRemoteCommand lsRemoteCommand() {
+        return authenticate(Git.lsRemoteRepository());
+    }
+
+    /**
+     * Creates an authenticated clone command for cloning repositories.
+     *
+     * @return an authenticated CloneCommand ready to be configured and executed
+     */
+    private CloneCommand cloneCommand() {
+        return authenticate(Git.cloneRepository());
+    }
+}

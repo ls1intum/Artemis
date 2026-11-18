@@ -1,0 +1,73 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('OneToOneChatCreateDialogComponent', () => {
+    let component: OneToOneChatCreateDialogComponent;
+    let fixture: ComponentFixture<OneToOneChatCreateDialogComponent>;
+    const course = { id: 1 } as Course;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                OneToOneChatCreateDialogComponent,
+                MockComponent(CourseUsersSelectorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(OneToOneChatCreateDialogComponent);
+        component = fixture.componentInstance;
+        initializeDialog(component, fixture, {
+            course,
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+        expect(component.isInitialized).toBe(true);
+    });
+
+    it('should dismiss modal if cancel is selected', () => {
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
+        const dismissButton = fixture.debugElement.nativeElement.querySelector('[data-testid="dialog-close-button"]');
+        dismissButton.click();
+        expect(dismissSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should close the dialog with the selected user once one is selected', () => {
+        const selectedUser = { id: 1 };
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+        component.onSelectedUsersChange([selectedUser]);
+        fixture.changeDetectorRef.detectChanges();
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith(selectedUser);
+    });
+});

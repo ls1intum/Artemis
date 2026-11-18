@@ -1,0 +1,335 @@
+import { Page } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+/** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Page object for the exercise teams page.
+ */
+export class ExerciseTeamsPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * Clicks the "Create team" button and waits for the dialog to be fully rendered, with
+     * both typeahead inputs visible.
+     *
+     * The dialog is opened by jhi-team-update-button via PrimeNG's DialogService directly inside the
+     * button's (onClick) handler (a synchronous `dialogService.open(...)`). Under heavy parallel load the
+     * button is occasionally clicked before Angular has wired that output binding, so the first click
+     * no-ops and no dialog ever appears — the source of this test's flakiness. Retry the click until the
+     * dialog becomes visible.
+     */
+    async createTeam() {
+        const createButton = this.page.locator('button', { hasText: 'Create team' });
+        const dialog = this.page.getByRole('dialog');
+        await expect(createButton).toBeEnabled({ timeout: 30_000 });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (await dialog.isVisible()) {
+                break;
+            }
+            await createButton.click();
+            try {
+                await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+                break;
+            } catch {
+                if (attempt === 2) {
+                    throw new Error('Team creation dialog did not open after multiple "Create team" clicks');
+                }
+            }
+        }
+        await this.page.getByTestId('owner-search-input').getByRole('combobox').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.getByTestId('student-search-input').getByRole('combobox').waitFor({ state: 'visible', timeout: 30_000 });
+    }
+
+    /**
+     * Enters the team name.
+     * @param teamName - the team name.
+     */
+    async enterTeamName(teamName: string) {
+        await this.page.locator('#teamName').fill(teamName);
+    }
+
+    /**
+     * Enters the team short name.
+     *
+     * The team-update-dialog runs an asynchronous short-name uniqueness check on every
+     * change with a 500ms debounce: `shortName$.pipe(debounceTime(500), switchMap(... existsByShortName ...))`.
+     * If we move on to interact with the tutor typeahead before that HTTP finishes, the
+     * resulting change-detection cycle on the response sometimes interferes with the
+     * ngbTypeahead directive's first input event. Wait through the debounce window so
+     * the validation request fires + settles before subsequent UI interactions.
+     *
+     * @param teamShortName - the team short name.
+     */
+    async enterTeamShortName(teamShortName: string) {
+        await this.page.locator('#teamShortName').fill(teamShortName);
+        // Debounce is 500 ms; allow another 400 ms for the existsByShortName response.
+        await this.page.waitForTimeout(900);
+    }
+
+    /**
+     * Searches for a tutor via the owner typeahead.
+     *
+     * The team-owner-search typeahead now applies `debounceTime(200) + distinctUntilChanged`
+     * on its text$ stream (matching team-student-search), so rapid typing coalesces into a
+     * single trailing HTTP rather than cascading through switchMap cancellations. We still
+     * pre-fetch the tutor list via Playwright's request API and install a `page.route`
+     * intercept so the typeahead's HTTP is fulfilled instantly regardless of server load —
+     * under heavy parallel multi-node load the real `GET /api/course/courses/{id}/tutors`
+     * round-trip can occasionally exceed the listbox wait timeout even with debounce.
+     *
+     * We deliberately serve the REAL server response (rather than a synthetic one) so the
+     * typeahead's selected `User` object carries every field the server later cross-checks
+     * during the team save — synthetic payloads can subtly differ from the real entity
+     * (extra fields, missing metadata) and break the save path.
+     *
+     * If every pre-fetch retry fails, we fall through to the real (slower) network — the
+     * fallback timeout is large enough to absorb a few server hiccups.
+     */
+    private async searchTutor(inputLocator: ReturnType<Page['locator']>, username: string) {
+        const listbox = this.page.getByRole('listbox');
+
+        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
+        const courseId = courseIdMatch?.[1];
+        const tutorsUrlSubstring = courseId ? `/api/course/courses/${courseId}/tutors` : undefined;
+        const routePattern = courseId ? `**/api/course/courses/${courseId}/tutors` : undefined;
+        let routeInstalled = false;
+
+        if (routePattern && courseId) {
+            const cachedBody = await this.fetchTutorListWithRetries(courseId, username);
+            if (cachedBody) {
+                // Convert Buffer → string explicitly: some Playwright versions handle Buffer bodies
+                // inconsistently when the response is JSON, occasionally surfacing as
+                // HttpErrorResponse on the Angular side. Passing a UTF-8 string is unambiguous.
+                const bodyText = cachedBody.toString('utf-8');
+                await this.page.route(routePattern, (route) =>
+                    route.fulfill({
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                        body: bodyText,
+                    }),
+                );
+                routeInstalled = true;
+            }
+        }
+
+        try {
+            await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
+
+            // Settle for any pending change detection from the previous fields (most
+            // importantly the team-shortname `existsByShortName` 500 ms-debounced HTTP)
+            // before touching the tutor typeahead. Under heavy parallel multi-node load the
+            // ngbTypeahead directive's `_valueChanges$` listener occasionally needs a tick
+            // to fully wire up to the host input — a short settle reliably moves the
+            // typeahead's setup out of the contended window where the very first interaction
+            // would otherwise be missed.
+            await this.page.waitForTimeout(800);
+
+            // The listbox timeout per attempt is large enough to absorb real-network latency
+            // when the route mock is not installed (prefetch failed), but short enough that
+            // four retries still fit comfortably inside the per-test budget.
+            const listboxTimeoutMs = routeInstalled ? 15_000 : 45_000;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                const tutorResponsePromise = tutorsUrlSubstring
+                    ? this.page.waitForResponse((resp) => resp.url().includes(tutorsUrlSubstring) && resp.ok(), { timeout: listboxTimeoutMs }).catch(() => undefined)
+                    : Promise.resolve(undefined);
+
+                // pressSequentially against the locator: auto-focuses the input, fires real
+                // keyboard input events that ngbTypeahead's `fromEvent(_, 'input')` listener
+                // reliably receives — matching the proven `searchStudent` pattern. After
+                // typing we wait briefly to honour the typeahead's `debounceTime(200)` on
+                // text$ so the final value lands as a single trailing emission rather than
+                // a burst that switchMap's still-resolving inner HTTP cancels.
+                await inputLocator.click();
+                await inputLocator.fill('');
+                await this.page.waitForTimeout(300);
+                await inputLocator.pressSequentially(username, { delay: 100 });
+
+                // Wait for the tutors HTTP to complete (mock or real). The route mock returns
+                // instantly; the real network can take a few seconds under load. If the wait
+                // times out we still proceed to the visibility check — the typeahead may have
+                // emitted from a previously-cached list without re-issuing the HTTP.
+                await tutorResponsePromise;
+
+                try {
+                    await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
+                    const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
+                    await option.waitFor({ state: 'visible', timeout: 5_000 });
+                    await option.click();
+                    return;
+                } catch {
+                    if (attempt === 3) throw new Error(`Tutor search autocomplete did not appear after 4 attempts for '${username}'`);
+                    // On retry: re-trigger the typeahead by dispatching a synthetic input
+                    // event with the value (in addition to the natural pressSequentially
+                    // chain above). Under heavy multi-node load the first natural input
+                    // event from a brand-new ngbTypeahead host occasionally reaches the
+                    // listener before the directive has subscribed to its result observable;
+                    // a follow-up dispatch lands after the subscription is established.
+                    await inputLocator.evaluate((el: HTMLInputElement, value: string) => {
+                        el.value = value;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                    }, username);
+                    await this.page.waitForTimeout(500);
+                }
+            }
+        } finally {
+            if (routeInstalled && routePattern) {
+                await this.page.unroute(routePattern);
+            }
+        }
+    }
+
+    /**
+     * Pre-fetches the course tutor list with retries. Uses Playwright's request context
+     * (a single HTTP call not subject to switchMap cancellation) so the route intercept
+     * can serve subsequent typeahead requests deterministically.
+     *
+     * Treats both empty responses AND responses missing the expected user as transient
+     * failures and retries. Under heavy parallel load the server occasionally returns
+     * a list that omits the seeded tutor (a node whose user-group / Hibernate session
+     * has not yet picked up the membership). Returning that payload via the route mock
+     * would make the typeahead silently filter to zero results — exactly the failure
+     * mode that has been chasing us across runs.
+     *
+     * Returns `undefined` if every retry fails — the caller then falls back to the
+     * real (slower) network path with a more generous per-attempt timeout.
+     */
+    private async fetchTutorListWithRetries(courseId: string, expectedUsername: string): Promise<Buffer | undefined> {
+        const url = `api/course/courses/${courseId}/tutors`;
+        const maxAttempts = 8;
+        const perAttemptTimeoutMs = 15_000;
+        const backoffMs = 1_000;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                const response = await this.page.request.get(url, { timeout: perAttemptTimeoutMs });
+                if (response.ok()) {
+                    const body = await response.body();
+                    if (this.bodyContainsUser(body, expectedUsername)) {
+                        return body;
+                    }
+                }
+            } catch {
+                // network/timeout — fall through to backoff + retry
+            }
+            await this.page.waitForTimeout(backoffMs);
+        }
+        return undefined;
+    }
+
+    /**
+     * Checks whether the JSON body parses as an array of users containing one whose
+     * `login` matches the expected username (case-insensitive substring match — the
+     * typeahead's own filter uses the same logic, so this mirrors what would actually
+     * show up in the listbox after filtering).
+     */
+    private bodyContainsUser(body: Buffer, expectedUsername: string): boolean {
+        try {
+            const parsed = JSON.parse(body.toString('utf-8'));
+            if (!Array.isArray(parsed) || parsed.length === 0) {
+                return false;
+            }
+            const needle = expectedUsername.toLowerCase();
+            return parsed.some((u: { login?: string; name?: string }) => {
+                return (u.login ?? '').toLowerCase().includes(needle) || (u.name ?? '').toLowerCase().includes(needle);
+            });
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Searches for a student via the student typeahead.
+     * The student typeahead uses debounceTime(200) which coalesces keystrokes
+     * into a single HTTP request after typing stops, so pressSequentially is safe.
+     */
+    private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
+        const listbox = this.page.getByRole('listbox');
+        // A deadline for the search as a whole, not only for its individual actions, and it starts here rather than
+        // after the first wait: four attempts of bounded steps still add up to minutes, an attempt starting just
+        // before the deadline would run past it, and a 30 s wait left outside made the advertised 90 s budget 120 s.
+        // The caller adds several students in sequence inside one test budget, which is what all of that has to fit.
+        const startedAt = Date.now();
+        const deadline = startedAt + 90_000;
+        const remaining = (maximum: number) => Math.max(1, Math.min(maximum, deadline - Date.now()));
+        // Ensure the input is mounted before we start typing — under parallel CI load the dialog
+        // body can render late and pressSequentially against an absent element silently no-ops.
+        await inputLocator.waitFor({ state: 'visible', timeout: remaining(30_000) });
+        for (let attempt = 0; attempt < 4 && Date.now() < deadline; attempt++) {
+            if (attempt > 0) {
+                await this.page.waitForTimeout(Math.min(500, remaining(500)));
+                // The delay can be what exhausts the budget, and `remaining` clamps to 1 ms rather than to zero, so
+                // without this the next attempt would still start its actions past the deadline.
+                if (Date.now() >= deadline) {
+                    break;
+                }
+            }
+
+            try {
+                // Typing into the field belongs inside the retry. Without a timeout these actions inherit the test's
+                // whole budget, so an input that never becomes actionable - the dialog re-renders under load and
+                // detaches it - hung the entire test instead of failing this attempt, and the run reported a 10 minute
+                // timeout rather than the clear message below.
+                await inputLocator.click({ timeout: remaining(10_000) });
+                await inputLocator.fill('', { timeout: remaining(10_000) });
+                await this.page.waitForTimeout(Math.min(300, remaining(300)));
+                await inputLocator.pressSequentially(username, { delay: 100, timeout: remaining(20_000) });
+
+                await listbox.waitFor({ state: 'visible', timeout: remaining(15_000) });
+                const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
+                await option.waitFor({ state: 'visible', timeout: remaining(5_000) });
+                await option.click({ timeout: remaining(10_000) });
+                return;
+            } catch {
+                if (attempt === 3 || Date.now() >= deadline) {
+                    break;
+                }
+            }
+        }
+        throw new Error(`Student search autocomplete did not appear for '${username}' within ${Math.round((Date.now() - startedAt) / 1000)}s`);
+    }
+
+    /**
+     * Sets the team owner/tutor.
+     * @param username - the tutor username.
+     */
+    async setTeamTutor(username: string) {
+        await this.searchTutor(this.page.getByTestId('owner-search-input').getByRole('combobox'), username);
+    }
+
+    /**
+     * Adds a student to the team.
+     * @param username - the student username.
+     */
+    async addStudentToTeam(username: string) {
+        await this.searchStudent(this.page.getByTestId('student-search-input').getByRole('combobox'), username);
+    }
+
+    /**
+     * Checks if the team is on the list of teams.
+     * @param teamShortName - the team short name.
+     */
+    async checkTeamOnList(teamShortName: string) {
+        await expect(this.page.getByRole('table').getByRole('row').getByText(teamShortName)).toBeVisible();
+    }
+
+    /**
+     * Retrieves the Locator to ignore team size recommendation checkbox.
+     */
+    getIgnoreTeamSizeRecommendationCheckbox() {
+        return this.page.locator('#ignoreTeamSizeRecommendation');
+    }
+
+    /**
+     * Retrieves the Locator for the save button.
+     */
+    getSaveButton() {
+        return this.page.locator('button', { hasText: 'Save' });
+    }
+}

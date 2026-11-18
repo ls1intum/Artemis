@@ -1,0 +1,39 @@
+<div
+    #assessmentFrame
+    class="modeling-assessment artemis-apollon-theme"
+    [class.modeling-assessment--fullscreen]="fullscreenActive()"
+    [class.apollon-fullscreen-frame]="fullscreenActive()"
+>
+    <div #topLeftRegion class="modeling-assessment__region modeling-assessment__region--top-left nopan nodrag nowheel">
+        <ng-content select="[modelingAssessmentTopLeft]" />
+    </div>
+    <div #topRightRegion class="modeling-assessment__region modeling-assessment__region--top-right nopan nodrag nowheel">
+        <ng-content select="[modelingAssessmentTopRight]" />
+    </div>
+    <div
+        #bottomCenterRegion
+        class="modeling-assessment__region modeling-assessment__region--bottom-center nopan nodrag nowheel"
+        [class.modeling-assessment__region--bottom-center-elevated]="bottomCenterElevated()"
+    >
+        @if (explanation()) {
+            <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" [autosizeMaxRows]="6" [autosizeMinRows]="4" />
+        }
+    </div>
+
+    <jhi-apollon-rail-disclosure
+        #panelRegion
+        [label]="panelLabel()"
+        [icon]="faPanel"
+        testId="modeling-assessment-panel"
+        [(visible)]="panelVisible"
+        [maxHeight]="panelMaxHeight()"
+        [hidden]="!hasPanel()"
+        (resized)="scheduleChromePlacement()"
+    >
+        <ng-content select="[modelingAssessmentPanel]" />
+    </jhi-apollon-rail-disclosure>
+
+    <div class="modeling-assessment__canvas-shell">
+        <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
+    </div>
+</div>

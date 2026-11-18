@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "textExercise": {
+            "home": {
+                "title": "Text Exercise",
+                "createLabel": "Create Text Exercise",
+                "editLabel": "Edit Text Exercise",
+                "importLabel": "Import Text Exercise"
+            },
+            "submitButton": {
+                "create": "Create",
+                "import": "Import",
+                "save": "Save"
+            },
+            "wordCount": "Number of words: {{ count }}",
+            "characterCount": "Number of characters: {{ count }}",
+            "created": "Created new Text Exercise with identifier {{ param }}",
+            "updated": "Updated Text Exercise with identifier {{ param }}",
+            "deleted": "Deleted Text Exercise with identifier {{ param }}",
+            "detail": {
+                "title": "Text Exercise"
+            },
+            "sampleSolution": "Example Solution",
+            "exampleSubmissions": "Example submissions",
+            "assessedSubmission": "Your assessed submission",
+            "assessedSubmissionInstructor": "The assessed submission",
+            "submission": "Submission",
+            "assessmentPending": "Assessment pending",
+            "createExampleSubmissions": "Create example submission",
+            "checkPlagiarism": "Plagiarism",
+            "saveSuccessful": "Your answer was saved successfully!",
+            "error": "An error occurred. Please try again later.",
+            "tutorEffortStatistics": {
+                "title": "Tutor Effort Statistics",
+                "titleDescription": "Distribution of the tutor effort: Displays how many students spent how many minutes for correcting submissions of this exercise. The interval containing the median of this distribution is highlighted in dark blue if at least one tutor satisfies this interval.",
+                "numberOfSubmissionsAssessed": "Number of total submissions involved",
+                "totalTimeSpent": "Total time spent grading (Minutes)",
+                "averageTime": "Grading Speed (Submissions/Minute)",
+                "effortMedian": "Effort median (Minutes)",
+                "noData": "No data records currently present for this exercise. Please try again later.",
+                "minutes": "Minutes",
+                "tutors": "Tutors",
+                "multipleTutors": "tutors",
+                "singleTutor": "tutor",
+                "forMinutes": "corrected for {{ interval }} minutes",
+                "medianOfSubmissions": "Median # of assessed submissions: {{ median }}",
+                "numberOfTutorsInvolved": "Number of tutors involved"
+            }
+        }
+    }
+}

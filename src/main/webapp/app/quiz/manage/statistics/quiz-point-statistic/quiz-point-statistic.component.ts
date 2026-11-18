@@ -1,0 +1,175 @@
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
+import { AccountService } from 'app/core/auth/account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { PointCounter } from 'app/quiz/shared/entities/point-counter.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
+import { round } from 'app/foundation/util/utils';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { EMPTY, filter, merge, startWith, switchMap } from 'rxjs';
+import { TumAetUiBarChartComponent, TumAetUiButtonDirective, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
+
+@Component({
+    selector: 'jhi-quiz-point-statistic',
+    templateUrl: './quiz-point-statistic.component.html',
+    styleUrls: ['./quiz-point-statistic.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiBarChartComponent, TumAetUiButtonDirective, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+})
+export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private websocketService = inject(WebsocketService);
+    private destroyRef = inject(DestroyRef);
+
+    readonly round = round;
+
+    readonly quizExercise = signal<QuizPointStatisticsResponse | undefined>(undefined);
+    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess() before the chart is rendered
+
+    labels: string[] = [];
+
+    label: string[] = [];
+    backgroundColor: string[] = [];
+
+    readonly maxScore = signal<number>(undefined!);
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
+    quizExerciseChannel!: string; // set in ngOnInit() from the route params before use
+
+    // Keep listening for the quiz-start event until the initial quiz response reports that it started.
+    waitingForQuizStart = false;
+
+    // Icons
+    faSync = faSync;
+    ngOnInit() {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
+        });
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
+                    this.quizExerciseChannel = `/topic/courses/${params['courseId']}/quizExercises`;
+
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+
+                    const quizStartUpdates = this.websocketService
+                        .subscribe<QuizExercise>(this.quizExerciseChannel)
+                        .pipe(filter((quiz) => this.waitingForQuizStart && exerciseId === quiz.id));
+                    const statisticUpdates = this.websocketService.subscribe<number>(this.websocketChannelForData);
+
+                    return merge(quizStartUpdates, statisticUpdates).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findPointStatistic(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res);
+            });
+    }
+
+    /**
+     * This functions loads the Quiz, which is necessary to build the Web-Template
+     *
+     * @param quizExercise the quizExercise, which this quiz-point-statistic presents.
+     */
+    loadQuizSuccess(quizExercise: QuizPointStatisticsResponse) {
+        // if the Student finds a way to the Website
+        //      -> the Student will be sent back to Courses
+        if (!this.accountService.isAtLeastTutor()) {
+            void this.router.navigate(['courses']);
+        }
+        this.quizExercise.set(quizExercise);
+        this.waitingForQuizStart = !quizExercise.quizStarted;
+        // The contract leaves the distribution optional; without one there is nothing to plot, so the chart stays empty.
+        this.quizPointStatistic = quizExercise.quizPointStatistic ?? new QuizPointStatistic();
+        this.maxScore.set(calculateMaxScore(quizExercise));
+
+        this.loadData();
+    }
+
+    /**
+     * load the Data from the Json-entity to the chart: myChart
+     */
+    loadData() {
+        // reset old data
+        this.label = [];
+        this.backgroundColor = [];
+        this.ratedData = [];
+        this.unratedData = [];
+        // set data based on the pointCounters
+        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter, index) => {
+            /*
+            The label represents the value range covered by the corresponding bar.
+            As we round the individual student scores to integers for the statistic,
+            each bar covers the range from integer - 0.5 to integer + 0.5, the lower border is always included.
+            Ex.: integer 2: chart bar summarizes all values between [1.5 - 2.5)
+            We additionally have to make sure that the range is limited by the maximum and minimum reachable points in the quiz
+            (no negative points are achievable and the maximum points are defined by the quiz itself)
+            Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
+             */
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore());
+            label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
+            this.label.push(label);
+            this.ratedData.push(pointCounter.ratedCounter!);
+            this.unratedData.push(pointCounter.unRatedCounter!);
+            this.backgroundColor.push(blueColor);
+        });
+
+        this.chartLabels = this.label;
+        this.chartColors.set([...this.backgroundColor]);
+
+        // load data into the chart
+        this.loadDataInDiagram();
+    }
+
+    /**
+     * check if the rated or unrated
+     * load the rated or unrated data into the diagram
+     */
+    loadDataInDiagram(): void {
+        this.setData(this.quizPointStatistic);
+        this.updateChartData();
+
+        // add Axes-labels based on selected language
+        this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.value);
+    }
+
+    /**
+     * order the point cursors ascending
+     */
+    order(pointCursors: Array<PointCounter>) {
+        // TODO: use sorting service
+        return pointCursors.sort((a: PointCounter, b: PointCounter) => {
+            if (a.points! < b.points!) {
+                return -1;
+            }
+            if (a.points! > b.points!) {
+                return 1;
+            }
+            // a must be equal to b
+            return 0;
+        });
+    }
+}

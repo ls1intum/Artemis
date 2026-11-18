@@ -1,0 +1,69 @@
+package de.tum.cit.aet.artemis.modeling.web;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
+import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
+
+/**
+ * REST controller for managing ApollonDiagram.
+ */
+@Conditional(ApollonEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.MODELING_EXERCISES)
+@RestController
+@RequestMapping("api/modeling/")
+public class ApollonConversionResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
+
+    private final ApollonConversionService apollonConversionService;
+
+    public ApollonConversionResource(ApollonConversionService apollonConversionService) {
+        this.apollonConversionService = apollonConversionService;
+    }
+
+    /**
+     * Converts given model to pdf
+     *
+     * @param request the model for conversion, which must not be blank and is limited in size
+     * @return input stream for conversion, or 429 (Too Many Requests) if the user converts models too often
+     */
+    @UsageInteraction(FeatureInteraction.VIEW)
+    @PostMapping("apollon/convert-to-pdf")
+    @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.APOLLON_CONVERSION, perUser = true)
+    public ResponseEntity<InputStreamResource> convertApollonModel(@Valid @RequestBody ApollonModelDTO request) throws IOException {
+        log.debug("REST call to convert apollon model to pdf");
+
+        InputStream inputStream = apollonConversionService.convertModel(request.model());
+
+        InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+        log.debug("REST call for apollon model conversion to pdf finished");
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(inputStreamResource);
+    }
+}

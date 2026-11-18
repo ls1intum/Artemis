@@ -1,0 +1,109 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
+import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { FormsModule } from '@angular/forms';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiProgressSpinnerComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-calendar-mobile-overview',
+    imports: [
+        CalendarMobileMonthPresentationComponent,
+        CalendarMobileDayPresentationComponent,
+        TranslateDirective,
+        FaIconComponent,
+        CalendarSubscriptionPopoverComponent,
+        FormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
+    ],
+    templateUrl: './calendar-mobile-overview.component.html',
+    styleUrl: './calendar-mobile-overview.component.scss',
+})
+export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
+    private readonly viewState = inject(CalendarViewStateService);
+
+    readonly faArrowUpFromBracket = faArrowUpFromBracket;
+    readonly faFilter = faFilter;
+    readonly CalendarEventFilterOption = CalendarEventFilterOption;
+
+    /* Shared with the desktop overview, so a resize past the breakpoint keeps showing the same month. */
+    firstDateOfCurrentMonth = this.viewState.firstDateOfDisplayedMonth;
+    selectedDate = signal<Dayjs | undefined>(undefined);
+    weekdayNameKeys = utils.getWeekdayNameKeys();
+    monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));
+    lectureFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents));
+    exerciseFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExerciseEvents));
+    tutorialFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.TutorialEvents));
+    examFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExamEvents));
+
+    toggleFilterOption(option: CalendarEventFilterOption) {
+        if (this.calendarService.includedEventFilterOptions().includes(option)) {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => oldOptions.filter((otherOption) => otherOption !== option));
+        } else {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => [...oldOptions, option]);
+        }
+    }
+
+    onDateSelected(date: Dayjs): void {
+        this.selectedDate.set(date);
+    }
+
+    unselectDate() {
+        this.selectedDate.set(undefined);
+    }
+
+    goToPrevious(): void {
+        if (this.selectedDate()) {
+            this.selectedDate.update((oldDate) => oldDate!.subtract(1, 'day'));
+            if (!this.selectedDate()!.isSame(this.firstDateOfCurrentMonth(), 'month')) {
+                this.firstDateOfCurrentMonth.update((oldDate) => oldDate.subtract(1, 'month'));
+            }
+        } else {
+            this.firstDateOfCurrentMonth.update((oldDate) => oldDate.subtract(1, 'month'));
+        }
+        this.loadEventsForCurrentMonth();
+    }
+
+    goToNext(): void {
+        if (this.selectedDate()) {
+            this.selectedDate.update((oldDate) => oldDate!.add(1, 'day'));
+            if (!this.selectedDate()!.isSame(this.firstDateOfCurrentMonth(), 'month')) {
+                this.firstDateOfCurrentMonth.update((oldDate) => oldDate.add(1, 'month'));
+            }
+        } else {
+            this.firstDateOfCurrentMonth.update((oldDate) => oldDate.add(1, 'month'));
+        }
+        this.loadEventsForCurrentMonth();
+    }
+
+    goToToday(): void {
+        const today = dayjs();
+        if (this.selectedDate()) {
+            this.selectedDate.set(today);
+            this.firstDateOfCurrentMonth.set(today.startOf('month'));
+        } else {
+            this.firstDateOfCurrentMonth.set(today.startOf('month'));
+        }
+        this.loadEventsForCurrentMonth();
+    }
+}

@@ -1,0 +1,270 @@
+package de.tum.cit.aet.artemis.globalsearch.dto;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * Unified DTO for global search results across all entity types.
+ * <p>
+ * Provides a consistent structure for search results regardless of the underlying entity type
+ * (exercises, lectures, lecture units, exams, FAQs, channels), which keeps the client-side
+ * renderer simple.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(description = "Unified search result representing an entity found via global search")
+public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of the entity") String id,
+        @Schema(description = "Entity type, e.g. 'exercise', 'lecture', 'exam'") String type, @Schema(description = "Display title of the entity") String title,
+        @Schema(description = "Short description or body text excerpt") String description,
+        @Schema(description = "Human-readable badge label in English, e.g. 'Programming', 'Quiz', 'Lecture'") String badge,
+        @Schema(description = "Stable badge key the web client resolves to a localised label, e.g. 'programming', 'quiz', 'lecture'") String badgeKey,
+        @Schema(description = "Additional type-specific metadata such as courseId, dueDate, or points") Map<String, Object> metadata) {
+
+    /** Badge key used when the indexed exercise type is absent or not one the client can localise. */
+    private static final String GENERIC_EXERCISE_BADGE_KEY = "exercise";
+
+    private static final String GENERIC_EXERCISE_BADGE_LABEL = "Exercise";
+
+    /** English badge label per known exercise type; its keys are also the exercise types that count as known. */
+    private static final Map<String, String> EXERCISE_BADGE_LABELS = Map.of(ExerciseType.PROGRAMMING.getValue(), "Programming", ExerciseType.MODELING.getValue(), "Modeling",
+            ExerciseType.QUIZ.getValue(), "Quiz", ExerciseType.TEXT.getValue(), "Text", ExerciseType.FILE_UPLOAD.getValue(), "File Upload");
+
+    /**
+     * Creates a search result DTO from a raw Weaviate property map returned by the unified
+     * {@code SearchableEntities} collection. Dispatches on the {@code type} discriminator to decide
+     * which type-specific metadata to surface to the client.
+     *
+     * @param properties     the property map returned by Weaviate
+     * @param courseNameById the batched map of course id → course title, resolved by the caller via
+     *                           one {@code courseRepository.findAllById(...)} lookup per search request
+     * @return the unified search result DTO, or {@code null} if the type discriminator is missing or not a searchable type
+     *         (posts and answer posts are indexed but never returned, see {@code SearchableEntityAccessFilterService.SEARCHABLE_TYPES})
+     */
+    public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
+        String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
+        if (type == null) {
+            return null;
+        }
+        return switch (type) {
+            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds);
+            case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds, editorCourseIds);
+            case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
+            default -> null;
+        };
+    }
+
+    /**
+     * Resolves the badge key for an indexed exercise. The badge key is a stable machine key the web client turns into
+     * a localised label by concatenation (global.search.results.badge.*), and for exercises it is the raw exercise
+     * type (e.g. "programming", "file-upload"), which also matches the exam exercise-group route segment.
+     * <p>
+     * A value without a known label degrades to the generic key rather than being passed through: the client has no
+     * catalogue entry for it, so it would render the unresolved key in place of a readable badge.
+     *
+     * @param exerciseType the indexed exercise type, or null when the row carries none
+     * @return a badge key the client's localisation catalogue defines
+     */
+    private static String badgeKeyForExerciseType(String exerciseType) {
+        return exerciseType != null && EXERCISE_BADGE_LABELS.containsKey(exerciseType) ? exerciseType : GENERIC_EXERCISE_BADGE_KEY;
+    }
+
+    private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
+        String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
+        String badgeKey = badgeKeyForExerciseType(exerciseType);
+        String badge = EXERCISE_BADGE_LABELS.getOrDefault(badgeKey, GENERIC_EXERCISE_BADGE_LABEL);
+        String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
+        String description = getString(properties, SearchableEntitySchema.Properties.DESCRIPTION);
+
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        putIfNotNull(metadata, "dueDate", getString(properties, SearchableEntitySchema.Properties.DUE_DATE));
+        putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
+        putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
+        putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
+
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
+        Long examId = getLong(properties, SearchableEntitySchema.Properties.EXAM_ID);
+        if (examId != null) {
+            metadata.put("examId", examId);
+            Long exerciseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+            Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
+            putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
+        }
+
+        // Role metadata: used by the client to route tutors to the assessment dashboard
+        // and editors to the exercise details page
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastTutor", true);
+        }
+
+        if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
+            putIfNotNull(metadata, "programmingLanguage", getString(properties, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE));
+        }
+        else if (ExerciseType.MODELING.getValue().equals(exerciseType)) {
+            putIfNotNull(metadata, "diagramType", getString(properties, SearchableEntitySchema.Properties.DIAGRAM_TYPE));
+        }
+        else if (ExerciseType.QUIZ.getValue().equals(exerciseType)) {
+            putIfNotNull(metadata, "quizDuration", getInteger(properties, SearchableEntitySchema.Properties.QUIZ_DURATION));
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.EXERCISE, title, description, badge, badgeKey, metadata);
+    }
+
+    private static GlobalSearchResultDTO fromLectureRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        putIfNotNull(metadata, "startDate", getString(properties, SearchableEntitySchema.Properties.START_DATE));
+        putIfNotNull(metadata, "endDate", getString(properties, SearchableEntitySchema.Properties.END_DATE));
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture", "lecture", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromLectureUnitRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Long lectureId = getLong(properties, SearchableEntitySchema.Properties.LECTURE_ID);
+        if (lectureId != null) {
+            metadata.put("lectureId", lectureId);
+        }
+        putIfNotNull(metadata, "unitType", getString(properties, SearchableEntitySchema.Properties.UNIT_TYPE));
+        putIfNotNull(metadata, "releaseDate", getString(properties, SearchableEntitySchema.Properties.RELEASE_DATE));
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.LECTURE_UNIT, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", "lecture-unit", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        putIfNotNull(metadata, "visibleDate", getString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
+        putIfNotNull(metadata, "startDate", getString(properties, SearchableEntitySchema.Properties.START_DATE));
+        putIfNotNull(metadata, "endDate", getString(properties, SearchableEntitySchema.Properties.END_DATE));
+        Boolean testExam = getBoolean(properties, SearchableEntitySchema.Properties.TEST_EXAM);
+        if (testExam != null) {
+            metadata.put("testExam", testExam);
+        }
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastTutor", true);
+        }
+
+        boolean isTestExam = Boolean.TRUE.equals(testExam);
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.EXAM, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), isTestExam ? "Test Exam" : "Exam", isTestExam ? "test-exam" : "exam", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromFaqRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        putIfNotNull(metadata, "faqState", getString(properties, SearchableEntitySchema.Properties.FAQ_STATE));
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.FAQ, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "FAQ", "faq", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromChannelRow(Map<String, Object> properties, Map<Long, String> courseNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Boolean isCourseWide = getBoolean(properties, SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE);
+        Boolean isPublic = getBoolean(properties, SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC);
+        if (isCourseWide != null) {
+            metadata.put("isCourseWide", isCourseWide);
+        }
+        if (isPublic != null) {
+            metadata.put("isPublic", isPublic);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.CHANNEL, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Channel", "channel", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromCourseRow(Map<String, Object> properties) {
+        Map<String, Object> metadata = new HashMap<>();
+        // For courses, courseId equals entityId — no course context needed since the result IS a course
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+        if (courseId != null) {
+            metadata.put("courseId", courseId);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.COURSE, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Course", "course", metadata);
+    }
+
+    private static void addCourseContext(Map<String, Object> properties, Map<String, Object> metadata, Map<Long, String> courseNameById) {
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
+        if (courseId != null) {
+            metadata.put("courseId", courseId);
+            String courseName = courseNameById.get(courseId);
+            if (courseName != null) {
+                metadata.put("courseName", courseName);
+            }
+        }
+    }
+
+    private static String idOrNull(Map<String, Object> properties) {
+        Long entityId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+        return entityId != null ? entityId.toString() : null;
+    }
+
+    private static void putIfNotNull(Map<String, Object> metadata, String key, Object value) {
+        if (value != null) {
+            metadata.put(key, value);
+        }
+    }
+
+    private static String getString(Map<String, Object> properties, String key) {
+        Object value = properties.get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    private static Long getLong(Map<String, Object> properties, String key) {
+        Object value = properties.get(key);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return null;
+    }
+
+    private static Double getDouble(Map<String, Object> properties, String key) {
+        Object value = properties.get(key);
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return null;
+    }
+
+    private static Integer getInteger(Map<String, Object> properties, String key) {
+        Object value = properties.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return null;
+    }
+
+    private static Boolean getBoolean(Map<String, Object> properties, String key) {
+        Object value = properties.get(key);
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        return null;
+    }
+}

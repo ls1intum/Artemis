@@ -1,0 +1,11 @@
+
+  ${AnsiColor.RED} █████╗ ██████╗ ${AnsiColor.BLUE}████████╗███████╗███╗   ███╗${AnsiColor.RED}██╗███████╗
+  ${AnsiColor.RED}██╔══██╗██╔══██╗${AnsiColor.BLUE}╚══██╔══╝██╔════╝████╗ ████║${AnsiColor.RED}██║██╔════╝
+  ${AnsiColor.RED}███████║██████╔╝${AnsiColor.BLUE}   ██║   █████╗  ██╔████╔██║${AnsiColor.RED}██║███████╗
+  ${AnsiColor.RED}██╔══██║██╔══██╗${AnsiColor.BLUE}   ██║   ██╔══╝  ██║╚██╔╝██║${AnsiColor.RED}██║╚════██║
+  ${AnsiColor.RED}██║  ██║██║  ██║${AnsiColor.BLUE}   ██║   ███████╗██║ ╚═╝ ██║${AnsiColor.RED}██║███████║
+  ${AnsiColor.RED}╚═╝  ╚═╝╚═╝  ╚═╝${AnsiColor.BLUE}   ╚═╝   ╚══════╝╚═╝     ╚═╝${AnsiColor.RED}╚═╝╚══════╝
+
+${AnsiColor.DEFAULT}:: Interactive Learning with Individual Feedback ::
+
+${AnsiColor.DEFAULT}:: Powered by Spring Boot ${spring-boot.version} ::

@@ -1,0 +1,386 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration is used for unit/integration tests.
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
+logging:
+    level:
+        ROOT: INFO
+        de.tum.cit.aet.artemis: DEBUG
+        tech.jhipster: INFO
+
+artemis:
+    version: 1.3.3-beta7
+    agent-access:
+        enabled: true
+    rate-limiting:
+        enabled: false # the tests share one client address and make many requests, the tests of the limits switch it on
+    file-upload-path: uploads
+    submission-export-path: exports
+    external-system-request:
+        batch-size: 1 # wait the time below after 1 requests (make it easier to test the corresponding code)
+        batch-waiting-time: 5 # 5ms (make the tests faster)
+    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    androidAppPackage: "de.tum.cit.aet.artemis"
+    androidSha256CertFingerprints:
+        release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+        debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
+
+    # Off by default in tests: the interceptor would otherwise accumulate counters for every request a test makes and
+    # the scheduled flush would write rows concurrently with assertions. The tests that cover the feature enable it
+    # explicitly and drive the flush themselves.
+    feature-usage:
+        enabled: false
+
+    push-notification-relay: https://hermes-staging.artemis.cit.tum.de
+    sharing:
+        enabled: true
+        # the shared common secret (overwritten in tests)
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes), overridden in Tests
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
+
+    continuous-integration:
+        # Defines the used docker images for certain programming languages
+        build:
+            default-docker-flags:
+                - flag: --cpus
+                  value: 2
+                # Set `memory-swap` and `memory` to the same value to turn off SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                - flag: --memory
+                  value: 2g
+                - flag: --memory-swap
+                  value: 2g
+                - flag: --pids-limit
+                  value: 1000
+            images:
+                # java intentionally uppercase to make sure both variants are
+                # accepted
+                JAVA:
+                    default: "~~invalid~~"
+                kotlin:
+                    default: "~~invalid~~"
+                empty:
+                    default: "~~invalid~~"
+                python:
+                    default: "~~invalid~~"
+                c:
+                    default: "~~invalid~~"
+                haskell:
+                    default: "~~invalid~~"
+                vhdl:
+                    default: "~~invalid~~"
+                assembler:
+                    default: "~~invalid~~"
+                swift:
+                    default: "~~invalid~~"
+                ocaml:
+                    default: "~~invalid~~"
+                rust:
+                    default: "~~invalid~~"
+                javascript:
+                    default: "~~invalid~~"
+                r:
+                    default: "~~invalid~~"
+                bash:
+                    default: "~~invalid~~"
+                c_plus_plus:
+                    default: "~~invalid~~"
+                c_sharp:
+                    default: "~~invalid~~"
+                typescript:
+                    default: "~~invalid~~"
+                go:
+                    default: "~~invalid~~"
+                matlab:
+                    default: "~~invalid~~"
+                ruby:
+                    default: "~~invalid~~"
+                dart:
+                    default: "~~invalid~~"
+        build-agent:
+            short-name: "artemis-build-agent-test"
+    telemetry:
+        enabled: false # setting this to false will disable sending any information to the telemetry service
+    licenses:
+        matlab:
+            license-server: "1234@license-server"
+
+    # Iris configuration - disabled by default, enabled in application-artemis.yml for tests
+    iris:
+        enabled: false
+        lecture-unit-sync:
+            # Periodic polls can reach the shared Iris HTTP mock while a test registers expectations.
+            # Tests exercise these jobs explicitly; event-driven synchronization remains enabled.
+            initial-delay: P365D
+
+    # Theia configuration for tests
+    theia:
+        enabled: true
+        portal-url: https://your-theia-instance.com
+        images:
+            java:
+                Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
+                Java-Non-Existent: "this-is-not-a-valid-image"
+            c:
+                C: "ghcr.io/ls1intum/theia/c:latest"
+
+    weaviate:
+      enabled: false
+
+    tum-live:
+        api-base-url: https://mocke.tum.live/api/v2
+
+spring:
+    application:
+        name: Artemis
+    ai:
+        chat:
+            memory:
+                repository:
+                    jdbc:
+                        initialize-schema: never # Disable JDBC schema init for tests (H2), prod uses Liquibase
+    datasource:
+        url: jdbc:mysql://artemis-mysql:3306/
+        type: com.zaxxer.hikari.HikariDataSource
+        name:
+        username:
+        password:
+        hikari:
+            auto-commit: false
+            pool-name: Hikari
+    h2:
+        console:
+            enabled: false
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: deferred
+    # Note: no indent-output here. Under Jackson 2 the spring.jackson prefix configured a mapper the application did
+    # not use, so this setting was inert and the suite has always asserted against compact responses. Jackson 3 honours
+    # it, so enabling it is a deliberate change that needs the affected assertions updated first.
+    jmx:
+        enabled: false
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database: POSTGRESQL
+        open-in-view: false
+        show-sql: false
+        hibernate:
+            ddl-auto: none
+            naming:
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+                implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
+        properties:
+            hibernate.format_sql: false
+            hibernate.use_sql_comments: false
+            hibernate.connection.provider_disables_autocommit: false
+            hibernate.connection.autocommit: false
+            hibernate.generate_statistics: false
+            hibernate.order_inserts: true
+            hibernate.order_updates: true
+            hibernate.query.fail_on_pagination_over_collection_fetch: true # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
+            hibernate.query.in_clause_parameter_padding: true
+            # Hibernate L2 cache is disabled cluster-wide; see documentation/docs/developer/guidelines/caching.mdx.
+            hibernate.cache.use_second_level_cache: false
+            hibernate.cache.use_query_cache: false
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.jdbc.time_zone: UTC
+            hibernate.jdbc.lob.non_contextual_creation: true
+            # limit fetch depth to prevent queries from getting too large because of eager fetching
+            hibernate.max_fetch_depth: 2
+    liquibase:
+        contexts: tests
+        enabled: true
+    mail:
+        host: localhost
+    main:
+        allow-bean-definition-overriding: false
+        allow-circular-references: false
+        lazy-initialization: true
+    messages:
+        basename: i18n/messages
+        cache-duration: PT1S # 1 second, see the ISO 8601 standard
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                # core-size must stay >= the number of test classes that run in parallel (junit-platform.properties enables
+                # parallel execution with the default strategy, i.e. one thread per core).
+                #
+                # ThreadPoolExecutor only grows past core-size once the queue is FULL, so with a 10000-deep queue max-size
+                # below is unreachable and core-size alone is the effective pool size. At 1, every @Async task of every
+                # test sharing a Spring context was serialized on one thread: a test awaiting its own background work
+                # could sit behind unrelated tests' tasks far longer than Awaitility's 10s default while the runner idled
+                # at ~67%. That is what made slide-splitting assertions flaky under suite load (#13341).
+                core-size: 8
+                max-size: 50
+                queue-capacity: 10000
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                # Same reasoning as task.execution.pool.core-size above, which was raised from 1 for the same reason
+                # in #13341. About a dozen production services share this one taskScheduler (ParticipantScoreScheduleService,
+                # ExerciseLifecycleService, QuizScheduleService, ProgrammingExerciseScheduleService, ...), and hundreds of
+                # test classes run in parallel against it. At size 1 a single long scheduled task blocked every other
+                # test's scheduled work, and Awaitility's 10s default could not survive it: one run produced seven
+                # simultaneous ConditionTimeoutExceptions across four classes waiting on scheduled work that had never
+                # been given a thread.
+                size: 8
+    thymeleaf:
+        mode: HTML
+    sleuth:
+        sampler:
+            probability: 1 # report 100% of traces
+    cloud:
+        discovery:
+            enabled: false
+        config:
+            discovery:
+                enabled: false
+            enabled: false
+            import-check:
+                enabled: false
+    websocket:
+        broker:
+            username: guest
+            password: guest
+            addresses: ""
+    hazelcast:
+        interface: "127.0.0.1"
+
+zonky:
+    test:
+        database:
+            prefetching:
+                concurrency: 1
+            # Default: PostgreSQL via Testcontainers (Docker required).
+            # Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker).
+            # Connection pooling for Testcontainers is handled by TestDataSourcePoolConfig.
+            type: POSTGRES
+            postgres:
+                docker:
+                    image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
+                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+
+                    # (PGDATA moved to /var/lib/postgresql/<major>/docker). We disable it here and mount
+                    # tmpfs at /var/lib/postgresql via PostgresTmpfsContainerCustomizer instead.
+                    tmpfs:
+                        enabled: false
+                server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    # Safe because test data is ephemeral and does not need crash recovery.
+                    properties:
+                        fsync: off
+                        synchronous_commit: off
+                        full_page_writes: off
+                        max_connections: 200
+                        shared_buffers: 256MB
+                        effective_cache_size: 512MB
+                        maintenance_work_mem: 64MB
+                        checkpoint_completion_target: 0.9
+                        wal_buffers: 16MB
+                        default_statistics_target: 100
+                        random_page_cost: 1.1
+                        effective_io_concurrency: 200
+                        work_mem: 4MB
+                        min_wal_size: 256MB
+                        max_wal_size: 1GB
+                        max_worker_processes: 4
+                        max_parallel_workers_per_gather: 2
+                        max_parallel_workers: 4
+                        max_parallel_maintenance_workers: 2
+            mysql:
+                docker:
+                    image: docker.io/library/mysql:${mysql.version}
+                    # MySQL's default DATADIR works with Zonky's tmpfs, no customizer needed.
+                    tmpfs:
+                        enabled: true
+                server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    properties:
+                        innodb_flush_log_at_trx_commit: 0
+                        innodb_doublewrite: 0
+                        sync_binlog: 0
+                        skip-log-bin: 1
+                        innodb_log_buffer_size: 64M
+                        innodb_buffer_pool_size: 512M
+                        innodb_io_capacity: 2000
+                        max_connections: 200
+
+server:
+    port: 8080
+    url: http://localhost
+    forward-headers-strategy: native
+
+management:
+    health:
+        mail:
+            # A health poll must not touch the shared mail sender while a test stubs or resets its spy.
+            enabled: false
+    otlp:
+        metrics:
+            export:
+                # Tests shadow the production application.yml: retain its disabled metrics export so the
+                # publisher cannot poll health indicators and interfere with test-owned mocks and spies.
+                enabled: false
+    endpoints:
+        web:
+            base-path: /management
+            exposure:
+                include: ["artemismetrics"]
+    endpoint:
+        artemismetrics:
+            access: read_only
+    info:
+        env:
+            enabled: true
+
+# Properties to be exposed on the /info management endpoint
+info:
+    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+    # default value set to true for tests
+    textAssessmentAnalyticsEnabled: true
+    studentExamStoreSessionData: true
+    contact: contactEmail@contact.de
+
+jhipster:
+    clientApp:
+        name: "artemisApp"
+    # CORS is only enabled by default with the "dev" profile, so the client can access the API
+    cors:
+        allowed-origin-patterns: "*"
+        allowed-methods: "*"
+        allowed-headers: "*"
+        exposed-headers: "Authorization,Link,X-Total-Count"
+        allow-credentials: true
+        max-age: 1800
+    mail: # specific JHipster mail property, for standard properties see MailProperties
+        from: test@localhost
+        base-url: http://127.0.0.1:8080
+    security:
+        authentication:
+            jwt:
+                # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
+                base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+                # Token is valid 24 hours
+                token-validity-in-seconds: 86400
+                token-validity-in-seconds-for-remember-me: 604800 # 7 days, matching what dev and prod ship, so the tests exercise the real value
+
+# Eureka configuration
+eureka:
+    client:
+        enabled: false
+        service-url:
+            defaultZone: http://admin:admin@localhost:8761/eureka/

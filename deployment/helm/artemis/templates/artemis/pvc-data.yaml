@@ -1,0 +1,22 @@
+{{- /*
+Shared ReadWriteMany volume mounted at /opt/artemis/data on every core pod.
+Holds git repos (LocalVC), uploads, exports, course archives, legal docs, etc.
+Skipped when sharedStorage.existingClaim is set.
+*/ -}}
+{{- if not .Values.sharedStorage.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "artemis.fullname" . }}-data
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.sharedStorage.accessMode }}
+  {{- if .Values.sharedStorage.storageClassName }}
+  storageClassName: {{ .Values.sharedStorage.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sharedStorage.size }}
+{{- end }}

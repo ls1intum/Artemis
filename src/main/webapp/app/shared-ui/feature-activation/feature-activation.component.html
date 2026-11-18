@@ -1,0 +1,21 @@
+<div class="mx-auto my-6! w-full max-w-[1320px] px-3!">
+    <tumaet-ui-card data-testid="feature-activation-card">
+        <div tumAetUiCardHeader class="flex items-center px-5! pt-5! pb-0!">
+            @if (headerIcon()) {
+                <div class="me-4! flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast">
+                    <fa-icon [icon]="headerIcon()!" />
+                </div>
+            }
+            <h2 class="m-0" [jhiTranslate]="headerTitle()"></h2>
+        </div>
+
+        <p class="pre-line" [jhiTranslate]="description()"></p>
+
+        <div tumAetUiCardFooter class="flex flex-wrap justify-center gap-2 px-5! pb-5!">
+            <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="enable.emit()" />
+            @if (secondActivateButtonText()) {
+                <jhi-button [btnType]="ButtonType.SECONDARY" [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
+            }
+        </div>
+    </tumaet-ui-card>
+</div>

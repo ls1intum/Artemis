@@ -1,0 +1,26 @@
+{
+    "artemisApp": {
+        "dragAndDropMapping": {
+            "home": {
+                "title": "Drag And Drop Mappings",
+                "createLabel": "Create a new Drag And Drop Mapping"
+            },
+            "created": "Created new Drag And Drop Mapping with identifier {{ param }}",
+            "updated": "Updated Drag And Drop Mapping with identifier {{ param }}",
+            "deleted": "Deleted Drag And Drop Mapping with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag And Drop Mapping {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag And Drop Mapping"
+            },
+            "dragItemIndex": "Drag Item Index",
+            "dropLocationIndex": "Drop Location Index",
+            "invalid": "Invalid",
+            "dragItem": "Drag Item",
+            "dropLocation": "Drop Location",
+            "submittedAnswer": "Submitted Answer",
+            "question": "Question"
+        }
+    }
+}

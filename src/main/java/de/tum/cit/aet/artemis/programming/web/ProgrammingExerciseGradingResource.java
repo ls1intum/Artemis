@@ -1,0 +1,100 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+
+/**
+ * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
+ * PUT or DELETE.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_GRADING_CONFIGURATION)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExerciseGradingResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
+
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final UserRepository userRepository;
+
+    private final ResultRepository resultRepository;
+
+    public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseRepository programmingExerciseRepository,
+            UserRepository userRepository, ResultRepository resultRepository) {
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userRepository = userRepository;
+        this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Use with care: Re-evaluates all latest automatic results for the given programming exercise.
+     *
+     * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
+     * @return the number of results that were updated.
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
+    @PutMapping("programming-exercises/{exerciseId}/grading/re-evaluate")
+    // The catalogue files this controller under configuration/grading, which fits reading grading statistics. Re-grading
+    // every submission of an exercise is a different thing an instructor does, heavyweight and rare, so it is worth
+    // counting on its own rather than being averaged into the same figure.
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
+        log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userRepository.getUserWithAuthorities();
+
+        List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
+
+        programmingExerciseGradingService.logReEvaluate(user, programmingExercise, course, updatedResults);
+        resultRepository.saveAll(updatedResults);
+        return ResponseEntity.ok(updatedResults.size());
+    }
+
+    /**
+     * Get the exercise's test case statistics for the given exercise id.
+     *
+     * @param exerciseId of the exercise.
+     * @return the test case statistics for the exercise.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/grading/statistics")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
+        var statistics = programmingExerciseGradingService.generateGradingStatistics(exerciseId);
+        return ResponseEntity.ok(statistics);
+    }
+
+}

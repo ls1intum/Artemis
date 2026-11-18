@@ -1,0 +1,46 @@
+@if (isRepositoryView()) {
+    <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
+} @else {
+    <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
+}
+<tumaet-ui-table-layout [empty]="groupedCommits().length === 0">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <span class="flex-1"></span>
+        <button tumAetUiButton type="button" size="small" severity="secondary" (click)="toggleAllExpanded()">
+            @if (isGroupsExpanded()) {
+                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
+            }
+        </button>
+    </div>
+    <table tumAetUiTable size="small">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.commitHash"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.author"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.date"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.result"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.message"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.commitInfo.commits"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (commitGroup of groupedCommits(); track commitGroup; let i = $index) {
+                <jhi-commits-info-group
+                    style="display: contents"
+                    [commits]="commitGroup.commits"
+                    [currentSubmissionHash]="currentSubmissionHash()"
+                    [previousSubmissionHash]="previousSubmissionHash()"
+                    [exerciseProjectKey]="exerciseProjectKey()"
+                    [isRepositoryView]="isRepositoryView()"
+                    [groupCount]="groupedCommits().length"
+                    [groupIndex]="i"
+                    [pushNumber]="i + 1"
+                    [isGroupExpanded]="isGroupsExpanded()"
+                />
+            }
+        </tbody>
+    </table>
+</tumaet-ui-table-layout>

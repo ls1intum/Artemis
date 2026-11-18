@@ -1,0 +1,342 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "deleted": "Inhalt gelöscht",
+            "deepLink": {
+                "unitGone": "Der verlinkte Vorlesungsinhalt existiert nicht mehr, daher wird nur die Vorlesung geöffnet."
+            },
+            "retryProcessing": "Verarbeitung wiederholen",
+            "processingRetryStarted": "Verarbeitungswiederholung gestartet",
+            "home": {
+                "title": "Vorlesungsinhalte"
+            },
+            "unitCreationCard": {
+                "title": "Einen Inhalt hinzufügen:",
+                "text": "Text",
+                "exercise": "Übung",
+                "online": "Online-Ressource",
+                "attachmentVideo": "Datei oder Video"
+            },
+            "releaseDate": "Veröffentlichungsdatum",
+            "details": {
+                "title": "Eigenschaften"
+            },
+            "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
+            "openFullscreen": "Vollbild öffnen",
+            "closeFullscreen": "Vollbild schließen",
+            "fullscreenView": "Vollbildansicht von {{ title }}",
+            "irisSidebarLabel": "Iris KI-Assistent Chat",
+            "lectureUnit": "Vorlesungsinhalt",
+            "management": {
+                "list": "Inhalte der Vorlesung",
+                "actions": "Aktionen für {{ name }}",
+                "empty": "Die Vorlesung hat noch keine Inhalte. Füge unten den ersten hinzu.",
+                "visible": "Für Studierende sichtbar",
+                "visibleSince": "Sichtbar seit {{ date }}",
+                "visibleFrom": "Verborgen bis {{ date }}",
+                "version": "Version {{ version }}",
+                "type": {
+                    "pdf": "PDF",
+                    "file": "Datei",
+                    "video": "Video",
+                    "fileAndVideo": "Datei und Video",
+                    "empty": "Noch keine Datei und kein Video",
+                    "text": "Text",
+                    "exercise": "Übung",
+                    "online": "Online-Ressource"
+                },
+                "editing": "In Bearbeitung"
+            }
+        },
+        "textUnit": {
+            "created": "Neuer Textinhalt erstellt",
+            "updated": "Textinhalt aktualisiert",
+            "tooltip": "Das ist ein Textinhalt",
+            "isolated": "Vollbild anzeigen",
+            "backToLecture": "Zurück zur Vorlesung",
+            "notFound": "Dieser Textinhalt existiert nicht oder ist für dich nicht verfügbar.",
+            "originalVersion": "Originalversion",
+            "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
+            "createTextUnit": {
+                "title": "Textinhalt erstellen",
+                "name": "Name",
+                "content": "Inhalt",
+                "namePlaceHolder": "Gib dem Textinhalt einen Namen",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein."
+            },
+            "editTextUnit": {
+                "title": "Textinhalt bearbeiten"
+            },
+            "delete": {
+                "question": "Willst du wirklich den Textinhalt <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Textinhalts zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            }
+        },
+        "onlineUnit": {
+            "created": "Neuer Online-Inhalt erstellt",
+            "updated": "Online-Inhalt aktualisiert",
+            "tooltip": "Das ist ein Online-Inhalt",
+            "description": "Beschreibung",
+            "notReleasedTooltip": "Online-Inhalt nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "doOpen": "Link öffnen",
+            "createOnlineUnit": {
+                "title": "Online-Inhalt erstellen",
+                "name": "Name",
+                "namePlaceHolder": "Gib dem Online-Inhalt einen Namen",
+                "description": "Beschreibung",
+                "descriptionPlaceHolder": "Gib dem Online-Inhalt eine Beschreibung",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
+                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
+                "source": "Externes Onlineangebot URL",
+                "sourcePlaceHolder": "Gib eine URL zu einem externen Onlineangebot ein.",
+                "sourceRequiredValidationError": "Link ist ein Pflichtfeld",
+                "sourceURLValidationError": "Keine valide URL",
+                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen",
+                "urlHelperKeepHint": "Ein leerer Name oder eine leere Beschreibung wird aus den Metadaten des Links übernommen."
+            },
+            "editOnlineUnit": {
+                "title": "Online-Inhalt bearbeiten"
+            },
+            "delete": {
+                "question": "Willst du wirklich den Online-Inhalt <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Online-Inhalts zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            }
+        },
+        "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "Diese URL sieht wie eine YouTube-URL aus, konnte aber nicht verarbeitet werden. Unterstützte Formate: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...",
+                "invalidVideoSourceScheme": "Die Video-Quelle darf nur http oder https verwenden."
+            },
+            "created": "Neuer Datei-/Video-Inhalt erstellt",
+            "updated": "Datei-/Video-Inhalt aktualisiert",
+            "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
+            "transcriptionProcessing": "Transkription wird verarbeitet",
+            "transcriptionFailed": "Transkription fehlgeschlagen",
+            "hasTranscription": "Transkription vollständig",
+            "awaitingProcessing": "Wartet auf Verarbeitung",
+            "processingTranscribing": "Transkription läuft",
+            "processingIngesting": "Indizierung läuft",
+            "processingVerifying": "Wird überprüft",
+            "processingLostContact": "Verbindung verloren",
+            "processingComplete": "Indiziert",
+            "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processingSkipped": "Nicht indiziert",
+            "processingSkippedTooltip": "Iris hat diese Einheit nicht indiziert. Entweder ist Iris für diesen Kurs nicht aktiviert, oder die Einheit hat kein PDF und ihr Video stammt nicht von YouTube oder TUM Live. Sie wird automatisch indiziert, sobald sich das ändert.",
+            "videoSlideSync": {
+                "toggle": "Folien und Video synchronisieren",
+                "disabledByPointOut": "Synchronisation deaktiviert: Iris verweist auf Seite {{page}} und Zeitpunkt {{time}}."
+            },
+            "processing": {
+                "lostContactTooltip": "Iris meldet für diesen Lauf keine Aktivität mehr. Er wird automatisch zurückgeholt und erneut gestartet, ohne das Wiederholungsbudget zu verbrauchen.",
+                "lastSeen": "zuletzt vor {{ time }}",
+                "cancelled": "Verarbeitung wurde abgebrochen",
+                "retriedLabelOne": "Wiederholung",
+                "retriedLabelOther": "Wiederholungen",
+                "retriedTooltip": "Nach einem vorübergehenden Fehler automatisch {{ count }}-mal wiederholt.",
+                "stage": {
+                    "readingSlides": "Folien werden gelesen",
+                    "summarizingSlides": "Folien werden zusammengefasst",
+                    "summarizingTranscript": "Transkript wird zusammengefasst",
+                    "indexingTranscript": "Transkript wird indiziert",
+                    "downloadingVideo": "Video wird heruntergeladen",
+                    "extractingAudio": "Audio wird extrahiert",
+                    "aligningSlides": "Folien werden zugeordnet",
+                    "splittingTranscript": "Transkript wird aufgeteilt"
+                },
+                "error": {
+                    "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "attachmentUnreadable": "Die Anhangsdatei konnte nicht vom Server gelesen werden. Lade die Datei erneut hoch, um die Verarbeitung neu zu starten.",
+                    "processingFailed": "Verarbeitung fehlgeschlagen",
+                    "transcriptionFailed": "Das Video konnte nicht transkribiert werden.",
+                    "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
+                    "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen",
+                    "youtubePrivate": "Das Video ist privat und kann nicht transkribiert werden.",
+                    "youtubeLive": "Das Video ist ein Livestream und kann nicht transkribiert werden.",
+                    "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
+                    "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
+                    "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden.",
+                    "videoSourceUnavailable": "Das Video kann gerade nicht geladen werden (zum Beispiel, weil es nicht öffentlich oder noch nicht aufgezeichnet ist). Die Verarbeitung wird automatisch wiederholt.",
+                    "noIngestibleContent": "Es konnten keine Inhalte indexiert werden: Das PDF enthält keine lesbaren Seiten und aus dem Video konnte kein Transkript erstellt werden. Prüfe die Datei und die Videoquelle und starte die Verarbeitung dann erneut.",
+                    "recoveryLimitReached": "Die Verarbeitung wurde mehrmals hintereinander unterbrochen, ohne abzuschließen (zum Beispiel durch Neustarts des Dienstes). Sie wird automatisch erneut versucht."
+                }
+            },
+            "createAttachmentVideoUnits": {
+                "noFile": "Es gibt keine Datei zum Aufteilen. Starte das Aufteilen erneut in der Bearbeitung der Vorlesung.",
+                "noUnitDetected": "Dieses PDF enthält keine Folie mit dem Wort „Outline“ oder „Gliederung“, daher konnte Artemis keine Inhalte vorschlagen. Lege die Inhalte und ihre Folien mit „Inhalt hinzufügen“ an.",
+                "pageTitle": "Inhalte verarbeiten",
+                "addUnit": "Inhalt hinzufügen",
+                "removeSlides": "Entferne Folien",
+                "removeSlidesInfo": {
+                    "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
+                    "secondLine": "Mehrere Schlüsselsätze werden mit einem Komma getrennt, zwischen Groß- und Kleinbuchstaben wird nicht unterschieden.",
+                    "thirdLine": "Folgende Folien werden entfernt:"
+                },
+                "timeout": "Zeitüberschreitung während der automatischen Inhaltsverarbeitung. Bitte versuche es erneut.",
+                "removeSlidesPlaceholder": "Beispiel: 'Pause, Beispiellösungen'",
+                "validation": {
+                    "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
+                    "empty": {
+                        "unitName": "Name darf nicht leer sein.",
+                        "startPage": "Die Startseite muss definiert sein.",
+                        "endPage": "Die letzte Seite muss definiert sein."
+                    },
+                    "endPageLower": "Letzte Seite darf nicht kleiner als 1 sein.",
+                    "startPageBigger": "Die Startseite darf nicht größer als {{ max }} sein.",
+                    "startPage": "Startseite muss größer oder gleich 1 sein.",
+                    "endPage": "Letzte Seite darf nicht größer als {{ max }} sein."
+                },
+                "split": {
+                    "empty": "",
+                    "unitName": "Name des Inhalts",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "startPage": "Erste Folie",
+                    "endPage": "Letzte Folie",
+                    "title": "PDF in Inhalte aufteilen",
+                    "summary": "Artemis hat {{ count }} Abschnitte in {{ slides }} Folien gefunden.",
+                    "summarySingle": "Artemis hat 1 Abschnitt in {{ slides }} Folien gefunden.",
+                    "hint": "Jede Zeile wird ein Inhalt mit ihren Folien. Prüfe die Namen und Folienbereiche, bevor du die Inhalte erstellst.",
+                    "slides": "Folien",
+                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden.",
+                    "detectionHint": "Artemis beginnt bei jeder Folie, die das Wort „Outline“ oder „Gliederung“ genau so geschrieben enthält, einen neuen Abschnitt und schlägt einen Namen aus dem Text dieser Folie vor. Das funktioniert mit PDFs aus jedem Programm, etwa PowerPoint, Keynote oder LaTeX, solange sich ihr Text markieren lässt. Prüfe die vorgeschlagenen Namen und Folien."
+                },
+                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld.",
+                "removeSource": "Den ursprünglichen PDF-Inhalt „{{ name }}“ nach dem Aufteilen entfernen",
+                "removeSourceHint": "Die Abschlüsse der Studierenden und die Kompetenzverknüpfungen des Inhalts werden mit ihm gelöscht.",
+                "create": "{{ count }} Inhalte erstellen",
+                "createSingle": "1 Inhalt erstellen",
+                "createEmpty": "Inhalte erstellen"
+            },
+            "createAttachmentVideoUnit": {
+                "title": "Datei-/Video-Inhalt erstellen",
+                "name": "Name",
+                "namePlaceHolder": "Gib dem Inhalt einen Namen",
+                "description": "Beschreibung",
+                "updateNotificationText": "Update Benachrichtigungstext",
+                "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
+                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 255 Zeichen lang sein.",
+                "descriptionPlaceHolder": "Gib dem Inhalt eine Beschreibung",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
+                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
+                "file": "Datei",
+                "version": "Version",
+                "fileRequiredValidationError": "Du musst eine Datei zum Uploaden auswählen.",
+                "chooseFile": "Datei auswählen",
+                "noFileChosen": "Keine Datei ausgewählt",
+                "currentFile": "Aktuelle Datei:",
+                "openFile": "Öffnen",
+                "replaceFile": "Datei ersetzen",
+                "replacementFile": "Neue Datei:",
+                "keepCurrentFile": "Aktuelle Datei behalten",
+                "replacementHint": "Die neue Datei ersetzt die aktuelle als neue Version. In der aktuellen Datei ausgeblendete Folien sind in der neuen nicht ausgeblendet.",
+                "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
+                "fileLimitation": "(max. Größe 20 MB)",
+                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}",
+                "fileTypeUnsupported": "Dieses Dateiformat wird nicht unterstützt. Unterstützte Formate: {{ extensions }}",
+                "source": "Einbettbares Video URL",
+                "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
+                "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
+                "sourceURLValidationError": "Keine valide URL",
+                "urlVideoHelper": "Link zur Videoseite",
+                "urlHelperPlaceholder": "Füge den Link der Seite ein, die das Video zeigt, zum Beispiel auf YouTube oder TUM-Live. „Als Video-URL verwenden“ macht daraus die Video-URL oben.",
+                "urlHelperValidationError": "Artemis kann aus diesem Link keine Video-URL machen.",
+                "videoTranscription": "Video Transkription",
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
+                "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen.",
+                "useAsVideoSource": "Als Video-URL verwenden",
+                "notifyStudents": "Studierende über die neue Version benachrichtigen",
+                "saveVideoSource": "Video-URL speichern",
+                "discardVideoSource": "Aktuelle URL behalten",
+                "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut.",
+                "discardNewFile": "Datei verwerfen",
+                "notifyStudentsNewFile": "Studierende über die neue Datei benachrichtigen",
+                "discardNewVideoSource": "URL verwerfen",
+                "uploading": "Wird hochgeladen…",
+                "replaceFileHint": "Eine Datei, die du auswählst, wird sofort als Version {{ version }} hochgeladen und von Artemis erneut verarbeitet. In der aktuellen Datei ausgeblendete Folien werden wieder angezeigt.",
+                "newFileHint": "Eine Datei, die du auswählst, wird sofort hochgeladen und von Artemis verarbeitet."
+            },
+            "editAttachmentVideoUnit": {
+                "title": "Datei-/Video-Inhalt bearbeiten"
+            },
+            "tooltip": "Das ist eine Datei",
+            "uploadDate": "Upload Datum",
+            "version": "Version",
+            "FileName": "Dateiname",
+            "description": "Beschreibung",
+            "download": "Herunterladen",
+            "delete": {
+                "question": "Willst du wirklich diesen Inhalt <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen des Inhalts zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            },
+            "transcription": {
+                "started": "Transkriptgenerierung gestartet.",
+                "error": "Transkriptgenerierung konnte nicht gestartet werden.",
+                "pendingWarning": "Für dieses Video wird derzeit eine Transkription verarbeitet. Bitte warte, bis diese abgeschlossen ist, bevor eine neue generiert wird.",
+                "overwriteWarning": "Das Generieren eines neuen Transkripts überschreibt die vorhandene Transkription für dieses Video.",
+                "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
+                "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
+                "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
+                "cancelButton": "Transkription abbrechen",
+                "cancelSuccess": "Transkription erfolgreich abgebrochen.",
+                "cancelError": "Transkription konnte nicht abgebrochen werden.",
+                "cancelConfirm": "Möchtest du die laufende Transkription wirklich abbrechen?"
+            },
+            "videoPlayer": {
+                "transcript": "Transkript",
+                "searchPlaceholder": "Transkript durchsuchen...",
+                "clearSearch": "Suche löschen",
+                "previousResult": "Vorheriges Ergebnis",
+                "nextResult": "Nächstes Ergebnis",
+                "noResults": "Keine Ergebnisse",
+                "noMatchingTranscript": "Kein passendes Transkript gefunden",
+                "loading": "Lädt...",
+                "resetSplitRatio": "Aufteilung zurücksetzen",
+                "iframeTitle": "Vorlesungsvideo"
+            },
+            "pdfViewer": {
+                "title": "PDF-Betrachter",
+                "loadingPdf": "PDF wird geladen...",
+                "loadFailed": "PDF konnte nicht geladen werden",
+                "zoomOut": "Verkleinern",
+                "zoomIn": "Vergrößern",
+                "search": "Im Dokument suchen",
+                "searchPlaceholder": "Suchen...",
+                "nextMatch": "Nächster Treffer",
+                "previousMatch": "Vorheriger Treffer",
+                "clearSearch": "Suche löschen",
+                "goToPage": "Gehe zu Seite",
+                "pageInputPlaceholder": "Seite",
+                "downloadPdf": "PDF herunterladen",
+                "openFullscreen": "Vollbild öffnen",
+                "closeFullscreen": "Vollbild schließen",
+                "fullscreenDialog": "PDF-Vollbildanzeige"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Übung mit Vorlesung verbunden",
+            "createExerciseUnit": {
+                "title": "Übungsinhalt",
+                "headline": "Verbinde eine Übung mit der Vorlesung",
+                "description": "Wähle alle Übungen zur Verbindung mit der Vorlesung aus.",
+                "select": "Auswählen",
+                "noExercises": "Alle Übungen des Kurses sind bereits Inhalte dieser Vorlesung.",
+                "noCourseExercises": "Der Kurs hat noch keine Übungen."
+            },
+            "delete": {
+                "question": "Willst du wirklich die Verknüpfung mit der Übung <strong>{{ title }}</strong> entfernen? Die Übung bleibt erhalten! Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
+                "buttonText": "Trennen"
+            }
+        }
+    }
+}

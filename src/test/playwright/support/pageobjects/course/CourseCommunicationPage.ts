@@ -1,0 +1,333 @@
+import { Page } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { readResponseJson, setMonacoEditorContentByLocator } from '../../utils';
+
+/**
+ * A class which encapsulates UI selectors and actions for the course communication page.
+ */
+export class CourseCommunicationPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * Initiates the creation of a new post.
+     */
+    async newPost() {
+        await this.page.locator('#new-post').click();
+    }
+
+    /**
+     * Gets the context selector within a modal dialog.
+     * @returns The locator for the context selector.
+     */
+    getContextSelectorInModal() {
+        return this.page.getByRole('dialog').locator('#context');
+    }
+
+    /**
+     * Sets the title in a modal dialog.
+     * @param title - The title to be set.
+     */
+    async setTitleInModal(title: string) {
+        const titleInput = this.page.getByRole('dialog').locator('#title');
+        await titleInput.fill('');
+        await titleInput.fill(title);
+    }
+
+    /**
+     * Sets the content in a modal dialog.
+     * @param content - The content to be set.
+     */
+    async setContentInModal(content: string) {
+        const contentField = this.page.getByRole('dialog').getByTestId('markdown-editor');
+        await setMonacoEditorContentByLocator(this.page, contentField, content);
+    }
+
+    /**
+     * Sets the content inline within the editor on the page.
+     * @param content - The content to be set.
+     */
+    async setContentInline(content: string) {
+        const contentField = this.page.getByTestId('markdown-editor').first();
+        await setMonacoEditorContentByLocator(this.page, contentField, content);
+    }
+
+    /**
+     * Saves the post and waits for the response.
+     * @returns A promise that resolves with the response to the save action.
+     */
+    async save() {
+        const responsePromise = this.page.waitForResponse(`api/communication/*/posts`);
+        await this.page.locator('#save').click();
+        return await responsePromise;
+    }
+
+    /**
+     * Saves a message and waits for the response.
+     * @returns A promise that resolves with the response to the save message action.
+     */
+    async saveMessage() {
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
+        await this.page.locator('#save').click();
+        return await responsePromise;
+    }
+
+    /**
+     * Verifies that a message post is visible with the specified content.
+     * @param postID - The ID of the message post to check.
+     * @param content - The content expected to be visible in the message post.
+     */
+    async checkMessagePost(postID: number, content: string) {
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
+     * Searches for a message using the provided search term.
+     * @param search - The search term to use.
+     */
+    async searchForMessage(search: string) {
+        await this.page.locator('input[name="searchText"]').fill(search);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Applies a filter by context to the messages.
+     * @param context - The context to filter by.
+     */
+    async filterByContext(context: string) {
+        await this.page.locator('#filter-context').click();
+        await this.page.locator('mat-option', { hasText: context }).locator('.mat-pseudo-checkbox').click();
+        await this.page.locator('#filter-context-panel').press('Escape');
+    }
+
+    /**
+     * Applies a filter to show only the messages created by the current user.
+     */
+    async filterByOwn() {
+        await this.page.locator('#filterToOwn').check();
+    }
+
+    /**
+     * Applies a filter to show only unresolved messages.
+     */
+    async filterByUnresolved() {
+        await this.page.locator('#filterToUnresolved').check();
+    }
+
+    /**
+     * Applies a filter to show only messages that have been reacted to.
+     */
+    async filterByReacted() {
+        const filterCheckbox = this.page.locator('#filterToAnsweredOrReacted');
+        await filterCheckbox.check();
+        await filterCheckbox.click();
+    }
+
+    /**
+     * Retrieves a single post by its ID.
+     * @param postID - The ID of the post to retrieve.
+     * @returns The locator for the specified post.
+     */
+    getSinglePost(postID: number) {
+        return this.page.locator(`.items-container #item-${postID}`);
+    }
+
+    getSinglePostContent(postID: number, content: string) {
+        return this.getSinglePost(postID).locator('.markdown-preview', { hasText: content });
+    }
+
+    /**
+     * Opens the reply interface for a specified post.
+     * @param postID - The ID of the post to reply to.
+     */
+    async openReply(postID: number) {
+        await this.getSinglePost(postID).locator('.reply-btn').click();
+    }
+
+    /**
+     * Replies to a specified post with the given content.
+     * @param postID - The ID of the post to reply to.
+     * @param content - The content of the reply.
+     */
+    async reply(postID: number, content: string) {
+        const postElement = this.getSinglePost(postID);
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
+        await setMonacoEditorContentByLocator(this.page, postReplyField, content);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-posts`);
+        await postElement.getByTestId('inline-reply-input').locator('#save').click();
+        await responsePromise;
+    }
+
+    /**
+     * Replies to a specified post with a message and returns the created Post object.
+     * @param postID - The ID of the post to reply to.
+     * @param content - The content of the reply.
+     * @returns A promise that resolves with the Post object created by the reply.
+     */
+    async replyWithMessage(postID: number, content: string): Promise<Post> {
+        const postElement = this.getSinglePost(postID);
+        const postReplyField = postElement.getByTestId('inline-reply-input').getByTestId('markdown-editor');
+        await setMonacoEditorContentByLocator(this.page, postReplyField, content);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/answer-messages`);
+        await this.getSinglePost(postID).getByTestId('inline-reply-input').locator('#save').click();
+        const response = await responsePromise;
+        return readResponseJson(response);
+    }
+
+    /**
+     * Reacts to a post with the specified emoji.
+     * @param postID - The ID of the post to react to.
+     * @param emoji - The emoji to use for the reaction.
+     */
+    async react(postID: number, emoji: string) {
+        await this.getSinglePost(postID).locator('.react').click();
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/postings/reactions`);
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
+        await responsePromise;
+    }
+
+    /**
+     * Pins the specified post.
+     * @param postID - The ID of the post to pin.
+     */
+    async pinPost(postID: number) {
+        await this.getSinglePost(postID).locator('.pin').click();
+    }
+
+    /**
+     * Shows the replies for a specified post, expanding them if they are not already visible.
+     * @param postID - The ID of the post for which to show replies.
+     */
+    async showReplies(postID: number) {
+        const postElement = this.getSinglePost(postID);
+        await postElement.waitFor({ state: 'visible' });
+        if (await postElement.locator('.collapse-answers-btn').isHidden()) {
+            await this.getSinglePost(postID).locator('.expand-answers-btn').click();
+        }
+    }
+
+    /**
+     * Marks a reply as the answer to a specified post.
+     * @param answerID - The ID of the reply to mark as the answer.
+     */
+    async markAsAnswer(answerID: number) {
+        await this.getSinglePost(answerID).locator('.resolve').click();
+    }
+
+    /**
+     * Verifies that a single post is visible with the specified content.
+     * @param postID - The ID of the post to check.
+     * @param content - The content expected to be visible in the post.
+     */
+    async checkSinglePost(postID: number, content: string) {
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+        await expect(this.getSinglePost(postID).locator('.reference-hash', { hasText: `#${postID}` })).toBeVisible();
+    }
+
+    /**
+     * Verifies that a single edited post is marked with "edited" notice.
+     * @param postID - The ID of the post to check.
+     */
+    async checkPostEdited(postID: number) {
+        await expect(this.getSinglePost(postID).locator('.edited-text', { hasText: '(edited)' })).toBeVisible();
+    }
+
+    /**
+     * Verifies that a reply is visible with the specified content.
+     * @param postID - The ID of the post containing the reply to check.
+     * @param content - The content expected to be visible in the reply.
+     */
+    async checkReply(postID: number, content: string) {
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
+     * Verifies that a reaction is visible on a post.
+     * @param postID - The ID of the post to check for the reaction.
+     * @param reaction - The reaction expected to be visible on the post.
+     */
+    async checkReaction(postID: number, reaction: string) {
+        await expect(this.getSinglePost(postID).locator(`.reaction-button.emoji-${reaction}`)).toBeVisible();
+    }
+
+    /**
+     * Verifies that a post has been marked as resolved.
+     * @param postID - The ID of the post to check.
+     */
+    async checkResolved(postID: number) {
+        const pageLocator = this.getSinglePost(postID);
+        const messageResolvedIcon = pageLocator.locator(`.svg-inline--fa.fa-square-check`);
+        await expect(messageResolvedIcon).toBeVisible();
+    }
+
+    /**
+     * Verifies that a single post is visible at a specific position with the specified title and content.
+     * If the title is not provided (undefined), only the content check is performed.
+     * @param position - The zero-based index position of the post in the list.
+     * @param title - The title of the post. This parameter is optional and may be undefined.
+     * @param content - The content expected to be visible in the post.
+     */
+    async checkSinglePostByPosition(position: number, title: string | undefined, content: string) {
+        if (title !== undefined) {
+            await expect(this.page.locator('.items-container .item').nth(position).locator('.post-title', { hasText: title })).toBeVisible();
+        }
+        await expect(this.page.locator('.items-container .item').nth(position).locator('.markdown-preview', { hasText: content })).toBeVisible();
+    }
+
+    /**
+     * Verifies that a single exercise post is visible with the specified content.
+     * @param postID - The ID of the exercise post to check.
+     * @param content - The content expected to be visible in the exercise post.
+     */
+    async checkSingleExercisePost(postID: number, content: string) {
+        await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
+     * Returns the scrollable container of the discussion section that hosts the infinite-scroll directive.
+     */
+    getDiscussionScrollContainer() {
+        return this.page.locator('jhi-discussion-section [infinite-scroll]');
+    }
+
+    /**
+     * Scrolls the discussion section to the very top, bringing the infinite-scroll directive's top sentinel
+     * into view and triggering the load of the next (older) page of posts.
+     */
+    async scrollDiscussionToTop() {
+        const container = this.getDiscussionScrollContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of posts currently rendered in the discussion section.
+     */
+    async getRenderedDiscussionPostCount(): Promise<number> {
+        return this.page.locator('jhi-discussion-section [id^="item-"]').count();
+    }
+
+    /**
+     * Returns the locator for a single post in the discussion section by its ID.
+     * @param postID - The ID of the post.
+     */
+    getDiscussionPost(postID: number) {
+        return this.page.locator(`jhi-discussion-section #item-${postID}`);
+    }
+
+    /**
+     * Verifies that a post with the given ID and content is visible in the discussion section.
+     * @param postID - The ID of the post.
+     * @param content - The content expected to be visible in the post.
+     */
+    async checkDiscussionPost(postID: number, content: string) {
+        const post = this.getDiscussionPost(postID);
+        await expect(post).toBeVisible({ timeout: 30000 });
+        await expect(post.locator('.markdown-preview', { hasText: content })).toBeVisible({ timeout: 30000 });
+    }
+}

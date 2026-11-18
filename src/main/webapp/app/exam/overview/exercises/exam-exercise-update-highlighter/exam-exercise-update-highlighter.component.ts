@@ -1,0 +1,97 @@
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import diff from 'html-diff-ts';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+
+@Component({
+    selector: 'jhi-exam-exercise-update-highlighter',
+    templateUrl: './exam-exercise-update-highlighter.component.html',
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiMessageComponent],
+})
+export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
+    themeSubscription?: Subscription;
+    updatedProblemStatementHTML!: SafeHtml; // populated in highlightProblemStatementDifferences() before the toggle view reads it
+    updatedProblemStatementWithHighlightedDifferencesHTML!: SafeHtml; // populated in highlightProblemStatementDifferences() before the toggle view reads it
+    outdatedProblemStatement = '';
+    updatedProblemStatement = '';
+    readonly showHighlightedDifferences = signal(true);
+    readonly isHidden = signal(true);
+    exercise = input.required<Exercise>();
+
+    problemStatementUpdateEvent = output<SafeHtml>();
+
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
+    ngOnInit(): void {
+        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
+            if (update) {
+                this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.subscriptionToLiveExamExerciseUpdates?.unsubscribe();
+        this.themeSubscription?.unsubscribe();
+    }
+
+    /**
+     * Switches the view between the new(updated) problem statement without the difference
+     * with the view showing the difference between the new and old problem statement and vice versa.
+     */
+    toggleHighlightedProblemStatement(event: MouseEvent): void {
+        // prevents the jhi-resizeable-container from collapsing the right panel on a button click
+        event.stopPropagation();
+        let problemStatementToEmit: SafeHtml;
+        if (this.showHighlightedDifferences()) {
+            problemStatementToEmit = this.updatedProblemStatementHTML;
+        } else {
+            problemStatementToEmit = this.updatedProblemStatementWithHighlightedDifferencesHTML;
+        }
+        this.showHighlightedDifferences.update((value) => !value);
+        this.problemStatementUpdateEvent.emit(problemStatementToEmit);
+    }
+
+    /**
+     * Updates the problem statement of the provided exercises based on its id.
+     * Also calls the method to highlight the differences between the old and new problem statement.
+     * @param exerciseId is the id of the exercise which problem statement should be updated.
+     * @param updatedProblemStatement is the new problem statement that should replace the old one.
+     */
+    updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
+        if (updatedProblemStatement != undefined && exerciseId === this.exercise().id) {
+            this.outdatedProblemStatement = this.exercise().problemStatement!;
+            this.updatedProblemStatement = updatedProblemStatement;
+            this.exercise().problemStatement = updatedProblemStatement;
+            this.showHighlightedDifferences.set(true);
+            // Highlighting of the changes in the problem statement of a programming exercise id handled
+            // in ProgrammingExerciseInstructionComponent
+            if (this.exercise().type !== ExerciseType.PROGRAMMING) {
+                this.highlightProblemStatementDifferences();
+            }
+            this.isHidden.set(false);
+            this.problemStatementUpdateEvent.emit(this.updatedProblemStatementWithHighlightedDifferencesHTML);
+        }
+    }
+
+    /**
+     * Computes the difference between the old and new (updated) problem statement and displays this difference.
+     */
+    highlightProblemStatementDifferences() {
+        const outdatedProblemStatementHTML = htmlForMarkdown(this.outdatedProblemStatement);
+        const updatedProblemStatementHTML = htmlForMarkdown(this.updatedProblemStatement);
+        this.updatedProblemStatementHTML = this.artemisMarkdown.safeHtmlForMarkdown(this.updatedProblemStatement);
+        this.updatedProblemStatementWithHighlightedDifferencesHTML = this.artemisMarkdown.safeHtmlForMarkdown(diff(outdatedProblemStatementHTML, updatedProblemStatementHTML));
+    }
+}

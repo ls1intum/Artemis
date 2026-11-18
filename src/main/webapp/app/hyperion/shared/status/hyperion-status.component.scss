@@ -1,0 +1,95 @@
+// Shape and labels distinguish states that share a color.
+:host {
+    --hyperion-status-size: calc(var(--spacing) * 2);
+    --hyperion-status-fill: var(--text-body-secondary);
+    --hyperion-status-edge: transparent;
+    --hyperion-status-edge-style: solid;
+}
+
+:host([data-state='running']) {
+    --hyperion-status-fill: var(--artemis-alert-info-color);
+}
+
+:host([data-state='success']) {
+    --hyperion-status-fill: var(--artemis-alert-success-color);
+}
+
+:host([data-state='warning']) {
+    --hyperion-status-fill: var(--artemis-alert-warning-color);
+}
+
+:host([data-state='danger']) {
+    --hyperion-status-fill: var(--artemis-alert-danger-color);
+}
+
+// Queued and unknown states use distinct outlines.
+:host([data-state='queued']) {
+    --hyperion-status-size: calc(var(--spacing) * 2.5);
+    --hyperion-status-fill: transparent;
+    --hyperion-status-edge: var(--text-body-secondary);
+}
+
+:host([data-state='unknown']) {
+    --hyperion-status-size: calc(var(--spacing) * 2.5);
+    --hyperion-status-fill: transparent;
+    --hyperion-status-edge: var(--text-body-secondary);
+    --hyperion-status-edge-style: dashed;
+}
+
+.hyperion-status-indicator {
+    display: block;
+    width: var(--hyperion-status-size);
+    height: var(--hyperion-status-size);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    border: 2px var(--hyperion-status-edge-style) var(--hyperion-status-edge);
+    border-radius: 50%;
+    background: var(--hyperion-status-fill);
+}
+
+// Animate only in-flight states when motion is welcome.
+@media (prefers-reduced-motion: no-preference) {
+    :host([data-state='queued']) .hyperion-status-indicator,
+    :host([data-state='running']) .hyperion-status-indicator {
+        animation: hyperion-status-pulse 1800ms ease-in-out infinite;
+    }
+
+    // The pulse owns `opacity`, so the state change transitions only the colours.
+    .hyperion-status-indicator {
+        transition:
+            border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            color 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+}
+
+@keyframes hyperion-status-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+// Preserve state shapes and labels in forced colors.
+@media (forced-colors: active) {
+    .hyperion-status-indicator {
+        border-color: CanvasText;
+        background: CanvasText;
+        forced-color-adjust: none;
+    }
+
+    :host([data-state='queued']) .hyperion-status-indicator,
+    :host([data-state='unknown']) .hyperion-status-indicator {
+        background: Canvas;
+    }
+
+    // Keep the running state distinct.
+    :host([data-state='running']) .hyperion-status-indicator {
+        border-color: Highlight;
+        background: Highlight;
+    }
+}

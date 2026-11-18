@@ -1,0 +1,67 @@
+import { Component, computed, input } from '@angular/core';
+import { IssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
+export interface IssueColumn {
+    w: string;
+    h: string;
+    color: string;
+    tooltip: string;
+}
+
+@Component({
+    selector: 'jhi-category-issues-chart',
+    template: `
+        <div style="max-width: 120px; margin: auto;">
+            <div style="height: 30px;" class="d-flex justify-content-between">
+                @for (column of columns(); track column) {
+                    <div class="d-flex align-items-end" [style]="{ width: column.w, height: '30px' }" [ngbTooltip]="column.tooltip" placement="bottom auto">
+                        <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    `,
+    imports: [NgbTooltip],
+})
+export class CategoryIssuesChartComponent {
+    readonly issuesMap = input<IssuesMap>();
+    readonly category = input.required<StaticCodeAnalysisCategory>();
+    readonly maxGradedIssues = input<number>();
+    readonly totalStudents = input.required<number>();
+    readonly maxNumberOfIssues = input.required<number>();
+
+    readonly columns = computed<IssueColumn[]>(() => {
+        const category = this.category();
+        const issuesMap = this.issuesMap();
+        const totalStudents = this.totalStudents();
+
+        // set a minimum of 10 columns
+        const numColumns = Math.max(this.maxNumberOfIssues(), 10) + 1;
+
+        // display properties
+        const columnGap = 2;
+        const columnWidth = (100 + columnGap) / numColumns - columnGap;
+
+        const maxGradedIssues = category.penalty > 0 ? category.maxPenalty / category.penalty : 0;
+
+        return new Array(numColumns).fill(0).map((column, i) => {
+            const numIssues = i + 1;
+            const numStudents = issuesMap ? issuesMap[numIssues] || 0 : 0;
+            return {
+                w: columnWidth + '%',
+                h: (totalStudents > 0 ? (numStudents / totalStudents) * 95 : 0) + 4 + '%',
+                color:
+                    category.state === StaticCodeAnalysisCategoryState.Inactive
+                        ? '#ddd'
+                        : numStudents === 0 || category.state !== StaticCodeAnalysisCategoryState.Graded
+                          ? '#28a745'
+                          : numIssues > maxGradedIssues
+                            ? '#dc3545'
+                            : '#ffc107',
+                tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} ${numStudents !== 1 ? 'have' : 'has'} ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
+            };
+        });
+    });
+}

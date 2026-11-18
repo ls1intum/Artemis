@@ -1,0 +1,111 @@
+{
+    "artemisApp": {
+        "modelingEditor": {
+            "title": "Modeling Editor",
+            "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
+            "saveSuccessful": "Your diagram was saved successfully!",
+            "allSaved": "All changes saved",
+            "unsavedChanges": "Unsaved changes",
+            "saving": "Saving...",
+            "submitSuccessful": "Your diagram was submitted successfully! You may submit again or wait for your feedback.",
+            "submitSuccessfulWithAssessment": "Your diagram was submitted successfully! You may no longer edit your diagram. Your feedback is shown below.",
+            "submitDueDateMissed": "Your diagram was submitted successfully! You may submit again or wait for your feedback. As you missed the due date, your score will not be counted.",
+            "empty": "Unable to submit an empty diagram.",
+            "fullscreen": {
+                "enterButtonText": "Fullscreen",
+                "exitButtonText": "Exit Fullscreen",
+                "tooltip": "Fullscreen"
+            },
+            "editorActions": "Editor actions",
+            "newAssessment": "A new assessment for your submission is available.",
+            "error": "An error occurred. Please try again later.",
+            "assessment": {
+                "title": "Assessment",
+                "noAssessment": "There is no assessment available yet.",
+                "instructions": "Select entities and/or associations in the editor to filter the assessment.",
+                "element": "Element",
+                "score": "Points"
+            },
+            "helpModal": {
+                "help": "Help",
+                "title": "How to use the modeling editor",
+                "walkthrough": "Walkthrough",
+                "basicsTitle": "Build a diagram",
+                "intro": "Start with the six core interactions below. The editor keeps controls close to the canvas so you can stay focused on the model.",
+                "refineTitle": "Refine your work",
+                "refineDescription": "Once the structure is in place, use these interactions to arrange, correct, and reuse parts of your diagram.",
+                "shortcuts": {
+                    "title": "Keyboard shortcuts",
+                    "description": "Shortcuts work while the canvas has focus. Browser shortcuts keep working when focus is outside the editor or in an explanation field.",
+                    "or": "or",
+                    "groups": {
+                        "editing": "Editing",
+                        "selection": "Selection",
+                        "view": "View"
+                    },
+                    "keys": {
+                        "delete": "Del",
+                        "backspace": "Backspace"
+                    },
+                    "actions": {
+                        "select-all": "Select all",
+                        "clear-selection": "Clear selection",
+                        "delete": "Delete",
+                        "copy": "Copy",
+                        "cut": "Cut",
+                        "paste": "Paste",
+                        "duplicate": "Duplicate",
+                        "move-selection": "Move selection",
+                        "undo": "Undo",
+                        "redo": "Redo",
+                        "zoom-in": "Zoom in",
+                        "zoom-out": "Zoom out",
+                        "reset-zoom": "Reset zoom",
+                        "fit-view": "Fit diagram",
+                        "zoom-to-selection": "Zoom to selection"
+                    }
+                },
+                "createElement": {
+                    "title": "Add elements",
+                    "text": "Drag an element from the palette onto the canvas. On a touch device, select it in the palette and then tap its position on the canvas."
+                },
+                "createRelationship": {
+                    "title": "Connect elements",
+                    "text": "Select the source element to reveal its connection handles, then drag from a handle to the target element. Release when the target handle is highlighted."
+                },
+                "updateElement": {
+                    "title": "Edit details",
+                    "text": "Double-click an element or relationship to open its editor. Update its name, type, content, and other available properties, then close the popover to continue."
+                },
+                "deleteElement": {
+                    "title": "Remove items",
+                    "text": "Select one or more elements or relationships, then press <code>Delete</code> or <code>Backspace</code>."
+                },
+                "moveElement": {
+                    "title": "Arrange the diagram",
+                    "text": "Drag elements into place, or select them and use the arrow keys for precise adjustments. Pan the canvas to make room as the diagram grows."
+                },
+                "resizeElement": {
+                    "title": "Resize elements",
+                    "text": "Select an element and drag one of its resize handles. Keep labels readable and leave enough space for relationships."
+                },
+                "reconnectRelationship": {
+                    "title": "Reconnect relationships",
+                    "text": "Select a relationship, then drag either endpoint to a different connection handle."
+                },
+                "select": {
+                    "title": "Work with a selection",
+                    "text": "Hold <code>Shift</code> while selecting to build a multi-selection. Use the platform shortcut shown in the Keyboard shortcuts tab to select everything."
+                },
+                "duplicate": {
+                    "title": "Reuse existing elements",
+                    "text": "Copy and paste a selection to duplicate it with its properties. The Keyboard shortcuts tab shows the correct keys for your platform."
+                },
+                "undo": {
+                    "title": "Recover from mistakes",
+                    "text": "Undo or redo recent changes at any time. You can find both platform-specific key combinations in the Keyboard shortcuts tab."
+                }
+            }
+        }
+    }
+}

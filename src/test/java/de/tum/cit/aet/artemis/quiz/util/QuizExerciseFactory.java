@@ -1,0 +1,689 @@
+package de.tum.cit.aet.artemis.quiz.util;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.springframework.util.ResourceUtils;
+
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+
+/**
+ * Factory for creating QuizExercises and related objects.
+ */
+public class QuizExerciseFactory {
+
+    /** The filenames the drag item pictures of the generated question are stored under. They are also the names the multipart parts of a create request carry. */
+    public static final String DRAG_ITEM_IMAGE_2 = "dragItemImage2.png";
+
+    public static final String DRAG_ITEM_IMAGE_4 = "dragItemImage4.png";
+
+    /**
+     * Creates a quiz exercise with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param course      The course the quiz should be added to.
+     * @param releaseDate The release date of the quiz.
+     * @param dueDate     The due date of the quiz.
+     * @param quizMode    The quiz mode used. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz.
+     */
+    @NonNull
+    public static QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        addQuestionsToQuizExercise(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Creates a synchronized quiz exercise with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param course      The course the quiz should be added to.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The startTime of the batch (synchronized quizzes have exactly one batch in which all participate).
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz.
+     */
+    public static QuizExercise createSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, null, null, course);
+        quizExercise.setTitle("Synchronized Quiz");
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(duration);
+        quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, startTime)));
+        addQuestionsToQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    /**
+     * Creates a quiz exercise for an exam with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param exerciseGroup Exercise group of an exam to which the quiz should be added.
+     * @return The created quiz.
+     */
+    @NonNull
+    public static QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
+        QuizExercise quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        addQuestionsToQuizExercise(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Adds different types of questions to the given quiz.
+     * One multiple choice, one drag and drop, and one short answer question is added to the quiz.
+     * The grading instructions are set to null.
+     *
+     * @param quizExercise The quiz to which questions should be added.
+     */
+    public static void addQuestionsToQuizExercise(QuizExercise quizExercise) {
+        quizExercise.addQuestion(createMultipleChoiceQuestion());
+        quizExercise.addQuestion(createDragAndDropQuestion());
+        quizExercise.addQuestion(createShortAnswerQuestion());
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
+        quizExercise.setGradingInstructions(null);
+    }
+
+    /**
+     * Creates a short answer question with score 2 and 2 different spot-solution mappings.
+     * The scoring type of the question is proportional without penalty.
+     *
+     * @return The created short answer question.
+     */
+    @NonNull
+    public static ShortAnswerQuestion createShortAnswerQuestion() {
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2d).text("This is a long answer text");
+        sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        // TODO: we should test different values here
+        sa.setMatchLetterCase(true);
+        sa.setSimilarityValue(100);
+
+        var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
+        var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
+        sa.addSpot(shortAnswerSpot1);
+        sa.addSpot(shortAnswerSpot2);
+
+        var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
+        var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
+        sa.addSolution(shortAnswerSolution1);
+        // also invoke remove once
+        sa.removeSolution(shortAnswerSolution1);
+        sa.addSolution(shortAnswerSolution1);
+        sa.addSolution(shortAnswerSolution2);
+
+        var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().getFirst()).solution(sa.getSolutions().getFirst());
+
+        var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
+        sa.addCorrectMapping(mapping1);
+        assertThat(mapping1.getId()).isNotNull();
+        sa.removeCorrectMapping(mapping1);
+        sa.addCorrectMapping(mapping1);
+        sa.addCorrectMapping(mapping2);
+        sa.setExplanation("Explanation");
+        sa.setRandomizeOrder(true);
+        // invoke some util methods
+        sa.copyQuestionId();
+        return sa;
+    }
+
+    /**
+     * Creates a drag and drop question with score 3 and 3 different location-drag item mappings.
+     * The scoring type of the question is proportional with penalty.
+     *
+     * @return The created drag and drop question.
+     */
+    @NonNull
+    public static DragAndDropQuestion createDragAndDropQuestion() {
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3d).text("Q2");
+        dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dnd.addDropLocation(dropLocation1);
+        // also invoke remove once
+        dnd.removeDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
+        dnd.addDropLocation(dropLocation4);
+
+        var dragItem1 = new DragItem().text("D1");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_2);
+        var dragItem3 = new DragItem().text("D3");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_IMAGE_4);
+        dnd.addDragItem(dragItem1);
+        assertThat(dragItem1.getId()).isNotNull();
+        // also invoke remove once
+        dnd.removeDragItem(dragItem1);
+        dnd.addDragItem(dragItem1);
+        dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
+        dnd.addDragItem(dragItem4);
+
+        var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+
+        dnd.addCorrectMapping(mapping1);
+        dnd.removeCorrectMapping(mapping1);
+        dnd.addCorrectMapping(mapping1);
+        var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
+        dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
+        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
+        dnd.addCorrectMapping(mapping4);
+        dnd.setExplanation("Explanation");
+        // invoke some util methods
+
+        dnd.setRandomizeOrder(true);
+        dnd.copyQuestionId();
+
+        return dnd;
+    }
+
+    /**
+     * Creates a multiple choice question with score 4 and 2 different answer options. One answer is correct and the other one incorrect.
+     * The scoring type of the question is all or nothing.
+     *
+     * @return The created multiple choice question.
+     */
+    @NonNull
+    public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mc.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.setExplanation("Explanation");
+        mc.setRandomizeOrder(true);
+
+        mc.copyQuestionId();
+        return mc;
+    }
+
+    /**
+     * Generates a quiz batch for a quiz exercise using the given start time.
+     *
+     * @param quizExercise The quiz to which a batch should be added.
+     * @param startTime    The start time of the batch.
+     * @return The created quiz batch.
+     */
+    public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(startTime);
+        return quizBatch;
+    }
+
+    /**
+     * Generates a quiz exercise without an assessment due date and adds it to the given course.
+     *
+     * @param releaseDate The release date of the quiz.
+     * @param dueDate     The due date of the quiz.
+     * @param quizMode    The quiz mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @param course      The course to which the quiz should be added to.
+     * @return The created quiz exercise.
+     */
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
+        return generateQuizExercise(releaseDate, dueDate, null, quizMode, course);
+    }
+
+    /**
+     * Generates a quiz exercise using the passed dates and adds it to the given course.
+     *
+     * @param releaseDate       The release date of the quiz.
+     * @param dueDate           The due date of the quiz.
+     * @param assessmentDueDate The assessment due date of the quiz.
+     * @param quizMode          The quiz mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @param course            The course to which the quiz should be added to.
+     * @return The created quiz exercise.
+     */
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        quizExercise.setTitle("new quiz");
+
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(120);
+        quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(quizMode);
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
+        }
+        return quizExercise;
+    }
+
+    /**
+     * Generates a submitted answer for the given quiz question of any type.
+     * The correctness of the answer depends on the passed correct value.
+     *
+     * @param question The quiz question to which a submitted answer should be added.
+     * @param correct  True, if the answer should be correct.
+     * @return The generated submitted answer.
+     */
+    public static SubmittedAnswer generateSubmittedAnswerFor(QuizQuestion question, boolean correct) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                if (answerOption.isIsCorrect().equals(correct)) {
+                    submittedAnswer.addSelectedOptions(answerOption);
+                }
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
+
+            if (correct) {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4));
+            }
+            else {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation4));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation2));
+            }
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (correct) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText(correctText.toUpperCase(Locale.ROOT));
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    /**
+     * Generates a quiz exercise for an exam with the duration of 10 seconds and randomized question order.
+     *
+     * @param exerciseGroup The exam exercise group to which the quiz should be added.
+     * @return The created exam quiz exercise.
+     */
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
+        var quizExercise = (QuizExercise) ExerciseFactory.populateExerciseForExam(new QuizExercise(), exerciseGroup);
+
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(10);
+        quizExercise.setRandomizeQuestionOrder(true);
+
+        return quizExercise;
+    }
+
+    /**
+     * Generates quiz exercise for an exam with the duration of 10 seconds and randomized question order.
+     *
+     * @param exerciseGroup The exam exercise group to which the quiz exercise should be added.
+     * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
+     * @return The generated quiz exercise.
+     */
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        quizExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
+        return quizExercise;
+    }
+
+    /**
+     * Adds different types of questions to the given quiz.
+     * One multiple choice, one drag and drop, one short answer, and one single choice question is added to the quiz.
+     * The grading instructions are set to null.
+     *
+     * @param quizExercise The quiz to which questions should be added.
+     */
+    public static void addAllQuestionTypesToQuizExercise(QuizExercise quizExercise) {
+        quizExercise.addQuestion(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quizExercise.addQuestion(createDragAndDropQuestionWithAllTypesOfMappings());
+        quizExercise.addQuestion(createShortAnswerQuestionWithRealisticText());
+        quizExercise.addQuestion(createSingleChoiceQuestion());
+    }
+
+    /**
+     * Creates a short answer question with "This [-spot0] a [-spot 2] answer text" text.
+     *
+     * @return The created short answer question.
+     */
+    public static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
+        var shortAnswerQuestion = createShortAnswerQuestion();
+        shortAnswerQuestion.setText("This [-spot0] a [-spot 2] answer text");
+        return shortAnswerQuestion;
+    }
+
+    /**
+     * Creates a drag and drop question with score 5 and 3 different location-drag item mappings.
+     * Fourth drag item is invalid and fifth one has a picture file.
+     * The scoring type of the question is proportional with penalty.
+     *
+     * @return The created drag and drop question.
+     */
+    public static DragAndDropQuestion createDragAndDropQuestionWithAllTypesOfMappings() {
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3d).text("Q2");
+        dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setInvalid(true);
+        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
+        dnd.addDropLocation(dropLocation1);
+        // also invoke remove once
+        dnd.removeDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
+        dnd.addDropLocation(dropLocation4);
+        dnd.addDropLocation(dropLocation5);
+
+        var dragItem1 = new DragItem().text("D1");
+        var dragItem2 = new DragItem().text("D2");
+        var dragItem3 = new DragItem().text("D3");
+        var dragItem4 = new DragItem().text("invalid drag item");
+        try {
+            // Every drag item picture lives in the one drag item directory, so the file backing the stored filename goes there and nowhere else.
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathConverter.getDragItemFilePath().resolve("drag_item.jpg").toFile());
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        var dragItem5 = new DragItem().pictureFilePath("drag_item.jpg");
+        dragItem4.setInvalid(true);
+        dnd.addDragItem(dragItem1);
+        assertThat(dragItem1.getId()).isNotNull();
+        // also invoke remove once
+        dnd.removeDragItem(dragItem1);
+        dnd.addDragItem(dragItem1);
+        dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
+        dnd.addDragItem(dragItem4);
+        dnd.addDragItem(dragItem5);
+
+        var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+
+        dnd.addCorrectMapping(mapping1);
+        dnd.removeCorrectMapping(mapping1);
+        dnd.addCorrectMapping(mapping1);
+        var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
+        dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
+        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
+        dnd.addCorrectMapping(mapping4);
+        var mapping5 = new DragAndDropMapping().dragItem(dragItem5).dropLocation(dropLocation5);
+        dnd.addCorrectMapping(mapping5);
+        dnd.setExplanation("Explanation");
+        return dnd;
+    }
+
+    /**
+     * Creates a multiple choice question with score 4 and 5 different answer options. 2 answers are correct and the other 3 incorrect.
+     * One answer option is invalid.
+     * The scoring type of the question is all or nothing.
+     *
+     * @return The created multiple choice question.
+     */
+    @NonNull
+    public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mc.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
+        return mc;
+    }
+
+    /**
+     * Creates a single choice question with 2 answer options.
+     * The scoring type of the question is all or nothing.
+     *
+     * @return The created single choice question.
+     */
+    @NonNull
+    public static MultipleChoiceQuestion createSingleChoiceQuestion() {
+        var singleChoiceQuestion = createMultipleChoiceQuestion();
+        singleChoiceQuestion.setSingleChoice(true);
+        return singleChoiceQuestion;
+    }
+
+    /**
+     * Generates a submission for the given quiz exercise. The quiz should have at least 3 questions!
+     * A submitted answer is added to each of the first 3 questions.
+     * The result of each answer depends on the given student id.
+     *
+     * @param quizExercise   The quiz to which the submission should be added.
+     * @param studentID      The id of the student participating in the quiz.
+     * @param submitted      True, if the submission should be submitted.
+     * @param submissionDate The submission date.
+     * @return The created quiz submission.
+     */
+    public static QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().getFirst();
+        QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
+        QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion1, studentID % 2 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion2, studentID % 3 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion3, studentID % 4 == 0));
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+
+        return quizSubmission;
+    }
+
+    /**
+     * Generates a submitted answer for the given quiz question of any type.
+     * The answer is only partially correct.
+     *
+     * @param question The quiz question to which a submitted answer should be added.
+     * @return The generated submitted answer.
+     */
+    public static SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                submittedAnswer.addSelectedOptions(answerOption);
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation2));
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (spot.getSpotNr() == 2) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText("wrong submitted text");
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    /**
+     * Generate a submission with all or none options of a multiple choice questions selected.
+     * For other question typed, incorrect submitted answers are added.
+     *
+     * @param quizExercise     The quiz to which the submission should be added.
+     * @param submitted        True, if the submission is submitted.
+     * @param submissionDate   The date the submission is submitted.
+     * @param selectEverything True, if every answer option should be selected. Otherwise, none are selected.
+     */
+    public static QuizSubmission generateSpecialSubmissionWithResult(QuizExercise quizExercise, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.setQuizQuestion(question);
+                if (selectEverything) {
+                    for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                        submittedAnswer.addSelectedOptions(answerOption);
+                    }
+                }
+                quizSubmission.addSubmittedAnswers(submittedAnswer);
+
+            }
+            else {
+                quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+            }
+        }
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+
+        return quizSubmission;
+    }
+
+    /**
+     * Creates a titled quiz exercise with all types of questions for an exam.
+     * The quiz includes one multiple choice, one drag and drop, one short answer, and single choice question.
+     *
+     * @param exerciseGroup The exam exercise group to which the quiz exercise should be added.
+     * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
+     * @return The created exam quiz exercise.
+     */
+    @NonNull
+    public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
+        addAllQuestionTypesToQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    /**
+     * Creates a quiz submissions and adds a submitted answer to it.
+     *
+     * @param quizQuestion The quiz question to which a submission should be added.
+     * @param correct      True if, the generated answer should be correct.
+     * @return The created quiz submission.
+     */
+    public static QuizSubmission generateQuizSubmissionWithSubmittedAnswer(QuizQuestion quizQuestion, boolean correct) {
+        QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
+        quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, correct));
+
+        return quizSubmission;
+    }
+
+    /**
+     * Sets quiz questions associated to quiz submission answers to null.
+     *
+     * @param quizSubmission The quiz submission with answer.
+     */
+    public static void setQuizQuestionToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.setQuizQuestion(null));
+    }
+
+    /**
+     * Sets quiz question ids associated to quiz submission answers to null.
+     *
+     * @param quizSubmission The quiz submission with answer.
+     */
+    public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
+    }
+}

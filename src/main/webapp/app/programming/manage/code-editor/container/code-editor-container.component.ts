@@ -1,0 +1,518 @@
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
+import {
+    CommitState,
+    CreateFileChange,
+    DeleteFileChange,
+    EditorState,
+    FileBadge,
+    FileBadgeType,
+    FileChange,
+    FileType,
+    PROBLEM_STATEMENT_IDENTIFIER,
+    RenameFileChange,
+    RepositoryType,
+} from 'app/programming/shared/code-editor/model/code-editor.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { editor } from 'monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { Subscription } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+export enum CollapsableCodeEditorElement {
+    FileBrowser,
+    BuildOutput,
+    Instructions,
+}
+
+@Component({
+    selector: 'jhi-code-editor-container',
+    templateUrl: './code-editor-container.component.html',
+    styleUrls: ['./code-editor-container.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CodeEditorGridComponent,
+        CodeEditorActionsComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorMonacoComponent,
+        CodeEditorInstructionsComponent,
+        CodeEditorBuildOutputComponent,
+        KeysPipe,
+    ],
+})
+export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private fileService = inject(CodeEditorFileService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+
+    readonly CommitState = CommitState;
+    readonly EditorState = EditorState;
+    readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+    // grid is the root layout element and is always rendered, so it is required and safe to dereference.
+    readonly grid = viewChild.required(CodeEditorGridComponent);
+    // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
+    // - actions is behind `@if (!isTutorAssessment() || commitState === CommitState.CONFLICT)`
+    // - buildOutput is behind `@if (buildable())`
+    // - fileBrowser may be absent for remote sync events that arrive before the view is initialized
+    //   (see handleRemoteFileTreeEvent), so it must not throw on early access.
+    // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
+    //   pre-view-init access from throwing.
+    readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly repositoryLoading = computed(() => this.fileBrowser()?.isLoadingFiles() ?? true);
+    readonly actions = viewChild(CodeEditorActionsComponent);
+    readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
+    readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
+    readonly instructions = viewChild(CodeEditorInstructionsComponent);
+    /**
+     * The toolbar above the editor: the title actions, the submission policy, the toolbar and the editor actions. A page that has room for it elsewhere
+     * (the exam shows it in its title row) can move this element out of the bar that holds it; the bar then collapses (see the grid).
+     */
+    readonly navbar = viewChild<ElementRef<HTMLElement>>('navbar');
+
+    editable = input<boolean>(true);
+    forRepositoryView = input<boolean>(false);
+    showInlineFeedback = input<boolean>(true);
+    buildable = input<boolean>(true);
+    showEditorInstructions = input<boolean>(true);
+    isTutorAssessment = input<boolean>(false);
+    /**
+     * The full hash of the commit to show, read-only and independent of the working copy on the server. Set it where a specific submission is shown, e.g. in the manual
+     * assessment; leave it unset to show the repository as it currently is, e.g. in the online editor.
+     */
+    commitId = input<string | undefined>(undefined);
+    highlightFileChanges = input<boolean>(false);
+    allowHiddenFiles = input<boolean>(false);
+    /**
+     * Manual feedback attached to code locations (in-line feedback and auto-accepted Athena suggestions), used to
+     * (re)compute file badges. Passed as its own signal input rather than derived only from `participation()`:
+     * the parent updates it via `.set()` with a fresh array reference on every change, including merges that
+     * mutate the existing participation object in place and would therefore not otherwise be picked up by the
+     * badge-update effect below. Left `undefined` (not just an empty array, which is a legitimate "no feedback"
+     * value) for every consumer besides the tutor assessment container, which is the only one that needs this
+     * extra reactivity; {@link collectFeedbackSuggestionBadges} falls back to {@link feedbackForSubmission} then.
+     */
+    referencedFeedback = input<Feedback[] | undefined>(undefined);
+    readOnlyManualFeedback = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    disableAutoSave = input<boolean>(false);
+    isProblemStatementVisible = input<boolean>(true);
+    showNavbar = input<boolean>(true);
+    course = input<Course | undefined>();
+    selectedRepository = input<RepositoryType>();
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
+    enableExerciseReviewComments = input<boolean>(false);
+    selectedAuxiliaryRepositoryId = input<number | undefined>();
+    onCommitStateChange = output<CommitState>();
+    onFileChanged = output<void>();
+    onUpdateFeedback = output<Feedback[]>();
+    onFileLoad = output<string>();
+    onRepositoryFilesLoaded = output<void>();
+    onEditorLoaded = output<void>();
+    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    onCommit = output<void>();
+
+    participation = input.required<Participation>();
+
+    private readonly selectedFileValue = signal<string | undefined>(undefined);
+    private bypassNextUnloadWarning = false;
+    private readonly unsavedFilesValue = signal<{ [fileName: string]: string }>({});
+    private readonly commitStateValue = signal(CommitState.UNDEFINED);
+
+    /**
+     * File-browser badges for code files and the Problem Statement entry, covering feedback
+     * suggestions, graded feedbacks, and active review-comment threads.
+     */
+    readonly fileBadges = computed<{ [fileName: string]: FileBadge[] }>(() => {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        return fileBadges;
+    });
+
+    get selectedFile(): string | undefined {
+        return this.selectedFileValue();
+    }
+
+    set selectedFile(file: string | undefined) {
+        this.selectedFileValue.set(file);
+    }
+
+    get problemStatementIdentifier(): string {
+        return PROBLEM_STATEMENT_IDENTIFIER;
+    }
+
+    shouldShowProblemStatement(): boolean {
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions() && this.isProblemStatementVisible();
+    }
+
+    /** Code Editor State Variables **/
+    editorState!: EditorState; // set in constructor via initializeProperties()
+    get commitState(): CommitState {
+        return this.commitStateValue();
+    }
+
+    set commitState(state: CommitState) {
+        this.commitStateValue.set(state);
+    }
+
+    readonly errorFiles = signal<string[]>([]);
+    readonly annotations = signal<Array<Annotation>>([]);
+    private fileTreeChangeSubscription?: Subscription;
+    constructor() {
+        this.initializeProperties();
+
+        effect(() => {
+            const syncService = this.fileSyncService();
+            this.fileTreeChangeSubscription?.unsubscribe();
+            if (syncService) {
+                this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.fileTreeChangeSubscription?.unsubscribe();
+    }
+
+    get unsavedFiles() {
+        return this.unsavedFilesValue();
+    }
+
+    /**
+     * Setting unsaved files also updates the editorState / commitState.
+     * - unsaved files empty -> EditorState.CLEAN
+     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES & CommitState.UNCOMMITTED_CHANGES
+     * - unsaved files empty AND editorState.SAVING -> CommitState.UNCOMMITTED_CHANGES
+     * @param unsavedFiles
+     */
+    set unsavedFiles(unsavedFiles: { [fileName: string]: string }) {
+        this.unsavedFilesValue.set(unsavedFiles);
+        if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING) {
+            this.editorState = EditorState.CLEAN;
+            if (this.commitState !== CommitState.COMMITTING) {
+                this.commitState = CommitState.UNCOMMITTED_CHANGES;
+            }
+        } else if (_isEmpty(this.unsavedFiles)) {
+            this.editorState = EditorState.CLEAN;
+        } else {
+            this.editorState = EditorState.UNSAVED_CHANGES;
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        }
+    }
+
+    private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
+        // Every referenced feedback counts here, not only AI suggestions: the badge's own tooltip says "Number of
+        // feedback in this file/folder", and every consumer besides the tutor assessment container relies on this
+        // to reflect regular manual and automatic feedback too.
+        for (const feedback of this.referencedFeedback() ?? this.feedbackForSubmission()) {
+            const filePath = Feedback.getReferenceFilePath(feedback);
+            if (!filePath) {
+                continue;
+            }
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.FEEDBACK_SUGGESTION, 1);
+        }
+    }
+
+    private collectReviewThreadBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
+        if (!this.enableExerciseReviewComments()) {
+            return;
+        }
+
+        const selectedRepository = this.selectedRepository();
+        const selectedAuxiliaryRepositoryId = this.selectedAuxiliaryRepositoryId();
+        const reviewThreads = this.exerciseReviewCommentService.threads();
+        for (const thread of reviewThreads) {
+            // File badges should only reflect active threads that still need attention.
+            if (thread.resolved || thread.outdated) {
+                continue;
+            }
+            if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+                this.addBadgeCount(fileBadgesByType, PROBLEM_STATEMENT_IDENTIFIER, FileBadgeType.REVIEW_COMMENT, 1);
+                continue;
+            }
+            if (!matchesSelectedRepository(thread, selectedRepository, selectedAuxiliaryRepositoryId)) {
+                continue;
+            }
+            const filePath = thread.filePath ?? thread.initialFilePath;
+            if (!filePath) {
+                continue;
+            }
+            // Count one badge item per thread, independent of the number of comments inside it.
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.REVIEW_COMMENT, 1);
+        }
+    }
+
+    private addBadgeCount(fileBadgesByType: Map<string, Map<FileBadgeType, number>>, filePath: string, badgeType: FileBadgeType, countToAdd: number): void {
+        if (countToAdd <= 0) {
+            return;
+        }
+        let badgeCountsByType = fileBadgesByType.get(filePath);
+        if (!badgeCountsByType) {
+            badgeCountsByType = new Map<FileBadgeType, number>();
+            fileBadgesByType.set(filePath, badgeCountsByType);
+        }
+        const existingCount = badgeCountsByType.get(badgeType) ?? 0;
+        badgeCountsByType.set(badgeType, existingCount + countToAdd);
+    }
+
+    /**
+     * Resets the repository-scoped editor state when the selected participation changes.
+     */
+    initializeProperties = () => {
+        this.selectedFile = undefined;
+        this.unsavedFiles = {};
+        this.editorState = EditorState.CLEAN;
+        this.commitState = CommitState.UNDEFINED;
+    };
+
+    /**
+     * @function onFileChange
+     * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
+     * Also, all references to a file need to be updated in case of rename,
+     * in case of delete make sure to also remove all sub entities (files in folder).
+     */
+    onFileChange<F extends FileChange>([, fileChange, isRemote]: [string[], F, boolean?]) {
+        if (fileChange instanceof CreateFileChange) {
+            // Select newly created file, but only for local operations — remote creates must not
+            // hijack the local user's current selection.
+            if (fileChange.fileType === FileType.FILE && !isRemote) {
+                this.selectedFile = fileChange.fileName;
+            }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
+            // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
+            if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
+                return;
+            }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+            this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
+            this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
+        }
+        // If unsavedFiles are deleted, this can mean that the editorState becomes clean
+        if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
+            this.editorState = EditorState.CLEAN;
+        }
+        void this.monacoEditor()?.onFileChange(fileChange);
+
+        this.onFileChanged.emit();
+    }
+
+    /**
+     * Handle remote file tree change events from the sync service.
+     * Delegates to fileBrowser.handleFileChange() which updates repositoryFiles, rebuilds
+     * the tree view, and emits onFileChange — mirroring the local file operation flow exactly.
+     *
+     * If fileBrowser is not yet rendered (e.g. during initial load), the event is safely
+     * ignored. This is acceptable because the file browser fetches the full file list from
+     * the server on initialization, so it will already reflect the current state.
+     *
+     * This follows the same pattern as {@link ProblemStatementSyncService}, where the sync
+     * service emits events and the consuming component handles them if ready, gracefully
+     * skipping events that arrive before the UI is initialized.
+     */
+    private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
+        switch (event.eventType) {
+            case ExerciseEditorSyncEventType.FILE_CREATED:
+                // isRemote=true: prevents the container from auto-selecting the new file,
+                // which would hijack the local user's current editor selection.
+                this.fileBrowser()?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_DELETED:
+                this.fileBrowser()?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_RENAMED:
+                this.fileBrowser()?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
+                break;
+        }
+    }
+
+    private mapFileType(type: 'FILE' | 'FOLDER'): FileType {
+        return type === 'FILE' ? FileType.FILE : FileType.FOLDER;
+    }
+
+    /**
+     * When files were saved, check which could be saved and set unsavedFiles to update the ui.
+     * Files that could not be saved will show an error in the header.
+     * @param files
+     */
+    onSavedFiles(files: { [fileName: string]: string | undefined }) {
+        const savedFiles = Object.entries(files)
+            .filter(([, error]: [string, string | undefined]) => !error)
+            .map(([fileName]) => fileName);
+        const errorFiles = Object.entries(files)
+            .filter(([, error]: [string, string | undefined]) => error)
+            .map(([fileName]) => fileName);
+
+        this.unsavedFiles = fromPairs(toPairs(this.unsavedFiles).filter(([fileName]) => !savedFiles.includes(fileName)));
+
+        if (errorFiles.length) {
+            this.onError('saveFailed');
+        }
+        this.monacoEditor()?.storeAnnotations(savedFiles);
+    }
+
+    /**
+     * Applies commit-state transitions after a successful inline-fix apply commit.
+     * Keeps UNCOMMITTED_CHANGES if new edits appeared while the commit request was in flight.
+     */
+    onInlineFixCommitted(): void {
+        this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+        this.onCommitStateChange.emit(this.commitState);
+        this.onCommit.emit();
+    }
+
+    /** Clears local editor state after a successful repository refresh. */
+    onRefreshFiles(): void {
+        this.unsavedFiles = {};
+        this.commitState = CommitState.CLEAN;
+        this.onCommitStateChange.emit(this.commitState);
+    }
+
+    /**
+     * When the content of a file changes, set it as unsaved.
+     */
+    onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        const syncService = this.fileSyncService();
+        if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
+            return;
+        }
+        this.unsavedFiles = cloneWith(this.unsavedFiles, { [fileName]: text });
+        this.onFileChanged.emit();
+    }
+
+    fileLoad(selectedFile: string) {
+        this.onFileLoad.emit(selectedFile);
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * @param error the translation key of the error that should be displayed
+     */
+    onError(error: string) {
+        let errorTranslationKey: string;
+        const translationParams = { connectionIssue: '' };
+        if (!error.includes(ConnectionError.message)) {
+            errorTranslationKey = error;
+        } else {
+            translationParams.connectionIssue = this.translateService.instant(`artemisApp.editor.errors.${ConnectionError.message}`);
+            errorTranslationKey = error.replaceAll(ConnectionError.message, '');
+        }
+        this.alertService.error(`artemisApp.editor.errors.${errorTranslationKey}`, translationParams);
+    }
+
+    getText(): string {
+        return this.monacoEditor()?.getText() ?? '';
+    }
+
+    commit(): void {
+        this.actions()?.commit();
+    }
+
+    getNumberOfLines(): number {
+        return this.monacoEditor()?.getNumberOfLines() ?? 0;
+    }
+
+    /**
+     * Highlights the line range in the Monaco editor.
+     * @param startLine The first line to highlight. Line numbers start at 1.
+     * @param endLine The last line to highlight.
+     */
+    highlightLines(startLine: number, endLine: number): void {
+        this.monacoEditor()?.highlightLines(startLine, endLine);
+    }
+
+    onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
+        this.grid().toggleCollapse(event, collapsableElement);
+    }
+
+    /**
+     * Set the annotations and extract error files for the file browser.
+     * @param annotations The new annotations array
+     */
+    onAnnotations(annotations: Array<Annotation>) {
+        this.annotations.set(annotations);
+        this.errorFiles.set(uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName)));
+    }
+
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
+    canDeactivate() {
+        return _isEmpty(this.unsavedFiles);
+    }
+
+    allowNextUnloadWithoutConfirmation(): void {
+        this.bypassNextUnloadWarning = true;
+    }
+
+    hasCleanRepositoryState(): boolean {
+        return this.commitState === CommitState.CLEAN;
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.monacoEditor()?.hasReviewCommentDrafts() ?? false;
+    }
+
+    /**
+     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
+     */
+    feedbackForSubmission(): Feedback[] {
+        const submission = this.participation()?.submissions?.[0];
+        const result = submission?.results?.[0];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
+    }
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.monacoEditor()?.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (this.bypassNextUnloadWarning) {
+            this.bypassNextUnloadWarning = false;
+            return true;
+        }
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
+    }
+}

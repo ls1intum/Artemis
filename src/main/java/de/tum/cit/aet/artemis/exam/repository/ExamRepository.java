@@ -1,0 +1,780 @@
+package de.tum.cit.aet.artemis.exam.repository;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+
+/**
+ * Spring Data JPA repository for the ExamRepository entity.
+ */
+@Conditional(ExamEnabled.class)
+@Lazy
+@Repository
+public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
+
+    /**
+     * Counts the real exams of the given courses for the public usage dashboard. Test exams (the practice format for students) and exams whose title starts
+     * with "test" or "mock", in any letter case, are demos or trials of instructors and not real exams.
+     *
+     * @param courseIds the courses
+     * @return the number of real exams of these courses
+     */
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                AND LOWER(e.title) NOT LIKE 'test%'
+                AND LOWER(e.title) NOT LIKE 'mock%'
+            """)
+    long countRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id IN :entityIds
+            """)
+    Set<Long> findExistingExamIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id > :afterId
+            ORDER BY exam.id ASC
+            """)
+    List<Long> findExamIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    /**
+     * Reads only the schedule and mode that decide whether a submission is in time.
+     * <p>
+     * The submission gate runs on every autosave of every student and reads nothing from the exam but these
+     * values, so loading the entity (and with it the course, through an eager association) is wasted work.
+     *
+     * @param examId the id of the exam
+     * @return the exam's dates, grace period, mode and working time
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.examMode, exam.workingTime)
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(e.course.id, e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findExamIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
+
+    List<Exam> findByCourseId(long courseId);
+
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO(
+                ex.id,
+                ex.title,
+                COUNT(DISTINCT se),
+                ex.course.id
+            )
+            FROM Exam ex
+                JOIN StudentExam se ON se.exam.id = ex.id AND se.testRun = FALSE
+            WHERE ex.course.id IN :courseIds
+            GROUP BY ex.id, ex.title, ex.course.id
+            """)
+    Set<ExamStudentCountDTO> findExamStudentCountsByCourseIds(@Param("courseIds") Collection<Long> courseIds);
+
+    @Query("""
+            SELECT DISTINCT ex
+            FROM Exam ex
+                LEFT JOIN FETCH ex.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises
+            WHERE ex.course.id = :courseId
+            """)
+    List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
+
+    /**
+     * Find all exams for a given course that are already visible to the user (either registered, at least tutor or the exam is a test exam)
+     *
+     * @param courseId the course for which the exams should be retrieved
+     * @param userId   the id of the user requesting the exams
+     * @param now      the current date, typically ZonedDateTime.now()
+     * @return a set of all visible exams for the user in the provided courses
+     */
+    /**
+     * Loads the exams of a course visible to the user, projected to what the course overview sidebar renders.
+     * <p>
+     * Deliberately a projection rather than the entity: everything an exam contains — exercise groups, exercises,
+     * registered users, grading — belongs to the exam itself and is loaded when a student opens it, not when the
+     * sidebar lists it. Mirrors the visibility predicate of {@link #findByCourseIdForUser}.
+     *
+     * @param courseId the course whose exams should be loaded
+     * @param userId   the id of the user requesting them
+     * @param now      the current date, typically ZonedDateTime.now()
+     * @return the exams visible to the user, projected for the sidebar
+     */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.examMode
+            )
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                    OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                    OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                )
+            """)
+    Set<ExamForOverviewDTO> findAllForOverviewByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exam e
+                LEFT JOIN e.examUsers eu
+                LEFT JOIN e.course c
+            WHERE c.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    eu.user.id = :userId
+                    OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                    OR e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                )
+            """)
+    Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT exam
+            FROM Exam exam
+                JOIN FETCH exam.course course
+            WHERE course.testCourse = FALSE
+                AND exam.endDate >= :date
+            ORDER BY exam.startDate ASC
+            """)
+    List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
+
+    /**
+     * Returns all exams visible to a user who is at least a teaching assistant in the corresponding course.
+     *
+     * <p>
+     * The visibility window depends on the user's role <b>per course</b>:
+     * <ul>
+     * <li><b>Instructors</b> may see exams whose {@code visibleDate} is between
+     * {@code fromDate} (typically now - 7 days) and {@code toDate} (typically now + 7 days).</li>
+     * <li><b>Editors</b> and <b>teaching assistants</b> may only see exams whose {@code visibleDate}
+     * lies between {@code fromDate} and {@code nowDate} (typically the current timestamp).</li>
+     * </ul>
+     *
+     * <p>
+     * This method is database-agnostic and works on both MySQL and PostgreSQL, because all
+     * temporal arithmetic is performed in Java, and the query uses only portable JPQL.
+     * </p>
+     *
+     * @param userId   id of the user
+     * @param pageable paging specification
+     * @param fromDate lower bound for instructors (usually {@code now.minusDays(7)})
+     * @param nowDate  upper bound for editors and tutors (usually the current timestamp)
+     * @param toDate   upper bound for all roles (usually {@code now.plusDays(7)})
+     * @return a paginated list of exams visible to the user according to their role
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
+                e.id, e.title, e.startDate, e.endDate, e.examMode, e.course.id, e.course.title
+            )
+            FROM Exam e
+            WHERE :fromDate <= e.visibleDate
+                AND (
+                    (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                     AND e.visibleDate <= :toDate)
+                OR
+                    (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT))
+                     AND e.visibleDate <= :nowDate))
+            """)
+    Page<ActiveExamDTO> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("userId") long userId, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+            @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
+
+    /**
+     * Count all active exams
+     *
+     * @param now Current time
+     * @return Number of active exams
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = FALSE
+                AND exam.visibleDate >= :now
+                AND exam.endDate <= :now
+            """)
+    Integer countAllActiveExams(@Param("now") ZonedDateTime now);
+
+    /**
+     * Count all exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of exercises ending between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = FALSE
+                AND exam.endDate >= :minDate
+                AND exam.endDate <= :maxDate
+            """)
+    Integer countExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exam users for exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of students registered in exams ending between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT examUsers.user.id)
+            FROM Exam exam
+            JOIN exam.examUsers examUsers
+            WHERE exam.course.testCourse = FALSE
+                AND exam.endDate >= :minDate
+                AND exam.endDate <= :maxDate
+            """)
+    Integer countExamUsersInExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of exercises starting between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = FALSE
+                AND exam.startDate >= :minDate
+                AND exam.startDate <= :maxDate
+            """)
+    Integer countExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exam users for exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of students registered in exams starting between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT examUsers.user.id)
+            FROM Exam exam
+            JOIN exam.examUsers examUsers
+            WHERE exam.course.testCourse = FALSE
+                AND exam.startDate >= :minDate
+                AND exam.startDate <= :maxDate
+            """)
+    Integer countExamUsersInExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
+    Optional<Exam> findWithExerciseGroupsById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
+    Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
+    Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
+    Optional<Exam> findWithExamUsersById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
+    Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exam e
+                LEFT JOIN FETCH e.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises ex
+            WHERE TYPE(ex) = QuizExercise
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+            """)
+    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") long userId);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exam e
+                LEFT JOIN FETCH e.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises ex
+            WHERE TYPE(ex) = QuizExercise
+            """)
+    List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
+
+    /**
+     * Query which fetches all the exams for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param userId     id of the user
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                )
+            """)
+    Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise group for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param userId     id of the user
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                AND e.exerciseGroups IS NOT EMPTY
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                )
+            """)
+    Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams for an admin and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE (
+                CONCAT(e.id, '') = :searchTerm
+                OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+            )
+            """)
+    Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise Group for an admin and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE e.exerciseGroups IS NOT EMPTY
+                AND (
+                    CONCAT(e.id, '') = :searchTerm
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                )
+            """)
+    Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
+    // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
+    // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
+
+    @Query("""
+            SELECT exam
+            FROM Exam exam
+                LEFT JOIN FETCH exam.studentExams studentExams
+                LEFT JOIN FETCH exam.exerciseGroups exerciseGroups
+                LEFT JOIN FETCH exerciseGroups.exercises
+            WHERE exam.id = :examId
+            """)
+    Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
+
+    /**
+     * Checks if the user is registered for the exam.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the user
+     * @return true if the user is registered for the exam
+     */
+    @Query("""
+            SELECT COUNT(exam) > 0
+            FROM Exam exam
+                LEFT JOIN exam.examUsers examUsers
+            WHERE exam.id = :examId
+                AND examUsers.user.id = :userId
+            """)
+    boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
+
+    @Query("""
+            SELECT exam.id, COUNT(registeredUsers)
+            FROM Exam exam
+                LEFT JOIN exam.examUsers registeredUsers
+            WHERE exam.id IN :examIds
+            GROUP BY exam.id
+            """)
+    List<long[]> countExamUsersByExamIds(@Param("examIds") List<Long> examIds);
+
+    @Query("""
+            SELECT COUNT(studentExam)
+            FROM StudentExam studentExam
+            WHERE studentExam.testRun = FALSE
+                AND studentExam.exam.id = :examId
+            """)
+    long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
+
+    long countByCourse_Id(long courseId);
+
+    /**
+     * Returns the title of the exam with the given id.
+     *
+     * @param examId the id of the exam
+     * @return the name/title of the exam or null if the exam does not exist
+     */
+    @Query("""
+            SELECT e.title
+            FROM Exam e
+            WHERE e.id = :examId
+            """)
+    String getExamTitle(@Param("examId") long examId);
+
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+            """)
+    Set<Exam> findAllVisibleByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Get one exam by id with exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups
+     */
+    @NonNull
+    default Exam findByIdWithExerciseGroupsElseThrow(long examId) {
+        return getValueElseThrow(findWithExerciseGroupsById(examId), examId);
+    }
+
+    /**
+     * Returns a set containing all exercises that are defined in the
+     * specified exam including their details.
+     *
+     * @param examId The id of the exam
+     * @return A set containing the exercises
+     */
+    default Set<Exercise> findAllExercisesWithDetailsByExamId(long examId) {
+        var exam = findWithExerciseGroupsAndExercisesAndExerciseDetailsById(examId);
+        return exam.map(value -> value.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet())).orElseGet(Set::of);
+    }
+
+    /**
+     * Get one exam by id with registered users.
+     *
+     * @param examId the id of the entity
+     * @return the exam with registered users
+     */
+    @NonNull
+    default Exam findByIdWithExamUsersElseThrow(long examId) {
+        return getValueElseThrow(findWithExamUsersById(examId), examId);
+    }
+
+    /**
+     * Get one exam by id with registered users and exercise groups.
+     *
+     * @param examId the id of the entity
+     * @return the exam with registered users and exercise groups
+     */
+    @NonNull
+    default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
+        return getValueElseThrow(findWithExamUsersAndExerciseGroupsAndExercisesById(examId), examId);
+    }
+
+    /**
+     * Get all exams that are held today and/or in the future
+     * (does not return exams belonging to test courses).
+     *
+     * @return the list of all exams
+     */
+    default List<Exam> findAllCurrentAndUpcomingExams() {
+        return findAllByEndDateGreaterThanEqual(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
+    }
+
+    default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(long examId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithExerciseGroupsAndExercisesById(examId), examId);
+    }
+
+    /**
+     * Filters the visible exams (excluding the ones that are not visible yet)
+     *
+     * @param exams a set of exams (e.g. the ones of a course)
+     * @return only the visible exams
+     */
+    default Set<Exam> filterVisibleExams(Set<Exam> exams) {
+        return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    default void setNumberOfExamUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).toList();
+        List<long[]> examIdAndRegisteredUsersCountPairs = countExamUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        // An exam may be deleted after it was listed but before the aggregate query returns its count.
+        exams.forEach(exam -> exam.setNumberOfExamUsers(registeredUsersCountMap.getOrDefault(exam.getId(), 0).longValue()));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
+    }
+
+    @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.examUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND e.visibleDate <= :visible
+                AND e.endDate >= :end
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                AND registeredUsers.user.id = :userId
+            """)
+    Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO(
+                exam.id,
+                exam.title,
+                exam.visibleDate,
+                exam.startDate,
+                exam.endDate,
+                exam.publishResultsDate,
+                exam.examStudentReviewStart,
+                exam.examStudentReviewEnd,
+                exam.examiner
+            )
+            FROM Exam exam
+            WHERE exam.course.id = :courseId
+            """)
+    Set<ExamCalendarEventDTO> getExamCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(
+                exam.title,
+                exam.id,
+                exam.moduleNumber,
+                exam.startDate,
+                se.workingTime,
+                exam.examMaxPoints
+            )
+            FROM Exam exam
+            JOIN exam.studentExams se
+            WHERE exam.course.id = :courseId
+              AND se.user.id  = :studentId
+              AND se.testRun = FALSE
+              AND exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+              AND exam.visibleDate <= :now
+            """)
+
+    Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT DISTINCT exam.id
+            FROM Exam exam
+            WHERE exam.course.id = :courseId
+            """)
+    Set<Long> findExamIdsByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT ex.id
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE exam.id = :examId
+            """)
+    Set<Long> findExerciseIdsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Counts the total number of student exams for a given exam.
+     * Used for calculating weighted progress during course deletion/reset.
+     *
+     * @param examId the ID of the exam
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+            """)
+    long countStudentExamsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Counts the number of programming exercises in an exam.
+     * Used for calculating weighted progress during course deletion/reset,
+     * as programming exercises require repository deletion per student.
+     *
+     * @param examId the ID of the exam
+     * @return the number of programming exercises in the exam
+     */
+    @Query("""
+            SELECT COUNT(ex)
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE exam.id = :examId
+                AND TYPE(ex) = de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise
+            """)
+    long countProgrammingExercisesByExamId(@Param("examId") Long examId);
+
+    /**
+     * Counts student exams for all exams in a course, grouped by exam ID.
+     * Used for calculating total exam weight during course deletion/reset.
+     *
+     * @param courseId the ID of the course
+     * @return list of [examId, studentExamCount] pairs
+     */
+    @Query("""
+            SELECT exam.id, COUNT(se)
+            FROM Exam exam
+                LEFT JOIN StudentExam se ON se.exam.id = exam.id
+            WHERE exam.course.id = :courseId
+            GROUP BY exam.id
+            """)
+    List<long[]> countStudentExamsGroupedByExamForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Counts programming exercises for all exams in a course, grouped by exam ID.
+     * Used for calculating total exam weight during course deletion/reset.
+     * Note: Exams with only non-programming exercises won't appear in results;
+     * use getOrDefault(examId, 0L) when looking up counts.
+     *
+     * @param courseId the ID of the course
+     * @return list of [examId, programmingExerciseCount] pairs
+     */
+    @Query("""
+            SELECT exam.id, COUNT(CASE WHEN TYPE(ex) = de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN 1 END)
+            FROM Exam exam
+                LEFT JOIN exam.exerciseGroups eg
+                LEFT JOIN eg.exercises ex
+            WHERE exam.course.id = :courseId
+            GROUP BY exam.id
+            """)
+    List<long[]> countProgrammingExercisesGroupedByExamForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Gets deletion info (student exam count, programming exercise count) for all exams in a course.
+     * This is used to calculate accurate total weight for course deletion/reset progress tracking.
+     *
+     * @param courseId the ID of the course
+     * @return list of ExamDeletionInfoDTO with counts for each exam
+     */
+    default List<ExamDeletionInfoDTO> findDeletionInfoByCourseId(long courseId) {
+        List<long[]> studentExamCounts = countStudentExamsGroupedByExamForCourse(courseId);
+        List<long[]> programmingExerciseCounts = countProgrammingExercisesGroupedByExamForCourse(courseId);
+
+        // Create a map of examId -> programmingExerciseCount for efficient lookup
+        Map<Long, Long> progExCountMap = programmingExerciseCounts.stream().collect(Collectors.toMap(arr -> arr[0], arr -> arr[1]));
+
+        return studentExamCounts.stream().map(arr -> {
+            long examId = arr[0];
+            long studentExamCount = arr[1];
+            long programmingExerciseCount = progExCountMap.getOrDefault(examId, 0L);
+            return new ExamDeletionInfoDTO(examId, studentExamCount, programmingExerciseCount);
+        }).toList();
+    }
+
+    @Query("""
+            SELECT ex.numberOfCorrectionRoundsInExam
+            FROM Exam ex
+            WHERE ex.id = :examId
+            """)
+    int findNumberOfCorrectionRoundsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Find the title of an exam by its ID.
+     * Used for audit logging where only the title is needed, avoiding expensive eager loading.
+     *
+     * @param examId the ID of the exam
+     * @return the title of the exam, or null if not found
+     */
+    @Query("SELECT e.title FROM Exam e WHERE e.id = :examId")
+    String findTitleById(@Param("examId") long examId);
+
+    /**
+     * Finds the exam that contains the given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return an Optional containing the exam if found, or empty otherwise
+     */
+    @Query("""
+            SELECT exam
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE ex.id = :exerciseId
+            """)
+    Optional<Exam> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT exam.course.id
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<Long> findCourseIdById(@Param("examId") long examId);
+}

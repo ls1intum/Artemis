@@ -1,0 +1,48 @@
+@let group = tutorialGroup();
+
+<div class="flex items-center justify-end gap-2">
+    @if (isAtLeastInstructor() || group.isUserTutor) {
+        <a
+            tumAetUiButton
+            size="small"
+            severity="primary"
+            variant="outlined"
+            [id]="'registrations-' + group.id"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'registrations']"
+        >
+            <fa-icon [icon]="faUsers" />
+            <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+            <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"></span>
+        </a>
+    }
+    @if (isAtLeastInstructor()) {
+        <a
+            tumAetUiButton
+            size="small"
+            severity="warn"
+            variant="outlined"
+            [id]="'edit-' + group.id"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'edit']"
+        >
+            <fa-icon [icon]="faWrench" />
+            <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
+        </a>
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="danger"
+            variant="outlined"
+            [renderButtonStyle]="false"
+            [id]="'delete-' + group.id"
+            jhiDeleteButton
+            [entityTitle]="group.title || ''"
+            deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
+            deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
+            [dialogError]="dialogError$"
+            (delete)="deleteTutorialGroup()"
+        >
+            <fa-icon [icon]="faTrash" />
+        </button>
+    }
+</div>

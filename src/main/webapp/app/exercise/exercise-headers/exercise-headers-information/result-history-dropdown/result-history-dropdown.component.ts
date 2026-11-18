@@ -1,0 +1,365 @@
+import { TumAetUiButtonComponent, TumAetUiDialogService, TumAetUiPopoverComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+
+import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { Badge, ResultService } from 'app/exercise/result/result.service';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAIResultAndFailed,
+    isAIResultAndTimedOut,
+    isAthenaAIResult,
+} from 'app/exercise/result/result.utils';
+
+import { NavigationEnd, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
+
+/**
+ * Where "continue to latest" goes for an exercise, or undefined for one with no participation route to return to.
+ * Exported because the page offers the same action from the title bar, where the dropdown may not be rendered at all.
+ *
+ * A quiz routes by mode rather than by participation id, so it is answered here. Everything else goes through
+ * {@link participationChildRouteSegments}, the one place that knows where a participation lives: spelling the mapping
+ * out a second time is what sent programming and file upload to the modeling route, and it cannot express that a
+ * programming exercise without the online editor has nowhere to go at all.
+ */
+export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] | undefined {
+    const courseId = getCourseFromExercise(exercise)?.id;
+    if (exercise.type === ExerciseType.QUIZ) {
+        return isPracticeMode(participation)
+            ? ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]
+            : ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live'];
+    }
+    const segments = participationChildRouteSegments(exercise, participation);
+    return segments ? ['/courses', courseId, 'exercises', ...segments] : undefined;
+}
+
+@Component({
+    selector: 'jhi-result-history-dropdown',
+    templateUrl: './result-history-dropdown.component.html',
+    styleUrls: ['./result-history-dropdown.component.scss'],
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
+})
+export class ResultHistoryDropdownComponent {
+    private resultService = inject(ResultService);
+    private translateService = inject(TranslateService);
+    private dialogService = inject(TumAetUiDialogService);
+    private router = inject(Router);
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+
+    readonly faAngleDown = faAngleDown;
+    readonly faClock = faClock;
+    readonly faRobot = faRobot;
+    readonly ExerciseType = ExerciseType;
+    readonly isAthenaAIResult = isAthenaAIResult;
+
+    exercise = input.required<Exercise>();
+    sortedHistoryResults = input.required<Result[]>();
+    studentParticipation = input<StudentParticipation>();
+    showUngradedResults = input<boolean>(false);
+
+    displayedResults = computed(() => [...this.sortedHistoryResults()]);
+
+    private readonly selectedResultId = signal<number | undefined>(undefined);
+
+    private readonly latestResultId = computed(() => {
+        const participation = this.studentParticipation();
+        const allResults = participation?.submissions?.flatMap((s) => s.results ?? []) ?? [];
+        if (!allResults.length) {
+            return undefined;
+        }
+        return allResults.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
+    });
+
+    activeResultId = computed(() => {
+        return this.selectedResultId() ?? this.latestResultId();
+    });
+
+    isViewingSubmission = computed(() => {
+        return this.selectedResultId() !== undefined;
+    });
+
+    viewingSubmissionChange = output<boolean>();
+    displayedResultChange = output<Result | undefined>();
+
+    constructor() {
+        effect(() => {
+            this.studentParticipation();
+            this.syncSelectedResultWithRoute();
+        });
+
+        // Also sync on navigation events (URL changes without signal changes)
+        this.router.events
+            .pipe(
+                filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+                takeUntilDestroyed(),
+            )
+            .subscribe(() => this.syncSelectedResultWithRoute());
+    }
+
+    private syncSelectedResultWithRoute() {
+        const resultMatch = this.router.url.match(/\/result\/(\d+)/);
+        if (resultMatch) {
+            const resultId = Number(resultMatch[1]);
+            const matchingResult = this.sortedHistoryResults().find((r) => r.id === resultId);
+            if (matchingResult?.id) {
+                this.selectedResultId.set(matchingResult.id);
+                this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
+                return;
+            }
+        }
+        const match = this.router.url.match(/\/submission\/(\d+)/);
+        if (match) {
+            const submissionId = Number(match[1]);
+            const matchingResult = this.sortedHistoryResults().find((r) => r.submission?.id === submissionId);
+            if (matchingResult?.id) {
+                this.selectedResultId.set(matchingResult.id);
+                this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
+                return;
+            }
+        }
+        this.selectedResultId.set(undefined);
+        this.viewingSubmissionChange.emit(false);
+        this.displayedResultChange.emit(undefined);
+    }
+
+    resultsPopover = viewChild<TumAetUiPopoverComponent>('resultsPopover');
+    dropdownArrow = viewChild<ElementRef>('dropdownArrow');
+
+    toggleResultsPopover(event: Event) {
+        const origin = this.dropdownArrow()?.nativeElement ?? event.currentTarget;
+        if (origin instanceof HTMLElement) {
+            this.resultsPopover()?.toggle(origin);
+        }
+    }
+
+    private getResultTemplateStatus(result: Result): ResultTemplateStatus | undefined {
+        const participation = result.submission?.participation;
+        if (!participation) {
+            return undefined;
+        }
+        return evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
+    }
+
+    getResultIcon(result: Result): IconProp {
+        const participation = result.submission?.participation;
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
+            return faQuestionCircle;
+        }
+        return getResultIconClass(result, participation, templateStatus, this.exercise());
+    }
+
+    getResultIconAnimation(result: Result): AnimationProp | undefined {
+        return this.getResultTemplateStatus(result) === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
+    }
+
+    getResultColorClass(result: Result): string {
+        const participation = result.submission?.participation;
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
+            return 'text-muted-color';
+        }
+        return getTextColorClass(result, participation, templateStatus, this.exercise());
+    }
+
+    private isUnfinishedAthenaFeedback(result: Result): boolean {
+        return isAthenaAIResult(result) && result.successful !== true;
+    }
+
+    shouldShowResultScore(result: Result): boolean {
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+    }
+
+    shouldShowResultMetadata(result: Result): boolean {
+        return !this.isUnfinishedAthenaFeedback(result);
+    }
+
+    getResultText(result: Result): string {
+        const participation = result.submission?.participation;
+        if (!participation) {
+            return '';
+        }
+        return this.resultService.getResultString(result, this.exercise(), participation, false);
+    }
+
+    getAthenaFeedbackTooltip(result: Result): string {
+        if (isAIResultAndFailed(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+        }
+        if (isAIResultAndTimedOut(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+        }
+        if (result.successful === undefined) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+        }
+        return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
+    }
+
+    getResultFeedbackMessage(result: Result): string {
+        if (isAthenaAIResult(result)) {
+            if (isAIResultAndFailed(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            }
+            if (isAIResultAndTimedOut(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            }
+            if (result.successful === undefined) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            }
+        }
+
+        const submission = result.submission;
+        if (submission && (submission as ProgrammingSubmission).buildFailed) {
+            return this.translateService.instant('artemisApp.result.progressString.buildFailed');
+        }
+
+        const currentScore = result.score ?? 0;
+        if (currentScore === 100) {
+            return this.translateService.instant('artemisApp.result.progressString.goalReached');
+        }
+
+        const sortedResults = this.sortedHistoryResults();
+        const currentResultIndex = sortedResults.indexOf(result);
+
+        if (currentResultIndex === sortedResults.length - 1) {
+            return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
+        }
+        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        if (currentScore > previousScore) {
+            return this.translateService.instant('artemisApp.result.progressString.niceProgress');
+        } else if (currentScore < previousScore) {
+            return this.translateService.instant('artemisApp.result.progressString.scoreDrop');
+        } else {
+            return this.translateService.instant('artemisApp.result.progressString.stuck');
+        }
+    }
+
+    getBadge(result: Result): Badge {
+        const participation = result.submission?.participation ?? this.studentParticipation();
+        if (!participation) {
+            return { severity: 'secondary', text: '', tooltip: '' };
+        }
+        return ResultService.evaluateBadge(participation, result);
+    }
+
+    isRowClickable(result?: Result): boolean {
+        const type = this.exercise().type;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
+    }
+
+    handleRowSpaceKeydown(result: Result, event: Event) {
+        if (!this.isRowClickable(result)) {
+            return;
+        }
+        event.preventDefault();
+        this.navigateToSubmission(result, event);
+    }
+
+    navigateToSubmission(result: Result, event: Event) {
+        event.stopPropagation();
+        const participation = result.submission?.participation;
+        if (!participation) {
+            return;
+        }
+        this.selectedResultId.set(result.id);
+        this.viewingSubmissionChange.emit(true);
+        this.displayedResultChange.emit(result);
+        this.resultsPopover()?.close();
+        const exercise = this.exercise();
+        const courseId = getCourseFromExercise(exercise)?.id;
+
+        if (exercise.type === ExerciseType.QUIZ) {
+            if (isPracticeMode(participation)) {
+                const submissionId = result.submission?.id;
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
+            } else {
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
+            }
+            return;
+        }
+
+        const submissionId = result.submission?.id;
+        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+        void this.router.navigate([
+            '/courses',
+            courseId,
+            'exercises',
+            exerciseTypePath,
+            exercise.id,
+            'participate',
+            participation.id,
+            'submission',
+            submissionId,
+            'result',
+            result.id,
+        ]);
+    }
+
+    showFeedback(result: Result, event: Event) {
+        event.stopPropagation();
+        const participation = result.submission?.participation;
+        if (!participation) {
+            return;
+        }
+        const exercise = this.exercise();
+        const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
+        const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
+        const feedbackParams = prepareFeedbackComponentParameters(exercise, result, participation, templateStatus, undefined, exerciseServiceToUse);
+
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedback'),
+            size: 'large',
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+            // Don't auto-focus the first focusable element on show: in a long feedback list it is often
+            // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
+            autoFocus: 'dialog',
+            inputValues: {
+                exercise,
+                result,
+                participation,
+                showScoreChart: feedbackParams.showScoreChart,
+                messageKey: feedbackParams.messageKey,
+                latestDueDate: feedbackParams.latestDueDate,
+                showMissingAutomaticFeedbackInformation: feedbackParams.showMissingAutomaticFeedbackInformation,
+            },
+        });
+    }
+}

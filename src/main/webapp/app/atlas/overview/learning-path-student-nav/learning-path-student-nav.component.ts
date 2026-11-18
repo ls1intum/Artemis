@@ -1,0 +1,75 @@
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCheckCircle, faChevronDown, faChevronLeft, faChevronRight, faFlag, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
+
+@Component({
+    selector: 'jhi-learning-path-student-nav',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        FontAwesomeModule,
+        LearningPathNavOverviewComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
+    templateUrl: './learning-path-student-nav.component.html',
+})
+export class LearningPathNavComponent {
+    private learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
+
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faFlag = faFlag;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faChevronLeft = faChevronLeft;
+    protected readonly faChevronRight = faChevronRight;
+
+    readonly learningPathId = input.required<number>();
+
+    readonly isLoading = this.learningPathNavigationService.isLoading;
+    readonly isLoadingPredecessor = signal<boolean>(false);
+    readonly isLoadingSuccessor = signal<boolean>(false);
+
+    private readonly learningPathNavigation = this.learningPathNavigationService.learningPathNavigation;
+    readonly learningPathProgress = computed(() => this.learningPathNavigation()?.progress ?? 0);
+    readonly predecessorLearningObject = computed(() => this.learningPathNavigation()?.predecessorLearningObject);
+    readonly currentLearningObject = computed(() => this.learningPathNavigation()?.currentLearningObject);
+    readonly successorLearningObject = computed(() => this.learningPathNavigation()?.successorLearningObject);
+
+    readonly isDropdownOpen = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            void untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
+        });
+    }
+
+    async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
+        this.scienceService.logEvent(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV, this.learningPathId());
+
+        const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
+        loadingSpinner.set(true);
+        await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
+        loadingSpinner.set(false);
+    }
+
+    completeLearningPath(): void {
+        this.learningPathNavigationService.completeLearningPath();
+    }
+
+    setIsDropdownOpen(isOpen: boolean): void {
+        this.isDropdownOpen.set(isOpen);
+    }
+}

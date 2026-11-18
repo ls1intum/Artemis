@@ -1,0 +1,32 @@
+import { IrisActivityItem } from 'app/iris/shared/entities/iris-activity.model';
+
+/**
+ * Mirrors the server-side IrisMessageContentResponseDTO record.
+ * Represents a single content block within a message as received over the wire.
+ */
+export interface IrisMessageContentResponseDTO {
+    id?: number;
+    type: string;
+    textContent?: string;
+    /**
+     * JSON content payload. The server annotates this field with @JsonRawValue, so it is written to the
+     * wire as an inline JSON object rather than as a string, matching IrisJsonMessageContent.attributes.
+     */
+    attributes?: Record<string, unknown>;
+}
+
+/**
+ * Mirrors the server-side IrisMessageResponseDTO record.
+ * This is the wire format for messages returned by REST endpoints and WebSocket payloads.
+ * Use this type at the HTTP/WebSocket boundary; map to IrisMessage domain types for internal use.
+ */
+export interface IrisMessageResponseDTO {
+    id?: number;
+    sentAt?: string;
+    helpful?: boolean;
+    sender: string;
+    content: IrisMessageContentResponseDTO[];
+    activities?: IrisActivityItem[];
+    messageDifferentiator?: number;
+    final?: boolean;
+}

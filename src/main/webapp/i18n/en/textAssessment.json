@@ -1,0 +1,50 @@
+{
+    "artemisApp": {
+        "textAssessment": {
+            "title": "Assessment Editor for Text Exercises",
+            "loading": "Please wait while Artemis finds the submission!",
+            "heading": {
+                "assessment": "Assessment Editor for Text Exercise {{exerciseTitle}}",
+                "exampleAssessment": "Example Assessment Editor for Text Exercise {{exerciseTitle}}"
+            },
+            "assessor": "Reviewer",
+            "save": "Save Assessment",
+            "saveSuccessful": "Your assessment was saved successfully!",
+            "submit": "Submit Assessment",
+            "submitSuccessful": "Your assessment was submitted successfully!",
+            "override": "Override Assessment",
+            "resultDismissed": "Your assessment was rejected because another tutor has already graded this submission.",
+            "exampleSubmissionInstruction": "Create an example submission",
+            "error": {
+                "invalidAssessments": "Your assessments are not valid!",
+                "invalidScoreMustBeNumber": "The points field must be a number and can not be empty!",
+                "invalidNeedScoreOrFeedback": "Each Feedback item must have at least points or feedback text.",
+                "feedbackReferenceTooLong": "Please select a text block shorter than 2000 characters."
+            },
+            "assessInstruction": "Please highlight the text block you want to assess and click the \"Assess\" button.",
+            "predefineTextBlocks": "Add Text Blocks automatically",
+            "lock": "You now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions.",
+            "submissionLocked": "submission locked",
+            "studentSubmission": "Student submission",
+            "instructions": "&nbsp; Instructions &nbsp;",
+            "editor": {
+                "assess": "Assess"
+            },
+            "dashboard": {
+                "heading": "Submissions and assessments of text exercise \"{{exerciseTitle}}\""
+            },
+            "notFound": "We couldn't find any unassessed text submissions. Please return to the dashboard.",
+            "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
+            "updateAfterComplaintFailed": "Updating the assessment failed.",
+            "cancel": "Cancel assessment",
+            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted, and the submission will be available for assessment to other tutors again.",
+            "feedbackEditor": {
+                "dismissFeedback": "Do you want to delete this feedback?",
+                "dismissFeedbackConfirmation": "Please confirm that you want to delete this feedback!",
+                "connectToInstruction": "Connect feedback to a grading instruction",
+                "noTitle": "(No title)"
+            },
+            "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>To assess custom text blocks, hold <code>alt</code>/<code>option</code> while clicking in any order on the first and last word of a text segment."
+        }
+    }
+}

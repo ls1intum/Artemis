@@ -1,0 +1,9 @@
+import { EMPTY, of } from 'rxjs';
+import { ICodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+
+export class MockCodeEditorRepositoryService implements ICodeEditorRepositoryService {
+    getStatus = () => of({ repositoryStatus: 'CLEAN' });
+    commit = () => EMPTY;
+    pull = () => EMPTY;
+    resetRepository = () => EMPTY;
+}

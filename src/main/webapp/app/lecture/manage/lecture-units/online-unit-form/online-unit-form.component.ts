@@ -1,0 +1,189 @@
+import { LectureUnitReleaseDateFormDirective } from '../lecture-unit-release-date-form.directive';
+import dayjs from 'dayjs/esm';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { map } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+export interface OnlineUnitFormData {
+    name?: string;
+    description?: string;
+    releaseDate?: dayjs.Dayjs;
+    source?: string;
+    competencyLinks?: CompetencyLectureUnitLink[];
+}
+
+function urlValidator(control: AbstractControl) {
+    let validUrl = true;
+
+    try {
+        new URL(control.value);
+    } catch {
+        validUrl = false;
+    }
+
+    return validUrl ? null : { invalidUrl: true };
+}
+
+@Component({
+    selector: 'jhi-online-unit-form',
+    templateUrl: './online-unit-form.component.html',
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        CompetencySelectionComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
+})
+export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective {
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly onlineUnitService = inject(OnlineUnitService);
+
+    protected readonly faTimes = faTimes;
+
+    formData = input<OnlineUnitFormData>();
+    isEditMode = input<boolean>(false);
+    /** The course of the lecture the unit belongs to, needed by the server to authorize fetching the metadata of the link. */
+    readonly courseId = input.required<number>();
+
+    formSubmitted = output<OnlineUnitFormData>();
+
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
+
+    /** Reports every change instead of offering Submit, for an item that is edited in place and saved automatically. */
+    readonly autosave = input<boolean>(false);
+    readonly formChanged = output<UnitFormChange<OnlineUnitFormData>>();
+    /** Set while the form takes over the data of the item, which is not a change of the user. */
+    private applyingFormData = false;
+
+    /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
+
+    urlValidator = urlValidator;
+
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined, [Validators.required, Validators.maxLength(255)]],
+        description: [undefined, [Validators.maxLength(1000)]],
+        releaseDate: [undefined],
+        source: [undefined, [Validators.required, this.urlValidator]],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+    });
+
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isReleaseDateTextValid());
+
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: OnlineUnitFormData;
+
+    constructor() {
+        super();
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
+        // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
+        // write reschedules the reactive flush, which re-runs this effect, which patches again — an
+        // infinite change-detection loop that leaves the edit form stuck behind the loading spinner.
+        // Guarding on the formData reference breaks the cycle and avoids clobbering in-progress edits.
+        effect(() => {
+            const data = this.formData();
+            if (this.isEditMode() && data && data !== this.appliedFormData) {
+                this.appliedFormData = data;
+                this.setFormValues(data);
+            }
+        });
+
+        for (const typedField of ['name', 'description', 'source']) {
+            this.form
+                .get(typedField)!
+                .valueChanges.pipe(takeUntilDestroyed())
+                .subscribe(() => this.reportChange(false));
+        }
+        this.form
+            .get('competencyLinks')!
+            .valueChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => this.reportChange(true));
+    }
+
+    get nameControl() {
+        return this.form.get('name');
+    }
+
+    get descriptionControl() {
+        return this.form.get('description');
+    }
+
+    protected override reportChange(immediate: boolean): void {
+        if (!this.autosave() || this.applyingFormData) {
+            return;
+        }
+        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
+        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
+        this.formChanged.emit({ data: deepClone(this.form.getRawValue()), immediate, valid });
+    }
+
+    get sourceControl() {
+        return this.form.get('source');
+    }
+
+    private setFormValues(formData: OnlineUnitFormData) {
+        this.applyingFormData = true;
+        this.form.patchValue(formData);
+        this.applyingFormData = false;
+    }
+
+    /**
+     * When the link is changed, fetch the website's metadata and update the form
+     */
+    onLinkChanged(): void {
+        const value = this.sourceControl?.value;
+
+        // If the link does not start with any HTTP protocol then add it
+        const regex = /https?:\/\//;
+        if (value && !value.match(regex)) {
+            this.sourceControl?.setValue('https://' + value);
+        }
+
+        if (this.sourceControl?.valid) {
+            this.onlineUnitService
+                .getOnlineResource(this.sourceControl.value, this.courseId())
+                .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
+                .subscribe({
+                    next: (onlineResource) => {
+                        // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
+                        const keepCurrent = this.autosave();
+                        const updateForm = {
+                            name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
+                            description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
+                        };
+                        this.form.patchValue(updateForm);
+                    },
+                });
+        }
+    }
+
+    submitForm() {
+        const onlineUnitFormData: OnlineUnitFormData = deepClone(this.form.value);
+        this.formSubmitted.emit(onlineUnitFormData);
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
+    }
+}

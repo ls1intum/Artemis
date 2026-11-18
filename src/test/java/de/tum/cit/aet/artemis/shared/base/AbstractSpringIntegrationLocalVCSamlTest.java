@@ -1,0 +1,224 @@
+package de.tum.cit.aet.artemis.shared.base;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.nio.file.Path;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+
+@Tag("BucketSmall")
+@ResourceLock("BucketSmall")
+// NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SCHEDULING })
+@TestPropertySource(locations = "classpath:config/application-saml2.yml", factory = YamlPropertySourceFactory.class, properties = { SAML2_ENABLED_PROPERTY_NAME + "=true",
+        ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false", PASSKEY_ENABLED_PROPERTY_NAME + "=true",
+        "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true",
+        "artemis.user-management.oidc.enabled=true",
+        // A bulk trigger waits while the build queue is full, which tests that leave jobs in a paused queue would wait on for hours.
+        // This has to be set here: application-localci.yml is a profile file and wins over the default test application.yml.
+        "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot=0",
+        // OIDC test properties for sharing the Spring Context
+        "spring.security.oauth2.client.registration.oidc.client-id=mock-client-id", "spring.security.oauth2.client.registration.oidc.client-secret=mock-secret",
+        "spring.security.oauth2.client.provider.oidc.issuer-uri=http://mock-issuer", "spring.security.oauth2.client.provider.oidc.authorization-uri=http://mock-auth",
+        "spring.security.oauth2.client.provider.oidc.token-uri=http://mock-token", "spring.security.oauth2.client.provider.oidc.user-info-uri=http://mock-user",
+        "spring.security.oauth2.client.provider.oidc.jwk-set-uri=http://mock-jwk" })
+public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractArtemisIntegrationTest {
+
+    private static int sshPort;
+
+    @BeforeAll
+    static void initPorts() {
+        sshPort = findAvailableTcpPort();
+    }
+
+    @DynamicPropertySource
+    static void registerDynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("artemis.version-control.ssh-port", () -> sshPort);
+        registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+    }
+
+    private static int findAvailableTcpPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port", e);
+        }
+    }
+
+    @Autowired
+    protected PasswordService passwordService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected Path localVCBasePath;
+
+    // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
+    @MockitoBean
+    protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
+
+    @AfterEach
+    void reset() {
+        Mockito.reset(relyingPartyRegistrationRepository, mailService);
+        super.resetSpyBeans();
+    }
+
+    @Override
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
+        // saml2-specific mocks
+        doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
+    }
+
+    @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
+        mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
+    }
+
+    @Override
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void resetMockProvider() {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
+        // Not needed for this test
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        // Not needed for this test
+    }
+}

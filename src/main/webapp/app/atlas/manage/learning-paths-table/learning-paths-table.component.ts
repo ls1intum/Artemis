@@ -1,0 +1,113 @@
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { onError } from 'app/foundation/util/global.utils';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
+import { TumAetUiDialogService, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+enum TableColumn {
+    ID = 'ID',
+    USER_NAME = 'USER_NAME',
+    USER_LOGIN = 'USER_LOGIN',
+    PROGRESS = 'PROGRESS',
+}
+
+@Component({
+    selector: 'jhi-learning-paths-table',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiInputDirective,
+        SearchHighlightComponent,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
+    templateUrl: './learning-paths-table.component.html',
+})
+export class LearningPathsTableComponent {
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+
+    readonly courseId = input.required<number>();
+
+    readonly isLoading = signal<boolean>(false);
+    private readonly searchResults = signal<SearchResult<LearningPathInformationDTO> | undefined>(undefined);
+    readonly learningPaths = computed(() => this.searchResults()?.resultsOnPage ?? []);
+
+    readonly searchTerm = signal<string>('');
+    readonly page = signal<number>(1);
+    private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
+    private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
+    readonly pageSize = signal<number>(100).asReadonly();
+    readonly collectionSize = computed(() => (this.searchResults()?.numberOfPages ?? 1) * this.pageSize());
+
+    private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
+
+    readonly averageProgress = signal<number | undefined>(undefined);
+    readonly formattedAverageProgress = computed(() => {
+        const progress = this.averageProgress();
+        return progress !== undefined ? progress.toFixed(2) : undefined;
+    });
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            // Both loaders report their own failures through the alert service.
+            void Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
+        });
+    }
+
+    private async loadLearningPaths(courseId: number): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const searchState = {
+                page: this.page(),
+                pageSize: this.pageSize(),
+                searchTerm: this.searchTerm(),
+                sortingOrder: this.sortingOrder(),
+                sortedColumn: this.sortedColumn(),
+            } satisfies SearchTermPageableSearch;
+            const searchResults = await this.learningPathApiService.getLearningPathInformation(courseId, searchState);
+            this.searchResults.set(searchResults);
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    private async loadAverageProgress(courseId: number): Promise<void> {
+        try {
+            const dto: LearningPathAverageProgressDTO = await this.learningPathApiService.getAverageProgressForCourse(courseId);
+            this.averageProgress.set(dto.averageProgress);
+        } catch (error) {
+            onError(this.alertService, error);
+            this.averageProgress.set(undefined);
+        }
+    }
+
+    search(searchTerm: string): void {
+        this.searchTerm.set(searchTerm);
+        this.page.set(1);
+        this.debounceLoadLearningPaths(this.courseId());
+    }
+
+    async setPage(pageNumber: number): Promise<void> {
+        this.page.set(pageNumber);
+        await this.loadLearningPaths(this.courseId());
+    }
+
+    openCompetencyGraph(learningPathId: number, name: string | undefined): void {
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.dialogService, learningPathId, name);
+    }
+}

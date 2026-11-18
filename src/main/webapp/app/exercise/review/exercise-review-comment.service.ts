@@ -1,0 +1,872 @@
+import { OnDestroy, Service, Signal, computed, inject, signal } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable, Subscription, map } from 'rxjs';
+import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+
+type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
+type CommentThreadResponseType = HttpResponse<CommentThread>;
+type CommentResponseType = HttpResponse<Comment>;
+type ReviewCommentSuccessCallback = () => void;
+
+/** What the editor that owns the Hyperion run state tells the review threads about AI adaptation. */
+export interface ReviewAdaptationAvailability {
+    /** Whether this deployment offers whole-exercise adaptation for the open exercise. */
+    offered: Signal<boolean>;
+    /** Whether feedback selection is available, including legacy code generation. */
+    feedbackOffered?: Signal<boolean>;
+    /** Translation key for why adaptation cannot start right now; `undefined` when it can. */
+    blockedReason: Signal<string | undefined>;
+}
+
+@Service()
+export class ExerciseReviewCommentService implements OnDestroy {
+    private http = inject(HttpClient);
+    private alertService = inject(AlertService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+
+    public readonly resourceUrl = 'api/exercise/exercises';
+    private activeExerciseId?: number;
+    private synchronizationSubscription?: Subscription;
+    private subscribedExerciseId?: number;
+    private isReloading = false;
+    private pendingSyncUpdates: ReviewThreadSyncUpdate[] = [];
+    private reloadSequence = 0;
+
+    /**
+     * Source of truth for currently loaded review comment threads.
+     * This intentionally tracks only persisted comments/threads, not draft input state.
+     */
+    readonly threads = signal<CommentThread[]>([]);
+
+    /**
+     * Local-only selection of review threads that should be forwarded to Hyperion exercise adaptation as feedback.
+     * This state is scoped to the active exercise/editor session and is never persisted independently.
+     */
+    readonly selectedFeedbackThreadIds = signal<number[]>([]);
+
+    private readonly adaptation = signal<ReviewAdaptationAvailability | undefined>(undefined);
+    /** Whether this editor offers whole-exercise adaptation. */
+    readonly adaptationOffered = computed(() => this.adaptation()?.offered() ?? false);
+    readonly feedbackSelectionOffered = computed(() => this.adaptation()?.feedbackOffered?.() ?? this.adaptationOffered());
+    /** Why the feedback selection is disabled right now, or `undefined` when it is available. */
+    readonly adaptationBlockedReason = computed(() => this.adaptation()?.blockedReason());
+
+    /**
+     * Lets the editor container that knows the Hyperion feature and run state drive what the thread widgets offer. The
+     * widgets are created deep inside generic editors, so this shared service is how the state reaches them without
+     * threading Hyperion inputs through every component in between.
+     */
+    connectAdaptation(availability: ReviewAdaptationAvailability): void {
+        this.adaptation.set(availability);
+    }
+
+    /**
+     * Sets the active exercise context and clears thread state when it changes.
+     *
+     * @param exerciseId The currently active exercise id.
+     * @returns True if the context changed.
+     */
+    setExercise(exerciseId: number | undefined): boolean {
+        if (this.activeExerciseId === exerciseId) {
+            return false;
+        }
+        this.reloadSequence++;
+        this.isReloading = false;
+        this.pendingSyncUpdates = [];
+        this.activeExerciseId = exerciseId;
+        this.threads.set([]);
+        this.selectedFeedbackThreadIds.set([]);
+        this.synchronizationSubscription?.unsubscribe();
+        this.synchronizationSubscription = undefined;
+        this.subscribedExerciseId = undefined;
+        if (exerciseId) {
+            this.ensureSynchronizationSubscription(exerciseId);
+        }
+        return true;
+    }
+
+    /**
+     * Reloads threads for the active exercise context.
+     *
+     * @param onLoaded Optional callback invoked after threads were successfully reloaded.
+     */
+    reloadThreads(onLoaded?: () => void): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            this.setThreads([]);
+            return;
+        }
+        const reloadId = ++this.reloadSequence;
+        this.isReloading = true;
+        this.pendingSyncUpdates = [];
+        this.loadThreads(exerciseId).subscribe({
+            next: (threads) => {
+                if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
+                    return;
+                }
+                this.setThreads(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
+                this.pendingSyncUpdates = [];
+                this.isReloading = false;
+                this.ensureSynchronizationSubscription(exerciseId);
+                onLoaded?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
+                    return;
+                }
+                this.threads.set(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
+                this.pendingSyncUpdates = [];
+                this.isReloading = false;
+                this.alertService.error('artemisApp.review.loadFailed');
+                this.ensureSynchronizationSubscription(exerciseId);
+            },
+        });
+    }
+
+    /**
+     * The currently selected feedback threads, resolved against the loaded threads in selection order. Threads that are no longer loaded are dropped. Derived from
+     * {@link selectedFeedbackThreadIds} — the single source of truth — so callers (e.g. the adapt dialog) never rebuild the selection state.
+     */
+    readonly selectedFeedbackThreads = computed<CommentThread[]>(() => {
+        const threadsById = new Map(this.threads().map((thread) => [thread.id, thread]));
+        return this.selectedFeedbackThreadIds()
+            .map((threadId) => threadsById.get(threadId))
+            .filter((thread): thread is CommentThread => thread !== undefined);
+    });
+
+    /**
+     * Toggles whether a thread should be included as feedback in the next Hyperion exercise adaptation request.
+     *
+     * @param threadId The thread id to toggle.
+     */
+    toggleThreadFeedbackSelection(threadId: number): void {
+        this.selectedFeedbackThreadIds.update((threadIds) => {
+            if (threadIds.includes(threadId)) {
+                return threadIds.filter((existingThreadId) => existingThreadId !== threadId);
+            }
+            return [...threadIds, threadId];
+        });
+    }
+
+    /**
+     * Clears the local feedback selection after it has been consumed by an adaptation run.
+     */
+    clearSelectedFeedback(): void {
+        this.selectedFeedbackThreadIds.set([]);
+    }
+
+    /**
+     * Checks whether a thread is currently selected for Hyperion exercise adaptation.
+     *
+     * @param threadId The thread id to inspect.
+     * @returns True if the thread is part of the local feedback selection.
+     */
+    isThreadSelectedAsFeedback(threadId: number): boolean {
+        return this.selectedFeedbackThreadIds().includes(threadId);
+    }
+
+    /**
+     * Returns currently selected feedback thread ids that still belong to the active repository context.
+     *
+     * @param repositoryType The repository currently selected in the code editor.
+     * @param auxiliaryRepositoryId The selected auxiliary repository id, if applicable.
+     * @returns The filtered thread ids in user selection order.
+     */
+    getSelectedFeedbackThreadIdsForRepository(repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): number[] {
+        const matchingThreadIds = new Set(
+            this.threads()
+                .filter((thread) => !thread.resolved && !thread.outdated && matchesSelectedRepository(thread, repositoryType, auxiliaryRepositoryId))
+                .map((thread) => thread.id),
+        );
+        return this.selectedFeedbackThreadIds().filter((threadId) => matchingThreadIds.has(threadId));
+    }
+
+    /**
+     * Creates a thread in the active exercise and reconciles local thread state.
+     *
+     * @param thread The thread payload.
+     * @param onSuccess Callback invoked only after the server has persisted it.
+     */
+    createThreadInContext(thread: CreateCommentThread, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.createThread(exerciseId, thread).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const createdThread = response.body;
+                if (!createdThread?.id) {
+                    return;
+                }
+                const normalizedThread: CommentThread = createdThread.comments ? createdThread : cloneWith(createdThread, { comments: [] });
+                this.updateThreads((threads) => this.appendThreadToThreads(threads, normalizedThread));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
+     * Deletes a comment in the active exercise and reconciles local thread state.
+     *
+     * @param commentId The comment id to delete.
+     */
+    deleteCommentInContext(commentId: number): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.deleteComment(exerciseId, commentId).subscribe({
+            next: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.updateThreads((threads) => this.removeCommentFromThreads(threads, commentId));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.deleteFailed');
+            },
+        });
+    }
+
+    /**
+     * Creates a reply in the active exercise and reconciles local thread state.
+     *
+     * @param threadId The target thread id.
+     * @param comment The reply payload.
+     * @param onSuccess Callback invoked only after the server has persisted it.
+     */
+    createReplyInContext(threadId: number, comment: CreateComment, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.createUserComment(exerciseId, threadId, comment).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const createdComment = response.body;
+                if (!createdComment) {
+                    return;
+                }
+                this.updateThreads((threads) => this.appendCommentToThreads(threads, createdComment));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
+     * Updates a comment in the active exercise and reconciles local thread state.
+     *
+     * @param commentId The comment id to update.
+     * @param content The updated content payload.
+     * @param onSuccess Callback invoked only after the server has persisted it.
+     */
+    updateCommentInContext(commentId: number, content: UpdateCommentContent, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateUserCommentContent(exerciseId, commentId, content).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedComment = response.body;
+                if (!updatedComment) {
+                    return;
+                }
+                this.updateThreads((threads) => this.updateCommentInThreads(threads, updatedComment));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
+     *
+     * @param commentId The consistency comment id.
+     * @param onSuccess Callback invoked only after the server has persisted it.
+     */
+    markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.markConsistencyInlineFixApplied(exerciseId, commentId).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedComment = response.body;
+                if (!updatedComment) {
+                    return;
+                }
+                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
+     * Toggles thread resolved state in the active exercise and reconciles local thread state.
+     *
+     * @param threadId The thread id.
+     * @param resolved The desired resolved state.
+     */
+    toggleResolvedInContext(threadId: number, resolved: boolean): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateThreadResolvedState(exerciseId, threadId, resolved).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedThread = response.body;
+                if (!updatedThread?.id) {
+                    return;
+                }
+                this.updateThreads((threads) => this.replaceThreadInThreads(threads, updatedThread));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.resolveFailed');
+            },
+        });
+    }
+
+    /**
+     * Toggles resolved state for all threads in a group in the active exercise and reconciles local thread state.
+     *
+     * @param groupId The thread-group id.
+     * @param resolved The desired resolved state for all group threads.
+     */
+    toggleGroupResolvedInContext(groupId: number, resolved: boolean): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateThreadGroupResolvedState(exerciseId, groupId, resolved).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedThreads = response.body ?? [];
+                if (!updatedThreads.length) {
+                    return;
+                }
+                this.threads.update((threads) => this.replaceThreadsInThreads(threads, updatedThreads));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.resolveFailed');
+            },
+        });
+    }
+
+    /**
+     * Creates a new review comment thread.
+     *
+     * @param exerciseId The exercise that owns the thread.
+     * @param thread The thread payload to create.
+     * @returns The HTTP response observable containing the created thread.
+     */
+    createThread(exerciseId: number, thread: CreateCommentThread): Observable<CommentThreadResponseType> {
+        return this.http.post<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads`, thread, { observe: 'response' });
+    }
+
+    /**
+     * Loads all review comment threads for an exercise and unwraps the response body.
+     *
+     * @param exerciseId The exercise to fetch threads for.
+     * @returns The thread list from the response body.
+     */
+    loadThreads(exerciseId: number): Observable<CommentThread[]> {
+        return this.getThreads(exerciseId).pipe(map((response) => response.body ?? []));
+    }
+
+    /**
+     * Loads all review comment threads for an exercise.
+     *
+     * @param exerciseId The exercise to fetch threads for.
+     * @returns The HTTP response observable containing the threads.
+     */
+    getThreads(exerciseId: number): Observable<CommentThreadArrayResponseType> {
+        return this.http.get<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-threads`, { observe: 'response' });
+    }
+
+    /**
+     * Creates a user comment within a thread.
+     *
+     * @param exerciseId The exercise that owns the thread.
+     * @param threadId The thread to add the comment to.
+     * @param comment The comment payload to create.
+     * @returns The HTTP response observable containing the created comment.
+     */
+    createUserComment(exerciseId: number, threadId: number, comment: CreateComment): Observable<CommentResponseType> {
+        return this.http.post<Comment>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/comments`, comment, { observe: 'response' });
+    }
+
+    /**
+     * Updates the resolved state of a thread.
+     *
+     * @param exerciseId The exercise that owns the thread.
+     * @param threadId The thread to update.
+     * @param resolved The new resolved state.
+     * @returns The HTTP response observable containing the updated thread.
+     */
+    updateThreadResolvedState(exerciseId: number, threadId: number, resolved: boolean): Observable<CommentThreadResponseType> {
+        const body: UpdateThreadResolvedState = { resolved };
+        return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
+    }
+
+    /**
+     * Updates the resolved state of all threads in a group.
+     *
+     * @param exerciseId The exercise that owns the group.
+     * @param groupId The group to update.
+     * @param resolved The new resolved state.
+     * @returns The HTTP response observable containing the updated threads.
+     */
+    updateThreadGroupResolvedState(exerciseId: number, groupId: number, resolved: boolean): Observable<CommentThreadArrayResponseType> {
+        const body: UpdateThreadResolvedState = { resolved };
+        return this.http.put<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-thread-groups/${groupId}/resolved`, body, { observe: 'response' });
+    }
+
+    /**
+     * Updates the content of a user comment.
+     *
+     * @param exerciseId The exercise that owns the comment.
+     * @param commentId The comment to update.
+     * @param content The new comment content.
+     * @returns The HTTP response observable containing the updated comment.
+     */
+    updateUserCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
+        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, content, { observe: 'response' });
+    }
+
+    /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment.
+     *
+     * @param exerciseId The exercise that owns the comment.
+     * @param commentId The consistency comment id.
+     * @returns The HTTP response observable containing the updated comment.
+     */
+    markConsistencyInlineFixApplied(exerciseId: number, commentId: number): Observable<CommentResponseType> {
+        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}/inline-fix/applied`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Deletes a review comment by id.
+     *
+     * @param exerciseId The exercise that owns the comment.
+     * @param commentId The id of the comment to delete.
+     * @returns The HTTP response observable.
+     */
+    deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
+    }
+
+    private setThreads(threads: CommentThread[]): void {
+        this.threads.set(threads);
+        this.reconcileSelectedFeedbackThreadIds(threads);
+    }
+
+    private updateThreads(updater: (threads: CommentThread[]) => CommentThread[]): void {
+        this.setThreads(updater(this.threads()));
+    }
+
+    private reconcileSelectedFeedbackThreadIds(threads: CommentThread[]): void {
+        const validThreadIds = new Set(threads.filter((thread) => !thread.resolved && !thread.outdated).map((thread) => thread.id));
+        this.selectedFeedbackThreadIds.update((threadIds) => threadIds.filter((threadId) => validThreadIds.has(threadId)));
+    }
+
+    /**
+     * Removes a comment from all threads and drops threads that become empty.
+     *
+     * @param threads The current list of threads.
+     * @param commentId The id of the comment to remove.
+     * @returns The updated thread list.
+     */
+    removeCommentFromThreads(threads: CommentThread[], commentId: number): CommentThread[] {
+        return threads
+            .map((thread) => {
+                if (!thread.comments) {
+                    return thread;
+                }
+                const remainingComments = thread.comments.filter((comment) => comment.id !== commentId);
+                if (remainingComments.length === thread.comments.length) {
+                    return thread;
+                }
+                return cloneWith(thread, { comments: remainingComments });
+            })
+            .filter((thread) => !thread.comments || thread.comments.length > 0);
+    }
+
+    /**
+     * Appends a newly created comment to the matching thread.
+     *
+     * @param threads The current list of threads.
+     * @param createdComment The new comment returned by the server.
+     * @returns The updated thread list.
+     */
+    appendCommentToThreads(threads: CommentThread[], createdComment: Comment): CommentThread[] {
+        if (createdComment.threadId === undefined) {
+            return threads;
+        }
+        return threads.map((thread) => {
+            if (thread.id !== createdComment.threadId) {
+                return thread;
+            }
+            const comments = thread.comments ?? [];
+            if (createdComment.id !== undefined && comments.some((comment) => comment.id === createdComment.id)) {
+                return thread;
+            }
+            return cloneWith(thread, { comments: [...comments, createdComment] });
+        });
+    }
+
+    /**
+     * Replaces a comment in its thread with the updated server version.
+     *
+     * @param threads The current list of threads.
+     * @param updatedComment The updated comment returned by the server.
+     * @returns The updated thread list.
+     */
+    updateCommentInThreads(threads: CommentThread[], updatedComment: Comment): CommentThread[] {
+        if (updatedComment.id === undefined || updatedComment.threadId === undefined) {
+            return threads;
+        }
+        return threads.map((thread) => {
+            if (thread.id !== updatedComment.threadId || !thread.comments) {
+                return thread;
+            }
+            return cloneWith(thread, {
+                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? cloneWith(comment, deepClone(updatedComment)) : comment)),
+            });
+        });
+    }
+
+    /**
+     * Replaces a single thread in the list with the updated server version.
+     *
+     * @param threads The current list of threads.
+     * @param updatedThread The updated thread returned by the server.
+     * @returns The updated thread list.
+     */
+    replaceThreadInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
+        if (!updatedThread.id) {
+            return threads;
+        }
+        return threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread));
+    }
+
+    /**
+     * Replaces multiple threads in the list with updated server versions.
+     *
+     * @param threads The current list of threads.
+     * @param updatedThreads Updated threads returned by the server.
+     * @returns The updated thread list.
+     */
+    replaceThreadsInThreads(threads: CommentThread[], updatedThreads: CommentThread[]): CommentThread[] {
+        if (!updatedThreads.length) {
+            return threads;
+        }
+        const updatedById = new Map(updatedThreads.filter((thread) => thread.id !== undefined).map((thread) => [thread.id, thread]));
+        return threads.map((thread) => updatedById.get(thread.id) ?? thread);
+    }
+
+    /**
+     * Appends a newly created thread to the list.
+     *
+     * @param threads The current list of threads.
+     * @param newThread The newly created thread.
+     * @returns The updated thread list.
+     */
+    appendThreadToThreads(threads: CommentThread[], newThread: CommentThread): CommentThread[] {
+        if (!newThread.id) {
+            return threads;
+        }
+        if (threads.some((thread) => thread.id === newThread.id)) {
+            return threads;
+        }
+        return [...threads, newThread];
+    }
+
+    /**
+     * Merges a thread update into the current list while preserving any comments that might have been
+     * received through dedicated comment events but are not present on the incoming thread payload.
+     *
+     * @param threads The current thread list.
+     * @param updatedThread The updated thread from synchronization events.
+     * @returns The merged thread list.
+     */
+    private mergeThreadUpdateInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
+        if (!updatedThread.id) {
+            return threads;
+        }
+        const existingThread = threads.find((thread) => thread.id === updatedThread.id);
+        if (!existingThread) {
+            return [...threads, updatedThread];
+        }
+        const existingComments = existingThread.comments ?? [];
+        const incomingComments = updatedThread.comments ?? [];
+        const mergedComments = this.mergeThreadComments(existingComments, incomingComments);
+        return threads.map((thread) => {
+            if (thread.id !== updatedThread.id) {
+                return thread;
+            }
+            // hydrate mutates its target and deep-clones each source, so `deepClone(thread)` is the detached base and
+            // `thread` itself is copied exactly once.
+            return hydrate(deepClone(thread), updatedThread, { comments: mergedComments });
+        });
+    }
+
+    /**
+     * Merges comments by id and prefers the most recently modified representation for duplicates.
+     *
+     * @param existingComments Comments already present locally.
+     * @param incomingComments Comments provided by the incoming thread update.
+     * @returns A merged comment list.
+     */
+    private mergeThreadComments(existingComments: Comment[], incomingComments: Comment[]): Comment[] {
+        const commentsById = new Map<number, Comment>();
+        for (const comment of existingComments) {
+            if (comment?.id !== undefined) {
+                commentsById.set(comment.id, comment);
+            }
+        }
+        for (const comment of incomingComments) {
+            if (comment?.id === undefined) {
+                continue;
+            }
+            const existing = commentsById.get(comment.id);
+            commentsById.set(comment.id, existing ? this.pickMostRecentComment(existing, comment) : comment);
+        }
+        return Array.from(commentsById.values());
+    }
+
+    /**
+     * Chooses the newer comment representation by comparing modification timestamps.
+     *
+     * @param existingComment The currently stored comment.
+     * @param incomingComment The incoming comment payload.
+     * @returns The comment considered most recent.
+     */
+    private pickMostRecentComment(existingComment: Comment, incomingComment: Comment): Comment {
+        const existingTimestamp = this.toTimestamp(existingComment.lastModifiedDate ?? existingComment.createdDate);
+        const incomingTimestamp = this.toTimestamp(incomingComment.lastModifiedDate ?? incomingComment.createdDate);
+        if (existingTimestamp !== undefined && incomingTimestamp !== undefined) {
+            return incomingTimestamp >= existingTimestamp ? incomingComment : existingComment;
+        }
+        if (incomingTimestamp !== undefined) {
+            return incomingComment;
+        }
+        if (existingTimestamp !== undefined) {
+            return existingComment;
+        }
+        return incomingComment;
+    }
+
+    /**
+     * Parses an ISO-like timestamp string into milliseconds since epoch.
+     *
+     * @param timestamp The timestamp string to parse.
+     * @returns Milliseconds since epoch, or undefined if parsing fails.
+     */
+    private toTimestamp(timestamp: string): number | undefined {
+        const parsed = Date.parse(timestamp);
+        return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
+    private updateGroupInThreads(threads: CommentThread[], threadIds: number[], groupId?: number): CommentThread[] {
+        if (!threadIds || threadIds.length === 0) {
+            return threads;
+        }
+        const affectedThreadIds = new Set(threadIds);
+        return threads.map((thread) => {
+            if (!affectedThreadIds.has(thread.id)) {
+                return thread;
+            }
+            return cloneWith(thread, { groupId });
+        });
+    }
+
+    /**
+     * Applies a single synchronization update for the active exercise.
+     *
+     * During a reload, updates are queued and replayed after the REST snapshot arrives to avoid
+     * race conditions between snapshot and incremental events.
+     *
+     * @param update The incoming synchronization update.
+     */
+    private applySyncUpdate(update: ReviewThreadSyncUpdate): void {
+        if (!update || !this.activeExerciseId || update.exerciseId !== this.activeExerciseId) {
+            return;
+        }
+        if (this.isReloading) {
+            this.pendingSyncUpdates.push(update);
+            return;
+        }
+        this.threads.update((threads) => {
+            return this.applySyncUpdateToThreads(threads, update);
+        });
+    }
+
+    /**
+     * Replays queued synchronization updates on top of a freshly loaded thread snapshot.
+     *
+     * @param threads The thread snapshot from REST.
+     * @param updates The queued synchronization updates in arrival order.
+     * @returns The merged thread state.
+     */
+    private applyQueuedSyncUpdates(threads: CommentThread[], updates: ReviewThreadSyncUpdate[]): CommentThread[] {
+        return updates.reduce((accumulator, update) => this.applySyncUpdateToThreads(accumulator, update), threads);
+    }
+
+    /**
+     * Filters synchronization events and forwards only review thread updates.
+     *
+     * @param event The synchronization event received from the shared topic.
+     */
+    private handleSynchronizationEvent(event: ExerciseEditorSyncEvent): void {
+        if (event.eventType !== ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE || event.target !== ExerciseEditorSyncTarget.REVIEW_COMMENTS) {
+            return;
+        }
+        const reviewUpdateEvent = event;
+        const reviewUpdate: ReviewThreadSyncUpdate = {
+            action: reviewUpdateEvent.action,
+            exerciseId: reviewUpdateEvent.exerciseId,
+            thread: reviewUpdateEvent.thread,
+            comment: reviewUpdateEvent.comment,
+            commentId: reviewUpdateEvent.commentId,
+            threadIds: reviewUpdateEvent.threadIds,
+            groupId: reviewUpdateEvent.groupId,
+        };
+        this.applySyncUpdate(reviewUpdate);
+    }
+
+    /**
+     * Applies one synchronization event to the current thread collection using idempotent reducers.
+     *
+     * Note: The initiating client can process the same logical change via HTTP and the echoed synchronization event.
+     * This is acceptable because reducers are idempotent, and the widget manager rerenders only when state changes.
+     *
+     * @param threads The current thread list.
+     * @param update The synchronization update to apply.
+     * @returns The updated thread list.
+     */
+    private applySyncUpdateToThreads(threads: CommentThread[], update: ReviewThreadSyncUpdate): CommentThread[] {
+        switch (update.action) {
+            case ReviewThreadSyncAction.THREAD_CREATED:
+                if (!update.thread) {
+                    return threads;
+                }
+                return this.appendThreadToThreads(threads, update.thread);
+            case ReviewThreadSyncAction.THREAD_UPDATED:
+                if (!update.thread) {
+                    return threads;
+                }
+                return this.mergeThreadUpdateInThreads(threads, update.thread);
+            case ReviewThreadSyncAction.COMMENT_CREATED:
+                if (!update.comment) {
+                    return threads;
+                }
+                return this.appendCommentToThreads(threads, update.comment);
+            case ReviewThreadSyncAction.COMMENT_UPDATED:
+                if (!update.comment) {
+                    return threads;
+                }
+                return this.updateCommentInThreads(threads, update.comment);
+            case ReviewThreadSyncAction.COMMENT_DELETED:
+                if (!update.commentId) {
+                    return threads;
+                }
+                return this.removeCommentFromThreads(threads, update.commentId);
+            case ReviewThreadSyncAction.GROUP_UPDATED:
+                if (!update.threadIds) {
+                    return threads;
+                }
+                return this.updateGroupInThreads(threads, update.threadIds, update.groupId);
+            default:
+                return threads;
+        }
+    }
+
+    /**
+     * Ensures an active synchronization subscription for review updates and replaces stale subscriptions.
+     *
+     * @param exerciseId The exercise id whose review updates should be observed.
+     */
+    private ensureSynchronizationSubscription(exerciseId: number): void {
+        if (this.subscribedExerciseId === exerciseId && this.synchronizationSubscription) {
+            return;
+        }
+        this.synchronizationSubscription?.unsubscribe();
+        try {
+            this.synchronizationSubscription = this.exerciseEditorSyncService.subscribeToUpdates().subscribe((event) => this.handleSynchronizationEvent(event));
+            this.subscribedExerciseId = exerciseId;
+        } catch {
+            // Parent containers establish the shared synchronization connection. If it is not
+            // connected yet, later reload/context transitions retry subscription setup.
+            this.synchronizationSubscription = undefined;
+            this.subscribedExerciseId = undefined;
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.synchronizationSubscription?.unsubscribe();
+        this.synchronizationSubscription = undefined;
+        this.subscribedExerciseId = undefined;
+        this.pendingSyncUpdates = [];
+        this.isReloading = false;
+    }
+}

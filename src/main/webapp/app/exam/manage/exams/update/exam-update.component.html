@@ -1,0 +1,452 @@
+<div>
+    <div>
+        <form id="editForm" name="editForm" role="form" #editForm="ngForm" (ngSubmit)="handleSubmit()">
+            <div *titleBarTitle class="flex items-center">
+                @if (exam && !exam.id) {
+                    @if (!isImport()) {
+                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.createExam"></h5>
+                    } @else {
+                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.importExam"></h5>
+                    }
+                    <jhi-documentation-button [type]="documentationType" />
+                } @else {
+                    <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.editExam"></h5>
+                }
+            </div>
+            <!-- Section exam configuration -->
+            <div class="mb-6!">
+                <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
+                <jhi-title-channel-name
+                    [(title)]="exam.title"
+                    [(channelName)]="exam.channelName"
+                    channelNamePrefix="exam-"
+                    [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
+                    [hideChannelName]="hideChannelNameInput()"
+                    [initChannelName]="isImport() || exam.id === undefined"
+                    [titleValidationMessage]="!exam.title?.trim() ? 'artemisApp.examManagement.titleMissingOrNotValid' : undefined"
+                    [channelNameValidationMessage]="isChannelNameMissing ? 'error.examChannelNameMissing' : undefined"
+                />
+            </div>
+            <div class="mb-6!">
+                <div>
+                    <label jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
+                    <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
+                </div>
+                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
+            </div>
+            @if (isRealExam(exam)) {
+                <div class="mb-6! flex items-center gap-2">
+                    <tumaet-ui-checkbox inputId="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
+                    <label for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck">Exam with attendance check </label>
+                </div>
+            }
+            <div class="mb-6! grid grid-cols-1 gap-6! sm:grid-cols-3">
+                <tumaet-ui-form-field controlId="examiner" [label]="'artemisApp.examManagement.examiner' | artemisTranslate">
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="examiner"
+                        id="examiner"
+                        [attr.aria-label]="'artemisApp.examManagement.examiner' | artemisTranslate"
+                        [(ngModel)]="exam.examiner"
+                    />
+                </tumaet-ui-form-field>
+                <tumaet-ui-form-field controlId="moduleNumber" [label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate">
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="moduleNumber"
+                        id="moduleNumber"
+                        [attr.aria-label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate"
+                        [(ngModel)]="exam.moduleNumber"
+                    />
+                </tumaet-ui-form-field>
+                <tumaet-ui-form-field controlId="courseName" [label]="'artemisApp.examManagement.courseName' | artemisTranslate">
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="courseName"
+                        id="courseName"
+                        [attr.aria-label]="'artemisApp.examManagement.courseName' | artemisTranslate"
+                        [(ngModel)]="exam.courseName"
+                    />
+                </tumaet-ui-form-field>
+            </div>
+            <hr class="my-6! border-(--border-color)" />
+            <!-- Section exam conduction (release dates and working time) -->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction"></h5>
+            <div class="@container">
+                <div class="mb-6! grid grid-cols-1 items-start gap-x-6 gap-y-6! @min-[45.5rem]:grid-cols-2 @min-[69rem]:grid-cols-3">
+                    @let realExam = isRealExam(exam);
+                    <div>
+                        <jhi-exam-timeline
+                            [(visibleDate)]="exam.visibleDate"
+                            [(startDate)]="exam.startDate"
+                            [(endDate)]="exam.endDate"
+                            [testExam]="!realExam"
+                            (datesChanged)="updateExamWorkingTime()"
+                            (timelineStatusChange)="timelineStatus.set($event)"
+                        />
+                    </div>
+                    <div>
+                        @if (isOngoingExam) {
+                            <div class="mb-6!">
+                                <span class="inline-flex" [tumAetUiTooltip]="'artemisApp.examManagement.dateChange.message' | artemisTranslate">
+                                    <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" />
+                                    <span class="mx-1 font-bold" jhiTranslate="artemisApp.examManagement.dateChange.label"></span>
+                                </span>
+                            </div>
+                        }
+                        @if (confirmDateChangeVisible()) {
+                            <tumaet-ui-dialog [(visible)]="confirmDateChangeVisible" size="medium" [header]="'artemisApp.examManagement.dateChange.title' | artemisTranslate">
+                                <p class="whitespace-pre-line">{{ 'artemisApp.examManagement.dateChange.message' | artemisTranslate }}</p>
+                                <div class="rounded-lg bg-(--hover-slightly-darker-body-bg) p-6!">
+                                    @if (oldWorkingTime && newWorkingTime) {
+                                        <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
+                                    }
+                                </div>
+                                <hr class="my-6! border-(--border-color)" />
+                                <div>
+                                    <jhi-confirm-entity-name
+                                        confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
+                                        [entityName]="exam.title!"
+                                        name="confirmEntityName"
+                                        [ngModel]="confirmEntityNameValue()"
+                                        (ngModelChange)="onConfirmNameChange($event)"
+                                    />
+                                </div>
+                                <ng-template #footer>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="secondary"
+                                        variant="outlined"
+                                        (click)="cancelDateChange()"
+                                        jhiTranslate="global.form.cancel"
+                                    ></button>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="danger"
+                                        (click)="confirmDateChange()"
+                                        [disabled]="confirmDisabled()"
+                                        jhiTranslate="global.form.confirm"
+                                    ></button>
+                                </ng-template>
+                            </tumaet-ui-dialog>
+                        }
+                        <div class="mb-6! flex flex-col gap-1">
+                            <div>
+                                <label for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
+                                <jhi-help-icon [text]="'artemisApp.examManagement' + (!realExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                            </div>
+                            @if (realExam) {
+                                <input tumAetUiInput id="workingTimeInMinutes" readonly disabled type="text" class="w-full" [value]="workingTimeInMinutesRounded" />
+                                @if (isWorkingTimeTooHigh) {
+                                    <tumaet-ui-message severity="error"><span jhiTranslate="error.examWorkingTimeTooHigh"></span></tumaet-ui-message>
+                                }
+                            }
+                            @if (!realExam) {
+                                <input
+                                    tumAetUiInput
+                                    id="workingTimeInMinutes"
+                                    name="workingTimeInMinutes"
+                                    class="w-full"
+                                    type="number"
+                                    min="1"
+                                    [max]="maxWorkingTimeInMinutes"
+                                    [(ngModel)]="workingTimeInMinutes"
+                                    (focusin)="roundWorkingTime()"
+                                    (focusout)="roundWorkingTime()"
+                                    #workingTimeInput="ngModel"
+                                />
+                                @if (workingTimeInput.errors?.['max'] || isWorkingTimeTooHigh) {
+                                    <tumaet-ui-message severity="error"><span jhiTranslate="error.examWorkingTimeTooHigh"></span></tumaet-ui-message>
+                                }
+                            }
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <div>
+                                <label for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
+                                <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
+                            </div>
+                            <input
+                                tumAetUiInput
+                                id="gracePeriod"
+                                name="gracePeriod"
+                                class="w-full"
+                                type="number"
+                                min="0"
+                                max="3600"
+                                [(ngModel)]="exam.gracePeriod"
+                                #gracePeriodInput="ngModel"
+                            />
+                            @if (gracePeriodInput.errors?.['max']) {
+                                <tumaet-ui-message severity="error"><span jhiTranslate="error.examGracePeriodTooHigh"></span></tumaet-ui-message>
+                            }
+                            @if (isGracePeriodNegative) {
+                                <tumaet-ui-message severity="error" data-testid="grace-period-low-error"
+                                    ><span jhiTranslate="error.examGracePeriodNegative"></span
+                                ></tumaet-ui-message>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-6! border-(--border-color)" />
+            <!-- Section settings for exam exercises -->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises"></h5>
+            <div class="mb-6! grid grid-cols-1 gap-6! sm:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                    <div>
+                        <label for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
+                    </div>
+                    <jhi-points-input
+                        fluid
+                        inputId="examMaxPoints"
+                        name="examMaxPoints"
+                        [min]="1"
+                        [max]="9999"
+                        pattern="\d*"
+                        [(ngModel)]="exam.examMaxPoints"
+                        #examMaxPointsInput="ngModel"
+                    />
+                    @if (examMaxPointsInput.errors?.['max']) {
+                        <tumaet-ui-message severity="error"><span jhiTranslate="error.examMaxPointsTooHigh"></span></tumaet-ui-message>
+                    }
+                    @if (examMaxPointsInput.errors?.['pattern']) {
+                        <tumaet-ui-message severity="error"><span jhiTranslate="error.examMaxPointsWholeNumber"></span></tumaet-ui-message>
+                    }
+                    @if (isMaxPointsMissingOrTooLow) {
+                        <tumaet-ui-message severity="error" data-testid="max-points-low-error"><span jhiTranslate="error.examMaxPointsMissingOrTooLow"></span></tumaet-ui-message>
+                    }
+                </div>
+                <div class="flex flex-col gap-1">
+                    <div>
+                        <label for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam">Number of Exercises in Exam</label>
+                        <jhi-help-icon [text]="'artemisApp.examManagement.numberOfExercisesInExamTooltip'" />
+                    </div>
+                    <input
+                        tumAetUiInput
+                        id="numberOfExercisesInExam"
+                        name="numberOfExercisesInExam"
+                        class="w-full"
+                        type="number"
+                        min="1"
+                        max="100"
+                        [(ngModel)]="exam.numberOfExercisesInExam"
+                        #numberOfExercisesInput="ngModel"
+                    />
+                    @if (numberOfExercisesInput.errors?.['max']) {
+                        <tumaet-ui-message severity="error"><span jhiTranslate="error.examNumberOfExercisesTooHigh"></span></tumaet-ui-message>
+                    }
+                    @if (isNumberOfExercisesTooLow) {
+                        <tumaet-ui-message severity="error" data-testid="number-of-exercises-low-error"
+                            ><span jhiTranslate="error.examNumberOfExercisesTooLow"></span
+                        ></tumaet-ui-message>
+                    }
+                </div>
+            </div>
+            <div class="mb-6! flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
+                <label for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"></label>
+            </div>
+            <!-- Subsection Exercise Selection for Exam Import -->
+            @if (isImport() && exam.exerciseGroups) {
+                <div class="mb-6!">
+                    <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
+                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
+                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="exam.course?.id" />
+                </div>
+            }
+            <!-- Section exam assessment and student review
+        Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
+            @if (isRealExam(exam)) {
+                <div>
+                    <hr class="my-6! border-(--border-color)" />
+                    <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
+                    <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
+                    @if (isRealExam(exam)) {
+                        <div class="mb-6! grid gap-6! grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                            <div class="flex flex-col gap-1">
+                                <label for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"></label>
+                                <input
+                                    tumAetUiInput
+                                    id="numberOfCorrectionRoundsInExam"
+                                    name="numberOfCorrectionRoundsInExam"
+                                    class="w-full"
+                                    type="number"
+                                    min="1"
+                                    max="2"
+                                    [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
+                                />
+                                @if (!isValidNumberOfCorrectionRounds) {
+                                    <tumaet-ui-message severity="error" data-testid="correction-rounds-error"
+                                        ><span jhiTranslate="error.examCorrectionRoundsInvalid"></span
+                                    ></tumaet-ui-message>
+                                }
+                            </div>
+                            <div>
+                                <tumaet-ui-date-picker
+                                    inputId="publishResultsDate"
+                                    data-testid="publishResultsDate"
+                                    labelName="artemisApp.examManagement.publishResultsDate"
+                                    [(value)]="exam.publishResultsDate"
+                                    [invalid]="!isValidPublishResultsDate"
+                                />
+                                @if (publishResultsDateErrorKey; as errorKey) {
+                                    <tumaet-ui-message severity="error" class="mt-1" data-testid="publishResultsDate-error"
+                                        ><span [jhiTranslate]="errorKey"></span
+                                    ></tumaet-ui-message>
+                                }
+                            </div>
+                        </div>
+                        <div class="mb-6! grid gap-6! grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                            <div>
+                                <tumaet-ui-date-picker
+                                    inputId="examSummaryPublicationDate"
+                                    data-testid="examSummaryPublicationDate"
+                                    labelName="artemisApp.examManagement.examSummaryPublicationDate"
+                                    [(value)]="exam.examSummaryPublicationDate"
+                                    [invalid]="!isValidExamSummaryPublicationDate"
+                                >
+                                    <jhi-help-icon tumAetUiDatePickerLabelAddon text="artemisApp.examManagement.examSummaryPublicationDateTooltip" />
+                                </tumaet-ui-date-picker>
+                                @if (examSummaryPublicationDateErrorKey; as errorKey) {
+                                    <tumaet-ui-message severity="error" class="mt-1" data-testid="examSummaryPublicationDate-error"
+                                        ><span [jhiTranslate]="errorKey"></span
+                                    ></tumaet-ui-message>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <div class="mb-6! grid gap-6! grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                        <div>
+                            <tumaet-ui-date-picker
+                                inputId="examStudentReviewStart"
+                                data-testid="examStudentReviewStart"
+                                labelName="artemisApp.examManagement.examStudentReviewStart"
+                                [(value)]="exam.examStudentReviewStart"
+                                [invalid]="!isValidExamStudentReviewStart"
+                            />
+                            @if (examStudentReviewStartErrorKey; as errorKey) {
+                                <tumaet-ui-message severity="error" class="mt-1" data-testid="examStudentReviewStart-error"
+                                    ><span [jhiTranslate]="errorKey"></span
+                                ></tumaet-ui-message>
+                            }
+                        </div>
+                        <div>
+                            <tumaet-ui-date-picker
+                                inputId="examStudentReviewEnd"
+                                data-testid="examStudentReviewEnd"
+                                labelName="artemisApp.examManagement.examStudentReviewEnd"
+                                [(value)]="exam.examStudentReviewEnd"
+                                [invalid]="!isValidExamStudentReviewEnd"
+                            />
+                            @if (!isValidExamStudentReviewEnd) {
+                                <small class="text-state-danger" jhiTranslate="artemisApp.examManagement.reviewDatesInvalidWarning"></small>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            <hr class="my-6! border-(--border-color)" />
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
+            <div class="mb-6! grid gap-6! grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                <div>
+                    <tumaet-ui-date-picker
+                        inputId="exampleSolutionPublicationDate"
+                        data-testid="exampleSolutionPublicationDate"
+                        labelName="artemisApp.exam.exampleSolutionPublicationDate"
+                        [(value)]="exam.exampleSolutionPublicationDate"
+                        [invalid]="!isValidExampleSolutionPublicationDate"
+                    >
+                        <jhi-help-icon tumAetUiDatePickerLabelAddon text="artemisApp.examManagement.exampleSolutionPublicationDateTooltip" />
+                    </tumaet-ui-date-picker>
+                    @if (exampleSolutionPublicationDateErrorKey; as errorKey) {
+                        <tumaet-ui-message severity="error" class="mt-1" data-testid="exampleSolutionPublicationDate-error"
+                            ><span [jhiTranslate]="errorKey"></span
+                        ></tumaet-ui-message>
+                    }
+                </div>
+            </div>
+            <hr class="my-6! border-(--border-color)" />
+            <!-- Section Texts-->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text"></h5>
+            <div class="mb-6! flex flex-col gap-1">
+                <label for="startText" jhiTranslate="artemisApp.examManagement.startText"></label>
+                <jhi-markdown-editor-monaco id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
+                @if (isExamTextTooLong(exam.startText)) {
+                    <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
+            </div>
+            <div class="mb-6! flex flex-col gap-1">
+                <label for="endText" jhiTranslate="artemisApp.examManagement.endText"></label>
+                <jhi-markdown-editor-monaco id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
+                @if (isExamTextTooLong(exam.endText)) {
+                    <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
+            </div>
+            <div class="mb-6! flex flex-col gap-1">
+                <label for="confirmationStartText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
+                <jhi-markdown-editor-monaco id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
+                @if (isExamTextTooLong(exam.confirmationStartText)) {
+                    <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
+            </div>
+            <div class="mb-6! flex flex-col gap-1">
+                <label for="confirmationEndText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
+                <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
+                @if (isExamTextTooLong(exam.confirmationEndText)) {
+                    <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
+            </div>
+            <div class="mt-6!">
+                @if (!isValidExamStudentReviewEnd) {
+                    <tumaet-ui-tag
+                        severity="warn"
+                        [value]="'artemisApp.quizExercise.edit.warning' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate"
+                        tumAetUiTooltipPlacement="right"
+                    />
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<jhi-exam-import-progress-dialog />
+
+<ng-template titleBarActions>
+    @if (exam) {
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            (click)="resetToPreviousState()"
+            [title]="'entity.action.cancel' | artemisTranslate"
+        >
+            <fa-icon [icon]="faBan" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button
+            id="save-exam"
+            form="editForm"
+            type="submit"
+            tumAetUiButton
+            severity="primary"
+            size="small"
+            [disabled]="editForm.form?.invalid || !isValidConfiguration || isSaving()"
+            [title]="saveTitle | artemisTranslate"
+        >
+            <fa-icon [icon]="faSave" />
+            <span class="title-bar-collapsible-label" [jhiTranslate]="saveTitle"></span>
+        </button>
+    }
+</ng-template>

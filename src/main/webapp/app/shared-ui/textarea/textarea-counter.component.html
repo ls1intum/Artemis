@@ -1,0 +1,5 @@
+@if (visible()) {
+    <span class="mt-1 mb-2 float-right inline-block rounded-md bg-primary px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white">
+        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }} / {{ maxLength() }}
+    </span>
+}

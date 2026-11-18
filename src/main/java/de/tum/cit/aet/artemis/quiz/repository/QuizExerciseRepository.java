@@ -1,0 +1,273 @@
+package de.tum.cit.aet.artemis.quiz.repository;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+
+/**
+ * Spring Data JPA repository for the QuizExercise entity.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM QuizExercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
+            """)
+    List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+
+    /**
+     * Filters the given quiz exercise ids down to those containing at least one drag-and-drop question. Lets the
+     * exercise-list endpoints report the flag without fetching the whole question graph of every quiz.
+     *
+     * @param exerciseIds the quiz exercise ids to check
+     * @return the subset of ids whose quiz has at least one drag-and-drop question
+     */
+    @Query("""
+            SELECT DISTINCT question.exercise.id
+            FROM DragAndDropQuestion question
+            WHERE question.exercise.id IN :exerciseIds
+            """)
+    Set<Long> findIdsWithDragAndDropQuestions(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.exerciseGroup.exam.id = :examId
+            """)
+    List<QuizExercise> findByExamId(@Param("examId") Long examId);
+
+    /**
+     * Find all quiz exercises that are planned to start in the future
+     *
+     * @param now the current date
+     * @return the list of quiz exercises
+     */
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizBatches b
+            WHERE qe.releaseDate > :now
+                OR b.startTime > :now
+                OR qe.dueDate > :now
+            """)
+    List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCategoriesAndBatchesById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndBatchesById(Long quizExerciseId);
+
+    // exerciseVariantGroup is LAZY, and QuizExerciseWithoutQuestionsDTO reads its title/maxPoints/dates, so it must be
+    // loaded here — otherwise the DTO mapping would trigger a proxy initialization outside the session.
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "competencyLinks.competency", "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    Set<QuizExercise> findWithEagerQuestionsByIdIn(Collection<Long> quizExerciseIds);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
+
+    @Query("""
+            SELECT q
+            FROM QuizExercise q
+                LEFT JOIN FETCH q.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE q.title = :title
+                AND q.course.id = :courseId
+            """)
+    Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO(
+                exercise.id,
+                exercise.quizMode,
+                exercise.title,
+                exercise.releaseDate,
+                exercise.dueDate,
+                batch.startTime,
+                exercise.duration
+            )
+            FROM QuizExercise exercise
+                LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
+            WHERE exercise.course.id = :courseId
+            """)
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds a QuizExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or statistics.
+     * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link QuizExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "gradingCriteria" })
+    Optional<QuizExercise> findForVersioningById(Long exerciseId);
+
+    /**
+     * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
+    default Optional<QuizExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<QuizExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
+
+    @NonNull
+    default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NonNull
+    default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load batches
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NonNull
+    default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions and batches.
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCategoriesAndBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
+    }
+
+    /**
+     * Targeted UPDATE of releaseDate + dueDate, used by START_NOW. Issues a single-row UPDATE on
+     * {@code QuizExercise} instead of {@code saveAndFlush(quizExercise)}.
+     *
+     * <p>
+     * The original motivation was to bypass the DELETE+INSERT cascade on the unidirectional
+     * {@code @OneToMany + @JoinColumn + @OrderColumn} child collections — that bug class is fixed at the mapping
+     * level now (issues #12574 / #12584, bidirectional {@code mappedBy}), but this targeted UPDATE is retained
+     * because it remains the cheapest correct option for the lifecycle action: it avoids loading the full quiz
+     * graph, skips the {@code @PrePersist}/{@code @PreUpdate} hooks on every child question, and produces a
+     * single-row UPDATE that is atomic and easy to reason about.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date (may be {@code null})
+     * @param dueDate     the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate,
+                qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseAndDueDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Targeted UPDATE of releaseDate, used by SET_VISIBLE. See {@link #updateReleaseAndDueDate} for why this
+     * is preferred over a full {@code saveAndFlush(quizExercise)}.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate);
+
+    /**
+     * Targeted UPDATE of dueDate, used by END_NOW. See {@link #updateReleaseAndDueDate} for why this is
+     * preferred over a full {@code saveAndFlush(quizExercise)}.
+     *
+     * @param id      the id of the quiz exercise to update
+     * @param dueDate the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateDueDate(@Param("id") Long id, @Param("dueDate") ZonedDateTime dueDate);
+}

@@ -1,0 +1,78 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { Course } from 'app/course/shared/entities/course.model';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
+import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+
+@Service()
+export class CourseAdminService {
+    private http = inject(HttpClient);
+
+    private resourceUrl = 'api/admin/courses';
+
+    /**
+     * Creates a course using a POST request. The server answers with the id of the new course only;
+     * the course management shell loads the course itself when the client navigates there.
+     * @param course - the course to be created on the server
+     * @param courseImage - the course icon file
+     */
+    create(course: Course, courseImage?: Blob): Observable<HttpResponse<{ id: number }>> {
+        const dto = toCourseCreateDTO(course);
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(dto));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+
+        return this.http.post<{ id: number }>(this.resourceUrl, formData, { observe: 'response' });
+    }
+
+    /**
+     * Starts the deletion of the course corresponding to the given unique identifier using a DELETE request.
+     * The server accepts the request with 202 and deletes the course in the background, the progress is published on the
+     * websocket topic of the course operation and can be read with {@link getOperationProgress}.
+     * @param courseId - the id of the course to be deleted
+     */
+    delete(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a comprehensive summary for the course containing all relevant data counts.
+     * Used by both deletion and reset confirmation dialogs.
+     * @param courseId - the id of the course to get the summary for
+     */
+    getCourseSummary(courseId: number): Observable<HttpResponse<CourseSummaryDTO>> {
+        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${courseId}/summary`, { observe: 'response' });
+    }
+
+    /**
+     * Resets the course by removing all student data while preserving the course structure.
+     * @param courseId - the id of the course to reset
+     */
+    reset(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/reset`, null, { observe: 'response' });
+    }
+
+    /**
+     * Returns the current progress of a delete/reset/archive operation on the course, or an empty body when none is known.
+     * This is used for polling when WebSocket is not available and to pick up a running operation after the page was reloaded.
+     * A failed read is not reported to the user with an alert.
+     * @param courseId - the id of the course to get the operation progress for
+     */
+    getOperationProgress(courseId: number): Observable<HttpResponse<CourseOperationProgressDTO | null>> {
+        return this.http
+            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, {
+                observe: 'response',
+                context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+            })
+            .pipe(tap((res) => res.body && (res.body.startedAt = convertDateFromServer(res.body.startedAt))));
+    }
+}

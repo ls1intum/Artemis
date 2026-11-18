@@ -1,0 +1,35 @@
+<div class="h-[500px]" data-testid="learning-paths-analytics-container">
+    <h5 class="m-0!" jhiTranslate="artemisApp.learningPathManagement.learningPathsAnalytics.title"></h5>
+    <hr class="my-2!" />
+    <div class="flex h-full gap-4!">
+        <div class="w-1/6 shrink-0 border-e border-border">
+            <ng-container [ngTemplateOutlet]="radioTemplate" [ngTemplateOutletContext]="{ $implicit: CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS }" />
+        </div>
+        <div class="min-w-0 grow basis-0">
+            @if (isLoading()) {
+                <div class="flex justify-center p-2">
+                    <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
+                </div>
+            } @else if (instructorCompetencyGraph()) {
+                <jhi-competency-graph [competencyGraph]="instructorCompetencyGraph()!" />
+            }
+        </div>
+    </div>
+</div>
+
+<ng-template #radioTemplate let-competencyNodeValueType>
+    <div class="flex items-center gap-2">
+        <tumaet-ui-radio-button
+            [inputId]="'graph-value-' + competencyNodeValueType"
+            [ariaLabel]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType | artemisTranslate"
+            [value]="competencyNodeValueType"
+            [ngModel]="valueSelection()"
+            (ngModelChange)="valueSelection.set($event)"
+        />
+        <label
+            [for]="'graph-value-' + competencyNodeValueType"
+            class="break-words"
+            [jhiTranslate]="'artemisApp.learningPathManagement.learningPathsAnalytics.graphSelection.' + competencyNodeValueType"
+        ></label>
+    </div>
+</ng-template>

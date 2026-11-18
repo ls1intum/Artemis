@@ -1,0 +1,745 @@
+import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { combineLatest, takeWhile } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-exam-update',
+    templateUrl: './exam-update.component.html',
+    imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        TitleChannelNameComponent,
+        HelpIconComponent,
+        ExamModePickerComponent,
+        FaIconComponent,
+        WorkingTimeChangeComponent,
+        ExamExerciseImportComponent,
+        MarkdownEditorMonacoComponent,
+        ArtemisTranslatePipe,
+        ConfirmEntityNameComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        PointsInputComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        ExamImportProgressDialogComponent,
+        ExamTimelineComponent,
+    ],
+})
+export class ExamUpdateComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private calendarService = inject(CalendarService);
+    private router = inject(Router);
+    private eventManager = inject(EventManager);
+
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly documentationType: DocumentationType = 'Exams';
+    protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
+    protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
+
+    // exam is template-bound (directly and through many getters) and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
+    // many synchronous reads/writes (getters, [(ngModel)] bindings) unchanged.
+    private readonly _exam = signal<Exam>(undefined!);
+    get exam(): Exam {
+        return this._exam();
+    }
+    set exam(value: Exam) {
+        this._exam.set(value);
+    }
+    course!: Course; // set in ngOnInit() from route data
+    readonly isSaving = signal(false);
+    readonly isImport = signal(false);
+    readonly isImportInSameCourse = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true, invalidItems: [] });
+
+    readonly hideChannelNameInput = signal(false);
+    private originalStartDate?: dayjs.Dayjs;
+
+    private originalEndDate?: dayjs.Dayjs;
+
+    private originalWorkingTime?: number;
+
+    private componentActive = true;
+
+    confirmEntityNameValue = signal('');
+    confirmDateChangeVisible = signal(false);
+    confirmDisabled = computed(() => {
+        const value = this.confirmEntityNameValue();
+        return !value || !this.exam?.title || value !== this.exam.title;
+    });
+
+    // Link to the component enabling the selection of exercise groups and exercises for import
+    examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
+    examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
+    /**
+     * The date fields of the review, publication and example solution dates. A date field keeps its last committed date while the
+     * typed text is not a date and flags itself, but it is no form control, so the save button has to ask the fields.
+     */
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
+
+    ngOnInit(): void {
+        combineLatest([this.route.url, this.route.data])
+            .pipe(takeWhile(() => this.componentActive))
+            .subscribe(([segments, data]) => {
+                const isImport = segments.some(({ path }) => path === 'import');
+                const exam: Exam = isImport ? prepareExamForImport(data.exam) : data.exam;
+
+                if (!exam.gracePeriod) {
+                    exam.gracePeriod = 180;
+                }
+
+                // test exam only feature automatic assessment
+                if (!isRealExam(exam)) {
+                    exam.numberOfCorrectionRoundsInExam = 0;
+                } else if (!exam.numberOfCorrectionRoundsInExam) {
+                    exam.numberOfCorrectionRoundsInExam = 1;
+                }
+
+                this.exam = exam;
+                this.isImport.set(isImport);
+                this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
+                this.originalStartDate = exam.startDate?.clone();
+                this.originalEndDate = exam.endDate?.clone();
+                this.originalWorkingTime = exam.workingTime;
+
+                this.course = data.course;
+                this.exam.course = data.course;
+
+                // Prefill course name with course title for new exams
+                if (!this.exam.id && !this.exam.courseName && this.course.title) {
+                    this.exam.courseName = this.course.title;
+                }
+
+                if (!this.exam.startText) {
+                    this.exam.startText = this.examDefaultStartText;
+                }
+                this.hideChannelNameInput.set((!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course));
+            });
+    }
+
+    ngOnDestroy() {
+        this.componentActive = false;
+    }
+
+    /**
+     * Sets the exam working time in minutes.
+     * @param minutes
+     */
+    set workingTimeInMinutes(minutes: number) {
+        this.exam.workingTime = minutes * 60;
+    }
+
+    /**
+     * Returns the exam working time in minutes.
+     */
+    get workingTimeInMinutes(): number {
+        return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
+    }
+
+    /**
+     * Returns the exam working time in minutes, rounded to one decimal place.
+     * Used for display purposes.
+     */
+    get workingTimeInMinutesRounded(): number {
+        return Math.round(this.workingTimeInMinutes * 10) / 10;
+    }
+
+    get oldWorkingTime(): number | undefined {
+        return isRealExam(this.exam) ? normalWorkingTime(this.originalStartDate, this.originalEndDate) : this.originalWorkingTime;
+    }
+
+    get newWorkingTime(): number | undefined {
+        return this.exam.workingTime;
+    }
+
+    /**
+     * Returns to the detail page if we edited an existing exam
+     * Returns to the overview page if we created a new exam
+     */
+    resetToPreviousState() {
+        if (this.exam.id) {
+            void this.router.navigate(['course-management', this.course.id, 'exams', this.exam.id]);
+        } else {
+            void this.router.navigate(['course-management', this.course.id, 'exams']);
+        }
+    }
+
+    /**
+     * Updates the working time for real exams based on the start and end dates.
+     */
+    updateExamWorkingTime() {
+        if (!isRealExam(this.exam)) return;
+
+        this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
+    }
+
+    onExamModeChange() {
+        if (!isRealExam(this.exam)) {
+            // Preserve the rounded value
+            this.exam.examWithAttendanceCheck = false;
+            this.roundWorkingTime();
+        } else {
+            // Otherwise, the working time should depend on the dates as usual
+            this.updateExamWorkingTime();
+        }
+    }
+
+    /**
+     * Rounds the working time of the exam in minutes such that it only has one decimal place.
+     */
+    roundWorkingTime() {
+        this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
+    }
+
+    /**
+     * Returns the maximum working time in minutes for test exams.
+     */
+    get maxWorkingTimeInMinutes(): number {
+        if (isRealExam(this.exam)) return 0;
+
+        if (this.exam.startDate && this.exam.endDate) {
+            // This considers decimal places as well.
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
+        } else {
+            // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
+            return this.isImport() ? this.workingTimeInMinutes : 0;
+        }
+    }
+
+    /**
+     * Saves the exam. If the dates have changed and the exam is ongoing, a confirmation modal is shown to the user.
+     * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
+     */
+    handleSubmit() {
+        // The save button is disabled for an invalid configuration, but a submit can also come from the form itself (for example Enter in a field).
+        if (!this.isValidConfiguration) {
+            return;
+        }
+        const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+        const workingTimeChanged = this.exam.workingTime !== this.originalWorkingTime;
+
+        const triggersPopup = this.isRealExam(this.exam) ? datesChanged : workingTimeChanged;
+
+        if (triggersPopup && this.isOngoingExam) {
+            this.confirmEntityNameValue.set('');
+            this.confirmDateChangeVisible.set(true);
+        } else {
+            this.save();
+        }
+    }
+
+    /**
+     * Updates the entered exam title used to enable/disable the confirm button.
+     */
+    onConfirmNameChange(value: string) {
+        this.confirmEntityNameValue.set(value);
+    }
+
+    confirmDateChange() {
+        if (this.confirmDisabled()) {
+            return;
+        }
+        this.confirmDateChangeVisible.set(false);
+        this.save();
+    }
+
+    cancelDateChange() {
+        this.confirmDateChangeVisible.set(false);
+    }
+
+    /**
+     * Saves the exam and navigates to the detail page of the exam if the save was successful.
+     * If the save was not successful, an error is shown to the user.
+     */
+    save() {
+        // Guard against re-entry (e.g. pressing Enter in the form while a save/import is already running): the save button is
+        // disabled while saving, but ngSubmit can still fire. A second import would reset the in-flight progress dialog.
+        if (this.isSaving()) {
+            return;
+        }
+        this.isSaving.set(true);
+
+        // Importing an exam can fail per exercise and take a while (programming repository copies). It therefore runs behind
+        // a progress dialog that shows live websocket progress and a persistent, must-dismiss summary of skipped/incomplete
+        // exercises, after which we navigate to the imported exam.
+        if (this.isImport() && this.exam?.exerciseGroups) {
+            this.importExam();
+            return;
+        }
+
+        const request$ = this.exam.id ? this.examManagementService.update(this.course.id!, this.exam) : this.examManagementService.create(this.course.id!, this.exam);
+        request$
+            .pipe(
+                map((response: HttpResponse<Exam>) => response.body!),
+                takeWhile(() => this.componentActive),
+            )
+            .subscribe({
+                next: this.onSaveSuccess.bind(this),
+                error: this.onSaveError.bind(this),
+            });
+    }
+
+    /**
+     * Imports the exam behind a progress dialog and navigates to the imported exam once the user dismisses the dialog.
+     * @private
+     */
+    private importExam() {
+        // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+        if (!this.examExerciseImportComponent().validateUserInput()) {
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+            this.isSaving.set(false);
+            return;
+        }
+        this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+        const totalExercises = (this.exam.exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
+        const importId = this.examManagementService.generateImportId();
+        const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
+        this.examImportProgressDialog()
+            .runImport(importId, totalExercises, request$)
+            .then((response) => {
+                const importedExam = response.body?.exam;
+                if (importedExam) {
+                    void this.onSaveSuccess(importedExam);
+                } else {
+                    this.isSaving.set(false);
+                }
+            })
+            .catch((httpErrorResponse: HttpErrorResponse) => this.onSaveError(httpErrorResponse));
+    }
+
+    /**
+     * Navigates to the detail page of the exam if the save was successful.
+     * @param exam
+     * @private
+     */
+    private async onSaveSuccess(exam: Exam) {
+        this.isSaving.set(false);
+        this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+        this.calendarService.reloadEvents();
+        await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        window.scrollTo(0, 0);
+    }
+
+    /**
+     * Shows an error to the user if the save was not successful.
+     * @param httpErrorResponse
+     * @private
+     */
+    private onSaveError(httpErrorResponse: HttpErrorResponse) {
+        const errorKey = httpErrorResponse.error?.errorKey;
+        if (errorKey === 'invalidKey') {
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            // The update() Method is called to update the exercises
+            this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
+            const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
+        } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
+        } else {
+            if (httpErrorResponse.error && httpErrorResponse.error.title) {
+                this.alertService.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+            } else {
+                onError(this.alertService, httpErrorResponse);
+            }
+        }
+        this.isSaving.set(false);
+    }
+
+    /**
+     * Returns true if the original exam is currently ongoing before any changes, false otherwise.
+     */
+    get isOngoingExam(): boolean {
+        return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
+    }
+
+    /**
+     * Returns whether the exam title is present after trimming. The title input is required, but Angular's required validator
+     * accepts a whitespace-only value, so the trimmed check is needed to keep the save button in sync with the title validation message.
+     */
+    get isValidTitle(): boolean {
+        return !!this.exam.title?.trim();
+    }
+
+    get isValidConfiguration(): boolean {
+        const examTitleValid = this.isValidTitle;
+        const examConductionDatesValid = this.timelineStatus().valid;
+        const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
+        const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
+        const examMaxPointsValid = this.isValidMaxPoints;
+        const examValidWorkingTime = this.validateWorkingTime;
+        const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examValidSummaryPublicationDate = this.isValidExamSummaryPublicationDate;
+        const examValidNumberOfExercises = this.isValidNumberOfExercises;
+        const examValidGracePeriod = this.isValidGracePeriod;
+        return (
+            examTitleValid &&
+            examConductionDatesValid &&
+            examReviewDatesValid &&
+            examNumberOfCorrectionsValid &&
+            examMaxPointsValid &&
+            examValidWorkingTime &&
+            examValidExampleSolutionPublicationDate &&
+            examValidSummaryPublicationDate &&
+            examValidNumberOfExercises &&
+            examValidGracePeriod &&
+            this.areExamTextsValid &&
+            this.datePickers().every((picker) => picker.isValid())
+        );
+    }
+
+    /**
+     * Returns true when a single exam text (start / end / confirmation) is within the allowed length.
+     */
+    isExamTextTooLong(text?: string): boolean {
+        return (text?.length ?? 0) > EXAM_TEXT_MAX_LENGTH;
+    }
+
+    /**
+     * Returns true when all exam start / end / confirmation texts are within the allowed length.
+     */
+    // Getter (not a computed) on purpose: the texts are mutated in place via [(ngModel)] without changing the exam signal reference, so a computed would go stale.
+    get areExamTextsValid(): boolean {
+        return ![this.exam.startText, this.exam.endText, this.exam.confirmationStartText, this.exam.confirmationEndText].some((text) => this.isExamTextTooLong(text));
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's number of exercises is valid.
+     * The number of exercises is valid if it's not set, or if it's between 1 and 100.
+     *
+     * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
+     */
+    get isValidNumberOfExercises(): boolean {
+        if (this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null) {
+            return true;
+        }
+        return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
+    }
+
+    get isValidNumberOfCorrectionRounds(): boolean {
+        if (!isRealExam(this.exam)) {
+            return this.exam.numberOfCorrectionRoundsInExam === 0;
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        }
+    }
+
+    get isValidMaxPoints(): boolean {
+        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0 && this.exam?.examMaxPoints <= 9999;
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's grace period is valid.
+     * The grace period is valid if it's not set, or if it's between 0 and 3600 seconds.
+     *
+     * @returns {boolean} `true` if the exam's grace period is valid, `false` otherwise.
+     */
+    get isValidGracePeriod(): boolean {
+        if (this.exam.gracePeriod === undefined || this.exam.gracePeriod === null) {
+            return true;
+        }
+        return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
+    }
+
+    /**
+     * Returns true when the grace period is set to a negative value, which the minimum of 0 seconds rules out.
+     */
+    get isGracePeriodNegative(): boolean {
+        return this.exam.gracePeriod !== undefined && this.exam.gracePeriod !== null && this.exam.gracePeriod < 0;
+    }
+
+    /**
+     * Returns true when the maximum points are missing or below the minimum of 1. Values above the maximum have their own explanation.
+     */
+    get isMaxPointsMissingOrTooLow(): boolean {
+        return !((this.exam.examMaxPoints ?? 0) >= 1);
+    }
+
+    /**
+     * Returns true when the number of exercises is set below the minimum of 1. An empty number of exercises is valid.
+     */
+    get isNumberOfExercisesTooLow(): boolean {
+        return this.exam.numberOfExercisesInExam !== undefined && this.exam.numberOfExercisesInExam !== null && this.exam.numberOfExercisesInExam < 1;
+    }
+
+    /**
+     * Returns true when the channel name field is shown but was emptied. The title fills it initially, so it is only empty after the user cleared it.
+     */
+    get isChannelNameMissing(): boolean {
+        return !this.hideChannelNameInput() && this.exam.channelName === '';
+    }
+
+    /**
+     * Maximum working time in seconds (30 days).
+     */
+    readonly maxWorkingTimeSeconds = 2592000;
+
+    /**
+     * Validates the WorkingTime.
+     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
+     * and must not exceed 30 days (2592000 seconds).
+     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
+     * and must not exceed 30 days (2592000 seconds).
+     */
+    get validateWorkingTime(): boolean {
+        if (!isRealExam(this.exam)) {
+            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
+                return false;
+            }
+            // Check 30-day limit
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
+                return false;
+            }
+            if (this.exam.startDate && this.exam.endDate) {
+                return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            }
+            return false;
+        }
+        if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
+            // Check 30-day limit for real exams as well
+            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
+                return false;
+            }
+            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the working time exceeds the maximum allowed limit of 30 days.
+     */
+    get isWorkingTimeTooHigh(): boolean {
+        if (this.exam.workingTime === undefined || this.exam.workingTime === null) {
+            return false;
+        }
+        return this.exam.workingTime > this.maxWorkingTimeSeconds;
+    }
+
+    get isValidPublishResultsDate(): boolean {
+        // allow instructors to set publishResultsDate later
+        if (!this.exam.publishResultsDate) {
+            return true;
+        }
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return !!this.exam.endDate && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+    }
+
+    get isValidExamStudentReviewStart(): boolean {
+        // allow instructors to set examStudentReviewStart later
+        if (!this.exam.examStudentReviewStart) {
+            return true;
+        }
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return !!this.exam.publishResultsDate && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+    }
+
+    get isValidExamStudentReviewEnd(): boolean {
+        // checks whether the end date can be undefined depending on if there is an undefined or manually deleted start date
+        if (!this.exam.examStudentReviewEnd) {
+            return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
+        }
+        // check for undefined because undefined is otherwise treated as the now dayjs
+        return !!this.exam.examStudentReviewStart && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+    }
+
+    get isValidExampleSolutionPublicationDate(): boolean {
+        // allow instructors to leave exampleSolutionPublicationDate unset
+        if (!this.exam.exampleSolutionPublicationDate) {
+            return true;
+        }
+        // dayjs.isBefore(null) is always false so exampleSolutionPublicationDate is valid if the visibleDate and endDate are not set
+        return !(
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
+        );
+    }
+
+    /**
+     * Validates the optional submission-overview publication date.
+     * It is valid when unset (summary shown immediately after submission) or, when set, strictly after the end date and no later than the publish results date
+     * (so the overview never becomes visible after the grades). Mirrors the server-side check in ExamResource#checkExamForDatesConflictsElseThrow.
+     *
+     * @returns true if the configured examSummaryPublicationDate is valid
+     */
+    get isValidExamSummaryPublicationDate(): boolean {
+        // allow instructors to leave examSummaryPublicationDate unset (summary shown immediately after submission)
+        if (!this.exam.examSummaryPublicationDate) {
+            return true;
+        }
+        const summaryDate = dayjs(this.exam.examSummaryPublicationDate);
+        // must be after the end date and, if a publish results date is set, no later than it (the overview must not lag behind the grades)
+        const afterEndDate = !!this.exam.endDate && summaryDate.isAfter(this.exam.endDate);
+        const notAfterPublishResults = !this.exam.publishResultsDate || !summaryDate.isAfter(this.exam.publishResultsDate);
+        return afterEndDate && notAfterPublishResults;
+    }
+
+    /**
+     * Returns the translation key explaining why the release date of results is invalid, or undefined if it is valid.
+     */
+    get publishResultsDateErrorKey(): string | undefined {
+        if (this.isValidPublishResultsDate) {
+            return undefined;
+        }
+        return this.exam.endDate ? 'error.examPublishResultsDateAfterEnd' : 'error.examPublishResultsDateEndMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the begin of the student review is invalid, or undefined if it is valid.
+     */
+    get examStudentReviewStartErrorKey(): string | undefined {
+        if (this.isValidExamStudentReviewStart) {
+            return undefined;
+        }
+        return this.exam.publishResultsDate ? 'error.examStudentReviewStartAfterRelease' : 'error.examStudentReviewStartReleaseMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the submission overview date is invalid, or undefined if it is valid.
+     */
+    get examSummaryPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExamSummaryPublicationDate) {
+            return undefined;
+        }
+        if (!this.exam.endDate) {
+            return 'error.examSummaryPublicationDateEndMissing';
+        }
+        const afterEndDate = dayjs(this.exam.examSummaryPublicationDate).isAfter(this.exam.endDate);
+        return afterEndDate ? 'error.examSummaryPublicationDateBeforeRelease' : 'error.examSummaryPublicationDateAfterEnd';
+    }
+
+    /**
+     * Returns the translation key explaining why the example solution publication date is invalid, or undefined if it is valid.
+     */
+    get exampleSolutionPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExampleSolutionPublicationDate) {
+            return undefined;
+        }
+        const beforeEndDate = dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null);
+        return beforeEndDate ? 'error.examExampleSolutionPublicationDateAfterEnd' : 'error.examExampleSolutionPublicationDateAfterVisible';
+    }
+
+    /**
+     * Default exam start text, which can be edited by instructors in the text editor
+     */
+    get examDefaultStartText(): string {
+        const warningForInstructionsText = '<!-- Please adapt this text for your exam -->\n\n';
+        const readCarefullyText = "<span class='font-bold'>Please read the following information carefully!</span>\n\n";
+        const workOnYourOwnText =
+            "You must work on the exam on your own. You <span class='font-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='font-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='font-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).\n\n";
+        const checkForPlagiarismText =
+            "All your submissions will be checked for plagiarism. You are <span class='font-bold text-primary'>not allowed</span> to copy code from any external sources, including books, websites, or other students. Any instance of copying will be classified as plagiarism.\n\n";
+        const programmingSubmissionText =
+            "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='font-bold text-primary'>Compile errors will result in 0 points</span>.\n\n";
+        const submissionPeriodText = `The submission period will close <span><!--Enter your grace period here--> seconds</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='font-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>.\n\n`;
+
+        const workingInstructionText =
+            `<div class="font-bold">Working instructions:</div>\n` +
+            `<ul>\n` +
+            `  <li><span class='font-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
+            `  <li>The exam consists of <span class='font-bold text-primary'><!--Enter your number of points here--> points</span> and is <span class='font-bold text-primary'><!--Enter your working time here--> minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
+            `  <li>It is <span class='font-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='font-bold text-primary'>forbidden</span>!</li>\n` +
+            `</ul>\n`;
+
+        return (
+            warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
+        );
+    }
+
+    /**
+     * Returns the appropriate translation key for the save button title.
+     *
+     * If the exam is being imported, the title reflects an import action;
+     * otherwise, it reflects a standard save action.
+     *
+     * @returns {string} The translation key for the save button title.
+     */
+    get saveTitle(): string {
+        return this.isImport() ? 'entity.action.import' : 'entity.action.save';
+    }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
+}
+
+/**
+ * Prepares the exam for import by omitting all properties that should not be imported.
+ */
+export const prepareExamForImport = (exam: Exam): Exam =>
+    cloneWith(
+        omit(exam, [
+            'id',
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'exampleSolutionPublicationDate',
+            'examSummaryPublicationDate',
+            'examUsers',
+            'studentExams',
+        ]),
+        { workingTime: 0 },
+    );

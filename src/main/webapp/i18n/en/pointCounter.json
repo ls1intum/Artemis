@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "pointCounter": {
+            "home": {
+                "title": "Point Counters",
+                "createLabel": "Create a new Point Counter"
+            },
+            "created": "Created new Point Counter with identifier {{ param }}",
+            "updated": "Updated Point Counter with identifier {{ param }}",
+            "deleted": "Deleted Point Counter with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Point Counter {{ id }}?"
+            },
+            "detail": {
+                "title": "Point Counter"
+            },
+            "points": "Points",
+            "quizPointStatistic": "Quiz Point Statistic"
+        }
+    }
+}

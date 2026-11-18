@@ -1,0 +1,591 @@
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { isExamExercise } from 'app/foundation/util/utils';
+import { debounceTime, shareReplay } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { MonacoBinding } from 'y-monaco';
+import { editor } from 'monaco-editor';
+/**
+ * Enumeration specifying the loading state
+ */
+export enum LOADING_STATE {
+    CLEAR = 'CLEAR',
+    INITIALIZING = 'INITIALIZING',
+    FETCHING_FAILED = 'FETCHING_FAILED',
+    CREATING_ASSIGNMENT_REPO = 'CREATING_ASSIGNMENT_REPO',
+    DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
+}
+
+@Component({
+    template: '',
+})
+export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private exerciseService = inject(ProgrammingExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private domainService = inject(DomainService);
+    private location = inject(Location);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    protected alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+    protected fileSyncService = inject(CodeEditorFileSyncService);
+
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
+
+    /** Raw markdown changes from the center editor for debounce logic */
+    private problemStatementChanges$ = new Subject<string>();
+
+    private currentFileBinding?: MonacoBinding;
+    private previousSyncedFile?: string;
+    private stateReplacedSubscription?: Subscription;
+
+    ButtonSize = ButtonSize;
+    LOADING_STATE = LOADING_STATE;
+    PROGRAMMING = ExerciseType.PROGRAMMING;
+
+    // This component responds to multiple route schemas:
+    // :exerciseId -> Load exercise and select template repository
+    // :exerciseId/:participationId -> Load exercise and select repository according to participationId
+    // :exerciseId/test -> Load exercise and select test repository
+    paramSub?: Subscription;
+
+    // Contains all participations (template, solution, assignment).
+    // Signal-backed because the whole editor template is gated on it and the subclass derives its Hyperion
+    // predicates from it. As a plain field, assigning it inside the route-flow `tap` scheduled no render under
+    // zoneless change detection: the page only updated because the unrelated `loadingState` signal happened to
+    // flip in the same subscription.
+    //
+    // The exercise object itself is still mutated in place by several flows (problem-statement edits,
+    // assignment-participation create/delete) and its identity is load-bearing (participations hold circular
+    // back-references to it), so it cannot be replaced with a fresh copy on every change. Instead the signal is
+    // configured to notify on every write and in-place mutations re-publish via `notifyExerciseChanged()`.
+    readonly exercise = signal<ProgrammingExercise | undefined>(undefined, { equal: () => false });
+    course!: Course; // set in ngOnInit() from the loaded exercise
+    // Can only be undefined when the test repository is selected.
+    selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
+    // Stores which repository is selected atm.
+    // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
+    // I am not sure if I can default initialize it like this, but I need to, to correctly show issues
+    selectedRepository!: RepositoryType; // set in ngOnInit() during domain selection before template/methods read it
+    selectedRepositoryId!: number; // set in ngOnInit() during domain selection (auxiliary repository)
+    selectedAuxiliaryRepositoryName?: string;
+
+    // Fires when the selected domain changes.
+    // This can either be a participation (solution, template, assignment) or the test repository.
+    domainChangeSubscription?: Subscription;
+
+    // State variables.
+    // Signal-backed so its async transitions (set inside the participation-fetch subscribe and the
+    // create/delete-assignment-repo flows) schedule change detection under zoneless. As a plain field the
+    // INITIALIZING -> CLEAR flip never re-rendered, leaving the whole template (gated on `@if (loadingState() ...)`)
+    // stuck and the editor page blank.
+    readonly loadingState = signal(LOADING_STATE.CLEAR);
+
+    protected isCreateAssignmentRepoDisabled!: boolean; // set in ngOnInit()'s participation-fetch subscribe
+    /** Debounced tick stream consumed by the sidebar preview */
+    previewEvents$ = this.problemStatementChanges$.pipe(
+        debounceTime(200),
+        map(() => void 0), // Observable<void>
+        shareReplay({ bufferSize: 1, refCount: true }), // replay latest for late subscribers
+    );
+
+    /**
+     * Initialize the route params subscription.
+     * On route param change load the exercise and the selected participation OR the test repository.
+     */
+    ngOnInit(): void {
+        /** Initial render if we already have content */
+        const loadedExercise = this.exercise();
+        if (loadedExercise?.problemStatement != undefined) {
+            this.problemStatementChanges$.next(loadedExercise.problemStatement);
+        }
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
+        this.paramSub = this.route.params
+            .pipe(
+                tap(() => this.loadingState.set(LOADING_STATE.INITIALIZING)),
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const repositoryType = params['repositoryType'];
+                    const repositoryId = Number(params['repositoryId']);
+                    return this.loadExercise(exerciseId).pipe(
+                        map((exercise) => {
+                            if (exercise.id !== exerciseId) {
+                                throw new Error('exerciseNotFound');
+                            }
+                            return exercise;
+                        }),
+                        tap((exercise) => {
+                            this.exercise.set(exercise);
+                            this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                            if (exercise.id) {
+                                this.exerciseEditorSyncService.connect(exercise.id);
+                            }
+                            // Emit initial markdown to drive the preview after loading the exercise
+                            if (exercise.problemStatement != undefined) {
+                                this.problemStatementChanges$.next(exercise.problemStatement);
+                            }
+                        }),
+                        // Set selected participation
+                        tap(() => {
+                            if (repositoryType === RepositoryType.TESTS) {
+                                this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise()!]);
+                            } else if (repositoryType === RepositoryType.AUXILIARY) {
+                                const auxiliaryRepo = this.exercise()!.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
+                                if (auxiliaryRepo) {
+                                    this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
+                                    this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                                }
+                            } else {
+                                const nextAvailableParticipation = this.getNextAvailableParticipation(repositoryId);
+                                if (nextAvailableParticipation) {
+                                    this.selectParticipationDomainById(nextAvailableParticipation.id!);
+
+                                    // Show a consistent route in the browser
+                                    if (nextAvailableParticipation.id !== repositoryId) {
+                                        const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                                        this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                                    }
+                                } else {
+                                    throw new Error('participationNotFound');
+                                }
+                            }
+                        }),
+                        tap(() => {
+                            if (!this.domainChangeSubscription) {
+                                this.domainChangeSubscription = this.subscribeToDomainChange();
+                            }
+                        }),
+                        catchError((error: unknown) => {
+                            const message = error instanceof Error && error.message === 'participationNotFound' ? 'participationNotFound' : 'exerciseNotFound';
+                            this.loadingState.set(LOADING_STATE.FETCHING_FAILED);
+                            this.onError(message);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+            )
+            .subscribe(() => {
+                this.loadingState.set(LOADING_STATE.CLEAR);
+                this.isCreateAssignmentRepoDisabled = isExamExercise(this.exercise()!);
+            });
+    }
+    /** Called by the center editor on every markdown change */
+    onInstructionChanged(markdown: string) {
+        const exercise = this.exercise();
+        if (exercise) {
+            exercise.problemStatement = markdown;
+            this.notifyExerciseChanged();
+        }
+        this.problemStatementChanges$.next(markdown);
+    }
+
+    /**
+     * Re-publishes the exercise signal after the exercise object was mutated in place.
+     *
+     * The signal holds a mutable object whose identity must stay stable (participations keep circular
+     * back-references to it), so mutations cannot be expressed as a replacing `set()`. It is created with an
+     * always-notify equality function, which makes re-setting the very same reference a valid change
+     * notification for template bindings and derived `computed()`s.
+     */
+    protected notifyExerciseChanged(): void {
+        this.exercise.update((exercise) => exercise);
+    }
+
+    /**
+     * Unsubscribe from paramSub and domainChangeSubscription if they are present, on component destruction
+     */
+    ngOnDestroy() {
+        if (this.domainChangeSubscription) {
+            this.domainChangeSubscription.unsubscribe();
+        }
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
+        this.exerciseEditorSyncService.disconnect();
+    }
+
+    /**
+     * Connects the shared exercise synchronization channel for the given exercise.
+     *
+     * @param exerciseId the exercise id for the synchronization topic
+     */
+    protected connectExerciseEditorSync(exerciseId: number): void {
+        this.exerciseEditorSyncService.connect(exerciseId);
+    }
+
+    /**
+     * Get the next available participation, highest priority has the participation given to the method.
+     * Removes participations without a repositoryUri (could be invalid).
+     * Returns undefined if no valid participation can be found.
+     *
+     * @param preferredParticipationId
+     */
+    private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
+        type ProgrammingParticipation = TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
+        const exercise = this.exercise()!;
+        const availableParticipations = [
+            exercise.templateParticipation,
+            exercise.solutionParticipation,
+            exercise.studentParticipations && exercise.studentParticipations.length ? (exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation) : undefined,
+        ].filter((participation): participation is ProgrammingParticipation => participation != undefined);
+        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingParticipation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations]
+            .filter((participation): participation is ProgrammingParticipation => participation != undefined)
+            .find(({ repositoryUri }: ProgrammingParticipation) => !!repositoryUri);
+    }
+
+    /**
+     * Subscribe for domain changes caused by url route changes.
+     * Distinguishes between participation based domains (template, solution, assignment) and the test repository.
+     */
+    subscribeToDomainChange() {
+        return this.domainService
+            .subscribeDomainChange()
+            .pipe(
+                filter((domain) => !!domain),
+                tap(([domainType, domainValue]) => {
+                    this.applyDomainChange(domainType, domainValue);
+                }),
+            )
+            .subscribe();
+    }
+
+    protected canSwitchRepository(): boolean {
+        return true;
+    }
+
+    protected applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
+        if (!this.canSwitchRepository()) return;
+        if (this.codeEditorContainer() != undefined) {
+            this.codeEditorContainer()!.initializeProperties();
+        }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
+        if (domainType === DomainType.AUXILIARY_REPOSITORY) {
+            this.selectedRepository = RepositoryType.AUXILIARY;
+            this.selectedRepositoryId = domainValue.id!;
+        } else if (domainType === DomainType.PARTICIPATION) {
+            this.setSelectedParticipation(domainValue.id!);
+        } else {
+            this.selectedParticipation = this.exercise()!.templateParticipation!;
+            this.selectedRepository = RepositoryType.TESTS;
+        }
+        const exerciseId = this.exercise()?.id;
+        if (exerciseId && this.selectedRepository) {
+            const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
+            if (syncTarget) {
+                const auxId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+                this.fileSyncService.init(exerciseId, syncTarget, auxId);
+            }
+        }
+    }
+
+    /**
+     * Set the selected participation based on its id.
+     * Shows an error if the participationId does not match the template, solution or assignment participation.
+     **/
+    setSelectedParticipation(participationId: number) {
+        // The result component needs a circular structure of participation -> exercise.
+        const exercise = this.exercise()!;
+        if (participationId === exercise.templateParticipation!.id) {
+            this.selectedRepository = RepositoryType.TEMPLATE;
+            this.selectedParticipation = exercise.templateParticipation;
+            (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (participationId === exercise.solutionParticipation!.id) {
+            this.selectedRepository = RepositoryType.SOLUTION;
+            this.selectedParticipation = exercise.solutionParticipation;
+            (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (exercise.studentParticipations?.length && participationId === exercise.studentParticipations[0].id) {
+            this.selectedRepository = RepositoryType.ASSIGNMENT;
+            this.selectedParticipation = exercise.studentParticipations[0];
+            this.selectedParticipation.exercise = exercise;
+        } else {
+            this.onError('participationNotFound');
+        }
+    }
+
+    repositoryUri(participation?: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUri;
+    }
+
+    /**
+     * Doesn't reload the exercise from server if it was already loaded.
+     * This check is done to avoid load on the server when the user is switching participations.
+     * Has the side effect, that if the exercise changes unrelated to the participations, the user has to reload the page to see the updates.
+     */
+    loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        const exercise = this.exercise();
+        return exercise && exercise.id === exerciseId
+            ? of(exercise)
+            : this.exerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
+    }
+
+    /**
+     * Set the selected participation domain based on its id.
+     * Shows an error if the participationId does not match the template, solution or assignment participation.
+     **/
+    selectParticipationDomainById(participationId: number) {
+        const exercise = this.exercise()!;
+        if (participationId === exercise.templateParticipation!.id) {
+            exercise.templateParticipation!.programmingExercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.templateParticipation!]);
+        } else if (participationId === exercise.solutionParticipation!.id) {
+            exercise.solutionParticipation!.programmingExercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+        } else if (exercise.studentParticipations?.length && participationId === exercise.studentParticipations[0].id) {
+            exercise.studentParticipations[0].exercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
+        } else {
+            this.onError('participationNotFound');
+        }
+    }
+
+    /**
+     * Saves unsaved changes and then selects a domain.
+     *
+     * Always use this method for changing the editor content to save file modifications.
+     */
+    saveChangesAndSelectDomain(domain: DomainChange) {
+        if (!this.canSwitchRepository()) return;
+        if (this.codeEditorContainer() != undefined) {
+            // Save before switching domains. Use a non-null assertion (not optional chaining) so a missing
+            // actions component throws instead of silently skipping the save and losing unsaved edits.
+            this.codeEditorContainer()!.actions()!.onSave();
+        }
+        this.domainService.setDomain(domain);
+    }
+
+    /**
+     * Select the template participation repository and navigate to it
+     */
+    selectTemplateParticipation() {
+        if (!this.canSwitchRepository()) return Promise.resolve(false);
+        return this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise()!.templateParticipation!.id], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the solution participation repository and navigate to it
+     */
+    selectSolutionParticipation() {
+        if (!this.canSwitchRepository()) return Promise.resolve(false);
+        return this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise()!.solutionParticipation!.id], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the assignment participation repository and navigate to it
+     */
+    selectAssignmentParticipation() {
+        if (!this.canSwitchRepository()) return Promise.resolve(false);
+        return this.router.navigate(['../..', RepositoryType.USER, this.exercise()!.studentParticipations![0].id], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the test repository and navigate to it
+     */
+    selectTestRepository() {
+        if (!this.canSwitchRepository()) return Promise.resolve(false);
+        // as test repositories do not have any participation nor repository Id associated, we use a 'test' placeholder
+        return this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the auxiliary repository and navigate to it
+     */
+    selectAuxiliaryRepository(repositoryId: number) {
+        if (!this.canSwitchRepository()) return Promise.resolve(false);
+        return this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
+    }
+
+    /**
+     * Creates an assignment participation for this user for this exercise.
+     */
+    createAssignmentParticipation() {
+        this.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
+        return this.courseExerciseService
+            .startExercise(this.exercise()!.id!, this.exercise()!)
+            .pipe(
+                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
+                tap((participation) => {
+                    this.exercise()!.studentParticipations = [participation];
+                    // Derived state (e.g. whether exercise generation may still be offered) reads the
+                    // participation list, so the in-place mutation has to be published.
+                    this.notifyExerciseChanged();
+                    this.loadingState.set(LOADING_STATE.CLEAR);
+                }),
+            )
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
+    }
+
+    /**
+     * Delete the assignment participation for this user for this exercise.
+     * This deletes all build plans, database information, etc. and copies the current version of the template repository.
+     */
+    deleteAssignmentParticipation() {
+        this.loadingState.set(LOADING_STATE.DELETING_ASSIGNMENT_REPO);
+        if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
+            void this.selectTemplateParticipation();
+        }
+        const assignmentParticipationId = this.exercise()!.studentParticipations![0].id!;
+        this.exercise()!.studentParticipations = [];
+        // See createAssignmentParticipation(): the participation list feeds derived state.
+        this.notifyExerciseChanged();
+        this.participationService
+            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+            .pipe(
+                catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
+                tap(() => {
+                    this.loadingState.set(LOADING_STATE.CLEAR);
+                }),
+            )
+            .subscribe({
+                error: (err: Error) => this.onError(err.message),
+            });
+    }
+
+    /**
+     * Called when a file finishes loading in Monaco (via onFileLoad event).
+     * Creates the Yjs <-> Monaco binding for real-time collaborative editing.
+     */
+    protected onFileSyncLoad(fileName: string): void {
+        this.teardownFileBinding();
+        if (this.previousSyncedFile) {
+            this.fileSyncService.closeFile(this.previousSyncedFile);
+            this.previousSyncedFile = undefined;
+        }
+
+        if (!this.fileSyncService.isInitialized()) {
+            return;
+        }
+
+        const monacoComponent = this.codeEditorContainer()?.monacoEditor?.();
+        if (!monacoComponent || monacoComponent.binaryFileSelected()) {
+            return;
+        }
+
+        const editorComponent = monacoComponent.editor();
+        const model = editorComponent.getModel();
+        const editorInstance = editorComponent.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const fallbackContent = this.normalizeLineEndings(editorComponent.getText());
+        const syncState = this.fileSyncService.openFile(fileName, fallbackContent);
+        if (!syncState) {
+            return;
+        }
+        this.previousSyncedFile = fileName;
+
+        // Clear model content before binding — the MonacoBinding constructor immediately
+        // populates the model from Y.Text content, so the brief empty state is not observable
+        // in the UI. This is required because MonacoBinding diffs the model content against
+        // Y.Text on construction, and starting from an empty model ensures a clean diff.
+        // Safe: no MonacoBinding exists yet at this point, so the setValue('') cannot propagate
+        // as a Yjs delete. The binding is only created on the next line.
+        model.setValue('');
+        // Monaco may still keep CRLF as model EOL depending on prior content/defaultEOL.
+        // Force LF right after setValue so y-monaco computes offsets against LF text.
+        this.enforceLfEol(model);
+        this.createFileBinding(syncState, model, editorInstance);
+
+        // Capturing model and editorInstance via closure is safe here: Monaco does not replace
+        // model objects internally (they are stable for the lifetime of a URI), and the editor
+        // instance is equally stable. This subscription is torn down by teardownFileBinding()
+        // on every file switch (line 409), so the captured references cannot go stale.
+        this.stateReplacedSubscription = this.fileSyncService.stateReplaced$.pipe(filter((event) => event.filePath === fileName)).subscribe((replacedState) => {
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.currentFileBinding?.destroy();
+            this.currentFileBinding = undefined;
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(replacedState.text.toJSON());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
+            this.createFileBinding(replacedState, model, editorInstance);
+        });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for a code file.
+     * Uses a per-binding closure variable to guard against double-destroy: each binding
+     * captures its own `destroyed` flag so that a new binding creation cannot accidentally
+     * reset the guard of an older binding that is still being torn down asynchronously.
+     */
+    private createFileBinding(syncState: FileSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor): void {
+        this.currentFileBinding?.destroy();
+        let destroyed = false;
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
+        const originalDestroy = binding.destroy.bind(binding);
+        binding.destroy = () => {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
+            originalDestroy();
+        };
+        this.currentFileBinding = binding;
+    }
+
+    /**
+     * Tears down the Monaco <-> Yjs binding only (UI concern). Does NOT call closeFile()
+     * because the Yjs document lifecycle is managed by the caller: onFileSyncLoad() closes
+     * the previous file explicitly, while ngOnDestroy() and domain changes call reset()
+     * which bulk-destroys all docs. Keeping these concerns separate is intentional.
+     */
+    private teardownFileBinding(): void {
+        this.stateReplacedSubscription?.unsubscribe();
+        this.stateReplacedSubscription = undefined;
+        this.currentFileBinding?.destroy();
+        this.currentFileBinding = undefined;
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.alertService.error(`artemisApp.editor.errors.${error}`);
+    }
+}

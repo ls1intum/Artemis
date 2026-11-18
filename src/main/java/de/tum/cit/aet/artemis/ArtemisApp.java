@@ -1,0 +1,203 @@
+package de.tum.cit.aet.artemis;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import jakarta.annotation.PostConstruct;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.info.GitProperties;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+
+import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
+import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.config.DefaultProfileUtil;
+import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
+import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
+import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+
+@SpringBootApplication
+@EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
+        ArtemisCompatibleVersionsConfiguration.class, ArtemisProperties.class })
+public class ArtemisApp {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
+
+    private final Environment env;
+
+    public static final long appStart = System.nanoTime();
+
+    public ArtemisApp(Environment env) {
+        this.env = env;
+    }
+
+    /**
+     * Initializes Artemis.
+     * <p>
+     * Spring profiles can be configured with a program argument --spring.profiles.active=your-active-profile
+     * <p>
+     * You can find more information and how profiles work with JHipster on <a href="https://www.jhipster.tech/profiles/">https://www.jhipster.tech/profiles/</a>.
+     */
+    @PostConstruct
+    public void initApplication() {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
+            log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
+        }
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_CLOUD)) {
+            log.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
+        }
+    }
+
+    /**
+     * Main method, used to run the application.
+     *
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        SpringApplication app = new SpringApplication(ArtemisApp.class);
+        DefaultProfileUtil.addDefaultProfile(app);
+        app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
+            Environment environment = event.getEnvironment();
+            if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+                throw new IllegalArgumentException("An AI Worker node cannot also run the core profile");
+            }
+            if (!isWorkerOnly(environment)) {
+                return;
+            }
+            if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
+            }
+            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
+            }
+            if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
+                throw new IllegalArgumentException("An AI Worker-only node requires a shared Hazelcast or Redis data provider");
+            }
+            if (DistributedDataProviderResolver.isProvider(environment, HAZELCAST) && !environment.getProperty("eureka.client.enabled", Boolean.class, false)) {
+                throw new IllegalArgumentException("An AI Worker-only node requires Eureka discovery with Hazelcast");
+            }
+        });
+        // The upload root of FilePathConverter is not set here. It is set by FileUploadPathEnvironmentPostProcessor,
+        // before the context is created, because ApplicationReadyEvent fires inside run() and its listeners resolve
+        // file locations.
+        var context = app.run(args);
+        Environment env = context.getEnvironment();
+        var buildProperties = context.getBean(BuildProperties.class);
+        var gitProperties = context.getBean(GitProperties.class);
+        logApplicationStartup(env, buildProperties, gitProperties);
+        // only publish the PrintStartupBeansEvent if the development profile is active.
+        // This event is only consumed by the BeanInstantiationTracer. This class prints a dependency graph of the initialized beans in the application context to startupBeans.dot
+        // This is useful for debugging and performance improvements, but should not be enabled in production environments.
+        // startupBeans.dot can be visualized with graphviz, e.g. with http://www.webgraphviz.com/
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_DEVELOPMENT))) {
+            context.publishEvent(new PrintStartupBeansEvent());
+        }
+
+        if (env.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+            deferredEagerBeanInitialization(context);
+        }
+    }
+
+    private static boolean isWorkerOnly(Environment environment) {
+        return environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && !environment.acceptsProfiles(Profiles.of(PROFILE_CORE));
+    }
+
+    /**
+     * Initializes deferred eager beans after the application context is fully initialized.
+     * We explicitly call this method instead of invoking it on ApplicationReadyEvent, because we want to start this process as soon as the run method returns which is after all
+     * logic related to the ApplicationReadyEvent has been executed.
+     * The deferred eager bean initialization is useful to ensure that all beans are initialized before the first request is made.
+     *
+     * @param context the application context
+     */
+    private static void deferredEagerBeanInitialization(ConfigurableApplicationContext context) {
+        DeferredEagerBeanInitializer initializer = context.getBean(DeferredEagerBeanInitializer.class);
+        initializer.initializeDeferredEagerBeans();
+    }
+
+    private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
+        if (isWorkerOnly(env)) {
+            log.info("{} AI Worker started without an HTTP server (version {}, commit {})", env.getProperty("spring.application.name"), buildProperties.getVersion(),
+                    gitProperties.getShortCommitId());
+            return;
+        }
+        String protocol = "http";
+        if (env.getProperty("server.ssl.key-store") != null) {
+            protocol = "https";
+        }
+        String serverPort = env.getProperty("server.port");
+        String version = buildProperties.getVersion();
+        String gitCommitId = gitProperties.getShortCommitId();
+        String gitBranch = gitProperties.getBranch();
+        String contextPath = env.getProperty("server.servlet.context-path");
+        if (StringUtils.isBlank(contextPath)) {
+            contextPath = "/";
+        }
+        String hostAddress = "localhost";
+        try {
+            hostAddress = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException e) {
+            log.warn("The host name could not be determined, using `localhost` as fallback");
+        }
+        List<String> activeFeatures = getActiveFeatures(env);
+        activeFeatures.sort(String::compareTo);
+        log.info("""
+
+                ----------------------------------------------------------
+                \t'{}' is running! Access URLs:
+                \tLocal:        {}://localhost:{}{}
+                \tExternal:     {}://{}:{}{}
+                \tProfiles:     {}
+                \tFeatures:     {}
+                \tVersion:      {}
+                \tGit Commit:   {}
+                \tGit Branch:   {}
+                \tFull startup: {}
+                ----------------------------------------------------------
+
+                """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), activeFeatures, version, gitCommitId, gitBranch,
+                TimeLogUtil.formatDurationFrom(appStart));
+    }
+
+    /**
+     * Gets the list of active module features based on configuration.
+     *
+     * @param env the Spring environment
+     * @return list of active feature names
+     */
+    private static List<String> getActiveFeatures(Environment env) {
+        return new ArtemisConfigHelper().getEnabledFeatures(env);
+    }
+}

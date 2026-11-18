@@ -1,0 +1,562 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.LargeObjectException;
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
+
+/**
+ * REST controller for managing ProgrammingExercise.
+ */
+@Profile(PROFILE_CORE)
+@FeatureToggle(Feature.ProgrammingExercises)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_IMPORT_EXPORT)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExerciseExportImportResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
+
+    /** A run of whitespace in the submitted list of participant identifiers. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
+    private static final String ENTITY_NAME = "programmingExercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final UserRepository userRepository;
+
+    private final CourseService courseService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ProgrammingExerciseImportService programmingExerciseImportService;
+
+    private final ProgrammingExerciseExportService programmingExerciseExportService;
+
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
+
+    private final SubmissionPolicyService submissionPolicyService;
+
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
+
+    private final ConsistencyCheckService consistencyCheckService;
+
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
+    public ProgrammingExerciseExportImportResource(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
+            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, SubmissionPolicyService submissionPolicyService,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, CourseRepository courseRepository,
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userRepository = userRepository;
+        this.courseService = courseService;
+        this.authCheckService = authCheckService;
+        this.programmingExerciseImportService = programmingExerciseImportService;
+        this.programmingExerciseExportService = programmingExerciseExportService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
+        this.submissionPolicyService = submissionPolicyService;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.courseRepository = courseRepository;
+        this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
+        this.consistencyCheckService = consistencyCheckService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
+    }
+
+    /**
+     * Validates static code analysis settings
+     *
+     * @param programmingExercise exercise to validate
+     * @param buildConfig         its build configuration, which is stored as a row of its own
+     */
+    private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+    }
+
+    /**
+     * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
+     * <p>
+     * This will import the whole exercise, including all base build plans (template, solution) and repositories
+     * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
+     * a new id. For a concrete list of what gets copied and what not have a look
+     * at {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)}
+     *
+     * @param sourceExerciseId                    The ID of the original exercise which should get imported
+     * @param newExerciseRequest                  The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans                  Option determining whether the build plans should be copied or re-created from scratch
+     * @param setTestCaseVisibilityToAfterDueDate Option determining whether the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)
+     */
+    @PostMapping("programming-exercises/import")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExercise(@RequestParam(name = "sourceExerciseId") long sourceExerciseId,
+            @RequestBody ImportProgrammingExerciseRequestDTO newExerciseRequest, @RequestParam(defaultValue = "false") boolean recreateBuildPlans,
+            @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) {
+        if (sourceExerciseId < 0) {
+            throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
+        }
+
+        // Map the request onto a transient exercise at the boundary; everything below keeps working on entities.
+        // The request does not bind the competency links itself: they need managed competencies, which are resolved once the
+        // role in the target course is checked.
+        ProgrammingExercise newExercise = newExerciseRequest.toEntity();
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it. The import
+        // falls back to the source exercise's configuration when the request carries none.
+        ProgrammingExerciseBuildConfig newBuildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(newExerciseRequest);
+
+        // Valid exercises have set either a course or an exerciseGroup
+        newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        newExercise.validateGeneralSettings();
+        programmingExerciseValidationService.validateBuildConfigSize(newBuildConfig);
+
+        final User user = userRepository.getUserWithAuthorities();
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, course.getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        // Validate course settings
+        programmingExerciseRepository.validateCourseSettings(newExercise, course);
+
+        // The client drops the competencies of the source exercise, which belong to the source course, and lets the author pick competencies of the target course instead.
+        // They are carried on the new exercise as references: the import resolves them before its first write, skipping those of another course,
+        // then binds them to the imported exercise once it has an id.
+        newExercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(newExerciseRequest, newExercise, ENTITY_NAME));
+
+        final var originalProgrammingExercise = programmingExerciseRepository
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(sourceExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
+
+        // The configuration the import writes: the request's one when it carries it, the source exercise's otherwise.
+        // Everything that validates it needs the source exercise to exist, so it is read once that is established.
+        ProgrammingExerciseBuildConfig sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExerciseId);
+        ProgrammingExerciseBuildConfig buildConfigToValidate = newBuildConfig == null ? sourceBuildConfig : newBuildConfig;
+        newExercise.validateProgrammingSettings(buildConfigToValidate);
+        programmingExerciseValidationService.validatePackageName(newExercise);
+        programmingExerciseValidationService.validateDockerFlags(buildConfigToValidate);
+        // a window of the source exercise is not taken over, so only a window supplied with the request has to be valid
+        if (newBuildConfig != null) {
+            programmingExerciseValidationService.validateBuildTimeWindow(newExercise, newBuildConfig);
+        }
+        validateStaticCodeAnalysisSettings(newExercise, buildConfigToValidate);
+
+        var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
+        if (!consistencyErrors.isEmpty()) {
+            throw new ConflictException("The source exercise is inconsistent", ENTITY_NAME, "sourceExerciseInconsistent");
+        }
+
+        // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
+        var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
+        originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
+
+        // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
+        if (!Objects.equals(newExercise.isStaticCodeAnalysisEnabled(), originalProgrammingExercise.isStaticCodeAnalysisEnabled()) && !recreateBuildPlans) {
+            throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans is activated", ENTITY_NAME,
+                    "staticCodeAnalysisCannotChange");
+        }
+
+        // If the new exercise has a submission policy, it must be validated.
+        if (newExercise.getSubmissionPolicy() != null) {
+            newExercise.getSubmissionPolicy().setActive(true);
+            submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
+        }
+
+        // Check if the user has the rights to access the original programming exercise
+        Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
+
+        try {
+            ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, sourceBuildConfig,
+                    newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+
+            // The response record carries neither test cases nor static code analysis categories nor tasks, so the
+            // response stays small without nulling those slots on the managed entity.
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
+
+            exerciseVersionService.createExerciseVersion(importedProgrammingExercise, user);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
+                    .body(ProgrammingExerciseResponseDTO.of(importedProgrammingExercise,
+                            programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(importedProgrammingExercise.getId())));
+
+        }
+        catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
+
+            // Input references rejected by preflight retain their client-error status instead of becoming an import failure.
+            if (exception instanceof HttpStatusException || exception instanceof EntityNotFoundException) {
+                throw exception;
+            }
+            if (exception instanceof VersionControlException && exception.getCause() instanceof LargeObjectException) {
+                throw new InternalServerErrorException("The import of the programming exercise failed because a file in the repository is too large.");
+            }
+
+            throw new InternalServerErrorAlertException("Unable to import programming exercise: " + exception.getMessage(), ENTITY_NAME, "unableToImportProgrammingExercise");
+        }
+    }
+
+    /**
+     * POST /programming-exercises/import-from-file: Imports an existing programming exercise from an uploaded zip file into an existing course
+     * <p>
+     * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
+     * the content from the repositories of the zip file into the newly created repositories.
+     * <p>
+     * The client drops the archived exercise's own competency links and lets the author pick competencies of the target
+     * course instead, so the picked links are resolved here and created with the exercise.
+     *
+     * @param programmingExerciseRequest The exercise that should be imported
+     * @param zipFile                    The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
+     * @param courseId                   The id of the course the exercise should be imported into
+     * @param hyperionCompetencyIds      IDs of links inferred through Hyperion's checklist
+     * @return The imported exercise (200)
+     *         (403) if the user is not at least an editor in the target course.
+     */
+    @PostMapping("courses/{courseId}/programming-exercises/import-from-file")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExerciseFromFile(@PathVariable long courseId,
+            @RequestPart("programmingExercise") ImportProgrammingExerciseRequestDTO programmingExerciseRequest, @RequestPart("file") MultipartFile zipFile,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
+        final var user = userRepository.getUserWithAuthorities();
+        // Legacy archives carry fields the current model no longer has; the request record ignores them while keeping
+        // the template and solution repository URIs the import needs.
+        ProgrammingExercise programmingExercise = programmingExerciseRequest.toEntity();
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it.
+        ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(programmingExerciseRequest);
+        // Valid exercises have set either a course or an exerciseGroup
+        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        final var course = courseRepository.findByIdElseThrow(courseId);
+        // The request only names the exercise group of an exam exercise by id: it has to belong to the course the role was checked for.
+        if (programmingExercise.isExamExercise() && !courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise).getId().equals(courseId)) {
+            throw new AccessForbiddenException("The exercise group does not belong to the course");
+        }
+        // Attach the target course, overwriting the source course an archive carries: the import writes the same course
+        // anyway, and the competency links below need it.
+        if (!programmingExercise.isExamExercise()) {
+            programmingExercise.setCourse(course);
+        }
+        // The request record does not bind the competency links itself: they need managed competencies, which only this
+        // service resolves. The import runs through the creation pipeline, which reads the links off the exercise,
+        // exactly as the entity request part used to leave them there.
+        competencyExerciseLinkService.updateCompetencyLinks(programmingExerciseRequest, programmingExercise, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
+        try {
+            ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, buildConfig, zipFile, course,
+                    user);
+            exerciseVersionService.createExerciseVersion(importedExercise, user);
+            return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(importedExercise,
+                    programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(importedExercise.getId())));
+        }
+        catch (IOException | URISyntaxException | GitAPIException e) {
+            log.error(e.getMessage(), e);
+            throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-exercise
+     *
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-instructor-exercise")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndCategoriesElseThrow(exerciseId);
+
+        long start = System.nanoTime();
+        Path path;
+        try {
+            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
+        }
+        catch (Exception e) {
+            log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
+        }
+
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(path));
+
+        log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
+                formatDurationFrom(start));
+
+        final var zipFile = path.toFile();
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
+     *
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participantIdentifiers  the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
+     * @param repositoryExportOptions the options that should be used for the export
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
+            repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
+        }
+
+        Set<Long> participationIds = new HashSet<>();
+        if (!repositoryExportOptions.exportAllParticipants()) {
+            participantIdentifiers = WHITESPACE_RUN.matcher(participantIdentifiers).replaceAll("");
+            Set<String> participantIdentifierList = new HashSet<>(List.of(participantIdentifiers.split(",")));
+            participationIds = programmingExerciseStudentParticipationRepository.findIdsByExerciseIdAndParticipantIdentifier(exerciseId, participantIdentifierList);
+        }
+
+        var participations = loadParticipationsForExercise(programmingExercise, repositoryExportOptions, participationIds);
+        var commitHashes = loadLatestValidCommitHash(participations, repositoryExportOptions, programmingExercise);
+
+        return provideZipForParticipations(participations, programmingExercise, repositoryExportOptions, commitHashes);
+    }
+
+    /**
+     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
+     *
+     * @param exerciseId              the id of the exercise to get the repos from
+     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double-blind assessment)
+     * @param repositoryExportOptions the options that should be used for the export; exporting all participants requires instructor access
+     * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zippedRequestBody
+     */
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        if (repositoryExportOptions.exportAllParticipants()) {
+            throw new AccessForbiddenException("Exporting all participants requires the instructor export operation");
+        }
+        return exportSelectedSubmissions(exerciseId, participationIds, repositoryExportOptions.copyWithAnonymizeRepository(true));
+    }
+
+    /**
+     * Exports selected repositories with instructor identity options, keeping participation IDs as the selector.
+     *
+     * @param exerciseId              the programming exercise
+     * @param participationIds        selected participation IDs
+     * @param repositoryExportOptions archive and content options
+     * @return the repository archive
+     * @throws IOException if the archive cannot be read
+     */
+    @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}/for-instructor")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportSelectedSubmissionsForInstructor(@PathVariable long exerciseId, @PathVariable String participationIds,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        if (repositoryExportOptions.exportAllParticipants()) {
+            throw new AccessForbiddenException("Use the instructor participant identifiers operation to export all participants");
+        }
+        return exportSelectedSubmissions(exerciseId, participationIds, repositoryExportOptions);
+    }
+
+    private ResponseEntity<Resource> exportSelectedSubmissions(long exerciseId, String participationIds, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
+            repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
+        }
+
+        var participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
+        var participations = loadParticipationsForExercise(programmingExercise, repositoryExportOptions, participationIdSet);
+        var commitHashes = loadLatestValidCommitHash(participations, repositoryExportOptions, programmingExercise);
+
+        return provideZipForParticipations(participations, programmingExercise, repositoryExportOptions, commitHashes);
+    }
+
+    // load the minimal amount of data from the database
+    private Set<ProgrammingExerciseStudentParticipation> loadParticipationsForExercise(ProgrammingExercise exercise, RepositoryExportOptionsDTO repositoryExportOptions,
+            Collection<Long> participationIds) {
+        // We need to load the participations with submissions here to be able to filter late submissions
+        // only when repositoryExportOptions.filterLateSubmissions is true we need submissions at all
+        // TODO: filter late submissions directly in the database query to avoid loading unnecessary data, because one participation could have hundreds of submissions
+        // effectively, we simply need the latest relevant commit hash before the due date, see ProgrammingExerciseExportService.filterLateSu bmissions
+        // it uses latestAllowedDate as repositoryExportOptions.filterLateSubmissionsIndividualDueDate or participation.getIndividualDueDate() or exercise.getDueDate() or null
+        Set<ProgrammingExerciseStudentParticipation> participations;
+        if (repositoryExportOptions.exportAllParticipants()) {
+            participations = programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId());
+        }
+        else {
+            participations = programmingExerciseStudentParticipationRepository.findByIds(participationIds);
+            if (participations.stream().anyMatch(participation -> !exercise.getId().equals(participation.getExercise().getId()))) {
+                throw new AccessForbiddenException("The selected participations do not belong to the requested exercise");
+            }
+        }
+
+        return participations;
+    }
+
+    // only load the commit hashes when required
+    private Map<Long, String> loadLatestValidCommitHash(Collection<ProgrammingExerciseStudentParticipation> participations, RepositoryExportOptionsDTO repositoryExportOptions,
+            ProgrammingExercise exercise) {
+        Map<Long, String> commitHashes = new HashMap<>();
+        if (repositoryExportOptions.filterLateSubmissions()) {
+            Set<Long> loadedParticipationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+            // Load the commit hash for the latest submission before the allowed date for each participation
+            var participationCommitHashes = programmingSubmissionRepository.findLatestValidCommitHashForParticipations(loadedParticipationIds,
+                    repositoryExportOptions.filterLateSubmissionsDate(), exercise.getDueDate());
+            commitHashes = participationCommitHashes.stream().collect(Collectors.toMap(ParticipationCommitHashDTO::participationId, ParticipationCommitHashDTO::commitHash));
+        }
+        return commitHashes;
+    }
+
+    private ResponseEntity<Resource> provideZipForParticipations(@NonNull Collection<ProgrammingExerciseStudentParticipation> studentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) throws IOException {
+        long start = System.nanoTime();
+
+        // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
+        if (studentParticipations.isEmpty()) {
+            return ResponseEntity.notFound()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .build();
+        }
+
+        File zipFile = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, studentParticipations, repositoryExportOptions,
+                participationCommitHashes);
+        if (zipFile == null) {
+            return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
+
+        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", studentParticipations.size(), programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+}

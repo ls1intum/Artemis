@@ -1,0 +1,29 @@
+<h3 id="requestMetrics" jhiTranslate="metrics.jvm.http.title"></h3>
+@if (!updating() && requestMetrics()) {
+    <table tumAetUiTable aria-describedby="requestMetrics" data-testid="request-table">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="metrics.jvm.http.table.code"></th>
+                <th scope="col" jhiTranslate="metrics.jvm.http.table.count"></th>
+                <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.mean"></th>
+                <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.max"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (entry of requestMetrics()['percode'] | keyvalue; track entry.key) {
+                <tr>
+                    <td>{{ entry.key }}</td>
+                    <td>
+                        <tumaet-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" severity="success">
+                            {{ entry.value.count }}
+                        </tumaet-ui-progress-bar>
+                    </td>
+                    <td class="text-end">
+                        {{ filterNaN(entry.value.mean) | number: '1.0-2' }}
+                    </td>
+                    <td class="text-end">{{ entry.value.max | number: '1.0-2' }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

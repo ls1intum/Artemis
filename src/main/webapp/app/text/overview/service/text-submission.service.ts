@@ -1,0 +1,113 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { createRequestOption } from 'app/foundation/util/request.util';
+import { stringifyCircular } from 'app/foundation/util/utils';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
+
+export type EntityResponseType = HttpResponse<TextSubmission>;
+
+@Service()
+export class TextSubmissionService {
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
+
+    create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
+        const copy = this.submissionService.convert(textSubmission);
+        return this.http
+            .post<TextSubmission>(`api/text/exercises/${exerciseId}/text-submissions`, copy, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
+    }
+
+    update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
+        const copy = this.submissionService.convert(textSubmission);
+        return this.http
+            .put<TextSubmission>(`api/text/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
+                headers: { 'Content-Type': 'application/json' },
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
+    }
+
+    getTextSubmission(submissionId: number, purpose: EditorViewingPurpose = 'owner'): Observable<TextSubmission> {
+        return this.http
+            .get<TextSubmission>(`api/text/text-submissions/${submissionId}${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
+    }
+
+    /** Lists submissions with participant identities; requires instructor access. */
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions`, req, correctionRound);
+    }
+
+    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
+    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
+        return this.getSubmissionList(`api/text/exercises/${exerciseId}/text-submissions/assessed-by-me`, undefined, correctionRound);
+    }
+
+    private getSubmissionList(
+        url: string,
+        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
+        correctionRound: number,
+    ): Observable<HttpResponse<TextSubmission[]>> {
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+
+        return this.http
+            .get<TextSubmission[]>(url, { observe: 'response', params })
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.submissionService.convertArrayResponse(res)));
+    }
+
+    /**
+     *
+     * @param exerciseId id of the exerciser
+     * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
+     * @param correctionRound: The correction round for which we want to get a new assessment
+     */
+    getSubmissionWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission | undefined> {
+        const url = `api/text/exercises/${exerciseId}/text-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+        if (option) {
+            params = params.set(option, 'true');
+        }
+
+        return this.http.get<TextSubmission | undefined>(url, { observe: 'response', params }).pipe(
+            map((response) => {
+                const submission = response.body;
+                if (!submission) {
+                    return undefined;
+                }
+                // The server nests the locked submission's results and text blocks inside participation.submissions; they
+                // are no longer carried on the top-level submission. Hoist them onto the returned submission so the
+                // assessment editor (which reads participation.submissions.last() and its results/blocks) receives the
+                // locked result it needs to save and submit.
+                // Participation.submissions is typed as the base Submission[]; narrow it to TextSubmission[] so
+                // lockedSubmission.blocks (a text-only field) type-checks below.
+                const participationSubmissions: TextSubmission[] | undefined = submission.participation?.submissions;
+                const lockedSubmission = participationSubmissions?.find((s) => s.id === submission.id) ?? participationSubmissions?.last();
+                if (lockedSubmission) {
+                    submission.results = lockedSubmission.results;
+                    submission.blocks = lockedSubmission.blocks;
+                }
+                setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+
+                submission.participation!.submissions = [submission];
+
+                return submission;
+            }),
+        );
+    }
+}

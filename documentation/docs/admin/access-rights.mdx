@@ -1,0 +1,588 @@
+---
+id: access-rights
+title: Access Rights
+sidebar_label: Access Rights
+last_reviewed: 2026-11-10
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import globalAndCourseRoles from "./assets/access-rights/global-and-course-roles.jpg";
+
+Artemis separates three global authorities — **USER**, **ADMIN**, and **SUPER_ADMIN** — from the roles assigned within each course: **Student**, **Teaching Assistant**, **Editor**, and **Instructor**. A course role grants access only in that course; it does not make the user an administrator.
+
+Minimum course-role checks follow the order Student, Teaching Assistant, Editor, Instructor. A higher role satisfies a lower-role check within the same course. **Anonymous** describes a visitor who has not signed in, rather than a global authority.
+
+## Roles Overview
+
+Global authorities apply across Artemis:
+
+- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
+- **ADMIN:** can administer the server, manage non-admin accounts, and create courses; the additional security privileges of Super Admin remain separate
+- **USER:** identifies a regular signed-in account; access to a particular course depends on its course roles
+
+Course roles describe what a user can do in a particular course:
+
+- **Instructor:** can manage course content and participants, including creating and deleting exercises, exams, and lectures, and monitoring scores and submissions
+- **Editor:** can create and edit course content but cannot delete it; access to other participants' information is limited
+- **Teaching Assistant:** can assess student submissions and view course content before its release date
+- **Student:** can participate in the course and view its released content
+
+<Callout variant={CalloutVariant.info}>
+    Adding or removing a course role changes the user's access on subsequent requests without signing out and back in. Reload an already open page if its controls still show the previous access.
+</Callout>
+
+In the user editor, **Global Roles** offers **Student** (the **USER** authority), **Admin**, and **Super Admin** to a Super Admin. A regular Admin can assign only **Student**. The separate **Course Roles** panel lists memberships by course and saves changes immediately.
+
+<Image src={globalAndCourseRoles} alt="Global Roles offers Super Admin, Admin, and Student above a separate Course Roles panel listing Editor and Tutor memberships in Systems Programming" size={ImageSize.large} caption="Global authorities and course memberships are managed separately." />
+
+In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
+
+## Super Admin vs Admin
+
+While Super Admins have all the permissions of regular Admins, they have additional privileges in security-critical areas:
+
+### Admin User Management
+
+Only Super Admins can manage administrator accounts (both Admin and Super Admin users). This includes:
+- **Creating** new admin or super admin users
+- **Updating** existing admin or super admin users
+- **Activating/Deactivating** admin or super admin users
+- **Deleting** admin or super admin users
+
+Regular Admins can manage accounts without an Admin or Super Admin global authority. Holding an Instructor, Editor, or Teaching Assistant role in a course does not make an account an administrator.
+
+### Passkey Approval
+
+Super Admins have the exclusive privilege to approve passkey registrations for administrators.
+This minimizes the attack surface for critical security operations by limiting passkey approval to a very small number of trusted users.
+
+For detailed information about passkey authentication, configuration, and the approval process, see the [Passkey Authentication](/admin/production-setup/security#passkey-authentication) section in the Security Configuration documentation.
+
+<Callout variant={CalloutVariant.info}>
+    Super Admin privileges ensure that only the most trusted users can manage administrator accounts and approve passkeys for administrators.
+    This minimizes the attack surface for critical security operations.
+</Callout>
+
+## Terminology
+
+<Callout variant={CalloutVariant.info}>
+  **Import Exercise** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  **Course membership terminology:**
+  - **"if in course"**: User must be assigned to the course as staff (member of the course's TA, Editor, or Instructor group)
+  - **"if enrolled"**: User must be enrolled as a student (member of the course's Student group)
+  - **"if visible"**: User can view the resource according to its release date or visibility settings (typically based on `releaseDate`). See [Lectures > Visibility Rules](#visibility-rules) for detailed definitions.
+
+  Both "if in course" and "if enrolled" require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
+</Callout>
+
+## Navigation
+
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseManagementResource.java)
+[//]: # (Refers to CourseOverviewResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseOverviewResource.java)
+[//]: # (Refers to AdminUserResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/account/web/admin/AdminUserResource.java)
+[//]: # (Refers to PasskeyResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/account/web/PasskeyResource.java)
+
+| Feature                  | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
+|--------------------------|-------------|-------|------------|--------|--------------------|---------|
+| Course Overview          | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
+| Course Management        | ✔           | ✔     | ✔          | ✔      | ✔                  |         |
+| Edit Course              | ✔           | ✔     | ✔          |        |                    |         |
+| Create new course        | ✔           | ✔     |            |        |                    |         |
+| Delete Course            | ✔           | ✔     |            |        |                    |         |
+| Server Administration    | ✔           | ✔     |            |        |                    |         |
+| Manage Non-Admin Users   | ✔           | ✔     |            |        |                    |         |
+| Manage Admin Users       | ✔           |       |            |        |                    |         |
+| Approve Passkeys         | ✔           |       |            |        |                    |         |
+
+## Course
+
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseManagementResource.java)
+[//]: # (Refers to ExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseResource.java)
+[//]: # (Refers to ExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java)
+
+| Feature                     | Instructor | Editor | Teaching Assistant |
+|-----------------------------|------------|--------|--------------------|
+| Exercises                   | ✔          | ✔      | ✔                  |
+| Exams                       | ✔          | ✔      | ✔                  |
+| Assessment Dashboard        | ✔          | ✔      | ✔                  |
+| Statistics                  | ✔          | ✔      | ✔                  |
+| Lectures                    | ✔          | ✔      | ✔                  |
+| Learning Goals              | ✔          |        |                    |
+| Instructor Course Dashboard | ✔          |        |                    |
+
+## Exercises
+
+### Common Prerequisites
+
+The following prerequisites apply to **all exercise types** unless otherwise noted:
+
+- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all exercises regardless of course membership
+- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
+
+### Common Visibility Rules
+
+The following visibility rules apply to **all exercise types**:
+
+**Exercise Release:**
+- Students can only view and participate in exercises after the `releaseDate` has passed
+- Teaching Assistants and above can view exercises before release
+
+**Submission Due Date:**
+- All users can only submit before the exercise `dueDate`
+- Submissions after due date are rejected (except for exam exercises which have separate handling)
+
+**Own Submission/Participation:**
+- Students can only view their own participations and submissions
+- Teaching Assistants and above can view all participations and submissions
+
+**Assessment Results:**
+- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
+- Assessor information is hidden from students until assessment is finalized
+- Long feedback texts follow the visibility of the result they belong to: students can open them once the assessment is completed and its due date has passed. Feedback configured as hidden, or as visible only after the due date, keeps that visibility. Exam results and their feedback are visible to students only after the results are published
+
+**Example Solution:**
+- Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
+- Teaching Assistants and above can view example solutions at any time
+
+<Callout variant={CalloutVariant.info}>
+  **Exam exercises** have separate submission handling and do not follow the standard due date rejection rules.
+</Callout>
+
+### General Functionality
+
+The following permissions apply to all exercise types. Exercise-type-specific sections below list only additional features or where permissions differ.
+
+[//]: # (Refers to ExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseResource.java)
+[//]: # (Refers to ParticipationResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ParticipationResource.java)
+[//]: # (Refers to SubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/SubmissionResource.java)
+[//]: # (Refers to ExampleSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/ExampleSubmissionResource.java)
+[//]: # (Refers to ResultResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/ResultResource.java)
+
+| Feature                             | Instructor          | Editor              | Teaching Assistant  | Student                    |
+|-------------------------------------|---------------------|---------------------|---------------------|----------------------------|
+| View Exercise (course)              | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
+| View Exercise (exam)                | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
+| Exercise Detail View                | ✔                   | ✔                   | ✔                   |                            |
+| Create Exercise                     | ✔                   | ✔                   |                     |                            |
+| Edit Exercise                       | ✔                   | ✔                   |                     |                            |
+| Delete Exercise                     | ✔                   |                     |                     |                            |
+| Import Exercise                     | ✔ (both courses)    | ✔ (both courses)    |                     |                            |
+| Search Exercises                    | ✔                   | ✔                   |                     |                            |
+| Scores                              | ✔                   | ✔                   | ✔                   |                            |
+| Participation                       | ✔                   | ✔                   | ✔                   |                            |
+| Start + Submit Exercise             | ✔                   | ✔                   | ✔                   | ✔                          |
+| Create / Update Example Submissions | ✔                   | ✔                   |                     |                            |
+| View / Assess Example Submissions   | ✔                   | ✔                   | ✔                   |                            |
+| Check Plagiarism                    | ✔                   | ✔                   |                     |                            |
+| Export All Submissions              | ✔                   |                     |                     |                            |
+| Add External Submission             | ✔                   |                     |                     |                            |
+
+<Callout variant={CalloutVariant.info}>
+  See the [Terminology](#terminology) section for definitions of "if in course" and "if enrolled" conditions.
+</Callout>
+
+
+<Callout variant={CalloutVariant.warning}>
+    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
+</Callout>
+
+For **course programming exercises**, tutors and editors can see student names and team identities on the
+participations page to help students with questions. The **Code** button opens a read-only repository view
+and provides clone URLs. Tutors can clone and pull student repositories, but cannot push or reset them.
+
+When **manual or semi-automatic assessment** is enabled, this support access ends at the **exercise due date**:
+non-instructors see anonymous participation IDs, and student names, identity search and sorting, and direct
+repository links are hidden. Tutors can no longer read or clone another student's live repository, including with
+previously issued tokens or SSH keys. They can still view submitted code and download anonymized submissions through
+the **Assessment Dashboard**. The restriction uses the exercise due date for the whole list, including participations
+with individual extensions and practice participations, so that those cannot expose identities during assessment.
+
+For automatically assessed course programming exercises, support access remains available after the due date.
+A manually assessed course programming exercise without a due date also keeps support access; anonymity starts if
+a due date is subsequently set and reached. The participations page explains the current access and any
+upcoming restriction.
+
+**Course quizzes** are always assessed automatically, so there is no tutor assessment to keep anonymous. Tutors and
+editors see student names next to the quiz scores on the participations page.
+
+Other exercise types and exam exercises, including exam quizzes, retain anonymous participation views for
+non-instructors. The participations list of an exam exercise is only available to instructors, and the direct
+participation lookups of other staff stay anonymous. Instructors retain named views, and participation owners retain
+access to their own details. Exports
+selected by student login or team name and identity exports continue to require instructor access.
+
+### Shared Submission and Assessment Features
+
+The following features are shared across **File Upload, Modeling, and Text** exercises. Programming and Quiz exercises have different submission and assessment models — see their dedicated sections.
+
+[//]: # (Refers to ExampleSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/ExampleSubmissionResource.java)
+[//]: # (Refers to AssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/AssessmentResource.java)
+
+<Callout variant={CalloutVariant.info}>
+    Double-blind assessment is supported: TAs cannot see student/team information during assessment. Students cannot see who assessed their submission.
+</Callout>
+
+| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student               |
+|---------------------------------|---------------------|---------------------|---------------------|-----------------------|
+| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                       |
+| View Course Exercises           | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    |                       |
+| Submit Exercise                 | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)   |
+| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| View Submission Editor Data     | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                       |
+| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                       |
+| List All Submissions            | ✔                   | ✔                   | ✔                   |                       |
+| Save Assessment                 | ✔                   | ✔                   | ✔                   |                       |
+| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                       |
+| Update After Complaint          | ✔                   | ✔                   | ✔                   |                       |
+| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded) |
+| Delete Assessment               | ✔                   |                     |                     |                       |
+| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                       |
+
+### Programming Exercises
+
+In addition to the [General Functionality](#general-functionality) above, Programming Exercises have these specific features:
+
+[//]: # (Refers to ProgrammingExerciseRetrievalResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java)
+[//]: # (Refers to ProgrammingAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingAssessmentResource.java)
+[//]: # (Refers to ProgrammingExerciseTaskResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseTaskResource.java)
+
+| Feature                         | Instructor       | Editor           | Teaching Assistant | Student         |
+|---------------------------------|------------------|------------------|--------------------|-----------------|
+| Clone Repository                | ✔                | ✔                | ✔                  |                 |
+| Download Repo                   | ✔                | ✔                | ✔                  |                 |
+| Export Instructor Repository    | ✔                | ✔                | ✔                  |                 |
+| Export Student Repository       | ✔ (all)          | ✔ (all)          | ✔ (all)            | ✔ (own only)    |
+| Export Solution (if published)  | ✔                | ✔                | ✔                  | ✔               |
+| Edit in Editor                  | ✔                | ✔                |                    |                 |
+| Manage Hints                    | ✔                | ✔                |                    |                 |
+| Update Structure Test Oracle    | ✔                | ✔                |                    |                 |
+| View Template/Solution Repos    | ✔                | ✔                |                    |                 |
+| Trigger Template/Solution Build | ✔                | ✔                |                    |                 |
+| Edit Test Cases                 | ✔                | ✔                |                    |                 |
+| View Test Cases                 | ✔                | ✔                | ✔                  |                 |
+| View Grading Statistics         | ✔                | ✔                |                    |                 |
+| Manage SCA Categories           | ✔                | ✔                |                    |                 |
+| Import SCA Configuration        | ✔ (both courses) | ✔ (both courses) |                    |                 |
+| Manage Submission Policies      | ✔                |                  |                    |                 |
+| View Submission Policy          | ✔                | ✔                | ✔                  | ✔               |
+| Re-evaluate All Results         | ✔                |                  |                    |                 |
+| Trigger All Builds              | ✔                |                  |                    |                 |
+| (Un-)lock All Repositories      | ✔                |                  |                    |                 |
+| Download All Repos              | ✔                |                  |                    |                 |
+| Cleanup                         | ✔                |                  |                    |                 |
+| Build Plan Access               | R + W            | R + W            | R                  |                 |
+| Participate in Exercise         | ✔                | ✔                | ✔                  | ✔ (if released) |
+| Trigger Own Build               | ✔                | ✔                | ✔                  | ✔               |
+| Get Exercise Tasks              | ✔                | ✔                | ✔                  |                 |
+
+<Callout variant={CalloutVariant.info}>
+    **Import SCA Configuration** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+#### Repository Access
+
+**Action Types:**
+- **READ** (fetch, pull)
+- **WRITE** (push)
+- **RESET** (reset to origin head)
+
+**Access to all repositories of a course:**
+
+| Admin / Instructor / Editor | Teaching Assistant | Student    |
+|-----------------------------|--------------------|------------|
+| *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
+
+For another student's assignment repository, tutor _READ_ access is subject to the support window described above:
+it ends at the exercise due date when manual or semi-automatic assessment is enabled. Tutors cannot directly access
+student assignment repositories of exam exercises. Read access to template, solution, test and auxiliary repositories
+is unaffected; anonymous assessment snapshots remain available.
+
+**Access on own repositories (graded participation):**
+
+| Context                                        | Instructor / Editor      | Teaching Assistant       | Student                  |
+|------------------------------------------------|--------------------------|--------------------------|--------------------------|
+| Before start                                   | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* | restricted               |
+| After start but before due date and not locked | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* |
+| After due date                                 | *READ*, *WRITE*, *RESET* | *READ*                   | *READ*                   |
+| Locked                                         | *READ*, *WRITE*, *RESET* | *READ*                   | *READ*                   |
+
+<Callout variant={CalloutVariant.info}>
+    **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
+</Callout>
+
+**Test and auxiliary repositories:** Teaching Assistants can read and pull. Creating, renaming and deleting files, committing and resetting require the Editor role.
+
+**Resetting a repository:** Students can reset their own repository while it is not locked, and their practice repository after the due date. Editors and Instructors can also reset locked repositories and the repositories of other users. Teaching Assistants can reset their own repositories as listed above, but not those of other users. A reset to the graded participation requires a graded participation of the same exercise.
+
+#### Additional Visibility Rules for Programming Exercises
+
+**Test Case Visibility:**
+- Test case visibility is controlled per test case via the `Visibility` enum: `ALWAYS`, `AFTER_DUE_DATE`, `NEVER`
+- Exam exercises default to `AFTER_DUE_DATE`; course exercises default to `ALWAYS`
+- The `releaseTestsWithExampleSolution` flag controls when tests are revealed
+
+**Solution Repository:**
+- Students can export the solution repository only after the example solution has been published
+- Before publication, Teaching Assistant role is required
+
+### Quiz Exercises
+
+In addition to the [General Functionality](#general-functionality) above, Quiz Exercises have these specific features:
+
+[//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
+[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizSubmissionResource.java)
+[//]: # (Refers to QuizAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizAssessmentResource.java)
+
+<Callout variant={CalloutVariant.info}>
+  Quiz exercises use a different submission and assessment model from other exercise types.
+  The [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) do not apply to quizzes.
+</Callout>
+
+| Feature                     | Instructor          | Editor              | Teaching Assistant  | Student             |
+|-----------------------------|---------------------|---------------------|---------------------|---------------------|
+| Set Visible                 | ✔                   | ✔                   |                     |                     |
+| Start Now                   | ✔                   | ✔                   |                     |                     |
+| End Now                     | ✔                   |                     |                     |                     |
+| Preview                     | ✔                   | ✔                   | ✔                   |                     |
+| Sample Solution             | ✔                   | ✔                   | ✔                   | ✔ (after quiz ends) |
+| View Statistics             | ✔                   | ✔                   | ✔                   |                     |
+| Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
+| Evaluate Quiz               | ✔                   |                     |                     |                     |
+| Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Delete Result               | ✔                   |                     |                     |                     |
+| Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
+| Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Start Participation         | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     |
+| Join Batch                  | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      |
+| Create Batch                | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (own)           | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (others')       | ✔                   |                     |                     |                     |
+| Training Questions          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit Training Answer      | ✔                   | ✔                   | ✔                   | ✔                   |
+| View Training Leaderboard   | ✔                   | ✔                   | ✔                   | ✔                   |
+| Update Leaderboard Settings | ✔                   | ✔                   | ✔                   | ✔                   |
+
+<Callout variant={CalloutVariant.warning}>
+    **End Now** requires Instructor role (higher than Start Now which only requires Editor).
+</Callout>
+
+#### Batch Mode
+
+Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVIDUAL**.
+
+[//]: # (Refers to QuizExerciseBatchResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseBatchResource.java)
+
+| Operation    | Mode         | Teaching Assistant                     | Student             |
+|--------------|--------------|----------------------------------------|---------------------|
+| Join Batch   | BATCHED/IND. | ✔ (if quiz started)                    | ✔ (if quiz started) |
+| Create Batch | BATCHED/IND. | ✔                                      |                     |
+| Start Batch  | BATCHED/IND. | ✔ (own batches) / INSTRUCTOR (others') |                     |
+
+<Callout variant={CalloutVariant.info}>
+    Batch operations are not allowed for exam quiz exercises - they are only available for course quizzes.
+</Callout>
+
+#### Additional Visibility Rules for Quizzes
+
+**Quiz Started:**
+- All users can join batches only after the quiz has started (and not ended)
+- Batch joining is not available for exam quiz exercises
+
+**Practice Mode:**
+- All users can submit in practice mode only after the quiz has ended
+- For exam exercises, practice mode is only available for practice exams
+- Quiz training offers the questions of a quiz only after the quiz due date has passed
+- Quiz exercises of an exam are started as part of the exam, not individually
+
+### File Upload Exercises
+
+File Upload Exercises follow the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above with no additional exercise-type-specific features.
+
+[//]: # (Refers to FileUploadExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/fileupload/web/FileUploadExerciseResource.java)
+
+### Modeling Exercises
+
+In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Modeling Exercises have these specific features:
+
+#### Apollon Diagram Templates
+Apollon diagram templates are course-level reusable diagram structures that instructors and course staff can create as reference materials for exercises.
+The permissions below apply to managing these templates, not to students creating their own models during exercise submissions.
+
+[//]: # (Refers to ApollonDiagramResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/modeling/web/ApollonDiagramResource.java)
+[//]: # (TODO clarify: should TAs really be able to save, create and edit template diagrams?)
+
+| Feature                 | Instructor | Editor | Teaching Assistant | Student |
+|-------------------------|------------|--------|--------------------|---------|
+| Create Template Diagram | ✔          | ✔      | ✔                  |         |
+| Edit Template Diagram   | ✔          | ✔      | ✔                  |         |
+| View Diagrams (Course)  | ✔          | ✔      | ✔                  |         |
+| Delete Template Diagram | ✔          | ✔      |                    |         |
+| View Diagram Title      | ✔          | ✔      | ✔                  | ✔       |
+| Convert Model to PDF    | ✔          | ✔      | ✔                  | ✔       |
+
+<Callout variant={CalloutVariant.info}>
+  **Note:** Students can create and submit their own Apollon models when participating in a modeling exercise.
+  This table only covers the creation and management of course-level template diagrams for instructional purposes.
+</Callout>
+
+
+### Text Exercises
+
+[//]: # (TODO Text Exercises are not using the annotations and hardcoded access rights checks -> should be refactored to be more consistent with the other exercise types)
+
+In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Text Exercises have these specific features:
+
+[//]: # (Refers to TextExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextExerciseResource.java)
+[//]: # (Refers to TextAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextAssessmentResource.java)
+[//]: # (Refers to TextAssessmentEventResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextAssessmentEventResource.java)
+
+| Feature                        | Instructor | Editor | Teaching Assistant | Student |
+|--------------------------------|------------|--------|--------------------|---------|
+| Submit Assessment              | ✔          | ✔      | ✔                  |         |
+| Save Example Assessment        | ✔          | ✔      |                    |         |
+| Delete Example Assessment      | ✔          | ✔      | ✔                  |         |
+| View Plagiarism Result         | ✔          | ✔      |                    |         |
+| Add Assessment Event           | ✔          | ✔      | ✔                  |         |
+| View Tutors Involved Analytics | ✔          |        |                    |         |
+| View Assessment Events (Admin) | Admin only |        |                    |         |
+
+<Callout variant={CalloutVariant.info}>
+    Text exercises also support Athena AI feedback suggestions (if enabled).
+</Callout>
+
+## Lectures
+
+[//]: # (Refers to LectureResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/lecture/web/LectureResource.java)
+[//]: # (Refers to LectureUnitResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/lecture/web/LectureUnitResource.java)
+
+| Feature                          | Instructor       | Editor           | Teaching Assistant | Student         |
+|----------------------------------|------------------|------------------|--------------------|-----------------|
+| View Lecture                     | ✔ (if in course) | ✔ (if in course) | ✔ (if in course)   | ✔ (if enrolled) |
+| View Lecture Details             | ✔ (if in course) | ✔ (if in course) | ✔ (if in course)   | ✔ (if enrolled) |
+| Create Lecture                   | ✔                | ✔                |                    |                 |
+| Edit Lecture                     | ✔                | ✔                |                    |                 |
+| Delete Lecture                   | ✔                |                  |                    |                 |
+| Import Lecture                   | ✔ (both courses) | ✔ (both courses) |                    |                 |
+| Search Lectures                  | ✔                | ✔                |                    |                 |
+| View Lecture Unit                | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| Add Lecture Unit                 | ✔                | ✔                |                    |                 |
+| Edit Lecture Unit                | ✔                | ✔                |                    |                 |
+| Delete Lecture Unit              | ✔                |                  |                    |                 |
+| Complete Lecture Unit            | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| View Lecture Unit Processing     | ✔                | ✔                |                    |                 |
+| Retry Lecture Unit Processing    | ✔                | ✔                |                    |                 |
+| View Attachment                  | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| View all Attachments for Lecture | ✔                | ✔                | ✔                  |                 |
+| Add Attachment (in unit)         | ✔                | ✔                |                    |                 |
+| Edit Attachment                  | ✔                | ✔                |                    |                 |
+| Delete Attachment                | ✔                |                  |                    |                 |
+
+<Callout variant={CalloutVariant.info}>
+    **Import Lecture** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  See the [Terminology](#terminology) section for definitions of "if in course", "if enrolled", and "if visible" conditions.
+</Callout>
+
+
+### Summary
+
+| Role       | Capabilities                                                     |
+|------------|------------------------------------------------------------------|
+| Student    | View lectures/units in enrolled courses (after release date)     |
+| TA         | Same as Student + see all units regardless of release date       |
+| Editor     | Same as TA + create/update lectures, units, and attachments      |
+| Instructor | Same as Editor + delete lectures, units, and attachments         |
+| Admin      | Full access to all lectures                                      |
+
+### Prerequisites
+
+- **Course Enrollment**: All lecture access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all lectures regardless of course membership
+
+### Visibility Rules
+
+Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table above are defined as follows:
+
+**Lecture Units and Attachments:**
+- Visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
+- Teaching Assistants and above can see all units/attachments regardless of release date
+- The details, transcript, slides and files of a unit follow this rule: the unit is visible to students after its own release date, and its attachment after the release date of the attachment
+- Students receive the student version of an attachment, which leaves out hidden slides. If an attachment has hidden slides but no student version, it is not available to students
+- Teaching Assistants and above receive the full version, including hidden slides
+
+**Search Lectures:**
+- Non-admin users only see lectures from courses where they have at least Editor role
+
+<Callout variant={CalloutVariant.warning}>
+  The `visibleDate` field on the `Lecture` entity is deprecated and will be removed.
+  All visibility control is managed at the lecture unit and attachment level via their `releaseDate` fields.
+</Callout>
+
+
+## Teams
+
+[//]: # (Refers to TeamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/TeamResource.java)
+
+| Feature                        | Instructor | Editor | Teaching Assistant |
+|--------------------------------|------------|--------|--------------------|
+| View Teams of an Exercise      | ✔          | ✔      | ✔                  |
+| Create Team                    | ✔          | ✔      | ✔                  |
+| Update Team                    | ✔          | ✔      | ✔                  |
+| Import Teams from a List       | ✔          | ✔      |                    |
+| Import Teams from an Exercise  | ✔          | ✔      |                    |
+| Delete Team                    | ✔          |        |                    |
+
+- The students of a team must be students of the course. Members that already belong to a team stay valid when the team is updated.
+- The owner of a team can be any member of the course.
+- Teams can be imported only from another exercise of the same course.
+
+## Communication
+
+All communication features are scoped to a course.
+
+- Users that are added to a channel, a one-to-one chat or a group chat must be members of the course. When several users are added at once, logins that do not belong to a course member are ignored.
+- The channel moderator role can be granted only to members of the course.
+- Saved posts can be listed and changed only for courses the user is a member of.
+
+## Plagiarism Cases
+
+Answers to the posts of a plagiarism case can be written by the Instructors of the course and by the student affected by the case. Only the author of an answer can edit or delete it, and Instructors can additionally change whether an answer resolves the post. Other roles, including Teaching Assistants and Editors, cannot answer. The plagiarism case must belong to the course of the request.
+
+## Exam
+
+[//]: # (Refers to ExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java)
+[//]: # (Refers to StudentExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/StudentExamResource.java)
+
+| Feature               | Instructor | Editor | Teaching Assistant |
+|-----------------------|------------|--------|--------------------|
+| Assessment Dashboard  | ✔          | ✔      | ✔                  |
+| View Exercise Groups  | ✔          | ✔      |                    |
+| Create Exercise Group | ✔          | ✔      |                    |
+| Edit Exercise Group   | ✔          | ✔      |                    |
+| Import Exercise Group | ✔          | ✔      |                    |
+| Delete Exercise Group | ✔          |        |                    |
+| Create Exam           | ✔          |        |                    |
+| Edit Exam             | ✔          |        |                    |
+| Import Exam           | ✔          |        |                    |
+| Archive Exam          | ✔          |        |                    |
+| Delete Exam           | ✔          |        |                    |
+| Exam Checklist        | ✔          |        |                    |
+| Scores                | ✔          |        |                    |
+| Test Run              | ✔          |        |                    |
+| Student Exams         | ✔          |        |                    |
+| Students              | ✔          |        |                    |
+
+**Participation:**
+- A student starts an exam exercise only through their own student exam: the exercise must be part of the student exam that the student has started and not yet handed in.
+- Instructors take part in exam exercises through test runs. A test run keeps its manual feedback visible to the instructor.
+- Students can see the results and the manual feedback of an exam exercise only after the results are published.

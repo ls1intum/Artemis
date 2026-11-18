@@ -1,0 +1,86 @@
+{
+    "artemisApp": {
+        "participation": {
+            "onlineEditor": "Online-Editor",
+            "home": {
+                "title": "Teilnahmen",
+                "createLabel": "Teilnahme erstellen"
+            },
+            "filterGroup": {
+                "submissions": "Abgaben",
+                "results": "Ergebnisse"
+            },
+            "created": "Teilnahme erstellt mit ID {{ param }}",
+            "updated": "Teilnahme von {{ param }} aktualisiert",
+            "deleted": "Teilnahme von {{ param }} gelöscht",
+            "delete": {
+                "question": "Soll die Teilnahme von <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?"
+            },
+            "cleanupBuildPlan": {
+                "question": "Soll der Build-Plan der Teilnahme von <strong>{{ title }}</strong> wirklich gelöscht werden?"
+            },
+            "addPresentation": {
+                "label": "Füge Präsentation hinzu",
+                "error": "Die Präsentation konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
+            },
+            "savePresentation": {
+                "label": "Sichere Präsentation",
+                "error": "Die Präsentationsnote konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
+            },
+            "removePresentation": {
+                "label": "Entferne Präsentation",
+                "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
+            },
+            "loadError": "Teilnahmen konnten nicht geladen werden. Bitte versuche es erneut.",
+            "updateDueDates": {
+                "success": "Die individuelle Einreichungsfrist für {{ name }} wurde aktualisiert.",
+                "error": "Die individuelle Einreichungsfrist konnte nicht aktualisiert werden."
+            },
+            "detail": {
+                "title": "Teilnahme"
+            },
+            "errors": {
+                "preconditionsNotMet": "Die Voraussetzungen für die Anforderung von KI-Feedback sind nicht erfüllt."
+            },
+            "participationId": "Teilnahme-ID",
+            "repository": "Repository",
+            "buildPlanId": "Build-Plan-Link",
+            "initializationState": "Status",
+            "initializationDate": "Teilnahme Start",
+            "individualDueDate": "Einreichungsfrist",
+            "noIndividualDueDate": "Keine Einreichungsfrist",
+            "editIndividualDueDate": "Einreichungsfrist bearbeiten",
+            "initializationNotYetStarted": "Noch nicht gestartet",
+            "presentationScore": "Präsentation",
+            "presentationGrade": "Präsentationsnote",
+            "results": "Ergebnisse",
+            "student": "Student",
+            "team": "Team",
+            "students": "Studierende",
+            "practice": "Übungsmodus",
+            "templateParticipation": "Template-Teilnahme",
+            "solutionParticipation": "Lösungsteilnahme",
+            "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
+            "exercise": "Übung",
+            "deleteRepository": "Repository löschen",
+            "deleteBuildPlan": "Build-Plan löschen",
+            "participationSubmission": {
+                "submissionType": "Abgabentyp",
+                "submissionDate": "Abgabedatum",
+                "resultCount": "Anzahl Ergebnisse",
+                "results": "Ergebnisse",
+                "assessor": "Bewertet von",
+                "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
+                "action": "Aktion",
+                "delete": "Soll diese Abgabe wirklich gelöscht werden?"
+            },
+            "tutorAccess": {
+                "untilDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Nach der Einreichungsfrist der Aufgabe ({{ dueDate }}) werden Namen und der direkte Repositoryzugriff ausgeblendet, da die manuelle Bewertung aktiviert ist.",
+                "available": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Diese Aufgabe wird automatisch bewertet, deshalb bleibt der Zugriff nach der Einreichungsfrist erhalten.",
+                "anonymousAssessment": "Die Einreichungsfrist der Aufgabe ist abgelaufen und die manuelle Bewertung ist aktiviert. Namen der Studierenden und der direkte Repositoryzugriff sind ausgeblendet, damit die Bewertung anonym bleibt. Im Bewertungsdashboard kannst du weiterhin anonymisierte Einreichungen ansehen und herunterladen.",
+                "assessmentDashboard": "Bewertungsdashboard öffnen",
+                "noDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Die manuelle Bewertung ist aktiviert, aber für die Aufgabe ist keine Einreichungsfrist festgelegt. Sobald eine Frist festgelegt wird und abläuft, werden Namen und der direkte Repositoryzugriff ausgeblendet."
+            }
+        }
+    }
+}

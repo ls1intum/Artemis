@@ -1,0 +1,51 @@
+// Shared styles for version metadata panels (shared + programming).
+// Import this file in each metadata component's SCSS.
+
+@mixin version-meta-panel-overrides {
+    .version-meta-panel {
+        display: block;
+    }
+}
+
+@mixin version-metadata-base {
+    :host {
+        display: block;
+    }
+
+    .metadata-section {
+        padding: 0.25rem 0;
+    }
+
+    .metadata-section h4 {
+        margin: 0 0 0.6rem;
+        font-size: 1.03rem;
+        font-weight: 700;
+    }
+
+    .metadata-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .metadata-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        align-items: baseline;
+        column-gap: 1.25rem;
+    }
+
+    .metadata-row__label {
+        color: var(--tumaet-ui-muted-color);
+        font-size: 0.9rem;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .metadata-row__value {
+        text-align: left;
+        font-weight: 500;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+}

@@ -1,0 +1,4 @@
+(library
+ (name overrides)
+ (flags
+  (:standard -nopervasives)))

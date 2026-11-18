@@ -1,0 +1,9 @@
+@for (option of normalizedOptions(); track option.value) {
+    <button type="button" [class]="optionClasses(option.selected)" [attr.aria-pressed]="option.selected" [disabled]="effectiveDisabled()" (click)="select(option)">
+        @if (itemTemplate(); as template) {
+            <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: option.raw }" />
+        } @else {
+            {{ option.label }}
+        }
+    </button>
+}

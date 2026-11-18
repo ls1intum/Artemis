@@ -1,0 +1,36 @@
+package de.tum.cit.aet.artemis.localvc.service.ssh;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.PublicKey;
+
+import org.apache.commons.codec.digest.MessageDigestAlgorithms;
+import org.apache.sshd.common.config.keys.KeyUtils;
+import org.apache.sshd.common.digest.BuiltinDigests;
+
+public class HashUtils {
+
+    public static String getSha512Fingerprint(PublicKey key) {
+        return KeyUtils.getFingerPrint(BuiltinDigests.sha512.create(), key);
+    }
+
+    public static String getSha256Fingerprint(PublicKey key) {
+        return KeyUtils.getFingerPrint(BuiltinDigests.sha256.create(), key);
+    }
+
+    /**
+     * Hashes a secret using SHA-256.
+     *
+     * @param secret the secret to hash
+     * @return the hashed secret
+     */
+    public static byte[] hashSha256(String secret) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(MessageDigestAlgorithms.SHA_256);
+            return digest.digest(secret.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to hash token", e);
+        }
+    }
+}

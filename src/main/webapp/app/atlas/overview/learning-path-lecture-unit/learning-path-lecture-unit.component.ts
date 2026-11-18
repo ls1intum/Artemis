@@ -1,0 +1,75 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
+import { lastValueFrom } from 'rxjs';
+import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
+import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-learning-path-lecture-unit',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TextUnitComponent,
+        AttachmentVideoUnitComponent,
+        OnlineUnitComponent,
+        DiscussionSectionComponent,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
+        ExerciseUnitComponent,
+    ],
+    templateUrl: './learning-path-lecture-unit.component.html',
+})
+export class LearningPathLectureUnitComponent {
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly alertService = inject(AlertService);
+
+    protected readonly LectureUnitType = LectureUnitType;
+
+    readonly courseId = input.required<number>();
+    readonly lectureUnitId = input.required<number>();
+    readonly isLoading = signal<boolean>(false);
+    readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
+
+    readonly lecture = computed(() => this.lectureUnit()?.lecture);
+
+    readonly isCommunicationEnabled = computed(() => isCommunicationEnabled(this.lecture()?.course));
+
+    constructor() {
+        effect(() => {
+            const lectureUnitId = this.lectureUnitId();
+            void untracked(() => this.loadLectureUnit(lectureUnitId));
+        });
+    }
+
+    async loadLectureUnit(lectureUnitId: number): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
+            this.lectureUnit.set(lectureUnit);
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
+        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent, () => {
+            // Publish a new reference so the unit card reacts (zoneless change detection), then propagate to the navigation.
+            this.lectureUnit.update((unit) => (unit ? cloneWith(unit, { completed: completionEvent.completed }) : unit));
+            this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
+        });
+    }
+}

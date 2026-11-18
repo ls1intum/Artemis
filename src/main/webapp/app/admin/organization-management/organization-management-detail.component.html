@@ -1,0 +1,86 @@
+<div>
+    <h5 *adminTitleBarTitle id="organization-detail-heading" class="mb-0">
+        <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization().name }}</b
+        >]
+    </h5>
+    <div class="p-6!">
+        <dl class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-x-4 gap-y-1">
+            <dt class="font-semibold"><span jhiTranslate="global.field.id"></span></dt>
+            <dd>{{ organization().id ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
+            <dd>{{ organization().name ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
+            <dd>{{ organization().shortName ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
+            <dd>{{ organization().url ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
+            <dd>{{ organization().logoUrl ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
+            <dd>{{ organization().description ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
+            <dd>{{ organization().emailPattern ?? '-' }}</dd>
+        </dl>
+
+        <h3 class="mt-6!">
+            <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
+        </h3>
+        <tumaet-ui-table
+            [columns]="courseColumns()"
+            [rows]="courses()"
+            [totalRecords]="coursesTotal()"
+            [trackBy]="trackByCourseId"
+            [loading]="coursesLoading()"
+            (dataRequest)="loadCourses($event)"
+            [striped]="true"
+        />
+
+        <div class="mt-6! flex items-center justify-between">
+            <h3 class="mb-0">
+                <span jhiTranslate="artemisApp.organizationManagement.users"></span>
+            </h3>
+            <button tumAetUiButton type="button" size="small" (click)="openAddUsersModal()">
+                <fa-icon [icon]="faUserPlus" class="me-1" />
+                <span jhiTranslate="artemisApp.organizationManagement.userSearch.addUsersButton"></span>
+            </button>
+        </div>
+        <tumaet-ui-table
+            [columns]="userColumns()"
+            [rows]="users()"
+            [totalRecords]="usersTotal()"
+            [trackBy]="trackByUserId"
+            [loading]="usersLoading()"
+            [rowActions]="userActions"
+            (dataRequest)="loadUsers($event)"
+            [striped]="true"
+        />
+    </div>
+</div>
+
+<ng-template #userIdTemplate let-cell>
+    <a [routerLink]="['/admin/user-management', cell.data.login]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #courseIdTemplate let-cell>
+    <a [routerLink]="['/course-management', cell.value]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #userActions let-user>
+    <button
+        type="button"
+        tumAetUiButton
+        severity="danger"
+        size="small"
+        [renderButtonStyle]="false"
+        jhiDeleteButton
+        [actionType]="ActionType.Remove"
+        [entityTitle]="user.login || user.email || ''"
+        deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
+        (delete)="removeFromOrganization(user)"
+        [dialogError]="dialogError$"
+        data-testid="remove-user-btn"
+    >
+        <fa-icon [icon]="faUserSlash" />
+    </button>
+</ng-template>
+
+<jhi-user-registration-modal titleKey="artemisApp.organizationManagement.addUserModal.title" [searchFn]="searchFn" [registerFn]="registerFn" (registered)="onUsersRegistered()" />

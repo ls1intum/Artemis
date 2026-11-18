@@ -1,0 +1,1298 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { computed } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { MockService } from 'ng-mocks';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
+import { User } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { provideHttpClient } from '@angular/common/http';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
+
+describe('AccountService', () => {
+    let accountService: AccountService;
+    let httpService: MockHttpService;
+    let getStub: ReturnType<typeof vi.spyOn>;
+    let httpMock: HttpTestingController;
+
+    const getUserUrl = 'api/core/public/account';
+    const updateLanguageUrl = 'api/core/public/account/change-language';
+    const user = { id: 1 } as User;
+    const user2 = { id: 2 } as User;
+    const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
+
+    const pendingEmailChange: PendingEmailChangeDTO = {
+        newEmail: 'new@example.org',
+        requestedAt: '2026-10-13T10:00:00Z',
+        expiresAt: '2026-10-14T10:00:00Z',
+        currentAddressConfirmed: false,
+        newAddressConfirmed: true,
+    };
+
+    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN];
+    const course = { id: 1 } as Course;
+    const exercise = { course } as Exercise;
+    const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
+    let result: boolean;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                { provide: WebsocketService, useValue: MockService(WebsocketService) },
+                { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideRouter([]),
+                { provide: AlertService, useValue: MockService(AlertService) },
+            ],
+        });
+        accountService = TestBed.inject(AccountService);
+        httpService = new MockHttpService();
+        httpMock = TestBed.inject(HttpTestingController);
+        getStub = vi.spyOn(httpService, 'get');
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('should fetch the user on identity if the userIdentity is not defined yet', async () => {
+        const identityPromise = accountService.identity();
+
+        const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        req.flush(user);
+
+        const userReceived = await identityPromise;
+
+        expect(userReceived).toEqual(user);
+        expect(accountService.userIdentity()).toEqual(user);
+        expect(accountService.isAuthenticated()).toBe(true);
+    });
+
+    it('should handle user SSH public key correctly', () => {
+        const sshKey = new UserSshPublicKey();
+        sshKey.id = 123;
+        sshKey.label = 'test-label';
+
+        expect(sshKey.id).toBe(123);
+        expect(sshKey.label).toBe('test-label');
+    });
+
+    it('should fetch the user on identity if the userIdentity is defined yet (force=true)', async () => {
+        accountService.userIdentity.set(user);
+        expect(accountService.userIdentity()).toEqual(user);
+        expect(accountService.isAuthenticated()).toBe(true);
+
+        const identityPromise = accountService.identity(true);
+
+        const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        req.flush(user2);
+
+        const userReceived = await identityPromise;
+
+        expect(userReceived).toEqual(user2);
+        expect(accountService.userIdentity()).toEqual(user2);
+        expect(accountService.isAuthenticated()).toBe(true);
+    });
+
+    it('should NOT fetch the user on identity if the userIdentity is defined (force=false)', async () => {
+        accountService.userIdentity.set(user);
+        expect(accountService.userIdentity()).toEqual(user);
+        expect(accountService.isAuthenticated()).toBe(true);
+        getStub.mockReturnValue(of({ body: user2 }));
+
+        const userReceived = await accountService.identity(false);
+
+        expect(getStub).not.toHaveBeenCalled();
+        expect(userReceived).toEqual(user);
+        expect(accountService.userIdentity()).toEqual(user);
+        expect(accountService.isAuthenticated()).toBe(true);
+    });
+
+    it('should update management access after course roles are granted and revoked without logging in again', async () => {
+        const guard = TestBed.inject(UserRouteAccessService);
+        const showsTutorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
+        const showsInstructorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR));
+
+        for (const roles of [[], ['TEACHING_ASSISTANT'], ['INSTRUCTOR'], []]) {
+            const refreshedAccount = accountService.identity(true);
+            httpMock.expectOne({ method: 'GET', url: getUserUrl }).flush({
+                id: 1,
+                authorities: [Authority.STUDENT],
+                courseRoles: [{ courseId: 1, roles }],
+            });
+            await refreshedAccount;
+
+            expect(accountService.isAuthenticated()).toBe(true);
+            expect(showsTutorControls()).toBe(roles.length > 0);
+            expect(showsInstructorControls()).toBe(roles.includes('INSTRUCTOR'));
+            await expect(guard.checkLogin(IS_AT_LEAST_TUTOR, '/course-management/1')).resolves.toBe(roles.length > 0);
+            await expect(guard.checkLogin(IS_AT_LEAST_INSTRUCTOR, '/course-management/1/edit')).resolves.toBe(roles.includes('INSTRUCTOR'));
+        }
+    });
+
+    it('should authenticate a user', () => {
+        expect(accountService.userIdentity()).toBeUndefined();
+        expect(accountService.isAuthenticated()).toBe(false);
+
+        accountService.authenticate(user);
+
+        expect(accountService.userIdentity()).toEqual(user);
+    });
+
+    describe('test authority check', () => {
+        const usedAuthorities: Authority[] = [];
+        it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
+            usedAuthorities.push(authority);
+
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+        });
+
+        it.each(authorities)('should return false if authenticated, user id but no authorities are set', async (authority: Authority) => {
+            accountService.userIdentity.set(user);
+            usedAuthorities.push(authority);
+
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+        });
+
+        it.each(authorities)('should return true if user is required', async (authority: Authority) => {
+            accountService.userIdentity.set(user3);
+            usedAuthorities.push(authority);
+
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
+        });
+
+        it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
+            accountService.userIdentity.set({ id: authorities.indexOf(authority), authorities: [authority] } as User);
+
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
+        });
+
+        it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
+            const index = authorities.indexOf(authority);
+            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % authorities.length]] } as User);
+
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+        });
+
+        it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+        });
+
+        describe('of the teaching roles', () => {
+            const inCourse = (...roles: string[]) => ({ id: 7, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles }] }) as unknown as User;
+
+            it.each([
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_TUTOR, true],
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_EDITOR, false],
+                ['EDITOR', IS_AT_LEAST_EDITOR, true],
+                ['EDITOR', IS_AT_LEAST_INSTRUCTOR, false],
+                ['INSTRUCTOR', IS_AT_LEAST_INSTRUCTOR, true],
+                ['STUDENT', IS_AT_LEAST_TUTOR, false],
+            ])('should answer a user with the course role %s for the authority list of %s as %s', (role, list, expected) => {
+                accountService.userIdentity.set(inCourse(role));
+
+                expect(accountService.hasAnyAuthorityDirect(list as readonly Authority[])).toBe(expected);
+            });
+
+            it('should count a role in any of the courses', () => {
+                accountService.userIdentity.set({
+                    id: 7,
+                    authorities: [Authority.STUDENT],
+                    courseRoles: [
+                        { courseId: 1, roles: ['STUDENT'] },
+                        { courseId: 2, roles: ['INSTRUCTOR'] },
+                    ],
+                } as unknown as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
+
+            it('should ignore a teaching authority that the server sends without a course role', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.INSTRUCTOR, Authority.TUTOR, Authority.EDITOR] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR)).toBe(false);
+            });
+
+            it('should leave the global authorities to the authority list of the user', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.ADMIN] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)).toBe(true);
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
+        });
+    });
+
+    describe('test isAtLeastTutorInCourse', () => {
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['TEACHING_ASSISTANT', 'EDITOR', 'INSTRUCTOR'])('should return true if user has at least TA role in course', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAtLeastEditorInCourse', () => {
+        it('should return false if user is not editor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user has at least editor role in course', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAtLeastInstructorInCourse', () => {
+        it('should return false if user is not editor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is instructor', () => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe.each([Authority.ADMIN, Authority.SUPER_ADMIN])('course administrator access for %s', (authority) => {
+        const helpers = ['isAtLeastTutorInCourseWithId', 'isAtLeastEditorInCourseWithId', 'isAtLeastInstructorInCourseWithId'] as const;
+
+        function expectCourseAccess(expected: readonly boolean[]) {
+            helpers.forEach((helper, index) => expect(accountService[helper](1)).toBe(expected[index]));
+            expect(accountService.isAdmin()).toBe(true);
+        }
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        });
+
+        it.each([
+            { session: 'password only', loggedInWithPasskey: false, passkeySuperAdminApproved: true },
+            { session: 'unapproved passkey', loggedInWithPasskey: true, passkeySuperAdminApproved: false },
+        ])('should deny course overrides for $session without target membership', ({ loggedInWithPasskey, passkeySuperAdminApproved }) => {
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey, passkeySuperAdminApproved } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it.each([
+            { role: 'TEACHING_ASSISTANT', expected: [true, false, false] },
+            { role: 'EDITOR', expected: [true, true, false] },
+            { role: 'INSTRUCTOR', expected: [true, true, true] },
+        ])('should retain the explicit $role course role without elevation', ({ role, expected }) => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 1, roles: [role] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess(expected);
+        });
+
+        it('should not reuse an instructor role from another course', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 2, roles: ['INSTRUCTOR'] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it('should grant all overrides with an approved passkey', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [],
+                loggedInWithPasskey: true,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([true, true, true]);
+        });
+
+        it('should grant all overrides when a passkey is not required', () => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(false);
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey: false } as User);
+            expectCourseAccess([true, true, true]);
+        });
+    });
+
+    describe('hasAdministratorAccess', () => {
+        it.each([
+            { authority: Authority.ADMIN, required: false, loggedInWithPasskey: false, passkeySuperAdminApproved: false, expected: true },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: false, passkeySuperAdminApproved: true, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: false, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.SUPER_ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.INSTRUCTOR, required: false, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: false },
+        ])('checks effective administrator rights for $authority (required=$required, passkey=$loggedInWithPasskey, approved=$passkeySuperAdminApproved)', (session) => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(session.required);
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [session.authority],
+                loggedInWithPasskey: session.loggedInWithPasskey,
+                passkeySuperAdminApproved: session.passkeySuperAdminApproved,
+            } as User);
+
+            expect(accountService.hasAdministratorAccess()).toBe(session.expected);
+        });
+    });
+
+    describe('test isAtLeastTutorForExercise', () => {
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['TEACHING_ASSISTANT', 'EDITOR', 'INSTRUCTOR'])('should return true if user has at least TA role', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAtLeastEditorForExercise', () => {
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user has at least editor role', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAtLeastInstructorForExercise', () => {
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is instructor', () => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }], authorities: [Authority.STUDENT] } as User);
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAdmin', () => {
+        it('should return false if user is not admin', () => {
+            accountService.userIdentity.set(user2);
+
+            result = accountService.isAdmin();
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity.set({ id: 10, authorities } as User);
+
+            result = accountService.isAdmin();
+
+            expect(result).toBe(true);
+        });
+    });
+
+    it('should update authority signals when the user identity changes', () => {
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(false);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: ['TEACHING_ASSISTANT'] }] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.SUPER_ADMIN] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(true);
+        expect(accountService.isSuperAdmin()).toBe(true);
+    });
+
+    it('should set access rights for referenced course', () => {
+        accountService.userIdentity.set({ id: 10, authorities } as User);
+
+        accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
+
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    it('should set access rights for referenced course in exam mode', () => {
+        accountService.userIdentity.set({ id: 10, authorities } as User);
+
+        accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
+
+        expect(examExercise.isAtLeastEditor).toBe(true);
+        expect(examExercise.isAtLeastInstructor).toBe(true);
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBe(true);
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    it('should set access rights for referenced exercise', () => {
+        course.exercises = [exercise];
+        accountService.userIdentity.set({ id: 10, authorities } as User);
+
+        accountService.setAccessRightsForCourseAndReferencedExercises(course);
+
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    describe('test isPasskeyRequiredForAdministratorFeatures', () => {
+        const activateModuleFeatures = (...features: string[]) =>
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature: string) => features.includes(feature));
+
+        it('should require a passkey when passkeys are enabled and required for administrator features', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(true);
+        });
+
+        it('should not require a passkey when administrator features do not require one', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(false);
+        });
+
+        it('should not require a passkey when passkeys are disabled', () => {
+            activateModuleFeatures(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+            expect(accountService.isPasskeyRequiredForAdministratorFeatures()).toBe(false);
+        });
+    });
+
+    describe('test hasEditorAccess', () => {
+        let passkeyRequired: boolean;
+
+        beforeEach(() => {
+            passkeyRequired = true;
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockImplementation(() => passkeyRequired);
+        });
+
+        it('should deny editor access to a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny editor access to a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant editor access to a user with the course role %s without a passkey', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
+
+        it.each([[Authority.ADMIN], [Authority.SUPER_ADMIN]])('should deny editor access to a user with the authority %s without the required passkey', (authority) => {
+            accountService.userIdentity.set({ id: 1, authorities: [authority], loggedInWithPasskey: false, passkeySuperAdminApproved: true } as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it('should deny editor access to an administrator whose passkey is not approved', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], loggedInWithPasskey: true, passkeySuperAdminApproved: false } as User);
+            expect(accountService.hasEditorAccess()).toBe(false);
+        });
+
+        it('should grant editor access to an administrator who signed in with an approved passkey', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], loggedInWithPasskey: true, passkeySuperAdminApproved: true } as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
+
+        it('should grant editor access to an administrator when administrator features require no passkey', () => {
+            passkeyRequired = false;
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
+            expect(accountService.hasEditorAccess()).toBe(true);
+        });
+    });
+
+    describe('test mayCreateAgentTokens', () => {
+        it('should deny a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(true);
+        });
+
+        it('should deny an administrator even if they teach a course', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+    });
+
+    describe('test isOwnerOfParticipation', () => {
+        let participation: Participation;
+        const user4 = { login: 'user' } as User;
+        const team = { students: [user4] } as Team;
+        it('should return false if student is not owner', () => {
+            participation = { student: user } as Participation;
+            accountService.userIdentity.set(user4);
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if student is owner', () => {
+            participation = { student: user4 } as Participation;
+            accountService.userIdentity.set(user4);
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return false if student is not part of the team', () => {
+            participation = { team } as Participation;
+            accountService.userIdentity.set(user);
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if student is part of the team', () => {
+            participation = { team } as Participation;
+            accountService.userIdentity.set(user4);
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test getImageUrl', () => {
+        let url: string | undefined;
+        it('should return undefined if not authenticated', () => {
+            url = accountService.getImageUrl();
+
+            expect(url).toBeUndefined();
+        });
+
+        it('should return image url if authenticated', () => {
+            const expectedUrl = 'profiles-pictures/example.png';
+            accountService.userIdentity.set({ imageUrl: expectedUrl } as User);
+
+            url = accountService.getImageUrl();
+
+            expect(url).toBe(`api/core/files/${expectedUrl}`);
+        });
+    });
+
+    describe('test setImageUrl', () => {
+        it('should emit a NEW identity reference so the signal notifies (upload / edit)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl('new.png');
+
+            const after = accountService.userIdentity();
+            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBe('new.png');
+            expect(after?.login).toBe('user');
+        });
+
+        it('should emit a NEW identity reference when clearing the image (delete)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl(undefined);
+
+            const after = accountService.userIdentity();
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBeUndefined();
+        });
+
+        it('should trigger a dependent computed to recompute', () => {
+            accountService.userIdentity.set({ imageUrl: 'old.png' } as User);
+            const derived = computed(() => accountService.userIdentity()?.imageUrl);
+            expect(derived()).toBe('old.png');
+
+            accountService.setImageUrl('new.png');
+            expect(derived()).toBe('new.png');
+
+            accountService.setImageUrl(undefined);
+            expect(derived()).toBeUndefined();
+        });
+
+        it('should be a no-op when there is no user identity', () => {
+            accountService.userIdentity.set(undefined);
+            expect(() => accountService.setImageUrl('x.png')).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+    });
+
+    it('should call update language url with language key', () => {
+        accountService.updateLanguage('EN').subscribe(() => {});
+
+        const req = httpMock.expectOne({ method: 'POST', url: updateLanguageUrl });
+        req.flush({});
+        expect(req.request.body).toBe('EN');
+    });
+
+    describe('test prefilled username', () => {
+        it('should set prefilled username', () => {
+            accountService.setPrefilledUsername('user');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('user');
+        });
+
+        it('should clear prefilledusername after get', () => {
+            accountService.setPrefilledUsername('test');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('test');
+            expect(accountService.getAndClearPrefilledUsername()).toBeUndefined();
+        });
+    });
+
+    describe('test token related user retrieval logic', () => {
+        let fetchStub: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            // @ts-ignore spying on private method
+            fetchStub = vi.spyOn(accountService, 'fetch');
+        });
+
+        it('should not retrieve user if vcs token is missing but not required', () => {
+            user.vcsAccessToken = undefined;
+            accountService.userIdentity.set(user);
+
+            accountService.identity();
+            expect(fetchStub).not.toHaveBeenCalled();
+        });
+
+        it('should not retrieve user if vcs token is present', () => {
+            user.vcsAccessToken = 'iAmAToken';
+            accountService.userIdentity.set(user);
+
+            accountService.identity();
+            expect(fetchStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('test vcs token related logic', () => {
+        afterEach(() => {
+            httpMock.verify();
+        });
+
+        it('should delete user VCS access token', () => {
+            accountService.deleteUserVcsAccessToken().subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
+            req.flush(null);
+        });
+
+        it('should add a new VCS access token', () => {
+            const expiryDate = '2024-10-10';
+
+            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
+                expect(response.status).toBe(200);
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            req.flush({ status: 200 });
+        });
+
+        it('should get VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.getVcsAccessToken(participationId).subscribe((response) => {
+                expect(response.body).toEqual(token);
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush(token);
+        });
+
+        it('should create VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.createVcsAccessToken(participationId).subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush(token);
+        });
+    });
+
+    describe('test external LLM usage acceptance', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            // Set a fixed date for consistent testing
+            vi.setSystemTime(new Date('2025-11-28T12:00:00'));
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should set selectedLLMUsageTimestamp when user identity exists', () => {
+            // Setup user identity
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            // Call the function
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            // Check if the date was set correctly
+            const acceptedDate = accountService.userIdentity()?.selectedLLMUsageTimestamp;
+            expect(acceptedDate).toBeDefined();
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2025-11-28');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            // Ensure userIdentity is undefined
+            accountService.userIdentity.set(undefined);
+
+            // Verify that calling the function doesn't throw an error
+            expect(() => accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
+        });
+
+        it('should set selectedLLMUsage to CLOUD_AI', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set selectedLLMUsage to LOCAL_AI', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set selectedLLMUsage to NO_AI', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        describe('restoreUserLLMSelectionDecision', () => {
+            it('should restore "no decision yet" without stamping a timestamp', () => {
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+            });
+
+            it('should restore a previous decision and its original timestamp verbatim', () => {
+                const originalTimestamp = dayjs().subtract(5, 'day');
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+
+                accountService.restoreUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI, originalTimestamp);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(originalTimestamp);
+            });
+
+            it('should preserve unrelated user properties', () => {
+                accountService.userIdentity.set({ id: 42, login: 'ab12cde' } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.id).toBe(42);
+                expect(accountService.userIdentity()?.login).toBe('ab12cde');
+            });
+        });
+
+        it('should update existing selectedLLMUsage value', () => {
+            accountService.userIdentity.set({
+                id: 1,
+                selectedLLMUsage: LLMSelectionDecision.NO_AI,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should update timestamp even if selectedLLMUsage was previously set', () => {
+            const oldTimestamp = dayjs('2024-01-01');
+            accountService.userIdentity.set({
+                id: 1,
+                selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
+                selectedLLMUsageTimestamp: oldTimestamp,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            const newTimestamp = accountService.userIdentity()?.selectedLLMUsageTimestamp;
+            expect(newTimestamp).toBeDefined();
+            expect(newTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+            expect(newTimestamp).not.toEqual(oldTimestamp);
+        });
+
+        it('should return undefined when userIdentity is null', () => {
+            accountService.userIdentity.set(undefined);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should preserve other user properties when updating LLM selection', () => {
+            const originalUser = {
+                id: 1,
+                login: 'testuser',
+                authorities: [Authority.ADMIN],
+                email: 'test@example.com',
+            } as User;
+
+            accountService.userIdentity.set(originalUser);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            const updatedUser = accountService.userIdentity();
+            expect(updatedUser?.id).toBe(1);
+            expect(updatedUser?.login).toBe('testuser');
+            expect(updatedUser?.authorities).toEqual([Authority.ADMIN]);
+            expect(updatedUser?.email).toBe('test@example.com');
+        });
+
+        it('should set both timestamp and decision in a single update', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            const user = accountService.userIdentity();
+            expect(user?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(user?.selectedLLMUsageTimestamp).toBeDefined();
+            expect(user?.selectedLLMUsageTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+        });
+
+        it('should handle multiple consecutive updates correctly', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+    });
+
+    describe('test save', () => {
+        it('should save user data and return the pending email change', () => {
+            const userToSave = { id: 1, login: 'testuser' } as User;
+            let result: UpdateBasicInformationResponseDTO | undefined;
+
+            accountService.save(userToSave).subscribe((response) => (result = response));
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
+            expect(req.request.body).toEqual(userToSave);
+            req.flush({ pendingEmailChange: pendingEmailChange });
+            expect(result).toEqual({ pendingEmailChange });
+        });
+
+        it('should return no pending email change when the server has none', () => {
+            let result: UpdateBasicInformationResponseDTO | undefined;
+
+            accountService.save({ id: 1 } as User).subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' }).flush({ pendingEmailChange: null });
+            expect(result).toEqual({ pendingEmailChange: null });
+        });
+    });
+
+    describe('pending email change', () => {
+        it('should load the pending email change', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
+        });
+
+        it('should return undefined when no email change is pending', () => {
+            let result: PendingEmailChangeDTO | undefined = pendingEmailChange;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(null, { status: 204, statusText: 'No Content' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should cancel the pending email change', () => {
+            let completed = false;
+
+            accountService.cancelPendingEmailChange().subscribe(() => (completed = true));
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/account/pending-email-change' }).flush(null);
+            expect(completed).toBe(true);
+        });
+
+        it('should resend the confirmation mails', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.resendPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'POST', url: 'api/account/pending-email-change/resend' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
+        });
+    });
+
+    describe('test setImageUrl', () => {
+        it('should set image url when user identity exists', () => {
+            accountService.userIdentity.set({ id: 1 } as User);
+
+            accountService.setImageUrl('new-image.png');
+
+            expect(accountService.userIdentity()?.imageUrl).toBe('new-image.png');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            accountService.userIdentity.set(undefined);
+
+            expect(() => accountService.setImageUrl('new-image.png')).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+    });
+
+    describe('test isSuperAdmin', () => {
+        it('should return false if user is not super admin', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT] } as User);
+
+            expect(accountService.isSuperAdmin()).toBe(false);
+        });
+
+        it('should return true if user is super admin', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.SUPER_ADMIN] } as User);
+
+            expect(accountService.isSuperAdmin()).toBe(true);
+        });
+    });
+
+    describe('test getAuthenticationState', () => {
+        it('should return observable of user', () => {
+            accountService.userIdentity.set(user);
+            // In zoneless mode, effects are deferred; flush them so the BehaviorSubject is updated
+            // before we subscribe (BehaviorSubject emits the current value immediately on subscribe).
+            TestBed.tick();
+
+            accountService.getAuthenticationState().subscribe((userState) => {
+                expect(userState).toEqual(user);
+            });
+        });
+
+        it('should return an observable from the authentication state', () => {
+            const authState$ = accountService.getAuthenticationState();
+
+            expect(authState$).toBeDefined();
+            expect(authState$).toHaveProperty('subscribe');
+        });
+    });
+
+    describe('test identity with error handling', () => {
+        it('should set userIdentity to undefined on fetch error', async () => {
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.error(new ProgressEvent('error'));
+
+            const userReceived = await identityPromise;
+
+            expect(userReceived).toBeUndefined();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should set userIdentity to undefined when response body is null', async () => {
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.flush(null);
+
+            const userReceived = await identityPromise;
+
+            expect(userReceived).toBeUndefined();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should set language from session storage when user has no langKey', async () => {
+            const sessionStorage = TestBed.inject(SessionStorageService);
+            vi.spyOn(sessionStorage, 'retrieve').mockReturnValue('de');
+
+            const translateService = TestBed.inject(TranslateService);
+            const translateUseSpy = vi.spyOn(translateService, 'use');
+
+            const userWithoutLang = { id: 1 } as User;
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.flush(userWithoutLang);
+
+            await identityPromise;
+
+            expect(translateUseSpy).toHaveBeenCalledWith('de');
+        });
+    });
+
+    describe('test isOwnerOfParticipation edge cases', () => {
+        it('should throw error when participation has no student and no team', () => {
+            const participation = {} as StudentParticipation;
+            accountService.userIdentity.set({ login: 'testuser' } as User);
+
+            expect(() => accountService.isOwnerOfParticipation(participation)).toThrow('Participation does not have any owners');
+        });
+    });
+
+    describe('test computed properties', () => {
+        it('should return askToSetupPasskey as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.askToSetupPasskey()).toBe(false);
+        });
+
+        it('should return askToSetupPasskey as true when user has it set', () => {
+            accountService.userIdentity.set({ id: 1, askToSetupPasskey: true } as User);
+            expect(accountService.askToSetupPasskey()).toBe(true);
+        });
+
+        it('should return isLoggedInWithPasskey as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.isLoggedInWithPasskey()).toBe(false);
+        });
+
+        it('should return isLoggedInWithPasskey as true when user logged in with passkey', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true } as User);
+            expect(accountService.isLoggedInWithPasskey()).toBe(true);
+        });
+
+        it('should return isPasskeySuperAdminApproved as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.isPasskeySuperAdminApproved()).toBe(false);
+        });
+
+        it('should return isPasskeySuperAdminApproved as true when passkey is approved', () => {
+            accountService.userIdentity.set({ id: 1, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isPasskeySuperAdminApproved()).toBe(true);
+        });
+
+        it('should return isUserLoggedInWithApprovedPasskey as false when either condition is false', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true, passkeySuperAdminApproved: false } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(false);
+
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: false, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(false);
+        });
+
+        it('should return isUserLoggedInWithApprovedPasskey as true when both conditions are true', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(true);
+        });
+    });
+
+    describe('test getToolToken', () => {
+        it('should get tool token', () => {
+            const expectedToken = 'test-tool-token';
+
+            accountService.getToolToken('vscode').subscribe((token) => {
+                expect(token).toBe(expectedToken);
+            });
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/account/tool-token?tool=vscode' });
+            req.flush(expectedToken);
+        });
+    });
+
+    describe('test setAccessRightsForExerciseAndReferencedCourse edge cases', () => {
+        it('should handle exercise without course', () => {
+            accountService.userIdentity.set({ id: 10, authorities } as User);
+
+            const exerciseWithoutCourse = {} as Exercise;
+            accountService.setAccessRightsForExerciseAndReferencedCourse(exerciseWithoutCourse);
+
+            expect(exerciseWithoutCourse.isAtLeastTutor).toBe(true);
+            expect(exerciseWithoutCourse.isAtLeastEditor).toBe(true);
+            expect(exerciseWithoutCourse.isAtLeastInstructor).toBe(true);
+        });
+    });
+
+    describe('test setAccessRightsForCourseAndReferencedExercises edge cases', () => {
+        it('should handle course without exercises', () => {
+            accountService.userIdentity.set({ id: 10, authorities } as User);
+
+            const courseWithoutExercises = {} as Course;
+            accountService.setAccessRightsForCourseAndReferencedExercises(courseWithoutExercises);
+
+            expect(courseWithoutExercises.isAtLeastInstructor).toBe(true);
+        });
+    });
+});

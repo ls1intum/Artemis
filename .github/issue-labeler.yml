@@ -1,0 +1,200 @@
+account:
+  - account
+  - user-management
+  - authority
+  - passkey
+  - authentication
+  - authorization
+  - login
+  - registration
+  - password
+  - user
+  - token
+  - conduct agreement
+  - caseSensitive: false
+
+admin:
+  - admin
+  - sbom
+  - vulnerability
+  - cleanup
+  - data export
+  - telemetry
+  - organization management
+  - imprint
+  - privacy statement
+  - audit
+  - legal document
+  - rate limit
+  - caseSensitive: false
+
+assessment:
+  - assessment
+  - bonus
+  - complaint
+  - submission
+  - grading
+  - grade
+  - score
+  - caseSensitive: false
+
+athena:
+  - athena
+  - ai feedback
+  - request (ai )?feedback
+  - caseSensitive: false
+
+atlas:
+  - atlas
+  - competency
+  - competencies
+  - knowledge area
+  - learning path
+  - learner profile
+  - science event
+  - adaptive learning
+  - caseSensitive: false
+
+buildagent:
+  - buildagent
+  - build agent
+  - buildjob
+  - build job
+  - build result
+  - caseSensitive: false
+
+calendar:
+  - calendar
+  - subscription
+  - ical
+  - caseSensitive: false
+
+communication:
+  - communication
+  - conversation
+  - notification
+  - agreement
+  - faq
+  - post
+  - reaction
+  - chat
+  - message
+  - caseSensitive: false
+
+core:
+  - migration
+  - security
+  - caseSensitive: false
+
+course:
+  - course
+  - enrollment
+  - course request
+  - course archive
+  - course material import
+  - course management
+  - caseSensitive: false
+
+exam:
+  - exam
+  - exercisegroup
+  - student exam
+  - suspicious behavior
+  - suspicious behaviour
+  - caseSensitive: false
+
+exercise:
+  - exercise
+  - participation
+  - participant
+  - difficulty
+  - lifecycle
+  - team
+  - assignment
+  - caseSensitive: false
+
+fileupload:
+  - fileupload
+  - upload
+  - caseSensitive: false
+
+globalsearch:
+  - global search
+  - globalsearch
+  - weaviate
+  - caseSensitive: false
+
+iris:
+  - iris
+  - llm
+  - chatbot
+  - \b(?<!\S)ai(?!\S)\b
+  - caseSensitive: false
+
+hyperion:
+  - hyperion
+  - consistency check
+  - exercise generation
+  - caseSensitive: false
+
+lecture:
+  - lecture
+  - attachment
+  - slide
+  - video
+  - text unit
+  - caseSensitive: false
+
+lti:
+  - \b(?<!\S)lti(?!\S)\b
+  - online course
+  - caseSensitive: false
+
+modeling:
+  - modeling
+  - diagram
+  - uml
+  - caseSensitive: false
+
+plagiarism:
+  - plagiarism
+  - caseSensitive: false
+
+programming:
+  - programming
+  - build
+  - build plan
+  - code hint
+  - \b(?<!\S)git(?!\S)\b
+  - \b(?<!\S)ide(?!\S)\b
+  - submission policy
+  - penalty
+  - auxilary
+  - commit
+  - static code analysis
+  - caseSensitive: false
+
+quiz:
+  - quiz
+  - drag
+  - drop
+  - single choice
+  - multiple choice
+  - batch
+  - short answer
+  - caseSensitive: false
+
+text:
+  - block
+  - caseSensitive: false
+
+tutorialgroup:
+  - tutorialgroup
+  - caseSensitive: false
+
+videosource:
+  - videosource
+  - video source
+  - tum live
+  - tum-live
+  - caseSensitive: false

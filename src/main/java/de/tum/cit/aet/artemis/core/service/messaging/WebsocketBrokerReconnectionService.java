@@ -1,0 +1,309 @@
+package de.tum.cit.aet.artemis.core.service.messaging;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+import jakarta.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
+import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
+import org.springframework.messaging.tcp.TcpOperations;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+
+/**
+ * Manages the lifecycle of the STOMP broker relay connection and coordinates reconnect attempts.
+ * <p>
+ * Tracks broker availability events, exposes manual connect/disconnect/reconnect hooks (used by admin actions),
+ * and publishes the current broker status into Hazelcast for UI consumption. Admin-triggered disconnects suppress
+ * automatic reconnect attempts until an explicit connect/reconnect request clears the suppression.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class WebsocketBrokerReconnectionService implements ApplicationListener<BrokerAvailabilityEvent>, DisposableBean {
+
+    private static final Logger log = LoggerFactory.getLogger(WebsocketBrokerReconnectionService.class);
+
+    public static final String WEBSOCKET_BROKER_STATUS_MAP = "websocketBrokerStatus";
+
+    static final Duration RECONNECT_INTERVAL = Duration.ofSeconds(60);
+
+    private static final Duration STATUS_PUBLISH_INTERVAL = Duration.ofSeconds(10);
+
+    private final TaskScheduler messageBrokerTaskScheduler;
+
+    private final Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler;
+
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final NodeRegistryService nodeRegistryService;
+
+    private DistributedMap<String, Boolean> brokerStatusMap;
+
+    private String lastPublishedMemberId;
+
+    private final Supplier<TcpOperations<byte[]>> stompTcpClientSupplier;
+
+    private final AtomicBoolean reconnectTaskRunning = new AtomicBoolean(false);
+
+    private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
+
+    /**
+     * Flag to suppress automatic reconnect attempts after an admin explicitly disconnected the broker relay.
+     */
+    private final AtomicBoolean manualDisconnectRequested = new AtomicBoolean(false);
+
+    private final AtomicReference<ScheduledFuture<?>> reconnectTask = new AtomicReference<>();
+
+    private final AtomicReference<ScheduledFuture<?>> statusPublishTask = new AtomicReference<>();
+
+    private volatile boolean lastKnownBrokerAvailable = false;
+
+    /**
+     * Set as soon as the application context closes, i.e. before any bean is destroyed. From then on, the distributed data provider may already be shut down,
+     * and a broker that becomes unavailable is part of the shutdown rather than a reason to update the status or to reconnect.
+     */
+    private volatile boolean shuttingDown = false;
+
+    public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
+            Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
+            @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier, DistributedDataProvider distributedDataProvider,
+            NodeRegistryService nodeRegistryService) {
+        this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.stompBrokerRelayMessageHandler = stompBrokerRelayMessageHandler;
+        this.stompTcpClientSupplier = stompTcpClientSupplier;
+        this.distributedDataProvider = distributedDataProvider;
+        this.nodeRegistryService = nodeRegistryService;
+    }
+
+    @PostConstruct
+    void initBrokerStatusPublisher() {
+        this.brokerStatusMap = distributedDataProvider.getMap(WEBSOCKET_BROKER_STATUS_MAP);
+        updateBrokerStatus(false);
+        scheduleStatusPublisher();
+    }
+
+    @EventListener(ContextClosedEvent.class)
+    void onContextClosed() {
+        shuttingDown = true;
+    }
+
+    @Override
+    public void onApplicationEvent(BrokerAvailabilityEvent event) {
+        if (stompBrokerRelayMessageHandler.isEmpty() || shuttingDown) {
+            return;
+        }
+
+        updateBrokerStatus(event.isBrokerAvailable());
+        if (event.isBrokerAvailable()) {
+            manualDisconnectRequested.set(false);
+            stopReconnectAttempts("broker became available again");
+        }
+        else {
+            if (manualDisconnectRequested.get()) {
+                log.info("Broker became unavailable but manual disconnect is active; skipping auto-reconnect");
+                return;
+            }
+            startReconnectAttempts("broker became unavailable");
+        }
+    }
+
+    /**
+     * Allows to manually trigger a reconnect to the external websocket broker.
+     *
+     * @return true if reconnect attempts were started, false if no external broker relay is configured
+     */
+    public boolean triggerManualReconnect() {
+        if (stompBrokerRelayMessageHandler.isEmpty()) {
+            log.warn("Manual websocket broker reconnect requested, but no external broker relay is configured");
+            return false;
+        }
+
+        stopReconnectAttempts("manual reconnect requested");
+        manualDisconnectRequested.set(false);
+        startReconnectAttempts("manual reconnect requested");
+        return true;
+    }
+
+    /**
+     * Allows to manually disconnect from the external websocket broker and suppress automatic reconnect attempts.
+     */
+    public void triggerManualDisconnect() {
+        if (stompBrokerRelayMessageHandler.isEmpty()) {
+            log.warn("Manual websocket broker disconnect requested, but no external broker relay is configured");
+            return;
+        }
+
+        stopReconnectAttempts("manual disconnect requested");
+        manualDisconnectRequested.set(true);
+        stompBrokerRelayMessageHandler.ifPresent(handler -> {
+            if (handler.isRunning()) {
+                handler.stop();
+            }
+        });
+        updateBrokerStatus(false);
+    }
+
+    /**
+     * Manually start the broker relay without scheduling repeated reconnect attempts.
+     */
+    public void triggerManualConnect() {
+        if (stompBrokerRelayMessageHandler.isEmpty()) {
+            log.warn("Manual websocket broker connect requested, but no external broker relay is configured");
+            return;
+        }
+
+        stopReconnectAttempts("manual connect requested");
+        manualDisconnectRequested.set(false);
+        restartBrokerRelayInternal(true);
+    }
+
+    private void startReconnectAttempts(String reason) {
+        if (reconnectTaskRunning.compareAndSet(false, true)) {
+            log.warn("Starting websocket broker reconnect attempts because {}", reason);
+            updateBrokerStatus(false);
+            restartBrokerRelay();
+            reconnectTask.set(messageBrokerTaskScheduler.scheduleWithFixedDelay(this::restartBrokerRelay, Instant.now(), RECONNECT_INTERVAL));
+        }
+    }
+
+    private void restartBrokerRelay() {
+        if (!reconnectTaskRunning.get()) {
+            return;
+        }
+
+        restartBrokerRelayInternal(false);
+    }
+
+    private void restartBrokerRelayInternal(boolean explicitRequest) {
+        stompBrokerRelayMessageHandler.ifPresent(handler -> {
+            if (!restartInProgress.compareAndSet(false, true)) {
+                return; // Avoid overlapping restart attempts
+            }
+
+            try {
+                if (handler.isRunning()) {
+                    handler.stop();
+                }
+                TcpOperations<byte[]> tcpClient = stompTcpClientSupplier.get();
+                if (tcpClient == null) {
+                    log.warn("Skipping websocket broker restart because no TCP client could be created");
+                    return;
+                }
+                handler.setTcpClient(tcpClient);
+                handler.start();
+            }
+            catch (Exception ex) {
+                log.warn("Failed to restart websocket broker relay: {}", ex.getMessage(), ex);
+            }
+            finally {
+                restartInProgress.set(false);
+            }
+        });
+        if (explicitRequest) {
+            updateBrokerStatus(false);
+        }
+    }
+
+    /**
+     * Cancel running reconnect attempts and clear scheduled tasks.
+     *
+     * @param reason diagnostic reason for logging
+     */
+    private void stopReconnectAttempts(String reason) {
+        if (reconnectTaskRunning.getAndSet(false)) {
+            log.info("Stopping websocket broker reconnect attempts because {}", reason);
+            ScheduledFuture<?> task = reconnectTask.getAndSet(null);
+            if (task != null) {
+                task.cancel(false);
+            }
+        }
+    }
+
+    @Override
+    public void destroy() {
+        stopReconnectAttempts("application shutdown");
+        if (brokerStatusMap != null) {
+            if (lastPublishedMemberId != null) {
+                try {
+                    brokerStatusMap.remove(lastPublishedMemberId);
+                }
+                catch (RuntimeException e) {
+                    // The distributed data provider may already be shut down; its entries of this node are gone with it
+                    log.debug("Could not remove the websocket broker status of this node during shutdown: {}", e.getMessage());
+                }
+            }
+        }
+        ScheduledFuture<?> publishTask = statusPublishTask.get();
+        if (publishTask != null) {
+            publishTask.cancel(false);
+        }
+    }
+
+    /**
+     * Store the current broker availability in a distributed map that is read by the admin UI.
+     *
+     * @param brokerAvailable whether the broker is currently available for this node
+     */
+    private void updateBrokerStatus(boolean brokerAvailable) {
+        String currentMemberId = currentMemberId();
+        if (lastPublishedMemberId != null && !lastPublishedMemberId.equals(currentMemberId)) {
+            brokerStatusMap.remove(lastPublishedMemberId);
+        }
+        lastKnownBrokerAvailable = brokerAvailable;
+        if (brokerStatusMap != null) {
+            brokerStatusMap.put(currentMemberId, brokerAvailable);
+            lastPublishedMemberId = currentMemberId;
+        }
+    }
+
+    /**
+     * Periodically re-publish the last known broker status so nodes that join late (e.g. when Hazelcast is not yet ready)
+     * eventually see an up-to-date value.
+     */
+    private void scheduleStatusPublisher() {
+        statusPublishTask.set(messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
+            try {
+                String currentMemberId = currentMemberId();
+                if (lastPublishedMemberId != null && !lastPublishedMemberId.equals(currentMemberId)) {
+                    brokerStatusMap.remove(lastPublishedMemberId);
+                }
+                brokerStatusMap.put(currentMemberId, lastKnownBrokerAvailable);
+                lastPublishedMemberId = currentMemberId;
+                log.debug("Published websocket broker status {} for member {}", lastKnownBrokerAvailable, currentMemberId);
+            }
+            catch (Exception ex) {
+                log.debug("Failed to publish websocket broker status: {}", ex.getMessage());
+            }
+        }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL));
+    }
+
+    private String currentMemberId() {
+        return nodeRegistryService.getLocalNodeId();
+    }
+
+    public enum ControlAction {
+        RECONNECT, DISCONNECT, CONNECT
+    }
+}

@@ -1,0 +1,149 @@
+import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Subscription, map, tap } from 'rxjs';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+@Component({
+    selector: 'jhi-exercise-update-plagiarism',
+    templateUrl: './exercise-update-plagiarism.component.html',
+    standalone: true,
+    imports: [ReactiveFormsModule, TranslateDirective, HelpIconComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiTagComponent],
+})
+export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
+    readonly fb = inject(FormBuilder);
+
+    readonly exercise = model.required<Exercise>();
+
+    form: FormGroup;
+
+    private formStatus: Signal<string>;
+    private formSubscription: Subscription;
+
+    isCPCCollapsed = true;
+    isFormValid = signal(false);
+    /** Names of the controls that fail validation, as a signal so that a host's computed() follows them. */
+    readonly invalidControlNames: Signal<string[]>;
+
+    static integerValidator(control: AbstractControl): ValidationErrors | null {
+        const value = control.value;
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        if (!Number.isInteger(value)) {
+            return { notInteger: true };
+        }
+        return null;
+    }
+
+    constructor() {
+        this.form = this.fb.group({
+            continuousPlagiarismControlEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlEnabled],
+            continuousPlagiarismControlPostDueDateChecksEnabled: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPostDueDateChecksEnabled],
+            similarityThreshold: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumScore: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore,
+                [Validators.required, Validators.min(0), Validators.max(100), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+            minimumSize: [DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize, [Validators.required, Validators.min(0), ExerciseUpdatePlagiarismComponent.integerValidator]],
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
+                [Validators.required, Validators.min(7), Validators.max(31), ExerciseUpdatePlagiarismComponent.integerValidator],
+            ],
+        });
+
+        this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+
+        effect(() => this.isFormValid.set(this.formStatus() === 'VALID'));
+
+        // The group reports its status after its controls have taken theirs, so their validity is current here.
+        this.invalidControlNames = toSignal(this.form.statusChanges.pipe(map(() => this.collectInvalidControlNames())), {
+            initialValue: this.collectInvalidControlNames(),
+            equal: (previous, current) => previous.length === current.length && previous.every((name, index) => name === current[index]),
+        });
+
+        this.formSubscription = this.form.valueChanges
+            .pipe(
+                tap((form) => {
+                    const enabled = form.continuousPlagiarismControlEnabled;
+                    [
+                        'continuousPlagiarismControlPostDueDateChecksEnabled',
+                        'similarityThreshold',
+                        'minimumScore',
+                        'minimumSize',
+                        'continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
+                    ].forEach((k) => this.form.get(k)?.[enabled ? 'enable' : 'disable']({ emitEvent: false }));
+                }),
+            )
+            .subscribe(() => {
+                this.exercise.update((exercise) => {
+                    exercise.plagiarismDetectionConfig = deepClone(this.form.getRawValue());
+                    return exercise;
+                });
+            });
+    }
+
+    ngOnInit(): void {
+        if (this.exercise() && !this.exercise()?.plagiarismDetectionConfig) {
+            this.exercise().plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
+        }
+
+        this.form.patchValue({
+            continuousPlagiarismControlEnabled:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlEnabled,
+            continuousPlagiarismControlPostDueDateChecksEnabled:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ??
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPostDueDateChecksEnabled,
+            similarityThreshold: this.exercise()?.plagiarismDetectionConfig?.similarityThreshold ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.similarityThreshold,
+            minimumScore: this.exercise()?.plagiarismDetectionConfig?.minimumScore ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumScore,
+            minimumSize: this.exercise()?.plagiarismDetectionConfig?.minimumSize ?? DEFAULT_PLAGIARISM_DETECTION_CONFIG.minimumSize,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ??
+                DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
+        });
+    }
+
+    private collectInvalidControlNames(): string[] {
+        return Object.entries(this.form.controls)
+            .filter(([, control]) => control.invalid)
+            .map(([name]) => name);
+    }
+
+    getMinimumSizeLabel(): string {
+        switch (this.exercise()?.type) {
+            case ExerciseType.PROGRAMMING: {
+                return 'artemisApp.plagiarism.minimumTokenCount';
+            }
+            case ExerciseType.TEXT: {
+                return 'artemisApp.plagiarism.minimumSize';
+            }
+            default: {
+                return '';
+            }
+        }
+    }
+
+    /**
+     * Return the translation identifier of the minimum size tooltip for the current exercise type.
+     */
+    getMinimumSizeTooltip(): string {
+        switch (this.exercise()?.type) {
+            case ExerciseType.PROGRAMMING:
+                return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
+            case ExerciseType.TEXT:
+                return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
+            default:
+                return '';
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.formSubscription.unsubscribe();
+    }
+}

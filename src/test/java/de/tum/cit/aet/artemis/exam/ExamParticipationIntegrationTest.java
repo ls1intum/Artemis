@@ -1,0 +1,1247 @@
+package de.tum.cit.aet.artemis.exam;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.withPrecision;
+import static org.awaitility.Awaitility.await;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
+import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
+
+    private static final String TEST_PREFIX = "examparticipationtest";
+
+    private static final Logger log = LoggerFactory.getLogger(ExamParticipationIntegrationTest.class);
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private QuizSubmissionTestRepository quizSubmissionRepository;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamService examService;
+
+    @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ParticipationTestRepository participationTestRepository;
+
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private BonusRepository bonusRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
+
+    private Course course1;
+
+    private static final int NUMBER_OF_STUDENTS = 3;
+
+    private static final int NUMBER_OF_TUTORS = 2;
+
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
+
+    private User student1;
+
+    private User instructor;
+
+    @BeforeEach
+    void initTestCase() throws GitAPIException {
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        jenkinsRequestMockProvider.reset();
+        if (programmingExerciseTestService.exerciseRepo != null) {
+            programmingExerciseTestService.tearDown();
+        }
+
+        for (var repo : studentRepos) {
+            repo.deleteWorkingCopy();
+        }
+
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        participantScoreScheduleService.shutdown();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testRemovingAllStudents_AfterParticipatingInExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
+
+        // Generate student exams
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(3);
+        assertThat(exam.getExamUsers()).hasSize(3);
+
+        int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
+        assertThat(numberOfGeneratedParticipations).isEqualTo(12);
+
+        // Fetch student exams
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExamsDB).hasSize(3);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(12);
+
+        // TODO there should be some participation but no submissions unfortunately
+        // remove all students
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK);
+
+        // Verify all exam users were removed
+        assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExamsDB).isEmpty();
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).hasSize(12);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testRemovingAllStudentsAndParticipations() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
+
+        // Generate student exams
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(3);
+        assertThat(exam.getExamUsers()).hasSize(3);
+
+        int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
+        assertThat(numberOfGeneratedParticipations).isEqualTo(12);
+        // Fetch student exams
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExamsDB).hasSize(3);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(12);
+
+        // TODO there should be some participation but no submissions unfortunately
+        // remove all students
+        var paramsParticipations = new LinkedMultiValueMap<String, String>();
+        paramsParticipations.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK, paramsParticipations);
+
+        // Verify all exam users were removed
+        assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExamsDB).isEmpty();
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteStudent_AfterParticipatingInExam() throws Exception {
+        // Create an exam with registered students
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+
+        // Remove student1 from the exam
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
+
+        // Ensure that student1 was removed from the exam
+        var examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId());
+        assertThat(examUser).isEmpty();
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
+
+        // Create individual student exams
+        List<StudentExamDTO> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).hasSize(2);
+
+        // Get the student exam of student2 as a managed entity (the response masks the nested user); needed with its exercises below
+        var studentExam2 = studentExamRepository.findWithExercisesByUserIdAndExamId(student2.getId(), exam.getId(), false).orElseThrow();
+
+        // Start the exam to create participations
+        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
+
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        // Remove student2 from the exam
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student2", HttpStatus.OK);
+
+        // Ensure that student2 was removed from the exam
+        var examUser2 = examUserRepository.findByExamIdAndUserId(exam.getId(), student2.getId());
+        assertThat(examUser2).isEmpty();
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(1);
+
+        // Ensure that the student exam of student2 was deleted
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(1).extracting(StudentExamDTO::id).doesNotContain(studentExam2.getId());
+
+        // Ensure that the participations were not deleted
+        List<StudentParticipation> participationsStudent2 = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
+        assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
+
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
+                HttpStatus.OK);
+
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(studentParticipations).isEmpty();
+
+        // invoke start exercises
+        studentExamService.startExercises(exam.getId()).join();
+
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(studentParticipations).hasSize(12);
+
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
+                HttpStatus.OK);
+
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(studentParticipations).isEmpty();
+
+        // invoke start exercises
+        studentExamService.startExercises(exam.getId()).join();
+
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(studentParticipations).hasSize(12);
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "generate-student-exams", "generate-missing-student-exams" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerateStudentExams_testWithSupervisedSession_rejectedAfterStart(String endpoint) throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(3600);
+        exam.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam = examRepository.save(exam);
+        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/" + endpoint;
+
+        List<StudentExamDTO> generatedExams = request.postListWithResponseBody(url, Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedExams).hasSize(NUMBER_OF_STUDENTS);
+        studentExamService.startExercises(exam.getId()).join();
+        List<Participation> participations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(participations).isNotEmpty();
+
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        examRepository.save(exam);
+        request.postListWithResponseBody(url, Optional.empty(), StudentExamDTO.class, HttpStatus.BAD_REQUEST);
+
+        List<StudentExamDTO> remainingExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(remainingExams).extracting(StudentExamDTO::id).containsExactlyInAnyOrderElementsOf(generatedExams.stream().map(StudentExamDTO::id).toList());
+        assertThat(participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId())).extracting(Participation::getId)
+                .containsExactlyInAnyOrderElementsOf(participations.stream().map(Participation::getId).toList());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
+        // Create an exam with registered students
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
+
+        // Create individual student exams
+        List<StudentExamDTO> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).isNotEmpty();
+
+        // Get the student exam of student1 as a managed entity (the response masks the nested user); needed with its exercises below
+        var studentExam1 = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam.getId(), false).orElseThrow();
+
+        // Start the exam to create participations
+        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
+        List<StudentParticipation> participationsStudent1 = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
+        assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Remove student1 from the exam and their participations
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK, params);
+
+        // Ensure that student1 was removed from the exam
+        var examUser1 = examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId());
+        assertThat(examUser1).isEmpty();
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
+
+        // Ensure that the student exam of student1 was deleted
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(2).extracting(StudentExamDTO::id).doesNotContain(studentExam1.getId());
+
+        // Ensure that the participations of student1 were deleted
+        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student1.getId(),
+                studentExam1.getExercises());
+        assertThat(participationsStudent1).isEmpty();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(ints = { 0, 1, 2 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
+        log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
+
+        User examTutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User examTutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
+        exam = examRepository.save(exam);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, false);
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 2 done");
+
+        var stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
+        assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
+        if (numberOfCorrectionRounds != 0) {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        }
+        else {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isNull();
+        }
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
+        assertThat(stats.getNumberOfSubmissions().inTime()).isZero();
+        if (numberOfCorrectionRounds > 0) {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        }
+        else {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isNull();
+        }
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        if (numberOfCorrectionRounds == 0) {
+            // We do not need any more assertions, as numberOfCorrectionRounds is only 0 for test exams (no manual assessment)
+            return;
+        }
+
+        var lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).isEmpty();
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 3 done");
+
+        // register users. Instructors are ignored from scores as they are exclusive for test run exercises
+        Set<User> registeredStudents = getRegisteredStudentsForExam();
+        for (var student : registeredStudents) {
+            var registeredExamUser = new ExamUser();
+            registeredExamUser.setExam(exam);
+            registeredExamUser.setUser(student);
+            exam.addExamUser(registeredExamUser);
+        }
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
+        exam.setRandomizeExerciseOrder(false);
+        exam = examRepository.save(exam);
+        exam = examRepository.findWithExamUsersAndExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 4 done");
+
+        // generate individual student exams
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+        // set start and submitted date as results are created below (on the managed entities; the response masks them)
+        List<StudentExam> managedStudentExams = new ArrayList<>(studentExamRepository.findByExamId(exam.getId()));
+        managedStudentExams.forEach(studentExam -> {
+            studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+        });
+        studentExamRepository.saveAll(managedStudentExams);
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 5 done");
+
+        // Fetch the created participations and assign them to the exercises
+        int participationCounter = 0;
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
+        for (var exercise : exercisesInExam) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
+            exercise.setStudentParticipations(new HashSet<>(participations));
+            participationCounter += exercise.getStudentParticipations().size();
+        }
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 6 done");
+
+        // Assign submissions to the participations
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                assertThat(participation.getSubmissions()).hasSize(1);
+                Submission submission = participation.getSubmissions().iterator().next();
+                submission.submitted(true);
+                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+                submissionRepository.save(submission);
+            }
+        }
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 7 done");
+
+        // check the stats again - check the count of submitted submissions
+        stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
+        // 85 = (17 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(studentExams.size() * 5L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        // Score used for all exercise results
+        Double resultScore = 75.0;
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 7 done");
+
+        // Lock all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                // Create results
+                var result = new Result().score(resultScore);
+                if (exercise instanceof QuizExercise) {
+                    result.completionDate(ZonedDateTime.now().minusMinutes(4));
+                    result.setRated(true);
+                }
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                result.setAssessor(examTutor1);
+                result.setSubmission(submission);
+                result.setExerciseId(exercise.getId());
+                result = resultRepository.save(result);
+                submission.addResult(result);
+                submissionRepository.save(submission);
+            }
+        }
+        log.debug("testGetStatsForExamAssessmentDashboard: step 8 done");
+
+        // check the stats again
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(studentExams.size() * 5L);
+        // (studentExams.size() users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(studentExams.size() * 5L);
+        // the studentExams.size() quiz submissions are already assessed
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(studentExams.size());
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(studentExams.size() * 5L);
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 9 done");
+
+        // test the query needed for assessment information
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        exam.getExerciseGroups().forEach(group -> {
+            var locks = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
+                            .inTime())
+                    .reduce(Long::sum).orElseThrow();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
+                assertThat(locks).isEqualTo(studentExams.size());
+            }
+        });
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 10 done");
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 11 done");
+
+        // Finish assessment of all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                result.setRated(true);
+                resultRepository.save(result);
+            }
+        }
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 12 done");
+
+        // check the stats again
+        stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(studentExams.size() * 5L);
+        // 75 + the 19 quiz submissions
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(studentExams.size() * 5L + studentExams.size());
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 13 done");
+
+        lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).isEmpty();
+        if (numberOfCorrectionRounds == 2) {
+            lockAndAssessForSecondCorrection(exam, course, studentExams, exercisesInExam, numberOfCorrectionRounds);
+        }
+
+        log.debug("testGetStatsForExamAssessmentDashboard: step 14 done");
+    }
+
+    private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExamDTO> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
+            throws Exception {
+        // Lock all submissions
+        User examInstructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User examTutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                assertThat(participation.getSubmissions()).hasSize(1);
+                Submission submission = participation.getSubmissions().iterator().next();
+                // Create results
+                var result = new Result().score(50D).rated(true);
+                if (exercise instanceof QuizExercise) {
+                    result.completionDate(ZonedDateTime.now().minusMinutes(3));
+                }
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                result.setAssessor(examInstructor);
+                result.setSubmission(submission);
+                result.setExerciseId(exercise.getId());
+                result = resultRepository.save(result);
+                submission.addResult(result);
+                submissionRepository.save(submission);
+            }
+        }
+        // check the stats again
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(studentExams.size() * 5L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(studentExams.size() * 5L);
+        // the 15 quiz submissions are already assessed - and all are assessed in the first correctionRound
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(studentExams.size() * 6L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].inTime()).isEqualTo(studentExams.size());
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(studentExams.size() * 5L);
+
+        // test the query needed for assessment information
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        exam.getExerciseGroups().forEach(group -> {
+            var locksRound1 = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
+                            .inTime())
+                    .reduce(Long::sum).orElseThrow();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
+                assertThat(locksRound1).isZero();
+            }
+
+            var locksRound2 = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
+                            .inTime())
+                    .reduce(Long::sum).orElseThrow();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
+                assertThat(locksRound2).isEqualTo(studentExams.size());
+            }
+        });
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
+
+        // Finish assessment of all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                result.setRated(true);
+                resultRepository.save(result);
+            }
+        }
+
+        // check the stats again
+        stats = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(studentExams.size() * 5L);
+        // 75 + the 15 quiz submissions
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(studentExams.size() * 6L);
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLockedSubmissionsForExam_wirePinsAssessmentLocksDTO() throws Exception {
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam, "text group");
+        exam = examRepository.save(exam);
+
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup, "Locked Text Exercise");
+        exerciseRepository.save(textExercise);
+
+        TextSubmission textSubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, student1, "some text");
+        StudentParticipation participation = (StudentParticipation) textSubmission.getParticipation();
+
+        // A genuinely LOCKED assessment: a tutor has started an in-progress manual assessment (assessor set,
+        // no completion date yet) on this exam text exercise.
+        Result lockedResult = new Result();
+        lockedResult.setAssessor(tutor);
+        lockedResult.setScore(55D);
+        lockedResult.setCorrectionRound(1);
+        lockedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        lockedResult.setSubmission(textSubmission);
+        lockedResult.setExerciseId(textExercise.getId());
+        lockedResult = resultRepository.save(lockedResult);
+        textSubmission.addResult(lockedResult);
+        submissionRepository.save(textSubmission);
+
+        List<LockedExamSubmissionDTO> lockedSubmissions = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK,
+                LockedExamSubmissionDTO.class);
+
+        assertThat(lockedSubmissions).hasSize(1);
+        LockedExamSubmissionDTO lockedSubmissionDTO = lockedSubmissions.getFirst();
+
+        // Every field the assessment-locks screen reads on the wire, pinned exactly: the polymorphic submission-type
+        // discriminator, participation id, exercise id/type/title, and the (in-progress) result's score/completionDate.
+        assertThat(lockedSubmissionDTO.submissionExerciseType()).isEqualTo("text");
+        assertThat(lockedSubmissionDTO.participation()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().id()).isEqualTo(participation.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
+        assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().exercise().exerciseGroup().id()).isEqualTo(exerciseGroup.getId());
+        assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
+        assertThat(lockedSubmissionDTO.results()).hasSize(1);
+        LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
+        assertThat(resultDTO.score()).isEqualTo(55D);
+        assertThat(resultDTO.correctionRound()).isEqualTo(1);
+        // The assessment is still in progress, so no completion date has been set yet.
+        assertThat(resultDTO.completionDate()).isNull();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
+        programmingExerciseTestService.setup(this, versionControlService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+
+        var visibleDate = ZonedDateTime.now().minusMinutes(5);
+        var startDate = ZonedDateTime.now().plusMinutes(5);
+        var endDate = ZonedDateTime.now().plusMinutes(20);
+
+        // register users. Instructors are ignored from scores as they are exclusive for test run exercises
+        Set<User> registeredStudents = getRegisteredStudentsForExam();
+
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(studentExams.getFirst().getExam().getId());
+        Course course = exam.getCourse();
+
+        Integer noGeneratedParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
+
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // instructor exam checklist checks
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(exam.getExamUsers().size());
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
+
+        // check that an adapted version is computed for tutors
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isZero();
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // set start and submitted date as results are created below
+        var savedStudentExams = studentExamRepository.findByExamId(exam.getId());
+        savedStudentExams.forEach(studentExam -> {
+            studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+        });
+        studentExamRepository.saveAll(savedStudentExams);
+
+        // Fetch the created participations and assign them to the exercises
+        int participationCounter = 0;
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
+        for (var exercise : exercisesInExam) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
+            exercise.setStudentParticipations(new HashSet<>(participations));
+            participationCounter += exercise.getStudentParticipations().size();
+        }
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
+
+        if (withSecondCorrectionAndStarted) {
+            exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
+            exerciseRepository.saveAll(exercisesInExam);
+        }
+
+        // Scores used for all exercise results
+        double correctionResultScore = 60D;
+        double resultScore = 75D;
+
+        // Assign results to participations and submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                // Programming exercises don't have a submission yet
+                if (exercise instanceof ProgrammingExercise) {
+                    assertThat(participation.getSubmissions()).isEmpty();
+                    submission = new ProgrammingSubmission();
+                    submission.setParticipation(participation);
+                    submission = submissionRepository.save(submission);
+                }
+                else {
+                    // There should only be one submission for text, quiz, modeling and file upload
+                    assertThat(participation.getSubmissions()).hasSize(1);
+                    submission = participation.getSubmissions().iterator().next();
+                }
+
+                // make sure to create submitted answers
+                if (exercise instanceof QuizExercise quizExercise) {
+                    var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
+                    for (var quizQuestion : quizQuestions) {
+                        var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
+                        var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
+                        quizSubmission.addSubmittedAnswers(submittedAnswer);
+                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow(), null);
+                    }
+                }
+
+                // Create results
+                if (withSecondCorrectionAndStarted) {
+                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(6));
+                    firstResult.setAssessor(instructor);
+                    firstResult.setSubmission(submission);
+                    firstResult.setExerciseId(exercise.getId());
+                    firstResult = resultRepository.save(firstResult);
+                    submission.addResult(firstResult);
+                }
+
+                var finalResult = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
+                finalResult.setAssessor(instructor);
+                finalResult.setSubmission(submission);
+                finalResult.setExerciseId(exercise.getId());
+                finalResult = resultRepository.save(finalResult);
+                submission.addResult(finalResult);
+
+                submission.submitted(true);
+                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+                submissionRepository.save(submission);
+            }
+        }
+        // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        final var exerciseWithNoUsers = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
+        exerciseRepository.save(exerciseWithNoUsers);
+
+        GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
+                Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }), true, 1);
+        gradingScale.setExam(exam);
+        gradingScale = gradingScaleRepository.save(gradingScale);
+
+        waitForParticipantScores();
+
+        if (withCourseBonus) {
+            configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
+        }
+
+        await().timeout(Duration.ofMinutes(1)).until(() -> {
+            for (Exercise exercise : exercisesInExam) {
+                if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        var examScores = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
+
+        // Compare generated results to data in ExamScoresDTO
+        // Compare top-level DTO properties
+        assertThat(examScores.maxPoints()).isEqualTo(exam.getExamMaxPoints());
+
+        assertThat(examScores.hasSecondCorrectionAndStarted()).isEqualTo(withSecondCorrectionAndStarted);
+
+        // For calculation assume that all exercises within an exerciseGroups have the same max points
+        double calculatedAverageScore = 0.0;
+        for (var exerciseGroup : exam.getExerciseGroups()) {
+            var exercise = exerciseGroup.getExercises().stream().findAny().orElseThrow();
+            if (exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                continue;
+            }
+            calculatedAverageScore += Math.round(exercise.getMaxPoints() * resultScore / 100.00 * 10) / 10.0;
+        }
+
+        assertThat(examScores.averagePointsAchieved()).isEqualTo(calculatedAverageScore);
+        assertThat(examScores.title()).isEqualTo(exam.getTitle());
+        assertThat(examScores.examId()).isEqualTo(exam.getId());
+
+        // Ensure that all exerciseGroups of the exam are present in the DTO
+        Set<Long> exerciseGroupIdsInDTO = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).collect(Collectors.toSet());
+        Set<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
+        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
+
+        // Compare exerciseGroups in DTO to exam exerciseGroups
+        // Tolerated absolute difference for floating-point number comparisons
+        double epsilon = 0000.1;
+        for (var exerciseGroupDTO : examScores.exerciseGroups()) {
+            // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
+            ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id())).findFirst()
+                    .orElseThrow();
+
+            // Assume that all exercises in a group have the same max score
+            Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().orElseThrow().getMaxPoints();
+            assertThat(exerciseGroupDTO.maxPoints()).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().orElseThrow().getMaxPoints());
+            assertThat(groupMaxScoreFromExam).isEqualTo(exerciseGroupDTO.maxPoints(), withPrecision(epsilon));
+
+            // epsilon
+            // Compare exercise information
+            long noOfExerciseGroupParticipations = 0;
+            for (var originalExercise : originalExerciseGroup.getExercises()) {
+                // Find the corresponding ExerciseInfoDTO object
+                var exerciseDTO = exerciseGroupDTO.containedExercises().stream().filter(exerciseInfo -> exerciseInfo.exerciseId().equals(originalExercise.getId())).findFirst()
+                        .orElseThrow();
+                // Check the exercise title
+                assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title());
+                // Check the max points of the exercise
+                assertThat(originalExercise.getMaxPoints()).isEqualTo(exerciseDTO.maxPoints());
+                // Check the number of exercise participants and update the group participant counter
+                var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
+                noOfExerciseGroupParticipations += noOfExerciseParticipations;
+                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.numberOfParticipants());
+            }
+            assertThat(noOfExerciseGroupParticipations).isEqualTo(exerciseGroupDTO.numberOfParticipants());
+        }
+
+        // Ensure that all registered students have a StudentResultDTO
+        Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResultDTO::userId).collect(Collectors.toSet());
+        Set<User> registeredUsers = exam.getRegisteredUsers();
+        Set<Long> registeredUsersIds = registeredUsers.stream().map(User::getId).collect(Collectors.toSet());
+        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
+
+        // Compare StudentResultDTO with the generated results
+        for (var studentResult : examScores.studentResults()) {
+            // Find the original user using the id in StudentResultDTO
+            User originalUser = userTestRepository.findByIdElseThrow(studentResult.userId());
+            StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().orElseThrow();
+
+            assertThat(studentResult.name()).isEqualTo(originalUser.getName());
+            assertThat(studentResult.email()).isEqualTo(originalUser.getEmail());
+            assertThat(studentResult.login()).isEqualTo(originalUser.getLogin());
+            assertThat(studentResult.registrationNumber()).isEqualTo(originalUser.getRegistrationNumber());
+
+            // Calculate overall points achieved
+
+            var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
+
+            assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
+
+            double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
+
+            // Calculate overall score achieved
+            var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
+            assertThat(studentResult.overallScoreAchieved()).isEqualTo(calculatedOverallScore, withPrecision(epsilon));
+
+            assertThat(studentResult.overallGrade()).isNotNull();
+            assertThat(studentResult.hasPassed()).isNotNull();
+            assertThat(studentResult.mostSeverePlagiarismVerdict()).isNull();
+            if (withCourseBonus) {
+                String studentLogin = studentResult.login();
+                assertThat(studentResult.gradeWithBonus().bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+                switch (studentLogin) {
+                    case TEST_PREFIX + "student1" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.0);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo("0.0");
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    case TEST_PREFIX + "student2" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.5); // 10.5 = 8 + 5 * 50% plagiarism point deduction.
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    case TEST_PREFIX + "student3" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isZero();
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    default -> {
+                    }
+                }
+            }
+            else {
+                assertThat(studentResult.gradeWithBonus()).isNull();
+            }
+
+            // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
+            Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult().values().stream().map(ExamScoresDTO.ExerciseResultDTO::exerciseId)
+                    .collect(Collectors.toSet());
+            Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet());
+            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
+            for (Map.Entry<Long, ExamScoresDTO.ExerciseResultDTO> entry : studentResult.exerciseGroupIdToExerciseResult().entrySet()) {
+                var exerciseResult = entry.getValue();
+
+                // Find the original exercise using the id in ExerciseResultDTO
+                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.exerciseId())).findFirst()
+                        .orElseThrow();
+
+                // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
+                assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());
+
+                assertThat(exerciseResult.title()).isEqualTo(originalExercise.getTitle());
+                assertThat(exerciseResult.maxScore()).isEqualTo(originalExercise.getMaxPoints());
+                assertThat(exerciseResult.achievedScore()).isEqualTo(resultScore);
+                if (originalExercise instanceof QuizExercise) {
+                    assertThat(exerciseResult.hasNonEmptySubmission()).isTrue();
+                }
+                else {
+                    assertThat(exerciseResult.hasNonEmptySubmission()).isFalse();
+                }
+                // TODO: create a test where hasNonEmptySubmission() is false for a quiz
+                assertThat(exerciseResult.achievedPoints()).isEqualTo(originalExercise.getMaxPoints() * resultScore / 100, withPrecision(epsilon));
+            }
+        }
+
+        // change back to instructor user
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        var expectedTotalExamAssessmentsFinishedByCorrectionRound = new Long[] { noGeneratedParticipations.longValue(), noGeneratedParticipations.longValue() };
+        if (!withSecondCorrectionAndStarted) {
+            // The second correction has not started in this case.
+            expectedTotalExamAssessmentsFinishedByCorrectionRound[1] = 0L;
+        }
+
+        // check if stats are set correctly for the instructor
+        examChecklistDTO = examService.getStatsForChecklist(exam, true);
+        assertThat(examChecklistDTO).isNotNull();
+        var size = examScores.studentResults().size();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isEqualTo(size);
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isEqualTo(size);
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+
+        // change to a tutor
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        // check that a modified version is returned
+        // check if stats are set correctly for the tutor
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.numberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsSubmitted()).isNull();
+        assertThat(examChecklistDTO.numberOfExamsStarted()).isNull();
+        assertThat(examChecklistDTO.allExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.numberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        assertThat(examChecklistDTO.numberOfTestRuns()).isNull();
+        assertThat(examChecklistDTO.numberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
+
+        jenkinsRequestMockProvider.reset();
+
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
+
+        var usersOfExam = exam.getRegisteredUsers();
+        mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
+
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
+
+        // change back to instructor user
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        // Make sure delete also works if so many objects have been created before
+        waitForParticipantScores();
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
+    }
+
+    private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, GradingScale bonusToGradingScale) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Long individualTextExerciseId = textExercise.getId();
+        textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+
+        Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Long teamTextExerciseId = teamExercise.getId();
+        Long team1Id = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student3 = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User tutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        Long team2Id = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
+
+        participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);
+
+        Team team1 = teamRepository.findById(team1Id).orElseThrow();
+        var result = participationUtilService.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
+        result.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result);
+        // Creating a second results for team1 to test handling multiple results.
+        var result2 = participationUtilService.createSubmissionAndResult((StudentParticipation) result.getSubmission().getParticipation(), 50, true);
+        result2.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result2);
+        var student2Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
+
+        var student3Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student3, 10.0, 10.0, 30, true);
+
+        Team team2 = teamRepository.findById(team2Id).orElseThrow();
+        participationUtilService.createParticipationSubmissionAndResult(teamTextExerciseId, team2, 10.0, 10.0, 80, true);
+
+        // Adding plagiarism cases
+        var bonusPlagiarismCase = new PlagiarismCase();
+        bonusPlagiarismCase.setStudent(student3);
+        bonusPlagiarismCase.setExercise(student3Result.getSubmission().getParticipation().getExercise());
+        bonusPlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
+        plagiarismCaseRepository.save(bonusPlagiarismCase);
+
+        var bonusPlagiarismCase2 = new PlagiarismCase();
+        bonusPlagiarismCase2.setStudent(student2);
+        bonusPlagiarismCase2.setExercise(student2Result.getSubmission().getParticipation().getExercise());
+        bonusPlagiarismCase2.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        bonusPlagiarismCase2.setVerdictPointDeduction(50);
+        plagiarismCaseRepository.save(bonusPlagiarismCase2);
+
+        BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
+        bonusToGradingScale.setBonusStrategy(bonusStrategy);
+        gradingScaleRepository.save(bonusToGradingScale);
+
+        GradingScale sourceGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }),
+                true, 1);
+        sourceGradingScale.setGradeType(GradeType.BONUS);
+        sourceGradingScale.setCourse(course);
+        gradingScaleRepository.save(sourceGradingScale);
+
+        var bonus = BonusFactory.generateBonus(bonusStrategy, -1.0, sourceGradingScale.getId(), bonusToGradingScale.getId());
+        bonusRepository.save(bonus);
+
+        course.setMaxPoints(100);
+        course.setPresentationScore(null);
+        courseRepository.save(course);
+
+    }
+
+    private void waitForParticipantScores() {
+        participantScoreScheduleService.executeScheduledTasks();
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
+    }
+
+    private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
+        return studentExamOfUser.getExercises().stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
+                .map(Exercise::getMaxPoints).reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * correctionResultScore / 100) * 10) / 10.0));
+    }
+
+    private Set<User> getRegisteredStudentsForExam() {
+        var registeredStudents = new HashSet<User>();
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
+        }
+        for (int i = 1; i <= NUMBER_OF_TUTORS; i++) {
+            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "tutor" + i));
+        }
+
+        return registeredStudents;
+    }
+}

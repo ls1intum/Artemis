@@ -1,0 +1,93 @@
+{
+    "artemisApp": {
+        "exerciseActions": {
+            "practice": "Üben",
+            "openQuiz": "Quiz öffnen",
+            "startQuiz": "Quiz starten",
+            "resumeQuiz": "Quiz fortführen",
+            "viewSubmissions": "Abgabe ansehen",
+            "viewResults": "Ergebnis ansehen",
+            "statistics": "Quiz-Statistiken",
+            "startExercise": "Aufgabe starten",
+            "startPractice": "Übung starten",
+            "resumeExercise": "Aufgabe fortführen",
+            "requestAutomaticFeedback": "AI Feedback anfragen",
+            "resumeExercisePractice": "Üben von Aufgabe fortführen",
+            "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
+            "openCodeEditor": "Programmiereditor öffnen",
+            "openPracticeCodeEditor": "Programmiereditor zum Üben öffnen",
+            "openGradedCodeEditor": "Programmiereditor öffnen",
+            "choseGradedMode": "Bewertete Teilnahme gewählt",
+            "openModelingEditor": "Modellierungseditor öffnen",
+            "importIntoIDE": "In deiner IDE öffnen",
+            "openOnlineIDE": "Online IDE öffnen",
+            "practiceMode": {
+                "title": "Übungsmodus",
+                "explanation": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
+                "repositoryChoice": "Du hast bereits vor der Einreichungsfrist eine bewertete Abgabe gemacht. Daher hast du die Wahl, ob der Code im neu aufgesetzten Repository der aus dem Template-Repository der Aufgabe oder deiner bewerteten Abgabe sein soll.",
+                "practiceWithTemplate": "Üben mit Template-Repository",
+                "practiceWithGradedParticipation": "Üben mit bewerteter Abgabe",
+                "teamHint": "Das Üben ist individuell. Es verändert das Ergebnis deines Teams nicht und deine Teammitglieder können es nicht sehen.",
+                "teamNote": "Du übst gerade allein. Das verändert das Ergebnis deines Teams nicht und deine Teammitglieder können deine Übungsarbeit nicht sehen."
+            },
+            "resetRepository": {
+                "label": "Repository zurücksetzen",
+                "titleGraded": "Bewertetes Repository zurücksetzen",
+                "titlePractice": "Übungs-Repository zurücksetzen",
+                "explanation": "Du kannst dein Repository auf den Ausgangszustand zurücksetzen und von dort aus weiterarbeiten. Dies überschreibt all deine Änderungen! Die bisherigen gepushten Änderungen bleiben aber weiterhin in der History des Repositories.",
+                "offlineIDEExplanation": "Nachdem du das Repository zurückgesetzt hast, musst du die Änderungen auf deinem PC pullen.",
+                "repositoryChoice": "Du hast bereits vor der Einreichungsfrist eine bewertete Abgabe gemacht. Daher hast du die Wahl, ob du dein Übungs-Repository auf das Template-Repository oder das Repository deiner bewerteten Abgabe zurücksetzen willst.",
+                "questionGraded": "Soll das bewertete Repository der Aufgabe <strong>{{ title }}</strong> wirklich zurückgesetzt werden?",
+                "questionPractice": "Soll das Übungs-Repository der Aufgabe <strong>{{ title }}</strong> wirklich zurückgesetzt werden?",
+                "typeNameToConfirm": "Bitte gib den Namen der Aufgabe zur Bestätigung ein.",
+                "resetToTemplate": "Zurücksetzen auf Template-Repository",
+                "resetToGradedParticipation": "Zurücksetzen auf bewertete Abgabe",
+                "success": "Repository erfolgreich zurückgesetzt. Du kannst die Aufgabe jetzt neu bearbeiten."
+            },
+            "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
+            "code": "Code",
+            "codePopoverAriaLabel": "Repository-Aktionen",
+            "codePopoverError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
+            "codePopoverSshKeyTip": "Um SSH zu nutzen, musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen SSH-Schlüssel hinzufügen.",
+            "codePopoverSshKeyExpiredTip": "Einige deiner SSH-Schlüssel sind abgelaufen. Möglicherweise musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen neuen SSH-Schlüssel hinzufügen.",
+            "accessRepository": "Greif auf dein Repository zu",
+            "openInSourceTree": {
+                "button": "In Sourcetree öffnen",
+                "helpIcon": "Dies öffnet das Repository in Sourcetree. Falls du es nicht installiert hast, kannst du das Repository weiterhin in deiner IDE oder dem Terminal klonen."
+            },
+            "ideButton": {
+                "openIn": "Öffnen in {{ ideName }}",
+                "helpIcon": "IDE kann in den Einstellungen festgelegt werden"
+            },
+            "goToBuildPlan": "Zum Build Plan gehen",
+            "openTextEditor": "Texteditor öffnen",
+            "copyUrl": "URL kopieren",
+            "copiedUrl": "URL kopiert",
+            "openRepositoryReadOnly": "Repository in der schreibgeschützten Online-Codeansicht öffnen (neuer Tab)",
+            "showAlternatives": "Alternativen anzeigen",
+            "uploadFile": "Datei hochladen",
+            "viewTeam": "Team",
+            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
+            "sshKeyExpiredTip": "Du hast abgelaufene SSH-Schlüssel. Möglicherweise musst du {link:hier} einen neuen SSH-Schlüssel zu deinem Konto hinzufügen.",
+            "passwordWarningText": "Die Nutzung von Kontopasswörtern für Git ist unsicher. Nutze stattdessen einen",
+            "passwordWarningHelp": "Persönliche Zugriffstokens sind auf Übungen beschränkt und verhindern, dass dein primäres Passwort im Klartext in Git gespeichert wird.",
+            "switchToToken": "Zu Token wechseln",
+            "passwordAuthenticationWarning": "Nutze besser <strong>Token</strong> oder <strong>SSH</strong>. Klonen über <strong>HTTPS</strong> kann ein Sicherheitsrisiko darstellen.",
+            "passwordAuthenticationWarningTooltip": "Beim Klonen über HTTPS wird dein Artemis-Passwort verwendet. Es kann dabei passieren, dass Git das Passwort unsicher als Klartext zwischenspeichert.",
+            "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
+            "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
+            "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",
+            "repositoryAccessTokenError": "Das Repository-Zugriffstoken konnte nicht abgerufen werden. Bitte versuche es erneut.",
+            "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
+            "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
+            "aiExperienceConfirmation": {
+                "popUpLabel": "Bestätigung der KI-Verwendung",
+                "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, verarbeitet werden dürfen. Deine Daten werden nicht in der Cloud gespeichert."
+            },
+            "mode": {
+                "practice": "Übung",
+                "graded": "Bewertet"
+            }
+        }
+    }
+}

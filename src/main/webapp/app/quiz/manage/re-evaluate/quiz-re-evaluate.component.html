@@ -1,0 +1,226 @@
+@if (quizExercise()) {
+    <div>
+        <h1>
+            <span
+                jhiTranslate="artemisApp.quizExercise.re-evaluate.title"
+                [translateValues]="{ param: quizExercise().course?.title || quizExercise().exerciseGroup?.exam?.title }"
+            ></span>
+        </h1>
+        @if (!quizExercise().course) {
+            <h5>
+                <fa-icon class="text-state-warning" [icon]="faExclamationTriangle" />
+                <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
+            </h5>
+        }
+        <hr />
+        <div class="edit-quiz-re-evaluate">
+            <div class="quiz-options">
+                <div class="mb-6! flex w-full flex-col">
+                    <!--
+                        The marker the shared title field carries on every other exercise form, which this page
+                        hand-rolls its own title input instead of using. Hidden from assistive technology because
+                        `required` on the input already conveys it.
+                    -->
+                    <div>
+                        <label class="text-base font-bold" for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input
+                            required
+                            id="quiz-title"
+                            type="text"
+                            tumAetUiInput
+                            class="min-w-0 grow"
+                            [(ngModel)]="quizExercise().title"
+                            (ngModelChange)="cacheValidation()"
+                            placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
+                        />
+                        <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            type="button"
+                            (click)="resetQuizTitle()"
+                            [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faUndo" />
+                        </button>
+                    </div>
+                </div>
+                <div class="grid w-full grid-cols-12 gap-x-6!">
+                    <div class="col-span-12 flex flex-col lg:col-span-7">
+                        <div class="mb-6!">
+                            <tumaet-ui-date-picker
+                                class="start-time w-4/5"
+                                inputId="quiz-re-evaluate-start-time"
+                                labelName="artemisApp.quizExercise.startTime"
+                                [value]="quizExercise().releaseDate"
+                                [disabled]="true"
+                            />
+                        </div>
+                        <div class="quiz-duration mb-6! flex flex-col">
+                            <span id="quiz-re-evaluate-duration-label" class="text-base font-bold" jhiTranslate="artemisApp.quizExercise.duration"></span>
+                            <div class="flex items-center" role="group" aria-labelledby="quiz-re-evaluate-duration-label">
+                                <label for="quiz-duration-hours" class="sr-only" jhiTranslate="artemisApp.quizExercise.hours"></label>
+                                <input id="quiz-duration-hours" tumAetUiInput class="me-2 w-16" title="Duration" [value]="duration().hours" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.hours"></span>
+                                <label for="quiz-duration-minutes" class="sr-only" jhiTranslate="artemisApp.quizExercise.minutes"></label>
+                                <input id="quiz-duration-minutes" tumAetUiInput class="me-2 ms-2 w-16" title="Duration" [value]="duration().minutes" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                <label for="quiz-duration-seconds" class="sr-only" jhiTranslate="artemisApp.quizExercise.seconds"></label>
+                                <input id="quiz-duration-seconds" tumAetUiInput class="me-2 ms-2 w-16" title="Duration" type="number" [value]="duration().seconds" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-12 flex flex-col lg:col-span-5">
+                        <div class="mb-6! flex flex-col">
+                            <span
+                                id="quiz-re-evaluate-included-label"
+                                class="text-base font-bold"
+                                jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}Label"
+                            ></span>
+                            <div role="group" aria-labelledby="quiz-re-evaluate-included-label">
+                                @if (quizExercise().includedInOverallScore) {
+                                    <jhi-included-in-overall-score-picker
+                                        [includedInOverallScore]="quizExercise().includedInOverallScore!"
+                                        (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                        [allowNotIncluded]="!!quizExercise().course"
+                                    />
+                                }
+                            </div>
+                        </div>
+                        <div class="mb-6! flex items-center gap-2">
+                            <tumaet-ui-checkbox inputId="cbRandomizeOrder" [(ngModel)]="quizExercise().randomizeQuestionOrder" (ngModelChange)="cacheValidation()" />
+                            <label class="m-0" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-1 mb-1 w-full text-start">
+                <h4>
+                    <span jhiTranslate="artemisApp.quizExercise.questions"></span>
+                </h4>
+            </div>
+            @for (question of quizExercise().quizQuestions; track question.id; let i = $index) {
+                <div class="mb-4! w-full overflow-hidden rounded-md border border-solid border-border bg-surface-raised">
+                    @if (question.type === MULTIPLE_CHOICE) {
+                        <div>
+                            <jhi-multiple-choice
+                                [question]="question"
+                                [questionIndex]="i + 1"
+                                (questionUpdated)="onQuestionUpdated()"
+                                (questionDeleted)="deleteQuestion(question)"
+                                (questionMoveUp)="moveUp(question)"
+                                (questionMoveDown)="moveDown(question)"
+                            />
+                        </div>
+                    }
+                    @if (question.type === DRAG_AND_DROP) {
+                        <div>
+                            <jhi-re-evaluate-drag-and-drop-question
+                                [question]="question"
+                                [questionIndex]="i + 1"
+                                (questionUpdated)="onQuestionUpdated()"
+                                (questionDeleted)="deleteQuestion(question)"
+                                (questionMoveUp)="moveUp(question)"
+                                (questionMoveDown)="moveDown(question)"
+                            />
+                        </div>
+                    }
+                    @if (question.type === SHORT_ANSWER) {
+                        <div>
+                            <jhi-re-evaluate-short-answer-question
+                                [question]="question"
+                                [questionIndex]="i + 1"
+                                (questionUpdated)="onQuestionUpdated()"
+                                (questionDeleted)="deleteQuestion(question)"
+                                (questionMoveUp)="moveUp(question)"
+                                (questionMoveDown)="moveDown(question)"
+                            />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="edit-quiz-footer">
+            <div class="mx-auto h-full w-full px-3! sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1140px] 2xl:max-w-[1320px]">
+                <div class="edit-quiz-footer-content">
+                    <div></div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if (!pendingChanges() && !isSaving()) {
+                            <tumaet-ui-tag severity="success"><span jhiTranslate="artemisApp.quizExercise.edit.saved"></span></tumaet-ui-tag>
+                        }
+                        @if (pendingChanges() && isValidQuiz() && !isSaving()) {
+                            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges"></span></tumaet-ui-tag>
+                        }
+                        @if (isSaving()) {
+                            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.quizExercise.edit.saving"></span></tumaet-ui-tag>
+                        }
+                        <ng-template #warningTranslate>
+                            @for (warning of invalidWarnings(); track warning) {
+                                <div>
+                                    @if ((warning.translateValues | json) !== '{}') {
+                                        <p jhiTranslate="{{ warning.translateKey }}" [translateValues]="{ index: warning.translateValues.index }"></p>
+                                    }
+                                    @if ((warning.translateValues | json) === '{}') {
+                                        <p jhiTranslate="{{ warning.translateKey }}"></p>
+                                    }
+                                </div>
+                            }
+                        </ng-template>
+                        @if (warningQuizCache()) {
+                            <tumaet-ui-tag severity="warn" [tumAetUiTooltip]="warningTranslate" tumAetUiTooltipPlacement="top">
+                                <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                                <span>({{ invalidWarnings().length }})</span>
+                            </tumaet-ui-tag>
+                        }
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="danger"
+                            size="small"
+                            (click)="resetAll()"
+                            [disabled]="!pendingChanges() || isSaving()"
+                            jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
+                        ></button>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            size="small"
+                            (click)="back()"
+                            jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"
+                        ></button>
+                        <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
+                        @if (!quizIsValid()) {
+                            <ul [id]="saveReasonsId" class="sr-only">
+                                @for (reason of invalidReasons(); track $index) {
+                                    <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+                                }
+                            </ul>
+                        }
+                        <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                             events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
+                        <button
+                            tumAetUiButton
+                            type="button"
+                            severity="primary"
+                            size="small"
+                            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                            (click)="onSaveClick()"
+                            [tumAetUiTooltip]="invalidReasonTexts()"
+                            [tumAetUiTooltipDescribesHost]="false"
+                            [attr.aria-disabled]="isSaveDisabled()"
+                            [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
+                            jhiTranslate="entity.action.save"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

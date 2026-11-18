@@ -1,0 +1,179 @@
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { debounceTime, filter, map } from 'rxjs/operators';
+import { BehaviorSubject, Subscription } from 'rxjs';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
+
+import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
+import { onError } from 'app/foundation/util/global.utils';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-course-faq',
+    templateUrl: './course-faq.component.html',
+    styleUrl: '../../course/overview/course-overview/course-overview.scss',
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        CourseTitleBarActionsDirective,
+        CourseFaqAccordionComponent,
+        CustomExerciseCategoryBadgeComponent,
+        SearchFilterComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+    ],
+})
+export class CourseFaqComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private faqService = inject(FaqService);
+    private alertService = inject(AlertService);
+    private renderer = inject(Renderer2);
+
+    faqElements = viewChildren<ElementRef>('faqElement');
+    private readonly searchFilter = viewChild(SearchFilterComponent);
+
+    courseId!: number; // set in ngOnInit() from the parent route paramMap
+    /** The FAQ named by the `faqId` query parameter; follows the parameter while the page stays open. */
+    // Every reference notifies, also a repeated one with the same id, so the FAQ is scrolled to again.
+    readonly referencedFaqId = signal<number | undefined>(undefined, { equal: () => false });
+    readonly faqs = signal<Faq[]>([]);
+    faqState = FaqState.ACCEPTED;
+
+    readonly filteredFaqs = signal<Faq[]>([]);
+    readonly existingCategories = signal<FaqCategory[]>([]);
+    readonly activeFilters = signal<Set<string>>(new Set<string>());
+
+    readonly hasCategories = signal(false);
+
+    searchInput = new BehaviorSubject<string>('');
+
+    readonly faFilter = faFilter;
+
+    private tabReselectionSubscription?: Subscription;
+    private queryParamSubscription?: Subscription;
+    private navigationSubscription?: Subscription;
+
+    constructor() {
+        effect(() => {
+            const referencedFaqId = this.referencedFaqId();
+            if (referencedFaqId) {
+                this.scrollToFaq(referencedFaqId);
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
+        // The router reuses this page when only the query changes, for example when global search opens another FAQ from
+        // here, so the parameter is followed rather than read once.
+        this.queryParamSubscription = this.route.queryParamMap.subscribe((params) => this.showReferencedFaq(Number(params.get('faqId')) || undefined));
+        // Opening the FAQ that is already referenced (for example from global search) does not change the query, so it is
+        // seen only as another navigation to the same URL, which the router reports because it reloads on same-URL navigation.
+        this.navigationSubscription = this.router.events
+            .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+            .subscribe(() => this.showReferencedFaq(Number(this.route.snapshot.queryParamMap.get('faqId')) || undefined));
+
+        this.loadFaqs();
+        this.loadCourseExerciseCategories(this.courseId);
+
+        this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
+            this.refreshFaqList(searchTerm);
+        });
+
+        // Selecting this tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => {
+            this.loadFaqs();
+            this.loadCourseExerciseCategories(this.courseId);
+        });
+    }
+
+    /**
+     * Shows the FAQ a link points to. On a page that stays open, the category and text filters set earlier could hide
+     * it, so they are cleared when they do; the scroll effect then finds the rendered FAQ.
+     */
+    private showReferencedFaq(faqId: number | undefined): void {
+        const hidden = faqId !== undefined && this.faqs().some((faq) => faq.id === faqId) && !this.filteredFaqs().some((faq) => faq.id === faqId);
+        if (hidden && (this.activeFilters().size > 0 || this.searchInput.getValue())) {
+            this.activeFilters.set(new Set<string>());
+            this.searchFilter()?.resetSearchValue();
+            this.searchInput.next('');
+            this.applyFilters();
+        }
+        this.referencedFaqId.set(faqId);
+    }
+
+    private loadCourseExerciseCategories(courseId: number) {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, this.faqState).subscribe((existingCategories) => {
+            this.existingCategories.set(existingCategories);
+            this.hasCategories.set(existingCategories.length > 0);
+        });
+    }
+
+    private loadFaqs() {
+        this.faqService
+            .findAllByCourseIdAndState(this.courseId, this.faqState)
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
+            .subscribe({
+                next: (res: Faq[]) => {
+                    this.faqs.set(res);
+                    this.applyFilters();
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
+        this.queryParamSubscription?.unsubscribe();
+        this.navigationSubscription?.unsubscribe();
+        this.searchInput.complete();
+    }
+
+    toggleFilters(category: string) {
+        this.activeFilters.set(this.faqService.toggleFilter(category, this.activeFilters()));
+        this.refreshFaqList(this.searchInput.getValue());
+    }
+
+    private applyFilters(): void {
+        this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs()));
+    }
+
+    private applySearch(searchTerm: string) {
+        this.filteredFaqs.set(this.filteredFaqs().filter((faq) => this.faqService.hasSearchTokens(faq, searchTerm)));
+    }
+
+    setSearchValue(searchValue: string) {
+        this.searchInput.next(searchValue);
+    }
+
+    refreshFaqList(searchTerm: string) {
+        this.applyFilters();
+        this.applySearch(searchTerm);
+    }
+
+    scrollToFaq(faqId: number): void {
+        const faqElement = this.faqElements().find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
+        if (faqElement) {
+            this.renderer.selectRootElement(faqElement.nativeElement, true).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+}

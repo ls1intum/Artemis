@@ -1,0 +1,206 @@
+<!-- expanded posts -->
+@if (course()) {
+    <div [class]="embedded() ? 'flex h-full flex-col' : 'h-full'">
+        @if (!collapsed()) {
+            <div
+                [class]="embedded() ? 'flex grow flex-col overflow-hidden' : 'postings-container expanded-discussion'"
+                jhiResizable
+                [resizableEdges]="{ left: '.draggable-left' }"
+                [resizableConstraints]="{ minWidth: 375, maxWidth: 600 }"
+            >
+                @if (!embedded()) {
+                    <div class="draggable-left panel-divider-x"></div>
+                }
+                <div [class]="embedded() ? 'flex grow flex-col overflow-hidden' : 'discussion-card'">
+                    <!-- header -->
+                    <div
+                        class="discussion-card-header"
+                        [tumAetUiTooltip]="'artemisApp.communication.hide' | artemisTranslate"
+                        (click)="collapsed.set(true)"
+                        [hidden]="embedded()"
+                        [attr.aria-expanded]="!collapsed()"
+                        #keyboardAction16
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+                    >
+                        <div class="flex grow items-center justify-between">
+                            <h5 class="mb-0 font-medium!" jhiTranslate="artemisApp.communication.label">Communication</h5>
+                            <fa-icon [icon]="faChevronRight" />
+                        </div>
+                    </div>
+                    <!-- body -->
+                    @if (noChannelAvailable()) {
+                        <div class="grow p-4!" jhiTranslate="artemisApp.communication.channel.noChannel"></div>
+                    } @else {
+                        <div [class]="embedded() ? 'flex w-full grow flex-col overflow-hidden px-2 pt-0' : 'grow px-4! pt-0 pb-4!'">
+                            @if (currentPost(); as selectedPost) {
+                                <div class="my-2">
+                                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
+                                    <span class="back-instruction" jhiTranslate="artemisApp.communication.post.showAllPosts"></span>
+                                    <jhi-posting-thread [post]="selectedPost" [showAnswers]="true" [id]="'item-' + selectedPost.id" [showChannelReference]="false" />
+                                </div>
+                            } @else {
+                                <!-- search bar -->
+                                <jhi-search-filter class="mb-2 block px-0" size="small" (newSearchEvent)="onSearch($event)" />
+                                <form [formGroup]="formGroup">
+                                    <!-- filter and sort controls -->
+                                    <div class="flex flex-wrap justify-between gap-x-2">
+                                        <!-- attribute filter -->
+                                        <div class="flex flex-wrap items-center">
+                                            <fa-icon class="pe-2" [icon]="faFilter" />
+                                            <div class="flex items-center gap-1 pe-2">
+                                                <tumaet-ui-checkbox
+                                                    inputId="filterToUnresolved"
+                                                    name="filterToUnresolved"
+                                                    formControlName="filterToUnresolved"
+                                                    (changed)="onSelectContext()"
+                                                />
+                                                <label for="filterToUnresolved" jhiTranslate="artemisApp.communication.overview.filterToUnresolved"></label>
+                                            </div>
+                                            <div class="flex items-center gap-1 pe-2">
+                                                <tumaet-ui-checkbox inputId="filterToOwn" name="filterToOwn" formControlName="filterToOwn" (changed)="onSelectContext()" />
+                                                <label for="filterToOwn" jhiTranslate="artemisApp.communication.overview.filterToOwn"></label>
+                                            </div>
+                                            <div class="flex items-center gap-1 pe-2">
+                                                <tumaet-ui-checkbox
+                                                    inputId="filterToAnsweredOrReacted"
+                                                    name="filterToAnsweredOrReacted"
+                                                    formControlName="filterToAnsweredOrReacted"
+                                                    (changed)="onSelectContext()"
+                                                />
+                                                <label for="filterToAnsweredOrReacted" jhiTranslate="artemisApp.communication.overview.filterToAnsweredOrReacted"></label>
+                                            </div>
+                                        </div>
+                                        <!-- sort dropdown -->
+                                        <div class="flex items-baseline">
+                                            <span class="pe-1" jhiTranslate="artemisApp.communication.discussionSection.sortByDate"></span>
+                                            @if (!currentSortDirection()) {
+                                                <div
+                                                    class="clickable"
+                                                    (click)="onChangeSortDir()"
+                                                    #keyboardAction98
+                                                    role="button"
+                                                    tabindex="0"
+                                                    [attr.aria-label]="'artemisApp.communication.discussionSection.defaultSortCriterion' | artemisTranslate"
+                                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction98.click() : undefined"
+                                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction98.click() : undefined"
+                                                >
+                                                    <fa-icon
+                                                        [icon]="faLongArrowRight"
+                                                        [tumAetUiTooltip]="'artemisApp.communication.discussionSection.defaultSortCriterion' | artemisTranslate"
+                                                    />
+                                                </div>
+                                            }
+                                            @if (currentSortDirection()) {
+                                                <div
+                                                    class="clickable"
+                                                    (click)="onChangeSortDir()"
+                                                    #keyboardAction106
+                                                    role="button"
+                                                    tabindex="0"
+                                                    [attr.aria-label]="
+                                                        (currentSortDirection() === SortDirection.ASCENDING
+                                                            ? 'artemisApp.communication.overview.sortAscending'
+                                                            : 'artemisApp.communication.overview.sortDescending'
+                                                        ) | artemisTranslate
+                                                    "
+                                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction106.click() : undefined"
+                                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction106.click() : undefined"
+                                                >
+                                                    <fa-icon
+                                                        [icon]="currentSortDirection() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                                        [tumAetUiTooltip]="
+                                                            currentSortDirection() === SortDirection.ASCENDING
+                                                                ? ('artemisApp.communication.overview.sortAscending' | artemisTranslate)
+                                                                : ('artemisApp.communication.overview.sortDescending' | artemisTranslate)
+                                                        "
+                                                    />
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </form>
+                                <div class="bold-line mt-1 mb-2"></div>
+                                <div
+                                    data-testid="discussion-messages"
+                                    #itemsContainer
+                                    [class]="embedded() ? 'grow overflow-y-auto' : 'items-container'"
+                                    infinite-scroll
+                                    [scrollWindow]="false"
+                                    (scrolledUp)="fetchNextPage()"
+                                >
+                                    @for (post of posts(); track post.id) {
+                                        <jhi-posting-thread
+                                            data-testid="discussion-post"
+                                            #postingThread
+                                            [id]="'item-' + post.id"
+                                            class="item"
+                                            [post]="post"
+                                            [showAnswers]="posts().length === 1"
+                                            [showChannelReference]="false"
+                                            [isCommunicationPage]="false"
+                                        />
+                                    }
+                                </div>
+                            }
+                            <!-- loading posts -->
+                            @if (isLoading()) {
+                                <div class="post-result-information mt-2" jhiTranslate="artemisApp.communication.discussionSection.loadingMessages"></div>
+                            }
+                            <!-- no posts -->
+                            @if (!isLoading() && posts().length === 0) {
+                                <div class="post-result-information mt-2" jhiTranslate="artemisApp.communication.discussionSection.noMessages"></div>
+                            }
+                            <!-- new post button -->
+                            @if (createdPost() && !isLoading() && !channel()?.isArchived) {
+                                <div class="mt-2">
+                                    <button tumAetUiButton type="button" id="new-post" size="small" (click)="toggleSendMessage()">
+                                        @if (!shouldSendMessage()) {
+                                            <fa-icon [icon]="faPlus" />
+                                        }
+                                        @if (shouldSendMessage()) {
+                                            <fa-icon [icon]="faTimes" />
+                                        }
+                                        @if (!shouldSendMessage()) {
+                                            <span class="hidden md:inline" jhiTranslate="artemisApp.communication.askQuestion"></span>
+                                        }
+                                        @if (shouldSendMessage()) {
+                                            <span class="hidden md:inline" jhiTranslate="artemisApp.communication.collapseNewMessage"></span>
+                                        }
+                                    </button>
+                                    @if (shouldSendMessage()) {
+                                        <jhi-message-inline-input class="message-input" [posting]="createdPost()" (onCreate)="createEmptyPost()" />
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        } @else {
+            <div
+                class="postings-container collapsed-discussion"
+                (click)="collapsed.set(false)"
+                [tumAetUiTooltip]="'artemisApp.communication.show' | artemisTranslate"
+                [attr.aria-expanded]="!collapsed()"
+                #keyboardAction183
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
+            >
+                <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
+                <span class="text-xl! leading-tight! font-medium!" jhiTranslate="artemisApp.communication.label">Communication</span>
+                <div class="spacer"></div>
+                <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
+            </div>
+        }
+        <!-- collapsed posts -->
+    </div>
+}

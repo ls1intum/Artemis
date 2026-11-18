@@ -1,0 +1,92 @@
+<form [formGroup]="form()">
+    @if (!isInConnectMode()) {
+        <div class="mb-4!">
+            <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.title'"></label>
+            <input
+                type="text"
+                tumAetUiInput
+                class="block w-full"
+                id="title"
+                formControlName="title"
+                [tumAetUiInputInvalid]="!!titleControl?.invalid && (!!titleControl?.dirty || !!titleControl?.touched)"
+                [placeholder]="'artemisApp.' + courseCompetency()?.type + '.create.titlePlaceholder' | artemisTranslate"
+            />
+            @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
+                <tumaet-ui-message severity="error" class="mt-2">
+                    @if (titleControl?.errors?.required) {
+                        <div [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.titleRequiredValidationError'"></div>
+                    }
+                    @if (titleControl?.errors?.maxlength) {
+                        <div
+                            [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.titleMaxLengthValidationError'"
+                            [translateValues]="{ max: competencyValidators.TITLE_MAX }"
+                        ></div>
+                    }
+                    @if (titleControl?.errors?.titleUnique) {
+                        <div jhiTranslate="artemisApp.courseCompetency.create.titleUniqueValidationError"></div>
+                    }
+                </tumaet-ui-message>
+            }
+        </div>
+    }
+    @if (!isInConnectMode()) {
+        <div class="mb-4!">
+            <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
+            <jhi-markdown-editor-monaco
+                [markdown]="descriptionControl?.value"
+                (markdownChange)="updateDescriptionControl($event)"
+                id="description"
+                class="markdown-preview"
+                [enableFileUpload]="false"
+            />
+            @if (descriptionControl?.invalid && descriptionControl?.dirty) {
+                <tumaet-ui-message severity="error" class="mt-2">
+                    @if (descriptionControl?.errors?.maxlength) {
+                        <div
+                            [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.descriptionMaxLengthValidationError'"
+                            [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                        ></div>
+                    }
+                </tumaet-ui-message>
+            }
+        </div>
+    }
+    <div class="mb-4!">
+        <tumaet-ui-date-picker
+            id="softDueDate"
+            inputId="softDueDate-input"
+            [labelName]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDate'"
+            ariaDescribedBy="softDueDate-hint"
+            formControlName="softDueDate"
+            [dateOnly]="true"
+        />
+        <small id="softDueDate-hint" class="text-muted-color" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint'"></small>
+    </div>
+    @if (!isInConnectMode()) {
+        <div class="mb-4!">
+            <label for="taxonomy">
+                {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
+                @if (suggestedTaxonomies().length) {
+                    <small> ({{ 'artemisApp.courseCompetency.create.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies().join(', ') }}) </small>
+                }
+            </label>
+            <jhi-taxonomy-select [selectId]="'taxonomy'" [form]="taxonomyControl" />
+        </div>
+    }
+    @if (!isInConnectMode()) {
+        <div class="mb-4!">
+            <label for="masteryThreshold">
+                {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
+                @if (averageStudentScore() !== null && averageStudentScore() !== undefined) {
+                    <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore() }}%) </small>
+                }
+            </label>
+            <input required type="number" tumAetUiInput class="block w-full" name="masteryThreshold" id="masteryThreshold" min="1" max="100" formControlName="masteryThreshold" />
+        </div>
+    }
+    <div class="mb-4! flex items-center gap-1">
+        <tumaet-ui-checkbox inputId="optional" formControlName="optional" />
+        <label [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.optional'" for="optional"></label>
+        <jhi-help-icon [text]="'artemisApp.' + courseCompetency()?.type + '.optionalDescription'" />
+    </div>
+</form>

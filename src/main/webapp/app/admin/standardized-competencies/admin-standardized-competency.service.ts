@@ -1,0 +1,42 @@
+import { HttpClient } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyCatalogDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+
+@Service()
+export class AdminStandardizedCompetencyService {
+    private httpClient = inject(HttpClient);
+
+    private resourceURL = 'api/atlas/admin/standardized-competencies';
+
+    createStandardizedCompetency(competency: StandardizedCompetencyDTO) {
+        return this.httpClient.post<StandardizedCompetencyDTO>(`${this.resourceURL}`, competency, { observe: 'response' });
+    }
+
+    updateStandardizedCompetency(competency: StandardizedCompetencyDTO) {
+        return this.httpClient.put<StandardizedCompetencyDTO>(`${this.resourceURL}/${competency.id}`, competency, { observe: 'response' });
+    }
+
+    deleteStandardizedCompetency(competencyId: number) {
+        return this.httpClient.delete<void>(`${this.resourceURL}/${competencyId}`, { observe: 'response' });
+    }
+
+    createKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
+        return this.httpClient.post<KnowledgeAreaDTO>(`${this.resourceURL}/knowledge-areas`, knowledgeArea, { observe: 'response' });
+    }
+
+    updateKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
+        return this.httpClient.put<KnowledgeAreaDTO>(`${this.resourceURL}/knowledge-areas/${knowledgeArea.id}`, knowledgeArea, { observe: 'response' });
+    }
+
+    deleteKnowledgeArea(knowledgeAreaId: number) {
+        return this.httpClient.delete<void>(`${this.resourceURL}/knowledge-areas/${knowledgeAreaId}`, { observe: 'response' });
+    }
+
+    importStandardizedCompetencyCatalog(dto: KnowledgeAreasForImportDTO) {
+        return this.httpClient.put<void>(`${this.resourceURL}/import`, dto, { observe: 'response' });
+    }
+
+    exportStandardizedCompetencyCatalog() {
+        return this.httpClient.get<StandardizedCompetencyCatalogDTO>(`${this.resourceURL}/export`, { observe: 'response' });
+    }
+}

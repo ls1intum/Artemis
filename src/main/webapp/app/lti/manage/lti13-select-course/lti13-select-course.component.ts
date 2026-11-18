@@ -1,0 +1,42 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { LtiCourseCardComponent } from '../lti-course-card/lti-course-card.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+@Component({
+    selector: 'jhi-lti-courses-overview',
+    templateUrl: './lti13-select-course.component.html',
+    imports: [LtiCourseCardComponent, TranslateDirective],
+})
+export class LtiCoursesComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private sessionStorageService = inject(SessionStorageService);
+    private alertService = inject(AlertService);
+
+    public readonly courses = signal<OnlineCourseDtoModel[]>([]);
+
+    ngOnInit() {
+        this.loadAndFilterCourses();
+    }
+
+    loadAndFilterCourses() {
+        const clientId = this.sessionStorageService.retrieve<string>('clientRegistrationId');
+        if (clientId) {
+            this.courseService.findAllOnlineCoursesWithRegistrationId(clientId).subscribe({
+                next: (courseResponse: OnlineCourseDtoModel[]) => {
+                    this.courses.set(courseResponse);
+                },
+                error: (error) => {
+                    this.alertService.error('error.unexpectedError', {
+                        error: error.message,
+                    });
+                },
+            });
+        } else {
+            this.courses.set([]);
+        }
+    }
+}

@@ -1,0 +1,136 @@
+package de.tum.cit.aet.artemis.text.service;
+
+import static java.lang.Integer.compare;
+
+import java.text.BreakIterator;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+
+@Conditional(TextEnabled.class)
+@Lazy
+@Service
+public class TextBlockService {
+
+    /**
+     * As line breaks are stored and handled in UNIX style (also on Windows), we always use '\n' instead of the platform-dependent separator.
+     */
+    private static final String LINE_SEPARATOR = "\n";
+
+    private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
+
+    public static final Comparator<TextBlock> compareByStartIndexReversed = (TextBlock first, TextBlock second) -> compare(second.getStartIndex(), first.getStartIndex());
+
+    private final TextBlockRepository textBlockRepository;
+
+    public TextBlockService(TextBlockRepository textBlockRepository) {
+        this.textBlockRepository = textBlockRepository;
+    }
+
+    public Set<TextBlock> findAllBySubmissionId(Long id) {
+        return this.textBlockRepository.findAllBySubmissionId(id);
+    }
+
+    /**
+     * Returns the stored text blocks for the given ids, independent of the submission they belong to.
+     *
+     * @param ids the ids to look up
+     * @return the text blocks that exist for those ids
+     */
+    public List<TextBlock> findAllById(Collection<String> ids) {
+        return this.textBlockRepository.findAllById(ids);
+    }
+
+    public Set<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
+        final var blocks = splitSubmissionIntoBlocks(textSubmission);
+        textSubmission.setBlocks(blocks);
+        return blocks;
+    }
+
+    /**
+     * Break down a Text Submission into its TextBlocks.
+     * A Text Block is defined (for now) as a Sentence. Delimitation is defined by java.text.BreakIterator or Linebreaks.
+     *
+     * @param submission TextSubmission to split
+     * @return set of TextBlocks
+     */
+    public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
+
+        // Return empty set for missing submission text.
+        final String submissionText = submission.getText();
+        if (submissionText == null) {
+            return Set.of();
+        }
+
+        // Javas Sentence BreakIterator handles sentence splitting.
+        BreakIterator breakIterator = BreakIterator.getSentenceInstance();
+        breakIterator.setText(submissionText);
+        final Set<TextBlock> blocks = new HashSet<>();
+        int start = breakIterator.first();
+
+        // Iterate over Sentences
+        for (int end = nextSentenceEnd(breakIterator, submissionText); end != BreakIterator.DONE; start = end, end = nextSentenceEnd(breakIterator, submissionText)) {
+            final String sentence = submissionText.substring(start, end);
+
+            // The BreakIterator does not take linebreaks into account.
+            // Therefore, we split each determined sentence by linebreaks.
+            final String[] split = sentence.split(LINE_SEPARATOR);
+            for (String lineOrSentence : split) {
+                final String lineOrSentenceTrimed = lineOrSentence.trim();
+                final int offset = lineOrSentence.indexOf(lineOrSentenceTrimed);
+                final int startIndex = start + offset;
+                final int endIndex = startIndex + lineOrSentenceTrimed.length();
+                start = start + lineOrSentence.length() + LINE_SEPARATOR_LENGTH;
+                if (startIndex == endIndex || lineOrSentence.isBlank()) {
+                    continue; // Do *not* define a text block for an empty line.
+                }
+
+                final TextBlock textBlock = new TextBlock().text(lineOrSentenceTrimed).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
+                textBlock.computeId();
+                blocks.add(textBlock);
+            }
+        }
+
+        return blocks;
+    }
+
+    /**
+     * Returns the next sentence boundary of the break iterator, ignoring boundaries inside a "!=" operator.
+     * The sentence break iterator treats the exclamation mark of "!=" as the end of a sentence, which would split the operator into two text blocks.
+     *
+     * @param breakIterator the sentence break iterator, already set to the given text
+     * @param text          the text which is split into sentences
+     * @return the next sentence boundary or {@link BreakIterator#DONE}
+     */
+    private static int nextSentenceEnd(BreakIterator breakIterator, String text) {
+        int end = breakIterator.next();
+        while (end > 0 && end < text.length() && text.charAt(end - 1) == '!' && text.charAt(end) == '=') {
+            end = breakIterator.next();
+        }
+        return end;
+    }
+
+    /**
+     * Save Iterable collection of text blocks.
+     *
+     * @param textBlocks Iterable of TextBlocks.
+     */
+    public void saveAll(Iterable<TextBlock> textBlocks) {
+        textBlockRepository.saveAll(textBlocks);
+    }
+
+    public void deleteForSubmission(TextSubmission textSubmission) {
+        textBlockRepository.deleteAllBySubmission_Id(textSubmission.getId());
+    }
+}

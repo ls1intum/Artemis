@@ -1,0 +1,65 @@
+<!-- Pointer clicks on notification cards expand the stack; the separate native toggle provides keyboard access.
+     Notification links and close actions must keep their own semantics and are ignored by the delegated handler. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div
+    [ngClass]="{ 'is-expanded': isExpanded(), 'is-expandable': notifications().length > 1, 'is-communication': isCommunicationView(), hidden: notifications().length === 0 }"
+    [style.height]="isExpanded() && !isCommunicationView() ? 5 + notifications().length * 7 + 'rem' : null"
+    class="course-notification-popup-overlay"
+    data-testid="notification-popup-overlay"
+    (click)="overlayClicked($event)"
+>
+    @for (notification of notifications(); track notification.notificationId) {
+        <div
+            class="notification-animation-wrapper"
+            data-testid="notification-popup-card"
+            animate.enter="notification-entering"
+            animate.leave="notification-leaving"
+            [style.bottom]="isExpanded() && !isCommunicationView() ? (notifications().length - $index - 1) * 7 + 5 + 'rem' : null"
+        >
+            <div class="course-notification-popup-overlay-notification">
+                <jhi-course-notification
+                    [courseNotification]="notification"
+                    [isShowClose]="true"
+                    [isHideTime]="true"
+                    [isRedirectToUrl]="isExpanded() || notifications().length === 1"
+                    [fluid]="isCommunicationView()"
+                    [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
+                    (onCloseClicked)="closeClicked(notification)"
+                />
+            </div>
+        </div>
+    }
+
+    <div class="course-notification-popup-overlay-collapse">
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            class="me-2! rounded-full!"
+            data-testid="notification-popup-toggle"
+            [attr.aria-expanded]="isExpanded()"
+            [attr.aria-label]="(isExpanded() ? 'artemisApp.notification.collapsePopup' : 'artemisApp.notification.expandPopup') | artemisTranslate"
+            [attr.tabindex]="isExpanded() || notifications().length > 1 ? 0 : -1"
+            (click)="$event.stopPropagation(); isExpanded() ? collapseOverlayClicked() : overlayClicked()"
+        >
+            <fa-icon [icon]="isExpanded() ? faTimes : faChevronUp" />
+        </button>
+
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            class="notification-popup-clear rounded-full!"
+            data-testid="notification-popup-clear"
+            [attr.aria-label]="'artemisApp.notification.hideAllCurrentlyDisplayedNotifications' | artemisTranslate"
+            [attr.tabindex]="isExpanded() ? 0 : -1"
+            (click)="clearAllNotifications()"
+        >
+            <fa-icon [icon]="faTrash" />
+        </button>
+    </div>
+</div>

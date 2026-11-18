@@ -1,0 +1,15 @@
+<div>
+    @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
+        <jhi-text-editor
+            [viewingPurpose]="viewingPurpose()"
+            [participationId]="exercise().studentParticipations![0].id"
+            [expandProblemStatement]="expandProblemStatement()"
+            [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"
+            [inputParticipation]="isAfterResultsArePublished() ? undefined : exercise().studentParticipations![0]"
+            [inputSubmission]="isAfterResultsArePublished() ? undefined : submission()"
+            [isExamSummary]="true"
+        />
+    } @else {
+        <div>No submission</div>
+    }
+</div>

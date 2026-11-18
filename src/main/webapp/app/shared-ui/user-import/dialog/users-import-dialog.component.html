@@ -1,0 +1,223 @@
+<tumaet-ui-dialog [(visible)]="dialogVisible" size="large" dismissableMask [header]="'artemisApp.importUsers.dialogTitle' | artemisTranslate">
+    <form id="userImportDialogForm" name="importForm" role="form" novalidate>
+        <div class="flex flex-col gap-2">
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.introText"></p>
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.dialogText"></p>
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
+        </div>
+        @if (!examUserMode()) {
+            <div class="flex justify-center items-center">
+                <table tumAetUiTable size="small" class="w-auto">
+                    <thead>
+                        <tr>
+                            <th>Login</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_1</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>user_2&#64;artemis.org</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>11712345</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <fa-icon [icon]="faArrowRight" class="mx-2" />
+                <span>user_1, user_2, user_3</span>
+            </div>
+        }
+        @if (examUserMode()) {
+            <div class="flex justify-center items-center">
+                <table tumAetUiTable size="small" class="w-auto">
+                    <thead>
+                        <tr>
+                            <th>Login</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.room'">Room</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.seat'">Seat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_1</td>
+                            <td>user_2&#64;artemis.org</td>
+                            <td>11712345</td>
+                            <td>10.101</td>
+                            <td>25F</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <fa-icon [icon]="faArrowRight" class="mx-2" />
+                <span>user_1</span>
+            </div>
+        }
+        <div class="flex flex-col gap-2">
+            <div class="flex items-end">
+                <div>
+                    <label for="importCSV" class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
+                    <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
+                </div>
+                @if (isParsing()) {
+                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
+                }
+            </div>
+            <div class="mt-2">
+                <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                @if (validationError() || noUsersFoundError()) {
+                    <div class="mt-6! mb-2 text-state-danger">
+                        <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
+                        <ul class="mt-1">
+                            @if (validationError()) {
+                                <li>
+                                    <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.failedRows'"></b>
+                                    <b [innerHTML]="validationError()"> </b>
+                                </li>
+                            }
+                            @if (noUsersFoundError()) {
+                                <li>
+                                    <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.noUsersFound'"></b>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (previewUsers().length > 0) {
+            <div class="flex flex-col gap-2 mt-6!">
+                <div>
+                    <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
+                </div>
+                <tumaet-ui-table-layout class="mt-2 [--table-layout-offset:32rem] max-md:[--table-layout-offset:40rem]">
+                    <table data-testid="user-import-preview" tumAetUiTable size="small" striped>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" class="w-72" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
+                                <th scope="col">Login</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
+                                <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                                @if (examUserMode()) {
+                                    <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.room'">Room</th>
+                                    <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.seat'">Seat</th>
+                                } @else if (adminUserMode()) {
+                                    <th scope="col" [jhiTranslate]="'artemisApp.importUsers.testUser'">Test user</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (user of previewUsers(); track $index; let i = $index) {
+                                <tr [class.import-success]="wasImported(user)" [class.import-not-found]="wasNotFound(user)" [class.import-warning]="wasRejectedStaff(user)">
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ user.registrationNumber }}</td>
+                                    <td>{{ user.login }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.firstName }}</td>
+                                    <td>{{ user.lastName }}</td>
+                                    @if (examUserMode()) {
+                                        <td>{{ user.room }}</td>
+                                        <td>{{ user.seat }}</td>
+                                    } @else if (adminUserMode()) {
+                                        <td>
+                                            @if (user.isTestUser) {
+                                                <fa-icon [icon]="faCheck" />
+                                                <span class="sr-only" jhiTranslate="artemisApp.importUsers.testUser"></span>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
+            </div>
+        }
+    </form>
+    <ng-template #footer>
+        <div class="flex justify-between w-full">
+            @if (usersToImport() && usersToImport().length > 0) {
+                <div class="shrink-0 me-2 flex">
+                    @if (!hasImported()) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ usersToImport().length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>{{ numberOfUsersImported }}</span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
+                            <span
+                                ><b class="text-state-danger">{{ numberOfUsersNotFound }}</b></span
+                            >
+                        </div>
+                    }
+                </div>
+            }
+            @if (examUsersToImport() && examUsersToImport().length > 0) {
+                <div class="shrink-0 me-2 flex">
+                    @if (!hasImported()) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ examUsersToImport().length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>
+                                <b class="text-state-success">{{ numberOfUsersImported }}</b>
+                            </span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotFound"></strong>
+                            <span>
+                                <b class="text-state-danger">{{ numberOfUsersNotFound }}</b>
+                            </span>
+                        </div>
+                        @if (numberOfStaffRejected > 0) {
+                            <div class="ms-2">
+                                <strong jhiTranslate="artemisApp.importUsers.numberOfStaffRejected"></strong>
+                                <span>
+                                    <b class="text-state-warning">{{ numberOfStaffRejected }}</b>
+                                </span>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            <div class="grow flex justify-end">
+                @if (!hasImported()) {
+                    <button tumAetUiButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                    <button tumAetUiButton type="submit" id="import" name="importButton" severity="secondary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                        <fa-icon [icon]="faUpload" class="me-2" />
+                        <span jhiTranslate="entity.action.to-import"></span>
+                        <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                    </button>
+                } @else {
+                    <button type="button" tumAetUiButton severity="primary" size="small" id="finish-button" (click)="onFinish()">
+                        <fa-icon [icon]="faCheck" class="me-2" />
+                        <span jhiTranslate="entity.action.finish"></span>
+                    </button>
+                }
+            </div>
+        </div>
+    </ng-template>
+</tumaet-ui-dialog>

@@ -1,0 +1,82 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockPipe } from 'ng-mocks';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { By } from '@angular/platform-browser';
+import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { facSaveSuccess } from 'app/foundation/icons/icons';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+describe('ExerciseSaveButtonComponent', () => {
+    let component: ExerciseSaveButtonComponent;
+    let fixture: ComponentFixture<ExerciseSaveButtonComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseSaveButtonComponent);
+        component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create the component', () => {
+        fixture.detectChanges();
+        expect(component).toBeTruthy();
+    });
+
+    it('should disable the button if submission is synced', () => {
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: false } as Submission);
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('#save-exam'));
+        expect(button.nativeElement.disabled).toBe(true);
+        // the layout contract of the exam finds the button by this hook
+        expect(button.nativeElement.getAttribute('data-testid')).toBe('exam-save-button');
+    });
+
+    it('should enable the button if submission is not synced', () => {
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('#save-exam'));
+        expect(button.nativeElement.disabled).toBe(false);
+    });
+
+    it('should display facSaveSuccess icon if submission is synced and submitted', () => {
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: true } as Submission);
+        fixture.detectChanges();
+
+        const icon = fixture.debugElement.query(By.directive(FaIconComponent));
+        expect(icon.componentInstance.icon()).toBe(facSaveSuccess);
+    });
+
+    it('should display faFloppyDisk icon if submission is not synced and submitted', () => {
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
+        fixture.detectChanges();
+
+        const icon = fixture.debugElement.query(By.directive(FaIconComponent));
+        expect(icon.componentInstance.icon()).toBe(faFloppyDisk);
+    });
+
+    it('should call onSave when the button is clicked and submission is not synced', () => {
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
+        fixture.detectChanges();
+
+        const onSaveSpy = vi.spyOn(component, 'onSave');
+
+        const button = fixture.debugElement.query(By.css('#save-exam'));
+        button.nativeElement.click();
+
+        expect(onSaveSpy).toHaveBeenCalled();
+    });
+});

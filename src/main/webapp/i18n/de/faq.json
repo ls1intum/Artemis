@@ -1,0 +1,68 @@
+{
+    "artemisApp": {
+        "faq": {
+            "home": {
+                "title": "FAQ",
+                "createLabel": "FAQ erstellen",
+                "proposeLabel": "FAQ vorschlagen",
+                "accept": "FAQ akzeptieren",
+                "reject": "FAQ ablehnen",
+                "filterLabel": "Filter",
+                "createOrEditLabel": "FAQ erstellen oder bearbeiten",
+                "empty": {
+                    "title": "Noch keine FAQs",
+                    "noMatchingTitle": "Keine passenden FAQs",
+                    "documentation": "Mehr über FAQs erfahren"
+                }
+            },
+            "faqDisabled": {
+                "title": "Willkommen zur FAQ!",
+                "description": "Die FAQ-Funktion ist aktuell deaktiviert.\nDas Feature erlaubt es Tutor:innen, Editor:innen und Lehrenden häufig gestellte Fragen zu sammeln und beantworten. Die Studierenden können die häufig gestellten Fragen einsehen. Dies reduziert die Anzahl redundanter Fragen und mindert den Arbeitsaufwand für die Lehrenden.\nDas Feature kann jederzeit in den Einstellungen eingeschaltet oder ausgeschaltet werden.",
+                "buttonLabel": "FAQ aktivieren"
+            },
+            "created": "Die FAQ {{ title }} wurde erfolgreich erstellt",
+            "updated": "Die FAQ {{ title }} wurde erfolgreich aktualisiert",
+            "proposed": "Die FAQ {{ title }} wurde erfolgreich vorgeschlagen",
+            "proposedChange": "Die Änderungen am FAQ {{ title }} wurden erfolgreich vorgeschlagen",
+            "deleted": "Die FAQ wurde erfolgreich gelöscht",
+            "accepted": "Die FAQ {{ title }} wurde erfolgreich akzeptiert",
+            "rejected": "Die FAQ {{ title }} wurde erfolgreich abgelehnt",
+            "delete": {
+                "question": "Soll die FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."
+            },
+            "table": {
+                "questionTitle": "Fragentitel",
+                "questionAnswer": "Antwort auf die Frage",
+                "categories": "Kategorien",
+                "state": "Status"
+            },
+            "course": "Kurs",
+            "noExisting": "Momentan existiert für diesen Kurs noch kein FAQ.",
+            "noMatching": "Es gibt kein FAQ, das die Kombination aus Filter- und Suchkriterien erfüllt.",
+            "import": {
+                "title": "FAQs importieren",
+                "description": "Verwende FAQs aus deinen anderen Kursen. Suche nach FAQs, sieh dir die Antworten an und wähle die FAQs aus, die du in diesen Kurs kopieren möchtest.",
+                "searchLabel": "FAQs suchen",
+                "searchPlaceholder": "Nach Frage, Antwort oder Kursname suchen",
+                "loading": "Zugängliche FAQs werden gesucht…",
+                "searchError": "Die FAQs konnten nicht geladen werden. Bitte versuche es erneut.",
+                "retry": "Erneut versuchen",
+                "emptyTitle": "Keine passenden FAQs",
+                "emptyDescription": "Versuche eine andere Suche. Hier erscheinen nur FAQs aus anderen Kursen, auf die du Zugriff hast.",
+                "selectPage": "Alle auf dieser Seite auswählen",
+                "preview": "Antwort ansehen",
+                "selected": "{{ count }} auf allen Seiten ausgewählt",
+                "clearSelection": "Auswahl aufheben",
+                "importSelected": "Auswahl importieren ({{ count }})",
+                "importError": "Die FAQs konnten nicht importiert werden. Möglicherweise hat sich dein Zugriff geändert. Überprüfe deine Auswahl und versuche es erneut.",
+                "success": "{{ count }} FAQs erfolgreich importiert.",
+                "state": {
+                    "ACCEPTED": "Akzeptiert",
+                    "PROPOSED": "Vorgeschlagen",
+                    "REJECTED": "Abgelehnt"
+                }
+            }
+        }
+    }
+}

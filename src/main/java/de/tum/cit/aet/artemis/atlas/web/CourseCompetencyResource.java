@@ -1,0 +1,481 @@
+package de.tum.cit.aet.artemis.atlas.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
+import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+@Conditional(AtlasEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.COMPETENCY_MANAGEMENT)
+@RestController
+@RequestMapping("api/atlas/")
+public class CourseCompetencyResource {
+
+    private static final String ENTITY_NAME = "courseCompetency";
+
+    private static final Logger log = LoggerFactory.getLogger(CourseCompetencyResource.class);
+
+    private final UserRepository userRepository;
+
+    private final CourseCompetencyService courseCompetencyService;
+
+    private final CourseRepository courseRepository;
+
+    private final CompetencyProgressService competencyProgressService;
+
+    private final CompetencyProgressRepository competencyProgressRepository;
+
+    private final CompetencyRelationRepository competencyRelationRepository;
+
+    private final CompetencyRelationService competencyRelationService;
+
+    private final Optional<IrisCompetencyApi> irisCompetencyApi;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public CourseCompetencyResource(UserRepository userRepository, CourseCompetencyService courseCompetencyService, CourseCompetencyRepository courseCompetencyRepository,
+            CourseRepository courseRepository, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
+            CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService, Optional<IrisCompetencyApi> irisCompetencyApi,
+            AuthorizationCheckService authorizationCheckService) {
+        this.userRepository = userRepository;
+        this.courseCompetencyService = courseCompetencyService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseRepository = courseRepository;
+        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressRepository = competencyProgressRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
+        this.competencyRelationService = competencyRelationService;
+        this.irisCompetencyApi = irisCompetencyApi;
+        this.authorizationCheckService = authorizationCheckService;
+    }
+
+    /**
+     * GET /course-competencies/:competencyId/title : Returns the title of the course competency with the given id
+     *
+     * @param competencyId the id of the course competency
+     * @return the title of the course competency wrapped in an ResponseEntity or 404 Not Found if no competency with that id exists
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("course-competencies/{competencyId}/title")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getCompetencyTitle(@PathVariable long competencyId) {
+        Long courseId = courseCompetencyRepository.findCourseIdById(competencyId).orElse(null);
+        if (courseId == null) {
+            return ResponseEntity.notFound().build();
+        }
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
+        final var title = courseCompetencyRepository.getCompetencyTitle(competencyId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET courses/{courseId}/course-competencies/titles : Returns the titles of all course competencies. Used for a validator in the client
+     *
+     * @param courseId  the id of the current course
+     * @param excludeId optional id of the competency to exclude from the returned titles
+     * @return the titles of all course competencies
+     */
+    @GetMapping("courses/{courseId}/course-competencies/titles")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<String>> getCourseCompetencyTitles(@PathVariable Long courseId, @RequestParam(required = false) Long excludeId) {
+        final var titles = courseCompetencyRepository.findAllTitlesByCourseIdExcludingCompetencyId(courseId, excludeId);
+        return ResponseEntity.ok(titles);
+    }
+
+    /**
+     * GET courses/:courseId/competencies/:competencyId : gets the competency with the specified id including its related exercises and lecture units
+     * This method also calculates the user progress
+     *
+     * @param competencyId the id of the competency to retrieve
+     * @param courseId     the id of the course to which the competency belongs
+     * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("courses/{courseId}/course-competencies/{competencyId}")
+    @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "Get one course competency", description = "Returns a competency or prerequisite of the course with its linked exercises and lecture units, as far as the caller may see them.")
+    public ResponseEntity<CourseCompetencyResponseDTO> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
+        log.info("REST request to get Competency : {}", competencyId);
+        var currentUser = userRepository.getUserWithAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var competency = courseCompetencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
+        checkCourseForCompetency(course, competency);
+
+        courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
+
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.ofWithLearningObjects(competency));
+    }
+
+    /**
+     * GET courses/:courseId/course-competencies : gets all the course competencies of a course
+     *
+     * @param courseId The id of the course for which the competencies should be fetched
+     * @param filter   Whether to filter out competencies that are not linked to any learning objects
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("courses/{courseId}/course-competencies")
+    @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List all competencies and prerequisites of a course", description = """
+            Returns every competency and prerequisite of the course. Each one carries the caller's own learning \
+            progress. Set filter=true to leave out those not linked to any exercise or lecture unit.""")
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
+        log.debug("REST request to get competencies for course with id: {}", courseId);
+        User user = userRepository.getUserWithAuthorities();
+        final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
+        return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
+    }
+
+    /**
+     * GET courses/:courseId/course-competencies/:competencyId/student-progress gets the course competency progress for a user
+     *
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the course competency for which to get the progress
+     * @param refresh      whether to update the student progress or fetch it from the database (default)
+     * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("courses/{courseId}/course-competencies/{competencyId}/student-progress")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<CompetencyProgressDTO> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
+            @RequestParam(defaultValue = "false") boolean refresh) {
+        log.debug("REST request to get student progress for competency: {}", competencyId);
+        var user = userRepository.getUserWithAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var competency = courseCompetencyRepository.findByIdElseThrow(competencyId);
+        checkCourseForCompetency(course, competency);
+
+        CompetencyProgress studentProgress;
+        if (refresh) {
+            studentProgress = competencyProgressService.updateCompetencyProgress(competencyId, user);
+        }
+        else {
+            studentProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
+        }
+
+        var progressDto = studentProgress == null ? null : CompetencyProgressDTO.of(studentProgress);
+        return ResponseEntity.ok(progressDto);
+    }
+
+    /**
+     * GET courses/:courseId/course-competencies/:competencyId/course-progress gets the competency progress for the whole course
+     *
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the course competency for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with the course competency course performance in the body
+     */
+    @GetMapping("courses/{courseId}/course-competencies/{competencyId}/course-progress")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable long courseId, @PathVariable long competencyId) {
+        log.debug("REST request to get course progress for competency: {}", competencyId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var competency = courseCompetencyRepository.findByIdWithExercisesElseThrow(competencyId);
+        if (!courseCompetencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the course", "courseCompetency", "competencyCourseMismatch");
+        }
+
+        var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
+
+        return ResponseEntity.ok(progress);
+    }
+
+    /**
+     * GET courses/:courseId/course-competencies/course-progress : gets the course progress for all competencies of a course
+     *
+     * @param courseId the id of the course for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with body the list of course competency progress DTOs
+     */
+    @GetMapping("courses/{courseId}/course-competencies/course-progress")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<CourseCompetencyProgressDTO>> getAllCompetenciesCourseProgress(@PathVariable long courseId) {
+        log.debug("REST request to get course progress for all competencies in course: {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var progressList = courseCompetencyService.getCourseProgressForAllCompetencies(course);
+        return ResponseEntity.ok(progressList);
+    }
+
+    /**
+     * Search for all course competencies by title, description, course title and semester. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and search terms
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("course-competencies/for-import")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<CourseCompetencyResponseDTO>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
+        final var user = userRepository.getUserWithAuthorities();
+        var result = courseCompetencyService.getOnPageWithSizeForImport(search, user);
+        var resultDto = new SearchResultPageDTO<>(result.getResultsOnPage().stream().map(CourseCompetencyResponseDTO::ofWithCourse).toList(), result.getNumberOfPages());
+        return ResponseEntity.ok(resultDto);
+    }
+
+    /**
+     * POST courses/{courseId}/course-competencies/import-all : Imports all course competencies of the source course (and optionally their relations) into another.
+     *
+     * @param courseId      the id of the course to import into
+     * @param importOptions the options for the import
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/course-competencies/import-all")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to all course competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
+
+        long sourceCourseId = CompetencyValidationService.sourceCourseIdForImport(importOptions, courseId, ENTITY_NAME);
+        var targetCourse = courseRepository.findByIdElseThrow(courseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
+
+        var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
+        Set<CompetencyWithTailRelation> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
+
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
+    }
+
+    // Competency Relation Endpoints
+
+    /**
+     * GET courses/:courseId/course-competencies/relations get the relations for the course
+     *
+     * @param courseId the id of the course to which the relations belong
+     * @return the ResponseEntity with status 200 (OK) and with a list of relations for the course
+     */
+    @GetMapping("courses/{courseId}/course-competencies/relations")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List the relations between competencies", description = "Returns the edges of the competency graph of the course: tail, head and relation type, by competency id.")
+    public ResponseEntity<Set<CompetencyRelationDTO>> getCompetencyRelations(@PathVariable long courseId) {
+        log.debug("REST request to get relations for course: {}", courseId);
+
+        var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+        var relationDTOs = relations.stream().map(CompetencyRelationDTO::of).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(relationDTOs);
+    }
+
+    /**
+     * POST courses/:courseId/course-competencies/relations create a new relation
+     *
+     * @param courseId the id of the course to which the competencies belong
+     * @param relation the relation to create
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/course-competencies/relations")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create a relation between two competencies", description = """
+            Adds an edge to the competency graph. Tail and head must be competencies of this course. The request is \
+            rejected with 400 if the relation type is missing or the relation would create a circular dependency.""")
+    public ResponseEntity<CompetencyRelationDTO> createCompetencyRelation(@PathVariable long courseId, @RequestBody CompetencyRelationDTO relation) {
+        var tailId = relation.tailCompetencyId();
+        var headId = relation.headCompetencyId();
+        log.info("REST request to create a relation between competencies {} and {}", tailId, headId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+
+        var tailCompetency = courseCompetencyRepository.findByIdElseThrow(tailId);
+        checkCourseForCompetency(course, tailCompetency);
+        var headCompetency = courseCompetencyRepository.findByIdElseThrow(headId);
+        checkCourseForCompetency(course, headCompetency);
+
+        var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
+
+        return ResponseEntity.ok(CompetencyRelationDTO.of(createdRelation));
+    }
+
+    /**
+     * DELETE courses/:courseId/course-competencies/relations/:competencyRelationId delete a relation
+     *
+     * @param courseId             the id of the course
+     * @param competencyRelationId the id of the competency relation
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("courses/{courseId}/course-competencies/relations/{relationId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId) {
+        log.info("REST request to remove a competency relation: {}", competencyRelationId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
+
+        checkCourseForCompetency(course, relation.getTailCompetency());
+        checkCourseForCompetency(course, relation.getHeadCompetency());
+
+        competencyRelationRepository.delete(relation);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST courses/:courseId/course-competencies/:competencyId/competencies/generate-from-description
+     * Generates a list of competencies from a given course description with IRIS.
+     *
+     * @param courseId the id of the current course
+     * @param input    the course description and current competencies
+     * @return the ResponseEntity with status 202 (Accepted)
+     */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
+    @PostMapping("courses/{courseId}/course-competencies/generate-from-description")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @Valid @RequestBody CompetencyGenerationRequestDTO input) {
+        var api = irisCompetencyApi.orElseThrow();
+        var user = userRepository.getUserWithAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var currentCompetencyDTOs = Optional.ofNullable(input.currentCompetencies()).orElse(List.of());
+        if (currentCompetencyDTOs.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestAlertException("currentCompetencies must not contain null elements", ENTITY_NAME, "nullCurrentCompetency");
+        }
+        var currentCompetencies = currentCompetencyDTOs.stream()
+                .map(competency -> new IrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
+
+        // Start the Iris competency generation pipeline for the given course.
+        // Updates are sent async over /topic/iris/competencies/{courseId} with payload {runState, error, result}.
+        api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), currentCompetencies);
+
+        return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * PATCH courses/:courseId/course-competencies/relations/:competencyRelationId update a relation type of an existing relation
+     *
+     * @param courseId                          the id of the course to which the competencies belong
+     * @param competencyRelationId              the id of the competency relation to update
+     * @param updateCourseCompetencyRelationDTO the new relation type
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{relationId}")
+    @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Change the type of a relation", description = "Changes the relation type of an existing relation. To change tail or head, create a new relation.")
+    @ApiResponse(responseCode = "204", description = "The relation was updated.")
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId,
+            @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
+        log.info("REST request to update a competency relation: {}", competencyRelationId);
+        courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET exercises/:exerciseId/contributions : Gets the competency contributions for the given exercise
+     *
+     * @param exerciseId the id of the exercise for which to get the contributions
+     * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("exercises/{exerciseId}/contributions")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForExercise(@PathVariable long exerciseId) {
+        log.debug("REST request to get competency contributions for exercise: {}", exerciseId);
+        final var user = userRepository.getUserWithAuthorities();
+        final var competencyContributions = courseCompetencyService.getCompetencyContributionsForExercise(exerciseId, user.getId());
+
+        return ResponseEntity.ok(competencyContributions);
+    }
+
+    /**
+     * GET lecture-units/:lectureUnitId/contributions : Gets the competency contributions for the given lecture unit
+     *
+     * @param lectureUnitId the id of the lecture unit for which to get the contributions
+     * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
+     */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @GetMapping("lecture-units/{lectureUnitId}/contributions")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForLectureUnit(@PathVariable long lectureUnitId) {
+        log.debug("REST request to get competency contributions for lecture unit: {}", lectureUnitId);
+        final var user = userRepository.getUserWithAuthorities();
+        final var competencyContributions = courseCompetencyService.getCompetencyContributionsForLectureUnit(lectureUnitId, user.getId());
+
+        return ResponseEntity.ok(competencyContributions);
+    }
+
+    /**
+     * Checks if the course competency matches the course.
+     *
+     * @param course     The course for which to check the authorization role for
+     * @param competency The course competency to be accessed by the user
+     */
+    private void checkCourseForCompetency(@NonNull Course course, @NonNull CourseCompetency competency) {
+        if (competency.getCourse() == null) {
+            throw new BadRequestAlertException("A course competency must belong to a course", ENTITY_NAME, "courseCompetencyNoCourse");
+        }
+        if (!competency.getCourse().getId().equals(course.getId())) {
+            throw new BadRequestAlertException("The course competency does not belong to the correct course", ENTITY_NAME, "courseCompetencyWrongCourse");
+        }
+    }
+}

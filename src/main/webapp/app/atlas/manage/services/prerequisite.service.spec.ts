@@ -1,0 +1,388 @@
+import { vi } from 'vitest';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { MockProvider } from 'ng-mocks';
+import { take } from 'rxjs/operators';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import {
+    Competency,
+    CompetencyExerciseLink,
+    CompetencyImportResponseDTO,
+    CompetencyLectureUnitLink,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationType,
+    CompetencyWithTailRelationDTO,
+    CourseCompetencyProgress,
+    CourseCompetencyType,
+} from 'app/atlas/shared/entities/competency.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import * as dateUtils from 'app/foundation/util/date.utils';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import dayjs from 'dayjs/esm';
+import { Dayjs } from 'dayjs/esm/index';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { CompetencyProgressDTO, CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
+
+describe('PrerequisiteService', () => {
+    let prerequisiteService: PrerequisiteService;
+    let httpTestingController: HttpTestingController;
+    let defaultPrerequisiteDtos: CourseCompetencyResponseDTO[];
+    let defaultPrerequisites: Prerequisite[];
+    let defaultCompetencyProgress: CompetencyProgress;
+    let defaultCompetencyCourseProgress: CourseCompetencyProgress;
+    let expectedResultCompetency: any;
+    let expectedResultCompetencyProgress: any;
+    let expectedResultCompetencyCourseProgress: any;
+    let resultImportAll: HttpResponse<CompetencyWithTailRelationDTO[]>;
+    let resultImportBulk: HttpResponse<CompetencyWithTailRelationDTO[]>;
+    let resultGetRelations: HttpResponse<CompetencyRelation[]>;
+    let resultGetForImport: SearchResult<Prerequisite>;
+    let resultImportStandardized: HttpResponse<CompetencyImportResponseDTO[]>;
+    let resultImport: HttpResponse<Prerequisite>;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(LectureUnitService, {
+                    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
+                        return res;
+                    },
+                }),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+            ],
+        });
+        expectedResultCompetency = {} as HttpResponse<Competency>;
+        expectedResultCompetencyProgress = {} as HttpResponse<CompetencyProgress>;
+
+        prerequisiteService = TestBed.inject(PrerequisiteService);
+        httpTestingController = TestBed.inject(HttpTestingController);
+
+        defaultPrerequisiteDtos = [{ id: 0, title: 'title', description: 'description', type: CourseCompetencyType.PREREQUISITE } as CourseCompetencyResponseDTO];
+        defaultPrerequisites = defaultPrerequisiteDtos.map((dto) => toPrerequisite(dto));
+        defaultCompetencyProgress = { progress: 20, confidence: 50 } as CompetencyProgress;
+        defaultCompetencyCourseProgress = { competencyId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseCompetencyProgress;
+    });
+
+    afterEach(() => {
+        httpTestingController.verify();
+    });
+
+    it('should find a competency', () => {
+        const returnedFromService = { ...defaultPrerequisiteDtos.first()! };
+        prerequisiteService
+            .findById(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResultCompetency = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetency.body).toEqual(defaultPrerequisites.first());
+    });
+
+    it('should find all competencies', () => {
+        const returnedFromService = [...defaultPrerequisiteDtos];
+        prerequisiteService.getAllForCourse(1).subscribe((resp) => (expectedResultCompetency = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetency.body).toEqual(defaultPrerequisites);
+    });
+
+    it('should get individual progress for a competency', () => {
+        const returnedFromService: CompetencyProgressDTO = { ...defaultCompetencyProgress };
+        prerequisiteService
+            .getProgress(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResultCompetencyProgress = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetencyProgress.body).toEqual(defaultCompetencyProgress);
+    });
+
+    it('should get course progress for a competency', () => {
+        const returnedFromService = { ...defaultCompetencyCourseProgress };
+        prerequisiteService
+            .getCourseProgress(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResultCompetencyCourseProgress = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetencyCourseProgress.body).toEqual(defaultCompetencyCourseProgress);
+    });
+
+    it('should create a Competency', () => {
+        const returnedFromService = { ...defaultPrerequisiteDtos.first()!, id: 0 };
+        const expected = toPrerequisite(returnedFromService);
+        prerequisiteService
+            .create({}, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResultCompetency = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetency.body).toEqual(expected);
+    });
+
+    it('should update a Competency', () => {
+        const returnedFromService = { ...defaultPrerequisiteDtos.first()!, title: 'Test' };
+        const expected = toPrerequisite(returnedFromService);
+        prerequisiteService
+            .update(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (expectedResultCompetency = resp));
+
+        const req = httpTestingController.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetency.body).toEqual(expected);
+    });
+
+    it('should delete a Competency', () => {
+        let result: any;
+        prerequisiteService.delete(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+
+        expect(result).toBeTruthy();
+    });
+
+    it('should add a Competency relation', () => {
+        const returnedFromService: CompetencyRelation = { tailCompetency: { id: 1 }, headCompetency: { id: 2 }, type: CompetencyRelationType.ASSUMES };
+        const expected: CompetencyRelation = { ...returnedFromService };
+        let result: any;
+        prerequisiteService
+            .createCompetencyRelation(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(result.body).toEqual(expected);
+    });
+
+    it('should remove a Competency relation', () => {
+        let result: any;
+        prerequisiteService.removeCompetencyRelation(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+
+        expect(result).toBeTruthy();
+    });
+
+    it('should parse a list of competencies from a course description', () => {
+        const description = 'Lorem ipsum dolor sit amet';
+        const returnedFromService = defaultPrerequisites;
+        const expected = defaultPrerequisites;
+        let response: any;
+
+        prerequisiteService.generateCompetenciesFromCourseDescription(1, description, []).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should bulk create competencies', () => {
+        const returnedFromService = defaultPrerequisiteDtos;
+        const expected = defaultPrerequisites;
+        let response: any;
+
+        prerequisiteService.createBulk(defaultPrerequisites, 1).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should import all competencies of a course', () => {
+        const competencyDTO = new CompetencyWithTailRelationDTO();
+        competencyDTO.competency = { ...defaultPrerequisites.first(), id: 1 };
+        competencyDTO.tailRelations = [];
+        const returnedFromService: CompetencyWithTailRelationResponseDTO[] = [{ competency: { ...defaultPrerequisiteDtos.first()!, id: 1 }, tailRelations: [] }];
+        const expected = [competencyDTO];
+
+        prerequisiteService
+            .importAll(1, 2, true)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportAll = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(resultImportAll.body).toEqual(expected);
+    });
+
+    it('should bulk import competencies', () => {
+        const competencyDTO = new CompetencyWithTailRelationDTO();
+        competencyDTO.competency = { ...defaultPrerequisites.first(), id: 1 };
+        competencyDTO.tailRelations = [];
+        const returnedFromService: CompetencyWithTailRelationResponseDTO[] = [{ competency: { ...defaultPrerequisiteDtos.first()!, id: 1 }, tailRelations: [] }];
+        const expected = [competencyDTO];
+
+        prerequisiteService
+            .importBulk([defaultPrerequisites.first()!], 1, false)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportBulk = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(resultImportBulk.body).toEqual(expected);
+    });
+
+    it('should import standardized competencies', () => {
+        const returnedFromService: CompetencyImportResponseDTO[] = [
+            { id: 1, title: 'standardizedCompetency1' },
+            { id: 2, title: 'standardizedCompetency2' },
+        ];
+        const expected = [...returnedFromService];
+
+        prerequisiteService
+            .importStandardizedCompetencies([11, 12], 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImportStandardized = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(resultImportStandardized.body).toEqual(expected);
+    });
+
+    it('should import competency', () => {
+        const returnedFromService = defaultPrerequisiteDtos[0];
+        const expected = defaultPrerequisites[0];
+
+        prerequisiteService
+            .import(expected, 2)
+            .pipe(take(1))
+            .subscribe((resp) => (resultImport = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(resultImport.body).toEqual(expected);
+    });
+
+    it('should get competency relations', () => {
+        const relation: CompetencyRelation = {
+            id: 1,
+            type: CompetencyRelationType.ASSUMES,
+        };
+        const returnedFromService = [relation];
+        const expected = [...returnedFromService];
+
+        prerequisiteService
+            .getCompetencyRelations(1)
+            .pipe(take(1))
+            .subscribe((resp) => (resultGetRelations = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(resultGetRelations.body).toEqual(expected);
+    });
+
+    it('should get competencies for import', () => {
+        const returnedFromService: SearchResult<CourseCompetencyResponseDTO> = {
+            resultsOnPage: defaultPrerequisiteDtos,
+            numberOfPages: 1,
+        };
+        const expected = { resultsOnPage: defaultPrerequisites, numberOfPages: 1 };
+        const search: CompetencyPageableSearch = {
+            courseTitle: '',
+            description: '',
+            title: '',
+            semester: '',
+            page: 1,
+            pageSize: 1,
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: '',
+        };
+
+        prerequisiteService
+            .getForImport(search)
+            .pipe(take(1))
+            .subscribe((resp) => (resultGetForImport = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(resultGetForImport).toEqual(expected);
+    });
+
+    it('should get courseCompetency titles', () => {
+        let result: HttpResponse<string[]> = new HttpResponse();
+        const returnedFromService = ['title1', 'title2'];
+        const expected = [...returnedFromService];
+
+        prerequisiteService
+            .getCourseCompetencyTitles(1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpTestingController.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(result.body).toEqual(expected);
+    });
+
+    it('should convert response from server', () => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const accountService = TestBed.inject(AccountService);
+
+        const convertDateSpy = vi.spyOn(dateUtils, 'convertDateFromServer');
+        const convertLectureUnitSpy = vi.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
+        const setAccessRightsCourseSpy = vi.spyOn(accountService, 'setAccessRightsForCourse');
+        const setAccessRightsExerciseSpy = vi.spyOn(accountService, 'setAccessRightsForExercise');
+        const convertExerciseSpy = vi.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
+        const parseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
+
+        const exercise: Exercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            studentAssignedTeamIdComputed: false,
+            secondCorrectionEnabled: false,
+        };
+        const competencyFromServer: Competency = {
+            softDueDate: dayjs('2022-02-20') as Dayjs,
+            course: { id: 1 },
+            lectureUnitLinks: [new CompetencyLectureUnitLink(this, { id: 1 }, 1), new CompetencyLectureUnitLink(this, { id: 2 }, 1)],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 3, ...exercise }, 1), new CompetencyExerciseLink(this, { id: 4, ...exercise }, 1)],
+        };
+
+        prerequisiteService['postProcessCompetency'](undefined);
+        expect(convertDateSpy).not.toHaveBeenCalled();
+        expect(convertLectureUnitSpy).not.toHaveBeenCalled();
+        expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
+        expect(convertExerciseSpy).not.toHaveBeenCalled();
+        expect(parseCategoriesSpy).not.toHaveBeenCalled();
+        expect(setAccessRightsExerciseSpy).not.toHaveBeenCalled();
+
+        prerequisiteService['postProcessCompetency'](competencyFromServer);
+
+        expect(convertDateSpy).toHaveBeenCalled();
+        expect(convertLectureUnitSpy).toHaveBeenCalledTimes(2);
+        expect(setAccessRightsCourseSpy).toHaveBeenCalledOnce();
+        expect(convertExerciseSpy).toHaveBeenCalledTimes(2);
+        expect(parseCategoriesSpy).toHaveBeenCalledTimes(2);
+        expect(setAccessRightsExerciseSpy).toHaveBeenCalledTimes(2);
+    });
+});

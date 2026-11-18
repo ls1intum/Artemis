@@ -1,0 +1,128 @@
+package de.tum.cit.aet.artemis.course;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+
+class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "courseonboarding";
+
+    private Course course;
+
+    @BeforeEach
+    void setUp() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+    }
+
+    private CourseManagementDTO updateCourse(Course courseToUpdate) throws Exception {
+        JsonMapper mapper = request.getObjectMapper();
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void newCourse_shouldHaveOnboardingDoneFalse() {
+        assertThat(course.isOnboardingDone()).isFalse();
+
+        // Also verify from the database
+        Course fromDb = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(fromDb.isOnboardingDone()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_setOnboardingDoneTrue_shouldPersist() throws Exception {
+        course.setOnboardingDone(true);
+
+        CourseManagementDTO updated = updateCourse(course);
+
+        assertThat(updated.onboardingDone()).isTrue();
+
+        // Verify from the database
+        Course fromDb = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(fromDb.isOnboardingDone()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_onboardingDoneTrue_cannotBeResetToFalse() throws Exception {
+        // First, set onboardingDone to true
+        course.setOnboardingDone(true);
+        CourseManagementDTO updated = updateCourse(course);
+        assertThat(updated.onboardingDone()).isTrue();
+
+        // Now try to reset onboardingDone to false via the update endpoint
+        course.setOnboardingDone(false);
+        CourseManagementDTO secondUpdate = updateCourse(course);
+
+        // The protection logic should prevent the reset
+        assertThat(secondUpdate.onboardingDone()).isTrue();
+
+        // Verify from the database that the value is still true
+        Course fromDb = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(fromDb.isOnboardingDone()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_onboardingDoneFalse_canBeSetToTrue() throws Exception {
+        // Verify initial state is false
+        assertThat(course.isOnboardingDone()).isFalse();
+
+        // Update the course with onboardingDone = true
+        course.setOnboardingDone(true);
+        CourseManagementDTO updated = updateCourse(course);
+
+        assertThat(updated.onboardingDone()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_onboardingDoneFalse_staysFalseIfNotChanged() throws Exception {
+        // Update the course without changing onboardingDone (remains false by default)
+        course.setDescription("Updated description");
+        CourseManagementDTO updated = updateCourse(course);
+
+        assertThat(updated.onboardingDone()).isFalse();
+
+        Course fromDb = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(fromDb.isOnboardingDone()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateCourse_onboardingDoneTrue_preservedOnUnrelatedUpdate() throws Exception {
+        // Set onboardingDone to true
+        course.setOnboardingDone(true);
+        CourseManagementDTO updated = updateCourse(course);
+        assertThat(updated.onboardingDone()).isTrue();
+
+        // Perform an unrelated update (e.g., change description) with onboardingDone still set to true
+        course.setDescription("New description after onboarding");
+        CourseManagementDTO secondUpdate = updateCourse(course);
+
+        assertThat(secondUpdate.onboardingDone()).isTrue();
+        assertThat(secondUpdate.description()).isEqualTo("New description after onboarding");
+    }
+}

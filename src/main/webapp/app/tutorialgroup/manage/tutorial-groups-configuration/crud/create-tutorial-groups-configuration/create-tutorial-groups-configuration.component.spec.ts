@@ -1,0 +1,122 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Subject, of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
+import { By } from '@angular/platform-browser';
+import { CreateTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationFormStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-configuration-form-sub.component';
+import {
+    generateExampleTutorialGroupsConfigurationDTO,
+    tutorialsGroupsConfigurationDtoToFormData,
+} from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
+describe('CreateTutorialGroupsConfigurationComponent', () => {
+    let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
+    let component: CreateTutorialGroupsConfigurationComponent;
+    let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
+    let courseManagementService: CourseManagementService;
+    let courseStorageService: CourseStorageService;
+    const course = { id: 1, title: 'Example' };
+    const router = new MockRouter();
+    let getCourseSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                MockProvider(TutorialGroupsConfigurationService),
+                MockProvider(CourseManagementService),
+                MockProvider(AlertService),
+                MockProvider(ArtemisDatePipe),
+                { provide: Router, useValue: router },
+                mockedActivatedRoute({ courseId: course.id! }, {}, {}, {}),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(CreateTutorialGroupsConfigurationComponent);
+        component = fixture.componentInstance;
+        tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
+        courseManagementService = TestBed.inject(CourseManagementService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        const response: HttpResponse<Course> = new HttpResponse({
+            body: course,
+            status: 201,
+        });
+        getCourseSpy = vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(response));
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        expect(component).not.toBeNull();
+        expect(getCourseSpy).toHaveBeenCalledWith(course.id!);
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should send POST request upon form submission and navigate', () => {
+        const exampleConfiguration = generateExampleTutorialGroupsConfigurationDTO({});
+
+        const createStub = vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(exampleConfiguration));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
+
+        const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
+
+        const formData = tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration);
+
+        sessionForm.formSubmitted.emit(formData);
+
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledWith(course.id, formData);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
+        expect(updateCourseSpy).toHaveBeenCalledOnce();
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
+    });
+
+    it('keeps the form open on save failure and clears loading', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+        const updateCourse = vi.spyOn(courseStorageService, 'updateCourse');
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component.createTutorialsGroupConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        expect(component.isLoading()).toBe(true);
+        request.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.isLoading()).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
+        expect(updateCourse).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledOnce();
+    });
+
+    it('cancels an unfinished save on destroy without navigating', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+
+        component.createTutorialsGroupConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        component.ngOnDestroy();
+        request.next(generateExampleTutorialGroupsConfigurationDTO({}));
+        expect(component.isLoading()).toBe(false);
+        expect(request.observed).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
+    });
+});

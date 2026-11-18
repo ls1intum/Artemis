@@ -1,0 +1,45 @@
+import { LegalDocumentFragmentDirective } from './legal-document-fragment.directive';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
+import { LegalDocumentService } from 'app/core/legal/legal-document.service';
+import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { switchMap } from 'rxjs';
+
+@Component({
+    selector: 'jhi-privacy',
+    template: `
+        <div [jhiMarkdown]="privacyStatement()" (markdownRendered)="onMarkdownRendered()"></div>
+        @if (isAuthenticated()) {
+            <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
+        }
+    `,
+    imports: [TranslateDirective, RouterLink, MarkdownDirective],
+})
+export class PrivacyComponent extends LegalDocumentFragmentDirective implements OnInit {
+    private readonly legalDocumentService = inject(LegalDocumentService);
+    private readonly languageHelper = inject(JhiLanguageHelper);
+    private readonly accountService = inject(AccountService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    readonly privacyStatement = signal<string | undefined>(undefined);
+    readonly isAuthenticated = signal(false);
+
+    /**
+     * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
+     */
+    ngOnInit(): void {
+        this.isAuthenticated.set(this.accountService.isAuthenticated());
+        // Update the view if the language was changed
+        this.languageHelper.language
+            .pipe(
+                switchMap((lang) => this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((statement) => this.privacyStatement.set(statement.text));
+    }
+}

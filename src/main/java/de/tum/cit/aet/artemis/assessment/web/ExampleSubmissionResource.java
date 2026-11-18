@@ -1,0 +1,235 @@
+
+package de.tum.cit.aet.artemis.assessment.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+
+/**
+ * REST controller for managing ExampleSubmission.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.TUTOR_TRAINING)
+@RestController
+@RequestMapping("api/assessment/")
+public class ExampleSubmissionResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
+
+    private static final String ENTITY_NAME = "exampleSubmission";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final ExampleSubmissionService exampleSubmissionService;
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
+
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, Optional<TextSubmissionExportApi> textSubmissionExportApi) {
+        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.authCheckService = authCheckService;
+        this.exerciseRepository = exerciseRepository;
+        this.textSubmissionExportApi = textSubmissionExportApi;
+    }
+
+    /**
+     * POST /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
+     *
+     * @param exerciseId        the id of the corresponding exercise for which to init a participation
+     * @param exampleSubmission the exampleSubmission to create
+     * @return the ResponseEntity with status 200 (OK) and the created example submission as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("exercises/{exerciseId}/example-submissions")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ExampleSubmissionDetailDTO> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
+        log.debug("REST request to save ExampleSubmission for exercise : {}", exerciseId);
+        if (exampleSubmission.id() != null) {
+            throw new BadRequestAlertException("A new exampleSubmission cannot already have an ID", ENTITY_NAME, "idExists");
+        }
+        Exercise exercise = checkRequestAndExerciseAccess(exerciseId, exampleSubmission);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmissionService.create(exercise, exampleSubmission)));
+    }
+
+    /**
+     * PUT /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission. This function is called by the text editor for saving and submitting text
+     * submissions. The submit specific handling occurs in the ExampleSubmissionService.save() function.
+     *
+     * @param exerciseId        the id of the corresponding exercise
+     * @param exampleSubmission the exampleSubmission to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated exampleSubmission, or with status 400 (Bad Request) if the exampleSubmission is not valid, or with
+     *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
+     */
+    @PutMapping("exercises/{exerciseId}/example-submissions")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ExampleSubmissionDetailDTO> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
+        log.debug("REST request to update ExampleSubmission : {}", exampleSubmission.id());
+        if (exampleSubmission.id() == null) {
+            return createExampleSubmission(exerciseId, exampleSubmission);
+        }
+        checkRequestAndExerciseAccess(exerciseId, exampleSubmission);
+        ExampleSubmission existingExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.id());
+        if (!existingExampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmissionService.update(existingExampleSubmission, exampleSubmission)));
+    }
+
+    /**
+     * Resolves the exercise of the path, checks that the current user is at least an editor of it, that the body carries the submission an example submission is about, and
+     * that the exercise the client attached to the body (if any) is the same one.
+     */
+    private Exercise checkRequestAndExerciseAccess(Long exerciseId, ExampleSubmissionRequestDTO exampleSubmission) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        if (exampleSubmission.submission() == null) {
+            // An example submission is the submission it shows. Without one the request says nothing, so it is answered
+            // instead of writing the metadata it does carry over the stored example submission.
+            throw new BadRequestAlertException("An example submission must reference a submission", ENTITY_NAME, "submissionMissing");
+        }
+        if (exampleSubmission.exercise() != null && !exerciseId.equals(exampleSubmission.exercise().id())) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+        return exercise;
+    }
+
+    /**
+     * Prepare an example submission for assessment.
+     * <p>
+     * Currently only used for {@link TextExercise TextExercise} to create automatic text blocks.
+     *
+     * @param exerciseId          the id of the corresponding exercise
+     * @param exampleSubmissionId the id of the exampleSubmission to prepare
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> prepareExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to prepare ExampleSubmission for assessment : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+
+        // Prepare text blocks for fresh assessment
+        if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
+            textSubmissionExportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionExportApi.class))
+                    .prepareTextBlockForExampleSubmission(exampleSubmission.getSubmission().getId());
+        }
+
+        return ResponseEntity.ok(null);
+    }
+
+    /**
+     * GET /example-submissions/:exampleSubmissionId : get the "id" exampleSubmission.
+     *
+     * @param exampleSubmissionId the id of the exampleSubmission to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
+     */
+    @GetMapping("example-submissions/{exampleSubmissionId}")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ExampleSubmissionDetailDTO> getExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
+                .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
+
+        // For TextExercise, we need to load the text blocks as well
+        if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
+            Optional<TextSubmission> textSubmission = textSubmissionExportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionExportApi.class))
+                    .getSubmissionForExampleSubmission(exampleSubmission.getSubmission().getId());
+            textSubmission.ifPresent(exampleSubmission::setSubmission);
+        }
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmission));
+    }
+
+    /**
+     * DELETE /example-submissions/:exampleSubmissionId : delete the "id" exampleSubmission.
+     *
+     * @param exampleSubmissionId the id of the exampleSubmission to delete
+     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
+     */
+    @DeleteMapping("example-submissions/{exampleSubmissionId}")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to delete ExampleSubmission : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
+                .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        exampleSubmissionService.deleteById(exampleSubmission.getId());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exampleSubmissionId.toString())).build();
+    }
+
+    /**
+     * POST exercises/:exerciseId/example-submissions/import : Imports an existing student submission as an example submission.
+     *
+     * @param exerciseId         the id of the corresponding exercise
+     * @param sourceSubmissionId the submission id to be imported as an example submission
+     * @return the ResponseEntity with status 200 (OK) and the imported example submission as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("exercises/{exerciseId}/example-submissions/import")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<ExampleSubmissionDetailDTO> importExampleSubmission(@PathVariable Long exerciseId, @RequestParam long sourceSubmissionId) {
+        log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
+        if (sourceSubmissionId <= 0) {
+            throw new BadRequestAlertException("A valid sourceSubmissionId must be provided to import an example submission", ENTITY_NAME, "sourceSubmissionIdMissing");
+        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);
+        return ResponseEntity.ok(ExampleSubmissionDetailDTO.of(exampleSubmission));
+    }
+}

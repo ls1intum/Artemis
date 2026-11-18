@@ -1,0 +1,124 @@
+<div class="frame">
+    <div class="header">
+        <!-- Every control in this row is outlined, the same way the desktop overview renders its own. -->
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="outlined"
+            (click)="goToPrevious()"
+            data-testid="previous-button"
+            [attr.aria-label]="'artemisApp.calendar.previousButtonLabel' | artemisTranslate"
+        >
+            <div class="chevron">
+                <fa-icon [icon]="faChevronLeft" />
+            </div>
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="outlined"
+            [tumAetUiPopoverTrigger]="filterPopover"
+            [attr.aria-label]="'artemisApp.calendar.filterComponentPlaceholder' | artemisTranslate"
+        >
+            <fa-icon [icon]="faFilter" />
+        </button>
+        <button
+            type="button"
+            data-testid="today-button"
+            tumAetUiButton
+            size="small"
+            variant="outlined"
+            (click)="goToToday()"
+            jhiTranslate="artemisApp.calendar.todayButtonLabel"
+        ></button>
+        @let currentCourseId = courseId();
+        @let subscriptionToken = calendarSubscriptionToken();
+        @if (currentCourseId && subscriptionToken) {
+            <div>
+                <button
+                    type="button"
+                    data-testid="subscribe-button"
+                    tumAetUiButton
+                    size="small"
+                    variant="outlined"
+                    (click)="subscriptionPopover.open($event)"
+                    [attr.aria-label]="'artemisApp.calendar.subscribeButtonLabel' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faArrowUpFromBracket" />
+                </button>
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" [isMobile]="true" #subscriptionPopover />
+            </div>
+        }
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="outlined"
+            (click)="goToNext()"
+            data-testid="next-button"
+            [attr.aria-label]="'artemisApp.calendar.nextButtonLabel' | artemisTranslate"
+        >
+            <div class="chevron">
+                <fa-icon [icon]="faChevronRight" />
+            </div>
+        </button>
+    </div>
+    <div class="calendar-presentation-container">
+        <div class="presentation-header">
+            <div class="presentation-header-top-section">
+                <div class="spacer">
+                    @if (selectedDate()) {
+                        <button type="button" class="close-button" (click)="unselectDate()">
+                            <fa-icon [icon]="faXmark" />
+                        </button>
+                    }
+                </div>
+                <div class="month-title">{{ monthDescription() }}</div>
+                <div class="spacer"></div>
+            </div>
+            <div class="presentation-header-bottom-section">
+                @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
+                    <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
+                }
+            </div>
+        </div>
+        @let day = selectedDate();
+        @if (day) {
+            <jhi-calendar-mobile-day-presentation [date]="day" />
+        } @else {
+            <jhi-calendar-mobile-month-presentation [firstDateOfCurrentMonth]="firstDateOfCurrentMonth()" (onDateSelected)="onDateSelected($event)" />
+        }
+        @if (isLoading()) {
+            <div class="loading-overlay">
+                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+            </div>
+        }
+    </div>
+</div>
+
+<tumaet-ui-popover #filterPopover [ariaLabel]="'artemisApp.calendar.filterComponentPlaceholder' | artemisTranslate" placement="bottom">
+    <div class="filter-popover-content">
+        <label class="filter-option-row">
+            <tumaet-ui-checkbox [ngModel]="lectureFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.LectureEvents)" />
+            <div class="filter-option-indicator lecture"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.lectures"></span>
+        </label>
+        <label class="filter-option-row">
+            <tumaet-ui-checkbox [ngModel]="exerciseFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExerciseEvents)" />
+            <div class="filter-option-indicator exercise"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.exercises"></span>
+        </label>
+        <label class="filter-option-row">
+            <tumaet-ui-checkbox [ngModel]="tutorialFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.TutorialEvents)" />
+            <div class="filter-option-indicator tutorial"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.tutorials"></span>
+        </label>
+        <label class="filter-option-row">
+            <tumaet-ui-checkbox [ngModel]="examFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExamEvents)" />
+            <div class="filter-option-indicator exam"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.exams"></span>
+        </label>
+    </div>
+</tumaet-ui-popover>

@@ -1,0 +1,728 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Mock the diff.utils module to avoid Monaco Editor issues in tests — must be hoisted above imports.
+vi.mock('app/programming/shared/utils/diff.utils', async () => ({
+    ...(await vi.importActual<typeof import('app/programming/shared/utils/diff.utils')>('app/programming/shared/utils/diff.utils')),
+    processRepositoryDiff: vi.fn().mockImplementation((templateFiles, solutionFiles) => {
+        // Handle the case where files are undefined (when repository fetch fails)
+        if (!templateFiles || !solutionFiles) {
+            return Promise.resolve(undefined);
+        }
+        return Promise.resolve({
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: true,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 2,
+                removedLineCount: 1,
+            },
+        } as RepositoryDiffInformation);
+    }),
+}));
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { Subject, of, throwError } from 'rxjs';
+import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { Course } from 'app/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { provideTranslateService } from '@ngx-translate/core';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { HttpHeaders } from '@angular/common/http';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+
+describe('ProgrammingExerciseDetailComponent', () => {
+    let comp: ProgrammingExerciseDetailComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
+    let statisticsService: StatisticsService;
+    let exerciseService: ProgrammingExerciseService;
+    let alertService: AlertService;
+    let profileService: ProfileService;
+    let submissionPolicyService: SubmissionPolicyService;
+    let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
+    let statisticsServiceStub: ReturnType<typeof vi.spyOn>;
+    let submissionPolicyServiceStub: ReturnType<typeof vi.spyOn>;
+    let findWithTemplateAndSolutionParticipationStub: ReturnType<typeof vi.spyOn>;
+    let getTemplateRepositoryFilesStub: ReturnType<typeof vi.spyOn>;
+    let getSolutionRepositoryFilesStub: ReturnType<typeof vi.spyOn>;
+    let router: Router;
+
+    const mockProgrammingExercise = {
+        id: 1,
+        categories: [{ category: 'Important' }],
+        templateParticipation: {
+            id: 1,
+        } as TemplateProgrammingExerciseParticipation,
+        solutionParticipation: {
+            id: 2,
+        } as SolutionProgrammingExerciseParticipation,
+    } as ProgrammingExercise;
+
+    const mockDiffInformation = {
+        diffInformations: [
+            {
+                originalFileContent: 'testing line differences',
+                modifiedFileContent: 'testing line diff\nnew line',
+                originalPath: 'Example.java',
+                modifiedPath: 'Example.java',
+                diffReady: false,
+                fileStatus: 'unchanged',
+                lineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
+                },
+                title: 'Example.java',
+            },
+        ],
+        totalLineChange: {
+            addedLineCount: 2,
+            removedLineCount: 1,
+        },
+    } as unknown as RepositoryDiffInformation;
+
+    it('combines repository, checkout, result and comparison rows while retaining build configuration fields', () => {
+        const section = comp.getExerciseDetailsLanguageSection(mockProgrammingExercise);
+        const details = section.details.filter((detail) => !!detail);
+        expect(details.map((detail) => detail.type)).toContain('detail-repository-build-overview');
+        expect(
+            details.filter((detail) => ['detail-repository-buttons', 'detail-test-status', 'detail-checkout-directories', 'detail-diff-report'].includes(detail.type)),
+        ).toHaveLength(0);
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.programmingLanguage');
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.packageName');
+    });
+
+    const exerciseStatistics = {
+        averageScoreOfExercise: 50,
+        maxPointsOfExercise: 10,
+        absoluteAveragePoints: 5,
+        scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+        numberOfExerciseScores: 10,
+        numberOfParticipations: 10,
+        numberOfStudentsOrTeamsInCourse: 10,
+        participationsInPercent: 100,
+        numberOfPosts: 4,
+        numberOfResolvedPosts: 2,
+        resolvedPostsInPercent: 50,
+    } as ExerciseManagementStatisticsDto;
+
+    const profileInfo = {
+        activeProfiles: [],
+        activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
+    } as unknown as ProfileInfo;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
+                MockProvider(AlertService),
+                MockProvider(DialogService),
+                MockProvider(ProgrammingLanguageFeatureService),
+                LocalStorageService,
+                SessionStorageService,
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: NgbModal, useValue: new MockNgbModalService() },
+                { provide: Router, useClass: MockRouter },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
+        })
+            // Mock the heavy presentational children so the eager zoneless render does not pull in
+            // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
+            .overrideComponent(ProgrammingExerciseDetailComponent, {
+                remove: {
+                    imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],
+                },
+                add: {
+                    imports: [
+                        MockComponent(ExerciseDetailStatisticsComponent),
+                        MockComponent(DetailOverviewListComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(ConsistencyCheckComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
+        comp = fixture.componentInstance;
+
+        statisticsService = TestBed.inject(StatisticsService);
+        statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
+        alertService = TestBed.inject(AlertService);
+        exerciseService = TestBed.inject(ProgrammingExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
+
+        programmingLanguageFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        router = TestBed.inject(Router);
+
+        findWithTemplateAndSolutionParticipationStub = vi
+            .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
+            .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
+        getTemplateRepositoryFilesStub = vi
+            .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+            .mockReturnValue(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent ?? '']])));
+        getSolutionRepositoryFilesStub = vi
+            .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+            .mockReturnValue(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent ?? '']])));
+        submissionPolicyServiceStub = vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+            plagiarismCheckSupported: true,
+        } as ProgrammingLanguageFeature);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('shows the saved title with its exercise type instead of the database ID', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        const heading = fixture.nativeElement.querySelector('h1') as HTMLElement;
+        expect(heading).not.toBeNull();
+        expect(heading.textContent).toContain(exercise.title);
+        expect(heading.textContent).not.toContain('21715');
+        expect(heading.querySelector('fa-icon')).not.toBeNull();
+    });
+
+    it('keeps version history as a link and moves secondary actions into a small menu', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        comp.baseResource.set('/course-management/1/programming-exercises/21715/');
+        fixture.detectChanges();
+
+        const history = fixture.nativeElement.querySelector('[data-testid="exercise-version-history"]') as HTMLAnchorElement;
+        expect(history?.tagName).toBe('A');
+        expect(router.createUrlTree).toHaveBeenCalledWith([comp.baseResource(), 'version-history'], expect.anything());
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+    });
+
+    it.each(['/course-management/1/programming-exercises/21715', '/course-management/1/exams/2/exercise-groups/3/programming-exercises/21715'])(
+        'provides direct editor access from the toolbar under %s',
+        (base) => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 21715;
+            exercise.isAtLeastEditor = true;
+            exercise.templateParticipation = { id: 42 };
+            comp.programmingExercise.set(exercise);
+            comp.baseResource.set(base);
+            fixture.detectChanges();
+            const editor = fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]') as HTMLAnchorElement;
+            expect(editor).not.toBeNull();
+            expect(editor.closest('[data-testid="exercise-editing-actions"]')).not.toBeNull();
+            expect(router.createUrlTree).toHaveBeenCalledWith([base, 'code-editor', 'TEMPLATE', 42], expect.anything());
+
+            comp.programmingExercise.set(Object.assign(new ProgrammingExercise(new Course(), undefined), { id: 21715, templateParticipation: { id: 42 } }));
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+        },
+    );
+
+    it('names the compact editing links when their visible labels are hidden', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+        const links = fixture.nativeElement.querySelectorAll('[data-testid="exercise-editing-actions"] a') as NodeListOf<HTMLAnchorElement>;
+        expect(Array.from(links, (link) => link.getAttribute('aria-label'))).toEqual(['entity.action.edit', 'artemisApp.programmingExercise.configureGrading.shortTitle']);
+    });
+
+    it('omits More actions when the editor has no available secondary commands', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        exercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
+    });
+
+    it('downloads the selected exercise and reports a failed download', () => {
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const response = new HttpResponse({ body: new Blob(['exercise']) });
+        const exportExercise = vi
+            .spyOn(exerciseService, 'exportInstructorExercise')
+            .mockReturnValueOnce(of(response))
+            .mockReturnValueOnce(throwError(() => new Error('Failed')));
+        const download = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => undefined);
+        const success = vi.spyOn(alertService, 'success');
+        const error = vi.spyOn(alertService, 'error');
+
+        comp.downloadExercise();
+
+        expect(exportExercise).toHaveBeenCalledWith(mockProgrammingExercise.id);
+        expect(download).toHaveBeenCalledExactlyOnceWith(response);
+        expect(success).toHaveBeenCalledWith('artemisApp.programmingExercise.export.successMessageExercise');
+
+        comp.downloadExercise();
+        expect(error).toHaveBeenCalledWith('error.exportFailed');
+    });
+
+    it('preserves sharing errors and does not export an unsaved exercise', () => {
+        const sharing = vi
+            .spyOn(TestBed.inject(ProgrammingExerciseSharingService), 'exportProgrammingExerciseToSharing')
+            .mockReturnValueOnce(of(new HttpResponse<string>({ body: null })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'Sharing unavailable' } })));
+        const error = vi.spyOn(alertService, 'error');
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledWith(mockProgrammingExercise.id, window.location.href);
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.noRedirect');
+
+        comp.exportExerciseToSharing();
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Sharing unavailable' });
+
+        comp.programmingExercise.set(new ProgrammingExercise(undefined, undefined));
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reload on participation change', async () => {
+        const fetchRepositoryFilesSpy = vi.spyOn(comp, 'fetchRepositoryFiles');
+        vi.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
+        comp.onParticipationChange();
+        // Allow the synchronous observable chain and the from(handleDiff()) promise to settle
+        await new Promise((r) => setTimeout(r, 0));
+        expect(fetchRepositoryFilesSpy).toHaveBeenCalledOnce();
+        expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+        expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
+    });
+
+    describe('onInit for course exercise', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.snapshot.data = { programmingExercise };
+        });
+
+        it('should not be in exam mode', async () => {
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
+            expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            // Allow the from(handleDiff()) promise chain to settle
+            await new Promise((r) => setTimeout(r, 0));
+            // Verify that the route exercise is preserved but participations are updated from API
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(false);
+            expect(comp.doughnutStats().participationsInPercent).toBe(100);
+            expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
+        });
+
+        it.each([true, false])(
+            'should only call service method to get build log statistics onInit if the user is at least an editor for this exercise',
+            async (isEditor: boolean) => {
+                const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+                programmingExercise.id = 123;
+                programmingExercise.isAtLeastEditor = isEditor;
+                vi.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+                    of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
+                );
+                comp.ngOnInit();
+                await new Promise((r) => setTimeout(r, 100));
+            },
+        );
+
+        it('should handle repositoryFilesError gracefully', async () => {
+            // Create a fresh programming exercise for this test
+            const testExercise = new ProgrammingExercise(new Course(), undefined);
+            testExercise.id = 456; // Different ID to avoid conflicts
+
+            // Set up the route snapshot data for this test
+            const route = TestBed.inject(ActivatedRoute);
+            route.snapshot.data = { programmingExercise: testExercise };
+
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            // Mock the repository file services to throw errors only for this test
+            const templateFilesSpy = vi
+                .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const solutionFilesSpy = vi
+                .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            comp.ngOnInit();
+            // Wait for all async operations to complete
+            await new Promise((r) => setTimeout(r, 1000));
+
+            // The error should be reported
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
+
+            // Repository diff information should not be set due to the error
+            expect(comp.repositoryDiffInformation).toBeUndefined();
+
+            // Clean up the spies
+            templateFilesSpy.mockRestore();
+            solutionFilesSpy.mockRestore();
+        });
+    });
+
+    describe('onInit for exam exercise', () => {
+        const exam = { id: 4, course: { id: 6 } as Course } as Exam;
+        const exerciseGroup = { id: 9, exam };
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 123;
+        programmingExercise.exerciseGroup = exerciseGroup;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.snapshot.data = { programmingExercise };
+        });
+
+        it('should be in exam mode', async () => {
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN — assert call counts synchronously before any macrotask triggers the framework's
+            // initial change detection (which would re-run ngOnInit once more in zoneless mode).
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
+
+            // Allow the synchronous observable chain and the from(handleDiff()) promise to settle
+            await new Promise((r) => setTimeout(r, 0));
+
+            // Verify that the route exercise is preserved but participations are updated from API
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().exerciseGroup).toEqual(exerciseGroup);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(true);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
+        });
+    });
+
+    describe('canAccessParticipationsAndScores', () => {
+        /**
+         * Helper to compute canAccessParticipationsAndScores like ngOnInit does.
+         * This simulates what happens when route data is received.
+         */
+        const computeCanAccessParticipationsAndScores = () => {
+            comp.canAccessParticipationsAndScores.set((comp.programmingExercise()?.isAtLeastTutor && !comp.isExamExercise()) || !!comp.programmingExercise()?.isAtLeastInstructor);
+        };
+
+        it('should return true for course exercise when user is at least tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
+        });
+
+        it('should return false for course exercise when user is not at least tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = false;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
+        });
+
+        it('should return false for exam exercise when user is only tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
+        });
+
+        it('should return true for exam exercise when user is at least instructor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = true;
+
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
+        });
+    });
+
+    it('should create details', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise.set(programmingExercise);
+
+        const sections = comp.getExerciseDetails();
+        expect(sections).toBeDefined();
+    });
+
+    describe('build time window details', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const windowDetails = (buildTimeWindow?: { start?: dayjs.Dayjs; end?: dayjs.Dayjs }) => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 123;
+            programmingExercise.buildConfig!.advancedSettings = buildTimeWindow ? { buildTimeWindow } : undefined;
+            comp.programmingExercise.set(programmingExercise);
+            return comp
+                .getExerciseDetailsLanguageSection(programmingExercise)
+                .details.filter((detail) => !!detail && detail.type === DetailType.Date && detail.title?.includes('buildTimeWindow'));
+        };
+
+        it('should show no row for an exercise without a window', () => {
+            expect(windowDetails()).toEqual([]);
+        });
+
+        it('should show the start and the end of the window', () => {
+            expect(windowDetails({ start: windowStart, end: windowEnd })).toEqual([
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.start', data: { date: windowStart } },
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.end', data: { date: windowEnd } },
+            ]);
+        });
+
+        it('should show only the bound that is set', () => {
+            expect(windowDetails({ start: windowStart }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.start']);
+            expect(windowDetails({ end: windowEnd }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.end']);
+        });
+    });
+
+    it.each([
+        ['jenkins', true],
+        ['localci', true],
+        ['gitlabci', false],
+    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+        profileInfo.activeProfiles = [profile as string];
+        const profileInfoStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+
+        comp.ngOnInit();
+
+        expect(profileInfoStub).toHaveBeenCalled();
+        expect(comp.isBuildPlanEditable()).toBe(editable);
+    });
+
+    it('should delete programming exercise', () => {
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.deleteProgrammingExercise({});
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should delete exam programming exercise', () => {
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.isExamExercise.set(true);
+        comp.deleteProgrammingExercise({});
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stay on the page when the background deletion of the programming exercise failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({});
+
+        expect(routerNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hand the programming exercise to the background deletion with the cleanup choices', () => {
+        const deleteSpy = vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+
+        expect(deleteSpy).toHaveBeenCalledWith(mockProgrammingExercise.id, true, false);
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }),
+            expect.anything(),
+        );
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        comp.programmingExercise.set({ ...mockProgrammingExercise, isAtLeastInstructor: true } as ProgrammingExercise);
+
+        comp['resumeRunningDeletion']();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }),
+            expect.anything(),
+        );
+    });
+
+    it('should not leave the page when the background deletion ends while the page shows another exercise', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.deleteProgrammingExercise({});
+
+        comp.programmingExercise.set({ ...mockProgrammingExercise, id: mockProgrammingExercise.id! + 1 } as ProgrammingExercise);
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: mockProgrammingExercise.id!,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(routerNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not write to the closed delete dialog subject when the deletion request fails after the user left the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const failed$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(failed$);
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const dialogErrorNextSpy = vi.spyOn(comp['dialogErrorSource'], 'next');
+
+        comp.deleteProgrammingExercise({});
+        fixture.destroy();
+        failed$.error(new HttpErrorResponse({ status: 409, statusText: 'Conflict', url: '/api/programming/delete' }));
+
+        expect(dialogErrorNextSpy).not.toHaveBeenCalled();
+    });
+
+    it('should generate structure oracle', async () => {
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+        vi.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'success',
+            disableTranslation: true,
+        });
+    });
+
+    it('should error on generate structure oracle', () => {
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+        vi.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                        error: { message: 'Some error occurred.' },
+                        headers: new HttpHeaders({ 'X-artemisApp-alert': 'error' }),
+                    }),
+            ),
+        );
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'error',
+            disableTranslation: true,
+        });
+    });
+});

@@ -1,0 +1,118 @@
+import { Page, expect } from '@playwright/test';
+import { Fixtures } from '../../../fixtures/fixtures';
+import { getExercise } from '../../utils';
+
+export class ExamResultsPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    async checkGradeSummary(gradeSummary: any) {
+        const examSummary = this.page.locator('[data-testid="exam-summary-result-overview"] .exam-points-summary-container');
+        // Wait for the summary container to be visible before checking rows
+        await expect(examSummary).toBeVisible({ timeout: 30000 });
+        for (const exercise of gradeSummary.studentExam.exercises) {
+            const exerciseGroup = exercise.exerciseGroup;
+            const exerciseRow = examSummary.locator('tr', { hasText: exerciseGroup.title });
+            await expect(exerciseRow).toBeVisible({ timeout: 15000 });
+
+            const exerciseResult = gradeSummary.studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
+            const achievedPoints = Math.floor(exerciseResult.achievedPoints).toString();
+            const achievablePoints = Math.floor(exerciseResult.maxScore).toString();
+            const achievedPercentage = exerciseResult.achievedScore.toString();
+
+            await expect(exerciseRow.getByTestId('exercise-achieved-points').getByText(achievedPoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.getByTestId('exercise-max-points').getByText(achievablePoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.getByTestId('exercise-achieved-percentage').getByText(`${achievedPercentage} %`)).toBeVisible({ timeout: 10000 });
+        }
+    }
+
+    async checkTextExerciseContent(exerciseId: number, textFixture: string) {
+        const textExercise = getExercise(this.page, exerciseId);
+        const submissionText = await Fixtures.get(textFixture);
+        await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
+    }
+
+    /**
+     * Two feedback markups live behind `#additional-feedback`: text and programming still render
+     * `jhi-unified-feedback`, while modeling renders the feedback list of its own assessment view. Both are matched so
+     * the same assertion serves every exercise type on the exam results page.
+     */
+    async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
+        const exercise = getExercise(this.page, exerciseId);
+        const feedbackElement = exercise.locator(`#additional-feedback`);
+        await expect(feedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
+    }
+
+    async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
+        const exercise = getExercise(this.page, exerciseId);
+        const results = exercise.locator('.feedback-item-group', { hasText: resultType });
+        await expect(results.getByText(`(${count})`)).toBeVisible();
+    }
+
+    async checkProgrammingExerciseTasks(exerciseId: number, taskFeedbacks: ProgrammingExerciseTaskStatus[]) {
+        const exercise = getExercise(this.page, exerciseId);
+        const tasks = exercise.locator('.stepwizard .stepwizard-step');
+        for (let taskIndex = 0; taskIndex < taskFeedbacks.length; taskIndex++) {
+            const taskElement = tasks.nth(taskIndex);
+            switch (taskFeedbacks[taskIndex]) {
+                case ProgrammingExerciseTaskStatus.PENDING:
+                    await expect(taskElement.locator('.stepwizard-step--no-result')).toBeVisible();
+                    break;
+                case ProgrammingExerciseTaskStatus.SUCCESS:
+                    await expect(taskElement.locator('.stepwizard-step--success')).toBeVisible();
+                    break;
+                case ProgrammingExerciseTaskStatus.FAILURE:
+                    await expect(taskElement.locator('.stepwizard-step--failed')).toBeVisible();
+                    break;
+                case ProgrammingExerciseTaskStatus.NOT_EXECUTED:
+                    await expect(taskElement.locator('.stepwizard-step--not-executed')).toBeVisible();
+                    break;
+            }
+        }
+    }
+
+    async checkQuizExerciseScore(exerciseId: number, score: number, maxScore: number) {
+        const exercise = getExercise(this.page, exerciseId);
+        await expect(exercise.locator('.question-score').getByText(`${score}/${maxScore}`)).toBeVisible();
+    }
+
+    async checkQuizExerciseAnswers(exerciseId: number, studentAnswers: boolean[], correctAnswers: boolean[]) {
+        const exercise = getExercise(this.page, exerciseId);
+
+        for (let i = 0; i < studentAnswers.length; i++) {
+            const selectedAnswer = exercise.locator('.selection').nth(i + 1);
+            if (studentAnswers[i]) {
+                await expect(selectedAnswer.locator('.fa-square-check')).toBeVisible();
+            }
+            if (!studentAnswers[i]) {
+                await expect(selectedAnswer.locator('.fa-square')).toBeVisible();
+            }
+
+            const solution = exercise.locator('.solution').nth(i + 1);
+            await expect(solution).toHaveText(correctAnswers[i] ? 'Correct' : 'Wrong');
+        }
+    }
+
+    /** Referenced modeling feedback: one row per assessed element, naming the element it belongs to. */
+    async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
+        const exercise = getExercise(this.page, exerciseId);
+        const componentFeedbacks = exercise.locator('[data-testid="component-feedback-table"]');
+        const feedbackElement = componentFeedbacks
+            .locator('.unified-feedback, .feedback-row')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text, .feedback-row__name', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() }) });
+        await expect(feedbackElement).toBeVisible({ timeout: 30000 });
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
+    }
+}
+
+export enum ProgrammingExerciseTaskStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILURE = 'failure',
+    NOT_EXECUTED = 'not_executed',
+}

@@ -1,0 +1,107 @@
+import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { isDate } from 'app/foundation/util/utils';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+
+@Pipe({
+    name: 'artemisTimeAgo',
+    pure: false,
+})
+export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
+    private cdRef = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+    private serverDateService = inject(ArtemisServerDateService);
+
+    private currentTimer: number | null = null;
+
+    private lastTime?: number;
+    private lastValue: dayjs.ConfigType;
+    private lastOmitSuffix?: boolean;
+    private lastLocale?: string;
+    private lastText = '';
+    private formatFn!: (m: dayjs.Dayjs) => string; // assigned in transform() before the timer that reads it is created
+
+    format(date: dayjs.Dayjs) {
+        // lastLocale is always assigned in transform() before format() runs; the fallback keeps the type sound for the (unreachable) unset case.
+        return date.locale(this.lastLocale ?? this.translateService.getCurrentLang() ?? 'en').from(this.serverDateService.now(), this.lastOmitSuffix);
+    }
+
+    transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {
+        if (this.hasChanged(value, omitSuffix)) {
+            this.lastTime = getTime(value);
+            this.lastValue = value;
+            this.lastOmitSuffix = omitSuffix;
+            this.lastLocale = this.translateService.getCurrentLang() ?? 'en';
+            this.formatFn = formatFn || this.format.bind(this);
+            this.removeTimer();
+            this.createTimer();
+            this.lastText = this.formatFn(dayjs(value));
+        } else {
+            this.createTimer();
+        }
+
+        return this.lastText;
+    }
+
+    ngOnDestroy(): void {
+        this.removeTimer();
+    }
+
+    private createTimer() {
+        if (this.currentTimer) {
+            return;
+        }
+
+        const dayjsInstance = dayjs(this.lastValue);
+        const timeToUpdate = getSecondsUntilUpdate(dayjsInstance) * 1000;
+
+        if (typeof window !== 'undefined') {
+            this.currentTimer = window.setTimeout(() => {
+                this.lastText = this.formatFn(dayjs(this.lastValue));
+
+                this.currentTimer = null;
+                // markForCheck is the canonical mechanism for impure self-updating pipes (Angular's async pipe
+                // and ngx-translate's pipe do the same): a pipe has no signal/template context of its own, so
+                // this is the only way to re-render the host when the relative time ticks over. Works under zoneless.
+                this.cdRef.markForCheck();
+            }, timeToUpdate);
+        } else {
+            this.currentTimer = null;
+        }
+    }
+
+    private removeTimer() {
+        if (this.currentTimer) {
+            window.clearTimeout(this.currentTimer);
+            this.currentTimer = null;
+        }
+    }
+
+    private hasChanged(value: dayjs.ConfigType, omitSuffix?: boolean): boolean {
+        return getTime(value) !== this.lastTime || this.translateService.getCurrentLang() !== this.lastLocale || omitSuffix !== this.lastOmitSuffix;
+    }
+}
+
+function getTime(value: dayjs.ConfigType): number {
+    if (isDate(value)) {
+        return (value as Date).getTime();
+    } else if (dayjs.isDayjs(value)) {
+        return value.valueOf();
+    } else {
+        return dayjs(value).valueOf();
+    }
+}
+
+function getSecondsUntilUpdate(dayjsInstance: dayjs.Dayjs) {
+    const howOld = Math.abs(dayjs().diff(dayjsInstance, 'minute'));
+    if (howOld < 1) {
+        return 1;
+    } else if (howOld < 60) {
+        return 30;
+    } else if (howOld < 180) {
+        return 300;
+    } else {
+        return 3600;
+    }
+}

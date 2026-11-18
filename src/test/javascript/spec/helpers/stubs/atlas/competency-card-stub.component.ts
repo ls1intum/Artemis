@@ -1,0 +1,10 @@
+import { Component, input } from '@angular/core';
+import { CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+
+@Component({ selector: 'jhi-competency-card', template: '<div><ng-content /></div>' })
+export class CompetencyCardStubComponent {
+    courseId = input<number | undefined>();
+    competency = input<CourseCompetency>();
+    isPrerequisite = input<boolean>();
+    noProgressRings = input<boolean>(false);
+}

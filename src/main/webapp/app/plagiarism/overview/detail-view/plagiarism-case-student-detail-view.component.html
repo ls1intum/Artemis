@@ -1,0 +1,85 @@
+@if (plagiarismCase(); as plagiarismCase) {
+    <div class="plagiarism-case">
+        <div class="case-header">
+            <div jhi-plagiarism-case-header [plagiarismCase]="plagiarismCase">
+                <div class="flex w-full! items-center px-3! min-[992px]:w-1/2! min-[1200px]:w-1/4! min-[1200px]:justify-end">
+                    <a tumAetUiButton severity="secondary" [routerLink]="affectedExerciseRouterLink()">
+                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise"></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="case-body">
+            @if (plagiarismCase.verdict) {
+                <section>
+                    @if (plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION) {
+                        <tumaet-ui-message severity="error" class="mb-4! block" data-testid="plagiarism-case-verdict-message">
+                            <div>
+                                <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></h5>
+                                <p class="mb-0!">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
+                            </div>
+                        </tumaet-ui-message>
+                    }
+                    @if (plagiarismCase.verdict === plagiarismVerdict.WARNING) {
+                        <tumaet-ui-message severity="error" class="mb-4! block" data-testid="plagiarism-case-verdict-message">
+                            <div>
+                                <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></h5>
+                                <p class="mb-0!">{{ plagiarismCase.verdictMessage }}</p>
+                            </div>
+                        </tumaet-ui-message>
+                    }
+                </section>
+            }
+            <section>
+                <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
+                @if (posts(); as posts) {
+                    @if (posts.length > 0) {
+                        <div class="mb-2">
+                            <jhi-post #post [readOnlyMode]="false" [posting]="posts[0]" [showAnswers]="true" [isCommunicationPage]="false" [hasChannelModerationRights]="false" />
+                            @if (
+                                !posts[0].answers?.length &&
+                                (!plagiarismCase.createdByContinuousPlagiarismControl || (plagiarismCase.createdByContinuousPlagiarismControl && isAfterDueDate()))
+                            ) {
+                                <tumaet-ui-message severity="warn" class="my-2 block" data-testid="plagiarism-case-reply-hint">
+                                    <div>
+                                        @if (posts[0].creationDate) {
+                                            <h5
+                                                [innerHTML]="
+                                                    'artemisApp.plagiarism.replyToAccusationDueDateNotification'
+                                                        | artemisTranslate
+                                                            : {
+                                                                  dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
+                                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(
+                                                                            plagiarismCase.exercise!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                                            'day'
+                                                                        )
+                                                                      : posts[0].creationDate.add(7, 'day')
+                                                                  ).format('DD.MM.YYYY'),
+                                                              }
+                                                "
+                                            ></h5>
+                                        }
+                                        <jhi-button
+                                            [btnType]="ButtonType.WARNING"
+                                            (click)="postComponent().openCreateAnswerPostModal()"
+                                            title="artemisApp.plagiarism.replyToAccusation"
+                                        />
+                                    </div>
+                                </tumaet-ui-message>
+                            }
+                            <div class="mt-4!"></div>
+                        </div>
+                    }
+                }
+            </section>
+            @if (isAfterDueDate()) {
+                <section>
+                    <h3 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
+                    <div class="w-full px-3!">
+                        <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true" />
+                    </div>
+                </section>
+            }
+        </div>
+    </div>
+}

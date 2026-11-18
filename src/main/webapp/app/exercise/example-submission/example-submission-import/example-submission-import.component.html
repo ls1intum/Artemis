@@ -1,0 +1,115 @@
+<form>
+    <div class="flex items-center justify-between gap-4! border-b border-border p-6!">
+        <h4 class="text-lg font-semibold" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
+        <button
+            tumAetUiButton
+            type="button"
+            variant="text"
+            severity="secondary"
+            data-testid="example-submission-import-close"
+            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            (click)="dismiss()"
+        >
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
+    </div>
+    @if (exercise(); as exercise) {
+        <div class="p-6!">
+            <tumaet-ui-table-layout
+                [loading]="loading()"
+                [empty]="content().resultsOnPage.length === 0 && !loading()"
+                [emptyTitle]="searchTermEntered ? 'artemisApp.assessment.dashboard.empty' : 'artemisApp.assessment.dashboard.emptySearch'"
+                class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
+            >
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                    <input
+                        tumAetUiInput
+                        tumAetUiInputSize="small"
+                        type="search"
+                        name="searchParticipant"
+                        id="searchParticipant"
+                        class="max-w-lg min-w-24 flex-1"
+                        [(ngModel)]="searchTerm"
+                        [placeholder]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"
+                    />
+                </div>
+                <table striped tumAetUiTable size="small" [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onTableSort($event)">
+                    <thead>
+                        <tr>
+                            <th>
+                                <span>#</span>
+                            </th>
+                            <th [tumAetUiSortableColumn]="'STUDENT_NAME'">
+                                <span jhiTranslate="artemisApp.exercise.name"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
+                                @if (exercise.type === ExerciseType.TEXT) {
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        class="text-text-secondary ps-1"
+                                        [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                                    />
+                                }
+                                @if (exercise.type === ExerciseType.MODELING) {
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        class="text-text-secondary ps-1"
+                                        [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                                    />
+                                }
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (submission of content().resultsOnPage; track submission; let i = $index) {
+                            <tr>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ submission.participation?.participantName }}</td>
+                                <td>{{ submission.submissionDate | artemisDate }}</td>
+                                <td>
+                                    <jhi-result
+                                        [exercise]="exercise"
+                                        [participation]="submission.participation!"
+                                        [result]="getLatestResult(submission)"
+                                        [isOwnParticipation]="false"
+                                    />
+                                </td>
+                                <td>
+                                    {{ submission.submissionSize }}
+                                </td>
+                                <td>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="secondary"
+                                        (click)="selectImport(submission)"
+                                        jhiTranslate="artemisApp.exercise.import.table.doImport"
+                                    ></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <!-- The search API supplies page counts, not an exact number of records, so the count is not shown. -->
+                <tumaet-ui-paginator
+                    tumAetUiTableFooter
+                    [page]="state.page - 1"
+                    [pageSize]="state.pageSize"
+                    [totalRecords]="total()"
+                    [showRowsPerPage]="false"
+                    [showCurrentPageReport]="false"
+                    (pageChange)="onPageChange($event + 1)"
+                />
+            </tumaet-ui-table-layout>
+        </div>
+    }
+</form>

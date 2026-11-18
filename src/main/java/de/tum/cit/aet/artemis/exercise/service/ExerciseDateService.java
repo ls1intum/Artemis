@@ -1,0 +1,415 @@
+package de.tum.cit.aet.artemis.exercise.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ExerciseDateService {
+
+    private final ParticipationRepository participationRepository;
+
+    private final Optional<ExamDateApi> examDateApi;
+
+    private final Optional<StudentExamApi> studentExamApi;
+
+    public ExerciseDateService(ParticipationRepository participationRepository, Optional<ExamDateApi> examDateApi, Optional<StudentExamApi> studentExamApi) {
+        this.participationRepository = participationRepository;
+        this.examDateApi = examDateApi;
+        this.studentExamApi = studentExamApi;
+    }
+
+    /**
+     * Whether participation identities must be hidden from non-instructor staff. Course programming exercises allow
+     * student support until their exercise due date, and indefinitely when assessment is automatic or no due date is set.
+     * Course quizzes are always assessed automatically, so no tutor assessment needs to be anonymous and staff may see
+     * who achieved which score. Other exercise types and exams retain anonymous assessment throughout.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            return exercise.isExamExercise();
+        }
+        return !(exercise instanceof ProgrammingExercise) || isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.getAssessmentType(), exercise.getDueDate());
+    }
+
+    /**
+     * Applies the same deadline rule to the projection used on every Git operation, including previously issued tokens.
+     *
+     * @param exercise the programming exercise access projection
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(GitRepositoryAccessDTO exercise) {
+        return isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.assessmentType(), exercise.dueDate());
+    }
+
+    /**
+     * Applies the same cutoff to loaded exercises and repository access projections. Exam assessment always hides
+     * identities; course assessment does so from the due date onward only for manual or semi-automatic assessment.
+     *
+     * @param examExercise   whether the exercise belongs to an exam
+     * @param assessmentType the configured assessment mode
+     * @param dueDate        the course exercise deadline, or {@code null} when none is configured
+     * @return whether anonymous assessment is active now
+     */
+    private boolean isAssessmentAnonymizationActive(boolean examExercise, AssessmentType assessmentType, ZonedDateTime dueDate) {
+        return examExercise
+                || ((assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) && dueDate != null && !ZonedDateTime.now().isBefore(dueDate));
+    }
+
+    /**
+     * Finds the latest individual due date for participants. If no individual due dates exist, then the exercise due date is returned.
+     * Returns nothing if the exercise itself has no due date.
+     *
+     * @param exercise the exercise for which the latest due date should be returned.
+     * @return the latest individual due date, or if not existing the exercise due date.
+     */
+    public Optional<ZonedDateTime> getLatestIndividualDueDate(Exercise exercise) {
+        if (exercise.getDueDate() == null) {
+            // early exit to avoid database call, same result would be produced
+            // in Optional.ofNullable(exercise.getDueDate()) below
+            return Optional.empty();
+        }
+        return participationRepository.findLatestIndividualDueDate(exercise.getId()).or(() -> Optional.ofNullable(exercise.getDueDate()));
+    }
+
+    /**
+     * Finds the earliest individual due date for participants.
+     * Returns null if the exercise itself has no due date.
+     *
+     * @param exercise the exercise for which the earliest due date should be returned.
+     * @return the earliest individual due date, or if none exists the exercise due date.
+     */
+    public Optional<ZonedDateTime> getEarliestIndividualDueDate(Exercise exercise) {
+        if (exercise.getDueDate() == null) {
+            // early exit to avoid database call, same result would be produced
+            // in Optional.ofNullable(exercise.getDueDate()) below
+            return Optional.empty();
+        }
+        return participationRepository.findEarliestIndividualDueDate(exercise.getId()).or(() -> Optional.ofNullable(exercise.getDueDate()));
+    }
+
+    /**
+     * Checks if submissions are no longer possible.
+     * <p>
+     * Checks for exam or course exercise, and if an individual due date is set for the given
+     * participation or only a course-wide due date applies.
+     *
+     * @param participation in a course or exam exercise.
+     * @return true, if the due date is in the past and submissions are no longer possible.
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation) {
+        return isAfterDueDate(participation, participation.getExercise());
+    }
+
+    /**
+     * Checks if submissions are no longer possible.
+     * <p>
+     * Checks for exam or course exercise, and if an individual due date is set for the given
+     * participation or only a course-wide due date applies.
+     *
+     * @param participation in a course or exam exercise.
+     * @param exercise      the exercise for which the due date should be checked.
+     * @return true, if the due date is in the past and submissions are no longer possible.
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation, Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
+            }
+            else {
+                return api.isExamWithGracePeriodOver(exercise.getExam());
+            }
+        }
+        else {
+            final ZonedDateTime now = ZonedDateTime.now();
+            return getDueDate(participation).map(now::isAfter).orElse(false);
+        }
+    }
+
+    /**
+     * Checks if submissions are no longer possible, for a caller holding a projection of the exercise.
+     * <p>
+     * The same decision as {@link #isAfterDueDate(ParticipationInterface, Exercise)}, for the git request path, which
+     * authorizes against {@link GitRepositoryAccessDTO} rather than the exercise entity. An exam exercise still reads
+     * its exam, because the working-period rules are written against it - but only here, and only once.
+     *
+     * @param participation in a course or exam exercise
+     * @param exercise      the projected exercise
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation, GitRepositoryAccessDTO exercise) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            long examId = exercise.examId();
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return api.isIndividualExerciseWorkingPeriodOver(examId, studentParticipation);
+            }
+            return api.isExamWithGracePeriodOver(examId);
+        }
+        ZonedDateTime dueDate = participation.getIndividualDueDate() != null ? participation.getIndividualDueDate() : exercise.dueDate();
+        return dueDate != null && ZonedDateTime.now().isAfter(dueDate);
+    }
+
+    /**
+     * Checks if the due date for the given participation is in the future.
+     *
+     * @param participation in a course or exam exercise.
+     * @return true, if the due date has not yet passed.
+     */
+    public boolean isBeforeDueDate(ParticipationInterface participation) {
+        return !isAfterDueDate(participation);
+    }
+
+    /**
+     * Whether submissions are no longer possible, for a caller holding a projection of the participation.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), target.testRun(), student.getId(), target.id());
+        }
+        return getDueDate(exercise, target).map(ZonedDateTime.now()::isAfter).orElse(false);
+    }
+
+    /**
+     * Whether the due date for a projected participation is still in the future.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has not yet passed
+     */
+    public boolean isBeforeDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        return !isAfterDueDate(exercise, target, student);
+    }
+
+    /**
+     * The individual due date of a projected participation if it has one, else the exercise due date.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @return the due date that applies, or nothing when neither is set
+     */
+    public static Optional<ZonedDateTime> getDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target) {
+        if (target.individualDueDate() != null) {
+            return Optional.of(target.individualDueDate());
+        }
+        return Optional.ofNullable(exercise.getDueDate());
+    }
+
+    /**
+     * Checks if the current time is before the latest possible submission time.
+     * If no due date is set, returns true (a due date infinitely far in the future is assumed).
+     *
+     * @param exercise for which this should be checked.
+     * @return true, if the current time is before the due date.
+     */
+    public boolean isBeforeLatestDueDate(Exercise exercise) {
+        final ZonedDateTime now = ZonedDateTime.now();
+        return getLatestIndividualDueDate(exercise).map(now::isBefore).orElse(true);
+    }
+
+    /**
+     * Checks if the current time is after the latest possible submission time.
+     * If no due date is set, returns false (a due date infinitely far in the future is assumed).
+     *
+     * @param exercise for which this should be checked.
+     * @return true, if the current time is after the due date.
+     */
+    public boolean isAfterLatestDueDate(Exercise exercise) {
+        return !isBeforeLatestDueDate(exercise);
+    }
+
+    /**
+     * Checks if due date is before now
+     * The due date we use to check depending on whether it is present is individual -> exercise -> none
+     * If no due date is set, returns an empty optional
+     *
+     * @param exercise for which this should be checked.
+     * @return Optional of true, if the due date is before the current time.
+     */
+    public Optional<Boolean> isAfterEarliestDueDate(Exercise exercise) {
+        final ZonedDateTime now = ZonedDateTime.now();
+        return getEarliestIndividualDueDate(exercise).map(now::isAfter);
+    }
+
+    public Optional<Boolean> isBeforeEarliestDueDate(Exercise exercise) {
+        return isAfterEarliestDueDate(exercise).map(x -> !x);
+    }
+
+    /**
+     * Gets either the individual due date for a participation if present or else the exercise due date if present.
+     *
+     * @param participation of a student in an exercise.
+     * @return the individual due date, or the exercise due date, or nothing.
+     */
+    public static Optional<ZonedDateTime> getDueDate(ParticipationInterface participation) {
+        final Exercise exercise = participation.getExercise();
+
+        if (participation.getIndividualDueDate() != null) {
+            return Optional.of(participation.getIndividualDueDate());
+        }
+        else {
+            return Optional.ofNullable(exercise.getDueDate());
+        }
+    }
+
+    /**
+     * Checks if the current time is after the assessment due date of the course exercise and manual results can be published to the student.
+     * NOTE: not applicable for exam exercises, as the assessment due date is not used there.
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the past or if the exercise has no assessment due date.
+     */
+    public static boolean isAfterAssessmentDueDate(ExerciseCourseScoreDTO exercise) {
+        return exercise.assessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.assessmentDueDate());
+    }
+
+    /**
+     * Checks if the current time is after the assessment due date
+     * and manual results can be published to the student.
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the past or if the exercise has no assessment due date.
+     */
+    public static boolean isAfterAssessmentDueDate(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return exercise.getExam().resultsPublished();
+        }
+        return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+    }
+
+    /**
+     * Checks if the exercise has started.
+     *
+     * @param exercise The programming exercise.
+     * @return True if the exercise has started, false otherwise.
+     */
+    public boolean hasExerciseStarted(Exercise exercise) {
+        ZonedDateTime exerciseStartDate = exercise.getParticipationStartDate();
+        return exerciseStartDate == null || exerciseStartDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * The two points in time an exam exercise needs so that a tutor can be told whether assessment is possible yet, and
+     * if not, from when on it is.
+     *
+     * @param latestExamEndDate      the moment the last student can no longer hand in, i.e. the latest individual exam
+     *                                   end date plus the exam's grace period. This is the same notion of "the exam is
+     *                                   over" that {@link ExamDateApi#isExamWithGracePeriodOver} and
+     *                                   {@code AutomaticAfterDueDateService} use.
+     * @param assessmentPossibleFrom the moment tutors can start assessing. Equals {@code latestExamEndDate}, except for
+     *                                   programming exercises, which additionally wait for the tests to run once more on
+     *                                   the final submissions (see
+     *                                   {@link ProgrammingExercise#getBuildAndTestStudentSubmissionsAfterDueDate()},
+     *                                   which the server defaults to shortly after the exam ends) so that the automatic
+     *                                   result a tutor sees is the final one.
+     */
+    public record ExamAssessmentDates(ZonedDateTime latestExamEndDate, ZonedDateTime assessmentPossibleFrom) {
+    }
+
+    /**
+     * Determines when the given exam exercise becomes assessable. Until then submissions can still change, so grading
+     * one would mean grading something the student may still replace.
+     *
+     * @param exercise an exam exercise
+     * @return both relevant dates, or {@code null} if the exam has no dates yet and it is therefore unknown when it is
+     *         over
+     * @throws IllegalArgumentException if the given exercise is not an exam exercise
+     */
+    @Nullable
+    public ExamAssessmentDates getExamAssessmentDates(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new IllegalArgumentException("This method should only be used for exam exercises");
+        }
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+        Exam exam = exercise.getExam();
+        return computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
+    }
+
+    /**
+     * Applies the assessment availability rule to an already determined latest individual exam end date, so that callers
+     * which have that date at hand do not need this service (and another query) just to add the grace period and the
+     * programming build-and-test date on top.
+     *
+     * @param exercise                    an exam exercise
+     * @param exam                        the exam of the exercise
+     * @param latestIndividualExamEndDate the latest individual exam end date, as returned by
+     *                                        {@code ExamDateApi#getLatestIndividualExamEndDate}
+     * @return both relevant dates, or {@code null} if the given end date is {@code null}, i.e. the exam has no dates yet
+     */
+    @Nullable
+    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, Exam exam, @Nullable ZonedDateTime latestIndividualExamEndDate) {
+        if (latestIndividualExamEndDate == null) {
+            return null;
+        }
+        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exam.getGracePeriod(), 0));
+
+        ZonedDateTime assessmentPossibleFrom = latestExamEndDate;
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            ZonedDateTime buildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
+            if (buildAndTestDate != null && buildAndTestDate.isAfter(latestExamEndDate)) {
+                assessmentPossibleFrom = buildAndTestDate;
+            }
+        }
+        return new ExamAssessmentDates(latestExamEndDate, assessmentPossibleFrom);
+    }
+
+    /**
+     * Return the individual due date for the exercise of the participation's user
+     * <p>
+     * For exam exercises, this depends on the StudentExam's working time
+     *
+     * @param exercise      that is possibly part of an exam
+     * @param participation the participation of the student
+     * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
+     */
+    @Nullable
+    public ZonedDateTime getIndividualDueDate(Exercise exercise, StudentParticipation participation) {
+        if (exercise.isExamExercise()) {
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            var studentExam = api.findStudentExam(exercise, participation).orElse(null);
+            if (studentExam == null) {
+                return exercise.getDueDate();
+            }
+            return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
+        }
+        else {
+            return ExerciseDateService.getDueDate(participation).orElse(null);
+        }
+    }
+}

@@ -1,0 +1,712 @@
+package de.tum.cit.aet.artemis.localci.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
+import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+
+/**
+ * Service for creating feedback for programming exercises.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ProgrammingExerciseFeedbackCreationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseFeedbackCreationService.class);
+
+    /** A dot inside an exception name, escaped so that it matches literally in the assembled expression. */
+    private static final Pattern DOT = Pattern.compile("\\.");
+
+    private static final String DEFAULT_FILEPATH = "notAvailable";
+
+    private static final String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
+
+    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError",
+            "de.tum.in.test.api.util.UnexpectedExceptionError", "de.tum.cit.ase.ares.api.util.UnexpectedExceptionError"));
+
+    private static final Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
+
+    private static final Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
+
+    private static final List<String> TIMEOUT_EXCEPTIONS = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+            "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
+
+    /** A timeout exception at the start of a line, with the exception name and its text as groups. */
+    private static final Pattern TIMEOUT_EXCEPTION_MESSAGE = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
+
+    /** Any other message that reports a timeout, with its text as the one group. */
+    private static final Pattern GENERAL_TIMEOUT_MESSAGE = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
+     * to be checked since the oracle would not create structural tests for invalid names.
+     */
+    private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
+
+    private static final String LONG_MESSAGE_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
+
+    private static final String SKIPPED_TEST_MESSAGE = "This test was skipped, so it did not run.";
+
+    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
+    private final FeedbackMessageService feedbackMessageService;
+
+    private final Optional<HyperionExerciseMutationApi> mutationApi;
+
+    private final GitService gitService;
+
+    private final String defaultBranch;
+
+    private final ProgrammingExerciseBuildConfigRepository buildConfigs;
+
+    public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
+            Optional<HyperionExerciseMutationApi> mutationApi, GitService gitService, ProgrammingExerciseBuildConfigRepository buildConfigs,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+        this.mutationApi = mutationApi;
+        this.gitService = gitService;
+        this.buildConfigs = buildConfigs;
+        this.testCaseRepository = testCaseRepository;
+        this.websocketMessagingService = websocketMessagingService;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.feedbackMessageService = feedbackMessageService;
+    }
+
+    /**
+     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
+     * the programming language, or just reformatting it to only show the most important details.
+     *
+     * @param programmingLanguage The programming language for which the feedback was generated
+     * @param errorMessage        The raw error message in the feedback
+     * @return A filtered and better formatted error message
+     */
+    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String errorMessage) {
+        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
+        final String exceptionPrefix = "Exception message: ";
+        // Overwrite timeout exception messages for Junit4, Junit5 and other
+        // Defining two pattern groups, (1) the exception name and (2) the exception text
+        Matcher matcher = TIMEOUT_EXCEPTION_MESSAGE.matcher(errorMessage);
+        if (matcher.find()) {
+            String exceptionText = matcher.group(2);
+            return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
+        }
+        // Defining one pattern group, (1) the exception text
+        matcher = GENERAL_TIMEOUT_MESSAGE.matcher(errorMessage);
+        if (matcher.find()) {
+            // overwrite Ares: TimeoutException
+            String generalTimeOutExceptionText = matcher.group(1);
+            return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
+        }
+
+        // Filter out unneeded Exception classnames
+        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
+            var messageWithoutStackTrace = errorMessage.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
+            return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
+        }
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            Optional<String> firstExceptionMessage = errorMessage.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
+            if (firstExceptionMessage.isPresent()) {
+                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + errorMessage;
+            }
+        }
+
+        return errorMessage;
+    }
+
+    /**
+     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, String)} on results from JVM languages.
+     *
+     * @param jvmExceptionsToFilter Exceptions at the start of lines that should be filtered out in the processing step
+     * @return A regex that can be used to process result messages
+     */
+    private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
+        // Replace all "." with "\\." and join with regex alternative symbol "|"
+        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> DOT.matcher(s).replaceAll("\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
+        // Match any of the exceptions at the start of the line and with ": " after it
+        String pattern = "^(?:%s): \n*".formatted(assertionRegex);
+
+        return Pattern.compile(pattern, Pattern.MULTILINE);
+    }
+
+    /**
+     * Removes CI specific path segments. Uses the assignment directory to decide where to cut the path.
+     *
+     * @param sourcePath Path to be shortened
+     * @return Shortened path if it contains an assignment directory, otherwise the full path
+     */
+    private String removeCIDirectoriesFromPath(String sourcePath) {
+        if (sourcePath == null || sourcePath.isEmpty()) {
+            return DEFAULT_FILEPATH;
+        }
+        int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
+        if (workingDirectoryStart == -1) {
+            return sourcePath;
+        }
+        return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
+    }
+
+    /**
+     * Transforms static code analysis reports to structured {@link ScaFeedback} rows. The (heavily
+     * duplicated) issue message is stored via the content-addressed {@link FeedbackMessageService}; the
+     * tool-reported category is retained separately for the later categorization step
+     * ({@link #categorizeScaFeedback(Result, List, ProgrammingExercise)}), which maps it to the Artemis
+     * category and sets the graded penalty.
+     *
+     * @param reports Static code analysis reports to be transformed
+     * @return SCA feedback rows representing the static code analysis findings
+     */
+    public List<ScaFeedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
+        List<ScaFeedback> feedbackList = new ArrayList<>();
+        for (final StaticCodeAnalysisReportDTO report : reports) {
+            StaticCodeAnalysisTool tool = report.tool();
+
+            for (final StaticCodeAnalysisIssue issue : report.issues()) {
+                ScaFeedback scaFeedback = new ScaFeedback();
+                scaFeedback.setTool(tool);
+                scaFeedback.setToolCategory(StringUtils.truncate(issue.category(), ScaFeedback.MAX_TOOL_CATEGORY_LENGTH));
+                scaFeedback.setRule(StringUtils.truncate(issue.rule(), ScaFeedback.MAX_RULE_LENGTH));
+                scaFeedback.setFilePath(StringUtils.truncate(removeCIDirectoriesFromPath(issue.filePath()), ScaFeedback.MAX_FILE_PATH_LENGTH));
+                scaFeedback.setStartLine(issue.startLine());
+                scaFeedback.setEndLine(issue.endLine());
+                scaFeedback.setStartColumn(issue.startColumn());
+                scaFeedback.setEndColumn(issue.endColumn());
+                scaFeedback.setPriority(StringUtils.truncate(issue.priority(), ScaFeedback.MAX_PRIORITY_LENGTH));
+                scaFeedback.setMessage(feedbackMessageService.getOrCreate(truncateSCADetailMessage(issue.message())));
+                feedbackList.add(scaFeedback);
+            }
+        }
+        return feedbackList;
+    }
+
+    private String truncateSCADetailMessage(String message) {
+        // Keeps parity with the previous storage limit for SCA messages
+        return StringUtils.truncate(message, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH - 500);
+    }
+
+    /**
+     * Create an automatic test-case feedback row from a test job. The (often identical across students
+     * and builds) message text is stored via the content-addressed {@link FeedbackMessageService}; credits
+     * and visibility are not stored at all — they are derived from the test case at read time.
+     *
+     * @param testName        the test case name.
+     * @param testMessages    a list of informational messages generated by the test job
+     * @param successful      true if the test case was successful.
+     * @param exercise        the connected programming exercise
+     * @param activeTestCases all active test cases of the exercise.
+     *                            They are passed as a parameter to avoid redundant database calls when calling this method multiple times.
+     * @return the test-case feedback row, or an empty Optional if the test is not known to Artemis (such
+     *         feedback was never displayed to students nor persisted — it used to be filtered out in
+     *         ProgrammingExerciseGradingService before saving)
+     */
+    public Optional<TestCaseFeedback> createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
+            Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
+        if (testCase.isEmpty()) {
+            // This feedback was created by a test which is not known to Artemis (not part of the solution result), e.g. a test invented by a student.
+            log.debug("Ignoring feedback of unknown test case {} for exercise {}", testName, exercise.getId());
+            return Optional.empty();
+        }
+
+        return Optional.of(buildTestCaseFeedback(testCase.get(), successful, resolveMessage(testMessages, successful, exercise)));
+    }
+
+    /**
+     * Creates a feedback row for a test the build reported as skipped (JUnit {@code <skipped>}, e.g. a disabled test or a
+     * failed assumption), matched to its active test case. The row carries the skip reason if the build reported one, and
+     * keeps the not-executed grading semantics (positive = {@code null}): the test counts towards the total, but not as
+     * passed. This is what lets a skipped test be told apart from one that produced no result at all.
+     *
+     * @param testName        the skipped test case's name
+     * @param skipMessages    the skip reason(s) reported by the build, if any
+     * @param activeTestCases all active test cases of the exercise
+     * @return the feedback row, or an empty Optional if the test is not known to Artemis
+     */
+    public Optional<TestCaseFeedback> createSkippedTestFeedback(String testName, List<String> skipMessages, Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
+        if (testCase.isEmpty()) {
+            return Optional.empty();
+        }
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase.get());
+        feedback.setPositive(null);
+        feedback.setMessage(feedbackMessageService.getOrCreate(buildSkippedMessageText(skipMessages)));
+        return Optional.of(feedback);
+    }
+
+    private String buildSkippedMessageText(List<String> skipMessages) {
+        String reason = skipMessages.stream().filter(message -> message != null && !message.isBlank()).map(String::trim).collect(Collectors.joining("\n\n"));
+        String message = reason.isEmpty() ? SKIPPED_TEST_MESSAGE : SKIPPED_TEST_MESSAGE + " Reason: " + reason;
+        return truncateTestMessage(message);
+    }
+
+    /**
+     * Shows an error that happened outside of any single test, e.g. in a {@code @BeforeAll} method, on the tests it kept from running.
+     * <p>
+     * JUnit reports such an error once for the whole class, as a failed test with a made-up name that matches no test case of the exercise. The tests of the class
+     * never started, so the build says nothing about them, and without this they would only be shown as not executed (or not at all).
+     * <p>
+     * A failed test that matches no test case is treated as such an error only if its class is known and it is the only thing the build reported for that class and the
+     * classes nested in it. Anything else reported there means the class did run, so the failure is just an unknown test (for example one that was renamed before the
+     * solution build registered the new name) and its message does not belong on other tests. The error is then attributed to active test cases that are known to belong to
+     * that class (or to a class nested in it) and have no feedback yet. Without class information, on either side, nothing is attributed and the result stays as it was.
+     *
+     * @param unmatchedFailures failed tests that match no active test case
+     * @param reportedTests     every test the build reported, passed or failed, including the unmatched failures
+     * @param activeTestCases   all active test cases of the exercise
+     * @param result            the result to add the feedback to; it must already hold the feedback of the tests that did run
+     * @param exercise          the connected programming exercise
+     */
+    public void addFeedbackForTestsOfFailedClasses(List<? extends TestCaseBase> unmatchedFailures, List<? extends TestCaseBase> reportedTests,
+            Set<ProgrammingExerciseTestCase> activeTestCases, Result result, ProgrammingExercise exercise) {
+        for (TestCaseBase failure : unmatchedFailures) {
+            String failedClass = ProgrammingExerciseTestCase.normalizeTestClass(failure.testClass());
+            if (failedClass == null || reportedTests.stream().filter(reported -> mayBelongToClass(reported, failedClass, activeTestCases)).count() != 1) {
+                continue;
+            }
+            List<ProgrammingExerciseTestCase> affectedTestCases = activeTestCases.stream()
+                    .filter(testCase -> testCase.isDeclaredInOrBelow(failedClass) && testCase.wasNotExecuted(result)).toList();
+            if (!affectedTestCases.isEmpty()) {
+                // the same text for every test of the class: process and store it once
+                FeedbackMessage message = resolveMessage(failure.testMessages(), false, exercise);
+                affectedTestCases.forEach(testCase -> result.addTestCaseFeedback(buildTestCaseFeedback(testCase, false, message)));
+            }
+        }
+    }
+
+    /**
+     * Whether a reported test may have been run as part of the given class or a class nested in it. A report that names its class answers this itself. A report without a class
+     * can only be ruled out through the class stored for the test case of the same name; a test that is not known, or whose class is not known either, may belong to the class,
+     * so it counts as a test that ran there and keeps the failure from being taken for an error of the whole class.
+     */
+    private static boolean mayBelongToClass(TestCaseBase reported, String failedClass, Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String reportedClass = ProgrammingExerciseTestCase.normalizeTestClass(reported.testClass());
+        if (reportedClass != null) {
+            return ProgrammingExerciseTestCase.isClassInOrBelow(reportedClass, failedClass);
+        }
+        String reportedName = ProgrammingExerciseTestCase.normalizeTestName(reported.name());
+        return activeTestCases.stream().filter(testCase -> reportedName.equalsIgnoreCase(testCase.getTestName())).findAny()
+                .map(testCase -> testCase.getTestClass() == null || testCase.isDeclaredInOrBelow(failedClass)).orElse(true);
+    }
+
+    private TestCaseFeedback buildTestCaseFeedback(ProgrammingExerciseTestCase testCase, boolean successful, FeedbackMessage message) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(successful);
+        feedback.setMessage(message);
+        return feedback;
+    }
+
+    private FeedbackMessage resolveMessage(List<String> testMessages, boolean successful, ProgrammingExercise exercise) {
+        final String messageText;
+        if (!successful) {
+            messageText = testMessages.stream().map(errorString -> processResultErrorMessage(exercise.getProgrammingLanguage(), errorString)).collect(Collectors.joining("\n\n"));
+        }
+        else if (!testMessages.isEmpty()) {
+            messageText = String.join("\n\n", testMessages);
+        }
+        else {
+            messageText = null;
+        }
+        return feedbackMessageService.getOrCreate(truncateTestMessage(messageText));
+    }
+
+    private String truncateTestMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+        if (message.length() <= maxFeedbackLength) {
+            return message;
+        }
+        // Same protection as the previous long-feedback overflow: excessively long messages are almost
+        // always the result of faulty test cases (endless loops, repeated stack traces) and are truncated
+        // with an explicit marker.
+        final int maxTextLength = maxFeedbackLength - LONG_MESSAGE_TRUNCATION_MARKER.length();
+        return message.substring(0, Math.max(0, maxTextLength)) + LONG_MESSAGE_TRUNCATION_MARKER;
+    }
+
+    /**
+     * Saves the test cases, tolerating a second result for the same exercise that inserted the same ones first.
+     * <p>
+     * The read above and this write are not atomic, and results are processed on
+     * {@code artemis.continuous-integration.concurrent-result-processing-size} threads (16 by default), so two passes
+     * over the same exercise can both decide the same test names are new. The loser then violates the unique index on
+     * (test_name, exercise_id), and because nothing caught that, the exception unwound the whole result processing -
+     * the build's result was lost with "Result could not be processed for build job", not just its test cases.
+     * <p>
+     * Re-reading and saving only what is genuinely still missing makes the losing pass a no-op instead. Test cases
+     * that already carry an id are activation changes rather than inserts; they cannot collide, so they are kept.
+     * <p>
+     * Deliberately not implemented by deleting and re-inserting: {@code test_case_feedback.test_case_id} is
+     * declared {@code ON DELETE CASCADE}, so a delete would take the feedback of every past result for this
+     * exercise with it.
+     *
+     * @param exercise        the exercise the test cases belong to
+     * @param testCasesToSave the new test cases and activation changes this pass computed
+     */
+    private void saveToleratingConcurrentInsert(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCasesToSave) {
+        try {
+            testCaseRepository.saveAll(testCasesToSave);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            Set<ProgrammingExerciseTestCase> persisted = testCaseRepository.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCase> stillMissing = testCasesToSave.stream()
+                    .filter(testCase -> testCase.getId() != null || persisted.stream().noneMatch(testCase::isSameTestCase)).collect(Collectors.toSet());
+            if (stillMissing.isEmpty()) {
+                log.debug("Test cases for exercise {} were written by a concurrent result; nothing left to save", exercise.getId());
+                return;
+            }
+            // Whatever is left did not collide, so a failure here is not this race and has to reach the caller.
+            testCaseRepository.saveAll(stillMissing);
+        }
+    }
+
+    /**
+     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
+     * through the websocket!
+     *
+     * @param buildResult from which to extract the test cases.
+     * @param exercise    the programming exercise for which the test cases should be extracted from the new result
+     */
+    public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+            if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
+                return;
+            }
+            boolean synchronizationBuildSuccessful = Integer.valueOf(0).equals(localResult.buildScriptExitCode())
+                    && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
+            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
+                    synchronizationBuildSuccessful, () -> {
+                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                            return false;
+                        }
+                        extractCurrentTestCases(buildResult, current);
+                        return true;
+                    });
+            if (!synchronizedCases) {
+                log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
+                        exercise.getId());
+            }
+            return;
+        }
+        extractCurrentTestCases(buildResult, exercise);
+    }
+
+    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
+        if (haveTestCasesChanged) {
+            // Notify the client about the updated testCases
+            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+            websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
+        }
+    }
+
+    /**
+     * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
+     * This way old test cases are not lost, some interfaces in the client might need this information, e.g., to show warnings.
+     * This also allows saving a grading configuration when testcases get temporaily removed, e.g., during an exam.
+     *
+     * @param buildResult the build result with all the test cases.
+     * @param exercise    programming exercise.
+     * @return Returns true if the test cases have changed, false if they haven't.
+     */
+    public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
+        // Do not generate test cases for static code analysis feedback
+        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
+        // Get test cases that are not already in database - those will be added as new entries.
+        Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
+                .collect(Collectors.toSet());
+        // Get test cases where the activate state has changed (re-added or removed tests).
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+                exercise.getProgrammingLanguage());
+
+        Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
+        testCasesToSave.addAll(newTestCases);
+        testCasesToSave.addAll(testCasesWithUpdatedActivation);
+
+        // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
+        // Just using the uniqueness property of the set is not enough, as the equals/hash functions
+        // compares test cases by their id.
+        testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
+
+        backfillTestClasses(existingTestCases, buildResult, testCasesToSave);
+
+        if (!testCasesToSave.isEmpty()) {
+            saveToleratingConcurrentInsert(exercise, testCasesToSave);
+            programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
+            // Replace the test case names by ids in the problem statement.
+            // This handles the case if the problem statement already contains the name of a test case
+            // that got later pushed into the test repository. Since this test case now exists,
+            // the problem statement should now refer to its id.
+            programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
+            programmingExerciseRepository.save(exercise);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Keeps the class of the test cases in line with the latest build, so that a test moved to another (e.g. nested) class is attributed correctly. A name that the build
+     * reports from more than one class is ambiguous: an existing test case keeps its class, and a new one gets none. A name for which the build reports no class is left alone.
+     * A test case that is saved anyway gets the class on that copy; the others are saved on their own, which does not count as a change of the test cases.
+     */
+    private void backfillTestClasses(Set<ProgrammingExerciseTestCase> existingTestCases, BuildResultNotification buildResult, Set<ProgrammingExerciseTestCase> testCasesToSave) {
+        Map<String, Set<String>> reportedClasses = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream())).forEach(test -> {
+            String testClass = ProgrammingExerciseTestCase.normalizeTestClass(test.testClass());
+            if (testClass != null) {
+                reportedClasses.computeIfAbsent(ProgrammingExerciseTestCase.normalizeTestName(test.name()), name -> new HashSet<>()).add(testClass);
+            }
+        });
+        Map<String, String> unambiguousClasses = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        reportedClasses.forEach((name, classes) -> {
+            if (classes.size() == 1) {
+                unambiguousClasses.put(name, classes.iterator().next());
+            }
+        });
+        if (reportedClasses.isEmpty()) {
+            return;
+        }
+        // The duplicate removal above keeps an arbitrary one of several new test cases with the same name, each created with the class it was reported from.
+        // So the class of a new test case is decided here from the complete report: a name reported from several classes belongs to none of them.
+        testCasesToSave.forEach(testCase -> {
+            Set<String> classes = reportedClasses.get(testCase.getTestName());
+            if (classes == null) {
+                return;
+            }
+            if (classes.size() == 1) {
+                testCase.setTestClass(classes.iterator().next());
+            }
+            else if (testCase.getId() == null) {
+                testCase.setTestClass(null);
+            }
+        });
+        Set<Long> savedIds = testCasesToSave.stream().map(ProgrammingExerciseTestCase::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> withNewClass = existingTestCases.stream().filter(existing -> !savedIds.contains(existing.getId())
+                && unambiguousClasses.containsKey(existing.getTestName()) && !unambiguousClasses.get(existing.getTestName()).equals(existing.getTestClass()))
+                .collect(Collectors.toSet());
+        if (!withNewClass.isEmpty()) {
+            withNewClass.forEach(existing -> existing.setTestClass(unambiguousClasses.get(existing.getTestName())));
+            testCaseRepository.saveAll(withNewClass);
+        }
+    }
+
+    private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
+        Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
+        // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
+        return existingTestCases.stream().filter(existing -> reportedTypes.containsKey(existing.getTestName()) != existing.isActive()).map(existing -> {
+            var updated = existing.clone().active(!existing.isActive());
+            // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
+            // the classification of its original CI name rather than the shortened database name.
+            updated.setType(reportedTypes.getOrDefault(existing.getTestName(), existing.getType()));
+            if (!updated.isActive() && updated.getType() == ProgrammingExerciseTestCaseType.DEFAULT) {
+                // Legacy short names may not have been classified yet; known structural types must survive shortening.
+                setTestCaseType(Set.of(updated), programmingLanguage);
+            }
+            return updated;
+        }).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets the enum value test case type for every test case and saves to the database. Implicitly, all tests are of the same programming language.
+     * If the test cases belong to a non-JAVA programming exercise, the type is set to DEFAULT.
+     * If the test case belong to a JAVA programming exercise, the type is set to:
+     * STRUCTURAL: test case has been generated by the structure oracle, therefore its name follows a certain pattern.
+     * BEHAVIORAL: all other test cases (that have been written by the instructor).
+     *
+     * @param testCases           the test cases
+     * @param programmingLanguage the programming language of the exercise
+     */
+    public void setTestCaseType(Set<ProgrammingExerciseTestCase> testCases, ProgrammingLanguage programmingLanguage) {
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            testCases.forEach(testCase -> testCase.setType(ProgrammingExerciseTestCaseType.DEFAULT));
+            return;
+        }
+
+        // will only be applied for programming exercises in Java
+        testCases.forEach(testCase -> {
+            String testCaseName = testCase.getTestName();
+            // set type depending on the test case name
+            if (STRUCTURAL_TEST_PATTERN.matcher(testCaseName).matches()) {
+                testCase.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
+            }
+            else {
+                testCase.setType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
+            }
+        });
+    }
+
+    private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
+
+        Set<ProgrammingExerciseTestCase> testCases = buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+                // we use default values for weight, bonus multiplier and bonus points
+                .map(testCase -> {
+                    var newTestCase = new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
+                            .visibility(defaultVisibility);
+                    newTestCase.setTestClass(testCase.testClass());
+                    return newTestCase;
+                }).collect(Collectors.toSet());
+        // Structural Java names end in ']'; shortening them before classification would lose that information.
+        setTestCaseType(testCases, exercise.getProgrammingLanguage());
+        testCases.forEach(testCase -> testCase.setTestName(ProgrammingExerciseTestCase.normalizeTestName(testCase.getTestName())));
+        return testCases;
+    }
+
+    /**
+     * Sets the category for each feedback and removes feedback with no category or an inactive one.
+     * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
+     * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
+     * the removed feedback into account.
+     *
+     * @param result                     of the build run
+     * @param staticCodeAnalysisFeedback modifiable list of static code analysis feedback objects that will get filtered
+     * @param programmingExercise        The current exercise
+     */
+    public void categorizeScaFeedback(Result result, List<ScaFeedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+        var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
+
+        for (Iterator<ScaFeedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {
+            var scaFeedback = iterator.next();
+            // Determine the Artemis category for this issue via the (persisted) tool-reported category;
+            // rows without one (migrated rows whose legacy JSON was unparseable) fall back to their
+            // already-resolved Artemis category.
+            Optional<StaticCodeAnalysisCategory> category = findCategoryForIssue(scaFeedback, categoryPairs);
+
+            if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {
+                // Remove feedback of unmapped or inactive categories permanently
+                result.getScaFeedbacks().remove(scaFeedback);
+                iterator.remove();
+                continue;
+            }
+
+            scaFeedback.setCategory(category.get().getName());
+            if (category.get().getState() == CategoryState.GRADED) {
+                scaFeedback.setPenalty(category.get().getPenalty());
+            }
+            else {
+                scaFeedback.setPenalty(null);
+            }
+        }
+    }
+
+    private Optional<StaticCodeAnalysisCategory> findCategoryForIssue(ScaFeedback scaFeedback,
+            Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> categoryPairs) {
+        if (scaFeedback.getToolCategory() != null) {
+            return categoryPairs.entrySet().stream().filter(
+                    pair -> pair.getValue().stream().anyMatch(mapping -> mapping.tool() == scaFeedback.getTool() && mapping.category().equals(scaFeedback.getToolCategory())))
+                    .map(Map.Entry::getKey).findFirst();
+        }
+        // already-categorized row (loaded from the database): match by the stored Artemis category name
+        return categoryPairs.keySet().stream().filter(category -> category.getName().equals(scaFeedback.getCategory())).findFirst();
+    }
+
+    /**
+     * Links the categories of an exercise with the default category mappings.
+     *
+     * @param programmingExercise The programming exercise
+     * @return A list of pairs of categories and their mappings.
+     */
+    private Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> getCategoriesWithMappingForExercise(ProgrammingExercise programmingExercise) {
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId());
+        var defaultCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingExercise.getProgrammingLanguage());
+
+        Map<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>> categoryPairsWithMapping = new HashMap<>();
+
+        for (var category : categories) {
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.name().equals(category.getName())).findFirst();
+            if (defaultCategoryMatch.isPresent()) {
+                var categoryMappings = defaultCategoryMatch.get().categoryMappings();
+                categoryPairsWithMapping.put(category, categoryMappings);
+            }
+        }
+
+        return categoryPairsWithMapping;
+    }
+
+}

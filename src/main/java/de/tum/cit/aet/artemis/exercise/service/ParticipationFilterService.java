@@ -1,0 +1,172 @@
+package de.tum.cit.aet.artemis.exercise.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+
+/**
+ * A service to handle participation filtering.
+ */
+@Lazy
+@Service
+@Profile(PROFILE_CORE)
+public class ParticipationFilterService {
+
+    private final SubmissionFilterService submissionFilterService;
+
+    public ParticipationFilterService(SubmissionFilterService submissionFilterService) {
+        this.submissionFilterService = submissionFilterService;
+    }
+
+    /**
+     * Finds all participations of a student in the given exercise. For file upload exercises, there should only be
+     * at most one participation. For programming, quiz, text, and modeling exercises, an additional practice participation can exist.
+     *
+     * @param participationsAcrossAllExercises all participations of the student in all exercises of the course
+     * @param exercise                         the exercise for which we want the participations
+     * @return the participations in the exercise
+     */
+    public Set<StudentParticipation> findStudentParticipationsInExercise(Set<StudentParticipation> participationsAcrossAllExercises, Exercise exercise) {
+        // only consider participations in the given exercise
+        if (participationsAcrossAllExercises == null || participationsAcrossAllExercises.isEmpty()) {
+            return Set.of();
+        }
+        // Compare by ID to avoid Hibernate 7 lazy proxy initialization (with @ConcreteProxy, equals() triggers entity loading).
+        // Fall back to reference equality for unpersisted entities (null IDs) in unit tests.
+        var participationsInExercise = participationsAcrossAllExercises.stream()
+                .filter(p -> p.getExercise() != null && (exercise.getId() != null ? exercise.getId().equals(p.getExercise().getId()) : p.getExercise() == exercise))
+                .collect(Collectors.toSet());
+
+        if (participationsInExercise.isEmpty()) {
+            return Set.of();
+        }
+
+        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())
+                || ExerciseType.TEXT.equals(exercise.getExerciseType()) || ExerciseType.MODELING.equals(exercise.getExerciseType())) {
+            return findStudentParticipationsForMultipleParticipationExercises(participationsInExercise);
+        }
+        else {
+            return Set.of(findStudentParticipationForSingleParticipationExercises(participationsInExercise));
+        }
+    }
+
+    /**
+     * Filters the student participation for display in the student dashboard.
+     * <p>
+     * Ensures that sensitive information (e.g. the assessing tutor) is removed.
+     * Additionally, this only keeps the latest submission and its most recent visible result.
+     * For example, in case the exercise uses a manual assessment and the assessment publication date has not yet passed,
+     * only the last automatic result is kept since the newer one should not yet be visible to the student.
+     *
+     * @param participation the participation that contains the exercise and should be filtered
+     * @param isStudent     used to determine if further filtering is needed.
+     */
+    public void filterParticipationForCourseDashboard(StudentParticipation participation, boolean isStudent) {
+        Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), false);
+
+        Set<Result> results = Set.of();
+
+        Optional<Submission> submissionForDashboard = optionalSubmission;
+
+        if (optionalSubmission.isPresent()) {
+            Submission submission = optionalSubmission.get();
+            Result latestResult = submission.getLatestGradingResult();
+            if (latestResult != null) {
+                results = Set.of(latestResult);
+                if (isStudent) {
+                    latestResult.filterSensitiveInformation();
+                }
+            }
+            submission.setResults(new LinkedHashSet<>(results));
+        }
+        else {
+            // A quiz that has not ended yet intentionally exposes neither its submission's answers nor its result (see
+            // SubmissionFilterService). The student dashboard still needs to know whether the student already submitted
+            // ("Submitted, waiting for due date"), so expose a sanitized submission carrying only the submitted flag and
+            // submission date (no answers, no results).
+            submissionForDashboard = getSanitizedSubmittedQuizSubmission(participation);
+        }
+
+        // add submission to participation or set it to empty set if no submission is available
+        participation.setSubmissions(submissionForDashboard.map(Set::of).orElse(Set.of()));
+
+        // remove inner exercise from participation
+        participation.setExercise(null);
+    }
+
+    /**
+     * Builds a sanitized copy of the student's latest submitted quiz submission for the course dashboard, exposing only
+     * the submitted flag and submission date, so the dashboard can show the
+     * "Submitted, waiting for due date" status without leaking quiz answers or scores before the quiz has ended.
+     *
+     * @param participation the quiz participation whose submissions should be inspected
+     * @return a sanitized submitted submission, or empty if the participation is not a quiz or has no submitted submission
+     */
+    private Optional<Submission> getSanitizedSubmittedQuizSubmission(StudentParticipation participation) {
+        if (!(participation.getExercise() instanceof QuizExercise) || participation.getSubmissions() == null) {
+            return Optional.empty();
+        }
+        return participation.getSubmissions().stream().filter(submission -> submission instanceof QuizSubmission && submission.isSubmitted())
+                .max(Comparator.comparing(Submission::getSubmissionDate, Comparator.nullsFirst(Comparator.naturalOrder()))).map(submission -> {
+                    QuizSubmission sanitizedSubmission = new QuizSubmission();
+                    sanitizedSubmission.setId(submission.getId());
+                    sanitizedSubmission.setSubmitted(true);
+                    sanitizedSubmission.setSubmissionDate(submission.getSubmissionDate());
+                    sanitizedSubmission.setResults(new LinkedHashSet<>());
+                    return sanitizedSubmission;
+                });
+    }
+
+    /**
+     * Validates and returns the student participations for exercises that allow multiple participations (programming, quiz, text, and modeling),
+     * which may include at most one graded and one practice participation.
+     *
+     * @param participations the set of participations in the exercise to validate
+     * @return the valid set of participations (empty, only graded, only practice, or both)
+     * @throws IllegalArgumentException if there are multiple graded or multiple practice participations
+     */
+    private Set<StudentParticipation> findStudentParticipationsForMultipleParticipationExercises(Set<StudentParticipation> participations) {
+        var gradedParticipations = participations.stream().filter(p -> !p.isPracticeMode()).collect(Collectors.toSet());
+        if (gradedParticipations.size() > 1) {
+            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming, quiz, text, or modeling exercises");
+        }
+        var practiceParticipations = participations.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
+        if (practiceParticipations.size() > 1) {
+            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming, quiz, text, or modeling exercises");
+        }
+
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming, non-quiz, non-text, and non-modeling).
+     *
+     * @param participations the set of participations in the exercise to validate
+     * @return the valid set of participations (empty or singleton set)
+     * @throws IllegalArgumentException if there are multiple participations
+     */
+    private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
+        if (participations.size() > 1) {
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming, quiz, text or modeling.");
+        }
+        return participations.iterator().next();
+    }
+}

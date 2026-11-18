@@ -1,0 +1,319 @@
+package de.tum.cit.aet.artemis.programming;
+
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.CommitDTO;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestCaseDTO;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestCaseDetailMessageDTO;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestResultsDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+
+class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+
+    private static final String TEST_PREFIX = "progsubreslocalvcjen";
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    private ProgrammingExercise exercise;
+
+    @BeforeEach
+    void setUp() {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+
+        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
+
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
+
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
+
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        jenkinsRequestMockProvider.reset();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,9] not a statement");
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,10] ';' expected");
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        // The build logs of a failed build are stored on disk, keyed by submission, so the service is what reads them back
+        List<BuildLogEntry> buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission);
+        assertThat(buildLogEntries).hasSize(2);
+        assertThat(buildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStoreBuildLogsWhenAnExistingSemiAutomaticResultIsUpdated() throws Exception {
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, exercise.getId());
+        long existingResultId = submission.getLatestResult().getId();
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).singleElement().extracting(Result::getId).isEqualTo(existingResultId);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).extracting(BuildLogEntry::getLog).containsExactly("[ERROR] Log1", "[ERROR] Log2",
+                "[ERROR] Log3");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDiscardTheStoredBuildLogsWhenTheSameSemiAutomaticResultBuildsSuccessfully() throws Exception {
+        // A semi-automatic result is updated in place and keeps its id, so the file an earlier failed build wrote for it would otherwise be read back under a result that now
+        // stands for a build that succeeded.
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, TEST_PREFIX);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "test1");
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, exercise.getId());
+        Result existingResult = submission.getLatestResult();
+        long existingResultId = existingResult.getId();
+
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.now(), "[ERROR] the earlier failure")), submission, existingResult);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).as("the failed build's logs are stored to begin with").isNotEmpty();
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).as("the result was updated in place rather than replaced").singleElement().extracting(Result::getId).isEqualTo(existingResultId);
+        assertThat(buildLogEntryService.getBuildLogs(submission, existingResultId)).as("the earlier failure's logs do not survive a successful build of the same result").isEmpty();
+        assertThat(buildLogEntryService.getLatestBuildLogs(submission)).as("and they are not served as the submission's latest ones either").isEmpty();
+    }
+
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
+        return ProgrammingLanguage.getEnabledLanguages().stream()
+                .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage, TEST_PREFIX);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        // Call programming-exercises/new-result which do not include build log entries yet
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), new ArrayList<>());
+        postResult(notification, HttpStatus.BAD_REQUEST);
+
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).isEmpty();
+    }
+
+    private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
+
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments() {
+        return ProgrammingLanguage.getEnabledLanguages().stream().flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true, true),
+                Arguments.of(programmingLanguage, false, true), Arguments.of(programmingLanguage, true, false), Arguments.of(programmingLanguage, false, false)));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis, boolean buildFailed) throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage, TEST_PREFIX);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        // It should not matter whether the submission has buildFailed set to true or false, because when the result is processed after sending it to Artemis, buildFailed is set to
+        // true anyway if no feedback is provided with the result.
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, buildFailed);
+
+        // Call programming-exercises/new-result which does include build log entries
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var result = assertBuildError(participation.getId(), userLogin);
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Call again and assert that no new submissions have been created
+        postResult(notification, HttpStatus.OK);
+        assertNoNewSubmissions(participation.getId(), submission);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateGradleFeedback() throws Exception {
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, JAVA, TEST_PREFIX);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        exercise = programmingExerciseRepository.save(exercise);
+        // the reported test must be known to Artemis, otherwise its feedback is not persisted at all
+        programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "test1");
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of(), List.of("test1"), logs, new ArrayList<>());
+
+        var longErrorMessage = new TestCaseDetailMessageDTO("abc\nmultiline\nfeedback");
+        var testCase = new TestCaseDTO("test1", "Class", 0d, new ArrayList<>(), List.of(longErrorMessage), new ArrayList<>());
+        notification.results().getFirst().testCases().set(0, testCase);
+
+        postResult(notification, HttpStatus.OK);
+
+        var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
+        // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
+        var testCaseFeedbacks = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
+        assertThat(testCaseFeedbacks).singleElement().extracting(TestCaseFeedback::getMessageText).isEqualTo("abc\nmultiline\nfeedback");
+    }
+
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+        SecurityUtils.setAuthorizationObject();
+        // Assert that result is linked to the participation
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
+        assertThat(results).hasSize(1);
+        var result = results.getFirst();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getScore()).isZero();
+
+        // Assert that the submission is linked to the participation
+        var submission = (ProgrammingSubmission) result.getSubmission();
+        assertThat(submission).isNotNull();
+        assertThat(submission.isBuildFailed()).isTrue();
+
+        assertThat(buildLogEntryService.getLatestBuildLogs(submission)).hasSize(3);
+
+        userUtilService.changeUser(userLogin);
+        // Assert that the build logs can be retrieved from the REST API
+        var receivedLogs = request.get("/api/programming/participations/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull().isNotEmpty();
+
+        return result;
+    }
+
+    private void assertNoNewSubmissions(long participationId, ProgrammingSubmission existingSubmission) {
+        var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
+        assertThat(updatedSubmissions).hasSize(1);
+        assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(existingSubmission.getId());
+    }
+
+    @Test
+    void rejectedAuthorizationTokenIsNotLogged() throws Exception {
+        String submittedToken = "wrong-authorization-token-value";
+        Logger logger = (Logger) LoggerFactory.getLogger("de.tum.cit.aet.artemis.programming.web.open.PublicProgrammingExerciseResultResource");
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(logAppender);
+        try {
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add(HttpHeaders.AUTHORIZATION, submittedToken);
+
+            request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", new HashMap<String, Object>(), HttpStatus.FORBIDDEN, httpHeaders);
+
+            assertThat(logAppender.list).isNotEmpty().noneMatch(event -> event.getFormattedMessage().contains(submittedToken));
+        }
+        finally {
+            logger.detachAppender(logAppender);
+            logAppender.stop();
+            logger.setLevel(previousLevel);
+        }
+    }
+
+    private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
+        JsonMapper mapper = JsonObjectMapper.get();
+        final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
+    }
+
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
+            List<String> logs, List<CommitDTO> commits) {
+        return createJenkinsNewResultNotification(projectKey, loginName, programmingLanguage, successfulTests, List.of(), logs, commits);
+    }
+
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
+            List<String> failedTests, List<String> logs, List<CommitDTO> commits) {
+        var repoName = (projectKey + "-" + loginName).toUpperCase(Locale.ROOT);
+        // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
+        var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
+        return ProgrammingExerciseFactory.generateTestResultDTO(fullName, repoName, null, programmingLanguage, false, successfulTests, failedTests, logs, commits, null);
+    }
+
+}

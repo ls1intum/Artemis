@@ -1,0 +1,30 @@
+<jhi-exercise-action-bar
+    [items]="mainActions()"
+    [hasReservedContent]="showTestRunWarning()"
+    (columnMinWidthChange)="actionsMinWidth.emit($event)"
+    (naturalWidthChange)="actionsNaturalWidth.emit($event)"
+>
+    <ng-container actionBarReserved>
+        @if (showTestRunWarning()) {
+            <!-- The icon carries the whole message, so it needs the tooltip text as its accessible name: a tooltip is
+                 hover-only and never reaches a screen reader. -->
+            <fa-icon
+                [icon]="faExclamationTriangle"
+                class="text-state-warning"
+                role="img"
+                [attr.aria-label]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
+                tumAetUiTooltipPlacement="top"
+            />
+        }
+    </ng-container>
+</jhi-exercise-action-bar>
+
+<!-- Outside the action bar so it never becomes one of its items; tumaet-ui-dialog portals the panel to body anyway. -->
+<jhi-exercise-variant-ai-modal-wizard
+    [visible]="aiVariantModalVisible()"
+    (visibleChange)="aiVariantModalVisible.set($event)"
+    [sourceExercise]="exercise()"
+    [courseId]="course().id"
+    [examExercise]="true"
+/>

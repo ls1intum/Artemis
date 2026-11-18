@@ -1,0 +1,37 @@
+<a
+    [id]="'competency-contribution-card-' + competencyId()"
+    class="block h-full rounded-xl text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    [routerLink]="['/courses', courseId(), 'competencies', competencyId()]"
+    [tumAetUiTooltip]="
+        'artemisApp.competency.competencyContribution.weightIconTooltips.' +
+            (weight() >= HIGH_COMPETENCY_LINK_WEIGHT ? 'high' : weight() >= MEDIUM_COMPETENCY_LINK_WEIGHT ? 'medium' : 'low') | artemisTranslate
+    "
+>
+    <tumaet-ui-card class="h-full">
+        <h4 class="m-0 flex items-center justify-between gap-2 text-base font-medium">
+            <span class="min-w-0 truncate">{{ title() }}</span>
+            <fa-layers class="icon-full-size shrink-0 text-state-success" aria-hidden="true">
+                <fa-icon [icon]="faArrowRight" />
+                @if (weight() >= MEDIUM_COMPETENCY_LINK_WEIGHT) {
+                    <fa-icon [icon]="faArrowRight" transform="left-8" />
+                }
+                @if (weight() >= HIGH_COMPETENCY_LINK_WEIGHT) {
+                    <fa-icon [icon]="faArrowRight" transform="left-16" />
+                }
+            </fa-layers>
+        </h4>
+        @if (mastery() !== undefined) {
+            <div class="mt-2 flex flex-wrap items-baseline justify-between gap-2">
+                <span jhiTranslate="artemisApp.competency.mastery"></span>
+                <span>{{ mastery() | number: '1.0-0' }}%</span>
+                <tumaet-ui-progress-bar
+                    class="w-full"
+                    [value]="mastery() ?? 0"
+                    [showValue]="false"
+                    severity="success"
+                    [ariaLabel]="'artemisApp.competency.mastery' | artemisTranslate"
+                />
+            </div>
+        }
+    </tumaet-ui-card>
+</a>

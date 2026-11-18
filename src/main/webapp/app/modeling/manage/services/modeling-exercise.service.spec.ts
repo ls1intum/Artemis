@@ -1,0 +1,172 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { take } from 'rxjs/operators';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import dayjs from 'dayjs/esm';
+import * as helper from 'app/foundation/util/download.util';
+import { Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { lastValueFrom } from 'rxjs';
+import { UMLDiagramType } from '@tumaet/apollon';
+import { provideHttpClient } from '@angular/common/http';
+
+describe('ModelingExercise Service', () => {
+    let service: ModelingExerciseService;
+    let httpMock: HttpTestingController;
+    let elemDefault: ModelingExercise;
+    const category = new ExerciseCategory('testCategory', 'red');
+    const categories = [JSON.stringify(category) as unknown as ExerciseCategory] as ExerciseCategory[];
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                LocalStorageService,
+                { provide: Router, useClass: MockRouter },
+            ],
+        });
+        service = TestBed.inject(ModelingExerciseService);
+        service.resourceUrl = 'resourceUrl';
+        httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
+        elemDefault.assessmentDueDate = dayjs();
+        elemDefault.studentParticipations = [];
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
+    it('should find an element', () => {
+        const returnedFromService = Object.assign({}, elemDefault);
+        service
+            .find(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.body).toEqual(elemDefault));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('should create a ModelingExercise', () => {
+        const returnedFromService = {
+            id: 0,
+            ...elemDefault,
+            categories,
+        };
+        const expected = { ...returnedFromService, categories: [category] };
+        service
+            .create(new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined))
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toEqual(expected);
+            });
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+    });
+
+    it('should update a ModelingExercise', () => {
+        const returnedFromService = {
+            diagramType: UMLDiagramType.ClassDiagram,
+            exampleSolutionModel: 'BBBBBB',
+            exampleSolutionExplanation: 'BBBBBB',
+            ...elemDefault,
+            categories,
+        };
+
+        const expected = { ...returnedFromService, categories: [category] };
+        service
+            .update(expected)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.body).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body.plagiarismDetectionConfig).toEqual(expected.plagiarismDetectionConfig);
+        req.flush(returnedFromService);
+    });
+
+    it('should send a flat course-exercise create body carrying courseId and no exerciseGroupId', () => {
+        const course = { id: 42 } as unknown as ModelingExercise['course'];
+        const exercise = new ModelingExercise(UMLDiagramType.ComponentDiagram, course, undefined);
+        exercise.plagiarismDetectionConfig = { ...exercise.plagiarismDetectionConfig, similarityThreshold: 42 };
+        service.create(exercise).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.body.courseId).toBe(42);
+        expect(req.request.body.exerciseGroupId).toBeUndefined();
+        expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
+        req.flush({ id: 1, ...exercise });
+    });
+
+    it('should send a flat exam-exercise create body carrying exerciseGroupId and no courseId', () => {
+        const exerciseGroup = { id: 7, exam: { id: 3, course: { id: 42 } } } as unknown as ModelingExercise['exerciseGroup'];
+        const exercise = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, exerciseGroup);
+        service.create(exercise).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.body.exerciseGroupId).toBe(7);
+        expect(req.request.body.courseId).toBeUndefined();
+        req.flush({ id: 1, ...exercise });
+    });
+
+    it('should delete a ModelingExercise', () => {
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBe(true));
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+    });
+
+    it('should convert model to pdf', async () => {
+        vi.spyOn(helper, 'downloadStream').mockReturnValue();
+        const blob = new Blob(['test'], { type: 'text/html' }) as File;
+
+        const promise = lastValueFrom(service.convertToPdf('model1', 'filename'));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(blob);
+
+        const result = await promise;
+        expect(result.body).toEqual(blob);
+    });
+
+    it('should re-evaluate and update a modelling exercise', () => {
+        const modelingExerciseReturned = { ...elemDefault };
+        modelingExerciseReturned.id = 111;
+        service
+            .reevaluateAndUpdate(modelingExerciseReturned)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toBe(modelingExerciseReturned);
+            });
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(modelingExerciseReturned);
+    });
+
+    it('should import a modeling exercise', () => {
+        const modelingExercise = { ...elemDefault };
+        modelingExercise.id = 445;
+        modelingExercise.categories = [category];
+        const returnedFromService = {
+            ...modelingExercise,
+            categories,
+        };
+
+        const expected = { ...returnedFromService, categories: [category] };
+        service
+            .import({ ...modelingExercise, categories })
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toEqual(expected);
+            });
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import?sourceExerciseId=${modelingExercise.id}` });
+        req.flush(returnedFromService);
+    });
+});

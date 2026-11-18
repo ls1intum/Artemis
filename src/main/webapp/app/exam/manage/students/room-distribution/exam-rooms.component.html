@@ -1,0 +1,125 @@
+<div class="m-2">
+    <div class="flex flex-col gap-2">
+        <h2 class="my-0!"><span jhiTranslate="artemisApp.examRooms.management.title"></span></h2>
+        <div>
+            <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
+        </div>
+        @if (isAdmin) {
+            <div class="flex items-center gap-2">
+                <input
+                    #roomDataFileSelect
+                    id="roomDataFileSelect"
+                    type="file"
+                    [attr.aria-label]="'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate"
+                    class="hidden"
+                    (change)="onFileSelectedAcceptZip($event)"
+                    accept=".zip"
+                />
+                <button id="roomDataFileSelectButton" type="button" tumAetUiButton variant="outlined" (click)="roomDataFileSelect.click()">
+                    @if (!hasSelectedFile()) {
+                        {{ 'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate }}
+                    } @else {
+                        {{ selectedFileName() }}
+                    }
+                </button>
+                <button type="button" id="roomDataUpload" tumAetUiButton jhiTranslate="entity.action.save" (click)="upload()" [disabled]="!canUpload()"></button>
+            </div>
+            <div class="flex items-center gap-1">
+                <button
+                    type="button"
+                    id="roomDataDeleteOutdatedAndUnused"
+                    tumAetUiButton
+                    severity="danger"
+                    jhiTranslate="artemisApp.examRooms.management.deleteExamRoomsSafe"
+                    (click)="deleteOutdatedAndUnusedExamRooms()"
+                ></button>
+                <jhi-help-icon text="artemisApp.examRooms.management.deleteExamRoomsSafeTooltip" />
+            </div>
+        }
+
+        @if (isUploading()) {
+            <div jhiTranslate="entity.action.saving"></div>
+        }
+        @if (hasUploadInformation()) {
+            <tumaet-ui-card class="mt-6!">
+                <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.uploadSummary.title"></span></h3>
+                <ul class="my-0! ps-6">
+                    <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
+                    <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
+                    <li><strong jhiTranslate="artemisApp.examRooms.management.uploadSummary.seatsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedSeats }}</li>
+                </ul>
+            </tumaet-ui-card>
+        }
+        @if (isDeleting()) {
+            <div jhiTranslate="artemisApp.examRooms.management.deleting"></div>
+        }
+        @if (hasDeletionInformation()) {
+            <tumaet-ui-card class="mt-6!">
+                <h3 class="mt-0! mb-2!"><span jhiTranslate="artemisApp.examRooms.management.deletionSummary.title"></span></h3>
+                <ul class="my-0! ps-6">
+                    <li><strong jhiTranslate="artemisApp.examRooms.management.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
+                </ul>
+            </tumaet-ui-card>
+        }
+    </div>
+    <div class="mt-6">
+        @if (hasOverview()) {
+            <h3>
+                <div jhiTranslate="artemisApp.examRooms.management.examRoomOverview.title"></div>
+            </h3>
+            <strong>
+                <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalExamRooms"></span> {{ numberOfAvailable()!.examRooms }}</div>
+                <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOfAvailable()!.examSeats }}</div>
+            </strong>
+            <h4 class="mt-6!"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
+            <tumaet-ui-table-layout [empty]="!hasExamRoomData()" emptyTitle="artemisApp.examRooms.management.examRoomOverview.empty">
+                <table tumAetUiTable size="small" [striped]="true" [sortField]="sortAttribute()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+                    <thead>
+                        <tr>
+                            <th tumAetUiSortableColumn="roomNumber">
+                                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.roomNumber"></span>
+                            </th>
+                            <th tumAetUiSortableColumn="name">
+                                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.roomName"></span>
+                            </th>
+                            <th tumAetUiSortableColumn="building">
+                                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.building"></span>
+                            </th>
+                            <th tumAetUiSortableColumn="defaultCapacity">
+                                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.defaultCapacity"></span>
+                            </th>
+                            <th tumAetUiSortableColumn="maxCapacity">
+                                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.maxCapacity"></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    @if (hasExamRoomData()) {
+                        <tbody>
+                            @for (examRoom of examRoomData(); track examRoom.roomNumber) {
+                                <tr>
+                                    <td>
+                                        <span>{{ examRoom.roomNumber }}</span>
+                                    </td>
+                                    <td>
+                                        <span>{{ examRoom.name }}</span>
+                                    </td>
+                                    <td>
+                                        <span>{{ examRoom.building }}</span>
+                                    </td>
+                                    <td>
+                                        <span>{{ examRoom.defaultCapacity }}</span>
+                                    </td>
+                                    <td>
+                                        <span>{{ examRoom.maxCapacity }}</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    }
+                </table>
+            </tumaet-ui-table-layout>
+        } @else {
+            <tumaet-ui-empty-state variant="plain" [title]="'artemisApp.examRooms.management.examRoomOverview.missing' | artemisTranslate" />
+        }
+    </div>
+</div>

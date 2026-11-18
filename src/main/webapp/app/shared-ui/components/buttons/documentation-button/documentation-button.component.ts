@@ -1,0 +1,69 @@
+import { Component, inject, input } from '@angular/core';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+// The routes here are used to build the link to the documentation.
+// Therefore, it's important that they exactly match the url to the subpage of the documentation.
+// Additionally, the case names must match the keys in documentationLinks.json for the tooltip.
+const DocumentationLinks = {
+    Course: 'instructor/course-management/',
+    Lecture: 'instructor/lectures/',
+    Exercise: 'instructor/exercises/intro',
+    Quiz: 'instructor/exercises/quiz-exercise',
+    Model: 'instructor/exercises/modeling-exercise',
+    Programming: 'instructor/exercises/programming-exercise',
+    SshSetup: 'student/tools-reference/integrated-code-lifecycle',
+    Text: 'instructor/exercises/text-exercise',
+    FileUpload: 'instructor/exercises/file-upload-exercise',
+    Notifications: 'student/communication-support/notifications',
+    Competencies: 'instructor/analytics/adaptive-learning',
+    StandardizedCompetencies: 'admin/adaptive-learning',
+    GenerateCompetencies: 'instructor/analytics/adaptive-learning#generate-competencies',
+    Communications: 'student/communication-support/communication',
+    Exams: 'instructor/exams/intro',
+    PlagiarismChecks: 'instructor/assessment-grading/plagiarism-check',
+    Grading: 'instructor/assessment-grading/grading',
+    Units: 'instructor/lectures/lectures#lecture-units',
+    Assessment: 'instructor/assessment-grading/assessment',
+    Statistics: 'instructor/analytics/learning-analytics',
+    StudentStatistics: 'student/progress-analytics/learning-analytics',
+    SuspiciousBehavior: 'instructor/exams/assess-an-exam#suspicious-behavior-detection',
+};
+
+export type DocumentationType = keyof typeof DocumentationLinks;
+
+@Component({
+    selector: 'jhi-documentation-button',
+    styleUrls: ['./documentation-button.component.scss'],
+    template: `
+        @let tooltip = getTooltipForType();
+        <a
+            class="text-primary documentation-button ms-1"
+            href="{{ BASE_URL + DocumentationLinks[this.type()] }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="tooltip"
+            [tumAetUiTooltip]="tooltip"
+            tumAetUiTooltipDescribesHost="false"
+        >
+            <fa-icon [icon]="faCircleInfo" />
+        </a>
+    `,
+    imports: [FaIconComponent, TumAetUiTooltipDirective],
+})
+export class DocumentationButtonComponent {
+    private translateService = inject(TranslateService);
+
+    readonly BASE_URL = 'https://docs.artemis.tum.de/';
+    readonly faCircleInfo = faCircleInfo;
+    readonly DocumentationLinks = DocumentationLinks;
+
+    readonly type = input.required<DocumentationType>();
+
+    getTooltipForType() {
+        const typeKey = 'artemisApp.documentationLinks.' + this.type().toLowerCase();
+        return this.translateService.instant('artemisApp.documentationLinks.prefix') + this.translateService.instant(typeKey);
+    }
+}

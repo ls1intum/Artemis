@@ -1,0 +1,109 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+
+import { Subscription, combineLatest } from 'rxjs';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { PageType } from 'app/communication/communication.util';
+
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PostComponent } from 'app/communication/post/post.component';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-plagiarism-case-student-detail-view',
+    templateUrl: './plagiarism-case-student-detail-view.component.html',
+    styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
+    providers: [CommunicationService],
+    imports: [
+        PlagiarismCaseHeaderComponent,
+        TranslateDirective,
+        RouterLink,
+        PostComponent,
+        ButtonComponent,
+        PlagiarismCaseReviewComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+    ],
+})
+export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
+    private communicationService = inject(CommunicationService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private activatedRoute = inject(ActivatedRoute);
+
+    readonly postComponent = viewChild.required<PostComponent>('post');
+    readonly ButtonType = ButtonType;
+
+    courseId!: number; // set in ngOnInit() from route params
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
+    readonly plagiarismCase = signal<PlagiarismCase | undefined>(undefined);
+
+    private paramSubscription?: Subscription;
+    readonly plagiarismVerdict = PlagiarismVerdict;
+
+    readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
+    private postsSubscription?: Subscription;
+    readonly posts = signal<Post[]>([]);
+
+    readonly affectedExerciseRouterLink = signal<(string | number)[]>([]);
+
+    readonly isAfterDueDate = signal(false);
+
+    readonly dayjs = dayjs;
+
+    ngOnInit(): void {
+        this.paramSubscription = combineLatest({
+            ancestorParams: this.activatedRoute.parent!.params,
+            params: this.activatedRoute.params,
+        }).subscribe(({ ancestorParams, params }: { ancestorParams: Params; params: Params }) => {
+            this.courseId = ancestorParams.courseId;
+            this.plagiarismCaseId = Number(params.plagiarismCaseId);
+            if (this.plagiarismCase()?.id === this.plagiarismCaseId) {
+                return;
+            }
+            this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
+                next: (res: HttpResponse<PlagiarismCase>) => {
+                    const plagiarismCase = res.body!;
+                    this.plagiarismCase.set(plagiarismCase);
+
+                    const examId = plagiarismCase.exercise?.examId;
+                    if (examId) {
+                        // Navigate to the exam result since individual exam exercises are not addressable.
+                        this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exams', examId]);
+                    } else {
+                        this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
+                    }
+
+                    this.communicationService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
+
+                    this.communicationService.setPageType(this.pageType);
+                    this.communicationService.getFilteredPosts({
+                        plagiarismCaseId: plagiarismCase.id,
+                    });
+
+                    const now = dayjs();
+                    this.isAfterDueDate.set(now.isAfter(plagiarismCase.exercise?.dueDate));
+                },
+            });
+        });
+        this.postsSubscription = this.communicationService.posts.pipe().subscribe((posts: Post[]) => {
+            this.posts.set(posts);
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.paramSubscription?.unsubscribe();
+        this.postsSubscription?.unsubscribe();
+    }
+}

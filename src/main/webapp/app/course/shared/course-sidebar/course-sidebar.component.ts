@@ -1,0 +1,205 @@
+import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { Course } from 'app/course/shared/entities/course.model';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+
+export interface CourseActionItem {
+    title: string;
+    icon?: IconDefinition;
+    translation: string;
+    action?: (item?: CourseActionItem) => void;
+}
+
+/**
+ * Longest sidebar item label, in characters, that the navigation sidebar is sized to show in full — in every
+ * language, so German is the case that matters. The width lives in `--sidebar-nav-width` (tailwind.css) and is
+ * deliberately the narrowest that fits, so a longer label would be cut off rather than widen the sidebar.
+ *
+ * This is a guard rail, not a guarantee: glyph widths differ, so a short label with wide letters can still be wider
+ * than a longer one — "Benachrichtigung" (16) needs more room than "LTI Konfiguration" (17). The width therefore
+ * carries headroom over the measured minimum, and `config/eslint/rules/sidebar-item-label-length.spec.mjs` keeps every label,
+ * English and German, within this cap. If a new label needs more, widen the sidebar deliberately and raise both.
+ */
+export const MAX_SIDEBAR_ITEM_LABEL_LENGTH = 17;
+
+export interface SidebarItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    /**
+     * Path of a monochrome image on a transparent background, shown instead of {@link icon}. It is drawn as a mask in
+     * the current text colour, so it follows hover, active and dark-theme colours the same way an icon does.
+     */
+    iconImage?: string;
+    iconColor?: string;
+    title: string;
+    testId?: string;
+    translation: string;
+    featureToggle?: FeatureToggle;
+    hidden: boolean;
+    isPrefix?: boolean;
+    bottom?: boolean;
+}
+
+@Component({
+    selector: 'jhi-course-sidebar',
+    templateUrl: './course-sidebar.component.html',
+    styleUrls: ['./course-sidebar.component.scss'],
+    imports: [
+        NgClass,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgTemplateOutlet,
+        NgbDropdownMenu,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        NgbTooltip,
+        RouterLink,
+        RouterLinkActive,
+        FeatureToggleHideDirective,
+    ],
+})
+export class CourseSidebarComponent {
+    layoutService = inject(LayoutService);
+    // Optional: the sidebar also renders in course management, which collects no science data and provides no ScienceService.
+    private readonly scienceService = inject(ScienceService, { optional: true });
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faEllipsis = faEllipsis;
+    protected readonly faCog = faCog;
+
+    course = input<Course | undefined>();
+    sidebarItemsTop = signal<SidebarItem[]>([]);
+    sidebarItemsBottom = signal<SidebarItem[]>([]);
+    sidebarItems = input<SidebarItem[]>([]);
+    courseActionItems = input<CourseActionItem[]>([]);
+    isNavbarCollapsed = input<boolean>(false);
+    isExamStarted = input<boolean>(false);
+    isProduction = input<boolean>(true);
+    isTestServer = input<boolean>(false);
+    hasUnreadMessages = input<boolean>(false);
+    communicationRouteLoaded = input<boolean>(false);
+
+    hiddenItems = signal<SidebarItem[]>([]);
+    anyItemHidden = signal<boolean>(false);
+    private readonly irisImpressionLoggedForCourseId = signal<number | undefined>(undefined);
+
+    courseActionItemClick = output<CourseActionItem>();
+    toggleCollapseState = output<void>();
+    activeBreakpoints: Signal<string[]>;
+    readonly canExpand = computed(() => {
+        this.activeBreakpoints();
+        return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
+    });
+
+    readonly itemsDrop = viewChild.required<NgbDropdown>('itemsDrop');
+
+    // Constants for threshold calculation
+    readonly WINDOW_OFFSET: number = 225;
+    readonly ITEM_HEIGHT: number = 38;
+
+    constructor() {
+        this.activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
+
+        effect(() => {
+            this.course();
+            this.irisImpressionLoggedForCourseId.set(undefined);
+        });
+
+        effect(() => {
+            const items = this.sidebarItems();
+            untracked(() => {
+                this.updateVisibleNavbarItems(window.innerHeight);
+                this.sidebarItemsTop.set(items.filter((item) => !item.bottom));
+                this.sidebarItemsBottom.set(items.filter((item) => item.bottom));
+            });
+        });
+    }
+
+    /** Listen window resize event by height */
+    @HostListener('window:resize')
+    onResize() {
+        this.updateVisibleNavbarItems(window.innerHeight);
+    }
+
+    /** Update sidebar item's hidden property based on the window height to display three-dots */
+    updateVisibleNavbarItems(height: number) {
+        const threshold = this.calculateThreshold();
+        this.applyThreshold(threshold, height);
+
+        const itemsDrop = this.itemsDrop();
+        if (!this.anyItemHidden() && itemsDrop) {
+            itemsDrop.close();
+        }
+    }
+
+    /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
+    applyThreshold(threshold: number, height: number) {
+        const newHiddenItems: SidebarItem[] = [];
+        let newAnyItemHidden = false;
+        if (this.sidebarItems()) {
+            const reversedSidebarItems = [...this.sidebarItems()].filter((item) => !item.bottom).reverse();
+
+            reversedSidebarItems.forEach((item, index) => {
+                const currentThreshold = threshold - index * this.ITEM_HEIGHT;
+                item.hidden = height <= currentThreshold;
+                if (item.hidden) {
+                    newAnyItemHidden = true;
+                    newHiddenItems.unshift(item);
+                }
+            });
+        }
+
+        this.anyItemHidden.set(newAnyItemHidden);
+        this.hiddenItems.set(newHiddenItems);
+        this.logIrisEntrypointImpression();
+    }
+
+    /** Calculate threshold levels based on the number of entries in the sidebar */
+    calculateThreshold(): number {
+        if (!this.sidebarItems()) {
+            return this.WINDOW_OFFSET;
+        }
+        return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+    }
+
+    onSidebarItemClick(item: SidebarItem): void {
+        // Selecting the tab that is already open is a refresh. The tab cannot infer that from the router, because it
+        // navigates to its own URL while rendering, so the click is reported explicitly.
+        this.courseTabRefreshService.notifyTabSelected(item.routerLink);
+        if (item.routerLink !== 'iris') {
+            return;
+        }
+        const courseId = this.course()?.id;
+        if (courseId) {
+            this.scienceService?.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId, courseId);
+        }
+    }
+
+    private logIrisEntrypointImpression(): void {
+        const courseId = this.course()?.id;
+        if (!courseId || this.irisImpressionLoggedForCourseId() === courseId) {
+            return;
+        }
+        const irisItem = this.sidebarItems()?.find((item) => item.routerLink === 'iris' && !item.bottom);
+        if (!irisItem || irisItem.hidden) {
+            return;
+        }
+        this.scienceService?.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId, courseId);
+        this.irisImpressionLoggedForCourseId.set(courseId);
+    }
+}

@@ -1,0 +1,412 @@
+package de.tum.cit.aet.artemis.core.web.open;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedDTO;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
+import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.EmailChangeService;
+import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
+
+/**
+ * REST controller for public endpoints regarding the current user's account.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.SIGN_IN)
+@RestController
+@RequestMapping("api/core/public/")
+public class PublicAccountResource {
+
+    private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
+
+    /**
+     * Upper bound for the identifier accepted by {@link #getLoginOptions}. A login is at most {@link Constants#USERNAME_MAX_LENGTH} characters and an email address at most 100,
+     * so this is a generous outer bound that no legitimate identifier reaches. It exists to keep an unauthenticated caller from sending an arbitrarily long string.
+     */
+    private static final int MAX_LOGIN_IDENTIFIER_LENGTH = 255;
+
+    @Value("${artemis.user-management.passkey.ask-users-to-setup:true}")
+    private boolean askUsersToSetupPasskey;
+
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
+    private boolean passkeyEnabled;
+
+    private final AccountService accountService;
+
+    private final UserService userService;
+
+    private final MailService mailService;
+
+    private final UserRepository userRepository;
+
+    private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
+
+    private final TokenProvider tokenProvider;
+
+    private final LoginOptionsService loginOptionsService;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    private final AccountSecurityEventService accountSecurityEventService;
+
+    private final EmailChangeService emailChangeService;
+
+    private final Validator validator;
+
+    public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
+            UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService,
+            EmailChangeService emailChangeService, Validator validator) {
+        this.accountService = accountService;
+        this.userService = userService;
+        this.mailService = mailService;
+        this.userRepository = userRepository;
+        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.tokenProvider = tokenProvider;
+        this.loginOptionsService = loginOptionsService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userAiPreferenceService = userAiPreferenceService;
+        this.accountSecurityEventService = accountSecurityEventService;
+        this.emailChangeService = emailChangeService;
+        this.validator = validator;
+    }
+
+    /**
+     * {@code POST /email-allowed} : tells a form whether an email address has valid syntax and is allowed by the configured restriction while the address is typed.
+     * <p>
+     * The answer is the one that registration and the change of the address give, because all of them ask {@link EmailChangeService#isAddressAllowed}. The forms ask after a
+     * short pause in typing and treat a failed request as allowed, since the decision is made again when the form is sent.
+     *
+     * @param request the address that was entered
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body whether the address is allowed
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @PostMapping("email-allowed")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.EMAIL_ADDRESS_CHECK)
+    public ResponseEntity<EmailAllowedDTO> checkEmailAllowed(@Valid @RequestBody EmailAllowedRequestDTO request) {
+        // Use the same syntax constraints as the account-save DTO. A 200 response with allowed=false keeps malformed addresses on the field-validation path.
+        boolean validEmail = validator.validateValue(UserDTO.class, "email", request.email()).isEmpty();
+        return ResponseEntity.ok(new EmailAllowedDTO(validEmail && emailChangeService.isAddressAllowed(request.email())));
+    }
+
+    /**
+     * {@code POST /register} : register the user.
+     *
+     * @param managedUserVM the managed user View Model.
+     * @return ResponseEntity with status 201 (Created) if the user is registered.
+     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
+     * @throws EmailAlreadyUsedException             {@code 400 (Bad Request)} if the email is already used.
+     * @throws LoginAlreadyUsedException             {@code 400 (Bad Request)} if the login is already used.
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @PostMapping("register")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
+    public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
+
+        if (accountService.isRegistrationDisabled()) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
+        if (accountService.isPasswordLengthInvalid(managedUserVM.getPassword())) {
+            throw new PasswordViolatesRequirementsException();
+        }
+
+        SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+
+        if (!emailChangeService.isAddressAllowed(managedUserVM.getEmail())) {
+            throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", "Account", "emailInvalid");
+        }
+
+        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
+        // The template renders the key, which now lives in user_recovery_key rather than on the user.
+        mailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(user, userRecoveryKeyService.findActivationKey(user.getId())));
+        // No separate notification: the activation mail already goes to the address that was registered.
+        accountSecurityEventService.recordAccountRegistered(user);
+        return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
+    }
+
+    /**
+     * {@code GET /activate} : activate the registered user.
+     * <p>
+     * The only way an activation key is ever redeemed, and gated behind the self-registration feature just like the mail that
+     * carries the key. That is why an unactivated account is only ever meaningful for an internal account on an instance with
+     * registration enabled - see {@link User#getActivated()}.
+     *
+     * @param key the activation key.
+     * @return ResponseEntity with status 200 (OK)
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the activation key is invalid or expired.
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @GetMapping("activate")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
+    public ResponseEntity<Void> activateAccount(@RequestParam("key") String key) {
+        if (accountService.isRegistrationDisabled()) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
+        Optional<User> user = userService.activateRegistration(key);
+        if (user.isEmpty()) {
+            throw new BadRequestAlertException("The activation key is invalid", "user", "invalidActivationKey");
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code GET /authenticate} : check if the user is authenticated, and return its login.
+     *
+     * @param request the HTTP request.
+     * @return the ResponseEntity with status 200 (OK) and with body the login if the user is authenticated.
+     */
+    @GetMapping("authenticate")
+    @EnforceNothing
+    public ResponseEntity<String> authenticatedLogin(HttpServletRequest request) {
+        log.debug("REST request to check if the current user is authenticated");
+        return ResponseEntity.ok(request.getRemoteUser());
+    }
+
+    /**
+     * {@code GET /account} : get the current user.
+     *
+     * @param request the HTTP request
+     * @return the ResponseEntity with status 200 (OK) and with body the current user, empty if not logged in.
+     * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
+     */
+    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("account")
+    @EnforceNothing
+    public ResponseEntity<UserDTO> getAccount(HttpServletRequest request) {
+        long start = System.currentTimeMillis();
+
+        Optional<User> userOptional = Optional.empty();
+
+        Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
+        if (loginOptional.isPresent()) {
+            userOptional = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(loginOptional.get());
+        }
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        User user = userOptional.get();
+        boolean shouldPromptUserToSetupPasskey = false;
+        if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
+            shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
+        }
+
+        boolean isLoggedInWithPasskey = false;
+        boolean isPasskeySuperAdminApproved = false;
+        if (passkeyEnabled) {
+            JwtWithSource jwtWithSource = extractValidJwt(request, this.tokenProvider);
+            if (jwtWithSource != null) {
+                isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtWithSource.jwt()), AuthenticationMethod.PASSKEY);
+                isPasskeySuperAdminApproved = this.tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
+            }
+        }
+
+        user.setVisibleRegistrationNumber();
+        UserDTO userDTO = getUserDTO(user, shouldPromptUserToSetupPasskey, isLoggedInWithPasskey, isPasskeySuperAdminApproved);
+        log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
+        return ResponseEntity.ok(userDTO);
+    }
+
+    private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
+        UserDTO userDTO = new UserDTO(user);
+        // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
+        userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
+        userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
+        accountService.addPersonalVcsAccessTokenIfSessionIsCurrent(userDTO, user);
+        userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
+        userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
+        userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
+        return userDTO;
+    }
+
+    /**
+     * {@code GET /login-options} : determine the login options for a given username or email.
+     * <p>
+     * This endpoint is public and is used during the first step of the identifier-first login flow
+     * to determine if the user should enter their local password or redirect to an external identity provider.
+     * <p>
+     * Being unauthenticated, it is bounded on two layers: {@link RateLimitType#LOGIN_OPTIONS} here, and a matching nginx zone
+     * keyed on the real TCP peer, which this limiter cannot see. It has its own bucket rather than sharing
+     * {@link RateLimitType#AUTHENTICATION}, because the client calls it once immediately before authenticating and sharing
+     * would halve the budget a real user has for logging in. See {@link LoginOptionsService} for why the answer is derived
+     * from local account state only.
+     *
+     * @param usernameOrEmail the login or email address entered by the user
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the identifier is longer than {@link #MAX_LOGIN_IDENTIFIER_LENGTH} characters
+     */
+    @GetMapping("login-options")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_OPTIONS)
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+        // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
+        if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
+            throw new BadRequestAlertException("The provided username or email is too long", "Account", "usernameOrEmailTooLong");
+        }
+        LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
+        return ResponseEntity.ok(loginOptions);
+    }
+
+    /**
+     * {@code POST  /account/change-language} : changes the current user's language key.
+     *
+     * @param languageKey languageKey to change to.
+     * @return ResponseEntity with status 200 (OK)
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the language key is not 'en' or 'de'.
+     */
+    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
+    @PostMapping("account/change-language")
+    @EnforceNothing
+    public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
+        User user = userRepository.getUser();
+        String langKey = languageKey.replace("\"", "").toLowerCase(Locale.ROOT).trim();
+        if (!"en".equals(langKey) && !"de".equals(langKey)) {
+            throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
+        }
+        userService.updateUserLanguageKey(user.getId(), langKey);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
+     *
+     * @param mailUsername string containing either mail or username of the user.
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @PostMapping("account/reset-password/init")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
+    public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
+        // For failure paths: Pretend the request has been successful to prevent checking which emails or usernames
+        // really exist but log that an invalid attempt has been made
+        List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
+        if (!users.isEmpty()) {
+            List<User> internalUsers = users.stream().filter(User::isInternal).toList();
+            if (internalUsers.isEmpty()) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("external-user");
+                throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
+            }
+            else if (internalUsers.size() >= 2) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("identifier-not-unique");
+                throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
+            }
+            var internalUser = internalUsers.getFirst();
+            if (internalUser.getEmail() == null) { // Should not happen but constraint is not enforced on db.
+                log.warn("Password reset requested for user with login '{}' which has no email specified.", internalUser.getLogin());
+            }
+            else {
+                userService.prepareUserForPasswordReset(internalUser).ifPresentOrElse(resetKey -> {
+                    mailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(internalUser, resetKey));
+                    accountSecurityEventService.recordPasswordResetRequested(internalUser);
+                }, () -> {
+                    // Not activated, so no reset key was issued and no mail was sent.
+                    accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
+                });
+            }
+        }
+        else {
+            log.warn("Password reset requested for a non-existing account");
+            accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST   /account/reset-password/finish} : Finish to reset the password of the user.
+     *
+     * @param keyAndPassword the generated key and the new password.
+     * @return ResponseEntity with status 200 (OK)
+     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
+     * @throws RuntimeException                      {@code 500 (Internal Server Error)} if the password could not be reset.
+     */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
+    @PostMapping("account/reset-password/finish")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
+    public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
+        if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
+            throw new PasswordViolatesRequirementsException();
+        }
+        if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
+                || keyAndPassword.keySecret().length() < 10) {
+            throw new AccessForbiddenException("Invalid key for password reset");
+        }
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.keyId(), keyAndPassword.keySecret(),
+                keyAndPassword.revokeCredentialsOrAll());
+
+        if (user.isEmpty()) {
+            throw new AccessForbiddenException("No user was found for this reset key");
+        }
+        // The completed reset is recorded and announced by UserService.completePasswordReset, through
+        // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
+        // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
+        return ResponseEntity.ok().build();
+    }
+}

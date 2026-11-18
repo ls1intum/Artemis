@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "shortAnswerSolution": {
+            "home": {
+                "title": "Kurzantwort-Lösungen",
+                "createLabel": "Kurzantwort-Lösung erstellen"
+            },
+            "created": "Kurzantwort-Lösung erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Lösung aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Lösung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Kurzantwort-Lösung {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Kurzantwort-Lösung "
+            },
+            "text": "Text",
+            "invalid": "Ungültig",
+            "question": "Frage"
+        }
+    }
+}

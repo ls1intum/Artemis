@@ -1,0 +1,390 @@
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { Subject, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
+import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
+import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
+import { VariantJob } from 'app/openapi/model/variant-job';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+
+/**
+ * Vitest specs for ExerciseVariantGenerationService.
+ */
+describe('ExerciseVariantGenerationService', () => {
+    let service: ExerciseVariantGenerationService;
+    let apiMock: {
+        generateVariant: ReturnType<typeof vi.fn>;
+        getJobsOfCurrentUser: ReturnType<typeof vi.fn>;
+        getJobDetail: ReturnType<typeof vi.fn>;
+        cancelJob: ReturnType<typeof vi.fn>;
+    };
+    let websocketMock: {
+        subscribeToJob: ReturnType<typeof vi.fn>;
+        unsubscribeFromJob: ReturnType<typeof vi.fn>;
+    };
+    let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
+    let userIdentity: ReturnType<typeof signal<User | undefined>>;
+    let editorAccess: boolean;
+    let activeFeatures: Set<string>;
+
+    beforeEach(() => {
+        eventSubjects = new Map();
+        apiMock = {
+            generateVariant: vi.fn(),
+            getJobsOfCurrentUser: vi.fn(),
+            getJobDetail: vi.fn(),
+            cancelJob: vi.fn(),
+        };
+        // Every terminal event re-reads the authoritative record; tests that do not care about it get an empty one.
+        apiMock.getJobDetail.mockReturnValue(of({}));
+        websocketMock = {
+            subscribeToJob: vi.fn((jobId: string) => {
+                if (!eventSubjects.has(jobId)) {
+                    eventSubjects.set(jobId, new Subject<VariantGenerationEvent>());
+                }
+                return eventSubjects.get(jobId)!.asObservable();
+            }),
+            unsubscribeFromJob: vi.fn(),
+        };
+        userIdentity = signal<User | undefined>(undefined);
+        editorAccess = true;
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION]);
+        TestBed.configureTestingModule({
+            providers: [
+                ExerciseVariantGenerationService,
+                { provide: HyperionExerciseVariantApi, useValue: apiMock },
+                { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
+                {
+                    provide: AccountService,
+                    useValue: { userIdentity, hasEditorAccess: () => editorAccess },
+                },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => activeFeatures.has(feature) } },
+            ],
+        });
+        service = TestBed.inject(ExerciseVariantGenerationService);
+    });
+
+    it('loads persisted jobs when an editor logs in and clears them on logout', () => {
+        const persistedJobs: VariantJob[] = [{ jobId: 'persisted-1', phase: 'VERIFYING' }];
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of(persistedJobs));
+
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+        expect(service.jobs()).toEqual(persistedJobs);
+
+        // Refreshing the identity object for the same login must not trigger another REST request.
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+
+        userIdentity.set(undefined);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
+    });
+
+    it('discards a previous account list response after switching directly to another editor', () => {
+        const first = new Subject<VariantJob[]>();
+        const second = new Subject<VariantJob[]>();
+        apiMock.getJobsOfCurrentUser.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        userIdentity.set({ login: 'first' } as User);
+        TestBed.tick();
+        service.jobs.set([{ jobId: 'first-job', phase: 'VERIFYING' }]);
+        userIdentity.set({ login: 'second' } as User);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        second.next([{ jobId: 'second-job', phase: 'ANALYZING' }]);
+        first.next([{ jobId: 'first-job', phase: 'VERIFYING' }]);
+        expect(service.jobs()).toEqual([{ jobId: 'second-job', phase: 'ANALYZING' }]);
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalledWith('first-job');
+    });
+
+    it('ignores an old start response after logout without attaching its topic', () => {
+        const response = new Subject<{ jobId: string }>();
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        userIdentity.set({ login: 'editor' } as User);
+        TestBed.tick();
+        apiMock.generateVariant.mockReturnValue(response);
+        service.startGeneration(42, {}).subscribe();
+        userIdentity.set(undefined);
+        TestBed.tick();
+        response.next({ jobId: 'old-job' });
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalledWith('old-job');
+    });
+
+    it('does not load persisted jobs for a user without editor access', () => {
+        editorAccess = false;
+        userIdentity.set({ login: 'student1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+        expect(service.jobs()).toEqual([]);
+    });
+
+    it('does not load persisted jobs when Hyperion is disabled', () => {
+        activeFeatures.delete(MODULE_FEATURE_HYPERION);
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+        expect(service.jobs()).toEqual([]);
+    });
+
+    it('loads persisted jobs once the user gains editor access in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        editorAccess = false;
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+
+        editorAccess = true;
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+    });
+
+    it('clears the jobs once the user loses editor access in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'persisted-1', phase: 'VERIFYING' }]));
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.jobs()).toHaveLength(1);
+
+        editorAccess = false;
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
+    });
+
+    it('ignores a pending load once the user logs out', () => {
+        const pendingJobs = new Subject<VariantJob[]>();
+        apiMock.getJobsOfCurrentUser.mockReturnValue(pendingJobs.asObservable());
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        userIdentity.set(undefined);
+        TestBed.tick();
+        pendingJobs.next([{ jobId: 'late-1', phase: 'VERIFYING' }]);
+
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalled();
+    });
+
+    it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        const request = { domainText: 'space', placement: { type: 'STANDALONE' as const } };
+
+        let returnedJobId: string | undefined;
+        service.startGeneration(42, request, 'Sorting Basics').subscribe((jobId) => (returnedJobId = jobId));
+
+        expect(returnedJobId).toBe('job-1');
+        expect(apiMock.generateVariant).toHaveBeenCalledWith(42, request);
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledWith('job-1');
+        expect(service.jobs()).toHaveLength(1);
+        expect(service.jobs()[0]).toMatchObject({ jobId: 'job-1', sourceExerciseId: 42, sourceExerciseTitle: 'Sorting Basics', phase: 'ANALYZING' });
+        expect(service.jobs().filter((job) => !isTerminalVariantPhase(job.phase))).toHaveLength(1);
+    });
+
+    it('PHASE_CHANGED and ATTEMPT events update the matching job entry', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+
+        eventSubjects.get('job-1')!.next({ type: 'PHASE_CHANGED', phase: 'TRANSFORMING' });
+        expect(service.jobs()[0].phase).toBe('TRANSFORMING');
+
+        eventSubjects.get('job-1')!.next({ type: 'ATTEMPT', phase: 'REPAIRING', attempt: 2, maxAttempts: 3 });
+        expect(service.jobs()[0].attempt).toBe(2);
+        expect(service.jobs()[0].maxAttempts).toBe(3);
+    });
+
+    it('DONE with warnings stores the terminal phase, variantExerciseId, and unsubscribes from the topic', async () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+
+        eventSubjects.get('job-1')!.next({ type: 'DONE', phase: 'DRAFT_WITH_WARNINGS', variantExerciseId: 4711, warnings: ['FINALIZING: placement failed'] });
+
+        expect(service.jobs()[0].phase).toBe('DRAFT_WITH_WARNINGS');
+        expect(service.jobs()[0].variantExerciseId).toBe(4711);
+        expect(service.jobs()[0].warnings).toEqual(['FINALIZING: placement failed']);
+        expect(service.jobs().filter((job) => !isTerminalVariantPhase(job.phase))).toHaveLength(0);
+        // Detach is deferred to a microtask so the terminal event reaches every subscriber first — flush it.
+        await Promise.resolve();
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
+    });
+
+    it('loadJobs re-syncs from REST and re-attaches only to running jobs', () => {
+        const jobs: VariantJob[] = [
+            { jobId: 'running-1', phase: 'VERIFYING' },
+            { jobId: 'done-1', phase: 'COMPLETED' },
+        ];
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of(jobs));
+
+        service.loadJobs().subscribe();
+
+        expect(service.jobs()).toHaveLength(2);
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledWith('running-1');
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalledWith('done-1');
+    });
+
+    it('loadJobs detaches from a job that finished while its terminal event was missed', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledWith('job-1');
+
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'job-1', phase: 'COMPLETED' }]));
+        service.loadJobs().subscribe();
+
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
+        expect(service.jobs()).toEqual([{ jobId: 'job-1', phase: 'COMPLETED' }]);
+    });
+
+    it('startGeneration merges into a job that a re-sync already listed instead of adding it twice', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'job-1', phase: 'PLANNING', sourceExerciseId: 42 }]));
+        service.loadJobs().subscribe();
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+
+        service.startGeneration(42, {}, 'Sorting Basics').subscribe();
+
+        expect(service.jobs()).toHaveLength(1);
+        expect(service.jobs()[0]).toMatchObject({ jobId: 'job-1', sourceExerciseTitle: 'Sorting Basics', phase: 'ANALYZING' });
+        // The re-sync already attached to the running job, so starting it must not subscribe a second time.
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledOnce();
+    });
+
+    it('jobEvents attaches the tray to the job once and returns its event stream', () => {
+        const received: VariantGenerationEvent[] = [];
+        service.jobEvents('job-1').subscribe((event) => received.push(event));
+        service.jobEvents('job-1').subscribe();
+
+        eventSubjects.get('job-1')!.next({ type: 'PHASE_CHANGED', phase: 'PLANNING' } as VariantGenerationEvent);
+
+        expect(received).toHaveLength(1);
+        // One subscription drives the tray; each jobEvents call returns the stream itself.
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledTimes(3);
+    });
+
+    it('getJobDetail delegates to the job-detail endpoint', () => {
+        const detail = { job: { jobId: 'job-1', phase: 'COMPLETED' } };
+        apiMock.getJobDetail.mockReturnValue(of(detail));
+
+        let received: unknown;
+        service.getJobDetail('job-1').subscribe((value) => (received = value));
+
+        expect(apiMock.getJobDetail).toHaveBeenCalledWith('job-1');
+        expect(received).toEqual(detail);
+    });
+
+    it('cancelJob issues the DELETE and the entry transitions to CANCELLED on the CANCELLED event', async () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        apiMock.cancelJob.mockReturnValue(of(undefined));
+        service.startGeneration(42, {}).subscribe();
+
+        service.cancelJob('job-1').subscribe();
+        expect(apiMock.cancelJob).toHaveBeenCalledWith('job-1');
+        // Entry stays until the server-side cleanup finished and the CANCELLED event arrives.
+        expect(service.jobs()[0].phase).toBe('ANALYZING');
+
+        eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
+        expect(service.jobs()[0].phase).toBe('CANCELLED');
+        // Detach is deferred to a microtask so the terminal event reaches every subscriber first — flush it.
+        await Promise.resolve();
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
+    });
+
+    it('drops the provisioned exercise id when a cancellation cleaned the clone up', () => {
+        // The CANCELLED event carries neither an exercise id nor a failure detail, so merging it over the cached
+        // entry would keep the id provisioning had put there and the tray would offer a link to a deleted exercise.
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        apiMock.cancelJob.mockReturnValue(of(undefined));
+        service.startGeneration(42, {}).subscribe();
+        eventSubjects.get('job-1')!.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', variantExerciseId: 4711 });
+        expect(service.jobs()[0].variantExerciseId).toBe(4711);
+        // The server cleaned the clone up, so its record no longer names one.
+        apiMock.getJobDetail.mockReturnValue(of({ job: { jobId: 'job-1', phase: 'CANCELLED' } }));
+
+        eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
+
+        expect(service.jobs()[0].phase).toBe('CANCELLED');
+        expect(service.jobs()[0].variantExerciseId).toBeUndefined();
+    });
+
+    it('keeps the surviving exercise id when the cancellation could not clean it up', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+        eventSubjects.get('job-1')!.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', variantExerciseId: 4711 });
+        // Cleanup failed, so the server's record still names the clone and the tray must keep linking to it.
+        apiMock.getJobDetail.mockReturnValue(of({ job: { jobId: 'job-1', phase: 'CANCELLED', variantExerciseId: 4711 } }));
+
+        eventSubjects.get('job-1')!.next({ type: 'CANCELLED', phase: 'CANCELLED' });
+
+        expect(service.jobs()[0].variantExerciseId).toBe(4711);
+    });
+
+    it('supports several running jobs for the SAME exercise at once', () => {
+        apiMock.generateVariant
+            .mockReturnValueOnce(of({ jobId: 'job-1' }))
+            .mockReturnValueOnce(of({ jobId: 'job-2' }))
+            .mockReturnValueOnce(of({ jobId: 'job-3' }));
+
+        service.startGeneration(42, {}).subscribe();
+        service.startGeneration(42, {}).subscribe();
+        service.startGeneration(42, {}).subscribe();
+
+        expect(service.jobs().filter((job) => !isTerminalVariantPhase(job.phase))).toHaveLength(3);
+        eventSubjects.get('job-2')!.next({ type: 'DONE', phase: 'COMPLETED', variantExerciseId: 7 });
+        expect(service.jobs().filter((job) => !isTerminalVariantPhase(job.phase))).toHaveLength(2);
+        expect(service.jobs()).toHaveLength(3);
+    });
+    it('reconciles a missed terminal event without retaining its websocket subscription', () => {
+        apiMock.getJobsOfCurrentUser
+            .mockReturnValueOnce(of([{ jobId: 'running', phase: 'VERIFYING' }]))
+            .mockReturnValueOnce(of([{ jobId: 'running', phase: 'COMPLETED', variantExerciseId: 12 }]));
+        service.loadJobs().subscribe();
+        service.loadJobs().subscribe();
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledExactlyOnceWith('running');
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledExactlyOnceWith('running');
+        expect(service.jobs()).toEqual([{ jobId: 'running', phase: 'COMPLETED', variantExerciseId: 12 }]);
+        eventSubjects.get('running')!.next({ type: 'PHASE_CHANGED', phase: 'VERIFYING' });
+        expect(service.jobs()[0].phase).toBe('COMPLETED');
+    });
+
+    it('delivers terminal events to the monitor before detaching and preserves state when detail refresh fails', async () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        apiMock.getJobDetail.mockReturnValue(throwError(() => new Error('network unavailable')));
+        service.startGeneration(42, {}).subscribe();
+        const events: VariantGenerationEvent[] = [];
+        service.jobEvents('job-1').subscribe((event) => events.push(event));
+        const terminal: VariantGenerationEvent = { type: 'FAILED', phase: 'FAILED', variantExerciseId: 7 };
+        eventSubjects.get('job-1')!.next(terminal);
+        expect(events).toEqual([terminal]);
+        expect(service.jobs()[0]).toMatchObject({ phase: 'FAILED', variantExerciseId: 7 });
+        expect(websocketMock.unsubscribeFromJob).not.toHaveBeenCalled();
+        await Promise.resolve();
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledExactlyOnceWith('job-1');
+    });
+
+    it('rejects a late terminal detail after logout and login even when the same login returns', () => {
+        const detail = new Subject<{ job: VariantJob }>();
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        userIdentity.set({ login: 'editor' } as User);
+        TestBed.tick();
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'old' }));
+        apiMock.getJobDetail.mockReturnValue(detail);
+        service.startGeneration(42, {}).subscribe();
+        eventSubjects.get('old')!.next({ type: 'DONE', phase: 'COMPLETED' });
+        userIdentity.set(undefined);
+        TestBed.tick();
+        userIdentity.set({ login: 'editor' } as User);
+        TestBed.tick();
+        service.jobs.set([{ jobId: 'new', phase: 'ANALYZING' }]);
+        detail.next({ job: { jobId: 'old', phase: 'COMPLETED', variantExerciseId: 99 } });
+        expect(service.jobs()).toEqual([{ jobId: 'new', phase: 'ANALYZING' }]);
+    });
+});

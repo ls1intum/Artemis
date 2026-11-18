@@ -1,0 +1,111 @@
+<!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
+<div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
+    <div class="vw-100 bg-body">
+        <div
+            class="layout-container vw-100"
+            [ngClass]="{
+                'container-closed': isNavbarCollapsed(),
+            }"
+        >
+            <div class="sidebar module-bg rounded-3">
+                <jhi-course-sidebar
+                    [course]="course()"
+                    [sidebarItems]="sidebarItems()"
+                    [courseActionItems]="[]"
+                    [isNavbarCollapsed]="isNavbarCollapsed()"
+                    [hasUnreadMessages]="hasUnreadMessages()"
+                    [communicationRouteLoaded]="communicationRouteLoaded()"
+                    (toggleCollapseState)="toggleCollapseState()"
+                />
+            </div>
+
+            <div class="layout-content">
+                @if (course()) {
+                    @if (!hasSidebar()) {
+                        <jhi-course-title-bar [pageTitle]="pageTitle()">
+                            @if (isSettingsPage()) {
+                                <div class="controls">
+                                    @if (course()?.isAtLeastInstructor) {
+                                        <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                                    }
+                                    <button
+                                        type="button"
+                                        id="reset-course"
+                                        *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                                        [buttonSize]="ButtonSize.SMALL"
+                                        jhiDeleteButton
+                                        [entityTitle]="course()?.title || ''"
+                                        [fetchCategorizedEntitySummary]="fetchCourseResetSummary()"
+                                        deleteQuestion="artemisApp.course.reset.question"
+                                        [translateValues]="{
+                                            courseType: course()?.testCourse
+                                                ? ('artemisApp.course.reset.testCourse' | artemisTranslate)
+                                                : ('artemisApp.course.reset.realCourse' | artemisTranslate),
+                                        }"
+                                        deleteConfirmationText="artemisApp.course.reset.typeNameToConfirm"
+                                        [actionType]="ActionType.Reset"
+                                        (delete)="resetCourse(course()!.id!)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faUndo" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="delete-course"
+                                        *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN"
+                                        [buttonSize]="ButtonSize.SMALL"
+                                        jhiDeleteButton
+                                        [entityTitle]="course()?.title || ''"
+                                        [fetchCategorizedEntitySummary]="fetchCourseDeletionSummary()"
+                                        deleteQuestion="artemisApp.course.delete.question"
+                                        [translateValues]="{
+                                            courseType: course()?.testCourse
+                                                ? ('artemisApp.course.delete.testCourse' | artemisTranslate)
+                                                : ('artemisApp.course.delete.realCourse' | artemisTranslate),
+                                        }"
+                                        deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                                        (delete)="deleteCourse(course()!.id!)"
+                                        [dialogError]="dialogError$"
+                                        style="margin-right: 0 !important"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
+                            }
+                        </jhi-course-title-bar>
+                    }
+
+                    <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
+                    <div
+                        #courseBodyContainer
+                        class="course-body-container shell-divider-x"
+                        id="course-body-container"
+                        [ngClass]="{
+                            'module-bg rounded rounded-3 scrollable-content': !hasSidebar() && !hasTransparentCourseBody(),
+                            'p-3': !hasSidebar() && !removePadding() && !hasTransparentCourseBody(),
+                            'sidebar-body': hasSidebar(),
+                        }"
+                        cdkScrollable
+                    >
+                        @if (!hasSidebar()) {
+                            <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                        }
+                        <!-- Check for !isLTI to render the router outlet only once and avoid side effects on route updates. -->
+                        @if (!isShownViaLti()) {
+                            <ng-template *ngTemplateOutlet="routerOutlet" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATES -->
+
+<ng-template #routerOutlet>
+    <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
+</ng-template>
+
+<!-- Progress overlay for long-running course operations (delete, reset, archive) -->
+<jhi-course-operation-progress [progress]="operationProgress()" (closeOverlay)="closeProgress()" />

@@ -1,0 +1,50 @@
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.examManagement.editWorkingTime.title' | artemisTranslate" size="medium">
+    <form name="workingTimeForm" (ngSubmit)="editForm.valid && !isLoading() && confirmUpdateWorkingTime()" #editForm="ngForm">
+        <div class="flex flex-col items-start gap-6!">
+            <jhi-working-time-control
+                name="workingTimeSeconds"
+                durationLabelText="artemisApp.examManagement.editWorkingTime.label"
+                [(ngModel)]="workingTimeSeconds"
+                [allowNegative]="true"
+                [disabled]="isLoading()"
+            />
+        </div>
+        <div class="mt-6! rounded-lg bg-(--hover-slightly-darker-body-bg) p-6!">
+            @if (newWorkingTime && oldWorkingTime) {
+                <jhi-working-time-change [newWorkingTime]="newWorkingTime" [oldWorkingTime]="oldWorkingTime" />
+            }
+        </div>
+        <hr class="my-6! border-(--border-color)" />
+        <div>
+            <p class="display-spaces" jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam().title }"></p>
+            <jhi-confirm-entity-name
+                confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
+                [entityName]="exam().title!"
+                [disabled]="isLoading()"
+                name="confirmEntityName"
+                ngModel
+            />
+        </div>
+    </form>
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" [disabled]="isLoading()" (click)="clear()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button
+            tumAetUiButton
+            id="confirm"
+            type="button"
+            severity="warn"
+            [disabled]="editForm.invalid || isLoading() || !isWorkingTimeChangeValid"
+            (click)="confirmUpdateWorkingTime()"
+        >
+            @if (isLoading()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            } @else {
+                <fa-icon [icon]="faCheck" />
+            }
+            <span jhiTranslate="entity.action.confirm"></span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

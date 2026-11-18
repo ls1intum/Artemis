@@ -1,0 +1,75 @@
+<button
+    tumAetUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    type="button"
+    id="exportDialogButton"
+    data-testid="tutorial-groups-export-open"
+    [tumAetUiTooltip]="'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate"
+    (click)="openExportDialog($event)"
+>
+    <fa-icon [icon]="faFileExport" />
+    <!-- sr-only below md keeps the icon-only button named; the tooltip carries the full wording -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.export"></span>
+</button>
+
+<tumaet-ui-dialog
+    data-testid="tutorial-groups-export-dialog"
+    [header]="'artemisApp.tutorialGroupExportDialog.header' | artemisTranslate"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    size="small"
+>
+    <form>
+        <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
+        <div>
+            <div class="mb-4! flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="selectAllId" data-testid="tutorial-groups-export-select-all" (changed)="toggleSelectAll()" [checked]="selectAll()" />
+                <label for="selectAllId" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
+            </div>
+        </div>
+        @for (field of availableFields; track field; let i = $index) {
+            <div>
+                <div class="mb-2 flex items-center gap-2">
+                    <tumaet-ui-checkbox
+                        inputId="fieldId-{{ i }}"
+                        [attr.data-testid]="'tutorial-groups-export-field-' + i"
+                        [checked]="field.selected"
+                        (changed)="onFieldSelectionChange(field)"
+                    />
+                    <label for="fieldId-{{ i }}">{{ field.value }}</label>
+                </div>
+            </div>
+        }
+    </form>
+    <!-- Label on a child element: jhiTranslate writes innerHTML and would overwrite tumAetUiButton's projection -->
+    <ng-template #footer>
+        <button tumAetUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.cancel"></span>
+        </button>
+        <button
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            type="button"
+            (click)="exportJSON()"
+            data-testid="tutorial-groups-export-json"
+            [disabled]="selectedFields().length === 0"
+        >
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportJSON"></span>
+        </button>
+        <button
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            type="button"
+            (click)="exportCSV()"
+            data-testid="tutorial-groups-export-csv"
+            [disabled]="selectedFields().length === 0"
+        >
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportCSV"></span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

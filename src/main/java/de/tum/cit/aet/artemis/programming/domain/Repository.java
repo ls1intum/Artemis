@@ -1,0 +1,135 @@
+package de.tum.cit.aet.artemis.programming.domain;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.jspecify.annotations.Nullable;
+
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+
+/**
+ * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.
+ * These repositories are cloned from the remote VCS and are saved in the folder defined in the application properties at artemis.repo-clone-path.
+ * Note: This class does not represent local VCS repositories. The local VCS is treated as a remote VCS in code and is represented by the
+ * {@link LocalVCRepositoryUri} class.
+ * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
+ */
+public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
+
+    /** The hooks directory of every repository: below the null device no hook can exist, so that git finds none. This relies on a POSIX file system. */
+    private static final String NO_HOOKS_PATH = "/dev/null";
+
+    private ProgrammingExerciseParticipation participation;
+
+    private volatile boolean configOverrideUnsaved;
+
+    @Nullable
+    private Path localPath;
+
+    private final LocalVCRepositoryUri remoteRepositoryUri;
+
+    public Repository(File gitDir, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
+        super(gitDir);
+        this.remoteRepositoryUri = remoteRepositoryUri;
+    }
+
+    public Repository(String gitDir, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
+        super(gitDir);
+        this.remoteRepositoryUri = remoteRepositoryUri;
+    }
+
+    public Repository(BaseRepositoryBuilder options, Path localPath, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
+        super(options);
+        this.localPath = localPath.normalize();
+        this.remoteRepositoryUri = remoteRepositoryUri;
+    }
+
+    /**
+     * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory. Also checks that the ../ operator is not
+     * used to traverse up directories on the server. Also checks that the file is not using the ".git" folder
+     *
+     * @param file for which to check if it is valid.
+     * @return true if the file is valid.
+     */
+    public boolean isValidFile(java.io.File file) {
+        if (file == null || file.getPath().contains("../")) {
+            return false;
+        }
+
+        // Compare the name only, ignoring its case.
+        if (".git".equalsIgnoreCase(file.getName())) {
+            return false;
+        }
+
+        if (this.localPath != null && file.equals(this.localPath.toFile())) {
+            return true;
+        }
+
+        return isValidFile(file.getParentFile());
+    }
+
+    /**
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them, and without symbolic links.
+     * The hooks directory and the symbolic link setting are set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * As they are part of the configuration, a configuration file that is saved contains them as well.
+     *
+     * @return the configuration of this repository
+     */
+    @Override
+    public FileBasedConfig getConfig() {
+        FileBasedConfig config = super.getConfig();
+        if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
+            config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+            configOverrideUnsaved = true;
+        }
+        // Symbolic links are never created in a working copy: an entry that is a link is written as a plain file holding the target, and a link is not followed
+        if (!"false".equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS))) {
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            configOverrideUnsaved = true;
+        }
+        for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
+            config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
+            configOverrideUnsaved = true;
+        }
+        return config;
+    }
+
+    /**
+     * Whether {@link #getConfig()} changed a value that the configuration file on disk still holds differently. The code that writes the configuration of a repository uses this,
+     * as it does not see such a value as a change.
+     *
+     * @return true if the configuration in memory differs from the file because of the settings that are always applied
+     */
+    public boolean hasUnsavedConfigOverride() {
+        return configOverrideUnsaved;
+    }
+
+    /** Records that the configuration was written to the file, including the settings that are always applied. */
+    public void markConfigOverrideSaved() {
+        configOverrideUnsaved = false;
+    }
+
+    public ProgrammingExerciseParticipation getParticipation() {
+        return participation;
+    }
+
+    public void setParticipation(ProgrammingExerciseParticipation participation) {
+        this.participation = participation;
+    }
+
+    public Path getLocalPath() {
+        return localPath;
+    }
+
+    public void closeBeforeDelete() {
+        super.close();
+        super.doClose();
+    }
+
+    public LocalVCRepositoryUri getRemoteRepositoryUri() {
+        return remoteRepositoryUri;
+    }
+}

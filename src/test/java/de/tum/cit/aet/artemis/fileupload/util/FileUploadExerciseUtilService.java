@@ -1,0 +1,376 @@
+package de.tum.cit.aet.artemis.fileupload.util;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
+
+/**
+ * Service responsible for initializing the database with specific testdata related to file upload exercises for use in integration tests.
+ */
+@Lazy
+@Service
+@Profile(SPRING_PROFILE_TEST)
+public class FileUploadExerciseUtilService {
+
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private CourseTestRepository courseRepo;
+
+    @Autowired
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepo;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ResultTestRepository resultRepo;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
+    /**
+     * Creates and saves a FileUploadExercise.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public FileUploadExercise addFileUploadExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, startDate, dueDate, assessmentDueDate, "pdf", course);
+        var savedExercise = exerciseRepository.save(fileUploadExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
+    }
+
+    /**
+     * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
+     *
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam with one mandatory FileUploadExercis should be before the current time, needed for
+     *                                       examLiveEvent tests
+     * @return The created FileUploadExercise
+     */
+    public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        // TODO: try to refactor this call to avoid using examUtilService here
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
+        var savedExercise = exerciseRepository.save(fileUploadExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
+    }
+
+    /**
+     * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise, enrolling the users identified by the given prefix.
+     * <p>
+     * This is the enrollment-aware counterpart of {@link #addCourseExamExerciseGroupWithOneFileUploadExercise(boolean)}.
+     * Use this whenever the acting test user must pass the course-membership access check.
+     *
+     * @param userPrefix                 The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam should be before the current time, needed for examLiveEvent tests
+     * @return The created FileUploadExercise with prefix users enrolled in the course
+     */
+    public FileUploadExercise addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(String userPrefix, boolean startDateBeforeCurrentTime) {
+        FileUploadExercise fileUploadExercise = addCourseExamExerciseGroupWithOneFileUploadExercise(startDateBeforeCurrentTime);
+        userUtilService.enrollPrefixedUsersInCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return fileUploadExercise;
+    }
+
+    /**
+     * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise. Does not save the exercises.
+     *
+     * @return A List containing the created FileUploadExercises
+     */
+    public List<FileUploadExercise> createEnrolledFileUploadExercisesWithCourse(String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+
+        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
+                course);
+        releasedFileUploadExercise.setTitle("released");
+        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
+                course);
+        finishedFileUploadExercise.setTitle("finished");
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
+
+        var fileUploadExercises = new ArrayList<FileUploadExercise>();
+        fileUploadExercises.add(releasedFileUploadExercise);
+        fileUploadExercises.add(finishedFileUploadExercise);
+        fileUploadExercises.add(assessedFileUploadExercise);
+        return fileUploadExercises;
+    }
+
+    /**
+     * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithThreeFileUploadExercise(String userPrefix) {
+        var fileUploadExercises = createEnrolledFileUploadExercisesWithCourse(userPrefix);
+        assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
+        exerciseRepository.saveAll(fileUploadExercises);
+        fileUploadExercises.forEach(exerciseConfigurationService::initialize);
+        long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
+        List<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId).stream().toList();
+        assertThat(exercises).as("three exercises got stored").hasSize(3);
+        assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
+        return course;
+    }
+
+    /**
+     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFourFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFourFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise.
+     *
+     * @return The created Course
+     */
+    public Course addCourseWithFourFileUploadExercise() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
+                course);
+        releasedFileUploadExercise.setTitle("released");
+        FileUploadExercise finishedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
+                course);
+        finishedFileUploadExercise.setTitle("finished");
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
+        FileUploadExercise noDueDateFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, null, PAST_TIMESTAMP, "png,pdf", course);
+        noDueDateFileUploadExercise.setTitle("noDueDate");
+
+        var fileUploadExercises = new ArrayList<FileUploadExercise>();
+        fileUploadExercises.add(releasedFileUploadExercise);
+        fileUploadExercises.add(finishedFileUploadExercise);
+        fileUploadExercises.add(assessedFileUploadExercise);
+        fileUploadExercises.add(noDueDateFileUploadExercise);
+        exerciseRepository.saveAll(fileUploadExercises);
+        fileUploadExercises.forEach(exerciseConfigurationService::initialize);
+
+        return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
+    }
+
+    /**
+     * Creates and saves a new Course with one assessed FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a new Course with one assessed FileUploadExercise.
+     *
+     * @return The created Course
+     */
+    public Course addCourseWithFileUploadExercise() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
+        course.addExercises(assessedFileUploadExercise);
+        courseRepo.saveWithDefaultConfigurations(course);
+        exerciseRepository.save(assessedFileUploadExercise);
+        exerciseConfigurationService.initialize(assessedFileUploadExercise);
+        return course;
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login.
+     *
+     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @return The updated FileUploadSubmission
+     */
+    public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, login);
+        participation.addSubmission(fileUploadSubmission);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login. Also creates and saves a Result for the
+     * StudentParticipation given the assessorLogin and List of Feedbacks.
+     *
+     * @param exercise             The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @param assessorLogin        The login of the assessor the Result should belong to
+     * @param feedbacks            The List of Feedbacks the Result should contain
+     * @return The updated FileUploadSubmission
+     */
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin, List<Feedback> feedbacks) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+
+        submissionRepository.save(fileUploadSubmission);
+
+        participation.addSubmission(fileUploadSubmission);
+        Result result = new Result();
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
+        result.setScore(100D);
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+        result.setFeedbacks(feedbacks);
+        result.setSubmission(fileUploadSubmission);
+        result.setExerciseId(exercise.getId());
+        result = resultRepo.save(result);
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+        result = resultRepo.save(result);
+        fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission.addResult(result);
+        fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
+        studentParticipationRepo.save(participation);
+        return fileUploadSubmission;
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login. Also creates and saves a Result for the
+     * StudentParticipation given the assessorLogin.
+     *
+     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @param assessorLogin        The login of the assessor the Result should belong to
+     * @return The updated FileUploadSubmission
+     */
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login.
+     *
+     * @param exercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param submission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login      The login of the user the StudentParticipation should belong to
+     * @return The updated FileUploadSubmission
+     */
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Updates the file pattern of the exercise with the passed id. The updated exercise is saved in the repository.
+     *
+     * @param exerciseId  The id of the exercise which should be updated
+     * @param filePattern The comma separated list of file endings the exercise accepts
+     */
+    public void updateFilePattern(long exerciseId, String filePattern) {
+        FileUploadExercise exercise = (FileUploadExercise) exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
+        exercise.setFilePattern(filePattern);
+        exerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
+    }
+
+    /**
+     * Creates and saves a FileUploadSubmission for the given FileUploadExercise and loginPrefix. Also creates an empty file for the submission.
+     *
+     * @param loginPrefix        The loginPrefix of the user the FileUploadSubmission should belong to (the loginPrefix will be suffixed with "student1")
+     * @param fileUploadExercise The FileUploadExercise the FileUploadSubmission should belong to
+     * @param filename           The name of the file to create
+     * @throws IOException If creating the file fails
+     */
+    public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./").resolve(FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        fileUploadSubmissionRepo.save(fileUploadSubmission);
+    }
+}

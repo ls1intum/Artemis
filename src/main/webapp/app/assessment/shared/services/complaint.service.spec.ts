@@ -1,0 +1,675 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { User } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import dayjs from 'dayjs/esm';
+import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
+import { provideHttpClient } from '@angular/common/http';
+import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+
+describe('ComplaintService', () => {
+    let complaintService: ComplaintService;
+    let accountService: AccountService;
+    let httpMock: HttpTestingController;
+
+    const dayjsTime1 = dayjs().utc().year(2022).month(3).date(14).hour(10).minute(35).second(12).millisecond(332);
+    const stringTime1 = '2022-04-14T10:35:12.332Z';
+    const dayjsTime2 = dayjs().utc().year(2022).month(4).date(12).hour(18).minute(12).second(11).millisecond(140);
+    const stringTime2 = '2022-05-12T18:12:11.140Z';
+    const dayjsTime3 = dayjs();
+
+    const clientComplaint1 = new ComplaintDTO();
+    clientComplaint1.id = 42;
+    clientComplaint1.complaintType = ComplaintType.MORE_FEEDBACK;
+    clientComplaint1.result = new ResultSimpleDTO();
+    clientComplaint1.submittedTime = dayjsTime1;
+    clientComplaint1.complaintText = 'Test text';
+
+    const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
+
+    const clientComplaint2 = new ComplaintDTO();
+    clientComplaint2.id = 42;
+    clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
+    clientComplaint2.result = new ResultSimpleDTO();
+    clientComplaint2.submittedTime = dayjsTime2;
+    clientComplaint2.complaintText = 'Test text';
+
+    const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
+
+    const clientComplaintReq = new ComplaintRequestDTO();
+    clientComplaintReq.examId = 1337;
+    clientComplaintReq.complaintText = 'Test text';
+    clientComplaintReq.resultId = 1;
+    clientComplaintReq.complaintType = ComplaintType.MORE_FEEDBACK;
+
+    let exercise: Exercise;
+    let emptyResult: Result;
+    const course: Course = {
+        maxComplaintTimeDays: 7,
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+        })
+            .compileComponents()
+            .then(() => {
+                complaintService = TestBed.inject(ComplaintService);
+                accountService = TestBed.inject(AccountService);
+                httpMock = TestBed.inject(HttpTestingController);
+            });
+
+        exercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+        emptyResult = new Result();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    describe('isComplaintLockedForLoggedInUser', () => {
+        it('should be false if no visible lock is present', () => {
+            const result = complaintService.isComplaintLockedForLoggedInUser(new Complaint(), new TextExercise(undefined, undefined));
+            expect(result).toBe(false);
+        });
+
+        it('should be false if user has the lock', () => {
+            const login = 'testUser';
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.reviewer = { login } as User;
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+
+            const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
+
+            expect(result).toBe(false);
+        });
+
+        it('should be true if user has not the lock', () => {
+            const login = 'testUser';
+            const anotherLogin = 'anotherTestUser';
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.reviewer = { login } as User;
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
+            vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
+
+            const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
+
+            expect(result).toBe(true);
+        });
+
+        it('should be false if user is instructor', () => {
+            const login = 'testUser';
+            const anotherLogin = 'anotherTestUser';
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.reviewer = { login } as User;
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
+            vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
+
+            const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('isComplaintLockedByLoggedInUser', () => {
+        it('should be false if no visible lock is present', () => {
+            const result = complaintService.isComplaintLockedByLoggedInUser(new Complaint());
+            expect(result).toBe(false);
+        });
+
+        it('should be false if the complaint is not locked', () => {
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+
+            const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
+            expect(result).toBe(false);
+        });
+
+        it('should be false if the complaint has been handled', () => {
+            const _complaint = new Complaint();
+            _complaint.accepted = true;
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+            _complaint.complaintResponse.submittedTime = dayjs();
+
+            const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
+            expect(result).toBe(false);
+        });
+
+        it('should be false if another user has the lock', () => {
+            const login = 'testUser';
+            const anotherLogin = 'anotherTestUser';
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+            _complaint.complaintResponse.reviewer = { login } as User;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
+
+            const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
+            expect(result).toBe(false);
+        });
+
+        it('should be true if the same user has the lock', () => {
+            const login = 'testUser';
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+            _complaint.complaintResponse.reviewer = { login } as User;
+            accountService.userIdentity.set({ login: login } as User);
+
+            const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('isComplaintLocked', () => {
+        it('should be false if no visible lock is present', () => {
+            const result = complaintService.isComplaintLocked(new Complaint());
+            expect(result).toBe(false);
+        });
+
+        it('should be true if locked', () => {
+            const _complaint = new Complaint();
+            _complaint.complaintResponse = new ComplaintResponse();
+            _complaint.complaintResponse.isCurrentlyLocked = true;
+
+            const result = complaintService.isComplaintLocked(_complaint);
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('create', () => {
+        it('For course', () => {
+            clientComplaintReq.examId = undefined;
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
+            });
+
+            const res = httpMock.expectOne({ method: 'POST' });
+            expect(res.request.url).toBe('api/assessment/complaints');
+            expect(res.request.body).toEqual(clientComplaintReq);
+
+            res.flush(clone(serverComplaint1));
+        });
+
+        it('For exam', () => {
+            complaintService.create(clientComplaintReq).subscribe((received) => {
+                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
+            });
+
+            const res = httpMock.expectOne({ method: 'POST' });
+            expect(res.request.url).toBe(`api/assessment/complaints`);
+            expect(res.request.body).toEqual(clientComplaintReq);
+
+            res.flush(clone(serverComplaint1));
+        });
+    });
+
+    describe('shouldHighlightComplaint', () => {
+        it('should not highlight handled complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(1, 'hours'),
+                accepted: true,
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(false);
+        });
+
+        it('should not highlight recent complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(8, 'days').add(1, 'seconds'),
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(false);
+        });
+
+        it('should highlight old complaints', () => {
+            const complaint = {
+                id: 42,
+                submittedTime: dayjs().subtract(8, 'days'),
+            } as Complaint;
+
+            const result = complaintService.shouldHighlightComplaint(complaint);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('getIndividualComplaintDueDate', () => {
+        it('should return undefined for no results', () => {
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, undefined);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+
+        it('should return undefined for quiz exercise', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3;
+            exercise.dueDate = undefined;
+            exercise.type = ExerciseType.QUIZ;
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+
+        it('should calculate the correct complaint due date for no exercise due date', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3;
+            exercise.dueDate = undefined;
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
+        });
+
+        it('should return undefined for automatic assessment without complaints', () => {
+            emptyResult.rated = true;
+            exercise.dueDate = dayjsTime3;
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+
+        it('should calculate the correct complaint due date for automatic assessment with complaints', () => {
+            emptyResult.completionDate = dayjsTime3.subtract(1, 'day');
+            exercise.allowComplaintsForAutomaticAssessments = true;
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
+            exercise.dueDate = dayjsTime3;
+
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
+        });
+
+        it('should calculate the correct complaint due date for automatic assessment with complaints before dueDate', () => {
+            emptyResult.completionDate = dayjsTime3.subtract(2, 'day');
+            exercise.allowComplaintsForAutomaticAssessments = true;
+            exercise.assessmentType = AssessmentType.AUTOMATIC;
+            exercise.dueDate = dayjsTime3.subtract(1, 'day');
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
+        });
+
+        it('should calculate the correct complaint due date after assessmentDueDate', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3.subtract(3, 'days');
+            exercise.assessmentType = AssessmentType.MANUAL;
+            exercise.dueDate = dayjsTime3.subtract(2, 'days');
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
+        });
+
+        it('should calculate the correct complaint due date after assessmentDueDate for late feedback', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3;
+            exercise.assessmentType = AssessmentType.MANUAL;
+            exercise.dueDate = dayjsTime3.subtract(2, 'days');
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
+        });
+
+        it('should return undefined for complaint due date before assessment dueDate', () => {
+            exercise.assessmentType = AssessmentType.MANUAL;
+            exercise.assessmentDueDate = dayjsTime3.add(1, 'days');
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+
+        it('should return undefined for complaint due date for unrated result after assessment dueDate', () => {
+            emptyResult.rated = false;
+            exercise.assessmentType = AssessmentType.MANUAL;
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+    });
+
+    it('uses explicit assessment detail URL', () => {
+        complaintService.findBySubmissionIdForAssessment(42).subscribe();
+        const req = httpMock.expectOne('api/assessment/complaints/for-assessment?submissionId=42');
+        expect(req.request.method).toBe('GET');
+        req.flush(clientComplaint1);
+    });
+
+    it.each(['course', 'exercise'] as const)('uses current-tutor %s scope without an arbitrary tutor ID', (scope) => {
+        if (scope === 'course') {
+            complaintService.findForTutorByCourseId(42, ComplaintType.COMPLAINT).subscribe();
+        } else {
+            complaintService.findForTutorByExerciseId(42, ComplaintType.COMPLAINT).subscribe();
+        }
+        const req = httpMock.expectOne(`api/assessment/complaints/for-tutor?${scope}Id=42&complaintType=COMPLAINT`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('findBySubmissionId', () => {
+        const submissionId = 1337;
+        complaintService.findBySubmissionId(submissionId).subscribe((received) => {
+            expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?submissionId=${submissionId}`);
+
+        res.flush(clone(serverComplaint1));
+    });
+
+    it('getComplaintsForTestRun', () => {
+        const exerciseId = 1337;
+        complaintService.getComplaintsForTestRun(exerciseId).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllByTutorIdForCourseId', () => {
+        const tutorId = 1337;
+        const courseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllByTutorIdForCourseId(tutorId, courseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllByTutorIdForExerciseId', () => {
+        const tutorId = 1337;
+        const exerciseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllByTutorIdForExerciseId(tutorId, exerciseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllByCourseId', () => {
+        const courseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllByCourseId(courseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllByCourseIdAndExamId', () => {
+        const courseId = 69;
+        const examId = 42;
+
+        complaintService.findAllByCourseIdAndExamId(courseId, examId).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&examId=${examId}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllByExerciseId', () => {
+        const exerciseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllByExerciseId(exerciseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    function clone(object: object): object {
+        return Object.assign({}, object);
+    }
+
+    it('findAllWithoutStudentInformationForCourseId', () => {
+        const courseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForCourseId(courseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('findAllWithoutStudentInformationForExerciseId', () => {
+        const exerciseId = 42;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForExerciseId(exerciseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('should remove result references from feedbacks for update after complaint', () => {
+        const result = new Result();
+        result.id = 1;
+
+        const feedback = new Feedback();
+        feedback.id = 10;
+        feedback.result = result;
+
+        const sanitizedFeedbacks = complaintService.getFeedbacksForUpdateAfterComplaint([feedback]);
+
+        expect(sanitizedFeedbacks).toHaveLength(1);
+        expect(sanitizedFeedbacks[0]).not.toBe(feedback);
+        expect(sanitizedFeedbacks[0].id).toBe(feedback.id);
+        expect(sanitizedFeedbacks[0].result).toBeUndefined();
+        expect(feedback.result).toBe(result);
+    });
+
+    it('should sanitize complaint response for update after complaint', () => {
+        const complaint = new Complaint();
+        complaint.id = 42;
+        complaint.accepted = false;
+        complaint.complaintType = ComplaintType.COMPLAINT;
+        complaint.result = new Result();
+
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 11;
+        complaintResponse.responseText = 'response';
+        complaintResponse.complaint = complaint;
+
+        const sanitizedComplaintResponse = complaintService.getComplaintResponseForUpdateAfterComplaint(complaintResponse);
+
+        expect(sanitizedComplaintResponse).not.toBe(complaintResponse);
+        expect(sanitizedComplaintResponse.id).toBe(11);
+        expect(sanitizedComplaintResponse.responseText).toBe('response');
+        expect(sanitizedComplaintResponse.complaint).toEqual({
+            id: 42,
+            accepted: false,
+            complaintType: ComplaintType.COMPLAINT,
+        });
+        expect(sanitizedComplaintResponse.complaint!.result).toBeUndefined();
+    });
+
+    describe('convertComplaintFromServer', () => {
+        it('should map base fields and attach the provided result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 7;
+            dto.complaintText = 'Why only 80%?';
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = true;
+            dto.submittedTime = dayjsTime1;
+
+            const result = new Result();
+            result.id = 99;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, result);
+
+            expect(complaint).toBeInstanceOf(Complaint);
+            expect(complaint.id).toBe(7);
+            expect(complaint.complaintText).toBe('Why only 80%?');
+            expect(complaint.complaintType).toBe(ComplaintType.COMPLAINT);
+            expect(complaint.accepted).toBe(true);
+            expect(complaint.submittedTime?.toISOString()).toBe(dayjsTime1.toISOString());
+            expect(complaint.result).toBe(result);
+        });
+
+        it('should tolerate an undefined result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 8;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.id).toBe(8);
+            expect(complaint.result).toBeUndefined();
+        });
+
+        it('should map a student participant onto complaint.student', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 3, name: 'Student One', login: 'student1', isStudent: true } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.student).toBeInstanceOf(User);
+            expect(complaint.student?.id).toBe(3);
+            expect(complaint.student?.name).toBe('Student One');
+            expect(complaint.student?.login).toBe('student1');
+            expect(complaint.team).toBeUndefined();
+        });
+
+        it('should map a team participant onto complaint.team', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 4, name: 'Team Awesome', login: 'team-awesome', isStudent: false } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.team).toBeInstanceOf(Team);
+            expect(complaint.team?.id).toBe(4);
+            expect(complaint.team?.name).toBe('Team Awesome');
+            expect(complaint.team?.shortName).toBe('team-awesome');
+            expect(complaint.student).toBeUndefined();
+        });
+    });
+
+    describe('convertComplaintFromServerInList', () => {
+        it('should reconstruct the reduced result, exercise title, assessor and feedbacks', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 11;
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = false;
+            dto.assessorKey = '9';
+            dto.assessorLabel = 'Tutor One';
+            dto.result = {
+                id: 55,
+                completionDate: dayjsTime1,
+                score: 80,
+                rated: true,
+                assessmentType: AssessmentType.MANUAL,
+                assessor: { id: 9, login: 'tutor1', name: 'Tutor One' },
+                exerciseTitle: 'My Exercise',
+                feedbacks: [{ id: 1, credits: 5, reference: 'reference-id', detailText: 'Good' } as FeedbackDTO],
+                submission: { id: 21, participation: { id: 31, exercise: { id: 41, type: ExerciseType.TEXT } } },
+            } as ResultSimpleDTO;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.id).toBe(11);
+            expect(complaint.accepted).toBe(false);
+            expect(complaint.assessorKey).toBe('9');
+            expect(complaint.assessorLabel).toBe('Tutor One');
+            expect(complaint.result).toBeInstanceOf(Result);
+            expect(complaint.result?.id).toBe(55);
+            expect(complaint.result?.score).toBe(80);
+            expect(complaint.result?.rated).toBe(true);
+            expect(complaint.result?.assessmentType).toBe(AssessmentType.MANUAL);
+            expect(complaint.result?.assessor?.login).toBe('tutor1');
+            expect(complaint.result?.feedbacks).toHaveLength(1);
+            expect(complaint.result?.submission?.id).toBe(21);
+            const participation = complaint.result?.submission?.participation as StudentParticipation;
+            expect(participation.id).toBe(31);
+            expect(participation.exercise?.id).toBe(41);
+            expect(participation.exercise?.type).toBe(ExerciseType.TEXT);
+            expect(participation.exercise?.title).toBe('My Exercise');
+        });
+
+        it('should keep assessorKey and assessorLabel when result.assessor is redacted', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 13;
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.assessorKey = '42';
+            dto.assessorLabel = 'Foreign Tutor';
+            dto.result = {
+                id: 56,
+                score: 70,
+                rated: true,
+                assessmentType: AssessmentType.MANUAL,
+            } as ResultSimpleDTO;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.assessorKey).toBe('42');
+            expect(complaint.assessorLabel).toBe('Foreign Tutor');
+            expect(complaint.result?.assessor).toBeUndefined();
+        });
+    });
+});

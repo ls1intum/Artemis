@@ -1,0 +1,202 @@
+package de.tum.cit.aet.artemis.exam.service;
+
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXAM_EVENTS;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.STUDENT_EXAM_EVENTS;
+
+import java.util.List;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+
+/**
+ * This service handles outgoing events during exams, so we can inform the client about a change or something that happened.
+ * Currently, these events include:
+ * <ul>
+ * <li>Exam Wide Announcements
+ * <li>Working Time Updates
+ * <li>Exam Attendance Check
+ * <li>Problem Statement Updates
+ * </ul>
+ * <p>
+ * In the future, we can incorporate more events here.
+ * <p>
+ * Additionally, the service will maintain a log of all events that happened during the exam,
+ * so we can display them to the user if they reconnect to the exam or join late.
+ */
+@Conditional(ExamEnabled.class)
+@Lazy
+@Service
+public class ExamLiveEventsService {
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ExamLiveEventRepository examLiveEventRepository;
+
+    private final StudentExamRepository studentExamRepository;
+
+    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository,
+            StudentExamRepository studentExamRepository) {
+        this.websocketMessagingService = websocketMessagingService;
+        this.examLiveEventRepository = examLiveEventRepository;
+        this.studentExamRepository = studentExamRepository;
+    }
+
+    /**
+     * Sends an announcement to all students in the exam.
+     *
+     * @param exam    the exam to send the announcement to.
+     * @param message The message to send.
+     * @return The created event.
+     */
+    public ExamWideAnnouncementEvent createAndDistributeExamAnnouncementEvent(Exam exam, String message) {
+        var event = new ExamWideAnnouncementEvent();
+
+        // Common fields
+        event.setExamId(exam.getId());
+
+        // Specific fields
+        event.setTextContent(message);
+
+        return this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * @param examId the exam whose announcement history should be returned
+     * @return the exam-wide announcements in reverse chronological order
+     */
+    public List<ExamWideAnnouncementEventDTO> getAnnouncements(long examId) {
+        return examLiveEventRepository.findAnnouncementsByExamId(examId).stream().map(ExamWideAnnouncementEvent::asDTO).toList();
+    }
+
+    /**
+     * Send an attendance check event to the specified student
+     *
+     * @param studentExam The student exam the where the popup should be shown
+     * @param message     The message to send.
+     * @return The created event.
+     */
+    public ExamAttendanceCheckEvent createAndSendExamAttendanceCheckEvent(StudentExam studentExam, String message) {
+        var event = new ExamAttendanceCheckEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+
+        // specific fields
+        event.setTextContent(message);
+
+        return this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Send a working time update to the specified student.
+     *
+     * @param studentExam    The student exam the time was updated for
+     * @param newWorkingTime The new working time in seconds
+     * @param oldWorkingTime The old working time in seconds
+     * @param courseWide     set to true if this event is caused by a course wide update that affects all students; false otherwise
+     */
+    public void createAndSendWorkingTimeUpdateEvent(StudentExam studentExam, int newWorkingTime, int oldWorkingTime, boolean courseWide) {
+        var event = new WorkingTimeUpdateEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+
+        // Specific fields
+        event.setNewWorkingTime(newWorkingTime);
+        event.setOldWorkingTime(oldWorkingTime);
+        event.setCourseWide(courseWide);
+
+        // Include the current exam schedule so a conducting student can refresh the pre-start countdown and the
+        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes.
+        // Only for real exams: for a test exam the exam's start/end dates are merely the availability window, not the
+        // student's conduction window (which the client derives from their individual startedDate), so sending them
+        // would make the client recompute the countdown from the wrong start. Leaving them unset keeps the test-exam
+        // client on its correct startedDate-based fallback. A real exam a student is conducting always has both dates
+        // set; the null checks are defensive and the client treats the dates as optional accordingly.
+        var exam = studentExam.getExam();
+        if (exam.getExamMode().isReal()) {
+            if (exam.getStartDate() != null) {
+                event.setNewStartDate(exam.getStartDate().toInstant());
+            }
+            if (exam.getEndDate() != null) {
+                event.setNewEndDate(exam.getEndDate().toInstant());
+            }
+        }
+
+        this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Send a problem statement update to all affected students.
+     *
+     * @param exercise The exam exercise the problem statement was updated for
+     * @param message  The message to send
+     */
+    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
+        Exam exam = exercise.getExamElseThrow();
+        studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
+                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message));
+    }
+
+    /**
+     * Send a problem statement update to the specified student.
+     *
+     * @param studentExam The student exam containing the exercise with updated problem statement
+     * @param exercise    The updated exercise
+     * @param message     The message to send
+     */
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message) {
+        var event = new ProblemStatementUpdateEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+
+        // Specific fields
+        event.setTextContent(message);
+        event.setProblemStatement(exercise.getProblemStatement());
+        event.setExerciseId(exercise.getId());
+        event.setExerciseName(exercise.getExerciseGroup().getTitle());
+
+        this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Stores the event in the database and sends it either to all student exams of the exam or to a specific student exam,
+     * depending on whether the event is for a specific student exam or for the entire exam.
+     *
+     * @param event The event to store and distribute.
+     * @return The stored event.
+     */
+    private <T extends ExamLiveEvent> T storeAndDistributeLiveExamEvent(T event) {
+        var storedEvent = examLiveEventRepository.save(event);
+
+        // If the event is for a specific student exam, only send it to that student exam.
+        if (event.getStudentExamId() != null) {
+            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENTS.at(storedEvent.getStudentExamId()), storedEvent.asDTO());
+            return storedEvent;
+        }
+
+        // Otherwise, send it to all student exams of the exam.
+        websocketMessagingService.sendMessage(EXAM_EVENTS.at(storedEvent.getExamId()), storedEvent.asDTO());
+
+        return storedEvent;
+    }
+}

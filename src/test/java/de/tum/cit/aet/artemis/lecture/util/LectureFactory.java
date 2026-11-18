@@ -1,0 +1,143 @@
+package de.tum.cit.aet.artemis.lecture.util;
+
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
+
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+
+/**
+ * Factory for creating Lectures and related objects.
+ */
+public class LectureFactory {
+
+    /**
+     * Generates a Lecture for the given Course.
+     *
+     * @param startDate The start date of the Lecture
+     * @param endDate   The end date of the Lecture
+     * @param course    The Course the Lecture belongs to
+     * @return The generated Lecture
+     */
+    public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
+        return generateLecture("Lecture", "Description", startDate, endDate, course);
+    }
+
+    /**
+     * Generates a Lecture with the given title and description. Delegates to the shared factory in the main source set, which is also used to seed the demo course.
+     *
+     * @param title       The title of the Lecture
+     * @param description The description of the Lecture
+     * @param startDate   The start date of the Lecture
+     * @param endDate     The end date of the Lecture
+     * @param course      The Course the Lecture belongs to
+     * @return The generated Lecture
+     */
+    public static Lecture generateLecture(String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
+        // Fully qualified because this class shadows the simple name.
+        return de.tum.cit.aet.artemis.lecture.factories.LectureFactory.generateLecture(title, description, startDate, endDate, course);
+    }
+
+    /**
+     * Generates a TextUnit. Delegates to the shared factory in the main source set, which is also used to seed the demo course.
+     *
+     * @param name    The name of the TextUnit
+     * @param content The content of the TextUnit
+     * @return The generated TextUnit
+     */
+    public static TextUnit generateTextUnit(String name, String content) {
+        // Fully qualified because this class shadows the simple name.
+        return de.tum.cit.aet.artemis.lecture.factories.LectureFactory.generateTextUnit(name, content);
+    }
+
+    /**
+     * Generates an AttachmentVideoUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
+     * replace the attachment for this use case.
+     *
+     * @return The generated AttachmentVideoUnit
+     */
+    public static AttachmentVideoUnit generateAttachmentVideoUnit() {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentVideoUnit = generateAttachment(started);
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
+        return attachmentVideoUnit;
+    }
+
+    /**
+     * Generates an Attachment with AttachmentType FILE.
+     *
+     * @param date The optional upload and release date of the Attachment
+     * @return The generated Attachment
+     */
+    public static Attachment generateAttachment(ZonedDateTime date) {
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.FILE);
+        if (date != null) {
+            attachment.setReleaseDate(date);
+            attachment.setUploadDate(date);
+        }
+        attachment.setName("TestAttachment");
+        attachment.setVersion(1);
+        return attachment;
+    }
+
+    /**
+     * Generates an Attachment with AttachmentType FILE and a link to an image file.
+     *
+     * @param startDate The optional upload and release date of the Attachment
+     * @param entityId  The id the file is stored under, which is the attachment video unit for {@code forUnit} and the lecture otherwise
+     * @param forUnit   Whether the file lies in the directory of an attachment video unit. Pass {@code false} to build an attachment that
+     *                      used to hang off a lecture directly and therefore still lies under the lecture attachment directory
+     * @return The generated Attachment
+     */
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        Path savePath = (forUnit ? FilePathConverter.getAttachmentVideoUnitFileSystemPath() : FilePathConverter.getLectureAttachmentFileSystemPath()).resolve(entityId.toString())
+                .resolve(testFileName);
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), savePath.toFile());
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(savePath.getFileName().toString());
+        return attachment;
+    }
+
+    /**
+     * Generates an Attachment with AttachmentType FILE and a link to a pdf file in the directory of an attachment video unit.
+     *
+     * @param startDate             The optional upload and release date of the Attachment
+     * @param attachmentVideoUnitId The id of the attachment video unit the Attachment belongs to
+     * @return The generated Attachment
+     */
+    public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long attachmentVideoUnitId) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
+        Path savePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve(testFileName);
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf"), savePath.toFile());
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(savePath.getFileName().toString());
+        return attachment;
+    }
+}

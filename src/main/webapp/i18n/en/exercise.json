@@ -1,0 +1,465 @@
+{
+    "artemisApp": {
+        "exercise": {
+            "home": {
+                "title": "Exercises",
+                "createLabel": "Create a new Exercise"
+            },
+            "sections": {
+                "general": "General",
+                "mode": "Mode",
+                "grading": "Grading",
+                "problem": "Problem",
+                "solution": "Solution"
+            },
+            "details": "Exercise details",
+            "addCriterion": "Add a Grading Criterion",
+            "resultsPerPage": "{{number}} results per page",
+            "showAllResults": "Show all results",
+            "searchForStudents": "Search for students by login or name (comma separated)",
+            "searchForTeams": "Search for teams by (short) name or for students by login/name (comma separated)",
+            "created": "Created new Exercise with identifier {{ param }}",
+            "updated": "Updated Exercise with identifier {{ param }}",
+            "deleted": "Deleted Exercise with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
+                "testCourse": "test course",
+                "realCourse": "real course",
+                "summary": {
+                    "title": "What will be deleted",
+                    "category": {
+                        "studentWork": "Student work",
+                        "assessment": "Assessment",
+                        "plagiarism": "Plagiarism checks",
+                        "communication": "Communication",
+                        "content": "Exercise content and links",
+                        "infrastructure": "Infrastructure"
+                    },
+                    "numberOfStudentParticipations": "Student participations",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Submissions",
+                    "numberOfStudentExams": "Student exams containing this exercise",
+                    "numberOfResults": "Results",
+                    "numberOfAssessments": "Manual assessments",
+                    "numberOfComplaints": "Complaints and feedback requests",
+                    "numberOfPlagiarismComparisons": "Plagiarism comparisons",
+                    "numberOfCommunicationPosts": "Posts in the exercise channel",
+                    "numberOfAnswerPosts": "Replies in the exercise channel",
+                    "numberOfExampleSubmissions": "Example submissions",
+                    "numberOfCompetencyLinks": "Linked competencies",
+                    "numberOfLectureUnitLinks": "Linked lecture units",
+                    "numberOfBuilds": "Build jobs"
+                }
+            },
+            "reset": {
+                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
+            },
+            "detail": {
+                "title": "Exercise"
+            },
+            "versionHistory": {
+                "title": "Version History",
+                "timeline": {
+                    "title": "Versions",
+                    "loadMore": "Load More",
+                    "empty": "No versions available yet."
+                },
+                "snapshot": {
+                    "empty": "Select a version to inspect its metadata.",
+                    "sharedTitle": "Exercise Metadata"
+                },
+                "errors": {
+                    "invalidExerciseId": "Could not determine exercise id.",
+                    "timelineLoadFailed": "Version timeline could not be loaded.",
+                    "snapshotLoadFailed": "Version snapshot could not be loaded."
+                }
+            },
+            "import": {
+                "attention": "Attention! ",
+                "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "embeddedFilesWarning": "All embedded files are available in the problem statement after the import.",
+                "search": "Search for exercise",
+                "loading": "Loading...",
+                "searchInCourses": "Search in courses?",
+                "searchInExams": "Search in exams?",
+                "preview": {
+                    "title": "Preview: {{ title }}",
+                    "buttonLabel": "Preview {{ title }}",
+                    "backToList": "Back to list",
+                    "loadFailed": "The preview could not be loaded."
+                },
+                "table": {
+                    "title": "Title",
+                    "language": "Language",
+                    "course": "Course",
+                    "exam": "Exam",
+                    "examQuestion": "Exam Question",
+                    "doImport": "Import"
+                },
+                "tabTitle": "From instance"
+            },
+            "importFromFile": {
+                "tabTitle": "From file",
+                "description": "Select a zip file that you downloaded with Export in the exercise overview of a course. Artemis then opens the exercise editor filled with the settings from the file, so you can review them before you save.",
+                "uploadForImport": "Import exercise from file",
+                "fileCountError": "Select exactly one file.",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Select a file with the extension .zip.",
+                "noExerciseDetailsJson": "The zip file does not contain exactly one JSON file with the exercise details.",
+                "exerciseTypeDoesntMatch": "The file does not contain an exercise of the selected type.",
+                "missingImage": "The zip file does not contain the image {{ fileName }}.",
+                "imageUploadFailed": "The image {{ fileName }} could not be uploaded.",
+                "importFailed": "The exercise import could not be prepared. Please try again."
+            },
+            "exercise": "Exercise",
+            "results": "Results",
+            "actions": "Actions",
+            "notStarted": "You have not started this exercise yet.",
+            "problemStatement": "Problem Statement",
+            "problemStatementEditor": "Problem Statement (Editor)",
+            "emptyProblemStatement": "(No problem statement)",
+            "emptyProblemStatementPreview": {
+                "title": "No Problem Statement Yet",
+                "description": "The problem statement for this exercise hasn't been created yet."
+            },
+            "instructions": "Instructions",
+            "exampleSolution": "Example Solution",
+            "emptyExampleSolution": "(No example solution)",
+            "exampleSolutionPublicationDateError": "The Example Solution Publication Date must be after the Release Date, Start Date, Due Date, and Assessment Due Date whenever those dates are set. Please check your selection again.",
+            "exampleSolutionPublicationDateRequiresExampleSolution": "Add an example solution or remove its publication date.",
+            "assessmentCriterion": "Assessment Criterion",
+            "assessmentInstructions": "Assessment Instructions",
+            "assessmentInstruction": "Assessment Instruction: ",
+            "structuredAssessmentInstructions": "Structured Assessment Instructions",
+            "addAssessmentCriterion": "Add assessment criterion",
+            "deleteAssessmentCriterion": "Delete this criterion",
+            "resetAssessmentCriterionTitle": "Reset assessment criterion title",
+            "resetAssessmentInstruction": "Reset assessment instruction",
+            "deleteAssessmentInstruction": "Delete assessment instruction",
+            "addAssessmentInstruction": "Add new assessment instruction",
+            "limit": "Limit",
+            "usageCountHint": "This number specifies how many times the score of this instruction may be included in the final score.",
+            "creditsHint": "This number specifies the score for this instruction.",
+            "gradingScaleHint": "Short label for this performance level, like a Likert step. Examples: Excellent, Good, Average, Poor. Only tutors see this; students do not.",
+            "descriptionHint": "Tutor-only notes on when to apply this instruction. Students do not see this.",
+            "feedbackHint": "Feedback is an explanatory text for the students in order to better understand their performance level.",
+            "gradingScalePlaceholder": "e.g. Good",
+            "criterionTitlePlaceholder": "Criterion Title",
+            "descriptionPlaceholder": "When should a tutor apply this level?",
+            "feedbackPlaceholder": "What should the student read?",
+            "dragDropInstruction": "Drag & Drop the assessment instruction to feedback element",
+            "gradingScale": "Scale",
+            "instructionDescription": "Description (tutors)",
+            "credits": "Credits",
+            "feedback": "Feedback (students)",
+            "editText": "Edit as Text",
+            "assessmentCriteriaGeneration": {
+                "generate": "Generate assessment criteria",
+                "generating": "Generating…",
+                "success": "Assessment criteria generated.",
+                "disabledProblemStatement": "Add a problem statement before generating assessment criteria.",
+                "disabledMaxPoints": "Set a valid maximum score greater than zero before generating assessment criteria.",
+                "disabledBonusPoints": "Set bonus points to a finite value of zero or greater before generating assessment criteria.",
+                "invalidSyntax": "The assessment-instruction text could not be parsed. Correct its syntax before generating criteria.",
+                "confirmationHeader": "Replace assessment criteria?",
+                "confirmation": "Generating new assessment criteria will replace all current structured criteria. Your general assessment-instruction text will be preserved.",
+                "confirmationUsed": "Saving these changes may require existing assessments to be re-evaluated.",
+                "replaceAndGenerate": "Replace and generate"
+            },
+            "title": "Title",
+            "shortName": "Short Name",
+            "release": "Release",
+            "releaseDate": "Release Date",
+            "start": "Start",
+            "startDate": "Start Date",
+            "due": "Due",
+            "dueDate": "Due Date",
+            "dueDateError": "Due Date must be after Release Date and Start Date if present. Please check your selection again.",
+            "dateForRunningTestsAfterDueDate": "Date for running tests after due date",
+            "startDateError": "Start Date must be after Release Date. Please check your selection again.",
+            "assessmentDue": "Assessment Due",
+            "assessmentDueDate": "Assessment Due Date",
+            "assessmentDueDateError": "Assessment Due Date must be after Release, Start and Due Date. Please check your selection again.",
+            "assessmentDueDateRequiresDueDate": "A due date must be set before an assessment due date can be set.",
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students can participate in the exercise.",
+            "dates": "Dates",
+            "dateNotSet": "No date set",
+            "timelineDateStrictOrderTooltip": "This date must be after all preceding dates.",
+            "timelineDateRequiredTooltip": "This date is required.",
+            "timelineDateInvalidTooltip": "The entered date is not valid. Please use the format DD.MM.YYYY HH:mm.",
+            "exampleSolutionPublicationDate": "Example Solution Publication Date",
+            "points": "Points",
+            "pointsError": "Must be a number between 1 and 9999.",
+            "bonusPoints": "Bonus Points",
+            "bonusPointsError": "Must be a number between 0 and 9999.",
+            "includedInOverallScoreCourseLabel": "Include this exercise in the course score calculation",
+            "includedInOverallScoreExamLabel": "Include this exercise in the exam score calculation",
+            "includedInOverallScore": "Included in Score",
+            "includedCompletely": "Included",
+            "categoriesTooltip": "You can define up to three categories per exercise (Enter category and press ENTER, or use commas to separate multiple values). You are free in defining them, though it might be best to use them consistently. They will be visible to students.",
+            "includedCompletelyTooltip": "All points and bonus points earned in this exercise count towards your course/exam score!",
+            "includedAsBonus": "Bonus",
+            "includedAsBonusTooltip": "All points earned in this exercise count towards your course/exam score as bonus points!",
+            "notIncluded": "Optional",
+            "notIncludedTooltip": "No points earned in this exercise count towards your course/exam score!",
+            "yes": "Yes",
+            "bonus": "Bonus",
+            "no": "No",
+            "createAction": "Create",
+            "importAction": "Import",
+            "difficulty": "Difficulty",
+            "noLevel": "No Level",
+            "easy": "Easy",
+            "medium": "Medium",
+            "hard": "Hard",
+            "mode": "Mode",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
+            "modes": {
+                "individual": "Individual",
+                "team": "Team"
+            },
+            "teamAssignmentConfig": {
+                "teamSize": "Team Size",
+                "teamSizeTooltip": "Recommendation for tutors regarding the minimum and maximum number of students per team.",
+                "participants": "Participants"
+            },
+            "categories": "Categories",
+            "noCategory": "No Category",
+            "selectCategories": "Select categories",
+            "participation": "Participation",
+            "participations": "Participations",
+            "submissions": "Submissions",
+            "teams": "Teams",
+            "complaints": "Complaints",
+            "export": {
+                "options": "Export Options:",
+                "names": "Export Names",
+                "results": {
+                    "title": "Export Results",
+                    "withoutTestCases": "Without test cases",
+                    "withTestCases": "With test cases",
+                    "withTestCasesAndFeedback": "With test cases<br />and feedback",
+                    "withTestCasesTooltip": "This will include additional information about passed and failed test cases for each result entry.",
+                    "withTestCasesAndFeedbackTooltip": "This will include information about test cases and a copy of the provided feedback for failed test cases.",
+                    "emptyError": "{{ exercise }}: No results found"
+                }
+            },
+            "startTraining": "Start Training",
+            "nextQuestion": "Next Question",
+            "endTraining": "End Training",
+            "submit": "Submit",
+            "refresh": "Refresh",
+            "course": "Course",
+            "type": "Type",
+            "mcqType": "Multiple Choice Question",
+            "dndType": "Drag and Drop Question",
+            "personalRepositoryClone": "Your personal repository has been set up. Click the <i>Code</i> button!",
+            "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
+            "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
+            "feedbackRequestSent": "Your feedback request has been sent.",
+            "feedbackRequestAlreadySent": "Your feedback request has already been sent.",
+            "noSubmissionExists": "You have to submit your work at least once.",
+            "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",
+            "feedbackRequestAfterDueDate": "You cannot submit feedback requests after the due date.",
+            "feedbackRequestPendingChanges": "You have pending changes. Please submit them first before requesting Feedback.",
+            "maxAthenaResultsReached": "You have reached the maximum number of AI feedback requests.",
+            "athenaFeedbackSuccessful": "AI feedback for {{title}} successfully generated. Click on the result to view details.",
+            "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
+            "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
+            "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
+            "aiFeedbackPopover": {
+                "title": "AI Feedback",
+                "description": "You can request AI-generated feedback for your submission. This feedback is preliminary and can include mistakes. Consider checking important information.",
+                "selectedAiType": "Your current AI selection: {{ type }}",
+                "aiType": {
+                    "CLOUD_AI": "Cloud AI",
+                    "LOCAL_AI": "Local AI"
+                }
+            },
+            "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
+            "name": "Name",
+            "studentId": "Login",
+            "teamShortName": "Short Name",
+            "completionDate": "Completion Date",
+            "lastResult": "Last Result",
+            "submissionCount": "Submissions",
+            "score": "Points",
+            "duration": "Duration",
+            "filter": "Filter",
+            "scoresFilter": "Filter: {{ filter }}",
+            "showBuildFailed": "Build Failed",
+            "showUnsuccessful": "Unsuccessful",
+            "showSuccessful": "Successful",
+            "showManual": "Manual",
+            "showAutomatic": "Automatic",
+            "showLocked": "Locked Assessments",
+            "showAll": "All",
+            "showFailed": "Latest Submission without Result",
+            "showNoSubmissions": "No Submissions",
+            "showNoPracticeMode": "Only graded participations",
+            "showingOnlyInRange": "Showing only results in range: {{ range }}",
+            "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
+            "tagPlaceholder": "+ Category",
+            "isProgramming": "This is a programming exercise",
+            "isModeling": "This is a modeling exercise",
+            "isQuiz": "This is a quiz exercise",
+            "isText": "This is a text exercise",
+            "isFileUpload": "This is a file upload exercise",
+            "notificationText": "What did you change?",
+            "submissionSuccessful": "The submission was successful",
+            "submissionUnsuccessful": "The submission was unsuccessful",
+            "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
+            "resultCreationSuccessful": "The result was created successfully",
+            "resultCreationUnsuccessful": "The result could not be created",
+            "presentationScoreEnabled": {
+                "title": "Presentation",
+                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
+            },
+            "codeEditorSync": {
+                "newCommitAlert": "New commit detected — A new commit was pushed to this repository. Save and submit your changes first, then refresh the page to load the latest version."
+            },
+            "metadataSync": {
+                "conflictTitle": "Exercise metadata conflicts",
+                "conflictIntro": "A new exercise version was saved while you were editing. Select which incoming values to apply.",
+                "conflictAuthor": "Updated by ",
+                "useIncoming": "Use incoming value for",
+                "useIncomingValue": "Use incoming value",
+                "useCurrentValue": "Use current value",
+                "yourValue": "Your value",
+                "incomingValue": "Incoming value",
+                "keepLocal": "Ignore incoming and continue",
+                "keepAllLocal": "Keep all my values",
+                "applyAllIncoming": "Apply all incoming values",
+                "applySelections": "Apply selections",
+                "untitledCriterion": "Untitled Criterion",
+                "snapshotFetchFailed": "Could not fetch the latest exercise version. Please refresh the page to see the most recent changes.",
+                "fields": {
+                    "buildConfig": {
+                        "sequentialTestRuns": "Sequential test runs",
+                        "buildPlanConfiguration": "Build plan configuration",
+                        "buildScript": "Build script",
+                        "checkoutSolutionRepository": "Checkout solution repository",
+                        "testCheckoutPath": "Test checkout path",
+                        "assignmentCheckoutPath": "Assignment checkout path",
+                        "solutionCheckoutPath": "Solution checkout path",
+                        "timeoutSeconds": "Timeout (seconds)",
+                        "dockerFlags": "Docker flags",
+                        "theiaImage": "Theia image",
+                        "onlineIdeExperienceLevel": "Online IDE experience level",
+                        "allowBranching": "Allow branching",
+                        "branchRegex": "Branch regex",
+                        "buildTimeWindowStart": "Build window start",
+                        "buildTimeWindowEnd": "Build window end"
+                    }
+                }
+            },
+            "errors": {
+                "exerciseNotFound": "This exercise was not found",
+                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!",
+                "deactivatedExerciseType": {
+                    "label": "Deactivated exercise type",
+                    "tooltip": "This exercise type is currently deactivated. Editing is currently not supported. You should contact the Artemis-hosting system administration."
+                }
+            },
+            "form": {
+                "title": {
+                    "undefined": "You need to specify a title.",
+                    "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces.",
+                    "disallowedValue": "The title is already used for another exercise.",
+                    "maxlength": "The title can be at most {{max}} characters long.",
+                    "minlength": "The title must be at least {{ min }} characters long."
+                },
+                "channelName": {
+                    "empty": "You need to specify a channel name."
+                },
+                "shortName": {
+                    "undefined": "You need to specify a short name.",
+                    "pattern": "The short name must begin with a letter and must not contain any special characters.",
+                    "minlength": "The short name must be at least 3 characters long.",
+                    "maxlength": "The short name must not exceed 36 characters.",
+                    "disallowedValue": "The short name is already used for another exercise."
+                },
+                "packageName": {
+                    "undefined": "You need to specify a package name.",
+                    "pattern": {
+                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\".",
+                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\".",
+                        "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\".",
+                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects.",
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
+                        "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
+                    },
+                    "maxlength": "The package name must not exceed {{ max }} characters."
+                },
+                "points": {
+                    "undefined": "You need to specify the points.",
+                    "customMin": "The number of points must be at least 1.",
+                    "customMax": "The number of points may not exceed 9999."
+                },
+                "bonusPoints": {
+                    "undefined": "You need to specify the bonus points.",
+                    "customMin": "The number of bonus points must be at least 0.",
+                    "customMax": "The number of bonus points may not exceed 9999."
+                },
+                "minTeamSize": {
+                    "min": "The minimal team size must not be less than 1 person.",
+                    "max": "The minimal team size must not exceed 99 people.",
+                    "required": "You need to specify the minimal team size."
+                },
+                "maxTeamSize": {
+                    "min": "The maximal team size must not be less than 1 person.",
+                    "max": "The maximal team size must not exceed 99 people.",
+                    "required": "You need to specify the maximal team size."
+                },
+                "timeline": {
+                    "required": "'{{ dateName }}' is required.",
+                    "order": "'{{ dateName }}' must be after or equal to all preceding dates.",
+                    "strictOrder": "'{{ dateName }}' must be after all preceding dates.",
+                    "invalidInput": "'{{ dateName }}' is not a valid date. Please use the format DD.MM.YYYY HH:mm.",
+                    "otherRequired": "'{{ dateName }}' can only be set once its preceding required date is set."
+                },
+                "maxPenalty": {
+                    "pattern": "The maximum penalty must be between 0 and 100 percent."
+                },
+                "continuousPlagiarismControl": {
+                    "similarityThreshold": {
+                        "pattern": "Similarity threshold must be 0-100 %."
+                    },
+                    "minimumScore": {
+                        "customMin": "Minimum score must be 0-100 %."
+                    },
+                    "minimumSize": {
+                        "customMin": "Minimum size must be a positive number."
+                    },
+                    "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod": {
+                        "pattern": "Response period must be 7-31 days."
+                    }
+                }
+            },
+            "exam": "Exam",
+            "isTeamExercise": "This is a team exercise.",
+            "update": {
+                "warning": {
+                    "warning": "Warning: These changes could cause problems",
+                    "saveExerciseWithoutReevaluation": "Save without re-evaluation",
+                    "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
+                    "instructionDeleted": "Grading instruction deleted",
+                    "creditChanged": "Grading instruction credit changed",
+                    "usageCountChanged": "Grading instruction usage count changed",
+                    "confirmText": "Do you want to save these changes or change them?",
+                    "reevaluateExercise": "Save with Re-evaluation",
+                    "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",
+                    "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
+                }
+            },
+            "isUsedForTutorial": "Tutor needs to review",
+            "action": "Action",
+            "exerciseAssessmentDashboard": "Assessment Dashboard",
+            "applyInstruction": "Apply this assessment instruction",
+            "applyInstructionHint": "Tick an assessment instruction to add it to the feedback, or drag & drop it onto a feedback element",
+            "instructionAppliedToReferencedElement": "Already applied to a feedback element. Remove it there to untick it."
+        }
+    }
+}

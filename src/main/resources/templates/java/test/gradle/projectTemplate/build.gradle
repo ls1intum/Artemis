@@ -1,0 +1,232 @@
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.process.CommandLineArgumentProvider
+
+plugins {
+    // %static-code-analysis-start%
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.5.12'
+    // %static-code-analysis-stop%
+    id 'com.teamscale' version '39.0.0'
+    id 'java'
+    id 'io.freefair.aspectj.post-compile-weaving' version '9.8.0'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+repositories {
+    // %maven-central-mirror-start%
+    maven {
+        name 'artemisMavenCentralMirror'
+        url '${mavenCentralMirrorUrl}'
+    }
+    // %maven-central-mirror-stop%
+    mavenCentral()
+    mavenLocal()
+}
+
+ext {
+    aresVersion = '2.2.1'
+    aspectjVersion = '1.9.25.1'
+}
+
+configurations {
+    // transitive = false: each configuration resolves to exactly one JAR, which is used by its file path below
+    aresAgent {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    aresAspectjRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    // Ares 2 comes with JUnit 5 and AssertJ
+    testImplementation "de.tum.cit.ase:ares:${aresVersion}"
+    // Puts Ares on the aspect path of the AspectJ compiler, otherwise nothing is woven into the student code
+    aspect "de.tum.cit.ase:ares:${aresVersion}"
+    implementation "org.aspectj:aspectjrt:${aspectjVersion}"
+    aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"
+    aresAspectjRuntime "org.aspectj:aspectjrt:${aspectjVersion}"
+    implementation 'org.apache.commons:commons-lang3:3.21.0'
+
+    // testImplementation(':${exerciseNamePomXml}')
+    // testImplementation(':${exerciseNamePomXml}-Solution')
+}
+
+abstract class AresJvmArguments implements CommandLineArgumentProvider {
+    @InputFiles
+    @PathSensitive(PathSensitivity.NONE)
+    abstract ConfigurableFileCollection getAgentJar()
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.NONE)
+    abstract ConfigurableFileCollection getAspectjRuntimeJar()
+
+    @Override
+    Iterable<String> asArguments() {
+        [
+                "-javaagent:${agentJar.singleFile.absolutePath}".toString(),
+                "-Xbootclasspath/a:${aspectjRuntimeJar.singleFile.absolutePath}".toString(),
+                '--add-exports', 'java.base/java.lang=ALL-UNNAMED',
+                '--add-exports', 'java.base/jdk.internal.misc=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.net=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.nio=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.nio.channels=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.util.concurrent=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.util.concurrent.locks=ALL-UNNAMED',
+                '--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',
+                '--add-opens', 'java.base/sun.net.www.protocol.http=ALL-UNNAMED',
+                '--add-opens', 'java.base/sun.net.www.protocol.https=ALL-UNNAMED',
+                '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED',
+                '--add-opens', 'jdk.unsupported/sun.misc=ALL-UNNAMED'
+        ]
+    }
+}
+
+def aresJvmArguments = objects.newInstance(AresJvmArguments)
+aresJvmArguments.agentJar.from(configurations.aresAgent)
+aresJvmArguments.aspectjRuntimeJar.from(configurations.aresAspectjRuntime)
+
+tasks.withType(Test).configureEach {
+    jvmArgumentProviders.add(aresJvmArguments)
+}
+
+def assignmentSrcDir = "${studentWorkingDirectoryNoSlash}"
+// %static-code-analysis-start%
+def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
+// %static-code-analysis-stop%
+
+sourceSets {
+    // %non-sequential-start%
+    test {
+        java {
+            srcDir 'test'
+        }
+        resources {
+            srcDir 'test'
+        }
+    }
+    // %non-sequential-stop%
+
+    // %sequential-start%
+    structuralTest {
+        java {
+            srcDir 'structural/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'structural/test'
+        }
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+
+    behaviorTest {
+        java {
+            srcDir 'behavior/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'behavior/test'
+        }
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+    // %sequential-stop%
+
+    main {
+        java {
+            srcDirs = [assignmentSrcDir]
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+}
+
+test {
+    defaultCharacterEncoding = 'UTF-8'
+    testLogging.showStandardStreams = true
+    useJUnitPlatform()
+}
+
+// %sequential-start%
+configurations {
+    structuralTestImplementation.extendsFrom testImplementation
+    structuralTestRuntime.extendsFrom testRuntime
+    behaviorTestImplementation.extendsFrom testImplementation
+    behaviorTestRuntime.extendsFrom testRuntime
+}
+
+tasks.register('structuralTests', Test) {
+    testClassesDirs = sourceSets.structuralTest.output.classesDirs
+    classpath += sourceSets.structuralTest.runtimeClasspath
+    useJUnitPlatform()
+}
+
+tasks.register('behaviorTests', Test) {
+    testClassesDirs = sourceSets.behaviorTest.output.classesDirs
+    classpath += sourceSets.behaviorTest.runtimeClasspath
+    useJUnitPlatform()
+}
+// %sequential-stop%
+
+// %static-code-analysis-start%
+checkstyle {
+    toolVersion = '14.4.0'
+    configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    configDirectory.set(file(scaConfigDirectory))
+    ignoreFailures = true
+    // exclude the test files
+    checkstyleTest.enabled = false
+    checkstyleMain.reports {
+        xml.outputLocation = file('target/checkstyle-result.xml')
+    }
+}
+
+spotbugs {
+    excludeFilter = file("$scaConfigDirectory/spotbugs-exclusions.xml")
+    ignoreFailures = true
+    // exclude the test files
+    spotbugsTest.enabled = false
+    spotbugsMain.reports {
+        xml {
+            enabled = true
+            outputLocation = file('target/spotbugsXml.xml')
+        }
+        html.enabled = false
+    }
+}
+
+pmd {
+    ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
+    rulesMinimumPriority = 5
+    ignoreFailures = true
+    toolVersion = '7.28.0'
+    // exclude the test files
+    pmdTest.enabled = false
+    pmdMain.reports {
+        xml.outputLocation = file('target/pmd.xml')
+    }
+}
+// %static-code-analysis-stop%
+
+// Ares reserved-package build boundary, version 2: student code must not shadow trusted packages
+apply from: 'gradle/AresReservedPackages.gradle'

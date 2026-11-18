@@ -1,0 +1,222 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { CreateFaqDTO, Faq, FaqImportSearchResult, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+type EntityResponseType = HttpResponse<Faq>;
+type EntityArrayResponseType = HttpResponse<Faq[]>;
+
+@Service()
+export class FaqService {
+    private http = inject(HttpClient);
+
+    public resourceUrl = 'api/communication/courses';
+
+    create(courseId: number, createFaqDTO: CreateFaqDTO): Observable<EntityResponseType> {
+        const copy = FaqService.convertCreateFaqFromClient(createFaqDTO);
+        return this.http.post<Faq>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                return res;
+            }),
+        );
+    }
+
+    update(courseId: number, updateFaqDTO: UpdateFaqDTO): Observable<EntityResponseType> {
+        const copy = FaqService.convertUpdateFaqFromClient(updateFaqDTO);
+        return this.http.put<Faq>(`${this.resourceUrl}/${courseId}/faqs/${updateFaqDTO.id}`, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                return res;
+            }),
+        );
+    }
+
+    find(courseId: number, faqId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
+    }
+
+    findForManagement(courseId: number, faqId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faqId}/for-management`, { observe: 'response' })
+            .pipe(map((res) => FaqService.convertFaqCategoriesFromServer(res)));
+    }
+
+    findAllForManagement(courseId: number, faqState?: FaqState): Observable<EntityArrayResponseType> {
+        const params = faqState ? new HttpParams().set('faqState', faqState) : new HttpParams();
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/for-management`, { observe: 'response', params })
+            .pipe(map((res) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllCategoriesForManagement(courseId: number, faqState?: FaqState): Observable<HttpResponse<string[]>> {
+        const params = faqState ? new HttpParams().set('faqState', faqState) : new HttpParams();
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/for-management`, { observe: 'response', params });
+    }
+
+    /**
+     * Searches visible FAQs outside the target course without loading every source course.
+     * @param courseId target course, excluded from the results
+     * @param searchTerm literal substring of the question, answer, or course name
+     * @param page zero-based result page
+     * @returns source FAQ details and exact pagination totals, normalizing omitted empty fields
+     */
+    searchForImport(courseId: number, searchTerm: string, page: number): Observable<FaqImportSearchResult> {
+        const params = new HttpParams().set('searchTerm', searchTerm).set('page', page);
+        return this.http
+            .get<Partial<FaqImportSearchResult>>(`${this.resourceUrl}/${courseId}/faqs/for-import`, { params })
+            .pipe(map((result) => ({ resultsOnPage: result.resultsOnPage ?? [], numberOfPages: result.numberOfPages ?? 0, totalElements: result.totalElements ?? 0 })));
+    }
+
+    /**
+     * Copies selected FAQs into the target course and decodes their categories for the course list.
+     * The server rechecks source access and accepts at most 500 distinct source IDs.
+     * @param courseId target course where the caller is an instructor
+     * @param faqIds source FAQ IDs selected across searches and pages
+     * @returns the created FAQ copies with their new IDs
+     */
+    importFaqs(courseId: number, faqIds: number[]): Observable<EntityArrayResponseType> {
+        return this.http
+            .post<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/import`, { faqIds }, { observe: 'response' })
+            .pipe(map((res) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllByCourseIdAndState(courseId: number, faqState: FaqState): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faq-state/${faqState}`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    delete(courseId: number, faqId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' });
+    }
+
+    findAllCategoriesByCourseId(courseId: number) {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories`, {
+            observe: 'response',
+        });
+    }
+    /**
+     * Converts the faq category json string into FaqCategory objects (if it exists).
+     * @param res the response
+     */
+    static convertFaqCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body?.categories) {
+            FaqService.parseFaqCategories(res.body);
+        }
+        return res;
+    }
+
+    /**
+     * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
+     * @param faq the faq
+     */
+    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO): string[] | undefined {
+        // Skip already-serialized entries so a second call does not double-encode them.
+        return faq.categories?.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+    }
+
+    convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
+        return categories.map((category) => parseJson<FaqCategory>(category));
+    }
+
+    /**
+     * Converts the faq category json strings into FaqCategory objects (if it exists).
+     * @param res the response
+     */
+    static convertFaqCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
+        if (res.body) {
+            res.body.forEach((faq: Faq) => FaqService.parseFaqCategories(faq));
+        }
+        return res;
+    }
+
+    /**
+     * Parses the faq categories JSON string into {@link FaqCategory} objects.
+     * @param faq - the faq
+     */
+    static parseFaqCategories(faq?: Faq) {
+        if (faq?.categories) {
+            faq.categories = faq.categories.map((category) => {
+                // Server sends categories as JSON strings; the model field carries FaqCategory objects after parsing.
+                const categoryObj = typeof category === 'string' ? parseJson<FaqCategory>(category) : category;
+                return new FaqCategory(categoryObj.category, categoryObj.color);
+            });
+        }
+    }
+
+    /**
+     * Prepare client-faq to be uploaded to the server
+     * @param { CreateFaqDTO } createFaq - faq that will be modified
+     */
+    static convertCreateFaqFromClient<F extends CreateFaqDTO>(createFaq: F): CreateFaqDTO {
+        const copy = deepClone(createFaq);
+        copy.categories = FaqService.stringifyFaqCategories(copy);
+        return copy;
+    }
+
+    /**
+     * Prepare client-faq to be uploaded to the server
+     * @param { UpdateFaqDTO } updateFaq - faq that will be modified
+     */
+    static convertUpdateFaqFromClient<F extends UpdateFaqDTO>(updateFaq: F): UpdateFaqDTO {
+        const copy = deepClone(updateFaq);
+        copy.categories = FaqService.stringifyFaqCategories(copy);
+        return copy;
+    }
+
+    toggleFilter(category: string, activeFilters: Set<string>) {
+        if (activeFilters.has(category)) {
+            activeFilters.delete(category);
+        } else {
+            activeFilters.add(category);
+        }
+        return activeFilters;
+    }
+
+    applyFilters(activeFilters: Set<string>, faqs: Faq[]): Faq[] {
+        if (activeFilters.size === 0) {
+            // If no filters selected, show all faqs
+            return faqs;
+        } else {
+            return faqs.filter((faq) => this.hasFilteredCategory(faq, activeFilters));
+        }
+    }
+
+    hasFilteredCategory(faq: Faq, filteredCategory: Set<string>) {
+        const categories = faq.categories?.map((category) => category.category);
+        if (categories) {
+            return categories.some((category) => filteredCategory.has(category!));
+        }
+        return false;
+    }
+
+    hasSearchTokens(faq: Faq, searchTerm: string): boolean {
+        if (searchTerm === '') {
+            return true;
+        }
+        const tokens = searchTerm.toLowerCase().split(' ');
+        const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
+        return tokens.every((token) => faqText.includes(token));
+    }
+
+    findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
+    }
+}

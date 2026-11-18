@@ -1,0 +1,46 @@
+package de.tum.cit.aet.artemis.lti.dto;
+
+import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.MAX_USER_PREFIX_LENGTH;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+
+/**
+ * DTO for exposing and updating online course LTI configuration.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record OnlineCourseConfigurationDTO(@Nullable Long id, @NotBlank @Size(max = MAX_USER_PREFIX_LENGTH) String userPrefix, @NotNull Boolean requireExistingUser,
+        @Nullable LtiPlatformConfigurationDTO ltiPlatformConfiguration) {
+
+    public static OnlineCourseConfigurationDTO of(OnlineCourseConfiguration config) {
+        return new OnlineCourseConfigurationDTO(config.getId(), config.getUserPrefix(), config.isRequireExistingUser(),
+                config.getLtiPlatformConfiguration() == null ? null : LtiPlatformConfigurationDTO.of(config.getLtiPlatformConfiguration()));
+    }
+
+    /**
+     * Creates an online course configuration entity from the given DTO.
+     *
+     * The linked platform is intentionally not reconstructed from request data. Controllers must
+     * attach the managed platform entity explicitly to avoid detached-entity issues and to keep
+     * platform updates restricted to the admin endpoints.
+     *
+     * @param dto the DTO to convert
+     * @return the corresponding entity
+     */
+    public static OnlineCourseConfiguration from(OnlineCourseConfigurationDTO dto) {
+        OnlineCourseConfiguration config = new OnlineCourseConfiguration();
+        config.setId(dto.id());
+        config.setUserPrefix(dto.userPrefix());
+        config.setRequireExistingUser(dto.requireExistingUser());
+        return config;
+    }
+}

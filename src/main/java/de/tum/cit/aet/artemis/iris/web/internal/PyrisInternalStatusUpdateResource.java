@@ -1,0 +1,278 @@
+package de.tum.cit.aet.artemis.iris.web.internal;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.annotations.Internal;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+
+/**
+ * REST controller for providing Pyris access to Artemis internal data and status updates.
+ * All endpoints in this controller authenticate with the signed callback token of the run.
+ * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, String, Class)} for more information.
+ */
+@Lazy
+@FeatureUsage(UserFeature.IRIS_CHAT)
+@RestController
+@Conditional(IrisEnabled.class)
+@RequestMapping("api/iris/internal/")
+public class PyrisInternalStatusUpdateResource {
+
+    private final PyrisJobService pyrisJobService;
+
+    private final PyrisStatusUpdateService pyrisStatusUpdateService;
+
+    private final IrisCommandService irisCommandService;
+
+    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService, IrisCommandService irisCommandService) {
+        this.pyrisJobService = pyrisJobService;
+        this.pyrisStatusUpdateService = pyrisStatusUpdateService;
+        this.irisCommandService = irisCommandService;
+    }
+
+    /**
+     * POST internal/pipelines/chat/runs/:runId/status : Set the status of any Iris chat job (exercise, text exercise, course, or lecture)
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("pipelines/chat/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, ChatJob.class);
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/chat/runs/:runId/command : Execute a command Iris wants to perform on the client mid-pipeline (e.g. point the student to a slide page / video
+     * timestamp in the combined view) and return synchronously whether it was carried out. The call blocks until the client acknowledges or a timeout elapses, so the Pyris agent
+     * tool learns the real outcome before formulating its answer.
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId   the ID of the job
+     * @param command the command to execute
+     * @param request the HTTP request
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     * @return the {@link PyrisCommandResultDTO} once the client responds or the wait times out
+     */
+    @PostMapping("pipelines/chat/runs/{runId}/command")
+    @Internal
+    public ResponseEntity<PyrisCommandResultDTO> executeChatCommand(@PathVariable String runId, @RequestBody PyrisCommandDTO command, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, ChatJob.class);
+
+        return ResponseEntity.ok(irisCommandService.executeCommand(job, command, pyrisJobService.getChatJobClientId(job.jobId())));
+    }
+
+    /**
+     * POST internal/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
+    @PostMapping("pipelines/competency-extraction/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, CompetencyExtractionJob.class);
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/tutor-suggestion/runs/:runId/status : Send the tutor suggestion response in a status update
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
+    @PostMapping("pipelines/tutor-suggestion/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setTutorSuggestionJobStatus(@PathVariable String runId, @RequestBody TutorSuggestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, TutorSuggestionJob.class);
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/autonomous-tutor/runs/:runId/status : Send the autonomous tutor response in a status update
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
+    @PostMapping("pipelines/autonomous-tutor/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setAutonomousTutorJobStatus(@PathVariable String runId, @RequestBody PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, AutonomousTutorJob.class);
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/struggle-intervention/runs/:runId/status : Send the struggle-intervention response in a status update
+     * <p>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @FeatureUsage(UserFeature.IRIS_STRUGGLE_INTERVENTION)
+    @PostMapping("pipelines/struggle-intervention/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStruggleInterventionJobStatus(@PathVariable String runId, @RequestBody PyrisStruggleInterventionStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, StruggleInterventionJob.class);
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/pipelines/global-search/runs/{runId}/status} : Receive a Pyris status update for an async global search Iris answer job.
+     * <p>
+     * Pyris sends two callbacks per request:
+     * <ol>
+     * <li>Thinking – when the query is classified as a real question ({@code runState == RUNNING}).</li>
+     * <li>Result – when the LLM pipeline finishes ({@code answer} is non-null or null for nav queries).</li>
+     * </ol>
+     * Authenticated with the signed callback token of the run.
+     *
+     * @param runId           the run id from the URL path
+     * @param statusUpdateDTO the status update payload
+     * @param request         the HTTP request (carries the callback token)
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @FeatureUsage(UserFeature.IRIS_SEARCH_ANSWER)
+    @PostMapping("pipelines/global-search/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfGlobalSearchAnswerJob(@PathVariable String runId, @RequestBody PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, GlobalSearchAnswerJob.class);
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
+    @PostMapping("webhooks/ingestion/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, PyrisJob.class);
+        if (!(job instanceof LectureIngestionWebhookJob lectureIngestionWebhookJob)) {
+            throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(lectureIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
+    @PostMapping("webhooks/ingestion/faqs/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, PyrisJob.class);
+        if (!(job instanceof FaqIngestionWebhookJob faqIngestionWebhookJob)) {
+            throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
+        }
+        pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+}

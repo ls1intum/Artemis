@@ -1,0 +1,12 @@
+<a
+    [id]="'exam-' + subjectId() + '-' + (subpage() || 'detail')"
+    [attr.data-testid]="'sidebar-subpage-' + (subpage() || 'detail')"
+    [routerLink]="subpage() ? [subjectId(), subpage()] : [subjectId()]"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: !subpage() }"
+    ariaCurrentWhenActive="page"
+    class="nav-link-subpage flex items-center gap-2 px-2 py-1 rounded-md no-underline"
+>
+    <fa-icon [icon]="icon()" class="w-4 text-center" />
+    <span> {{ title() }} </span>
+</a>

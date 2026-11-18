@@ -1,0 +1,190 @@
+package de.tum.cit.aet.artemis.text.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
+import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventInputDTO;
+import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+
+/**
+ * REST controller for managing TextAssessmentEventResource.
+ */
+@Conditional(TextEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.TUTOR_EFFORT)
+@RestController
+@RequestMapping("api/text/")
+public class TextAssessmentEventResource {
+
+    private static final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
+
+    private final TextAssessmentEventRepository textAssessmentEventRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    @Value("${info.textAssessmentAnalyticsEnabled}")
+    private Optional<Boolean> textAssessmentAnalyticsEnabled;
+
+    public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            CourseRepository courseRepository, TextSubmissionRepository textSubmissionRepository) {
+        this.textAssessmentEventRepository = textAssessmentEventRepository;
+        this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
+    }
+
+    /**
+     * The text assessment analytics are enabled when the configuration info.textAssessmentAnalyticsEnabled is set to true.
+     * A non-existing entry or false mean that the text assessment analytics is not enabled
+     *
+     * @return whether the text assessment analytics are enabled or not
+     */
+    private boolean isTextAssessmentAnalyticsEnabled() {
+        return textAssessmentAnalyticsEnabled.isPresent() && Boolean.TRUE.equals(textAssessmentAnalyticsEnabled.get());
+    }
+
+    /**
+     * POST event-insights/text-assessment/events : Adds an assessment event into the text_assessment_event table.
+     *
+     * @param dto the DTO containing the event data to be added
+     * @return the status of the finished request
+     */
+    @PostMapping("event-insights/text-assessment/events")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEventInputDTO dto) throws URISyntaxException {
+        log.debug("REST request to save assessmentEvent : {}", dto);
+
+        TextAssessmentEvent event = dto.toEntity();
+        // Check if the text assessment analytics feature is enabled
+        // Save the event if it is valid. All other requests are considered bad requests.
+        if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
+            textAssessmentEventRepository.save(event);
+            return ResponseEntity.created(new URI("/api/text/admin/event-insights/text-assessment/events?courseId=" + event.getCourseId())).build();
+        }
+        // TODO: this is not really nice, because the reason for the bad request is not given
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * GET event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved : get the number of the tutors involved in the list of events
+     *
+     * @param courseId   the id of the course to query events for
+     * @param exerciseId the id of the exercise to query events for
+     * @return an integer representing the number of tutors involved for the respective course and exercise
+     */
+    @GetMapping("event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        Integer numberOfTutors = textAssessmentEventRepository.getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(courseId, exerciseId);
+        log.debug("REST request to get number of tutors involved : {}", numberOfTutors);
+        return ResponseEntity.ok().body(numberOfTutors);
+    }
+
+    /**
+     * This method checks that the event parameter is valid.
+     * - The user id received should match the logged-in users id.
+     * - The user should be at least tutor of the course
+     * - The course id received should exist
+     * - The exercise id received should be an exercise of the course.
+     *
+     * @param event the event to be validated
+     * @return whether the event is valid or not
+     */
+    private boolean validateEvent(TextAssessmentEvent event) {
+        // avoid access from tutor if they are not part of the course
+        User user = userRepository.getUserWithAuthorities();
+
+        // The ID check is defense-in-depth: the DTO doesn't have an ID field, so client-specified IDs
+        // are silently ignored during JSON deserialization. This check guards against future changes.
+        // Also reject if the logged-in user id and received event user id do not match,
+        // or if the event submission id is null.
+        if (event.getId() != null || !user.getId().equals(event.getUserId()) || event.getSubmissionId() == null) {
+            return false;
+        }
+
+        // check if user has enough roles to access the course
+        if (!isUserInCourseWithId(user, event.getCourseId())) {
+            return false;
+        }
+
+        // check if the received event submission data is valid
+        return isEventSubmissionValid(event);
+    }
+
+    /**
+     * Checks if the given user is at least a tutor in the course with the given id
+     *
+     * @param user     the user to be checked
+     * @param courseId the id of the course that the user should be at least tutor of
+     * @return whether the user is or isn't in the course specified
+     */
+    private boolean isUserInCourseWithId(User user, Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Checks if the data corresponding to the submission in the given TextAssessmentEvent corresponds to an actual
+     * non-example submission that exists in the database. In case such a submission doesn't exist in the database it should be ignored.
+     *
+     * @param event the event to be checked against the database
+     * @return whether the event is valid or not
+     */
+    private boolean isEventSubmissionValid(TextAssessmentEvent event) {
+        // Fetch the text submission by the received event submission id
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(event.getSubmissionId());
+        if (textSubmission.isEmpty()) {
+            return false;
+        }
+        TextSubmission submission = textSubmission.get();
+        // Ignore events for example submissions
+        if (submission.isExampleSubmission() != null && submission.isExampleSubmission()) {
+            return false;
+        }
+
+        // fetch all the relevant id's to be checked
+        Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
+        Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();
+        Long fetchedExerciseId = fetchedExercise.getId();
+        Long fetchedCourseId = fetchedExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        // check if ids of the event ids match with the actual datas id in the repository.
+        return fetchedCourseId.equals(event.getCourseId()) && fetchedExerciseId.equals(event.getTextExerciseId()) && fetchedParticipationId.equals(event.getParticipationId());
+    }
+}

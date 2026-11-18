@@ -1,0 +1,159 @@
+{
+    "artemisApp": {
+        "result": {
+            "home": {
+                "title": "Results",
+                "createLabel": "Bewertung erstellen"
+            },
+            "created": "Bewertung erstellt mit ID {{ param }}",
+            "updated": "Bewertung aktualisiert mit ID {{ param }}",
+            "deleted": "Bewertung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Bewertung {{ id }} wirklich dauerhaft gelöscht werden?",
+                "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
+                "buttonText": "Löschen",
+                "error": {
+                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden, wenn es zu ihr eine Beschwerde gibt!"
+                }
+            },
+            "detail": {
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback für Teilaufgabe: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Codeissue",
+                    "title": "{{ scaCategory }} Issue in Datei {{ location }}",
+                    "line": "in Zeile {{ line }}",
+                    "lines": "in Zeilen {{ from }}-{{ to }}",
+                    "column": "Spalte {{ column }}",
+                    "columns": "Spalten {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Testfall",
+                    "noInfo": "Kein Ergebnis für {{ name }}",
+                    "passed": "{{ name }} bestanden",
+                    "failed": "{{ name }} fehlgeschlagen"
+                }
+            },
+            "noResult": "Kein Ergebnis",
+            "noGradedResult": "Nicht gewertet",
+            "resultString": {
+                "resultString": "Ergebnistext",
+                "buildFailed": "Build gescheitert",
+                "buildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
+                "buildSuccessfulTests": "{{ numberOfTestsPassed }} von {{ numberOfTestsTotal }} bestanden",
+                "nonProgramming": "{{ relativeScore }}%, {{ points }} Punkte",
+                "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} Punkte",
+                "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} Punkte",
+                "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
+                "short": "{{ relativeScore }}%",
+                "automaticAIFeedbackSuccessful": "Feedback",
+                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackInProgress": "Feedbackanfrage",
+                "automaticAIFeedbackTimedOut": "Feedbackanfrage ist ohne Ergebnis abgelaufen",
+                "automaticAIFeedbackSuccessfulTooltip": "AI-Feedbackanfrage war erfolgreich. Beachte, dass die Ergebnisse Fehler beinhalten können. Verwende sie nur zur Orientierung.",
+                "automaticAIFeedbackFailedTooltip": "AI-Feedbackanfrage ist aufgrund eines internen Fehlers fehlgeschlagen. Bitte versuche es in Kürze erneut oder kontaktiere die Artemis-Administratoren, sollte der Fehler wieder auftreten.",
+                "automaticAIFeedbackInProgressTooltip": "AI-Feedback wird generiert.",
+                "automaticAIFeedbackTimedOutTooltip": "Die Zeit für die Generierung des AI-Feedbacks ist abgelaufen. Bitte versuche es in Kürze erneut oder kontaktiere die Artemis-Administratoren, sollte der Fehler wieder auftreten."
+            },
+            "completionDate": "Abgabedatum",
+            "successful": "Erfolgreich",
+            "buildError": "Build Fehler:",
+            "score": "Deine Bewertung ist {{score}}%",
+            "scorePercentage": "Bewertung (in %)",
+            "scoreWithPoints": "Deine Bewertung ist {{score}}%, {{points}} Punkte",
+            "currentScore": "Aktuelle Bewertung",
+            "rated": "Bewertet",
+            "assessmentType": "Bewertungstyp",
+            "assessor": "Reviewer:in",
+            "feedbacks": "Feedback",
+            "submission": "Einreichung",
+            "participation": "Teilnahme",
+            "createManual": "Erstelle manuelles Ergebnis",
+            "updateManual": "Manuelles Ergebnis aktualisieren",
+            "viewManual": "Manuelles Ergebnis anzeigen",
+            "manualResult": "Manuelles Ergebnis",
+            "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
+            "resultStringRequired": "Ein Ergebnistext ist erforderlich.",
+            "studentLogin": "Studierende Person",
+            "studentLoginRequired": "Wähle eine studierende Person aus.",
+            "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
+            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Studierende können das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
+            "addFeedback": "Neues Feedback hinzufügen",
+            "deleteFeedback": "Letztes Feedback löschen",
+            "feedbackTextRequired": "Feedbacktext ist erforderlich.",
+            "positive": "Positiv",
+            "graded": "Bewertet",
+            "gradedTooltip": "Dieses Ergebnis ist Teil der bewerteten Abgabe",
+            "notGraded": "Nicht bewertet",
+            "notGradedTooltip": "Dieses Ergebnis ist kein Teil der Bewertung",
+            "practice": "Übung",
+            "practiceTooltip": "Dieses Ergebnis ist Teil der Übungsabgabe und hat keinen Einfluss auf deine Bewertung",
+            "preliminary": "vorläufig",
+            "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
+            "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",
+            "preliminaryTooltipAthena": "Dies ist eine KI-Bewertung. Das tatsächliche Ergebnis kann abweichen.",
+            "codeIssuesTooltip": "Die automatische Codeanalyse hat Codeissues gefunden.",
+            "detailsLoadingFailed": "Die Feedbackdetails konnten nicht geladen werden.",
+            "buildLogsLoading": "Build-Logs werden geladen …",
+            "buildLogsLoadingFailed": "Die Build-Logs konnten nicht geladen werden.",
+            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
+            "onlyCompilationTested": "Dein Code kompiliert erfolgreich. Derzeit sind keine Testfälle sichtbar.",
+            "chart": {
+                "points": "Punkte",
+                "deductions": "Abzüge",
+                "tooltip": "Deine Punktabzüge werden begrenzt, um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen.",
+                "filterApplied": "Das Feedback ist gefiltert.",
+                "reset": "Zurücksetzen"
+            },
+            "linkedCommit": "Dieses Ergebnis ist mit dem folgenden Commit verknüpft:",
+            "missing": {
+                "viewPrevious": "Letztes Ergebnis anzeigen",
+                "programmingFailedSubmission": {
+                    "message": "Kein entsprechendes Ergebnis verfügbar.",
+                    "tooltipOfflineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code manuell in deiner IDE, z.B. überprüfe, ob dein Code lokal kompiliert und korrekt funktioniert.",
+                    "tooltipOnlineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code soweit möglich manuell."
+                }
+            },
+            "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
+            "seeMore": "Mehr anzeigen",
+            "noFeedback": "Kein Feedback verfügbar",
+            "afterDueDateFeedbackHidden": "Auch nach der Einreichungsfrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall, wenn für andere Studierende eine spätere Einreichungsfrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein.",
+            "testCount": "Du hast {{passed}} von {{total}} Tests bestanden.",
+            "notExecutedTests": "{{numberOfNotExecutedTests}} Tests wurden nicht ausgeführt.",
+            "notExecutedTestsTooltip": "Diese Tests werden eventuell nur nach der Einreichungsfrist ausgeführt oder es gab ein Problem während der Ausführung der Tests.",
+            "scaIssueCount": "Du hast {{issues}} Code-Issues.",
+            "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen.",
+            "buildLogs": {
+                "viewLogs": "Logs anzeigen"
+            },
+            "progressString": {
+                "title": "Ergebnisverlauf",
+                "resultsCount": {
+                    "one": "{{ count }} Ergebnis",
+                    "other": "{{ count }} Ergebnisse"
+                },
+                "feedbackButton": "Feedback",
+                "clickToSeeAllResults": "Klicke hier, um alle Ergebnisse zu sehen",
+                "buildFailed": "Dein Build ist fehlgeschlagen!",
+                "goalReached": "Ziel erreicht! Ausgezeichnete Arbeit.",
+                "niceProgress": "Guter Fortschritt! Du kommst näher.",
+                "scoreDrop": "Ups, deine Punktzahl ist gesunken. Versuche einen anderen Ansatz!",
+                "stuck": "Steckst du fest? Versuche einen neuen Ansatz."
+            }
+        },
+        "externalSubmission": {
+            "searchPlaceholder": "Nach Login, Name, E-Mail oder Matrikelnummer suchen",
+            "searchTooShort": "Gib mindestens {{ min }} Zeichen ein, um zu suchen.",
+            "noResults": "Keine passenden Studierenden.",
+            "moreResults": "Es werden die ersten {{ shown }} von {{ total }} passenden Studierenden angezeigt. Gib mehr ein, um die Suche einzugrenzen.",
+            "searchFailed": "Die Suche ist fehlgeschlagen. Versuche es erneut.",
+            "clearSelection": "Ausgewählte studierende Person entfernen",
+            "ineligible": {
+                "notInCourse": "nicht in diesem Kurs eingeschrieben",
+                "noStudentExam": "hat keine individuelle Klausur",
+                "exerciseNotInStudentExam": "Aufgabe nicht in der individuellen Klausur",
+                "resultAlreadyExists": "hat bereits ein Ergebnis"
+            }
+        }
+    }
+}

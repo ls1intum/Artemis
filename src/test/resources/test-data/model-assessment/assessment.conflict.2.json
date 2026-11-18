@@ -1,0 +1,44 @@
+[
+    {
+        "referenceId": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+        "referenceType": "Class",
+        "reference": "Class:66912b2d-0c8e-4663-af39-f69acb9350e1",
+        "credits": 1,
+        "text": ""
+    },
+    {
+        "referenceId": "6e47db46-9343-4fc9-96bd-37342991bdc5",
+        "referenceType": "ClassMethod",
+        "reference": "ClassMethod:6e47db46-9343-4fc9-96bd-37342991bdc5",
+        "credits": -1,
+        "text": ""
+    },
+    {
+        "referenceId": "77f659ca-670f-4942-beb1-5b257971fc27",
+        "referenceType": "Class",
+        "reference": "Class:77f659ca-670f-4942-beb1-5b257971fc27",
+        "credits": 0.5,
+        "text": ""
+    },
+    {
+        "referenceId": "594ab1eb-2f79-4573-a9a7-4806f631c5fe",
+        "referenceType": "ClassAttribute",
+        "reference": "ClassAttribute:594ab1eb-2f79-4573-a9a7-4806f631c5fe",
+        "credits": 0.5,
+        "text": ""
+    },
+    {
+        "referenceId": "62db30c6-520e-4346-b841-4cf98857d784",
+        "referenceType": "ClassMethod",
+        "reference": "ClassMethod:62db30c6-520e-4346-b841-4cf98857d784",
+        "credits": 0.5,
+        "text": ""
+    },
+    {
+        "referenceId": "0749e2c9-1abc-4460-a28d-b6ffdd52b026",
+        "referenceType": "ClassInheritance",
+        "reference": "ClassInheritance:0749e2c9-1abc-4460-a28d-b6ffdd52b026",
+        "credits": 1,
+        "text": ""
+    }
+]

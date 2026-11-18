@@ -1,0 +1,38 @@
+{
+    "questions": [
+        {
+            "id": "q1",
+            "type": "multiple-choice",
+            "title": "Binary Search Complexity",
+            "questionText": "What is the **time complexity** of binary search on a sorted array of `n` elements?",
+            "options": [
+                { "text": "`O(log n)`", "correct": true },
+                { "text": "`O(n)`", "correct": false },
+                { "text": "`O(n log n)`", "correct": false },
+                { "text": "`O(1)`", "correct": false }
+            ]
+        },
+        {
+            "id": "q2",
+            "type": "single-choice",
+            "title": "Stack vs Queue",
+            "questionText": "Which data structure follows the **LIFO** (Last In, First Out) principle?",
+            "options": [
+                { "text": "Stack", "correct": true },
+                { "text": "Queue", "correct": false },
+                { "text": "Linked List", "correct": false },
+                { "text": "Heap", "correct": false }
+            ]
+        },
+        {
+            "id": "q3",
+            "type": "true-false",
+            "title": "Hash Table Lookup",
+            "questionText": "A well-implemented hash table provides `O(1)` average-case lookup time.",
+            "options": [
+                { "text": "True", "correct": true },
+                { "text": "False", "correct": false }
+            ]
+        }
+    ]
+}

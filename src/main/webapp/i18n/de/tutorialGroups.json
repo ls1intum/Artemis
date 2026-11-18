@@ -1,0 +1,419 @@
+{
+    "artemisApp": {
+        "errors": {
+            "scheduleOverlapsWithSession": "Der Zeitplan überschneidet sich mit den folgenden Sitzungen: {{ sessions }}",
+            "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
+        },
+        "generic": {
+            "more": "Mehr...",
+            "offline": "Offline",
+            "online": "Online",
+            "repetitions": {
+                "everyWeek": "Jede Woche",
+                "everyNWeeks": "Alle {{ n }} Wochen"
+            },
+            "timeZone": "Zeitzone: {{ timeZone }}"
+        },
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Tutorien",
+                "title": "Titel",
+                "campus": "Campus",
+                "teachingAssistant": "Tutor:in",
+                "registrationsWithCapacity": "Registrierungen / Kapazität",
+                "channelReverse": "Kanal der Übungsgruppe {{ title }}",
+                "utilization": "Auslastung",
+                "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
+                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "room": "Raum",
+                "schedule": "Termin",
+                "noAttendanceRecorded": "Noch keine Anwesenheit erfasst."
+            },
+            "tutorialFreePeriod": {
+                "startDate": "Startdatum",
+                "endDate": "Enddatum",
+                "reason": "Grund"
+            }
+        },
+        "forms": {
+            "tutorialFreePeriodForm": {
+                "timeFrame": {
+                    "label": "Zeitraum",
+                    "periodWithinDay": "Freier Zeitraum innerhalb eines Tages",
+                    "period": "Freier Zeitraum",
+                    "day": "Freier Tag"
+                },
+                "dateInput": {
+                    "label": "Datum",
+                    "labelStart": "Anfangsdatum",
+                    "labelEnd": "Enddatum",
+                    "labelStartTime": "Startuhrzeit",
+                    "labelEndTime": "Enduhrzeit",
+                    "invalidEndDateError": "Das Enddatum muss nach dem Startdatum sein!"
+                },
+                "reasonInput": {
+                    "label": "Grund für keine Übungsgruppen an diesem Tag",
+                    "placeholder": "Nationalfeiertag",
+                    "maxLengthValidationError": "Die Vernunft beschränkt sich auf {{ max }} Zeichen!"
+                }
+            },
+            "configurationForm": {
+                "hero": {
+                    "title": "Übungsgruppen-Konfiguration",
+                    "description": "Standardeinstellungen für alle Übungsgruppen dieses Kurses."
+                },
+                "timeZoneInput": {
+                    "label": "Übungsgruppen-Zeitzone",
+                    "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
+                    "invalidTimeZone": "Bitte wähle eine gültige Zeitzone aus der Liste der Vorschläge aus."
+                },
+                "periodInput": {
+                    "label": "Übungsgruppen-Zeitraum",
+                    "explanation": "Der Zeitraum, in dem die Übungsgruppen im Semester stattfinden. Dies ist der Standardplan für jede Übungsgruppe. Er kann durch individuelle Zeitpläne überschrieben werden. Wenn du hier z.B. '01-01-2020 - 01-06-2020' eingibst, haben alle Übungsgruppen standardmäßig einen Zeitplan von '01-01-2020 - 01-06-2020'. Du kannst dies später für einzelne Übungsgruppen ändern.",
+                    "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
+                    "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
+                    "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
+                },
+                "useTutorialGroupChannelsInput": {
+                    "label": "Artemis verwaltete Übungsgruppen-Kommunikationskanäle verwenden",
+                    "channelDeletionWarning": "Wenn diese Option deaktiviert wird, werden alle Übungsgruppen-Kommunikationskanäle gelöscht. Soll das wirklich gemacht werden?",
+                    "explanation": "Wenn diese Option aktiviert ist, erstellt Artemis für jede Übungsgruppe einen eigenen Kanal im Abschnitt 'Kommunikation' des Kurses. Der Kanal kann immer noch manuell verwaltet werden, aber Artemis führt einige allgemeine Verwaltungsaufgaben automatisch aus. Artemis fügt automatisch Studierende zum Kanal hinzu oder entfernt sie aus diesem, wenn sie sich für die Übungsgruppe an- oder abmelden. Der / Die zugewiesene Tutor:in der Übungsgruppe wird zum / zur Moderator:in des Kanals. Der Kanal wird gelöscht, wenn die Übungsgruppe gelöscht wird. Er kann nicht manuell gelöscht werden. Diese Option kann später noch geändert werden."
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Sie ermöglicht es, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "noTutorialGroupsTitle": "Noch keine Übungsgruppen",
+                "title": "Übungsgruppen-Verwaltung",
+                "freePeriodsButtons": "Freie Tage",
+                "creatTutorialGroupButton": "Neue Übungsgruppe",
+                "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "configurationRequiredForTutor": "Die Übungsgruppenverwaltung ist erst verfügbar, nachdem Lehrende die Übungsgruppen für diesen Kurs konfiguriert haben.",
+                "notAuthorized": "Du bist nicht berechtigt, auf die Übungsgruppenverwaltung dieses Kurses zuzugreifen.",
+                "deleteDialog": {
+                    "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
+                    "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                },
+                "searchPlaceholder": "Suchen…",
+                "noMatchingGroups": "Keine Übungsgruppe entspricht deiner Suche.",
+                "actions": {
+                    "import": "Importieren",
+                    "export": "Exportieren",
+                    "create": "Erstellen"
+                }
+            },
+            "checklist": {
+                "title": "Checkliste für Übungsgruppen",
+                "explanation": "Bevor du mit der Nutzung der Übungsgruppenfunktion beginnen kannst, musst du einige Konfigurationsschritte durchführen",
+                "heroTitle": "Übungsgruppen einrichten",
+                "timeZone": "Der Kurs hat eine Zeitzone konfiguriert",
+                "timeZoneExplanation": "Für den Kurs muss eine Zeitzone konfiguriert werden, damit die Übungsgruppen-Termine entsprechend dieser Zeitzone korrekt geplant werden können.",
+                "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
+                "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
+                "createConfiguration": "Konfiguration erstellen",
+                "continueToManagement": "Weiter"
+            },
+            "tutorialGroupRegistrations": {
+                "title": "Tutorialregistrierungen",
+                "searchFieldPlaceholder": "Suche nach Name oder Login",
+                "importButtonLabel": "Importieren",
+                "exportButtonLabel": "Exportieren",
+                "addStudentsButtonLabel": "Studenten Hinzufügen",
+                "removeStudentButton": {
+                    "confirmationDialogue": {
+                        "header": "Entfernung Bestätigen",
+                        "message": "Möchtest du den Student wirklich deregistrieren?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registrierungsnummer",
+                    "deregister": "Deregistrieren"
+                },
+                "importModal": {
+                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login' oder 'Registration Number' enthalten. Falls die Datei weitere Spalten enthält, werden diese ignoriert. Hier ein Beispiel für eine valide Datei:",
+                    "explanationHeader": "Studenten Importieren",
+                    "confirmImportHeader": "Importbestätigung",
+                    "importResultsHeader": "Import Resultat",
+                    "chooseFileButtonLabel": "Datei Wählen",
+                    "invalidFileEntriesAlert": "Die ausgewählte Datei enthält Einträge, die nicht mindestens eines der benötigten Felder enthälten.",
+                    "noFileEntriesAlert": "Die ausgewählte Datei enthält keine Einträge.",
+                    "confirmationText": "Bitte schau dir den Inhalt der eingelesenen .csv Datei and und bestätige, dass er korrekt ist. Danach wird Artemis verifizieren, dass die Benutzer existieren und sie für die Gruppe registrieren. Artemis hat Folgendes eingelesen:",
+                    "backToExplanationButtonLabel": "Zurück",
+                    "importButtonLabel": "Importieren",
+                    "importErrorAlert": "Beim Importieren ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "finishButtonLabel": "Beenden",
+                    "restartButtonLabel": "Neustart",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Nur ein Teil der Studenten konnten registriert werden. Die rot markierten logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "allStudentsRegistered": "Alle Studenten wurden registriert.."
+                    },
+                    "tableHeader": {
+                        "login": "Login",
+                        "registrationNumber": "Registration Number"
+                    }
+                },
+                "registerModal": {
+                    "header": "Studenten Registrieren",
+                    "registerAllButtonLabel": "Alle Registrieren",
+                    "cancelButtonLabel": "Abbrechen",
+                    "registerErrorAlert": "Beim Registrieren ist etwas schiefgegangen. Bitte versuche es erneut."
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",
+                    "noResultsText": "Keine Studenten gefunden."
+                }
+            },
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Übungsgruppe bearbeiten",
+                    "create": "Übungsgruppe erstellen"
+                },
+                "sectionTitle": {
+                    "generalInformation": "Generelle Informationen",
+                    "defineSessionPlan": "Sessionplan definieren"
+                },
+                "inputLabel": {
+                    "title": "Titel",
+                    "tutor": "Tutor",
+                    "language": "Sprache",
+                    "languageAutocompleteHeader": "gebe eine neue ein oder wähle eine existierende:",
+                    "mode": "Modus",
+                    "campus": "Campus",
+                    "capacity": "Kapazität",
+                    "additionalInformation": "Zusätzliche Information",
+                    "firstSessionStart": "Start erste Session",
+                    "firstSessionEnd": "Ende erste Session",
+                    "repetitionFrequency": "Wiederholungsfrequenz",
+                    "repetitionFrequencyPrefix": "jede ",
+                    "repetitionFrequencySuffix": " Woche(n)",
+                    "tutorialPeriodEnd": "Ende Tutoriumsperiode",
+                    "location": "Ort"
+                },
+                "placeholder": {
+                    "title": "z. B. Di 14:00 Gruppe 3",
+                    "tutor": "Tutor auswählen",
+                    "language": "z. B. Englisch",
+                    "mode": "Modus auswählen",
+                    "campus": "z. B. Garching",
+                    "capacity": "z. B. 30",
+                    "additionalInformation": "z. B. Bring deinen Laptop mit",
+                    "location": "z. B. Raum 00.08.038"
+                },
+                "validationError": {
+                    "titleContent": "Der Titel muss mit einem Buchstaben oder einer Ziffer anfangen und darf sonst nur Buchstaben, Ziffern, Strichpunkte, Leerzeichen und Bindestriche enthalten.",
+                    "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "campusLength": "Campus darf eine maximale Länge von 255 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "languageRequired": "Bitte wähle eine Sprache.",
+                    "languageLength": "Sprache darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "additionalInformationLength": "Zusätzliche Information darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionStartInvalid": "Bitte gib ein gültiges Datum mit Uhrzeit ein.",
+                    "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndInvalid": "Bitte gib ein gültiges Datum mit Uhrzeit ein.",
+                    "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
+                    "firstSessionEndNotOnSameDayAsStart": "Das Ende der ersten Session muss am selben Tag sein wie der Anfang.",
+                    "teachingPeriodRequired": "Bitte wähle ein Zeitpunkt.",
+                    "tutorialPeriodEndInvalid": "Bitte gib ein gültiges Datum ein.",
+                    "teachingPeriodNotAfterFirstSessionStart": "Das Ende der Tutoriumsperiode muss nach dem Anfang der ersten Session liegen.",
+                    "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "Das Ende der Tutoriumsperiode darf höchstens 2 Jahre nach dem Beginn der ersten Session liegen.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
+                    "tutorRequired": "Bitte wähle ein Tutor.",
+                    "locationRequired": "Bitte wähle einen Ort.",
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "noChanges": "Ändere etwas, bevor du speicherst."
+                },
+                "networkError": {
+                    "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createGroup": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchSchedule": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchLanguages": "Beim laden der vom Kurs benutzten Sprachen ist etwas schief gegangen. Bitte lade die Seite neu, falls du beim Auswählen der Sprache bereits benutzte Sprachen vorgeschlagen bekommen willst."
+                },
+                "confirmSaveDialog": {
+                    "header": "Gruppe Speichern?",
+                    "message": "Du hast den Sessionplan verändert. Beim Speichern werden die Sessions an den neuen Plan angepasst: weiterhin stattfindende Sessions behalten ihre erfasste Anwesenheit, nicht mehr stattfindende Sessions werden entfernt.",
+                    "acceptButtonLabel": "Speichern und Aktualisieren"
+                }
+            },
+            "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor:in",
+                    "generalInfoCardTitle": "Allgemeine Information",
+                    "averageAttendanceCardTitle": "Auslastung",
+                    "nextSessionCardTitle": "Nächste Session"
+                },
+                "language": "Sprache:",
+                "capacity": "Kapazität:",
+                "mode": "Modus:",
+                "campus": "Campus:",
+                "status": "Status:",
+                "statusChipLabel": {
+                    "regular": "Regulär",
+                    "cancelled": "Abgesagt",
+                    "rescheduled": "Verschoben",
+                    "relocated": "Raumänderung"
+                },
+                "date": "Datum:",
+                "time": "Uhrzeit:",
+                "location": "Ort:",
+                "title": "Übungsgruppen-Details",
+                "sessionsListTitle": "Sessions",
+                "sessionsEmptyTitle": "Keine Sessions vorhanden",
+                "sessionsEmptyDescription": "Erstelle die erste Session dieser Tutoriumsgruppe.",
+                "sessionListOptionLabel": {
+                    "allSessions": "Alle",
+                    "futureSessions": "Zukünftige"
+                },
+                "currentTutorialLectureLinkLabel": "Aktuelle Lektion",
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Gruppen Channel",
+                "registrationsLinkLabel": "Registrierungen",
+                "newSessionButtonLabel": "Session erstellen",
+                "confirmationDialog": {
+                    "deleteGroup": {
+                        "header": "Gruppe löschen?",
+                        "message": "Willst du wirklich diese Gruppe löschen? Diese Aktion kann nicht rückgängig gemacht werden!"
+                    },
+                    "deleteSession": {
+                        "header": "Session löschen?",
+                        "message": "Willst du wirklich diese Session löschen?"
+                    }
+                },
+                "sessionTableColumnTitle": {
+                    "date": "Datum",
+                    "time": "Uhrzeit",
+                    "location": "Ort",
+                    "attendance": "Teilnehmerzahl",
+                    "status": "Status",
+                    "actions": "Aktionen"
+                },
+                "sessionTableActionTooltipLabel": {
+                    "edit": "Bearbeiten",
+                    "cancel": "Absagen",
+                    "activate": "Absage wiederrufen",
+                    "delete": "Löschen"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "Keine Daten verfügbar",
+                    "noUpcomingSession": "Keine bevorstehende Session"
+                },
+                "pieChartCategoryLabel": {
+                    "attended": "Anwesend",
+                    "notAttended": "Abwesend"
+                },
+                "networkError": {
+                    "deleteGroup": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
+                    "deleteSession": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
+                    "cancelSession": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "activateSession": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "updateSession": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createSession": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createOneToOneChat": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Session erstellen",
+                        "edit": "Session bearbeiten"
+                    },
+                    "inputLabels": {
+                        "date": "Datum",
+                        "startTime": "Startzeit",
+                        "endTime": "Endzeit",
+                        "location": "Ort",
+                        "attendance": "Anwesenheiten"
+                    },
+                    "validationError": {
+                        "dateInvalid": "Bitte ein gültiges Datum eingeben.",
+                        "dateRequired": "Bitte wähle ein Datum.",
+                        "startTimeRequired": "Bitte wähle eine Startzeit.",
+                        "endTimeRequired": "Bitte wähle eine Endzeit.",
+                        "endTimeNotAfterStartTime": "Die Endzeit muss nach der Startzeit sein.",
+                        "locationRequired": "Bitte wähle einen Ort.",
+                        "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                    }
+                }
+            },
+            "tutorialFreePeriodsManagement": {
+                "title": "Feiertage",
+                "explanation": "Lege kursweite Tage fest, an denen keine Übungsgruppentermine stattfinden.",
+                "allHolidays": "Alle Feiertage",
+                "addHoliday": "Feiertag hinzufügen",
+                "loadFailed": "Die Feiertage konnten nicht geladen werden.",
+                "retry": "Erneut versuchen",
+                "editHoliday": "Feiertag bearbeiten",
+                "wholeDay": "Ganztägig",
+                "noHolidays": "Noch keine Feiertage.",
+                "sessionsCancelled": "{{ count }} Termine",
+                "pastHidden": "{{ count }} vergangene Feiertage werden im Filter „Bevorstehend“ ausgeblendet.",
+                "filter": {
+                    "upcoming": "Bevorstehend",
+                    "all": "Alle"
+                },
+                "calendar": {
+                    "today": "Heute",
+                    "previousMonth": "Vorheriger Monat",
+                    "nextMonth": "Nächster Monat",
+                    "sessionsShort": "{{ count }} Term.",
+                    "fromTime": "ab {{ time }}",
+                    "untilTime": "bis {{ time }}",
+                    "addHolidayOn": "Feiertag am {{ date }} hinzufügen"
+                },
+                "form": {
+                    "from": "Von",
+                    "to": "Bis",
+                    "create": "Erstellen",
+                    "reason": "Grund",
+                    "reasonPlaceholder": "z. B. Weihnachtsferien",
+                    "invalidRange": "Das Ende muss nach dem Beginn liegen.",
+                    "overlapsHoliday": "Überschneidet sich mit „{{ reason }}“. Zwei Feiertage dürfen nicht denselben Zeitraum abdecken, da eine abgesagte Sitzung einen davon als Grund nennt.",
+                    "overlapsExistingHoliday": "Dieser Feiertag überschneidet sich mit einem, der zwischenzeitlich hinzugefügt wurde. Die Seite wurde aktualisiert; bitte wähle einen Zeitraum, den er nicht abdeckt.",
+                    "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
+                },
+                "deleteDialog": {
+                    "header": "Feiertag löschen",
+                    "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
+                    "multiDayQuestion": "{{ reason }} umfasst {{ count }} Tage und ist als ein Feiertag gespeichert. Beim Löschen entfallen daher alle. Wirklich löschen?"
+                },
+                "editHolidayNamed": "{{ reason }} bearbeiten",
+                "deleteHolidayNamed": "{{ reason }} löschen"
+            },
+            "createOrEditTutorialFreePeriodTitle": {
+                "create": "Freien Tag erstellen",
+                "edit": "Freien Tag bearbeiten"
+            },
+            "tutorialGroupSessionManagement": {
+                "title": "Sitzungsverwaltung"
+            },
+            "createTutorialGroupsConfiguration": {
+                "title": "Globalen Übungsgruppen Konfiguration erstellen"
+            },
+            "editTutorialGroupsConfiguration": {
+                "title": "Globale Konfiguration bearbeiten"
+            }
+        },
+        "services": {
+            "tutorialGroupCourseAndGroupService": {
+                "networkError": {
+                    "fetchGroup": "Beim Aktualisieren der Daten der Tutorial Gruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchCourse": "Beim Aktualisieren der Daten des Kurses ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupTutorService": {
+                "networkError": {
+                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupRegisteredStudentsService": {
+                "networkError": {
+                    "deregisterStudent": "Beim Deregistrieren des Studenten ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchRegisteredStudents": "Beim Laden der registrierten Studenten ist etwas schief gegangen. Bitte versuche es erneut."
+                }
+            }
+        }
+    }
+}

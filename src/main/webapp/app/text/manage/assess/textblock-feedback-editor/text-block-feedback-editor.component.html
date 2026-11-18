@@ -1,0 +1,81 @@
+<jhi-unified-feedback
+    [editable]="true"
+    [readOnly]="readOnly()"
+    [feedback]="feedback()"
+    [showReference]="false"
+    [highlightDifferences]="highlightDifferences()"
+    [(feedbackTitle)]="feedback().text"
+    [(feedbackDetail)]="feedback().detailText"
+    [(feedbackCredits)]="feedback().credits!"
+    (feedbackTitleChange)="didChange()"
+    (feedbackDetailChange)="didChange()"
+    (feedbackCreditsChange)="onScoreChange()"
+    (onDelete)="dismiss()"
+    (keydown.escape)="escKeyup()"
+    (drop)="connectFeedbackWithInstruction($event)"
+    (dragover)="$event.preventDefault()"
+    (focusin)="onFocus.emit()"
+>
+    <!-- The slot is claimed by the container: content projection cannot match an element nested in two @if blocks. -->
+    <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
+        @if (criteria(); as criteriaList) {
+            @if (criteriaList.length > 0) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    data-testid="feedback-instruction-menu"
+                    [tumAetUiMenuTrigger]="instructionMenu"
+                    [attr.aria-label]="connectToInstructionAriaLabel()"
+                >
+                    <fa-icon [icon]="faCaretDown" />
+                </button>
+                <!-- The kit menu has no submenus, so the instructions of all criteria are listed in one menu, below the title of their criterion.
+                     Each criterion is a named group, so a screen reader announces the criterion when the focus enters its instructions. -->
+                <ng-template #instructionMenu>
+                    <tumaet-ui-menu class="max-h-[60vh]!">
+                        @for (criterion of criteriaList; track criterion) {
+                            <div
+                                [attr.role]="criteriaList.length > 1 ? 'group' : null"
+                                [attr.aria-label]="criteriaList.length > 1 ? criterion.title || ('artemisApp.textAssessment.feedbackEditor.noTitle' | artemisTranslate) : null"
+                                data-testid="feedback-instruction-group"
+                            >
+                                @if (criteriaList.length > 1) {
+                                    <div class="px-3! pt-2 pb-1 text-sm font-semibold text-muted-color" aria-hidden="true">
+                                        @if (criterion.title) {
+                                            {{ criterion.title }}
+                                        } @else {
+                                            <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>
+                                        }
+                                    </div>
+                                }
+                                @for (instruction of criterion.structuredGradingInstructions; track instruction) {
+                                    <button
+                                        type="button"
+                                        tumAetUiMenuItem
+                                        class="w-full py-1!"
+                                        [style.background-color]="getInstrColour(instruction)"
+                                        (triggered)="updateAssessmentWithDropdown(instruction)"
+                                    >
+                                        <span class="min-w-11 font-bold">{{ instruction.credits }}P</span>
+                                        <span class="line-clamp-2 w-max max-w-[30vw] overflow-hidden text-ellipsis whitespace-break-spaces">{{
+                                            instruction.instructionDescription
+                                        }}</span>
+                                        <span class="ms-auto flex items-center gap-1">
+                                            @if (instruction.usageCount) {
+                                                <span>{{ instruction.usageCount }}</span>
+                                            } @else {
+                                                &#8734;
+                                            }
+                                            <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
+                                            <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
+                                        </span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </tumaet-ui-menu>
+                </ng-template>
+            }
+        }
+    </ng-container>
+</jhi-unified-feedback>

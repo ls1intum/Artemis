@@ -1,0 +1,92 @@
+<div class="flex flex-col gap-4!" (focusout)="onTouched()">
+    <div class="flex flex-col gap-1">
+        @if (label()) {
+            <label class="text-sm font-medium" [for]="id + '-search-input'">{{ label() }}</label>
+        }
+        <tumaet-ui-autocomplete
+            class="block w-full"
+            name="search-filter"
+            [inputId]="id + '-search-input'"
+            [ariaLabel]="label() ? undefined : ('artemisApp.userSelector.placeholderText' | artemisTranslate)"
+            [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
+            [suggestions]="suggestions()"
+            [emptyMessage]="isSearching() ? ('artemisApp.userSelector.searchingText' | artemisTranslate) : undefined"
+            [optionTemplate]="resultTemplate"
+            [minLength]="searchStudents() ? 3 : 0"
+            [completeOnFocus]="!searchStudents()"
+            [debounceMs]="200"
+            [disabled]="disabled()"
+            (input)="onInputChange($event)"
+            (searchRequested)="requestSearch($event.query)"
+            (optionSelected)="onSelectItem($event)"
+        />
+        <ng-template #resultTemplate let-user>
+            <div class="flex items-center gap-2" data-testid="user-search-result">
+                <jhi-profile-picture
+                    [imageSizeInRem]="'1.1'"
+                    [fontSizeInRem]="'0.5'"
+                    [imageId]="'sidebar-profile-picture'"
+                    [defaultPictureId]="'sidebar-default-profile-picture'"
+                    [isGray]="false"
+                    [authorId]="user.id"
+                    [authorName]="user.name"
+                    [imageUrl]="addPublicFilePrefix(user.imageUrl)"
+                    [isEditable]="false"
+                />
+                <span>{{ getUserLabel(user) }}</span>
+            </div>
+        </ng-template>
+        @if (isSearching()) {
+            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
+        }
+        @if (searchFailed()) {
+            <small class="text-xs text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
+        }
+        @if (searchStudents()) {
+            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.helpText">Type at least 3 characters to search for users by name or login</small>
+        }
+    </div>
+    <div class="flex flex-wrap items-center justify-end gap-4!">
+        @if (rolesToAllowSearchingIn().includes('students')) {
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="students" [checked]="searchStudents()" (changed)="searchStudents.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="students" jhiTranslate="artemisApp.course.students">Students</label>
+            </div>
+        }
+        @if (rolesToAllowSearchingIn().includes('tutors')) {
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="tutors" [checked]="searchTutors()" (changed)="searchTutors.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="tutors" jhiTranslate="artemisApp.course.tutors">Tutors</label>
+            </div>
+        }
+        @if (rolesToAllowSearchingIn().includes('instructors')) {
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="instructors" [checked]="searchInstructors()" (changed)="searchInstructors.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="instructors" jhiTranslate="artemisApp.course.instructors">Instructors</label>
+            </div>
+        }
+    </div>
+    @if (showUserList() && selectedUsers().length > 0) {
+        <tumaet-ui-list [ariaLabel]="label()">
+            @for (user of selectedUsers(); track trackIdentity(i, user); let i = $index) {
+                <li tumAetUiListItem inline class="selected-user">
+                    <span>{{ getUserLabel(user) }}</span>
+                    @if (!disabled()) {
+                        <button
+                            tumAetUiButton
+                            class="delete-user"
+                            type="button"
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            [attr.aria-label]="('entity.action.remove' | artemisTranslate) + ' ' + getUserLabel(user)"
+                            (click)="onDelete(i)"
+                        >
+                            <fa-icon [icon]="faX" />
+                        </button>
+                    }
+                </li>
+            }
+        </tumaet-ui-list>
+    }
+</div>

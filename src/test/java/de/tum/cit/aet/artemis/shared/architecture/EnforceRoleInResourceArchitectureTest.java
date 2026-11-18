@@ -1,0 +1,84 @@
+package de.tum.cit.aet.artemis.shared.architecture;
+
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
+
+import org.junit.jupiter.api.Test;
+
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ConditionEvents;
+
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
+
+/**
+ * This class contains architecture tests for endpoints with EnforceRoleInResource annotations.
+ */
+class EnforceRoleInResourceArchitectureTest extends AbstractArchitectureTest {
+
+    @Test
+    void testEnforceRoleInCourseEndpointHasCourseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInCourse annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInCourseAnnotation = getAnnotation(EnforceRoleInCourse.class, method);
+                var courseIdFieldName = enforceRoleInCourseAnnotation.resourceIdFieldName();
+                if (hasNoParameterWithName(method, courseIdFieldName)) {
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), courseIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInCourse = methods().that().areAnnotatedWith(EnforceRoleInCourse.class).or().areMetaAnnotatedWith(EnforceRoleInCourse.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(EnforceRoleInCourse.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
+
+        enforceRoleInCourse.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceRoleInExerciseEndpointHasExerciseIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInExercise annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInExerciseAnnotation = getAnnotation(EnforceRoleInExercise.class, method);
+                var exerciseIdFieldName = enforceRoleInExerciseAnnotation.resourceIdFieldName();
+                if (hasNoParameterWithName(method, exerciseIdFieldName)) {
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), exerciseIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInExercise = methods().that().areAnnotatedWith(EnforceRoleInExercise.class).or().areMetaAnnotatedWith(EnforceRoleInExercise.class).or()
+                .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
+
+        enforceRoleInExercise.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceRoleInLectureUnitEndpointHasLectureUnitIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInLectureUnit annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInLectureUnitAnnotation = getAnnotation(EnforceRoleInLectureUnit.class, method);
+                var lectureUnitIdFieldName = enforceRoleInLectureUnitAnnotation.resourceIdFieldName();
+                if (hasNoParameterWithName(method, lectureUnitIdFieldName)) {
+                    events.add(violated(method, "Method %s does not have a parameter named %s".formatted(method.getFullName(), lectureUnitIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInLectureUnit = methods().that().areAnnotatedWith(EnforceRoleInLectureUnit.class).or().areMetaAnnotatedWith(EnforceRoleInLectureUnit.class).or()
+                .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInLectureUnit.class).and().areDeclaredInClassesThat().areNotAnnotations()
+                .should(haveParameterWithAnnotation);
+
+        enforceRoleInLectureUnit.check(productionClasses);
+    }
+}

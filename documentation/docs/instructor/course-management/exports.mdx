@@ -1,0 +1,304 @@
+---
+id: exports
+title: Exports and archives
+sidebar_label: Exports
+last_reviewed: 2026-11-05
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import courseArchiveSection from "./assets/exports/course-archive-section.png";
+import examArchiveChecklist from "./assets/exports/exam-archive-checklist.png";
+import exerciseExportButtons from "./assets/exports/exercise-export-buttons.png";
+import repositoryExportDialog from "./assets/exports/repository-export-dialog.png";
+import scoresExportOptions from "./assets/exports/scores-export-options.png";
+import courseScoresExport from "./assets/exports/course-scores-export.png";
+import exportOptionsDialog from "./assets/exports/export-options-dialog.png";
+import dataExportPage from "./assets/exports/data-export-page.png";
+
+This page is the complete reference for everything Artemis can hand out as a file: archives, repositories,
+submissions, scores, and personal data. Each entry names the **minimum role** you need, where the action lives in the
+user interface, and what you get back.
+
+## Overview
+
+The role column is the lowest role that may perform the action. A higher role can always do the same, and some entries
+have extra conditions that are explained in their section.
+
+| Export or archive                                                                     | Minimum role                     | Where in Artemis                                        | What you get                                         |
+|---------------------------------------------------------------------------------------|----------------------------------|---------------------------------------------------------|------------------------------------------------------|
+| [Archive a course](#archive-a-course)                                                   | Instructor                       | Course settings page                                      | ZIP with every exercise and student submission        |
+| [Archive an exam](#archive-an-exam)                                                     | Instructor                       | Exam checklist                                            | ZIP with every exam exercise and student submission   |
+| [Export an exercise](#export-an-exercise)                                               | Instructor                       | Course exercises page, **Export**                         | ZIP that can be imported into another course          |
+| [Export programming exercise material](#export-programming-exercise-material)            | Instructor                       | Exercise detail page                                      | ZIP that can be imported into another course          |
+| [Export student repositories in bulk](#export-student-repositories-in-bulk)               | Tutor (anonymized), Instructor   | Participations page, or the course exercises overview     | ZIP with one entry per participation                  |
+| [Download a template, solution or test repository](#download-a-template-solution-or-test-repository) | Tutor                | Exercise detail page                                      | ZIP including the Git history                         |
+| [Download an auxiliary repository](#download-an-auxiliary-repository)                     | Tutor                            | Exercise detail page                                      | ZIP including the Git history                         |
+| [Download a single student repository](#download-a-single-student-repository)             | Owner of the participation, otherwise Tutor | Participations page, assessment view, exercise page | ZIP of the code without the Git history               |
+| [Download the example solution](#download-the-example-solution)                           | Student after publication, otherwise Tutor | Exercise page                                  | ZIP of the code without the Git history               |
+| [Export exercise submissions](#export-exercise-submissions)                               | Instructor                       | Participations page                                       | ZIP of text, modeling or uploaded files               |
+| [Export exercise results](#export-exercise-results)                                       | Instructor                       | Participations page                                       | CSV                                                   |
+| [Export participant names](#export-participant-names)                                     | Instructor                       | Participations page                                       | CSV of the participants                               |
+| [Export course scores](#export-course-scores)                                             | Instructor                       | Course management, Scores page                            | Excel or CSV                                          |
+| [Export exam scores](#export-exam-scores)                                                 | Instructor                       | Exam scores page                                          | Excel or CSV                                          |
+| [Export the exam student list](#export-the-exam-student-list)                             | Instructor                       | Exam students page                                        | CSV                                                   |
+| [Export quiz questions](#export-quiz-questions)                                           | Editor                           | Quiz exercise detail page                                 | JSON                                                  |
+| [Export tutorial groups](#export-tutorial-groups)                                         | Instructor                       | Tutorial groups management                                | CSV or JSON                                           |
+| [Export an exercise to the Sharing Platform](#export-an-exercise-to-the-sharing-platform)  | Instructor                       | Exercise detail page                                      | Exercise pushed to the connected platform             |
+| [Request your own data export](#request-your-own-data-export)                             | Any user                         | Privacy statement, in the page footer                     | ZIP with everything Artemis stores about you          |
+| [Request a data export for another user](#request-a-data-export-for-another-user)          | Administrator                    | Administration, Data exports                              | The same ZIP, for the named user                      |
+
+<Callout variant={CalloutVariant.info}>
+
+  The **Exports** feature toggle, under Server Administration, Feature Toggles, governs the heavy exports: the course
+  and exam archives, the programming repository downloads, and the submission exports. With it off those buttons stay
+  visible but are disabled. The score, results, participant, quiz, tutorial group and personal data exports are not
+  behind it and keep working. **Export** on the exercise page of a course, which
+  [exports whole exercises](#export-an-exercise), is hidden while the toggle is off.
+
+</Callout>
+
+## Archives
+
+An archive is the complete record of a course or an exam, produced once and downloaded as often as needed.
+
+### Archive a course
+
+**Archive Course**, on the **Settings** page of the course in the course management, exports all course data. The
+button appears only once the course end date has passed — while the course is still running there is nothing to
+archive, so Artemis does not offer it.
+
+<Image src={courseArchiveSection} alt="Course settings page with Archive Course in its title bar" size={ImageSize.large} caption="The archive section of the course settings page" />
+
+For each exercise the archive contains the problem statement and a JSON file with the exercise details such as points.
+For programming exercises, the template, solution, test and auxiliary repositories are included as well, and every
+student repository is added as its own ZIP file inside the archive. All exams of the course are archived along with it.
+
+Beyond the submissions, the archive carries the student data the course has accumulated: course and exam scores,
+participation results with their feedback, posts and messages, competency progress, learner profiles, tutorial group
+registrations, Iris chat sessions, and LLM token usage traces.
+
+The archive is built asynchronously and you receive a notification once it is ready. **Download Archive**, on the same
+page, hands it to you.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Archiving compresses every repository and submission in the course and can run for hours on a large course, taking
+  server resources with it. Start it when the instance is quiet.
+
+</Callout>
+
+For the exact list of what is and is not part of a course archive, see
+[Course Archive](/admin/course-management#course-archive) in the administration documentation.
+
+### Archive an exam
+
+The same as a course archive, limited to a single exam, and likewise only possible once the exam end date has passed.
+**Archive Exam** on the exam checklist page starts it, and **Download Archive** on that page hands it over.
+
+<Image src={examArchiveChecklist} alt="Archive Exam on the exam checklist page" size={ImageSize.large} caption="Archiving from the exam checklist" />
+
+## Exercises
+
+### Export an exercise
+
+**Export**, on the exercise page of a course, opens the **Export** tab of the **Manage Exercises** dialog. Pick the
+exercise type, then **Export** next to the exercise. The ZIP file is what **Import**, **From file** reads, for every
+exercise type, so it is the way to move an exercise to another course or another Artemis instance. It contains:
+
+- `Exercise-Details-<title>.json` with the exercise settings, its categories and its grading criteria.
+- `Problem-Statement-<title>.md` and, in `files/`, the images the problem statement embeds.
+- For a quiz, the questions with their solutions and, in one folder per drag-and-drop question, its images.
+- For a programming exercise, the same content as
+  [Export programming exercise material](#export-programming-exercise-material).
+
+Student submissions and results are not included; the [course archive](#archive-a-course) holds those. Images that
+are embedded anywhere other than the problem statement keep pointing at the Artemis instance they came from.
+
+## Programming exercise repositories
+
+Every repository export is an ordinary ZIP file. Whether it carries the Git history differs per export and is stated
+below, because that is what decides if the extracted folder is a usable repository or only a copy of the code.
+
+<Callout variant={CalloutVariant.info}>
+
+  Repositories that are exported with their history extract as a working Git repository: `git status` is clean and file
+  permissions, including the executable bit on files such as `gradlew`, are preserved.
+
+</Callout>
+
+### Export programming exercise material
+
+**Download Exercise**, on the exercise detail page, exports the material of a programming exercise: the template,
+solution, test and auxiliary repositories, the problem statement, and the exercise configuration. This is the format
+the exercise import reads, so it is the way to move an exercise to another course or another Artemis instance.
+
+<Image src={exerciseExportButtons} alt="The More actions menu of a programming exercise detail page, with Download Exercise" size={ImageSize.large} caption="The export actions on a programming exercise" />
+
+### Export student repositories in bulk
+
+Exports the repositories of many participations at once, for graded and practice participations alike.
+
+Open the **Participations** page of the exercise, click **Export**, and choose **Download Repos**. The same action is
+available on the course exercises overview, where it exports the selected programming exercises together.
+
+The **Export Repositories** dialog takes either a comma-separated list of logins or team short names, or
+**Or download the repositories of all students**. Nothing is requested from the server until one of the two is set.
+
+<Image src={repositoryExportDialog} alt="Repository export dialog with the participant selection and the rewrite options" size={ImageSize.large} caption="Choosing participants and export options" />
+
+The dialog also offers options that rewrite what is exported:
+
+| Option                                 | Effect                                                                              |
+|----------------------------------------|-------------------------------------------------------------------------------------|
+| **Add student name to project**        | Renames the project inside the repository so the participant is identifiable, and several can be imported into an IDE side by side. On by default |
+| **Combine changes into one commit**    | Squashes the student commits into a single commit, which is easier to read than a history. On by default |
+| **Normalize code style**               | Standardizes line endings and encoding                                                |
+| **Filter late submissions**            | Moves the branch back to the last commit before **Date to filter late submissions**, which defaults to the due date |
+| **Exclude practice submissions**       | Skips participations made after the due date in practice mode                         |
+| **Anonymize repository**               | Removes the student name from the commit messages and the directory name              |
+
+<Callout variant={CalloutVariant.info}>
+
+  Tutors always receive anonymized repositories, so that assessment stays double-blind, and only an instructor may
+  export every participation at once. Instructors can turn anonymization off.
+
+</Callout>
+
+Each participation appears in the archive as its own folder containing the code and a `.git` directory, so the full
+history is available after extracting.
+
+### Download a template, solution or test repository
+
+**Download Repository** on the exercise detail page downloads one of the exercise's own repositories including its Git
+history.
+
+### Download an auxiliary repository
+
+The same for an [auxiliary repository](/instructor/exercises/programming-exercise/create-an-exercise#auxiliary-repositories),
+if the exercise defines any.
+
+### Download a single student repository
+
+**Download Repository** on a participation gives you that one repository as a ZIP file **without** the `.git`
+directory, so it contains the submitted code but no history.
+
+Students see this button on their own exercise page and can only download their own participation. Instructors can
+open student repositories from the participations page. Tutors can open them through **Code** while support
+access is available: before the exercise due date when manual or semi-automatic assessment is enabled, or at any time
+for automatically assessed course programming exercises and exercises without a due date.
+
+After the manual-assessment deadline, tutors use the **Assessment Dashboard** to view and download anonymized
+submissions selected by participation ID. Names and direct repository access are hidden on the participations page. See [Access Rights](/admin/access-rights#general-functionality).
+
+### Download the example solution
+
+**Download Example Solution** gives you the solution repository as a ZIP file without the `.git` directory. Students
+can do this only once the example solution publication date of the exercise has passed; before that, the button is
+limited to tutors and above. **Download tests with example solution** appears in place of it when the exercise is
+configured to release the tests together with the solution.
+
+## Submissions, results and scores
+
+The exercise **Participations** page collects the per-exercise exports behind one **Export** button. Which entries the
+resulting **Export Options** list offers depends on the exercise type and on your role.
+
+<Image src={scoresExportOptions} alt="Export Options list on the exercise participations page" size={ImageSize.large} caption="The export options of a text exercise" />
+
+### Export exercise submissions
+
+**Export Submissions** exports the submissions of everyone who participated in a text, modeling or file upload
+exercise. Text submissions become text files, modeling submissions become JSON files, and file upload submissions are
+exported as the uploaded files, each collected in one ZIP file. **Filter late submissions** cuts the export off at a
+date you give, which defaults to the due date.
+
+For programming exercises, use [Export student repositories in bulk](#export-student-repositories-in-bulk) instead.
+
+### Export exercise results
+
+**Export Results** exports the results of one exercise as a CSV file. For a programming exercise it offers three
+levels of detail — **Without test cases**, **With test cases**, and **With test cases and feedback**, which adds a copy
+of the feedback given for each failed test. Every other exercise type produces the plain file directly.
+
+The file is assembled in your browser from the data already on the page, so it contains exactly the participations the
+page shows.
+
+### Export participant names
+
+**Export Names** writes the participants of the exercise to a CSV file, without their results. Use it when you need
+the list of who took part rather than how they did. For a team exercise the file has a row per team — team name, short
+name, and the students in it — rather than a bare list of names.
+
+### Export course scores
+
+The **Scores** page of the course management shows every student's points exercise by exercise, and **Export** turns
+that table into a file. The table, its statistics (average, median and standard deviation) and the export list students
+only: users who currently hold the tutor, editor or instructor role in the course are left out, even if they took part
+in exercises.
+
+<Image src={courseScoresExport} alt="Course scores page with the score distribution and the table of points that Export turns into a file" size={ImageSize.large} caption="The course scores page" />
+
+**Export** opens the **Export Options** dialog with a tab per format. **Excel** writes an `.xlsx` workbook and has
+nothing to configure. **CSV** takes the three settings that decide whether another program reads the result correctly:
+the **Field Separator**, whether strings are wrapped in **Quote Strings**, and the **Decimal Separator** — a comma for
+locales that write `1,42`, a period for those that write `1.42`.
+
+<Image src={exportOptionsDialog} alt="Export Options dialog with the Excel and CSV choices" size={ImageSize.large} caption="Choosing the file format and its separators" />
+
+### Export exam scores
+
+The same dialog, from the **Export** button on an exam's scores page.
+
+### Export the exam student list
+
+Exports the students registered for an exam as a CSV file, from the exam students page. Use it to hand the registration
+list to another system, for example for seat planning.
+
+## Other exports
+
+### Export quiz questions
+
+Exports the questions of a quiz, including their sample solutions, as a JSON file. **Export** on the detail page of the
+quiz writes all of its questions. To move the whole quiz with its settings, [export the exercise](#export-an-exercise)
+instead.
+
+The file is written by your browser from the quiz that is already loaded, and it can be imported into another quiz.
+
+### Export tutorial groups
+
+**Export Tutorial Groups** on the tutorial groups management page exports the groups with their registrations. The
+dialog asks which fields to include and then writes them through **Export as CSV** or **Export as JSON**. See
+[Tutorial groups](/instructor/communication-support/tutorial-groups).
+
+### Export an exercise to the Sharing Platform
+
+Publishes an exercise to a connected sharing platform instead of downloading it. This is only available when an
+administrator has configured the platform. See [Sharing Platform](/instructor/integrations/sharing).
+
+## User data
+
+### Request your own data export
+
+Exports everything Artemis stores about you: your account details, your submissions and results, the feedback you
+received, your messages, and more. Follow **Privacy** in the page footer, then the **Data Export** link on the privacy
+statement, and click **Request data export**. You confirm by typing your own login, and receive an email with a
+download link once the export is ready.
+
+<Image src={dataExportPage} alt="Data export page with the Request data export button" size={ImageSize.large} caption="Requesting your own data export" />
+
+Programming exercise participations appear in the export as one folder per participation with a working `.git`
+directory, so your own commit history is part of it.
+
+You can hold one export at a time. Once you have downloaded it, or once Artemis has deleted it, the page names the date
+from which you may request the next one.
+
+The full list of what the export contains is documented on the student page,
+[Exports](/student/tools-reference/exports).
+
+### Request a data export for another user
+
+Administrators can request and download a data export on behalf of a user, for example to answer a data access request
+that reaches the institution rather than the platform. The action lives under Administration in the Data exports
+section and produces the same archive as a self-service request.

@@ -1,0 +1,15 @@
+<div class="competency-node inline-block">
+    <div
+        class="progress-container inline-block"
+        [class.competency-container]="courseCompetencyType() === CourseCompetencyType.COMPETENCY"
+        [class.prerequisite-container]="courseCompetencyType() === CourseCompetencyType.PREREQUISITE"
+        [tumAetUiTooltip]="'artemisApp.courseCompetency.relations.graph.tooltips.' + this.courseCompetencyType() | artemisTranslate"
+    >
+        <small>
+            <strong [jhiTranslate]="'artemisApp.courseCompetency.relations.graph.nodeTypes.' + this.courseCompetencyType()"></strong>
+        </small>
+    </div>
+    <span class="ms-1 inline-block"
+        ><strong>{{ courseCompetencyNode().label }}</strong></span
+    >
+</div>

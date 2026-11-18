@@ -1,0 +1,368 @@
+package de.tum.cit.aet.artemis.programming;
+
+import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
+
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    private static final String TEST_PREFIX = "peinttest";
+
+    private Long programmingExerciseId;
+
+    @BeforeEach
+    void init() {
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+    }
+
+    void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        programmingExercise.setProblemStatement(newProblem);
+        programmingExercise.setTitle(newTitle);
+
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+
+        var programmingExerciseCountBefore = programmingExerciseRepository.count();
+
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        // The result from the put response should be updated with the new data.
+        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+        assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
+
+        // There should still be the same number of programming exercises.
+        assertThat(programmingExerciseRepository.count()).isEqualTo(programmingExerciseCountBefore);
+        // The programming exercise in the db should also be updated.
+        ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
+        assertThat(programmingExerciseFromDb.getProblemStatement()).isEqualTo(newProblem);
+        assertThat(programmingExerciseFromDb.getTitle()).isEqualTo(newTitle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateProgrammingExerciseOnce() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateProgrammingExerciseTwice() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+        updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateProblemStatement_courseExercise() throws Exception {
+        final var newProblem = "a new problem statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExerciseId + "/problem-statement";
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+        verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
+        verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
+
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateProblemStatement_examExercise() throws Exception {
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true, TEST_PREFIX);
+        var exam = programmingExercise.getExam();
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
+        examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
+
+        final var newProblem = "a new problem statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+        verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any(), any());
+        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
+
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).isEmpty();
+
+        // no test cases, changing to automatic feedback: update should work
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        // test cases with weights > 0, changing to automatic feedback: update should work
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(AssessmentType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.forEach(testCase -> testCase.setWeight(0D));
+        testCaseRepository.saveAll(testCases);
+
+        programmingExercise.setAssessmentType(assessmentType);
+
+        if (assessmentType == AssessmentType.AUTOMATIC) {
+            jenkinsRequestMockProvider.enableMockingOfRequests();
+            jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+            jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+        }
+
+        updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseAssessmentTypeToSemiAutomatic() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        var dto = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", dto, ProgrammingExercise.class, HttpStatus.OK);
+
+        // Check that controller processed the assessment type correctly
+        assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+
+        // Check that assessment type was stored correctly
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseAssessmentTypeToAutomatic() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        var dto = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", dto, ProgrammingExercise.class, HttpStatus.OK);
+
+        // Check that controller processed the assessment type correctly
+        assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+
+        // Check that assessment type was stored correctly
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+    private ProgrammingExercise exerciseWithPlansMocked() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+        return programmingExercise;
+    }
+
+    /**
+     * A window from a quarter to three quarters of the way between the release and the due date of the exercise, which are the dates the fixture chose.
+     */
+    private static BuildTimeWindow windowInsideTheDatesOf(ProgrammingExercise exercise) {
+        Duration period = Duration.between(exercise.getReleaseDate(), exercise.getDueDate());
+        return new BuildTimeWindow(exercise.getReleaseDate().plus(period.dividedBy(4)), exercise.getReleaseDate().plus(period.multipliedBy(3).dividedBy(4)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseStoresTheBuildTimeWindowAndKeepsBranching() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("^feature-.*$");
+        buildConfig.setBuildTimeWindow(window);
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.OK);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isEqualTo(window);
+        assertThat(stored.isAllowBranching()).isTrue();
+        assertThat(stored.getBranchRegex()).isEqualTo("^feature-.*$");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseCanRemoveTheBuildTimeWindowAndKeepsBranching() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBuildTimeWindow(windowInsideTheDatesOf(programmingExercise));
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        var withoutWindow = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        withoutWindow.setBuildTimeWindow(null);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, withoutWindow), HttpStatus.OK);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+        assertThat(stored.isAllowBranching()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(programmingExercise.getDueDate().minusDays(1), programmingExercise.getDueDate().plusDays(1)));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+
+        // an invalid update must not leave a window behind
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseRejectsABuildTimeWindowThatEndsBeforeItStarts() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(window.end(), window.start()));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(programmingExercise.getDueDate().minusDays(1), programmingExercise.getDueDate().plusDays(1)));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTimelineRejectsADueDateBeforeTheEndOfTheBuildTimeWindow() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        // the due date moves to before the end of the window, so builds would stop after the exercise ended
+        var timeline = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), programmingExercise.getReleaseDate(), programmingExercise.getStartDate(),
+                window.end().minusMinutes(1), programmingExercise.getAssessmentType(), null, null, null);
+        request.put("/api/programming/programming-exercises/timeline", timeline, HttpStatus.BAD_REQUEST);
+
+        var stored = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(stored.getDueDate()).isCloseTo(programmingExercise.getDueDate(), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteProgrammingExerciseChannel() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(programmingExercise);
+
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
+    }
+
+    /**
+     * The build configuration holds the exercise key, with ON DELETE CASCADE, and the exercise carries no field for it,
+     * so nothing in the application deletes the configuration: the database does. That makes this the test that the
+     * constraint is really there. Without it, a migration that recreated the foreign key without the delete rule would
+     * leave a configuration row naming an exercise that no longer exists, which is the orphan the key exists to prevent.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteProgrammingExerciseDeletesItsBuildConfig() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isPresent();
+
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
+    }
+}

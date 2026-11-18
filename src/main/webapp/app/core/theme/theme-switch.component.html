@@ -1,0 +1,56 @@
+<ng-template #popContent>
+    <div class="popover-content" (mouseenter)="openPopover()" id="theme-switch-popover-content">
+        <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode"></span> ☾</div>
+        <div class="switch-box">
+            <div><fa-icon [icon]="faSync" /> <span jhiTranslate="artemisApp.theme.sync"></span></div>
+            <div class="form-switch">
+                <input
+                    [attr.aria-label]="'artemisApp.theme.sync' | artemisTranslate"
+                    class="form-check-input"
+                    type="checkbox"
+                    (click)="toggleSynced()"
+                    [checked]="isSyncedWithOS()"
+                />
+            </div>
+        </div>
+    </div>
+</ng-template>
+<div (mouseenter)="openPopover()" (mouseleave)="mouseLeave()" class="wrapper">
+    <div
+        class="toggle-popover-wrapper"
+        (click)="toggleTheme()"
+        [ngbPopover]="popContent"
+        [triggers]="''"
+        #popover="ngbPopover"
+        [autoClose]="false"
+        [animation]="true"
+        [placement]="popoverPlacement()"
+        #keyboardAction13
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="(isDarkTheme() ? 'artemisApp.theme.lightMode' : 'artemisApp.theme.darkMode') | artemisTranslate"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+    >
+        <div class="theme-toggle" [class.dark]="isDarkTheme()" id="theme-toggle">
+            <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
+                <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" fill="currentColor" />
+                <g class="sun-beams" stroke="currentColor">
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </g>
+                <mask class="moon" id="moon-mask">
+                    <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                    <circle cx="24" cy="10" r="6" fill="black" />
+                </mask>
+            </svg>
+        </div>
+    </div>
+</div>

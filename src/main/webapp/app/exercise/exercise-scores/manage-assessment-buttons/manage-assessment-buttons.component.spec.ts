@@ -1,0 +1,328 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
+import { MockProvider } from 'ng-mocks';
+import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
+import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { of } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+
+describe('ManageAssessmentButtonsComponent', () => {
+    let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
+    let comp: ManageAssessmentButtonsComponent;
+    let programmingAssessmentService: ProgrammingAssessmentManualResultService;
+    let modelingAssessmentService: ModelingAssessmentService;
+    let textAssessmentService: TextAssessmentService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
+
+    const course = { id: 1 } as Course;
+    const exercise = {
+        id: 1,
+        type: ExerciseType.PROGRAMMING,
+    } as Exercise;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ManageAssessmentButtonsComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ProgrammingAssessmentManualResultService),
+                MockProvider(ModelingAssessmentService),
+                MockProvider(TextAssessmentService),
+                MockProvider(FileUploadAssessmentService),
+                provideRouter([]),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ManageAssessmentButtonsComponent);
+        comp = fixture.componentInstance;
+        programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
+        modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('course', course);
+        // Distinct ids on purpose: with everything set to 1 an assertion cannot tell which id a service received.
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0 } as Result] } as Submission],
+        } as Participation);
+    });
+
+    it.each([
+        { result: { assessmentType: 'MANUAL', completionDate: undefined }, action: 'continue', cancel: true },
+        { result: { assessmentType: 'MANUAL', completionDate: '2026-10-28T12:00:00Z' }, action: 'open', cancel: false },
+        { result: { assessmentType: 'MANUAL', hasComplaint: true }, action: 'complaint', cancel: true },
+        { result: {}, action: 'assess', cancel: false },
+    ])('names the $action assessment action independently of its responsive text', ({ result, action, cancel }) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' });
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissionCount: 1,
+            submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0, ...result }] }],
+        });
+        fixture.detectChanges();
+        const link = fixture.nativeElement.querySelector('a') as HTMLAnchorElement;
+        const expected = action === 'complaint' ? 'artemisApp.exerciseAssessmentDashboard.showComplaint' : `artemisApp.assessment.dashboard.actions.${action}`;
+        expect(link.getAttribute('aria-label')).toBe(expected);
+        expect(link.textContent).toContain(expected);
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement | null;
+        if (cancel) {
+            expect(button?.getAttribute('aria-label')).toBe('artemisApp.assessment.dashboard.actions.cancel');
+        } else {
+            expect(button).toBeNull();
+        }
+    });
+
+    it('distinguishes exam correction rounds in visible and accessible action names', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key, args) => `${key}:${args?.correctionRound}`);
+        fixture.componentRef.setInput('exercise', {
+            ...exercise,
+            assessmentType: 'SEMI_AUTOMATIC',
+            exerciseGroup: { id: 7, exam: { id: 8, numberOfCorrectionRoundsInExam: 2 } },
+        });
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissionCount: 1,
+            submissions: [
+                {
+                    id: 20,
+                    results: [
+                        { id: 30, correctionRound: 0, assessmentType: 'MANUAL', completionDate: '2026-10-28T12:00:00Z' },
+                        { id: 31, correctionRound: 1, assessmentType: 'MANUAL' },
+                    ],
+                },
+            ],
+        });
+        fixture.detectChanges();
+        const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
+        expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+            'artemisApp.assessment.dashboard.actions.examCorrectionRound.open:1',
+            'artemisApp.assessment.dashboard.actions.examCorrectionRound.continue:2',
+        ]);
+        for (const link of links) {
+            expect(link.textContent).toContain(link.getAttribute('aria-label'));
+        }
+        expect(fixture.nativeElement.querySelector('button').getAttribute('aria-label')).toBe('artemisApp.assessment.dashboard.actions.examCorrectionRound.cancel:2');
+    });
+
+    describe('ngOnInit', () => {
+        it('should set newManualResultAllowed for non-exam exercise', () => {
+            fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any);
+
+            comp.ngOnInit();
+
+            expect(comp.examMode).toBe(false);
+            expect(comp.correctionRoundIndices()).toEqual([0]);
+        });
+
+        it('should set examMode to true for exam exercise', () => {
+            const examExercise = {
+                ...exercise,
+                exerciseGroup: {
+                    exam: { numberOfCorrectionRoundsInExam: 2 },
+                } as ExerciseGroup,
+            } as Exercise;
+            fixture.componentRef.setInput('exercise', examExercise);
+
+            comp.ngOnInit();
+
+            expect(comp.examMode).toBe(true);
+            expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+        });
+
+        it('should disable manual results for practice mode (testRun)', () => {
+            // isPracticeMode checks testRun property
+            fixture.componentRef.setInput('participation', {
+                id: 1,
+                testRun: true, // This is what isPracticeMode checks
+                submissions: [],
+            } as StudentParticipation);
+            // Use an exercise that would normally allow manual results
+            fixture.componentRef.setInput('exercise', {
+                ...exercise,
+                assessmentType: 'SEMI_AUTOMATIC',
+            } as any);
+
+            comp.ngOnInit();
+
+            // Practice mode (testRun) should disable manual results for non-exam mode
+            expect(comp.newManualResultAllowed()).toBe(false);
+        });
+    });
+
+    describe('getAssessmentLink', () => {
+        it('should return undefined when exercise type is missing', () => {
+            fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);
+
+            const result = comp.getAssessmentLink();
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined when submission id is missing', () => {
+            fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
+
+            const result = comp.getAssessmentLink();
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return assessment link for valid exercise', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+            fixture.componentRef.setInput('participation', {
+                id: 1,
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0 }] } as Submission],
+            } as Participation);
+
+            const result = comp.getAssessmentLink();
+
+            expect(result).toBeDefined();
+        });
+    });
+
+    describe('getCorrectionRoundForAssessmentLink', () => {
+        it('should return correctionRound when no result exists', () => {
+            fixture.componentRef.setInput('participation', { id: 1, submissions: [{ id: 1, results: [] } as Submission] } as Participation);
+
+            const result = comp.getCorrectionRoundForAssessmentLink(0);
+
+            expect(result).toBe(0);
+        });
+
+        it('should return next correction round when complaint was accepted', () => {
+            fixture.componentRef.setInput('participation', {
+                id: 1,
+                submissions: [
+                    {
+                        id: 1,
+                        results: [{ id: 1, correctionRound: 0, hasComplaint: true } as Result, { id: 2, correctionRound: 1 } as Result],
+                    } as Submission,
+                ],
+            } as Participation);
+
+            const result = comp.getCorrectionRoundForAssessmentLink(0);
+
+            expect(result).toBe(1);
+        });
+
+        it('should return same correction round when no complaint', () => {
+            fixture.componentRef.setInput('participation', {
+                id: 1,
+                submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0, hasComplaint: false } as Result] } as Submission],
+            } as Participation);
+
+            const result = comp.getCorrectionRoundForAssessmentLink(0);
+
+            expect(result).toBe(0);
+        });
+    });
+
+    describe('cancelAssessment', () => {
+        beforeEach(() => {
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should cancel programming assessment', () => {
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
+            const result = { id: 30, submission: { id: 20 } } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
+            expect(refreshSpy).toHaveBeenCalled();
+        });
+
+        it('should cancel modeling assessment', () => {
+            const cancelSpy = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
+            const result = { id: 30, submission: { id: 20 } } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
+            expect(refreshSpy).toHaveBeenCalled();
+        });
+
+        it('should cancel text assessment', () => {
+            const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+            const result = { id: 30, submission: { id: 20 } } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
+            expect(refreshSpy).toHaveBeenCalled();
+        });
+
+        it('should cancel file upload assessment', () => {
+            const cancelSpy = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
+            const result = { id: 30, submission: { id: 20 } } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
+            expect(refreshSpy).toHaveBeenCalled();
+        });
+
+        /**
+         * The participation page builds its rows from ParticipationManagementDTO, and those results have no submission back
+         * reference. Guarding on result.submission?.id therefore swallowed every click and no request was sent (#13396).
+         */
+        it('should cancel even when the result has no submission back reference', () => {
+            const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+            // Exactly the shape ParticipationComponent#toParticipation produces: no `submission` on the result.
+            const dtoShapedResult = { id: 30 } as Result;
+
+            comp.cancelAssessment(dtoShapedResult, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
+        });
+
+        it('should not cancel when user declines confirmation', () => {
+            vi.spyOn(window, 'confirm').mockReturnValue(false);
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
+            const result = { id: 30, submission: { id: 20 } } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not cancel when the participation has no submission', () => {
+            // The submission id comes from the participation now, so that is the precondition that has to be missing.
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('participation', { id: 10, submissions: [] } as Participation);
+            const result = { id: 30 } as Result;
+
+            comp.cancelAssessment(result, comp.participation());
+
+            expect(cancelSpy).not.toHaveBeenCalled();
+        });
+    });
+});

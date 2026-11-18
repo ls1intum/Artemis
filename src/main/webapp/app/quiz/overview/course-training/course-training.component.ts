@@ -1,0 +1,239 @@
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { EMPTY, firstValueFrom } from 'rxjs';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
+import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
+import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
+import dayjs from 'dayjs/esm';
+import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+
+@Component({
+    selector: 'jhi-course-training',
+    imports: [
+        CourseTitleBarActionsDirective,
+        ButtonComponent,
+        LeaderboardComponent,
+        TranslateDirective,
+        FontAwesomeModule,
+        LeagueBadgeComponent,
+        TumAetUiButtonDirective,
+        QuizTrainingDialogComponent,
+    ],
+    templateUrl: './course-training.component.html',
+    styleUrl: './course-training.component.scss',
+})
+export class CourseTrainingComponent {
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+    private readonly quizTrainingApi = inject(QuizTrainingApi);
+    private readonly alertService = inject(AlertService);
+
+    protected readonly faClock = faClock;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faXmark = faXmark;
+    protected readonly faCheck = faCheck;
+
+    protected readonly pointsBronzeLeague = 50;
+    protected readonly pointsSilverLeague = 150;
+    protected readonly pointsGoldLeague = 300;
+    protected readonly pointsDiamondLeague = 500;
+
+    paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    courseId = computed(() => this.paramsSignal()?.['courseId']);
+    isFirstVisit = signal<boolean>(true);
+    leaderboardEntries = signal<LeaderboardEntry[]>([]);
+    currentUserEntry = signal<LeaderboardEntry | undefined>(undefined);
+    isLoading = signal<boolean>(false);
+    isDataLoaded = signal<boolean>(false);
+    currentTime = signal<string>('');
+    initialShowInLeaderboard = signal<boolean>(true);
+
+    showDialog = true;
+    showInLeaderboard = true;
+    displayInfoDialog = false;
+
+    league = computed(() => {
+        const entry = this.currentUserEntry();
+        const league = entry?.selectedLeague ?? 0;
+        if (league === 1) {
+            return 'Master';
+        }
+        if (league === 2) {
+            return 'Diamond';
+        }
+        if (league === 3) {
+            return 'Gold';
+        }
+        if (league === 4) {
+            return 'Silver';
+        }
+        if (league === 5) {
+            return 'Bronze';
+        } else {
+            return 'No League';
+        }
+    });
+
+    leaderboardName = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.userName ?? '';
+    });
+
+    points = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.score ?? 0;
+    });
+
+    dueDate = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.dueDate ? dayjs(entry.dueDate) : undefined;
+    });
+
+    dueIn = computed(() => {
+        const dueDateDayjs = this.dueDate();
+        if (!dueDateDayjs) {
+            return { isValid: false, isPast: false, days: 0, hours: 0, minutes: 0 };
+        }
+
+        const now = dayjs(this.currentTime());
+
+        if (now.isAfter(dueDateDayjs)) {
+            return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
+        }
+
+        const diffDays = dueDateDayjs.diff(now, 'day');
+        const diffHours = dueDateDayjs.diff(now, 'hour') % 24;
+        const diffMinutes = dueDateDayjs.diff(now, 'minute') % 60;
+
+        if (diffDays === 0 && diffHours === 0 && diffMinutes === 0) {
+            const diffSeconds = dueDateDayjs.diff(now, 'second');
+            if (diffSeconds < 60) {
+                return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
+            }
+        }
+
+        return {
+            isValid: true,
+            isPast: false,
+            days: diffDays,
+            hours: diffHours,
+            minutes: diffMinutes,
+        };
+    });
+
+    totalQuestions = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.totalQuestions ?? 0;
+    });
+
+    correctQuestions = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.answeredCorrectly ?? 0;
+    });
+
+    wrongQuestions = computed(() => {
+        const entry = this.currentUserEntry();
+        return entry?.answeredWrong ?? 0;
+    });
+
+    constructor() {
+        // Selecting this tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.route)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => void this.loadLeaderboard(Number(this.courseId())));
+
+        effect(() => {
+            const id = this.courseId();
+            if (id) {
+                void this.loadLeaderboard(Number(id));
+            }
+        });
+    }
+
+    async loadLeaderboard(courseId: number): Promise<void> {
+        this.isLoading.set(true);
+        try {
+            const leaderboard = await firstValueFrom(this.quizTrainingApi.getQuizTrainingLeaderboard(courseId));
+            this.leaderboardEntries.set(leaderboard.leaderboardEntries);
+            this.currentUserEntry.set(leaderboard.currentUserEntry);
+            this.currentTime.set(leaderboard.currentTime);
+            this.isLoading.set(false);
+            this.isDataLoaded.set(true);
+
+            if (leaderboard.hasUserSetSettings) {
+                this.showDialog = false;
+                this.isFirstVisit.set(false);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
+    }
+
+    public navigateToTraining(): void {
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            void this.router.navigate(['courses', courseId, 'training', 'quiz']);
+        }
+    }
+
+    async onSaveDialog(): Promise<void> {
+        this.isLoading.set(true);
+        try {
+            await firstValueFrom(this.quizTrainingApi.updateLeaderboardSettings({ showInLeaderboard: this.showInLeaderboard }));
+            this.isFirstVisit.set(false);
+            this.isLoading.set(false);
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                void this.loadLeaderboard(courseId);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
+    }
+
+    async showInfoDialog(): Promise<void> {
+        try {
+            const settings = await firstValueFrom(this.quizTrainingApi.getLeaderboardSettings());
+            if (settings) {
+                this.showInLeaderboard = settings.showInLeaderboard ?? true;
+                this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
+            }
+            this.isLoading.set(false);
+            this.displayInfoDialog = true;
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
+    }
+
+    async onSaveInfoDialog(): Promise<void> {
+        try {
+            await firstValueFrom(this.quizTrainingApi.updateLeaderboardSettings({ showInLeaderboard: this.showInLeaderboard }));
+            this.initialShowInLeaderboard.set(this.showInLeaderboard);
+            this.displayInfoDialog = false;
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                void this.loadLeaderboard(courseId);
+            }
+            this.isLoading.set(false);
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
+    }
+}

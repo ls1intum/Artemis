@@ -1,0 +1,424 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
+import { User } from 'app/account/user/user.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+
+describe('ParticipationWebsocketService', () => {
+    let websocketService: WebsocketService;
+    let receiveParticipationSubject: Subject<Participation>;
+    let receiveParticipation2Subject: Subject<Participation>;
+    let receiveResultForParticipationSubject: Subject<Result>;
+    let receiveResultForParticipation2Subject: Subject<Result>;
+    let subscribeSpy: ReturnType<typeof vi.spyOn>;
+    let participationWebsocketService: ParticipationWebsocketService;
+
+    const exercise1 = new ProgrammingExercise(undefined, undefined);
+    exercise1.id = 20;
+    const exercise2 = new ProgrammingExercise(undefined, undefined);
+    exercise2.id = 40;
+
+    const participation: Participation = { id: 1, exercise: exercise1 };
+    const currentResult: Result = { id: 10 };
+    const currentSubmission: Submission = { id: 1, participation, results: [currentResult] };
+    currentResult.submission = currentSubmission;
+    participation.submissions = [currentSubmission];
+    const newRatedResult: Result = { id: 11, rated: true, submission: currentSubmission };
+    const newUnratedResult: Result = { id: 12, rated: false, submission: currentSubmission };
+
+    const participationPersonalResultTopic = `/user/topic/newResults`;
+    const participationTopic = `/user/topic/exercise/${participation.exercise!.id}/participation`;
+
+    const participation2: Participation = { id: 2, exercise: exercise2 };
+    const currentResult2: Result = { id: 13, submission: { participation: participation2 } };
+    const currentSubmission2: Submission = { id: 2, participation: participation2, results: [currentResult2] };
+    participation2.submissions = [currentSubmission2];
+
+    const participationInstructorResultTopic = `/topic/exercise/${participation2.exercise!.id}/newResults`;
+    const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+        await TestBed.compileComponents();
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
+
+        subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+
+        receiveResultForParticipationSubject = new Subject();
+        receiveResultForParticipation2Subject = new Subject();
+        receiveParticipationSubject = new Subject();
+        receiveParticipation2Subject = new Subject();
+        subscribeSpy.mockImplementation((arg1: string) => {
+            switch (arg1) {
+                case participationPersonalResultTopic:
+                    return receiveResultForParticipationSubject.asObservable();
+                case participationInstructorResultTopic:
+                    return receiveResultForParticipation2Subject.asObservable();
+                case participationTopic:
+                    return receiveParticipationSubject.asObservable();
+                case participation2Topic:
+                    return receiveParticipation2Subject.asObservable();
+            }
+            return new Subject().asObservable();
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exercise2.id);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(subscribeSpy).toHaveBeenCalledWith(participationInstructorResultTopic);
+
+        expect(participationWebsocketService.cachedParticipations.size).toBe(0);
+
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
+
+        expect(participationWebsocketService.resultObservables.size).toBe(1);
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
+
+        expect(participationWebsocketService.participationObservable).toBeUndefined();
+    });
+
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(subscribeSpy).toHaveBeenCalledWith(participationPersonalResultTopic);
+
+        expect(participationWebsocketService.cachedParticipations.size).toBe(0);
+
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeDefined();
+
+        expect(participationWebsocketService.resultObservables.size).toBe(1);
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
+
+        expect(participationWebsocketService.participationObservable).toBeUndefined();
+    });
+
+    it('should emit rated result when received through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
+        const resultSpy = vi.spyOn(resultObservable, 'next');
+        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+
+        // Emit new result from websocket
+        receiveResultForParticipationSubject.next(newRatedResult);
+
+        expect(resultSpy).toHaveBeenCalledOnce();
+        expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
+    });
+
+    it('should also emit participation update with new result when new rated result arrives through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.subscribeForParticipationChanges();
+        const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
+        const resultSpy = vi.spyOn(resultObservable, 'next');
+        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        receiveResultForParticipationSubject.next(newRatedResult);
+
+        expect(resultSpy).toHaveBeenCalledOnce();
+        expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const updatedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
+
+        expect(updatedParticipation.id).toBe(participation.id);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
+        expect(cached).toEqual(updatedParticipation);
+    });
+
+    it('should emit participation update with new result when unrated result arrives through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.subscribeForParticipationChanges();
+
+        const resultObservable = new BehaviorSubject<Result | undefined>(undefined);
+        const resultSpy = vi.spyOn(resultObservable, 'next');
+        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+        receiveResultForParticipationSubject.next(newUnratedResult);
+
+        expect(resultSpy).toHaveBeenCalledOnce();
+        expect(resultSpy).toHaveBeenCalledWith(newUnratedResult);
+
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const emittedParticipation = participationSpy.mock.calls[0][0] as Participation;
+        expect(emittedParticipation).toBeDefined();
+        expect(emittedParticipation.id).toBe(participation.id);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
+        expect(cached).toBeDefined();
+        expect(cached!.id).toBe(participation.id);
+    });
+
+    it('should replace unfinished Athena placeholder when persisted Athena result arrives through websocket', () => {
+        const participationWithPlaceholder: StudentParticipation = { id: 91, exercise: exercise1 } as StudentParticipation;
+        const submission: Submission = { id: 91, participation: participationWithPlaceholder } as Submission;
+        const previousResult: Result = { id: 90, score: 60, submission } as Result;
+        const placeholderResult: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission,
+        } as Result;
+        submission.results = [previousResult, placeholderResult];
+        participationWithPlaceholder.submissions = [submission];
+        const persistedAthenaResult: Result = {
+            id: 92,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholder.id!);
+        const cachedResults = cached?.submissions?.[0].results ?? [];
+        expect(cachedResults).toHaveLength(2);
+        expect(cachedResults.map((result) => result.id).sort()).toEqual([90, 92]);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should remove stale failed Athena placeholders when a later persisted Athena result arrives for another submission', () => {
+        const participationWithFailedPlaceholder: StudentParticipation = { id: 93, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 93, participation: participationWithFailedPlaceholder } as Submission;
+        const secondSubmission: Submission = { id: 94, participation: participationWithFailedPlaceholder } as Submission;
+        const failedPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [failedPlaceholder];
+        participationWithFailedPlaceholder.submissions = [firstSubmission, secondSubmission];
+        const persistedAthenaResult: Result = {
+            id: 95,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithFailedPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithFailedPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithFailedPlaceholder.id!);
+        const cachedResults = cached?.submissions?.flatMap((submission) => submission.results ?? []) ?? [];
+        expect(cachedResults).toHaveLength(1);
+        expect(cachedResults[0].id).toBe(95);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should keep Athena placeholders when an incoming Athena websocket update is not persisted', () => {
+        const participationWithPlaceholders: StudentParticipation = { id: 96, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 96, participation: participationWithPlaceholders } as Submission;
+        const secondSubmission: Submission = { id: 97, participation: participationWithPlaceholders } as Submission;
+        const existingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [existingPlaceholder];
+        participationWithPlaceholders.submissions = [firstSubmission, secondSubmission];
+        const incomingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholders.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholders);
+
+        receiveResultForParticipationSubject.next(incomingPlaceholder);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholders.id!);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results?.[0].successful).toBeUndefined();
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results?.[0].successful).toBe(false);
+    });
+
+    it('should propagate participation initialization state from a websocket result payload', () => {
+        const cachedParticipation: StudentParticipation = {
+            id: 98,
+            exercise: exercise1,
+            initializationState: InitializationState.INITIALIZED,
+        } as StudentParticipation;
+        const cachedSubmission: Submission = { id: 98, participation: cachedParticipation, results: [] } as Submission;
+        cachedParticipation.submissions = [cachedSubmission];
+        const finishedParticipationPayload: Participation = {
+            id: cachedParticipation.id,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            initializationState: InitializationState.FINISHED,
+            submissionCount: 1,
+            exercise: exercise1,
+        } as Participation;
+        const incomingSubmission: Submission = { id: cachedSubmission.id, participation: finishedParticipationPayload } as Submission;
+        const incomingResult: Result = { id: 99, score: 80, submission: incomingSubmission } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(cachedParticipation.id!, true);
+        participationWebsocketService.addParticipation(cachedParticipation);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        receiveResultForParticipationSubject.next(incomingResult);
+
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const emittedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
+        expect(emittedParticipation.initializationState).toBe(InitializationState.FINISHED);
+        expect(emittedParticipation.submissions?.[0].results?.map((result) => result.id)).toEqual([99]);
+        expect(participationWebsocketService.cachedParticipations.get(cachedParticipation.id!)?.initializationState).toBe(InitializationState.FINISHED);
+    });
+
+    it('should attach the result to participation if the participation has undefined for results value', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.addParticipation(participation as Participation);
+        participationWebsocketService.subscribeForParticipationChanges();
+        const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
+        const resultSpy = vi.spyOn(resultObservable, 'next');
+        participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        receiveResultForParticipationSubject.next(newRatedResult);
+
+        expect(participationWebsocketService.cachedParticipations.size).toBe(1);
+
+        expect(resultSpy).toHaveBeenCalledOnce();
+        expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const updatedParticipation = participationSpy.mock.calls[0][0] as Participation;
+
+        expect(updatedParticipation.id).toBe(participation.id);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
+        expect(cached).toEqual(updatedParticipation);
+    });
+
+    it('should reset the local cache', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id!, false, participation2.exercise!.id);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeDefined();
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
+
+        participationWebsocketService.resetLocalCache();
+
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+    });
+
+    it('should return the cached participation after adding it', () => {
+        expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toHaveLength(0);
+
+        participationWebsocketService.addParticipation(participation);
+
+        expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toEqual([participation]);
+    });
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: ParticipationWebsocketService;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    { provide: WebsocketService, useClass: MockWebsocketService },
+                    { provide: ParticipationService, useClass: MockParticipationService },
+                    { provide: AccountService, useValue: customAccountService },
+                ],
+            });
+            scoped = TestBed.inject(ParticipationWebsocketService);
+        });
+
+        it('should clear cached participations and websocket subscriptions on logout', () => {
+            scoped.addParticipation(participation);
+            scoped.addParticipation(participation2);
+            const personalSub = scoped.subscribeForLatestResultOfParticipation(participation.id!, true);
+            // Also exercise the non-personal subscription path so both websocket maps are populated.
+            scoped.subscribeForLatestResultOfParticipation(participation2.id!, false, participation2.exercise!.id!);
+            let resultCompleted = false;
+            personalSub.subscribe({ complete: () => (resultCompleted = true) });
+            const participationStream = scoped.subscribeForParticipationChanges();
+            let participationCompleted = false;
+            participationStream.subscribe({ complete: () => (participationCompleted = true) });
+
+            authState.next(undefined);
+
+            expect(scoped.cachedParticipations.size).toBe(0);
+            expect(scoped.openResultWebsocketSubscriptions.size).toBe(0);
+            expect(scoped.openPersonalWebsocketSubscription).toBeUndefined();
+            expect(scoped.resultObservables.size).toBe(0);
+            expect(scoped.participationObservable).toBeUndefined();
+            expect(scoped.subscribedExercises.size).toBe(0);
+            expect(scoped.participationSubscriptionTypes.size).toBe(0);
+            expect(resultCompleted).toBe(true);
+            expect(participationCompleted).toBe(true);
+        });
+
+        it('should clear participations when a different user logs in', () => {
+            scoped.addParticipation(participation);
+
+            authState.next({ id: 42 } as User);
+
+            expect(scoped.cachedParticipations.size).toBe(0);
+        });
+
+        it('should not clear participations when the same user re-emits', () => {
+            scoped.addParticipation(participation);
+
+            authState.next({ id: 99 } as User);
+
+            expect(scoped.cachedParticipations.size).toBe(1);
+        });
+    });
+});

@@ -1,0 +1,33 @@
+{{- /*
+Routes the Gateway's TCP/7921 listener to the git-over-SSH service.
+TCPRoute is part of the Gateway API EXPERIMENTAL channel - the CRD and a
+controller that supports it (Cilium, Istio, Envoy Gateway, NGINX Gateway
+Fabric...) must be installed. Use gateway.ssh.mode=loadbalancer|nodeport as a
+fallback for controllers without TCPRoute support.
+*/ -}}
+{{- if and .Values.gateway.enabled (eq .Values.gateway.ssh.mode "tcproute") }}
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: {{ include "artemis.sshName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    {{- if .Values.gateway.create }}
+    - name: {{ include "artemis.fullname" . }}
+      sectionName: ssh
+    {{- else }}
+    - name: {{ required "gateway.parentRef.name is required when gateway.create=false" .Values.gateway.parentRef.name }}
+      {{- with .Values.gateway.parentRef.namespace }}
+      namespace: {{ . }}
+      {{- end }}
+      {{- with .Values.gateway.parentRef.sshSectionName }}
+      sectionName: {{ . }}
+      {{- end }}
+    {{- end }}
+  rules:
+    - backendRefs:
+        - name: {{ include "artemis.sshName" . }}
+          port: {{ .Values.gateway.ssh.port }}
+{{- end }}

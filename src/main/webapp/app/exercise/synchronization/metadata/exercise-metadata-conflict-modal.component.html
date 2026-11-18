@@ -1,0 +1,287 @@
+<div class="conflict-body">
+    <p class="text-lg" jhiTranslate="artemisApp.exercise.metadataSync.conflictIntro"></p>
+    <p>
+        <span jhiTranslate="artemisApp.exercise.metadataSync.conflictAuthor"></span>
+        <strong>{{ authorName() }}</strong>
+        @if (versionId()) {
+            <span>(#{{ versionId() }})</span>
+        }
+    </p>
+
+    <div class="global-toggle flex gap-2 mb-3!">
+        <tumaet-ui-button size="small" [variant]="allLocal() ? 'solid' : 'outlined'" (clicked)="setAllDecisions(false)">
+            <span jhiTranslate="artemisApp.exercise.metadataSync.keepAllLocal"></span>
+        </tumaet-ui-button>
+        <tumaet-ui-button size="small" [variant]="allIncoming() ? 'solid' : 'outlined'" (clicked)="setAllDecisions(true)">
+            <span jhiTranslate="artemisApp.exercise.metadataSync.applyAllIncoming"></span>
+        </tumaet-ui-button>
+    </div>
+
+    <div class="conflict-list flex flex-col gap-3!">
+        @for (conflict of conflicts(); track conflict.field) {
+            <div class="conflict-item border rounded-lg p-3!">
+                <div class="conflict-header mb-2">
+                    <span class="font-semibold" [jhiTranslate]="conflict.labelKey"></span>
+                </div>
+
+                @if (isBuildConfigField(conflict.field)) {
+                    <div class="grid grid-cols-12 gap-3!">
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction30
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                @for (entry of getBuildConfigValues(conflict.currentValue); track entry.labelKey) {
+                                    <div class="flex justify-between gap-2 text-sm mb-1">
+                                        <span class="font-semibold" [jhiTranslate]="entry.labelKey"></span>
+                                        <span class="break-words text-right">{{ formatValue(entry.value) }}</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction45
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                @for (entry of getBuildConfigValues(conflict.incomingValue); track entry.labelKey) {
+                                    <div class="flex justify-between gap-2 text-sm mb-1">
+                                        <span class="font-semibold" [jhiTranslate]="entry.labelKey"></span>
+                                        <span class="break-words text-right">{{ formatValue(entry.value) }}</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                } @else if (isCategoriesField(conflict.field)) {
+                    <div class="grid grid-cols-12 gap-3!">
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction63
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="flex flex-wrap gap-2">
+                                    @for (category of toCategoryEntries(conflict.currentValue); track category.category) {
+                                        <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction77
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="flex flex-wrap gap-2">
+                                    @for (category of toCategoryEntries(conflict.incomingValue); track category.category) {
+                                        <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                } @else if (isCompetencyLinksField(conflict.field)) {
+                    <div class="grid grid-cols-12 gap-3!">
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction94
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="flex flex-col gap-2">
+                                    @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
+                                        <div class="flex justify-between gap-2 px-2 py-1 rounded-lg bg-surface-raised text-sm">
+                                            <span class="font-semibold">{{ entry.title }}</span>
+                                            <span>{{ formatValue(entry.weight) }}</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction111
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="flex flex-col gap-2">
+                                    @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
+                                        <div class="flex justify-between gap-2 px-2 py-1 rounded-lg bg-surface-raised text-sm">
+                                            <span class="font-semibold">{{ entry.title }}</span>
+                                            <span>{{ formatValue(entry.weight) }}</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                } @else if (isGradingCriteriaField(conflict.field)) {
+                    <div class="grid grid-cols-12 gap-3!">
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction131
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.currentValue }" />
+                            </div>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction165
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.incomingValue }" />
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <div class="grid grid-cols-12 gap-3!">
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-2 px-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction202
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="break-words">{{ formatValue(conflict.currentValue) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <div
+                                class="conflict-tile rounded-lg p-2 px-3! h-full"
+                                [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
+                                (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction212
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
+                            >
+                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="break-words">{{ formatValue(conflict.incomingValue) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="flex justify-end gap-2 mt-3!">
+    <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="keepLocalChanges()">
+        <span jhiTranslate="artemisApp.exercise.metadataSync.keepLocal"></span>
+    </tumaet-ui-button>
+    <tumaet-ui-button (clicked)="applySelections()">
+        <span jhiTranslate="artemisApp.exercise.metadataSync.applySelections"></span>
+    </tumaet-ui-button>
+</div>
+
+<ng-template #gradingCriteria let-value>
+    @for (criterion of toGradingCriteriaDisplay(value); track criterion.title) {
+        <div class="mb-2">
+            <div class="font-semibold text-sm mb-1">{{ criterion.title }}</div>
+            @if (criterion.instructions.length > 0) {
+                <table tumAetUiTable size="small" class="w-full">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.credits"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.gradingScale"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.instructionDescription"></th>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.feedback"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (instr of criterion.instructions; track instr.id ?? $index) {
+                            <tr>
+                                <td>{{ instr.credits }}</td>
+                                <td>{{ instr.gradingScale }}</td>
+                                <td class="break-words">{{ instr.instructionDescription }}</td>
+                                <td class="break-words">{{ instr.feedback }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+</ng-template>

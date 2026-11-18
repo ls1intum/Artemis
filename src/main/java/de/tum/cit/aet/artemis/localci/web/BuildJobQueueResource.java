@@ -1,0 +1,269 @@
+package de.tum.cit.aet.artemis.localci.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.SliceUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
+
+@Profile(PROFILE_LOCALCI)
+@Lazy
+@FeatureUsage(UserFeature.BUILD_OVERVIEW)
+@RestController
+@RequestMapping("api/localci/")
+public class BuildJobQueueResource {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
+
+    private final SharedQueueManagementService localCIBuildJobQueueService;
+
+    private final DistributedDataAccessService distributedDataAccessService;
+
+    private final BuildJobRepository buildJobRepository;
+
+    private final ParticipationRepository participationRepository;
+
+    private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
+
+    public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
+            DistributedDataAccessService distributedDataAccessService, ParticipationRepository participationRepository,
+            ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
+        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.buildJobRepository = buildJobRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
+        this.participationRepository = participationRepository;
+        this.participationAuthorizationCheckService = participationAuthorizationCheckService;
+    }
+
+    /**
+     * Returns a single build job by its ID, verifying it belongs to the given course.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param courseId   the id of the course
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found or does not belong to the course
+     */
+    @GetMapping("courses/{courseId}/build-jobs/{buildJobId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
+        if (buildJobId == null || buildJobId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        buildJobId = buildJobId.trim();
+        log.debug("REST request to get build job by id {} for course {}", buildJobId, courseId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId) {
+            return ResponseEntity.ok(CourseBuildJobDTO.of(processingJob));
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id()) && queuedJob.courseId() == courseId) {
+                return ResponseEntity.ok(CourseBuildJobDTO.of(queuedJob));
+            }
+        }
+
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId)
+                .<BuildJobDTO>map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), distributedDataAccessService.getBuildAgentInformation()))
+                .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns the queued build jobs for the given course.
+     *
+     * @param courseId the id of the course for which to get the queued build jobs
+     * @return the queued build jobs
+     */
+    @GetMapping("courses/{courseId}/queued-jobs")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<CourseBuildJobDTO>> getQueuedBuildJobsForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get the queued build jobs for course {}", courseId);
+        List<CourseBuildJobDTO> buildJobQueue = distributedDataAccessService.getQueuedJobsForCourse(courseId).stream().map(CourseBuildJobDTO::of).toList();
+        return ResponseEntity.ok(buildJobQueue);
+    }
+
+    /**
+     * Returns the running build jobs for the given course.
+     *
+     * @param courseId the id of the course for which to get the running build jobs
+     * @return the running build jobs
+     */
+    @GetMapping("courses/{courseId}/running-jobs")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<CourseBuildJobDTO>> getRunningBuildJobsForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get the running build jobs for course {}", courseId);
+        List<CourseBuildJobDTO> runningBuildJobs = distributedDataAccessService.getProcessingJobsForCourse(courseId).stream().map(CourseBuildJobDTO::of).toList();
+        return ResponseEntity.ok(runningBuildJobs);
+    }
+
+    /**
+     * Cancels the build job for the given participation in the specified course.
+     *
+     * @param courseId   the id of the course
+     * @param buildJobId the id of the build job to cancel
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("courses/{courseId}/build-jobs/{buildJobId}/cancel")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
+        log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
+        // Build job ids are not course scoped, so being an instructor of the course in the path says nothing about this job.
+        // Without this check an instructor could stop the build of any other course whose job id they know.
+        if (!belongsToCourse(buildJobId, courseId)) {
+            throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
+        }
+
+        // The course is checked again against the job that is actually cancelled, as a job can be handed over from the queue to an agent after the check above
+        localCIBuildJobQueueService.cancelBuildJobOfCourse(buildJobId, courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * @param buildJobId the build job a course wants to cancel
+     * @param courseId   the course the request was made for
+     * @return whether the job may be cancelled from that course: it either belongs to it, or it is neither queued nor
+     *         running any more, in which case cancelling it does nothing at all and there is nothing to protect
+     */
+    private boolean belongsToCourse(String buildJobId, long courseId) {
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return processingJob.courseId() == courseId;
+        }
+        return distributedDataAccessService.getQueuedJobs().stream().filter(queuedJob -> buildJobId.equals(queuedJob.id())).allMatch(queuedJob -> queuedJob.courseId() == courseId);
+    }
+
+    /**
+     * Cancels all queued build jobs for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("courses/{courseId}/cancel-all-queued-jobs")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> cancelAllQueuedBuildJobs(@PathVariable long courseId) {
+        log.debug("REST request to cancel all queued build jobs for course {}", courseId);
+        // Call the cancelAllQueuedBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllQueuedBuildJobsForCourse(courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Cancels all running build jobs for the given course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with the result of the cancellation
+     */
+    @DeleteMapping("courses/{courseId}/cancel-all-running-jobs")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> cancelAllRunningBuildJobs(@PathVariable long courseId) {
+        log.debug("REST request to cancel all running build jobs for course {}", courseId);
+        // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
+        localCIBuildJobQueueService.cancelAllRunningBuildJobsForCourse(courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Get all finished build jobs for a course
+     *
+     * @param courseId the id of the course
+     * @param search   the search criteria
+     * @return the page of finished build jobs
+     */
+    @GetMapping("courses/{courseId}/finished-jobs")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<CourseFinishedBuildJobDTO>> getFinishedBuildJobsForCourse(@PathVariable long courseId, FinishedBuildJobPageableSearchDTO search) {
+        log.debug("REST request to get the finished build jobs for course {}", courseId);
+        // Filtering by the address of a build agent is a function of the administration pages
+        var courseSearch = new FinishedBuildJobPageableSearchDTO(search.buildStatus(), null, search.startDate(), search.endDate(), search.buildDurationLower(),
+                search.buildDurationUpper(), search.pageable());
+        Slice<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(courseSearch, courseId);
+        var agents = distributedDataAccessService.getBuildAgentInformation();
+        Slice<CourseFinishedBuildJobDTO> finishedBuildJobDTOs = buildJobPage.map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), agents));
+        HttpHeaders headers = SliceUtil.generateSliceHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
+        return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Returns the build job statistics.
+     *
+     * @param courseId the id of the course
+     * @param span     the time span in days. The statistics will be calculated for the last span days. Default is 7 days.
+     * @return the build job statistics
+     */
+    @GetMapping("courses/{courseId}/build-job-statistics")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@PathVariable long courseId, @RequestParam(required = false, defaultValue = "7") int span) {
+        log.debug("REST request to get the build job statistics");
+        List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatisticsForCourse(ZonedDateTime.now().minusDays(span), courseId);
+        BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
+        return ResponseEntity.ok(buildJobStatistics);
+    }
+
+    /**
+     * Returns the estimated start date of the build job for the given participation.
+     * The user needs access to the participation.
+     *
+     * @param participationId the id of the participation
+     * @return the estimated queue duration
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("queued-jobs/queue-duration-estimation")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {
+        var start = System.nanoTime();
+        if (participationId <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participationRepository.findByIdElseThrow(participationId));
+        ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
+        log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(estimatedJobQueueReleaseTime);
+    }
+
+}

@@ -1,0 +1,349 @@
+@if (loadingState() === LOADING_STATE.INITIALIZING || loadingState() === LOADING_STATE.FETCHING_FAILED) {
+    <nav class="card">
+        <div class="card-body">
+            @if (loadingState() === LOADING_STATE.INITIALIZING) {
+                <span>
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
+                    <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                </span>
+            }
+            @if (loadingState() === LOADING_STATE.FETCHING_FAILED) {
+                <span>
+                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
+                    <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
+                </span>
+            }
+        </div>
+    </nav>
+} @else if (exercise(); as exercise) {
+    <!-- The @else branch already excludes the two loading states, and the alias narrows the exercise signal to a
+         non-null value for the whole block so the bindings below keep type-checking their optional participations. -->
+    <div class="module-bg p-3 pt-1">
+        <jhi-code-editor-container
+            [participation]="selectedParticipation!"
+            [editable]="!isProblemStatementEditingLocked()"
+            [buildable]="selectedRepository !== RepositoryType.TESTS"
+            [selectedRepository]="selectedRepository"
+            [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
+            [course]="course"
+            [allowHiddenFiles]="true"
+            [fileSyncService]="fileSyncService"
+            [enableExerciseReviewComments]="true"
+            (onFileLoad)="onFileLoad($event)"
+            (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
+            (onEditorLoaded)="onEditorLoaded()"
+            (onCommit)="onCommit()"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
+        >
+            <div editorTitle>
+                <span>{{ exercise?.title }}</span>
+                <span
+                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                ></span>
+                <span>
+                    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                    }
+                </span>
+            </div>
+            <div editorTitleActions class="d-flex align-items-center ms-2">
+                <jhi-programming-exercise-instructor-exercise-status
+                    class="me-2"
+                    [exercise]="exercise"
+                    [templateParticipation]="exercise?.templateParticipation!"
+                    [solutionParticipation]="exercise?.solutionParticipation!"
+                />
+                <!-- repository select -->
+                <div ngbDropdown class="d-inline-block me-2">
+                    <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                        {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
+                    </button>
+                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                        <button
+                            type="button"
+                            [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
+                            (click)="selectTemplateParticipation()"
+                            ngbDropdownItem
+                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
+                        >
+                            <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
+                        </button>
+                        <button
+                            type="button"
+                            [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
+                            (click)="selectSolutionParticipation()"
+                            ngbDropdownItem
+                            [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
+                        >
+                            <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
+                        </button>
+                        <div class="d-flex w-100">
+                            <button
+                                type="button"
+                                class="flex-grow-1 text-start"
+                                ngbDropdownItem
+                                [disabled]="
+                                    loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                    loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
+                                    !exercise.studentParticipations ||
+                                    !exercise.studentParticipations.length ||
+                                    (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
+                                "
+                                (click)="selectAssignmentParticipation()"
+                                [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
+                            >
+                                <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
+                            </button>
+                            @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                                <div class="vr my-1"></div>
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2"
+                                    ngbDropdownItem
+                                    (click)="createAssignmentParticipation()"
+                                    [disabled]="isExerciseGenerationActionBlocked() || isCreateAssignmentRepoDisabled || loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                                    [ngbTooltip]="
+                                        isCreateAssignmentRepoDisabled
+                                            ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
+                                            : ('artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate)
+                                    "
+                                >
+                                    @if (loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faPlus" />
+                                    }
+                                </button>
+                            }
+                            @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
+                                <div class="vr my-1"></div>
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2 text-danger"
+                                    ngbDropdownItem
+                                    (click)="deleteAssignmentParticipation()"
+                                    [disabled]="isExerciseGenerationActionBlocked() || loadingState() !== LOADING_STATE.CLEAR"
+                                    [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
+                                >
+                                    @if (loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faTimes" />
+                                    }
+                                </button>
+                            }
+                        </div>
+                        <button
+                            type="button"
+                            [disabled]="!exercise"
+                            (click)="selectTestRepository()"
+                            ngbDropdownItem
+                            [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
+                            jhiTranslate="artemisApp.editor.repoSelect.testRepo"
+                        ></button>
+                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
+                            @if (auxiliaryRepository.id) {
+                                <button
+                                    type="button"
+                                    [disabled]="!exercise"
+                                    (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
+                                    ngbDropdownItem
+                                    [style.background-color]="
+                                        selectedRepository === RepositoryType.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? 'var(--link-color)' : 'transparent'
+                                    "
+                                >
+                                    {{ auxiliaryRepository.name }}
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+                @if (hyperionEnabled) {
+                    <div class="vr mx-2"></div>
+                    <jhi-code-editor-ai-actions
+                        [adaptOffered]="adaptOffered()"
+                        [variantOffered]="variantOffered()"
+                        [variantBlockedReason]="variantBlockedReason()"
+                        (variantRequested)="openVariantDialog()"
+                        (progressRequested)="openGenerationPage()"
+                        [adaptUnavailableReason]="adaptUnavailableReason()"
+                        [selectedFeedbackCount]="selectedAdaptFeedbackCount()"
+                        [progressLink]="progressLink()"
+                        [progressRunning]="generationActivity.running()"
+                        [problemStatementEmpty]="shouldShowGenerateButton()"
+                        [refineBlockedReason]="refineBlockedReason()"
+                        [consistencyBlockedReason]="consistencyBlockedReason()"
+                        [issueCount]="sortedIssues().length"
+                        [busy]="aiActionsBusy()"
+                        [cancelAvailable]="isGeneratingOrRefining()"
+                        [(prompt)]="refinementPrompt"
+                        (adaptRequested)="openAdaptDialog()"
+                        (refineSubmitted)="submitRefinement()"
+                        (consistencyRequested)="checkConsistencies(exercise)"
+                        (issuesToggled)="toggleConsistencyIssuesToolbar()"
+                        (cancelRequested)="cancelAiOperation()"
+                    />
+                }
+
+                <!-- Consistency Issue Navigator Toolbar -->
+                @if (showConsistencyIssuesToolbar() && sortedIssues().length) {
+                    <nav
+                        class="ml-2 flex shrink-0 items-center gap-2"
+                        [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.issues' | artemisTranslate"
+                        data-testid="consistency-issue-navigation"
+                    >
+                        <button
+                            tumAetUiButton
+                            type="button"
+                            size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+                            severity="secondary"
+                            variant="outlined"
+                            (click)="navigateGlobal(-1)"
+                            data-testid="consistency-previous-issue"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowLeft" />
+                        </button>
+                        <span class="text-sm whitespace-nowrap" aria-live="polite">
+                            <span class="ml-1 tabular-nums">{{ currentGlobalIndex }} / {{ totalLocationsCount() }}</span>
+                        </span>
+                        <button
+                            tumAetUiButton
+                            type="button"
+                            size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+                            severity="secondary"
+                            variant="outlined"
+                            (click)="navigateGlobal(1)"
+                            data-testid="consistency-next-issue"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowRight" />
+                        </button>
+                        <button
+                            tumAetUiButton
+                            type="button"
+                            size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
+                            severity="secondary"
+                            variant="text"
+                            (click)="toggleConsistencyIssuesToolbar()"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </nav>
+                }
+            </div>
+            <div editorToolbar class="ms-auto d-flex align-items-center">
+                @if (selectedParticipation && selectedRepository !== RepositoryType.TESTS) {
+                    <jhi-updating-result
+                        [exercise]="exercise"
+                        [participation]="selectedParticipation!"
+                        [showUngradedResults]="true"
+                        [showBadge]="selectedRepository === RepositoryType.ASSIGNMENT"
+                        [personalParticipation]="false"
+                        [showProgressBar]="true"
+                        [showProgressBarBorder]="true"
+                        class="me-2"
+                    />
+                }
+                @if (selectedRepository !== RepositoryType.TESTS && !isExerciseGenerationActionBlocked()) {
+                    <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
+                }
+            </div>
+            <!-- Editable instructions with diff support -->
+            <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                @if (showDiff()) {
+                    <jhi-diff-review-banner
+                        [(allowSplitView)]="allowSplitView"
+                        [actionsDisabled]="isAiApplying() || isExerciseGenerationActionBlocked()"
+                        [addedLineCount]="addedLineCount()"
+                        [removedLineCount]="removedLineCount()"
+                        (revertRequested)="revertAllRefinement()"
+                        (doneRequested)="closeDiff()"
+                    />
+                }
+                @if (exercise.templateParticipation && selectedParticipation) {
+                    <jhi-programming-exercise-editable-instructions
+                        [exercise]="exercise"
+                        [participation]="selectedParticipation"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [externalHeight]="true"
+                        [enableResize]="false"
+                        [showPreview]="false"
+                        [enableExerciseReviewComments]="true"
+                        [canonicalBaseIsolation]="generationSupported()"
+                        [isGeneratingOrRefining]="isGeneratingOrRefining() || isProblemStatementEditingLocked()"
+                        [mode]="showDiff() ? 'diff' : 'normal'"
+                        [renderSideBySide]="allowSplitView()"
+                        (diffLineChange)="onDiffLineChange($event)"
+                        class="flex-grow-1 overflow-auto"
+                        (instructionChange)="onInstructionChanged($event)"
+                        (hasUnsavedChanges)="onProblemStatementUnsavedChangesChanged($event)"
+                        (onProblemStatementSaved)="onProblemStatementSaved()"
+                        (onInlineRefinement)="onInlineRefinement($event)"
+                        (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
+                    />
+                } @else {
+                    <!-- Loading state while waiting for templateParticipation -->
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                    </div>
+                }
+            </div>
+            <!-- Preview-only component for right sidebar -->
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                id="previewMonaco"
+                class="editable-instruction-container__instructions"
+                [exercise]="exercise"
+                [participation]="selectedParticipation!"
+                [personalParticipation]="false"
+                [generateHtmlEvents]="previewEvents$"
+            />
+        </jhi-code-editor-container>
+        @if (variantDialogVisible()) {
+            <jhi-exercise-variant-ai-modal-wizard
+                [visible]="true"
+                (visibleChange)="variantDialogVisible.set($event)"
+                [sourceExercise]="exercise"
+                [courseId]="exercise.course?.id"
+                [examExercise]="false"
+            />
+        }
+        @if (generationSupported()) {
+            <tumaet-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
+            @if (generationRefreshFailed()) {
+                <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
+                </button>
+            }
+            <tumaet-ui-dialog
+                [(visible)]="adaptDialogVisible"
+                [dismissableMask]="!generationStartPending()"
+                [closable]="!generationStartPending()"
+                [closeOnEscape]="!generationStartPending()"
+                size="medium"
+                [header]="'artemisApp.review.adaptExercise.title' | artemisTranslate"
+                (hidden)="onAdaptDialogHidden()"
+            >
+                @if (adaptDialogVisible()) {
+                    <jhi-review-adapt-exercise-dialog
+                        [findings]="adaptDialogFindings()"
+                        [blockedReason]="adaptBlockedReason()"
+                        [progressLink]="generationLink()"
+                        [submitting]="generationStartPending()"
+                        [submissionError]="adaptSubmissionError()"
+                        [selectedFeedbackThreadIds]="adaptDialogSelectedIds()"
+                        (confirmed)="onAdaptDialogConfirmed($event)"
+                        (cancelled)="adaptDialogVisible.set(false)"
+                    />
+                }
+            </tumaet-ui-dialog>
+        }
+    </div>
+}

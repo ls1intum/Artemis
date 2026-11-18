@@ -1,0 +1,5 @@
+@if (displayString() && documentationType()) {
+    <a style="font-size: medium" class="text-primary ms-1 mb-1" href="{{ BASE_URL + DocumentationLinks[documentationType()!] }}">
+        <span [jhiTranslate]="displayString()!"></span>
+    </a>
+}

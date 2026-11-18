@@ -1,0 +1,15 @@
+<button
+    [attr.aria-label]="'artemisApp.examManagement.editWorkingTime.title' | artemisTranslate"
+    tumAetUiButton
+    type="button"
+    severity="warn"
+    data-testid="edit-working-time-button"
+    [disabled]="!workingTimeChangeAllowed()"
+    (click)="openDialog($event)"
+>
+    <fa-icon [icon]="faHourglassHalf" />
+    <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.editWorkingTime.title"></span>
+</button>
+@if (dialogVisible()) {
+    <jhi-edit-working-time-dialog [(visible)]="dialogVisible" [exam]="exam()" (workingTimeUpdated)="examChange.emit($event)" />
+}

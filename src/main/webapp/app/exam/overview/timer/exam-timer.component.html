@@ -1,0 +1,9 @@
+<span class="timer text-sm">{{ 'artemisApp.examParticipation.' + (isEndView() ? 'timerEndView' : 'timer') | artemisTranslate }}</span>
+<span
+    class="remaining-time min-w-20 truncate rounded-md px-2 py-0.5 text-center text-base leading-snug font-semibold tabular-nums"
+    [class.critical]="isCriticalTime()"
+    [attr.data-critical]="isCriticalTime()"
+    data-testid="displayTime"
+>
+    {{ displayTime$ | async }}
+</span>

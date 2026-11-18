@@ -1,0 +1,173 @@
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { ActivatedRoute } from '@angular/router';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/foundation/util/navigation.utils';
+import { Course } from 'app/course/shared/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+
+/** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
+interface ExamScoreLookupEntry {
+    absoluteValue?: number;
+    exerciseId?: number;
+    exerciseType?: ExerciseType;
+}
+
+type NameToValueMap = { [name: string]: ExamScoreLookupEntry };
+
+/** Vertical space each horizontal bar needs to stay readable, including the gap to its neighbour. */
+const BAR_HEIGHT_PX = 34;
+
+/** Space the x-axis (ticks and labels) and the chart's own padding need on top of the bars. */
+const AXIS_AND_PADDING_HEIGHT_PX = 48;
+
+@Component({
+    selector: 'jhi-exam-scores-average-scores-graph',
+    templateUrl: './exam-scores-average-scores-graph.component.html',
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+})
+export class ExamScoresAverageScoresGraphComponent implements OnInit {
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private activatedRoute = inject(ActivatedRoute);
+    private localeConversionService = inject(LocaleConversionService);
+    private translateService = inject(TranslateService);
+
+    averageScores = input.required<AggregatedExerciseGroupResult>();
+    course = input.required<Course>();
+
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
+
+    /** One entry per bar: the exercise group average followed by the exercise averages. */
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    /** The raw per-bar colors (CSS variable references), index-aligned with {@link chartEntries}. */
+    readonly barColors = signal<string[]>([]);
+    readonly xScaleMax = signal(100);
+    lookup: NameToValueMap = {};
+
+    private readonly resolvedColors = computed(() => this.barColors());
+
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
+
+    /**
+     * Height of the chart box, derived from the number of bars (the exercise group plus one bar per exercise).
+     * A fixed height squeezed groups with several exercises into unreadable slivers.
+     */
+    readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + Math.max(this.chartEntries().length, 1) * BAR_HEIGHT_PX);
+
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
+        horizontal: true,
+        percentScale: true,
+        xAxis: { max: this.xScaleMax() },
+        tooltip: {
+            title: (items) => items[0]?.label ?? '',
+            label: (item) => {
+                const name = item.label;
+                const averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
+                return `${averagePointsTooltip}: ${this.lookupAbsoluteValue(name)} (${this.roundAndPerformLocalConversion(item.value)}%)`;
+            },
+        },
+    }));
+
+    constructor() {
+        effect(() => this.initializeChart());
+    }
+
+    ngOnInit(): void {
+        this.activatedRoute.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            this.examId = +params['examId'];
+        });
+    }
+
+    private initializeChart(): void {
+        const entries: ChartSeriesEntry[] = [];
+        const colors: string[] = [];
+        let xScaleMax = 100;
+        this.lookup = {};
+        const exerciseGroupAverage = this.averageScores().averagePercentage;
+        if (exerciseGroupAverage != null && Number.isFinite(exerciseGroupAverage) && Number.isFinite(this.averageScores().averagePoints)) {
+            this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
+            entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
+            colors.push(this.determineColor(true, exerciseGroupAverage));
+            xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
+        }
+        this.averageScores().exerciseResults.forEach((exercise) => {
+            const exerciseAverage = exercise.averagePercentage;
+            if (exerciseAverage == null || !Number.isFinite(exerciseAverage) || !Number.isFinite(exercise.averagePoints)) {
+                return;
+            }
+            xScaleMax = Math.max(xScaleMax, exerciseAverage);
+            entries.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
+            this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
+                absoluteValue: exercise.averagePoints,
+                exerciseId: exercise.exerciseId,
+                exerciseType: exercise.exerciseType,
+            };
+            colors.push(this.determineColor(false, exerciseAverage));
+        });
+
+        this.chartEntries.set(entries);
+        this.barColors.set(colors);
+        this.xScaleMax.set(xScaleMax);
+    }
+
+    roundAndPerformLocalConversion(points: number | undefined) {
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course().accuracyOfScores);
+    }
+
+    /**
+     * We navigate to the exercise participation page when the user clicks on a data point
+     */
+    navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
+        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'participations');
+    }
+
+    /**
+     * Looks up the absolute average points of an exercise group or an exercise
+     * @param name name of the exercise or exercise type
+     * @returns locale string representation of the points
+     */
+    lookupAbsoluteValue(name: string): string {
+        return this.roundAndPerformLocalConversion(this.lookup[name].absoluteValue);
+    }
+
+    /**
+     * Delegates the user to the participation page of the specific exam exercise if the corresponding bar is clicked
+     * @param event the event identifying the clicked bar
+     */
+    onSelect(event: TumAetUiChartSelectEvent) {
+        if (!event.label) {
+            return;
+        }
+        const id = this.lookup[event.label]?.exerciseId;
+        const type = this.lookup[event.label]?.exerciseType;
+        if (id && type) {
+            this.navigateToExercise(id, type);
+        }
+    }
+
+    /**
+     * Determines the color for a given bar
+     * @param isExerciseGroup boolean that indicates if the currently determined color is assigned to a bar representing the exercise group average
+     * This is necessary because we have a color difference between the exercise group average representation and an exercise average representation
+     * @param score the score the bar will represent
+     */
+    private determineColor(isExerciseGroup: boolean, score: number): string {
+        if (score >= 50) {
+            return isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;
+        } else if (score > 25) {
+            return GraphColors.YELLOW;
+        } else {
+            return GraphColors.RED;
+        }
+    }
+}

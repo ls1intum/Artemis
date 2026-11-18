@@ -1,0 +1,73 @@
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-course-description-form',
+    templateUrl: './course-description-form.component.html',
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
+        IrisLogoButtonComponent,
+        ArtemisTranslatePipe,
+    ],
+})
+export class CourseDescriptionFormComponent implements OnInit {
+    private formBuilder = inject(FormBuilder);
+
+    readonly isLoading = input(false);
+    readonly placeholder = input('');
+    readonly formSubmitted = output<string>();
+
+    form!: FormGroup<{ courseDescription: FormControl<string | null> }>; // built in ngOnInit()
+    readonly hasBeenSubmitted = signal(false);
+
+    //icons
+    protected readonly faQuestionCircle = faQuestionCircle;
+
+    //other constants
+    protected readonly DESCRIPTION_MAX = 10000;
+    protected readonly DESCRIPTION_MIN = 100;
+    protected readonly ButtonType = ButtonType;
+
+    ngOnInit(): void {
+        this.form = this.formBuilder.group({
+            courseDescription: [this.placeholder(), [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
+        });
+    }
+
+    setCourseDescription(description: string) {
+        this.form.controls.courseDescription.setValue(description);
+    }
+
+    /**
+     * Sends event to parent to handle submission
+     */
+    submitForm() {
+        this.formSubmitted.emit(this.form.value.courseDescription ?? '');
+        //save that form has been submitted to change look of the submit button
+        this.hasBeenSubmitted.set(true);
+    }
+
+    /**
+     * Only allows submitting if no form controls have validation errors
+     */
+    get isSubmitPossible() {
+        return !this.form.invalid;
+    }
+
+    get courseDescriptionControl() {
+        return this.form.controls.courseDescription;
+    }
+}

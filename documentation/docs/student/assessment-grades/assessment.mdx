@@ -1,0 +1,98 @@
+---
+id: assessment
+title: Assessment and Feedback
+sidebar_label: Assessment and Feedback
+last_reviewed: 2026-11-06
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import resultActions from '../assets/assessment/result-actions.png';
+import complaintForm from '../assets/assessment/complaint-form.png';
+import moreFeedbackForm from '../assets/assessment/more-feedback-form.png';
+import feedbackRating from '../assets/assessment/feedback-rating.png';
+
+How your work is marked depends on the exercise. A quiz and a programming exercise are marked by Artemis itself,
+against the correct answers or the test cases. A text, modeling or file upload exercise is read and marked by a tutor
+or an instructor. A programming exercise can be both: the tests give a starting point and a reviewer corrects it.
+
+## Receiving Your Result
+
+Nothing appears while marking is in progress. Once the assessment due date has passed, all the results are published
+together, and the exercise header carries yours: the points you scored, your percentage, and the date up to which you
+could dispute it.
+
+<Image src={resultActions} alt="Exercise header with the points, the status and the complaint deadline" size={ImageSize.large} caption="Your result on the exercise page" />
+
+Opening the status shows the feedback itself — the comments on your answer, the criteria that were applied, and where
+points were added or taken off. For a programming exercise with immediate feedback, results appear during the working
+period as well; whether that is switched on is your instructor's choice.
+
+## Double-Blind Assessment
+
+Marking is double-blind. The reviewer does not see your name while marking your work, and you do not see who marked
+it. Neither of you can be influenced by the other's identity.
+
+## Complaints
+
+If you believe the assessment is wrong, **Complain** disputes it — where your instructor has enabled complaints. The
+form asks you to say in detail why the assessment is wrong, in up to 2000 characters, and **Submit a complaint** sends
+it.
+
+A tutor may not answer a complaint about their own marking, so if a tutor marked your work a different tutor reviews
+the complaint. An instructor may answer any complaint, including one about an assessment they wrote themselves.
+
+<Image src={complaintForm} alt="Complaint form with its text box and the submit action" size={ImageSize.large} caption="Filing a complaint" />
+
+Two limits apply.
+
+- **A deadline.** The header names it as **Complaint due** — by default seven days after your result was published.
+  After that the option is gone.
+- **A number.** You may have only so many complaints that are still open or were rejected at once, three by default.
+  An accepted complaint stops counting, so being right costs you nothing; being wrong repeatedly uses your allowance
+  up.
+
+A reviewer either accepts the complaint, which reopens the assessment and may change your marks, or rejects it and
+explains why the original marks stand.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Accepting a complaint reopens the whole assessment, not only the part you disputed, so a mark can go down as well as
+  up.
+
+</Callout>
+
+A quiz result can never be complained about, and neither can Artemis's
+[preliminary AI feedback](/student/exercises/ai-feedback). An automatically
+marked exercise can be disputed only where your instructor has allowed it; if the option is off, no complaint deadline
+appears in the header at all. In an exam, complaints are only possible during the student review period.
+
+## More Feedback Requests
+
+If you do not think the marks are wrong but want them explained, **Request more feedback** asks for that instead. The
+form says what it does plainly: it does not affect your number of allowed complaints, but your score stays as it is,
+and the **same** reviewer who marked your work answers.
+
+<Image src={moreFeedbackForm} alt="More feedback request form, stating that the score stays unchanged" size={ImageSize.large} caption="Asking for more feedback" />
+
+<Callout variant={CalloutVariant.danger}>
+
+  Complaints and more feedback requests are mutually exclusive: Artemis keeps one or the other per result, never both.
+  If you request more feedback you cannot complain about that result afterwards, even if it turns out the marking was
+  wrong. When you are unsure whether the marks or only their explanation is the problem, complain.
+
+</Callout>
+
+## Rating Feedback Quality
+
+Once you have your feedback, Artemis asks how useful it was, and the answer is five stars and nothing else — no
+comment to write.
+
+<Image src={feedbackRating} alt="Feedback rating asking how useful the feedback was, with five stars" size={ImageSize.large} caption="Rating the feedback you received" />
+
+Rating changes nothing about your marks, and the reviewer cannot read what you gave them: only you and an
+administrator can see an individual rating. What instructors see is the rating against the *reviewer's* name, never
+yours, and each reviewer's average on the course leaderboard — which is how feedback that is not helping anyone gets
+noticed. Rate on whether the feedback told you something you can use, not on the score it came with.

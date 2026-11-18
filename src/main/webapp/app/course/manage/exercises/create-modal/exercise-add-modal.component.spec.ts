@@ -1,0 +1,395 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router, provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as downloadUtil from 'app/foundation/util/download.util';
+
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { ExerciseAddModalComponent } from 'app/course/manage/exercises/create-modal/exercise-add-modal.component';
+import { IMPORT_DIALOG_BACK } from 'app/course/manage/exercises/create-modal/import-dialog-footer.component';
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+
+describe('ExerciseAddModalComponent', () => {
+    let fixture: ComponentFixture<ExerciseAddModalComponent>;
+    let component: ExerciseAddModalComponent;
+    let profileService: ProfileService;
+    let featureToggleService: MockFeatureToggleService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseAddModalComponent],
+            providers: [
+                provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+            ],
+        }).compileComponents();
+
+        profileService = TestBed.inject(ProfileService);
+        featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+    });
+
+    /** The gating is resolved at construction (toSignal + computed), so configure the mocks before creating the component. */
+    function createComponent(): void {
+        fixture = TestBed.createComponent(ExerciseAddModalComponent);
+        component = fixture.componentInstance;
+    }
+
+    function visibleCardTypes(): ExerciseType[] {
+        // exerciseTypeCards is a protected computed signal; read it directly for the gating assertion.
+        return (component as unknown as { exerciseTypeCards: () => { type: ExerciseType }[] }).exerciseTypeCards().map((card) => card.type);
+    }
+
+    it('shows every exercise type when all module features and the programming toggle are active', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        createComponent();
+        expect(visibleCardTypes()).toEqual([ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD]);
+    });
+
+    it('hides text, modeling and file-upload when their module feature is inactive', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+        createComponent();
+        // Quiz is not module-gated and programming stays because its feature toggle defaults to active.
+        expect(visibleCardTypes()).toEqual([ExerciseType.PROGRAMMING, ExerciseType.QUIZ]);
+    });
+
+    it('hides programming while its feature toggle is off', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+        createComponent();
+        expect(visibleCardTypes()).not.toContain(ExerciseType.PROGRAMMING);
+    });
+
+    it('hides generation when programming exercises are disabled, including a previously selected generate tab', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+        createComponent();
+        fixture.componentRef.setInput('mode', 'unified');
+        fixture.componentRef.setInput('visible', true);
+        component.setActiveTab('generate');
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('[data-testid="generate-programming-exercise"]')).toBeNull();
+        expect(document.body.textContent).not.toContain('artemisApp.exerciseManagement.addModal.tab.generate');
+    });
+
+    it.each([
+        ['create', 6],
+        ['import', 5],
+    ] as const)('offers native create and import buttons in %s', (tab, count) => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        createComponent();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        component.setActiveTab(tab);
+        fixture.detectChanges();
+
+        const cards = document.body.querySelectorAll<HTMLButtonElement>('.exercise-grid > .exercise-card');
+        expect(cards).toHaveLength(count);
+        expect(document.body.querySelector('tumaet-ui-card')).toBeNull();
+        for (const card of cards) {
+            expect(card.tagName).toBe('BUTTON');
+            expect(card.type).toBe('button');
+        }
+    });
+
+    describe('tabs and visibility', () => {
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
+        });
+
+        it('activates the tab matching the mode input whenever the modal becomes visible', () => {
+            fixture.componentRef.setInput('mode', 'import');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            expect(component.activeTab()).toBe('import');
+        });
+
+        it('keeps the current tab for the unified mode', () => {
+            component.setActiveTab('export');
+            fixture.componentRef.setInput('mode', 'unified');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            expect(component.activeTab()).toBe('export');
+        });
+
+        it('emits visibleChange(false) on close', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            component.close();
+            expect(emitted).toEqual([false]);
+        });
+
+        it('describes the generate tab with the generation entry copy, not the plain programming description', () => {
+            // `unified` so the mode effect leaves the tab alone; every other mode forces its own tab on open.
+            fixture.componentRef.setInput('mode', 'unified');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            component.setActiveTab('generate');
+            fixture.detectChanges();
+
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            const card = document.body.querySelector('[data-testid="generate-programming-exercise"]')?.closest('.exercise-card');
+            expect(card?.textContent).toContain('artemisApp.exerciseManagement.type.PROGRAMMING');
+            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.description');
+            expect(card?.tagName).toBe('BUTTON');
+            expect(card?.querySelector('.card-icon-wrapper')).not.toBeNull();
+            expect(card?.querySelector('h6')).not.toBeNull();
+            expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
+        });
+
+        it('renders the translated dialog header', () => {
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            expect(document.body.querySelector('.tumaet-ui-dialog-title')?.textContent?.trim()).toBe('artemisApp.exerciseManagement.addModal.header');
+        });
+    });
+
+    describe('navigateToCreate', () => {
+        let router: Router;
+        let navigateSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
+            router = TestBed.inject(Router);
+            navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        });
+
+        it('navigates to the type-specific create route and closes', () => {
+            fixture.componentRef.setInput('courseId', 42);
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            const card = (component as unknown as { exerciseTypeCards: () => { type: ExerciseType; routeSegment: string }[] })
+                .exerciseTypeCards()
+                .find((c) => c.type === ExerciseType.QUIZ)!;
+
+            component.navigateToCreate(card as never);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'quiz-exercises', 'new']);
+            expect(emitted).toEqual([false]);
+        });
+
+        it('does not navigate without a course id but still closes', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            const card = (component as unknown as { exerciseTypeCards: () => { type: ExerciseType }[] }).exerciseTypeCards()[0];
+
+            component.navigateToCreate(card as never);
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(emitted).toEqual([false]);
+        });
+
+        it('opens the brief dialog without navigating to the programming-exercise create page', () => {
+            fixture.componentRef.setInput('courseId', 42);
+
+            (component as unknown as { openProgrammingGeneration: () => void }).openProgrammingGeneration();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(component.briefDialogVisible()).toBe(true);
+        });
+
+        it('returns to the generate tab when the brief dialog asks to go back', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            component.briefDialogVisible.set(true);
+
+            (component as unknown as { backToGenerationTypes: () => void }).backToGenerationTypes();
+
+            expect(component.briefDialogVisible()).toBe(false);
+            expect(component.activeTab()).toBe('generate');
+            expect(emitted).toEqual([true]);
+        });
+    });
+
+    describe('startImport', () => {
+        let router: Router;
+        let navigateSpy: ReturnType<typeof vi.spyOn>;
+        let dialogService: TumAetUiDialogService;
+        let onClose: Subject<Exercise | string | undefined>;
+
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
+            router = TestBed.inject(Router);
+            navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            dialogService = TestBed.inject(TumAetUiDialogService);
+            onClose = new Subject();
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onClose.asObservable() } as unknown as TumAetUiDialogRef);
+            fixture.componentRef.setInput('courseId', 42);
+        });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.QUIZ])('opens the tabbed import dialog with the import from a file for %s', (type) => {
+            component.startImport(type);
+            expect(dialogService.open).toHaveBeenLastCalledWith(
+                ExerciseImportTabsComponent,
+                expect.objectContaining({ data: expect.objectContaining({ exerciseType: type, courseId: 42 }) }),
+            );
+        });
+
+        it('reopens the modal on the import tab when the dialog closes with the back sentinel', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+
+            component.startImport(ExerciseType.TEXT);
+            onClose.next(IMPORT_DIALOG_BACK);
+
+            // close() on open, then the reopen with true.
+            expect(emitted).toEqual([false, true]);
+            expect(component.activeTab()).toBe('import');
+        });
+
+        it('navigates to the import route for a selected non-programming exercise', () => {
+            component.startImport(ExerciseType.TEXT);
+            onClose.next({ id: 7 } as Exercise);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'text-exercises', 7, 'import'], { queryParams: { sourceIsExamExercise: false } });
+        });
+
+        it('navigates to the programming import route for a selected programming exercise', () => {
+            component.startImport(ExerciseType.PROGRAMMING);
+            onClose.next({ id: 7 } as Exercise);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import', 7], { queryParams: { sourceIsExamExercise: false } });
+        });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
+            'retains the selected exam source kind for %s imports into a course',
+            (type) => {
+                component.startImport(type);
+                onClose.next({ id: 7, exerciseGroup: {} } as Exercise);
+                expect(navigateSpy).toHaveBeenCalledWith(expect.any(Array), { queryParams: { sourceIsExamExercise: true } });
+            },
+        );
+
+        it('routes a from-file programming import (no id) to the import-from-file page with state', () => {
+            const fromFile = { title: 'from file', type: ExerciseType.PROGRAMMING } as Exercise;
+            component.startImport(ExerciseType.PROGRAMMING);
+            onClose.next(fromFile);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import-from-file'], {
+                state: { programmingExerciseForImportFromFile: fromFile },
+            });
+        });
+
+        it('routes a from-file import of another type (no id) to the editor of a new exercise with state', () => {
+            const fromFile = { title: 'from file', type: ExerciseType.FILE_UPLOAD } as Exercise;
+            component.startImport(ExerciseType.FILE_UPLOAD);
+            onClose.next(fromFile);
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'file-upload-exercises', 'new'], { state: { exerciseForImportFromFile: fromFile } });
+        });
+
+        it('does nothing when the dialog is dismissed without a result', () => {
+            component.startImport(ExerciseType.TEXT);
+            onClose.next(undefined);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not navigate when the course id is missing', () => {
+            fixture.componentRef.setInput('courseId', undefined);
+            component.startImport(ExerciseType.TEXT);
+            onClose.next({ id: 7 } as Exercise);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('export tab', () => {
+        const textExercise = { id: 1, title: 'Essay', type: ExerciseType.TEXT } as Exercise;
+        const quizExercise = { id: 2, title: 'Quiz', type: ExerciseType.QUIZ } as Exercise;
+
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
+            fixture.componentRef.setInput('exercises', [textExercise, quizExercise]);
+            fixture.componentRef.setInput('canExport', true);
+            fixture.componentRef.setInput('mode', 'export');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+        });
+
+        function query(testId: string): HTMLElement | null {
+            return document.querySelector(`[data-testid="${testId}"]`);
+        }
+
+        it('lists the exercises of the chosen type and goes back to the type cards', () => {
+            query('export-text-exercise')!.click();
+            fixture.detectChanges();
+
+            expect(query('export-row-1')).not.toBeNull();
+            expect(query('export-row-2')).toBeNull();
+
+            query('export-back')!.click();
+            fixture.detectChanges();
+            expect(query('export-row-1')).toBeNull();
+            expect(query('export-text-exercise')).not.toBeNull();
+        });
+
+        it('downloads the exported zip file', () => {
+            const response = new HttpResponse({ body: new Blob(['zip']), headers: new HttpHeaders({ filename: 'Essay.zip' }) });
+            const exportSpy = vi.spyOn(TestBed.inject(ExerciseService), 'exportToFile').mockReturnValue(of(response));
+            const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
+
+            (component as unknown as { exportExercise: (exercise: Exercise) => void }).exportExercise(textExercise);
+
+            expect(exportSpy).toHaveBeenCalledExactlyOnceWith(textExercise);
+            expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
+        });
+
+        it('shows an error when the export fails', () => {
+            vi.spyOn(TestBed.inject(ExerciseService), 'exportToFile').mockReturnValue(throwError(() => new Error('failed')));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            (component as unknown as { exportExercise: (exercise: Exercise) => void }).exportExercise(textExercise);
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exerciseManagement.addModal.export.failed');
+        });
+
+        it('hides the export tab from users who may not export', () => {
+            expect(query('export-tab')).not.toBeNull();
+            fixture.componentRef.setInput('canExport', false);
+            fixture.detectChanges();
+            expect(query('export-tab')).toBeNull();
+        });
+    });
+
+    describe('group creation', () => {
+        beforeEach(() => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            createComponent();
+        });
+
+        it('emits groupCreate and closes', () => {
+            const created = vi.fn();
+            const emitted: boolean[] = [];
+            component.groupCreate.subscribe(created);
+            component.visibleChange.subscribe((v) => emitted.push(v));
+
+            component.createGroup();
+
+            expect(created).toHaveBeenCalledOnce();
+            expect(emitted).toEqual([false]);
+        });
+    });
+});

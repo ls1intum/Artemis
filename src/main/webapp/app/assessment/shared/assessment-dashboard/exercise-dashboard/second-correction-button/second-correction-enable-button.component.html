@@ -1,0 +1,13 @@
+<span>
+    {{ 'artemisApp.exerciseAssessmentDashboard.secondCorrection' | artemisTranslate }}:
+    {{ (secondCorrectionEnabled() ? 'artemisApp.exerciseAssessmentDashboard.enabled' : 'artemisApp.exerciseAssessmentDashboard.disabled') | artemisTranslate }}
+</span>
+<tumaet-ui-toggle-switch
+    [ngModel]="secondCorrectionEnabled()"
+    [disabled]="togglingSecondCorrectionButton()"
+    (changed)="triggerSecondCorrectionButton()"
+    [ariaLabel]="'artemisApp.exerciseAssessmentDashboard.secondCorrection' | artemisTranslate"
+/>
+@if (togglingSecondCorrectionButton()) {
+    <fa-icon [icon]="faSpinner" animation="spin" />
+}

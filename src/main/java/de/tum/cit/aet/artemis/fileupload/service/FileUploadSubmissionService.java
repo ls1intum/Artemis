@@ -1,0 +1,290 @@
+package de.tum.cit.aet.artemis.fileupload.service;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Optional;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
+
+@Conditional(FileUploadEnabled.class)
+@Lazy
+@Service
+public class FileUploadSubmissionService extends SubmissionService {
+
+    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
+    private final FileService fileService;
+
+    private final ExerciseDateService exerciseDateService;
+
+    public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
+        this.fileService = fileService;
+        this.exerciseDateService = exerciseDateService;
+    }
+
+    /**
+     * Handles file upload submissions sent from the client and saves them in the database.
+     *
+     * @param fileUploadSubmission      the file upload submission that should be saved
+     * @param exercise                  the corresponding file upload exercise
+     * @param file                      the file that will be stored on the server
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
+     * @return the saved file upload submission
+     * @throws IOException        if file can't be saved
+     * @throws EmptyFileException if file is empty
+     */
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user,
+            @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) throws IOException, EmptyFileException {
+        // Don't allow submissions after the due date (except if the exercise was started after the due date)
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        // The gate never hands one over for a file upload: this reads the previous file off participation.submissions,
+        // which the gate's projection does not carry, so the participation is resolved here with them.
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentWithEagerSubmissionsAnyState(exercise, user);
+        if (optionalParticipation.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
+        }
+        final var participation = optionalParticipation.get();
+        final var dueDate = ExerciseDateService.getDueDate(participation);
+        // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+            throw new AccessForbiddenException();
+        }
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+            fileUploadSubmission.setSubmitted(true);
+        }
+
+        fileUploadSubmission = save(fileUploadSubmission, file, participation, exercise);
+        return fileUploadSubmission;
+    }
+
+    /**
+     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound    - the correction round we want our submission to have results for
+     * @param examMode           flag to determine if test runs should be ignored. This should be set to true for exam exercises
+     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
+        var submissionWithoutResult = super.getRandomAssessableSubmission(fileUploadExercise, examMode, correctionRound);
+        if (submissionWithoutResult.isPresent()) {
+            FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissionWithoutResult.get();
+            return Optional.of(fileUploadSubmission);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission()
+     * calls.
+     *
+     * @param fileUploadSubmission the submission that should be saved
+     * @param file                 the file that will be saved on the server
+     * @param participation        the participation the submission belongs to
+     * @param exercise             the exercise the submission belongs to
+     * @return the fileUploadSubmission entity that was saved to the database
+     * @throws IOException        if file can't be saved
+     * @throws EmptyFileException if file is empty
+     */
+    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
+            throws IOException, EmptyFileException {
+
+        URI newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
+
+        // update submission properties
+        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
+        fileUploadSubmission.setType(SubmissionType.MANUAL);
+        participation.addSubmission(fileUploadSubmission);
+
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
+            // the detached entity would merge it, reading the row back before writing it.
+            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
+        }
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        fileUploadSubmission.setResults(new HashSet<>());
+
+        // Note: we save before the new file path is set to potentially remove the old file on the file system
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmission.setFilePath(newFilePath.toString());
+        // Note: the path is written on its own so that the new file is recorded. Only this column changed and the row
+        // exists, so it is an update rather than a save, which would read the submission back first.
+        fileUploadSubmissionRepository.updateFilePath(fileUploadSubmission.getId(), fileUploadSubmission.getFilePath());
+
+        return fileUploadSubmission;
+    }
+
+    private URI storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
+            throws EmptyFileException, IOException {
+        if (file.isEmpty()) {
+            throw new EmptyFileException(file.getOriginalFilename());
+        }
+
+        final String multipartFileHash = DigestUtils.sha256Hex(file.getInputStream());
+        // We need to set id for newly created submissions
+        if (fileUploadSubmission.getId() == null) {
+            fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        }
+        final Path savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
+
+        // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
+        // Reviewed false positive (CodeQL java/path-injection): savePath comes from saveFileForSubmission, which builds it from a sanitized file name.
+        final var storedFileHash = DigestUtils.sha256Hex(Files.newInputStream(savePath)); // codeql[java/path-injection]
+        if (!multipartFileHash.equals(storedFileHash)) {
+            throw new IOException("The file " + file.getName() + "could not be stored");
+        }
+
+        // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
+        Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
+
+        previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
+            // Compared as strings rather than as URIs: a value stored before filenames were sanitized may contain a space, which URI.create rejects outright, and a submission
+            // is not the place to find that out.
+            final String oldFilePath = previousSubmission.getFilePath();
+            // check if we already had a file associated with this submission
+            if (!oldFilePath.equals(newFilePath.toString())) { // different name
+                // IMPORTANT: only delete the file when it has changed the name
+                previousSubmission.onDelete();
+            }
+            else { // same name
+                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                fileService.evictCacheForPath(savePath);
+            }
+        });
+        return newFilePath;
+    }
+
+    private Path saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
+        final var exerciseId = exercise.getId();
+        final var submissionId = submission.getId();
+        var filename = file.getOriginalFilename();
+        if (filename.contains("\\")) {
+            // this can happen on Windows computers, then we want to take the last element of the file path
+            var components = filename.split("\\\\");
+            filename = components[components.length - 1];
+        }
+        filename = FileUtil.sanitizeFilename(filename);
+        // if the filename is now too short, we prepend "file"
+        // this prevents potential problems when users call their file e.g. ßßß.pdf
+        if (filename.length() < 5) {
+            filename = "file" + filename;
+        }
+        final Path dirPath = FilePathConverter.buildFileUploadSubmissionPath(exerciseId, submissionId);
+        final Path filePath = dirPath.resolve(filename);
+        final File savedFile = filePath.toFile();
+
+        FileUtils.copyInputStreamToFile(file.getInputStream(), savedFile);
+
+        return filePath;
+    }
+
+    /**
+     * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if
+     * the
+     * submission lock limit has been reached.
+     *
+     * @param submissionId       the id of the file upload submission
+     * @param fileUploadExercise the corresponding exercise
+     * @param correctionRound    the correctionRound for which the submission should lock a result
+     * @return the locked file upload submission
+     */
+    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository
+                .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+
+        Result latestResult = fileUploadSubmission.getLatestResult();
+        if (latestResult == null || latestResult.getAssessor() == null) {
+            Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null) {
+                throw new IllegalStateException("The course of exercise " + fileUploadExercise.getId() + " cannot be resolved");
+            }
+            checkSubmissionLockLimit(course.getId());
+        }
+
+        // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams
+        lockSubmission(fileUploadSubmission, correctionRound);
+        return fileUploadSubmission;
+    }
+
+    /**
+     * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param fileUploadExercise          the exercise the submission should belong to
+     * @param correctionRound             - the correction round we want our submission to have results for
+     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a locked file upload submission that needs an assessment
+     */
+    public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean ignoreTestRunParticipations, int correctionRound) {
+        var submission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, ignoreTestRunParticipations, correctionRound)
+                .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
+        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+        submission = fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submission.getId());
+        lockSubmission(submission, correctionRound);
+        return submission;
+    }
+}

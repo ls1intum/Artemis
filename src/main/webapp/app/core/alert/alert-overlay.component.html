@@ -1,0 +1,33 @@
+@if (alerts().length >= 2) {
+    <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
+        <div class="dismiss-all">
+            <button type="button" tumAetUiButton severity="secondary" size="small" data-testid="alert-dismiss-all" (click)="alertService.closeAll()">
+                <fa-icon [icon]="times" />
+                <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
+            </button>
+        </div>
+    </div>
+}
+@for (alert of alerts(); track alert) {
+    <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
+        <div class="alert-wrap">
+            <div class="alert-inner" data-testid="alert" [attr.data-alert-type]="alert.type.containerClassName" [ngClass]="alert.type.containerClassName">
+                <div class="left">
+                    <fa-icon [icon]="alert.type.icon" size="2x" />
+                    <div class="message" data-testid="alert-message" [innerHTML]="alert.message"></div>
+                </div>
+                @if (alert.action) {
+                    <button type="button" tumAetUiButton [severity]="alert.type.buttonSeverity" size="small" data-testid="alert-action" (click)="alert.action.callback(alert)">
+                        {{ alert.action.label }}
+                    </button>
+                }
+                @if (alert.dismissible) {
+                    <jhi-close-circle (click)="alert.close()" />
+                }
+                @if ((alert?.timeout || 0) > 0) {
+                    <div class="time-bar" [style.animation-duration]="alert.timeout + 'ms'"></div>
+                }
+            </div>
+        </div>
+    </div>
+}

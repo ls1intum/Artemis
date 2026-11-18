@@ -1,0 +1,162 @@
+---
+id: quiz-generation
+title: 'Quiz Question Generation & Refinement'
+sidebar_label: 'Quiz Question Generation & Refinement'
+last_reviewed: 2026-11-10
+---
+
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import subsystemDecomposition from '../assets/quiz-generation-subsystem-decomposition.png';
+import generationSequence from '../assets/quiz-generation-sequence.png';
+
+This page describes the architecture behind Hyperion's AI-assisted quiz authoring, covering both question generation, in its free-topic and competency-grounded modes, and question refinement, applied to a single question or in bulk.
+For instructor-facing usage documentation, see [Quiz Exercise: Generate Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai) and [Refine Multiple-Choice Questions with AI](../../instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai).
+
+## Components
+
+Hyperion hosts two new server components for quiz authoring, backed by a set of prompt templates. The diagram below decomposes the subsystem and shows how it connects to the rest of Artemis and to the external services it depends on.
+
+<Image src={subsystemDecomposition} alt="Subsystem Decomposition" size={ImageSize.large} caption="Subsystem Decomposition: Hyperion's Quiz Generation and Competency Context Components" />
+
+The diagram groups the system into four parts: the Artemis server, the Artemis quiz client, and the external services Edutelligence and the LLM provider. Hyperion hosts the two new server components shown above, `HyperionQuizQuestionGenerationService` (Quiz Generation) and `HyperionCompetencyContextService` (Competency Context).
+
+Quiz Generation builds structured prompts, calls the LLM provider through its service, and parses and validates the responses into valid Artemis questions. Competency Context aggregates the course context and exposes it to Quiz Generation, drawing entirely on existing Artemis services: it reads the competencies, their typed relations, and the linked exercises from Atlas's Competency Service, which in turn resolves the exercises through its own competency-exercise links; fetches the corresponding lecture units from the Lecture Service and calls Edutelligence's Lecture Snippet Service for embedded lecture retrieval.
+
+Both components are backed by Spring AI prompt files under `src/main/resources/prompts/hyperion/`, rendered by `HyperionPromptTemplateService`. All three service beans are lazily initialized and only registered in the Spring context when Hyperion is enabled through configuration; see [Hyperion Setup](../../admin/hyperion) for details.
+
+## Question Generation
+
+The system supports two generation modes: a free-topic mode, where the instructor supplies a topic and optional guidance, and a competency-grounded mode, where questions are grounded in the course's competencies and their related lecture content.
+
+### Free-Topic and Competency-Grounded Generation
+
+Both modes render a different user-prompt template against the same system prompt. The free-topic template takes the topic, an optional custom prompt, the language, and the desired question counts and difficulty. The competency-grounded template instead takes the selected competencies, their relations, and the assembled lecture context, alongside the same options as the free-topic template. The two templates are `generate_quiz_questions_user.st` and `generate_quiz_questions_user_competency.st`, both rendered against the shared `generate_quiz_questions_system.st` system prompt.
+
+The sequence diagram below traces a competency-grounded generation request: the generation service delegates context assembly to the context service, which fans out to Atlas and Edutelligence before the generation service builds the prompt, calls the LLM, and validates the response.
+
+<Image src={generationSequence} alt="Grounded Generation Sequence Diagram" size={ImageSize.large} caption="Sequence Diagram of the Competency-Grounded Generation Flow" />
+
+### Competency-Grounded Context Assembly
+
+The `computeContext` method on `HyperionCompetencyContextService` assembles this context in three steps:
+
+1. It first loads all the course's competencies and resolves the requested IDs against that set. Any ID that is not part of the course triggers a bad-request error.
+2. It then resolves the relations (assumes, extends, and matches) that involve the selected competencies.
+3. Finally, it gathers lecture and exercise context from three independent sources, merged and de-duplicated:
+   - **Pyris semantic search** surfaces pre-indexed lecture content ranked by relevance to the competency titles, capped at 20 results and scoped to the course. If Pyris is unreachable, this source is dropped with a logged warning.
+   - **Text units linked to the competencies** are pulled in directly, since their content is already available plain text.
+   - **Exercises linked to the competencies** contribute indirectly: problem statements are not passed to the quiz-generation prompt directly. Instead, each exercise (capped at 10) is first summarized by a separate LLM call that extracts its core challenges and learning objectives from the problem statement and, where available, the reference solution. Because the summarization calls are independent of each other, they run in parallel.
+
+### Output Validation
+
+The LLM response is parsed into a nested record structure, then mapped and re-validated into the DTO shape used by the rest of the system. This mapping step rejects the response if:
+
+- Title is blank or exceeds 500 characters
+- Question text is blank or exceeds 10,000 characters
+- Fewer than 2 options
+- Any option text is blank or exceeds 2,000 characters
+- The correct-option count doesn't match the question type's structural rule (`validateCorrectOptionCount`): exactly 1 for single-choice, ≥1 for multiple-choice, exactly 2 options with exactly 1 correct for true/false
+
+## Question Refinement
+
+Refinement takes the question as currently edited in the UI, together with a free-text refinement prompt, and returns either a refined question or an error, reusing the same output-validation path as generation.
+
+The response is modeled as a sealed interface with two variants, a success case and a failure case, discriminated by a `type` field:
+
+```java
+public sealed interface QuizQuestionRefinementResponseDTO permits QuizQuestionRefinementSuccessDTO, QuizQuestionRefinementFailureDTO {
+    record QuizQuestionRefinementSuccessDTO(GeneratedQuizQuestionDTO question, String reasoning, String type) {}
+    record QuizQuestionRefinementFailureDTO(String error, String type) {}
+}
+```
+
+For bulk refinement this means that a single question's LLM call failing must not fail the whole batch.
+
+The refined question can be restored to its previous state via a restore button, since the client snapshots each question before applying the refinement.
+
+### Bulk refinement
+
+Bulk refinement reuses the architecture of the single-question refinement mechanism and parallelizes the requests across the questions, calling the same single-question refinement logic for each with the shared refinement prompt, and catches exceptions per question rather than letting one bad question abort the whole batch. Results are returned in the same order as the input questions.
+
+## Quiz Question Pool
+
+Separately from the on-demand generation in the quiz editor, Hyperion keeps a per-course pool of pre-generated and pre-judged multiple-choice questions. The pool is a grid of cells, one per combination of competency, lecture unit linked to that competency, language, question type and difficulty, and every cell holds the number of items the course's settings assign to it. Every question is grounded in the material of its lecture unit. Instructors review the pool on its own page in course management; quizzes are later assembled from the approved questions.
+
+### Cells and Settings
+
+`HyperionQuizQuestionPoolPlanService.enqueue`, called through `HyperionQuizQuestionPoolBuildService.enqueue`, derives the cells from the course's competencies (Atlas), the lecture units linked to each of them that carry readable material, the course language, and the course's settings, then tops every cell up to its target. `HyperionQuizQuestionPoolMaterialService` decides which linked units count: text units with content, and attachment video units with a stored PDF or a transcript; online units, exercise units and units without text get no cells, and a competency without such a unit gets no questions. The targets come from the course's `HyperionCourseSettings`: the single-choice count per lecture unit and competency (default 12) and, when multiple-choice questions are enabled, the multiple-choice count (default 12) are each split over the difficulties by the course's shares (default 20 % easy, 50 % medium, 30 % hard; whole numbers first, the remainder to the largest fractions), so each type yields exactly the configured number of questions per unit; a difficulty whose share comes to no question gets no cell. Enqueuing is idempotent: cells that already hold their target gain nothing.
+
+The settings are stored as a JSON payload in `hyperion_course_settings`, keyed by course. The row is created with the course (`CourseRepository.ensureDefaultConfigurations`), a migration adds it for existing courses, and updates replace the payload in place; a course whose row is missing reads as the defaults and receives the row on its next update. `poolGenerationEnabled` opts the course into the scheduled overnight build. The range of correct options of a multiple-choice question is a course setting as well (1 to 4, the lower bound not above the upper; payloads without it read as 1 to 4). A build plans its cells with the settings stored when it starts and keeps that snapshot in the distributed map `hyperion-quiz-pool-build-settings` until it releases its lease; the progress endpoint returns the snapshot as `buildSettings` while the build runs, so a settings change made in the meantime is shown as applying to the next build.
+
+### Lecture Units and Material Changes
+
+`quiz_question_pool_lecture_unit` records, per course and lecture unit, the fingerprint of the material the unit was last built from, whether an instructor excluded the unit, and when it was last built. `HyperionQuizQuestionPoolMaterialService.fingerprintOf` hashes a text unit's content, and for an attachment video unit the attachment's version, upload date and link together with the transcript, so a re-uploaded slide deck or a new transcript changes the fingerprint while a renamed unit does not.
+
+At the start of every build, `enqueue` reconciles each groundable unit with its record. A new unit gets a record and its cells. A unit whose fingerprint changed loses its unreviewed items, keeps its approved items with `material_changed` set, and gets fresh cells; flagged items are shown on the pool page but no longer count towards the cell's target, and the replacement items take the indices above them. A unit that was built before but no longer yields readable material, or no longer belongs to a competency, is treated the same way and gets no cells until it has material again. A unit an instructor excluded loses its unreviewed items and gets no cells until it is included again. Exclusion is set through the relevance endpoint on the pool page and takes effect immediately for unreviewed items and at the next build for generation. A build writes only the fingerprint and build times of an existing record (`QuizQuestionPoolLectureUnitRepository.updateBuildState`) and the relevance endpoint only the exclusion (`updateExcluded`), so an instructor including a unit while a build reconciles it keeps the inclusion.
+
+### Scheduler and Build Record
+
+`HyperionQuizQuestionPoolScheduleService` starts on the node with the `scheduling` profile at `artemis.hyperion.quiz-pool.schedule-cron` (default midnight) and hands the run to `hyperionQuizQuestionPoolTaskExecutor`, which keeps two threads so manual builds do not wait behind it. The run builds the pool of every course that has `poolGenerationEnabled` and has not ended, one course after another, ordered by the end of each course's last completed build (`QuizQuestionPoolBuildRepository.findLastCompletedBuildPerCourse`: builds without a failure), oldest first and courses without one first. It lasts at most `schedule-window-hours` (default 7): once that has passed it starts no further course, and the running build, which received the end of the window as its deadline, stops after its current unit of work, keeps its pending items and records "The overnight window ended" as its failure, so the course counts as not completed and comes early in the next run. Every build, manual or scheduled, first takes the course's lease in the distributed map `hyperion-quiz-pool-builds` under a token unique to that build; the lease expires after `build-lease-minutes` unless the build renews it after each unit of work, and renewal and release are conditional on the token, so a crashed node frees the course after the lease expires and no build can touch another build's lease. A manual build whose lease expired while it waited in the executor queue takes the lease again when the course is free and drops itself, with its build record closed, when another build holds the course; a running build that finds its lease gone stops after its current unit of work. One build per course therefore runs at a time as long as no single unit of work, one generation batch or one judgement, outlasts the lease; a model call that does can overlap the next build for that one unit, and the item version fences its writes. A manual build on a course whose lease another node holds is answered with `409 Conflict`.
+
+Every build is recorded in `quiz_question_pool_build` with its trigger (`MANUAL`, `SCHEDULED`), start and end time, the items it enqueued, generated, judged, accepted, rejected and failed, and the reason when it stopped early: the end of the overnight window, a cancellation, or a lease another build took over. A build that failed records a fixed message; the exception is only logged. The most recent record is returned with the progress and shown on the pool page.
+
+### Build Loop
+
+A build is started from the pool page or by the scheduler and runs on the dedicated `hyperionQuizQuestionPoolTaskExecutor`; the request returns `202 Accepted` at once, or `409 Conflict` while a build of the same course runs anywhere in the cluster. `HyperionQuizQuestionPoolBuildService.build` then works the pool to completion:
+
+1. Claims older than `stale-claim-minutes` are returned to their stable state, and items whose last attempt failed on a model call (`CALL_FAILED`) or an unusable verdict (`FILTER_UNUSABLE`) are revived with a fresh attempt budget.
+2. While there are generated items awaiting the filter, one is claimed and judged.
+3. Otherwise up to `generation-batch-size` pending items of one cell are claimed and generated with a single model call; the question at each position of the answer goes to the item at that position, and an item whose question is missing or unusable fails with `NO_VALID_QUESTION` and is retried up to three times. A question the filter rejects is discarded and its item is generated again while the item has generation attempts left (three in total), so only a question rejected on the last attempt stays in the pool as rejected.
+4. The loop ends when nothing is left to claim, or before its next unit of work once an instructor cancelled the build (`POST …/build/cancel`, which marks the course in the distributed map `hyperion-quiz-pool-build-cancellations` and answers `409 Conflict` when no build runs). A cancelled build deletes the course's pending items, so the next build plans them anew with the settings in effect then; items already generated are still judged by the next build.
+
+Every item carries a version that each write increments. Claims are conditional updates that name the state and the version they expect (`QuizQuestionPoolItemRepository.claim`), the release of stale claims and the revival of failed items increment the version as well, and the completion writes go through the entity's optimistic lock, so a worker whose claim another node released and took over cannot overwrite the newer state: its save fails and the result is discarded (`saveIfStillOwned`). The cell coordinates and the item index are unique in the database, so two nodes cannot enqueue the same item twice. The item states are `PENDING`, `GENERATING`, `GENERATED`, `FILTERING`, `FILTERED`, `FAILED_GENERATION` and `FAILED_FILTER`; `review_state` records the instructor's later decision.
+
+### Generation and Filter
+
+Generation uses `generate_quiz_question_pool_system.st` and `generate_quiz_question_pool_user.st`, which ask for self-contained questions with four answer options and an explanation at the cognitive level the competency states: recall of stated facts at REMEMBER, at least one step of reasoning at UNDERSTAND and above. The prompt states how many options each question of the batch must mark correct: one for single-choice items, and for multiple-choice items every count of the course's range (`multipleChoiceMinCorrectOptions` to `multipleChoiceMaxCorrectOptions`, default 1 to 4) in turn over the pool's items (`correctOptionCountFor`), so that a unit's multiple-choice questions vary in their number of correct options; a question whose correct options do not number what its position asked for is dropped. Each question of the structured output states the count it was asked for (`correctOptionCount`) before its options, which keeps models on the requested count. The prompt also requires every formula in dollar-sign math, since the Markdown renderer recognises no other delimiters; math the model still wraps in `\(…\)` or `\[…\]` is rewritten to `$…$` and `$$…$$` before the question is stored. It also requires every piece of source code to be set in Markdown code, and `QuizQuestionCodeFormatting` sets code that still arrives as plain text, an option that is a statement or a run of code lines inside the text, in backticks or a fenced block before the question is stored. Lecture material is the text of the cell's lecture unit, extracted once per unit and build by `HyperionQuizQuestionPoolMaterialService` (text unit content, the PDF text of an attachment video unit via PDFBox, and its transcript), cut to `max-material-characters` and passed as a fenced block headed by the lecture and unit name. Items whose competency or lecture unit has disappeared, or whose unit no longer yields text, fail with `COMPETENCY_MISSING`, `LECTURE_UNIT_MISSING` or `NO_MATERIAL` and are not retried. Questions that fail the deterministic checks in `HyperionQuizQuestionChecks` (wrong type or option count, duplicate or contained options, "all of the above" style options, a reference to a figure the question does not contain, a conspicuously long correct option, a question text that lists its options or options that refer to numbered statements in it, a LaTeX command outside math and code) are dropped before the filter sees them.
+
+`HyperionQuizQuestionFilterService` renders `filter_quiz_question_system.st` and `filter_quiz_question_user.st` and asks the judge for a severity from 0 to 1 on each of the five failure modes in `QuizQuestionFailureMode`: factual error, ambiguous correct answer, off topic, near duplicate and ill-formed distractors. A verdict that omits a mode is discarded. The aggregate score is one minus the worst severity among the gating modes, and the question is accepted when the aggregate reaches 0.7. Near duplicate is reported but never gates, because a question grounded in lecture material necessarily resembles it. Every verdict is stored with the item, so the pool page can show why a question was flagged or rejected.
+
+The pool reaches its models only through `HyperionQuizQuestionPoolModelService`, which builds its own `OpenAiChatModel` and `ChatClient` and registers neither as a bean, so the `ChatClient` that the rest of Hyperion injects is untouched. The endpoint is `artemis.hyperion.quiz-pool.base-url` with its `api-key`, or, when that is empty and `spring.ai.model.chat` is `openai`, `spring.ai.openai.base-url` with its `api-key`; a fallback endpoint that lies on a known cloud provider or has `spring.ai.openai.microsoft-foundry` set is not used. The timeout is always the pool's own. `generator-model` and `judge-model` default to `Qwen/Qwen3.8-27B`, and both must appear in `allowed-models`. The service validates the configuration at startup: with both models empty or no usable endpoint the pool is off, `POST …/build` answers `503 Service Unavailable` with the key `quizQuestionPoolModelNotConfigured`, and the progress response reports `modelConfigured: false`; a single model, a model outside the allowlist, a model the endpoint does not list under `GET /models` (asked once at startup through the injected `RestClient.Builder`; an endpoint that cannot be asked leaves the pool on), a URL that is not http(s), or a host on a known cloud provider (`HyperionQuizQuestionPoolModelService.CLOUD_HOSTS`) leaves the pool off in the same way and logs a warning with the reason, which the client never receives. Both models are bound onto the request through `ChatOptions`, and every call is recorded through `LLMTokenUsageService` under the pipeline ids `HYPERION_QUIZ_POOL_GENERATION` and `HYPERION_QUIZ_QUESTION_FILTER`.
+
+## REST Endpoints
+
+| Method | Path                                                     | Request                                | Response                                |
+|--------|----------------------------------------------------------|----------------------------------------|-----------------------------------------|
+| POST   | `courses/{courseId}/quiz-exercises/generate-questions`   | `QuizQuestionGenerationRequestDTO`     | `QuizQuestionGenerationResponseDTO`     |
+| POST   | `courses/{courseId}/quiz-exercises/refine-question`      | `QuizQuestionRefinementRequestDTO`     | `QuizQuestionRefinementResponseDTO`     |
+| POST   | `courses/{courseId}/quiz-exercises/refine-all-questions` | `QuizQuestionBulkRefinementRequestDTO` | `QuizQuestionBulkRefinementResponseDTO` |
+| POST   | `courses/{courseId}/quiz-question-pool/build`            | –                                      | `QuizQuestionPoolBuildStartDTO`         |
+| GET    | `courses/{courseId}/quiz-question-pool/progress`         | –                                      | `QuizQuestionPoolProgressDTO`           |
+| GET    | `courses/{courseId}/quiz-question-pool/questions`        | `competencyId`, `flagged`, `page`, `size` (query, optional) | `QuizQuestionPoolPageDTO`            |
+| DELETE | `courses/{courseId}/quiz-question-pool/questions`        | `competencyId` (query, optional)       | `QuizQuestionPoolDeletionDTO`           |
+| DELETE | `courses/{courseId}/quiz-question-pool/questions/{questionId}` | –                                | –                                       |
+| GET    | `courses/{courseId}/quiz-question-pool/settings`         | –                                      | `HyperionCourseSettingsDTO`             |
+| PUT    | `courses/{courseId}/quiz-question-pool/settings`         | `HyperionCourseSettingsDTO`            | `HyperionCourseSettingsDTO`             |
+| PUT    | `courses/{courseId}/quiz-question-pool/questions/{questionId}/review` | `QuizQuestionPoolReviewDTO` | `QuizQuestionPoolItemDTO`              |
+| GET    | `courses/{courseId}/quiz-question-pool/lecture-units`    | –                                      | `List<QuizQuestionPoolLectureUnitDTO>`  |
+| PUT    | `courses/{courseId}/quiz-question-pool/lecture-units/{lectureUnitId}/relevance` | `QuizQuestionPoolLectureUnitRelevanceDTO` | `QuizQuestionPoolLectureUnitRelevanceDTO` |
+
+### Pool Page
+
+The pool has its own page in course management, `course-management/:courseId/smart-quizzes`, reachable for editors and above when Hyperion and Atlas are enabled. `QuizQuestionPoolComponent` loads the course to know the user's role, then progress, the first page of questions and, for instructors, the settings through `QuizQuestionPoolService`, which wraps the generated `HyperionQuizQuestionPoolApi`. The question list is served in pages of 20 in pool order (`page`, `size` up to 500); the page loads more on request and refreshes the loaded range while a build runs. The judge stores whether a question's verdicts flag it for review (`flagged`; the rule lives in `QuizQuestionReviewFlags`), and `flagged=true` returns only flagged questions, those awaiting a decision first, which the page shows as a collapsible queue above the grouped list while no competency filter is set; once every flagged question has a decision the queue collapses and reports that, and expanding it still lists them. Each page also names the competencies that have questions, for the filter. The pool card shows how many questions are planned, generated and checked, still being generated, and could not be generated in three attempts. Below the counts the card names the last build: its trigger, when it started or finished, how many questions it added, generated, accepted, rejected and failed, and why it stopped early if it did. A collapsible "Lecture units" panel, folded by default, lists every lecture unit per competency with its question and approved counts, when it was last built, and tags for exclusion and changed material; instructors exclude a unit there after a confirmation, which is refused with `409 Conflict` while a build runs, or include it again at any time. Questions whose material changed carry a tag of their own. While a build runs, "planned" and the progress bar refer to that build's items; otherwise they refer to the questions the pool holds once the next build is complete: the current items plus `missing`, the questions a build with the stored settings would add, which `GET …/plan` computes without creating items together with `planned`, the stored settings' own target. A build only adds items, so lowering the settings leaves the planned number unchanged. The page loads the plan when it opens, after saving settings, after deletions and when a build ends, not on every poll. Instructors start a build from the page and edit the pool settings in a dialog (`QuizQuestionPoolSettingsDialogComponent`), whose current values the card summarises in one line; while a build runs with other settings, the card lists the running build's settings above them and marks the facts that change for the next build, and saving the dialog during a build first asks for confirmation that the change applies to the next build only. While a build runs, the title bar offers "Cancel build" in place of "Build now", behind a confirmation. The grouped list loads 20 questions at a time, the next page when its end scrolls into view, with a "Load more" button as a fallback. Editors and instructors review. While a build runs the page polls progress and questions every few seconds and stops once the server reports the build as finished and the question list requested on that report has arrived. A `409 Conflict` from the build endpoint is shown as "already running" rather than as an error.
+
+Questions are grouped by competency and, within a competency, by lecture unit. Inside a unit's list, `QuizQuestionPoolItemListComponent` shows judged questions in three sections: first the accepted questions that are flagged for review (factual error, ambiguous answer or off topic at any severity above zero, weak distractors at 0.4 or above; recall-only verdicts never flag), then the other accepted questions, then the questions the filter rejected, with a tag per flagged mode (marked when the mode gated the question) and an expandable rationale that lists every verdict with its justification. Approve and exclude set the item's review state through the review endpoint; taking the same decision again returns the question to "not reviewed". Instructors delete a single question after a confirmation, every question of one competency from its group heading, or the whole pool from the title bar, the last two after typing the course title; both are refused with `409 Conflict` while a build runs, and the next build generates the deleted places anew. Questions that are still being generated or judged, and questions that failed, are only counted.
+
+## Prompt-Injection Mitigation
+
+Both pipelines sanitize every piece of user- or instructor-authored text before it is used in a prompt template:
+
+1. Strips control characters.
+2. Strips any `-----BEGIN/END ... -----`-style delimiter text the input itself might contain, preventing a competency title, lecture snippet, or refinement instruction from forging its own fake delimiter and breaking out of its untrusted block.
+3. Strips `{{...}}`-style template variable syntax, preventing the input from being (mis)interpreted as a StringTemplate variable reference when the template is re-rendered.
+
+Blocks of instructor-authored but still untrusted content (competency lists, competency relations, lecture snippets) are wrapped in the templates with explicit `-----BEGIN UNTRUSTED INPUT-----` / `-----END UNTRUSTED INPUT-----` markers and an instruction to the model to parse the content as data only.
+
+This is the equivalent delimiter-and-instruction pattern used by the [Consistency Check](./consistency-check) pipeline for problem-statement content.
+
+## Client Integration
+
+On the client, `QuizAiGenerationService` wraps the generated OpenAPI client and maps the DTOs and the editor's `MultipleChoiceQuestion` / `GeneratedQuestion` models. The generation dialog and the inline per-question refinement panel plug into the existing Multiple-Choice question editor, while the quiz exercise update view hosts the bulk-refinement action, shown only when Hyperion is enabled and the quiz has at least one Multiple-Choice question.
+
+Before applying a refinement, both the single-question and bulk flows snapshot the pre-refinement question with a deep clone, which is what enables the restore-previous-version action in the refinement UI. The refinement itself then mutates the original question object in place.

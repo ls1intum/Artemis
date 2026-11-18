@@ -1,0 +1,264 @@
+package de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas;
+
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.BOOLEAN;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.DATE;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.INT;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.NUMBER;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.TEXT;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.TEXT_ARRAY;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.filterable;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.nonSearchable;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.searchable;
+
+import java.util.List;
+
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
+
+/**
+ * Unified schema definition for the {@code SearchableEntities} Weaviate collection.
+ * <p>
+ * A single collection backs global search across all entity types (exercises, lectures, lecture units,
+ * exams, FAQs, channels). Each row carries a {@link Properties#TYPE} discriminator so per-type access
+ * rules can be expressed as compound disjuncts within one Weaviate request.
+ * <p>
+ * Sparse/type-specific properties are only populated for the relevant entity type and left absent for
+ * others. Weaviate's null-aware inverted index (enabled in {@code WeaviateService.ensureCollectionExists})
+ * makes this wide, optional schema cheap.
+ */
+public final class SearchableEntitySchema {
+
+    /**
+     * Utility class, should not be instantiated.
+     */
+    private SearchableEntitySchema() {
+    }
+
+    /**
+     * Collection name for the unified searchable items collection.
+     */
+    public static final String COLLECTION_NAME = "SearchableEntities";
+
+    /**
+     * Canonical string values for the {@code type} discriminator.
+     * Kept as string constants (not an enum) because Weaviate stores and filters on raw text values.
+     */
+    public static final class TypeValues {
+
+        public static final String EXERCISE = "exercise";
+
+        public static final String LECTURE = "lecture";
+
+        public static final String LECTURE_UNIT = "lecture_unit";
+
+        public static final String EXAM = "exam";
+
+        public static final String FAQ = "faq";
+
+        public static final String CHANNEL = "channel";
+
+        public static final String COURSE = "course";
+
+        public static final String POST = "post";
+
+        public static final String ANSWER_POST = "answer_post";
+
+        private TypeValues() {
+        }
+    }
+
+    /**
+     * Property names for the {@link #COLLECTION_NAME} collection.
+     */
+    public static final class Properties {
+
+        // Common properties (always present)
+
+        public static final String TYPE = "type";
+
+        public static final String ENTITY_ID = "entity_id";
+
+        public static final String COURSE_ID = "course_id";
+
+        public static final String TITLE = "title";
+
+        public static final String DESCRIPTION = "description";
+
+        // Access-control / sparse filter properties
+
+        public static final String RELEASE_DATE = "release_date";
+
+        public static final String IS_EXAM_EXERCISE = "is_exam_exercise";
+
+        public static final String EXAM_VISIBLE_DATE = "exam_visible_date";
+
+        public static final String EXAM_START_DATE = "exam_start_date";
+
+        public static final String EXAM_END_DATE = "exam_end_date";
+
+        public static final String TEST_EXAM = "test_exam";
+
+        public static final String EXAM_ID = "exam_id";
+
+        /**
+         * For type {@link TypeValues#EXAM} only: the exam's own visible date (student access gate).
+         * Distinct from {@link #EXAM_VISIBLE_DATE}, which is denormalized onto each exam exercise.
+         */
+        public static final String VISIBLE_DATE = "visible_date";
+
+        public static final String FAQ_STATE = "faq_state";
+
+        public static final String CHANNEL_IS_COURSE_WIDE = "channel_is_course_wide";
+
+        public static final String CHANNEL_IS_PUBLIC = "channel_is_public";
+
+        // Type-specific display / metadata fields
+
+        public static final String SHORT_NAME = "short_name";
+
+        public static final String EXERCISE_TYPE = "exercise_type";
+
+        public static final String DIFFICULTY = "difficulty";
+
+        public static final String MAX_POINTS = "max_points";
+
+        public static final String PROGRAMMING_LANGUAGE = "programming_language";
+
+        public static final String PROJECT_TYPE = "project_type";
+
+        public static final String DIAGRAM_TYPE = "diagram_type";
+
+        public static final String QUIZ_MODE = "quiz_mode";
+
+        public static final String QUIZ_DURATION = "quiz_duration";
+
+        public static final String FILE_PATTERN = "file_pattern";
+
+        public static final String ASSESSMENT_TYPE = "assessment_type";
+
+        public static final String START_DATE = "start_date";
+
+        public static final String END_DATE = "end_date";
+
+        public static final String DUE_DATE = "due_date";
+
+        public static final String LECTURE_ID = "lecture_id";
+
+        public static final String UNIT_TYPE = "unit_type";
+
+        /**
+         * The title of the lecture a lecture unit belongs to (lecture_unit rows only). Part of the header of the
+         * unit's embedding inputs, so the chunks can be rebuilt from the stored row.
+         */
+        public static final String LECTURE_TITLE = "lecture_title";
+
+        // Post-specific properties
+        public static final String CHANNEL_ID = "channel_id";
+
+        // Answer-post-specific properties
+        public static final String POST_ID = "post_id";
+
+        /**
+         * Operational (non-display): the outbox id of the write that produced this row, a strictly monotonic
+         * logical clock. A bulk delete only removes rows whose {@code source_seq} predates the delete's own
+         * outbox id, so a delete deferred by backoff can never erase a per-entity write that was enqueued after
+         * it. Deliberately excluded from the sync-ledger content hash. Absent (null) on rows written before this
+         * property existed or seeded outside the outbox; such rows predate every delete and are always in scope.
+         */
+        public static final String SOURCE_SEQ = "source_seq";
+
+        /**
+         * Operational (non-display): the content hash of the property map this row was written from, carrying the
+         * version of the algorithm that produced it (see {@code SearchableEntityContentHasher}).
+         * <p>
+         * Every other consistency check compares the database against the sync-state ledger, and both of those live
+         * in Postgres, so none of them ever reads what the index actually holds. Storing the hash on the row itself
+         * is what lets a reconcile pass detect that Weaviate diverged from what we believe we wrote, for example
+         * after a restore from an older snapshot, a write that reported success without persisting, or a manual
+         * edit. Deliberately excluded from the hash it stores, which would otherwise be self-referential.
+         * <p>
+         * Absent (null) on rows written before this property existed. Such a row is not corrupt, it is simply
+         * unverified, and a reconcile pass rewrites it once to bring it under verification.
+         */
+        public static final String CONTENT_HASH = "content_hash";
+
+        /**
+         * Operational (non-display): SHA-256 of each embedding input of the row, in the order of the row's vectors. A
+         * write reuses a stored vector only for a chunk with the same hash, and the answer path checks the hash before
+         * it shows a re-derived chunk as the matched passage. Part of the content hash, so a changed chunk makes the
+         * drift pass rewrite the row.
+         */
+        public static final String CHUNK_HASHES = "chunk_hashes";
+
+        /**
+         * Operational (non-display): the {@code SearchableEntityChunker} version the row's chunks were made with. A
+         * stored vector is reused only for the same version.
+         */
+        public static final String CHUNKER_VERSION = "chunker_version";
+
+        private Properties() {
+        }
+    }
+
+    /**
+     * Schema definition for the unified {@code SearchableEntities} collection.
+     * <p>
+     * Only {@link Properties#TITLE}, {@link Properties#SHORT_NAME} and {@link Properties#DESCRIPTION} are
+     * BM25-searchable — all other properties are either filterable (used in the compound access filter)
+     * or non-searchable (display-only, stored but not indexed). Structured metadata fields are never
+     * matched by free-text queries.
+     */
+    public static final WeaviateCollectionSchema SCHEMA = WeaviateCollectionSchema.of(COLLECTION_NAME, List.of(
+            // Common fields
+            filterable(Properties.TYPE, TEXT, "The entity type discriminator (exercise, lecture, lecture_unit, exam, faq, channel)"),
+            filterable(Properties.ENTITY_ID, INT, "The database ID of the underlying entity (unique within type)"),
+            filterable(Properties.COURSE_ID, INT, "The ID of the course the entity belongs to"), searchable(Properties.TITLE, TEXT, "The canonical title/name of the entity"),
+            searchable(Properties.DESCRIPTION, TEXT, "The body text of the entity (problem statement / description / content / answer)"),
+
+            // Access-control / sparse filter fields
+            filterable(Properties.RELEASE_DATE, DATE, "The release date (exercises and lecture units)"),
+            filterable(Properties.IS_EXAM_EXERCISE, BOOLEAN, "Whether this exercise belongs to an exam"),
+            filterable(Properties.EXAM_VISIBLE_DATE, DATE, "The parent exam's visible date (denormalized onto exam exercises)"),
+            filterable(Properties.EXAM_START_DATE, DATE, "The parent exam's start date (denormalized onto exam exercises)"),
+            filterable(Properties.EXAM_END_DATE, DATE, "The parent exam's end date (denormalized onto exam exercises)"),
+            filterable(Properties.TEST_EXAM, BOOLEAN, "Whether this is a test exam (exams and exam exercises)"),
+            filterable(Properties.EXAM_ID, INT, "The ID of the parent exam (exam exercises only)"),
+            filterable(Properties.VISIBLE_DATE, DATE, "The exam's own visible date (exam rows only)"),
+            filterable(Properties.FAQ_STATE, TEXT, "The state of the FAQ: ACCEPTED, REJECTED, or PROPOSED (faq rows only)"),
+            filterable(Properties.CHANNEL_IS_COURSE_WIDE, BOOLEAN, "Whether the channel is course-wide (channel rows only)"),
+            filterable(Properties.CHANNEL_IS_PUBLIC, BOOLEAN, "Whether the channel is public (channel rows only)"),
+
+            // Type-specific display / metadata fields
+            searchable(Properties.SHORT_NAME, TEXT, "The short name of the exercise (exercises only)"),
+            filterable(Properties.EXERCISE_TYPE, TEXT, "The type of exercise: programming, quiz, modeling, text, file-upload (exercises only)"),
+            nonSearchable(Properties.DIFFICULTY, TEXT, "The difficulty level of the exercise (exercises only)"),
+            nonSearchable(Properties.MAX_POINTS, NUMBER, "The maximum points for the exercise (exercises only)"),
+            nonSearchable(Properties.PROGRAMMING_LANGUAGE, TEXT, "The programming language (programming exercises only)"),
+            nonSearchable(Properties.PROJECT_TYPE, TEXT, "The project type (programming exercises only)"),
+            nonSearchable(Properties.DIAGRAM_TYPE, TEXT, "The diagram type (modeling exercises only)"),
+            nonSearchable(Properties.QUIZ_MODE, TEXT, "The quiz mode: SYNCHRONIZED, BATCHED, INDIVIDUAL (quiz exercises only)"),
+            nonSearchable(Properties.QUIZ_DURATION, INT, "The quiz duration in seconds (quiz exercises only)"),
+            nonSearchable(Properties.FILE_PATTERN, TEXT, "The accepted file pattern (file upload exercises only)"),
+            filterable(Properties.ASSESSMENT_TYPE, TEXT, "The assessment type: AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA (exercises only)"),
+            nonSearchable(Properties.START_DATE, DATE, "The start date (exercises, lectures, exams)"), nonSearchable(Properties.END_DATE, DATE, "The end date (lectures, exams)"),
+            nonSearchable(Properties.DUE_DATE, DATE, "The due date (exercises only)"),
+            filterable(Properties.LECTURE_ID, INT, "The ID of the parent lecture (lecture_unit rows only, used for bulk delete on lecture deletion)"),
+            nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
+            nonSearchable(Properties.LECTURE_TITLE, TEXT, "The title of the parent lecture (lecture_unit rows only), part of the embedding input header"),
+
+            // Post-specific properties
+            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post' and 'answer_post', null for all other types)"),
+
+            // Answer-post-specific properties
+            filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)"),
+
+            // Operational field (present on every upserted row): the outbox write id, used to fence bulk deletes against newer writes
+            filterable(Properties.SOURCE_SEQ, INT, "The outbox write id that produced this row; a bulk delete only removes rows written before it"),
+
+            // Operational field (present on every upserted row): stored, but never indexed or filtered on. A reconcile pass
+            // reads it back by projection while scanning the collection, so it needs no inverted index of its own.
+            nonSearchable(Properties.CONTENT_HASH, TEXT, "The versioned content hash of the data this row was written from; a reconcile pass compares it to detect index drift"),
+
+            // Operational fields of the embedding inputs: one hash per chunk, in vector order, and the chunker version
+            nonSearchable(Properties.CHUNK_HASHES, TEXT_ARRAY, "SHA-256 of each embedding input of the row, in the order of its vectors"),
+            nonSearchable(Properties.CHUNKER_VERSION, INT, "The chunker version the row's embedding inputs were made with")));
+}

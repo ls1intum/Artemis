@@ -1,0 +1,188 @@
+<div
+    #pdfContainer
+    class="pdf-container"
+    [class.scroll-disabled]="isPopoverOpen()"
+    cdkDropList
+    cdkDropListOrientation="mixed"
+    [cdkDropListData]="orderedPages()"
+    (cdkDropListDropped)="onPageDrop($event)"
+>
+    @if (isAttachmentVideoUnit()) {
+        @for (page of orderedPages(); track page.slideId) {
+            <div
+                class="pdf-canvas-container"
+                [class.cdk-drag-preview]="isDragging() && dragSlideId() === page.slideId"
+                [class.cdk-drag-placeholder]="isDragging() && dragSlideId() !== page.slideId"
+                cdkDrag
+                [cdkDragData]="page"
+            >
+                <button
+                    data-button-intent="utility"
+                    data-button-intent-reason="Enlarges a page canvas within the existing PDF preview"
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    type="button"
+                    [id]="'pdf-page-' + page.slideId"
+                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+                    [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
+                    (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                >
+                    <span class="drag-handle">
+                        <fa-icon [icon]="faGripLines" />
+                    </span>
+
+                    <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
+                </button>
+                @if (loadedPages().has(page.order)) {
+                    <tumaet-ui-checkbox
+                        class="pdf-page-selection"
+                        [inputId]="'checkbox-' + page.slideId"
+                        [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
+                        [checked]="isPageSelected(page.slideId)"
+                        (changed)="togglePageSelection(page.slideId, $event.originalEvent)"
+                    />
+                }
+                <button
+                    type="button"
+                    [id]="'hide-show-button-' + page.slideId"
+                    [style.opacity]="activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
+                    tumAetUiButton
+                    size="small"
+                    class="hide-show-btn"
+                    [severity]="hiddenPages()[page.slideId] ? 'success' : 'secondary'"
+                    (click)="togglePagePopover(page.slideId, $event, popover)"
+                    aria-haspopup="dialog"
+                    [attr.aria-label]="
+                        (hiddenPages()[page.slideId] ? 'artemisApp.attachment.pdfPreview.thumbnailGrid.showPage' : 'artemisApp.attachment.pdfPreview.dateBox.hidePage')
+                            | artemisTranslate: { param: getPageOrder(page.slideId) }
+                    "
+                    [attr.aria-expanded]="popover.isOpen()"
+                >
+                    <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />
+                </button>
+
+                <tumaet-ui-popover
+                    #popover
+                    placement="right"
+                    [ariaLabel]="'artemisApp.attachment.pdfPreview.hidePageButton' | artemisTranslate"
+                    (openChange)="isPopoverOpen.set($event); !$event && activeButtonPage.set(undefined)"
+                >
+                    @if (popover.isOpen()) {
+                        <ng-container [ngTemplateOutlet]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox" />
+                    }
+                </tumaet-ui-popover>
+                <ng-template #hidePageBox>
+                    <jhi-pdf-preview-date-box-component
+                        [courseId]="courseId()"
+                        [selectedPages]="[activeButtonPage()!]"
+                        (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
+                        (selectionCancelledOutput)="popover.close()"
+                    />
+                </ng-template>
+                <ng-template #showPageBox>
+                    <div class="confirmation-box">
+                        <div class="preview-heading mb-2">
+                            <h5>
+                                <span
+                                    jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage"
+                                    [translateValues]="{ param: getPageOrder(activeButtonPage()?.slideId!) }"
+                                ></span>
+                            </h5>
+                            <p>
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
+                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(FOREVER, 'day')) {
+                                    <span class="text-muted-color" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                } @else {
+                                    <span>
+                                        {{ hiddenPages()[activeButtonPage()?.slideId!]?.date!.format('MMM D, YYYY - HH:mm') }}
+                                    </span>
+                                }
+                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.exerciseId) {
+                                    <span
+                                        class="text-primary"
+                                        jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
+                                        [translateValues]="{ param: hiddenPages()![activeButtonPage()!.slideId!].exerciseId! }"
+                                    ></span>
+                                }
+                                <br />
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
+                            </p>
+                            <div class="submit-container mt-4! flex justify-between">
+                                <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="activeButtonPage.set(undefined); popover.close()">
+                                    <span jhiTranslate="entity.action.cancel"></span>
+                                </button>
+                                <button
+                                    tumAetUiButton
+                                    severity="primary"
+                                    variant="solid"
+                                    size="default"
+                                    type="button"
+                                    (click)="showPage(activeButtonPage()?.slideId!); popover.close()"
+                                >
+                                    <span jhiTranslate="entity.action.show"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+        }
+    } @else {
+        <!-- Without drag and drop for regular attachments -->
+        @for (page of orderedPages(); track page.slideId) {
+            <div class="pdf-canvas-container">
+                <button
+                    data-button-intent="utility"
+                    data-button-intent-reason="Enlarges a page canvas within the existing PDF preview"
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    type="button"
+                    [id]="'pdf-page-' + page.slideId"
+                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+                    [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
+                    (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                >
+                    <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
+                </button>
+                @if (loadedPages().has(page.order)) {
+                    <tumaet-ui-checkbox
+                        class="pdf-page-selection"
+                        [inputId]="'checkbox-' + page.slideId"
+                        [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
+                        [checked]="isPageSelected(page.slideId)"
+                        (changed)="togglePageSelection(page.slideId, $event.originalEvent)"
+                    />
+                }
+            </div>
+        }
+    }
+    @if (isEnlargedView()) {
+        <jhi-pdf-preview-enlarged-canvas-component
+            class="enlarged-canvas"
+            [pdfContainer]="pdfContainer"
+            [totalPages]="orderedPages().length"
+            [originalCanvas]="originalCanvas()"
+            [initialPage]="initialPageNumber()"
+            (isEnlargedViewOutput)="isEnlargedView.set($event)"
+        />
+    }
+</div>
+
+<ng-template #pageOverlay let-page>
+    @if (hiddenPages()[page.slideId]) {
+        <ng-container>
+            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
+                <span>
+                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                </span>
+            </span>
+        </ng-container>
+    }
+    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+        <span>{{ getPageOrder(page.slideId) }}</span>
+    </span>
+</ng-template>

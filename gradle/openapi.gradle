@@ -1,0 +1,457 @@
+    import org.yaml.snakeyaml.Yaml
+
+
+    buildscript {
+        repositories {
+            // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors)
+            maven {
+                name = "reposiliteRepository"
+                url = "https://reposilite.aet.cit.tum.de/releases"
+            }
+            mavenCentral()
+        }
+        // The org.openapi.generator plugin comes from the plugins block of the root build.gradle. Do not add it here as
+        // well: the Jackson pin in the root buildscript block does not reach this classpath, so a second copy would put
+        // its older jackson-databind into the GitHub dependency graph.
+        dependencies {
+            classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
+        }
+    }
+
+    // The ports of the throwaway server the specifications are read from. Override them with -PopenApiServerPort=<port> and
+    // -PopenApiSshPort=<port> when 8080 or 7921 is taken, for example by a development server.
+    def openApiServerPort = project.findProperty("openApiServerPort") ?: "8080"
+    def openApiSshPort = project.findProperty("openApiSshPort") ?: "7921"
+
+    // Two specifications come from the same server, one per run. ./gradlew generateOpenApiDocs writes the application
+    // specification, which feeds the generated Angular client. ./gradlew generateOpenApiDocs -PopenApiGroup=agent writes the
+    // agent specification, which lists only the endpoints a personal access token can call (see
+    // OpenAPIConfiguration#agentApi) and is published on the documentation site, so it is written there directly.
+    def openApiGroup = project.findProperty("openApiGroup")
+
+    openApi {
+        outputDir.set(file("$rootDir/config/openapi"))
+        if (openApiGroup) {
+            // A group is served as JSON only. JSON is valid YAML, and pruneOpenApiSpec writes the file back as YAML.
+            // The file name is relative to outputDir.
+            apiDocsUrl.set("http://localhost:${openApiServerPort}/api-docs/${openApiGroup}".toString())
+            outputFileName.set("../../documentation/static/agent/openapi.yaml")
+        } else {
+            apiDocsUrl.set("http://localhost:${openApiServerPort}/api-docs.yaml".toString())
+            outputFileName.set("openapi.yaml")
+        }
+        // This is the time we wait for the Artemis server to start. The default is 30s, which might not suffice on less powerful machines.
+        def waitTimeSeconds = 180;
+        waitTimeInSeconds.set(waitTimeSeconds)
+        customBootRun {
+            def localVcsPath = "${rootDir}/local-vcs-repos"
+
+            jvmArgs = [
+                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
+                "-Dartemis.lti.enabled=true",
+                "-Dartemis.athena.enabled=true",
+                // The application specification covers only the packages that are fully DTO-based. The agent specification is
+                // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
+                "-Dspringdoc.packages-to-scan=" + (openApiGroup
+                    ? "de.tum.cit.aet.artemis"
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.athena.web"),
+                // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
+                // of the specification: in the generated client each alias would become a name/name_ method pair.
+                "-Dspringdoc.paths-to-exclude=/api/athena/internal/**,/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
+                "-Dartemis.hyperion.enabled=true",
+                "-Dartemis.hyperion.exercise-generation.enabled=true",
+                // Controller introspection only; no generation job is admitted by this documentation process.
+                "-Dartemis.aiworker.enabled=true",
+                "-Dartemis.aiworker.ids=openapi-docs",
+                "-Dartemis.weaviate.enabled=true",
+                "-Dartemis.openapi-docs-generation=true",
+                "-Dartemis.iris.enabled=true",
+                "-Dspringdoc.api-docs.enabled=true",
+                "-Dspringdoc.pre-loading-enabled=true",
+                "-Dspring.main.lazy-initialization=true",
+                // Liquibase is disabled and ddl-auto=create lets Hibernate materialise the schema
+                // directly from JPA entities into the in-memory H2 DB. This is intentional: the
+                // Spring context only needs to start far enough for springdoc to introspect
+                // controllers — no real persistence happens here.
+                "-Dspring.liquibase.enabled=false",
+                "-Dspring.jpa.hibernate.ddl-auto=create",
+                "-Dspring.main.banner-mode=off"
+            ]
+
+            // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
+            args.set([
+                "--server.port=${openApiServerPort}".toString(),
+                "--artemis.version-control.ssh-port=${openApiSshPort}".toString(),
+                "--artemis.user-management.use-external=false",
+                "--artemis.iris.url=http://iris.fake",
+                "--artemis.iris.secret-token=token",
+                "--spring.jpa.database=h2",
+                "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "--spring.datasource.username=sa",
+                "--spring.datasource.password=",
+                "--artemis.version-control.local-vcs-repo-path=${localVcsPath}"
+            ])
+        }
+    }
+
+    // 1. TODO Detect if any resources have changed
+    // 2. TODO If so, modify the packages to scan accordingly in the task above
+    // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
+    // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
+    // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
+    // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
+
+    // The Angular client is generated by our custom de.tum.cit.aet:openapi-generator-angular22:3.0.0
+    // generator (generatorName "angular22"): standalone, inject()-based services (no constructor
+    // injection — required for the AnalogJS fastCompile test runner under Angular 22) and
+    // signal/readonly-aware models. The generator is added to the buildscript classpath (only for the
+    // openApiGenerate task) in the root build.gradle, which also documents how to obtain it (Maven
+    // Central — no auth — or build-from-source via publishToMavenLocal). The generated client is
+    // committed, so CI never runs openApiGenerate.
+    openApiGenerate {
+        generatorName = "angular22"
+        inputSpec.set(file("${rootDir}/config/openapi/openapi.yaml").toURI().toString())
+        outputDir = "${rootDir}/src/main/webapp/app/openapi"
+        apiPackage = "api"
+        modelPackage = "model"
+        // sets are not properly converted to JSON objects, so we need to use Array instead https://github.com/OpenAPITools/openapi-generator/issues/14055
+        // empty responses should be void, not object
+        typeMappings = [
+                set: 'Array',
+        ]
+        languageSpecificPrimitives =['void']
+        // useHttpResource=false: classical HttpClient.get() Observable methods (not the signal-based
+        // httpResource API). useInjectFunction=true: inject() instead of constructor injection.
+        // readonlyModels=false: keep DTO properties mutable (Artemis builds/edits DTOs in place).
+        // observeResponseHeaders=true: an operation whose 2xx response declares headers returns the
+        // HttpResponse, so callers can read them (e.g. X-Has-Next of the quiz training questions).
+        configOptions = [
+            useHttpResource       : "false",
+            useInjectFunction     : "true",
+            separateResources     : "false",
+            readonlyModels        : "false",
+            observeResponseHeaders: "true"
+        ]
+    }
+
+    tasks.register('pruneOpenApiSpec') {
+        description = 'Prune invalid $ref nodes, drop operations (and empty paths) with missing schemas, and fail on operations that would generate the same method in one API class'
+
+        doLast {
+            def projectRoot = project.rootDir
+            def yamlParser = new Yaml()
+
+            // The application specification feeds the generated client, so its operations must not collide. The agent
+            // specification is only read, so it needs no collision check and no flattening of discriminators.
+            def specifications = [
+                [file: file("${projectRoot}/config/openapi/openapi.yaml"), forClient: true],
+                [file: file("${projectRoot}/documentation/static/agent/openapi.yaml"), forClient: false],
+            ]
+
+            specifications.each { specification ->
+                File outputFile = specification.file
+                if (!outputFile.exists()) {
+                    return
+                }
+
+                Map<String, Object> specificationMap =
+                    yamlParser.load(outputFile.text) as Map<String, Object>
+
+                Map<String, Map<String, Object>> componentsMap =
+                    (specificationMap.components ?: [:]) as Map<String, Map<String, Object>>
+
+                Map<String, Object> prunedSpecificationMap =
+                    pruneInvalidReferences(specificationMap, componentsMap)
+
+                removeOperationsWithNullSchemas(prunedSpecificationMap)
+                if (specification.forClient) {
+                    flattenDiscriminatorAllOfBackReferences(prunedSpecificationMap)
+                    failOnMethodNameCollisions(prunedSpecificationMap)
+                }
+                else {
+                    // Static analysis of an API description asks for an upper bound on every array. The bound is far above any
+                    // list a course has and is not enforced by the server, so it is set here, on the final document: springdoc
+                    // adds the component schemas only after its customizers have run.
+                    boundArrays(prunedSpecificationMap)
+                }
+
+                // The specification was read from a throwaway server whose port can be overridden with -PopenApiServerPort.
+                // Keep the committed file independent of it.
+                (prunedSpecificationMap.servers as List<Map<String, Object>>)?.each { server ->
+                    server.url = server.url?.toString()?.replaceFirst(/localhost:\d+/, 'localhost:8080')
+                }
+
+                outputFile.text = yamlParser.dump(prunedSpecificationMap)
+                // SnakeYAML's dump() converts double-quoted strings to single quotes.
+                // The version line must use double quotes for update_version.sh --check.
+                outputFile.text = outputFile.text.replaceFirst(
+                    /(?m)^(  version: )'([^']+)'$/, '$1"$2"'
+                )
+                println "✔ Pruned specification written to ${outputFile}"
+            }
+        }
+    }
+
+    /**
+     * Sets {@code maxItems} on every array schema of the given node that has none, descending through maps and lists.
+     */
+    def boundArrays(Object node) {
+        if (node instanceof Map) {
+            if (node.type == 'array' && !node.containsKey('maxItems')) {
+                node.maxItems = 10000
+            }
+            node.values().each { boundArrays(it) }
+        }
+        else if (node instanceof List) {
+            node.each { boundArrays(it) }
+        }
+    }
+
+    /**
+     * Recursively traverses the given map and prunes any entries that resolve to an invalid $ref.
+     *
+     * <p>For each key/value pair in {@code originalMap}, this method invokes {@link #pruneNode(Object, Map)}
+     * on the value. If the result is non-null, the entry is retained with its original key;
+     * otherwise the entry is dropped.</p>
+     * This is needed as we only include DTOs in the OpenAPI spec.
+     * Not all our endpoints use DTOs, currently, so we get some invalid $ref entries and they need to be pruned.
+     *
+     * @param originalMap   the OpenAPI spec (or sub-map) to prune
+     * @param componentsMap a map of component category → (component name → definition)
+     * @return a new map containing only entries whose values did not prune to null
+     */
+    private Map<String, Object> pruneInvalidReferences(
+        Map<String, Object> originalMap,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        originalMap.collectEntries { String entryKey, Object entryValue ->
+            Object prunedValue = pruneNode(entryValue, componentsMap)
+            prunedValue != null ? [(entryKey): prunedValue] : [:]
+        }
+    }
+
+    private Object pruneNode(
+        Object node,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        if (node instanceof Map) {
+            return pruneMapEntries(node as Map<String, Object>, componentsMap)
+        } else if (node instanceof List) {
+            return pruneListEntries(node as List<?>, componentsMap)
+        } else {
+            return node
+        }
+    }
+
+    private Map<String, Object> pruneMapEntries(
+        Map<String, Object> mapValue,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        // A map with '$ref' is treated as a reference node and validated as a whole.
+        // OpenAPI 3.1 allows sibling keys on $ref nodes (e.g. description, summary),
+        // but they are always plain scalar metadata — never nested schemas with their
+        // own $refs — so recursing into them is unnecessary.
+        boolean isReferenceNode = mapValue.containsKey('$ref')
+        if (isReferenceNode) {
+            String referenceString = mapValue['$ref'] as String
+            // Matches strings like "#/components/{componentType}/{componentName}",
+            def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
+            if (componentMatcher.matches()) {
+                def componentTypeIndex = 1
+                def componentNameIndex = 2
+                String componentCategory   = componentMatcher[0][componentTypeIndex]
+                String componentIdentifier = componentMatcher[0][componentNameIndex]
+                if (!componentsMap[componentCategory]?.containsKey(componentIdentifier)) {
+                    return null
+                }
+            }
+            return mapValue
+        }
+
+        mapValue.collectEntries { String nestedKey, Object nestedValue ->
+            Object prunedNestedValue = pruneNode(nestedValue, componentsMap)
+            prunedNestedValue != null ? [(nestedKey): prunedNestedValue] : [:]
+        }
+    }
+
+    private List<?> pruneListEntries(
+        List<?> listValue,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        listValue
+            .collect { pruneNode(it, componentsMap) }
+            .findAll { it != null }
+    }
+
+    /**
+     * Flattens allOf back-references from discriminator subtypes to their oneOf parent.
+     *
+     * <p>When a schema uses {@code oneOf} with a {@code discriminator}, springdoc generates subtypes
+     * with {@code allOf: [$ref: parent, {type: object, properties: ...}]}. The typescript-angular
+     * generator turns this into {@code interface Sub extends Parent}, but since the parent is
+     * generated as a {@code type} alias (union), TypeScript rejects it. This method removes
+     * the back-reference and inlines the remaining allOf entry.</p>
+     *
+     * <p>The walk is recursive: subtypes that are themselves discriminator parents (chains like
+     * grandparent → parent → child) are fully processed at arbitrary depth.</p>
+     */
+    private static void flattenDiscriminatorAllOfBackReferences(Map<String, Object> specificationMap) {
+        Map<String, Object> schemas = (specificationMap.components as Map<String, Object>)?.schemas as Map<String, Object>
+        if (schemas == null) return
+
+        schemas.each { String schemaName, Object schemaValue ->
+            if (!(schemaValue instanceof Map)) return
+            Map<String, Object> schema = schemaValue as Map<String, Object>
+
+            if (!schema.containsKey('oneOf') || !schema.containsKey('discriminator')) return
+
+            flattenSubtypeChildren(schema, schemaName, schemas)
+        }
+    }
+
+    private static void flattenSubtypeChildren(Map<String, Object> schema, String schemaName, Map<String, Object> schemas) {
+        List<Map<String, Object>> oneOfRefs = schema.oneOf as List<Map<String, Object>>
+        oneOfRefs?.each { Map<String, Object> ref ->
+            String refPath = ref['$ref'] as String
+            if (!refPath?.startsWith('#/components/schemas/')) return
+
+            String subtypeName = refPath.substring('#/components/schemas/'.length())
+            Map<String, Object> subtype = schemas[subtypeName] as Map<String, Object>
+            if (subtype == null) return
+
+            if (subtype.containsKey('allOf')) {
+                flattenAllOfBackReference(subtype, schemaName)
+            }
+
+            if (subtype.containsKey('oneOf') && subtype.containsKey('discriminator')) {
+                flattenSubtypeChildren(subtype, subtypeName, schemas)
+            }
+        }
+    }
+
+    private static void flattenAllOfBackReference(Map<String, Object> subtype, String parentSchemaName) {
+        List<Object> allOfList = subtype.allOf as List<Object>
+        if (allOfList == null) return
+
+        String parentRef = "#/components/schemas/${parentSchemaName}"
+        allOfList.removeIf { item ->
+            item instanceof Map && (item as Map)['$ref'] == parentRef
+        }
+
+        if (allOfList.size() == 1 && allOfList[0] instanceof Map) {
+            Map<String, Object> remaining = allOfList[0] as Map<String, Object>
+            subtype.remove('allOf')
+            remaining.each { String k, Object v ->
+                if (!subtype.containsKey(k)) {
+                    subtype[k] = v
+                }
+            }
+        }
+    }
+
+    private static void removeOperationsWithNullSchemas(Map<String, Object> specificationMap) {
+        Map<String, Map<String, Object>> pathsMap =
+            specificationMap.paths as Map<String, Map<String, Object>>
+        if (pathsMap == null) {
+            return
+        }
+
+        pathsMap.each { String pathName, Map<String, Object> operationsMap ->
+            List<String> operationsToRemove = operationsMap.findAll { String operationName, Object operationValue ->
+                operationContainsNullSchema(operationValue as Map<String, Object>)
+            }.keySet().toList()
+
+            operationsToRemove.each { operationsMap.remove(it) }
+        }
+
+        List<String> emptyPathNames = pathsMap.findAll { String pathName, Map<String, Object> operationsMap ->
+            operationsMap.isEmpty()
+        }.keySet().toList()
+
+        emptyPathNames.each { pathsMap.remove(it) }
+    }
+
+    /**
+     * Fails when two operations would generate methods of the same name in one API class.
+     * springdoc makes operation ids unique per file by appending _1, _2, ...; the generator drops that suffix and groups
+     * operations by tag, so two operations with the same base id and tag become name/name_ pairs whose order nobody
+     * controls. Typical cause: a legacy URL alias on the same handler method, see springdoc.paths-to-exclude above.
+     */
+    private static void failOnMethodNameCollisions(Map<String, Object> specificationMap) {
+        Map<String, Map<String, Object>> pathsMap = specificationMap.paths as Map<String, Map<String, Object>>
+        if (pathsMap == null) {
+            return
+        }
+        def httpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']
+        Map<String, List<String>> operationsByMethodName = [:].withDefault { [] }
+        pathsMap.each { String path, Map<String, Object> pathItem ->
+            pathItem.findAll { String method, Object operation -> method in httpMethods && operation instanceof Map }.each { String method, Object operation ->
+                String operationId = (operation as Map).operationId as String
+                if (operationId == null) {
+                    return
+                }
+                String methodName = operationId.replaceFirst(/_\d+$/, '')
+                List<String> tags = ((operation as Map).tags ?: ['default']) as List<String>
+                tags.each { String tag ->
+                    operationsByMethodName["${tag}.${methodName}".toString()] << "${method.toUpperCase(Locale.ROOT)} ${path} (${operationId})".toString()
+                }
+            }
+        }
+        def collisions = operationsByMethodName.findAll { key, operations -> operations.size() > 1 }
+        if (!collisions.isEmpty()) {
+            throw new GradleException("OpenAPI operations that would generate the same method in one API class:\n"
+                + collisions.collect { key, operations -> "  ${key}: ${operations.join(', ')}" }.join('\n')
+                + "\nExclude legacy URL aliases with springdoc.paths-to-exclude in gradle/openapi.gradle or give the handler methods distinct names.")
+        }
+    }
+
+    private static boolean operationContainsNullSchema(Map<String, Object> operationDefinition) {
+        boolean requestHasNullSchema = operationDefinition.requestBody
+            ?.content
+            ?.values()
+            ?.any { mediaType -> mediaType.schema == null }
+
+        boolean responseHasNullSchema = operationDefinition.responses
+            ?.values()
+            ?.any { responseObject ->
+                responseObject.content
+                    ?.values()
+                    ?.any { mediaType -> mediaType.schema == null }
+            }
+
+        return requestHasNullSchema || responseHasNullSchema
+    }
+
+
+
+    tasks.named('openApiGenerate') {
+        finalizedBy 'postProcessTsFiles'
+    }
+    // The client can use the committed spec alone, but combined generation must consume the freshly produced spec.
+    tasks.named('pruneOpenApiSpec') {
+        mustRunAfter 'generateOpenApiDocs'
+    }
+    tasks.named('openApiGenerate') {
+        dependsOn 'pruneOpenApiSpec'
+        mustRunAfter 'generateOpenApiDocs'
+    }
+    tasks.named("openApiGenerate") {
+        doFirst {
+            def openapiDir = file("$rootDir/src/main/webapp/app/openapi")
+            if (openapiDir.exists()) {
+                delete fileTree(dir: openapiDir, exclude: ".openapi-generator-ignore")
+                println "✔ Deleted everything under openapi/ except .openapi-generator-ignore"
+            }
+        }
+    }
+
+
+    tasks.register('postProcessTsFiles', Exec) {
+        description = "Removes unused imports from generated OpenAPI TypeScript files and cleans numeric suffixes from method names"
+
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            commandLine "cmd", "/c", "npx tsx gradle/scripts/openapi-post-processing.ts"
+        } else {
+            commandLine "npx", "tsx", "gradle/scripts/openapi-post-processing.ts"
+        }
+    }

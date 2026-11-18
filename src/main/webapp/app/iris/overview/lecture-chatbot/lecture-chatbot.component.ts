@@ -1,0 +1,86 @@
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
+import { IrisMessageContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+
+@Component({
+    selector: 'jhi-lecture-chatbot',
+    imports: [IrisBaseChatbotComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
+        @if (lectureId()) {
+            <jhi-iris-base-chatbot
+                [showDeclineButton]="false"
+                [isChatHistoryAvailable]="false"
+                [isContextSelectionAvailable]="isContextSelectionAvailable()"
+                [layout]="'widget'"
+                [contextProvider]="contextProvider()"
+            />
+        }
+    `,
+    styles: [
+        `
+            :host {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                overflow: hidden;
+            }
+        `,
+    ],
+})
+/**
+ * Lightweight lecture-specific wrapper around the shared Iris chatbot widget.
+ */
+export class LectureChatbotComponent {
+    private readonly chatService = inject(IrisChatService);
+    private readonly irisBaseChatbot = viewChild(IrisBaseChatbotComponent);
+
+    /** Lecture identifier used to scope chatbot requests to the current lecture context. */
+    readonly lectureId = input<number>();
+
+    /** Context provider for collecting context from all visible lecture units. */
+    readonly contextsProvider = input<LectureContextsProvider | undefined>(undefined);
+
+    /**
+     * Whether the user may change the chat topic from the input row. Hosts that pin the chat to this
+     * lecture (the combined view) pass false: the topic selector is hidden and the lecture is staged as
+     * the context instead, so the chat cannot drift to another entity while the student is reading it.
+     */
+    readonly isContextSelectionAvailable = input<boolean>(true);
+
+    /** Computed context provider function for the base chatbot */
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => {
+        const provider = this.contextsProvider();
+        return provider ? () => provider.getVisibleContexts() : undefined;
+    });
+
+    constructor() {
+        // Reuse the existing chat session tagged with this lecture if one exists in the history;
+        // otherwise the COURSE chat is opened with the lecture pre-selected as pending context.
+        effect(() => {
+            const lectureId = this.lectureId();
+            if (lectureId !== undefined) {
+                untracked(() => {
+                    this.chatService.openChat(ChatServiceMode.LECTURE, lectureId);
+                    if (!this.isContextSelectionAvailable()) {
+                        // openChat is a no-op when the page context already is this lecture, so a topic the user
+                        // switched to elsewhere (e.g. an exercise picked in the lecture page's Iris panel) would
+                        // survive into a view that offers no way back. Staging the lecture pins it: the next
+                        // message commits it via a CTXSWAP marker, which renders as the divider in the history.
+                        // Staging dedups against the committed context, so the common case stages nothing.
+                        this.chatService.stagePendingContext(ChatServiceMode.LECTURE, lectureId);
+                    }
+                });
+            }
+        });
+    }
+
+    /** Toggles the visibility of the chat history panel in the embedded base chatbot. */
+    public toggleChatHistory(): void {
+        const baseChatbot = this.irisBaseChatbot();
+        if (baseChatbot) {
+            baseChatbot.setChatHistoryVisibility(!baseChatbot.isChatHistoryOpen());
+        }
+    }
+}

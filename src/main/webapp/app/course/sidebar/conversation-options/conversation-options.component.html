@@ -1,0 +1,45 @@
+<div class="option-buttons flex items-center">
+    <button class="favorite btn btn-outline-secondary sidebar-button p-0" (click)="onFavoriteClicked($event)" type="button">
+        <fa-icon [icon]="conversation().isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
+    </button>
+    <div ngbDropdown container="body" class="flex items-center">
+        <button
+            class="btn btn-outline-secondary dropdown-toggle sidebar-button flex! items-center justify-center px-1! py-0!"
+            type="button"
+            ngbDropdownToggle
+            data-testid="conversation-options-toggle"
+            (click)="$event.stopPropagation()"
+        >
+            <fa-icon [icon]="faEllipsisVertical" size="sm" />
+        </button>
+        <div ngbDropdownMenu>
+            @if (conversationAsChannel()?.subTypeReferenceId) {
+                <a class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink()" (click)="$event.stopPropagation()">
+                    {{ channelSubTypeReferenceTranslationKey() | artemisTranslate }}
+                </a>
+            }
+            @if (!isOneToOneChat(conversation())) {
+                <button type="button" class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)">
+                    <fa-icon [icon]="faGear" size="sm" class="me-1" />
+                    {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
+                </button>
+            }
+            <button type="button" class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
+                <fa-icon [icon]="conversation().isMuted ? faVolumeUp : faVolumeXmark" size="sm" class="me-1" />
+                {{
+                    conversation().isMuted
+                        ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
+                        : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute' | artemisTranslate)
+                }}
+            </button>
+            <button type="button" class="hide" ngbDropdownItem (click)="onArchiveClicked($event)">
+                <fa-icon [icon]="conversation().isHidden ? faBoxOpen : faBoxArchive" size="sm" class="me-1" />
+                {{
+                    conversation().isHidden
+                        ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)
+                        : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide' | artemisTranslate)
+                }}
+            </button>
+        </div>
+    </div>
+</div>

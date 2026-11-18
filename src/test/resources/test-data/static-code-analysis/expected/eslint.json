@@ -1,0 +1,27 @@
+{
+  "tool": "ESLINT",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/client.js",
+      "startLine": 21,
+      "endLine": 21,
+      "startColumn": 9,
+      "endColumn": 18,
+      "rule": "no-debugger",
+      "category": "Lint",
+      "message": "Unexpected 'debugger' statement.",
+      "priority": "error"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/client.js",
+      "startLine": 34,
+      "endLine": 34,
+      "startColumn": 9,
+      "endColumn": 11,
+      "rule": "no-empty",
+      "category": "Lint",
+      "message": "Empty block statement.",
+      "priority": "error"
+    }
+  ]
+}

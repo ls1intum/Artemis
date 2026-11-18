@@ -1,0 +1,243 @@
+package de.tum.cit.aet.artemis.communication.domain.conversation;
+
+import java.time.ZonedDateTime;
+import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+
+@Entity
+@DiscriminatorValue("C")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class Channel extends Conversation {
+
+    /**
+     * The name of the channel. Must be unique in the course.
+     */
+    @Column(name = "name")
+    @Size(min = 1, max = 30)
+    @NotBlank
+    private String name;
+
+    /**
+     * What is the purpose of this channel? (not shown in header)
+     */
+    @Column(name = "description")
+    @Size(min = 0, max = 250)
+    @Nullable
+    private String description;
+
+    /**
+     * What is the current topic of this channel? (shown in header)
+     */
+    @Column(name = "topic")
+    @Size(min = 0, max = 250)
+    @Nullable
+    private String topic;
+
+    /**
+     * A channel is either public or private. Users need an invitation to join a private channel. Every user can join a public channel.
+     */
+    @Column(name = "is_public")
+    private boolean isPublic = false;
+
+    /**
+     * An announcement channel is a special type of channel where only channel moderators and instructors can start new posts.
+     * Answer posts are still possible so that students can ask questions concerning the announcement.
+     */
+    @Column(name = "is_announcement")
+    private boolean isAnnouncementChannel = false;
+
+    /**
+     * A channel that is no longer needed can be archived or deleted.
+     * Archived channels are closed to new activity, but the message history is retained and searchable.
+     * The channel can be unarchived at any time.
+     */
+    @Column(name = "is_archived")
+    private boolean isArchived = false;
+
+    /**
+     * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_course_wide=true.
+     * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
+     */
+    @Column(name = "is_course_wide")
+    @NonNull
+    private boolean isCourseWide = false;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "lecture_id")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    private Lecture lecture;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exercise_id")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    private Exercise exercise;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exam_id")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    private Exam exam;
+
+    public Channel(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
+            ZonedDateTime lastMessageDate, String name, @Nullable String description, @Nullable String topic, boolean isPublic, boolean isAnnouncementChannel, boolean isArchived,
+            boolean isCourseWide, Lecture lecture, Exercise exercise, Exam exam) {
+        super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
+        this.name = name;
+        this.description = description;
+        this.topic = topic;
+        this.isPublic = isPublic;
+        this.isAnnouncementChannel = isAnnouncementChannel;
+        this.isArchived = isArchived;
+        this.isCourseWide = isCourseWide;
+        this.lecture = lecture;
+        this.exercise = exercise;
+        this.exam = exam;
+    }
+
+    public Channel() {
+    }
+
+    @Nullable
+    public String getName() {
+        return name;
+    }
+
+    public void setName(@Nullable String name) {
+        this.name = name;
+    }
+
+    @Nullable
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(@Nullable String description) {
+        this.description = description;
+    }
+
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    @Nullable
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(@Nullable String topic) {
+        this.topic = topic;
+    }
+
+    public boolean getIsArchived() {
+        return isArchived;
+    }
+
+    public void setIsArchived(boolean archived) {
+        isArchived = archived;
+    }
+
+    public boolean getIsAnnouncementChannel() {
+        return isAnnouncementChannel;
+    }
+
+    public void setIsAnnouncementChannel(boolean announcementChannel) {
+        isAnnouncementChannel = announcementChannel;
+    }
+
+    public boolean getIsCourseWide() {
+        return isCourseWide;
+    }
+
+    public void setIsCourseWide(boolean isCourseWide) {
+        this.isCourseWide = isCourseWide;
+    }
+
+    public Lecture getLecture() {
+        return lecture;
+    }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public Exam getExam() {
+        return exam;
+    }
+
+    public void setExam(Exam exam) {
+        this.exam = exam;
+    }
+
+    /**
+     * Whether students may see this channel. The channel of an exercise or exam stays hidden from students until the exercise or exam is visible, while staff can already
+     * discuss it.
+     *
+     * @return false while the exercise or exam of this channel is not visible to students
+     */
+    @JsonIgnore
+    public boolean isVisibleToStudents() {
+        if (exercise != null) {
+            return exercise.isVisibleToStudents();
+        }
+        else if (exam != null) {
+            return exam.isVisibleToStudents();
+        }
+        return true;
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        return getName();
+    }
+
+    /**
+     * hide the details of the object, can be invoked before sending it as payload in a REST response or websocket message
+     */
+    @Override
+    public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
+        setLecture(null);
+        setExam(null);
+        setExercise(null);
+        super.hideDetails();
+    }
+
+    @Override
+    public Conversation copy() {
+        return new Channel(getId(), getCreator(), getConversationParticipants(), getPosts(), getCourse(), getCreationDate(), getLastMessageDate(), getName(), getDescription(),
+                getTopic(), getIsPublic(), getIsAnnouncementChannel(), getIsArchived(), getIsCourseWide(), getLecture(), getExercise(), getExam());
+    }
+}

@@ -1,0 +1,170 @@
+package de.tum.cit.aet.artemis.text;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventInputDTO;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "assessmentevent";
+
+    @Autowired
+    private TextSubmissionTestRepository textSubmissionTestRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private TextAssessmentEventRepository textAssessmentEventRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    private Course course;
+
+    private User tutor;
+
+    private Exercise exercise;
+
+    private TextSubmission textSubmission;
+
+    private StudentParticipation studentParticipation;
+
+    /**
+     * Initializes the database with a course that contains a tutor and a text submission
+     */
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourseWithTextExercise(TEST_PREFIX);
+        tutor = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
+        // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
+        exercise = course.getExercises().iterator().next();
+        studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).iterator().next();
+        textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
+    }
+
+    /**
+     * Tests adding multiple different combinations of events
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAddMultipleCompleteAssessmentEvents() throws Exception {
+        List<TextAssessmentEvent> events = TextExerciseFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+        for (TextAssessmentEvent event : events) {
+            request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.CREATED);
+        }
+    }
+
+    /**
+     * Tests addition of a single assessment event
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAddSingleCompleteAssessmentEvent() throws Exception {
+        expectEventAddedWithResponse(HttpStatus.CREATED, tutor.getId());
+    }
+
+    /**
+     * Tests addition of a single event with a tutor that is not part of the course
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() throws Exception {
+        // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
+        expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
+    }
+
+    /**
+     * Local helper function that given a userId and an expected status, adds an event and checks if the result is as expected
+     *
+     * @param expected the status expected from the Http response
+     * @param userId   the id of the user to be tested in the event
+     */
+    private void expectEventAddedWithResponse(HttpStatus expected, Long userId) throws Exception {
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), expected);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
+        textSubmission.setExampleSubmission(true);
+        textSubmissionTestRepository.saveAndFlush(textSubmission);
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Tests the get events endpoint with admin role
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllEventsByCourseId() throws Exception {
+        User user = userUtilService.getUserByLogin("admin");
+        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.CREATED);
+
+        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events?courseId=" + course.getId(), HttpStatus.OK, TextAssessmentEventDTO.class);
+        assertThat(foundEvents).hasSize(1);
+        TextAssessmentEventDTO foundEvent = foundEvents.getFirst();
+        assertThat(foundEvent.id()).isNotNull();
+        assertThat(foundEvent.courseId()).isEqualTo(course.getId());
+        assertThat(foundEvent.userId()).isEqualTo(user.getId());
+        assertThat(foundEvent.textExerciseId()).isEqualTo(exercise.getId());
+        assertThat(foundEvent.participationId()).isEqualTo(studentParticipation.getId());
+        assertThat(foundEvent.submissionId()).isEqualTo(textSubmission.getId());
+    }
+
+    private static TextAssessmentEventInputDTO toInputDTO(TextAssessmentEvent event) {
+        return new TextAssessmentEventInputDTO(event.getUserId(), event.getEventType(), event.getFeedbackType(), event.getSegmentType(), event.getCourseId(),
+                event.getTextExerciseId(), event.getParticipationId(), event.getSubmissionId());
+    }
+
+    /**
+     * Tests the get events endpoint with admin role
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
+        TextAssessmentEvent event1 = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+        TextAssessmentEvent event2 = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(),
+                textSubmission.getId());
+
+        // Add two events with two different tutor ids
+        textAssessmentEventRepository.saveAll(List.of(event1, event2));
+
+        int numberOfTutorsInvolved = request.get("/api/text/event-insights/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
+                HttpStatus.OK, Integer.class);
+
+        assertThat(numberOfTutorsInvolved).isEqualTo(2);
+    }
+}

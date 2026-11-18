@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "quizStatisticCounter": {
+            "home": {
+                "title": "Statistikzähler",
+                "createLabel": "Statistikzähler erstellen"
+            },
+            "created": "Statistikzähler erstellt mit ID {{ param }}",
+            "updated": "Statistikzähler aktualisiert mit ID {{ param }}",
+            "deleted": "Statistikzähler gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Statistikzähler {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Statistikzähler"
+            },
+            "ratedCounter": "Rated Counter",
+            "unRatedCounter": "Un Rated Counter"
+        }
+    }
+}

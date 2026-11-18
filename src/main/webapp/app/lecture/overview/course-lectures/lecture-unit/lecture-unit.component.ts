@@ -1,0 +1,189 @@
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+
+@Component({
+    selector: 'jhi-lecture-unit-card',
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FontAwesomeModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        CommonModule,
+        CompetencyContributionComponent,
+    ],
+    templateUrl: './lecture-unit.component.html',
+    styleUrl: './lecture-unit.component.scss',
+})
+export class LectureUnitComponent implements OnDestroy {
+    private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
+
+    private router = inject(Router);
+    private elementRef = inject(ElementRef);
+    private injector = inject(Injector);
+    private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private scrollGeneration = 0;
+
+    protected faDownload = faDownload;
+    protected faCheckCircle = faCheckCircle;
+    protected faCircle = faCircle;
+    protected faExpand = faExpand;
+
+    courseId = input.required<number>();
+
+    lectureUnit = input.required<LectureUnit>();
+    icon = input.required<IconDefinition>();
+
+    showViewIsolatedButton = input<boolean>(false);
+    viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
+    viewIsolatedButtonSeverity = input<TumAetUiButtonSeverity>('secondary');
+    viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
+    isPresentationMode = input.required<boolean>();
+    readonly deepLink = input<LectureDeepLink | undefined>(undefined);
+
+    readonly showOriginalVersionButton = input<boolean>(false);
+    readonly onShowOriginalVersion = output<void>();
+
+    /** Controls visibility of the fullscreen action button in the lecture unit header. */
+    readonly showFullscreenButton = input<boolean>(false);
+    /** Emitted when the fullscreen action button is activated. */
+    readonly onFullscreen = output<void>();
+
+    readonly onShowIsolated = output<void>();
+    readonly onCollapse = output<boolean>();
+    readonly onCompletion = output<boolean>();
+
+    readonly isCollapsed = signal<boolean>(true);
+
+    readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
+    readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
+
+    constructor() {
+        effect(
+            (onCleanup) => {
+                const deepLink = this.deepLink();
+                if (!deepLink) {
+                    return;
+                }
+
+                const scrollGeneration = ++this.scrollGeneration;
+
+                untracked(() => {
+                    if (this.isCollapsed()) {
+                        this.isCollapsed.set(false);
+                        this.onCollapse.emit(false);
+                    }
+
+                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS, deepLink, scrollGeneration);
+                });
+
+                onCleanup(() => {
+                    this.scrollGeneration++;
+                    this.clearScrollTimeout();
+                });
+            },
+            { injector: this.injector },
+        );
+    }
+
+    ngOnDestroy(): void {
+        this.scrollGeneration++;
+        this.clearScrollTimeout();
+    }
+
+    toggleCompletion(event: Event) {
+        event.stopPropagation();
+        this.onCompletion.emit(!this.lectureUnit().completed!);
+    }
+
+    toggleCollapse() {
+        this.isCollapsed.update((isCollapsed) => !isCollapsed);
+        this.onCollapse.emit(this.isCollapsed());
+
+        if (!this.isCollapsed()) {
+            this.scheduleScroll('nearest');
+        }
+    }
+
+    handleIsolatedView(event: Event) {
+        event.stopPropagation();
+        this.onShowIsolated.emit();
+    }
+
+    handleOriginalVersionView(event: Event) {
+        event.stopPropagation();
+        this.onShowOriginalVersion.emit();
+    }
+
+    /** Handles fullscreen action clicks without collapsing/expanding the card. */
+    handleFullscreen(event: Event): void {
+        event.stopPropagation();
+        this.onFullscreen.emit();
+    }
+
+    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0, deepLink?: LectureDeepLink, scrollGeneration?: number): void {
+        afterNextRender(
+            () => {
+                if (scrollGeneration !== undefined && scrollGeneration !== this.scrollGeneration) {
+                    return;
+                }
+
+                const doScroll = () => {
+                    if (scrollGeneration !== undefined && scrollGeneration !== this.scrollGeneration) {
+                        return;
+                    }
+
+                    const timestamp = deepLink?.timestamp;
+                    const page = deepLink?.page;
+
+                    // Scroll to video player if timestamp is provided (deeplinking)
+                    if (timestamp !== undefined) {
+                        const videoPlayer = this.elementRef.nativeElement.querySelector('jhi-video-player') ?? this.elementRef.nativeElement.querySelector('jhi-youtube-player');
+                        if (videoPlayer) {
+                            videoPlayer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            return;
+                        }
+                    }
+
+                    // Scroll to PDF viewer if page is provided (deeplinking)
+                    if (page !== undefined) {
+                        const pdfViewer = this.elementRef.nativeElement.querySelector('jhi-pdf-viewer');
+                        if (pdfViewer) {
+                            pdfViewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            return;
+                        }
+                    }
+
+                    // Default: scroll to unit card
+                    this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block });
+                };
+                if (delayMs > 0) {
+                    this.scrollTimeoutId = setTimeout(doScroll, delayMs);
+                } else {
+                    doScroll();
+                }
+            },
+            { injector: this.injector },
+        );
+    }
+
+    private clearScrollTimeout(): void {
+        if (this.scrollTimeoutId !== undefined) {
+            clearTimeout(this.scrollTimeoutId);
+            this.scrollTimeoutId = undefined;
+        }
+    }
+}

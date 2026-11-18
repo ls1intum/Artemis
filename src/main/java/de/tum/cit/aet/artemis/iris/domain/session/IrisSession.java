@@ -1,0 +1,143 @@
+package de.tum.cit.aet.artemis.iris.domain.session;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+
+import org.hibernate.annotations.ConcreteProxy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
+
+/**
+ * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
+ * See {@link IrisChatSession} and {@link IrisTutorSuggestionSession} for concrete implementations.
+ */
+@Entity
+@Table(name = "iris_session")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@ConcreteProxy
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisTutorSuggestionSession.class, name = "tutor_suggestion"),
+})
+// @formatter:on
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public abstract class IrisSession extends DomainObject {
+
+    @Parent
+    private long userId;
+
+    @OrderColumn(name = "iris_message_order")
+    @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IrisMessage> messages = new ArrayList<>();
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "creation_date")
+    private ZonedDateTime creationDate = ZonedDateTime.now();
+
+    /**
+     * The latest suggestions that were sent to the user.
+     * This column holds the list of latest suggestions as a JSON array.
+     */
+    @Column(name = "latest_suggestions")
+    private String latestSuggestions;
+
+    /**
+     * Citation metadata extracted from the session messages.
+     * This information is derived at runtime and not persisted.
+     */
+    @Transient
+    private List<IrisCitationMetaDTO> citationInfo;
+
+    public IrisMessage newMessage() {
+        var message = new IrisMessage();
+        message.setSession(this);
+        return message;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setCreationDate(ZonedDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public ZonedDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public List<IrisMessage> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<IrisMessage> messages) {
+        this.messages = messages;
+    }
+
+    public String getLatestSuggestions() {
+        return latestSuggestions;
+    }
+
+    public void setLatestSuggestions(String latestSuggestions) {
+        this.latestSuggestions = latestSuggestions;
+    }
+
+    @JsonProperty("citationInfo")
+    public List<IrisCitationMetaDTO> getCitationInfo() {
+        return citationInfo;
+    }
+
+    public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
+        this.citationInfo = citationInfo;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public abstract boolean shouldSelectLLMUsage();
+
+    /**
+     * Returns the ID of the domain entity this session is associated with.
+     * For chat sessions this is the course, exercise, or lecture ID; for tutor-suggestion sessions it is the post ID.
+     *
+     * @return the entity ID associated with this session
+     */
+    public abstract Long getEntityId();
+
+}

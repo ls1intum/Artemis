@@ -1,0 +1,1090 @@
+import { Locator, Page, expect } from '@playwright/test';
+import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { UserCredentials } from '../../users';
+import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
+import { readResponseJson } from '../../utils';
+
+/**
+ * A class which encapsulates UI selectors and actions for the Course Messages page.
+ */
+export class CourseMessagesPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * Clicks the button to initiate channel creation.
+     */
+    async createChannelButton() {
+        await this.page.getByTestId('sidebar-create-menu-button').click();
+        const createBtn = this.page.locator('button', { hasText: 'Create channel' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
+    }
+
+    /**
+     * Navigates to the channel overview section.
+     */
+    async browseChannelsButton() {
+        await this.page.getByTestId('sidebar-create-menu-button').click();
+        const browseBtn = this.page.locator('button', { hasText: 'Browse channels' });
+        await browseBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await browseBtn.click();
+        // Wait for the channels overview to load
+        await this.page.getByTestId('channels-overview-dialog').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Checks if a channel exists by name.
+     * @param name - The name of the channel to check for existence.
+     */
+    async checkChannelsExists(name: string) {
+        await expect(this.page.getByTestId('channel-overview-item').getByText(name, { exact: true })).toBeVisible({ timeout: 15000 });
+    }
+
+    /**
+     * Retrieves the ID of a channel by its name.
+     * @param name - The name of the channel whose ID is to be retrieved.
+     * @returns The ID of the channel.
+     */
+    async getChannelIdByName(name: string) {
+        const channelElement = this.page.getByTestId('channel-overview-item').filter({ hasText: name });
+        return (await channelElement.getAttribute('data-channel-id')) ?? undefined;
+    }
+
+    /**
+     * Joins a channel by its ID.
+     * @param channelID - The ID of the channel to join.
+     */
+    async joinChannel(channelID: number) {
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/register`);
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#register${channelID}`).click({ force: true });
+        await responsePromise;
+    }
+
+    /**
+     * Leaves a channel by its ID.
+     * @param channelID - The ID of the channel to leave.
+     */
+    async leaveChannel(channelID: number) {
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels/*/deregister`);
+        await this.page.locator(`[data-channel-id="${channelID}"]`).locator(`#deregister${channelID}`).click({ force: true });
+        await responsePromise;
+    }
+
+    /**
+     * Gets the 'joined' badge of a channel.
+     * @param channelID - The ID of the channel.
+     * @returns The locator for the badge element.
+     */
+    getJoinedBadge(channelID: number) {
+        return this.page.locator(`[data-channel-id="${channelID}"]`).getByTestId('channel-joined-badge');
+    }
+
+    /**
+     * Sets the name in a modal dialog.
+     * @param name - The name to be set.
+     */
+    async setName(name: string) {
+        const locator = this.page.getByRole('dialog').locator('#name');
+        await locator.clear();
+        await locator.fill(name);
+    }
+
+    /**
+     * Sets the description in a modal dialog.
+     * @param description - The description to be set.
+     */
+    async setDescription(description: string) {
+        const locator = this.page.getByRole('dialog').locator('#description');
+        await locator.clear();
+        await locator.fill(description);
+    }
+
+    /**
+     * Sets a channel to be private in the modal dialog (PrimeNG SelectButton).
+     */
+    async setPrivate() {
+        await this.page.getByTestId('channel-visibility-select').getByText('Private').click();
+    }
+
+    /**
+     * Sets a channel to be public in the modal dialog (PrimeNG SelectButton).
+     */
+    async setPublic() {
+        await this.page.getByTestId('channel-visibility-select').getByText('Public').click();
+    }
+
+    /**
+     * Marks a channel as course-wide in the modal dialog (PrimeNG SelectButton).
+     */
+    async setCourseWideChannel() {
+        await this.page.getByTestId('channel-scope-select').getByText('Course-wide Channel').click();
+    }
+
+    /**
+     * Marks a channel as an announcement channel in the modal dialog (PrimeNG SelectButton).
+     */
+    async setAnnouncementChannel() {
+        await this.page.getByTestId('channel-type-select').getByText('Announcement Channel').click();
+    }
+
+    /**
+     * Marks a channel as unrestricted in the modal dialog (PrimeNG SelectButton).
+     */
+    async setUnrestrictedChannel() {
+        await this.page.getByTestId('channel-type-select').getByText('Unrestricted Channel').click();
+    }
+
+    /**
+     * Creates a channel with the specified properties.
+     * @param isAnnouncementChannel - Specifies if the channel is an announcement channel.
+     * @param isPublic - Specifies if the channel is public.
+     */
+    async createChannel(isAnnouncementChannel: boolean, isPublic: boolean) {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
+        );
+        await this.page.getByRole('dialog').locator('#submitButton').click();
+        const response = await responsePromise;
+        const channel: ChannelDTO = await readResponseJson(response);
+        await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
+        expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
+        expect(channel.isPublic).toBe(isPublic);
+    }
+
+    /**
+     * Retrieves the error message element from the modal dialog.
+     * @returns The locator for the error message element.
+     */
+    getError() {
+        return this.page.getByTestId('channel-name-error');
+    }
+
+    /**
+     * Retrieves the name element from the conversation.
+     * @returns The locator for the name element.
+     */
+    getName() {
+        return this.page.getByTestId('conversation-name');
+    }
+
+    /**
+     * Retrieves the topic element from the conversation.
+     * @returns The locator for the topic element.
+     */
+    getTopic() {
+        return this.page.locator('[data-testid="conversation-topic"]');
+    }
+
+    /**
+     * Edits the name of the conversation inline with auto-save.
+     * Opens the detail dialog via the header name click (which opens the Info tab).
+     * @param newName - The new name for the conversation.
+     */
+    async editName(newName: string) {
+        await this.getName().click();
+        const nameInput = this.page.locator('#name-input');
+        await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+        await nameInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await nameInput.fill(newName);
+        await responsePromise;
+        await this.closeEditPanel();
+    }
+
+    /**
+     * Edits the topic of the conversation inline with auto-save.
+     * @param newTopic - The new topic for the conversation.
+     */
+    async editTopic(newTopic: string) {
+        await this.getName().click();
+        const topicInput = this.page.locator('#topic-input');
+        await topicInput.waitFor({ state: 'visible', timeout: 5000 });
+        await topicInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await topicInput.fill(newTopic);
+        await responsePromise;
+        await this.closeEditPanel();
+    }
+
+    /**
+     * Edits the description of the conversation inline with auto-save.
+     * @param newDescription - The new description for the conversation.
+     */
+    async editDescription(newDescription: string) {
+        await this.getName().click();
+        const descInput = this.page.locator('#description-input');
+        await descInput.waitFor({ state: 'visible', timeout: 5000 });
+        await descInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await descInput.fill(newDescription);
+        await responsePromise;
+        await this.closeEditPanel();
+    }
+
+    /**
+     * Closes the edit panel in the conversation detail dialog.
+     */
+    async closeEditPanel() {
+        await this.page.getByTestId('conversation-detail-close-button').click();
+    }
+
+    /**
+     * @param login method to log in a user and navigate to a certain URL
+     * @param user who shall be logged in to create the communication channel
+     * @param course in which the channel should be created
+     * @param communicationAPIRequests to create the channel
+     */
+    async setupCommunicationChannel(
+        login: (credentials: UserCredentials, url?: string) => Promise<void>,
+        user: UserCredentials,
+        course: Course,
+        communicationAPIRequests: CommunicationAPIRequests,
+    ): Promise<Channel> {
+        await login(user, `/courses/${course.id}/communication`);
+        await this.acceptCodeOfConductButton();
+        const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
+        await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, user);
+        return channel;
+    }
+
+    /**
+     * @param login method to log in a user and navigate to a certain URL
+     * @param user who shall be logged in
+     * @param courseId to which the channel belongs
+     * @param channelId of the channel in which the message should be sent
+     * @param messageText of the message to be sent
+     *
+     * @note The user will still be logged in after this method, make sure to log in with another user afterward if needed.
+     */
+    async sendMessageInChannel(
+        login: (credentials: UserCredentials, url?: string) => Promise<void>,
+        user: UserCredentials,
+        courseId: number,
+        channelId: number,
+        messageText: string,
+    ) {
+        await login(user, `/courses/${courseId}/communication?conversationId=${channelId}`);
+        await this.writeMessage(messageText);
+        await this.save();
+    }
+
+    /**
+     * Replaces the message field with plain text through the active editor.
+     * Formatted messages should be composed with the editor's formatting controls.
+     * @param message - The message to be written.
+     */
+    async writeMessage(message: string) {
+        await this.setMessageContent(this.getMainMessageInput(), message);
+    }
+
+    /**
+     * Returns the main composer rather than an inline edit form or a thread reply.
+     * The main composer follows the posts in document order.
+     */
+    private getMainMessageInput() {
+        return this.page.locator('jhi-message-inline-input').filter({ visible: true }).last();
+    }
+
+    private getActiveMessageEditor(container: Locator) {
+        return container.getByTestId('formatted-message-input').filter({ visible: true });
+    }
+
+    /** Replaces plain message text through the native rich editor. */
+    private async setMessageContent(container: Locator, message: string) {
+        const editor = this.getActiveMessageEditor(container);
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.fill(message);
+    }
+
+    private getSendButton(container: Locator) {
+        return container.getByTestId('send-formatted-message').or(container.locator('#save')).filter({ visible: true });
+    }
+
+    /**
+     * Returns the visible editor of the main (non-thread) message input.
+     */
+    getMessageEditor() {
+        return this.getActiveMessageEditor(this.getMainMessageInput());
+    }
+
+    /**
+     * Focuses the main message editor and types the given text via real keystrokes rather than
+     * the replacement operation in {@link writeMessage}. This exercises the active editor's native
+     * keyboard handlers and completion behavior.
+     * @param text - The text to type into the editor.
+     */
+    async typeInMessageEditor(text: string) {
+        const editor = this.getMessageEditor();
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.click();
+        await this.page.keyboard.type(text);
+    }
+
+    /**
+     * Returns the locator for the rendered text content of the main message editor.
+     */
+    getMessageEditorText() {
+        const container = this.getMainMessageInput();
+        return this.getActiveMessageEditor(container);
+    }
+
+    /**
+     * Waits until the latest rich-editor edit has made the send form valid.
+     */
+    async waitUntilSendEnabled() {
+        await expect(this.getSendButton(this.getMainMessageInput())).toBeEnabled({ timeout: 10000 });
+    }
+
+    /**
+     * Sends the message currently in the main message editor by pressing Enter (rather than
+     * clicking the send button), and waits for the message to be persisted.
+     * @returns The created message.
+     */
+    async sendMessageWithEnterKey(): Promise<Post> {
+        await this.waitUntilSendEnabled();
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
+        await this.getMessageEditor().press('Enter');
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        return readResponseJson(response);
+    }
+
+    /**
+     * Checks for the presence of a message by its ID and content.
+     * @param messageId - The ID of the message to check.
+     * @param message - The content of the message to verify.
+     */
+    async checkMessage(messageId: number, message: string) {
+        const postElement = this.getSinglePost(messageId);
+        await expect(postElement).toBeVisible({
+            timeout: 30000,
+        });
+
+        const markdownPreview = postElement.locator('.markdown-preview');
+        await expect(markdownPreview).toBeVisible({
+            timeout: 30000,
+        });
+
+        const messagePreview = markdownPreview.getByText(message);
+        await expect(messagePreview).toBeVisible({
+            timeout: 30000,
+        });
+    }
+
+    /**
+     * Verifies that an edited message is marked with "edited" notice.
+     * @param messageId - The ID of the message to check.
+     */
+    async checkMessageEdited(messageId: number) {
+        await expect(this.getSinglePost(messageId).locator('.edited-text', { hasText: '(edited)' })).toBeVisible();
+    }
+
+    /**
+     * Edits a message by its ID to have new content.
+     * @param messageId - The ID of the message to edit.
+     * @param message - The new content for the message.
+     */
+    async editMessage(messageId: number, message: string) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const editButton = postLocator.getByTestId('posting-menu-edit');
+        if (await editButton.isVisible()) {
+            await editButton.click();
+        } else {
+            await postLocator.getByTestId('posting-reaction-edit').click();
+        }
+
+        await this.setMessageContent(postLocator, message);
+
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
+        await this.getSendButton(postLocator).click();
+        await responsePromise;
+    }
+
+    /**
+     * Deletes a message by its ID.
+     * @param messageId - The ID of the message to delete.
+     */
+    async deleteMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
+        const deleteButton = postLocator.getByTestId('posting-menu-delete');
+        if (await deleteButton.isVisible()) {
+            await deleteButton.click();
+        } else {
+            await postLocator.getByTestId('posting-reaction-delete').click();
+        }
+        await responsePromise;
+    }
+
+    /**
+     * Retrieves a single post by its ID.
+     * @param postID - The ID of the post to retrieve.
+     * @returns The locator for the specified post.
+     */
+    getSinglePost(postID: number) {
+        return this.page.locator(`#item-${postID}`);
+    }
+
+    /**
+     * Saves changes made in a modal dialog, optionally forcing the click action.
+     * @param force - Whether to force the click action.
+     * @returns A promise that resolves with the Post object after saving.
+     */
+    async save(): Promise<Post> {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
+        const saveButton = this.getSendButton(this.getMainMessageInput());
+        await expect(saveButton).toBeEnabled({ timeout: 10000 });
+        await saveButton.click({ timeout: 10000 });
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        return readResponseJson(response);
+    }
+
+    /**
+     * Clicks the button to initiate group chat creation.
+     */
+    async createGroupChatButton() {
+        await this.page.getByTestId('sidebar-create-menu-button').click();
+        const createBtn = this.page.locator('button', { hasText: 'Create group chat' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
+    }
+
+    /**
+     * Creates a group chat and waits for the response.
+     * @returns A promise that resolves with the GroupChat object after creation.
+     */
+    async createGroupChat(): Promise<GroupChat> {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats') && !resp.url().includes('/register') && resp.request().method() === 'POST');
+        await this.page.locator('#submitButton').click();
+        const response = await responsePromise;
+        const groupChat: GroupChat = await readResponseJson(response);
+        // Wait for Angular to navigate to the new conversation. Under heavy parallel multi-node
+        // load the SPA's internal navigation to the new conversation URL occasionally races a
+        // late page reload and the query-param update gets dropped — fall back to navigating
+        // directly when the implicit navigation does not happen within 10s.
+        const targetUrlPattern = `**/communication?conversationId=${groupChat.id}`;
+        try {
+            await this.page.waitForURL(targetUrlPattern, { timeout: 10_000 });
+        } catch {
+            const courseIdMatch = this.page.url().match(/\/courses\/(\d+)\//);
+            if (courseIdMatch) {
+                await this.page.goto(`/courses/${courseIdMatch[1]}/communication?conversationId=${groupChat.id}`);
+                await this.page.waitForURL(targetUrlPattern, { timeout: 10_000 });
+            } else {
+                throw new Error(`Group chat created (id=${groupChat.id}) but URL did not update and current URL has no course id: ${this.page.url()}`);
+            }
+        }
+        return groupChat;
+    }
+
+    /**
+     * Updates a group chat's registration status and waits for the response.
+     */
+    async updateGroupChat() {
+        const submitButton = this.page.locator('#submitButton');
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/register') && resp.request().method() === 'POST');
+        await submitButton.click();
+        const response = await responsePromise;
+        expect(response.status()).toBeLessThan(300);
+        // Wait for Angular to process the response and update the conversation header
+        await this.page.waitForTimeout(500);
+    }
+
+    /**
+     * Adds a user to a group chat by username.
+     * @param user - The username of the user to add to the group chat.
+     */
+    async addUserToGroupChat(user: string) {
+        // Use a flexible selector that matches any users-selector search input (the ID suffix is a global counter)
+        const searchInput = this.page.locator('input[id$="-search-input"][id^="users-selector"]');
+        const dropdownItem = this.page.getByTestId('user-search-result').filter({ hasText: `(${user})` });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await searchInput.clear();
+            await searchInput.fill(user);
+            try {
+                await dropdownItem.waitFor({ state: 'visible', timeout: 8000 });
+                await dropdownItem.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`User search dropdown did not appear after 3 attempts for '${user}'`);
+            }
+        }
+    }
+
+    /**
+     * Clicks the button to add users to a group chat and waits for the modal to appear.
+     */
+    async addUserToGroupChatButton() {
+        const addUsersBtn = this.page.locator('.addUsers');
+        await addUsersBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await addUsersBtn.click();
+        // Wait for the add-users modal form to render (use flexible selector for the search input ID)
+        await this.page.locator('input[id$="-search-input"][id^="users-selector"]').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Navigates to a conversation and waits for it to become active.
+     * <p>
+     * A single navigation, deliberately. This used to retry twice, because `setActiveConversation` dropped the
+     * conversation the url asked for whenever the route emitted its query parameters before the request that loads the
+     * conversations had returned, which left the page empty. The service now remembers that request and applies it when
+     * the list arrives, so one navigation is enough and a retry would only hide the day that stops being true.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     */
+    async openConversation(courseID: number, conversationID: number) {
+        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
+        await this.page.locator('.members').waitFor({ state: 'visible' });
+    }
+
+    /**
+     * Opens a conversation and waits until a specific post has rendered in the message list.
+     * <p>
+     * Activation and rendering are two different things: {@link openConversation} returns once the conversation is
+     * active, which is before the message list has necessarily painted the post. Waiting for the post itself is what
+     * callers actually need, and it is a wait rather than a retry, so a post that never arrives still fails here.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     * @param postID - The ID of the post that must be visible before returning.
+     */
+    async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
+        await this.openConversation(courseID, conversationID);
+        await this.getSinglePost(postID).waitFor({ state: 'visible' });
+    }
+
+    async listMembersButton(courseID: number, conversationID: number) {
+        const membersButton = this.page.locator('.members');
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+        } catch {
+            await this.openConversation(courseID, conversationID);
+        }
+        await membersButton.click();
+        // Wait for the members dialog to render
+        await this.page.locator('jhi-conversation-members').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Checks for the presence of a member in the member list by name.
+     * @param name - The name of the member to check for in the list.
+     */
+    async checkMemberList(name: string) {
+        await expect(this.page.locator('jhi-conversation-members')).toContainText(name, { timeout: 15000 });
+    }
+
+    /**
+     * Checks that the conversation header (h4 title) contains the given name.
+     * This is faster and more reliable than opening the member list dialog.
+     */
+    async checkConversationHeaderContains(name: string) {
+        await expect(this.page.getByTestId('conversation-name')).toContainText(name, { timeout: 10000 });
+    }
+
+    /**
+     * Opens the settings tab within the conversation details.
+     */
+    async openSettingsTab() {
+        const settingsTab = this.page.getByTestId('conversation-settings-tab');
+        await settingsTab.waitFor({ state: 'visible', timeout: 10000 });
+        await settingsTab.click();
+    }
+
+    /**
+     * Leaves the current group chat.
+     */
+    async leaveGroupChat() {
+        const leaveButton = this.page.locator('.leave-conversation');
+        await leaveButton.waitFor({ state: 'visible', timeout: 10000 });
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/deregister') && resp.status() === 200);
+        await leaveButton.click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks if a group chat with the specified name exists or not.
+     * @param name - The name of the group chat to check for existence.
+     * @param exist - A boolean indicating whether the group chat should exist or not.
+     */
+    async checkGroupChatExists(name: string, exist: boolean) {
+        const groupChat = this.page.getByTitle(name);
+        if (exist) {
+            await expect(groupChat).toBeVisible({ timeout: 15000 });
+        } else {
+            await expect(groupChat).toBeHidden({ timeout: 15000 });
+        }
+    }
+
+    /**
+     * Right-clicks a message to open context menu, then clicks the bookmark button.
+     * @param messageId - The ID of the message to bookmark.
+     */
+    async bookmarkMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with bookmark option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('/saved-posts') && (resp.request().method() === 'POST' || resp.request().method() === 'DELETE'),
+        );
+        await postLocator.getByTestId('posting-menu-bookmark').click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is bookmarked or not.
+     * @param messageId - The ID of the message to check.
+     * @param isBookmarked - Whether the message should be bookmarked.
+     */
+    async checkMessageBookmarked(messageId: number, isBookmarked: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isBookmarked) {
+            await expect(postLocator.locator('.is-saved').first()).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.is-saved')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Adds an emoji reaction to a message via the reaction bar.
+     * @param messageId - The ID of the message to react to.
+     * @param emoji - The emoji search term (e.g., 'thumbsup').
+     */
+    async addReactionToMessage(messageId: number, emoji: string) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu which has "Add reaction"
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click the "Add reaction" item — this opens the emoji picker at the click location
+        await this.page.getByTestId('posting-menu-react').click();
+        // Search for the emoji and click it
+        await this.page.locator('.emoji-mart').waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/postings/reactions') && resp.request().method() === 'POST');
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks that a reaction badge exists on a message.
+     * @param messageId - The ID of the message to check.
+     */
+    async checkReactionOnMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        // Reactions are displayed inside .emoji-container within the emoji-count reaction bar
+        await expect(postLocator.locator('.emoji-container').first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens the thread sidebar for a message by clicking the reply button.
+     * @param messageId - The ID of the message to open thread for.
+     */
+    async openThreadForMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with reply option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.getByTestId('posting-menu-reply').click();
+        // Wait for the thread sidebar to become visible
+        await this.page.locator('.expanded-thread').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Types a reply in the thread sidebar and saves it.
+     * @param content - The reply content.
+     * @returns Promise<Post> representing the created reply.
+     */
+    async replyInThread(content: string): Promise<Post> {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyContainer = threadSidebar.locator('jhi-message-reply-inline-input');
+        await this.setMessageContent(replyContainer, content);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
+        await this.getSendButton(replyContainer).click();
+        const response = await responsePromise;
+        return readResponseJson(response);
+    }
+
+    /**
+     * Checks that a reply is visible in the thread sidebar.
+     * @param replyId - The ID of the reply to check.
+     * @param content - The expected content of the reply.
+     */
+    async checkThreadReply(replyId: number, content: string) {
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await expect(replyLocator).toBeVisible({ timeout: 10000 });
+        await expect(replyLocator.locator('.markdown-preview')).toContainText(content);
+    }
+
+    /**
+     * Clicks the "+" button and selects "Create direct message".
+     */
+    async createDirectMessageButton() {
+        await this.page.getByTestId('sidebar-create-menu-button').click();
+        const createBtn = this.page.locator('button', { hasText: 'Direct message' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
+    }
+
+    /**
+     * Forwards a message via the context menu.
+     * @param messageId - The ID of the message to forward.
+     */
+    async forwardMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with forward option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.getByTestId('posting-menu-forward').click();
+        // Wait for the forward dialog to appear
+        await this.page.locator('jhi-forward-message-dialog').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Completes an already-open forward dialog: selects the destination conversation by name and sends.
+     * @param destinationName - The name of the destination channel/conversation to forward to.
+     * @param extraContent - Optional additional message content to include with the forward.
+     */
+    private async completeForwardDialog(destinationName: string, extraContent?: string) {
+        const dialog = this.page.locator('jhi-forward-message-dialog');
+        const input = dialog.locator('input.tag-input');
+        // the dialog selects on (mousedown) so the option is chosen before the input blur closes the dropdown
+        const option = dialog.getByTestId('forward-destination-option').filter({ hasText: destinationName }).first();
+        // The autocomplete dropdown re-renders as the debounced search resolves, so the matched option can detach between
+        // becoming visible and the mousedown — an unbounded dispatchEvent then hangs until the test timeout. Re-type and
+        // re-select as a unit with a bounded mousedown so a detach retries quickly instead of hanging.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await input.fill('');
+            await input.fill(destinationName);
+            try {
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.dispatchEvent('mousedown', { timeout: 5000 });
+                break;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+            }
+        }
+        if (extraContent) {
+            await dialog.getByTestId('formatted-message-input').fill(extraContent);
+        }
+        // forwarding first creates the container post, then the forwarded-message link(s)
+        const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
+        await dialog.getByTestId('forward-send-button').click();
+        await forwardResponse;
+        await dialog.waitFor({ state: 'hidden', timeout: 10000 });
+    }
+
+    /**
+     * Forwards a message to a destination channel and waits until the forward is persisted.
+     * @param messageId - The ID of the message to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardMessageToChannel(messageId: number, destinationName: string, extraContent?: string) {
+        await this.forwardMessage(messageId);
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Forwards a thread reply (answer post) to a destination channel.
+     * @param parentMessageId - The ID of the message whose thread contains the reply.
+     * @param replyId - The ID of the reply to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardReplyToChannel(parentMessageId: number, replyId: number, destinationName: string, extraContent?: string) {
+        await this.openThreadForMessage(parentMessageId);
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+        // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
+        // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).getByTestId('posting-menu-forward').click();
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Asserts that a forwarded-message preview containing the given source content is visible in the open conversation.
+     * @param expectedSourceContent - The content of the original (forwarded) posting.
+     */
+    async checkForwardedPreview(expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        await expect(forwarded.first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens a conversation and waits until a forwarded-message preview containing the given source content has rendered,
+     * reloading between attempts.
+     *
+     * The forwarded preview is only populated after the conversation's forwarded-messages fetch AND the (access-checked)
+     * source-post / source-answer fetch both succeed. Under heavy multi-node load the just-created forward can briefly be
+     * invisible to the node that serves the destination conversation, so {@link openConversation} (which only waits for the
+     * conversation to *activate*) returns before the forwarded-messages fetch sees it — and the source fetch then never
+     * fires. A reload re-issues those fetches against the shared database, which by then has the persisted forward. This is
+     * the same load-induced rendering-race mitigation {@link openConversationAndWaitForPost} uses for plain posts. A visible
+     * preview proves the whole chain — including the access-checked source fetch — succeeded for an accessible source.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the destination conversation to open.
+     * @param expectedSourceContent - The content of the original (forwarded) posting that must appear in the preview.
+     */
+    async openConversationAndWaitForForwardedPreview(courseID: number, conversationID: number, expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await expect(forwarded.first()).toBeVisible({ timeout: 12000 });
+                return;
+            } catch {
+                // Forwarded message not yet propagated/rendered — fall through to a reload, which re-fetches it.
+            }
+        }
+        throw new Error(`Forwarded preview containing "${expectedSourceContent}" did not render in conversation ${conversationID} after opening and reloading`);
+    }
+
+    /**
+     * Pins or unpins a message via the context menu.
+     * @param messageId - The ID of the message to pin/unpin.
+     */
+    async pinMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/messages/') && resp.request().method() === 'PUT');
+        await postLocator.getByTestId('posting-menu-pin').click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is pinned.
+     * @param messageId - The ID of the message to check.
+     * @param isPinned - Whether the message should be pinned.
+     */
+    async checkMessagePinned(messageId: number, isPinned: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isPinned) {
+            await expect(postLocator.locator('.pinned-message, .pin-icon')).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.pinned-message')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Edits a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to edit.
+     * @param newContent - The new content for the reply.
+     */
+    async editThreadReply(replyId: number, newContent: string) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click "Edit Message" from the dropdown by matching translated text
+        await this.page.getByTestId('posting-menu-edit').click();
+
+        await this.setMessageContent(replyLocator, newContent);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
+        await replyLocator.getByTestId('answer-post-edit-save').click();
+        await responsePromise;
+    }
+
+    /**
+     * Deletes a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to delete.
+     */
+    async deleteThreadReply(replyId: number) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.getByTestId('posting-context-menu').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'DELETE');
+        // Click "Delete Message" from the dropdown by matching translated text
+        await this.page.getByTestId('posting-menu-delete').click();
+        await responsePromise;
+    }
+
+    toggleSidebarAccordion(sidebarTitle: string) {
+        return this.page.locator(`#test-accordion-item-header-${sidebarTitle}`);
+    }
+
+    /**
+     * Accepts the code of conduct by clicking the respective button if it's visible.
+     * If the user has already accepted the code of conduct, the button won't be present.
+     */
+    async acceptCodeOfConductButton() {
+        const button = this.page.locator('[data-testid="acceptCodeOfConductButton"]');
+        // Wait a short time for the page to load and determine if the button should be shown
+        await this.page.waitForLoadState('domcontentloaded');
+        if (await button.isVisible()) {
+            await button.click();
+            // Wait for the acceptance to be processed
+            await this.page.waitForLoadState('domcontentloaded');
+        }
+    }
+
+    /**
+     * Returns the scrollable message-list container that hosts the infinite-scroll directive.
+     */
+    getScrollableMessagesContainer() {
+        return this.page.locator('#scrollableDiv');
+    }
+
+    /**
+     * Scrolls the message list to the very top. In a conversation this brings the top sentinel of the
+     * infinite-scroll directive into view, which triggers loading of the next (older) page of messages.
+     */
+    async scrollMessagesToTop() {
+        const container = this.getScrollableMessagesContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of currently rendered posts in the message list.
+     */
+    async getRenderedPostCount(): Promise<number> {
+        return this.page.locator('.post-item').count();
+    }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
+    }
+}

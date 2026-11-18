@@ -1,0 +1,685 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { map, tap } from 'rxjs/operators';
+import { AccountService } from 'app/core/auth/account.service';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { parseJson } from 'app/foundation/util/json.util';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import type { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { SafeHtml } from '@angular/platform-browser';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { summaryCategories, summaryCategory, summaryItem } from 'app/shared-ui/delete-dialog/entity-summary.util';
+import { UMLModel } from '@tumaet/apollon';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
+
+export type EntityResponseType = HttpResponse<Exercise>;
+export type EntityArrayResponseType = HttpResponse<Exercise[]>;
+export type ExampleSolutionInfo = {
+    modelingExercise?: ModelingExercise;
+    exampleSolution?: SafeHtml;
+    exampleSolutionUML?: UMLModel;
+    programmingExercise?: ProgrammingExercise;
+    exampleSolutionPublished: boolean;
+};
+
+/**
+ * Request options that are appended as query parameters when creating, updating or re-evaluating an exercise.
+ */
+export type ExerciseUpdateRequestOptions = {
+    notificationText?: string;
+    deleteFeedback?: boolean;
+};
+
+export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
+export type ExerciseDetailsType = {
+    exercise: Exercise;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
+};
+
+export type CourseExistingExerciseDetailsType = {
+    exerciseTitles?: Set<string>;
+    shortNames?: Set<string>;
+};
+
+export interface ExerciseServicable<T extends Exercise> {
+    create(exercise: T): Observable<HttpResponse<T>>;
+
+    import?(exercise: T): Observable<HttpResponse<T>>;
+
+    update(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
+
+    reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
+}
+
+@Service()
+export class ExerciseService {
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private entityTitleService = inject(EntityTitleService);
+
+    public resourceUrl = 'api/exercise/exercises';
+
+    /**
+     * Fetches the id, title and type of the course exercises the user may see, for callers that only have to name
+     * exercises rather than show them.
+     * @param courseId the course to fetch the exercise titles for
+     */
+    getTitlesForCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.loadTitlesForCourse(courseId, false);
+    }
+
+    getTitlesForCourseForStaff(courseId: number): Observable<ExerciseTitle[]> {
+        return this.loadTitlesForCourse(courseId, true);
+    }
+
+    /** The catalogue is shared by course reference pickers; choose from the known course membership before loading. */
+    getTitlesForAccessibleCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.accountService.isAtLeastTutorInCourseWithId(courseId) ? this.getTitlesForCourseForStaff(courseId) : this.getTitlesForCourse(courseId);
+    }
+
+    private loadTitlesForCourse(courseId: number, staff: boolean): Observable<ExerciseTitle[]> {
+        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles${staff ? '/for-staff' : ''}`);
+    }
+    public adminResourceUrl = 'api/exercise/admin/exercises';
+    public courseResourceUrl = 'api/course/courses';
+
+    /**
+     * Validates if the dates are correct
+     */
+    validateDate(exercise: Exercise) {
+        exercise.startDateError = this.hasStartDateError(exercise);
+        exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
+        exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
+    }
+
+    hasStartDateError(exercise: Exercise) {
+        return !validateStrictDateSequence([exercise.releaseDate], exercise.startDate, [exercise.dueDate, exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
+    }
+
+    hasDueDateError(exercise: Exercise) {
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate], exercise.dueDate, [exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
+    }
+
+    hasAssessmentDueDateError(exercise: Exercise) {
+        if (!exercise.assessmentDueDate) return false;
+        if (!exercise.dueDate) return true;
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate], exercise.assessmentDueDate, [exercise.exampleSolutionPublicationDate]);
+    }
+
+    hasExampleSolutionPublicationDateError(exercise: Exercise) {
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate, exercise.assessmentDueDate], exercise.exampleSolutionPublicationDate, []);
+    }
+
+    /**
+     * Downloads the exercise as a zip file that the import from file reads. A programming exercise also carries its template,
+     * solution and test repositories.
+     * @param exercise the exercise to export
+     */
+    exportToFile(exercise: Exercise): Observable<HttpResponse<Blob>> {
+        const module = exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type;
+        const url =
+            exercise.type === ExerciseType.PROGRAMMING
+                ? `api/programming/programming-exercises/${exercise.id}/export-instructor-exercise`
+                : `api/${module}/${exercise.type}-exercises/${exercise.id}/export`;
+        return this.http.get(url, { observe: 'response', responseType: 'blob' });
+    }
+
+    /**
+     * Get exercise with exerciseId from server
+     * @param exerciseId - Exercise that should be loaded
+     */
+    find(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '');
+    }
+
+    findForStaff(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-staff');
+    }
+
+    findForExamAssessment(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-exam-assessment');
+    }
+
+    findForExamManagement(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-exam-management');
+    }
+
+    private loadExercise(exerciseId: number, suffix: string): Observable<EntityResponseType> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}${suffix}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Get exercise details including up to the latest 20 results for the currently logged-in user
+     * @param exerciseId - Id of the exercise to get the repos from
+     */
+    getExerciseDetails(exerciseId: number): Observable<EntityDetailsResponseType> {
+        return this.http.get<ExerciseDetailsType>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
+            map((res: EntityDetailsResponseType) => {
+                if (res.body) {
+                    res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise)!;
+                    ExerciseService.parseExerciseCategories(res.body.exercise);
+                    // Make sure to set the access rights for the exercise
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body.exercise);
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.exercise.posts === undefined) {
+                        res.body.exercise.posts = [];
+                    }
+                }
+                return res;
+            }),
+        );
+    }
+
+    /**
+     * Get basic exercise information for the purpose of displaying its example solution. If the example solution is not yet
+     * published, returns error.
+     * @param exerciseId - Id of the exercise to get the example solution
+     */
+    getExerciseForExampleSolution(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/example-solution`, { observe: 'response' }).pipe(
+            tap((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
+            }),
+        );
+    }
+
+    /**
+     * Resets an exercise with exerciseId by deleting all its participations.
+     * @param exerciseId - Id of exercise that should be reset
+     */
+    reset(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves what is deleted together with an exercise, grouped into categories for the delete dialog.
+     *
+     * @param exercise the exercise
+     * @returns an observable of the categories, which only contain rows for data that exists and is relevant for the exercise type
+     */
+    getDeletionSummary(exercise: Exercise): Observable<EntitySummaryCategory[]> {
+        if (exercise.id === undefined || exercise.type === undefined) {
+            return of<EntitySummaryCategory[]>([]);
+        }
+
+        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : [];
+            }),
+        );
+    }
+
+    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO, exerciseType: ExerciseType): EntitySummaryCategory[] {
+        const prefix = 'artemisApp.exercise.delete.summary';
+        const isProgramming = exerciseType === ExerciseType.PROGRAMMING;
+        const isQuiz = exerciseType === ExerciseType.QUIZ;
+
+        return summaryCategories([
+            summaryCategory(`${prefix}.category.studentWork`, [
+                summaryItem(`${prefix}.numberOfStudentParticipations`, dto.numberOfStudentParticipations),
+                summaryItem(`${prefix}.numberOfTeams`, dto.numberOfTeams),
+                summaryItem(`${prefix}.numberOfSubmissions`, dto.numberOfSubmissions),
+                summaryItem(`${prefix}.numberOfStudentExams`, dto.numberOfStudentExams),
+            ]),
+            summaryCategory(`${prefix}.category.assessment`, [
+                summaryItem(`${prefix}.numberOfResults`, dto.numberOfResults),
+                summaryItem(`${prefix}.numberOfAssessments`, isQuiz ? undefined : dto.numberOfAssessments),
+                summaryItem(`${prefix}.numberOfComplaints`, dto.numberOfComplaints),
+            ]),
+            summaryCategory(`${prefix}.category.plagiarism`, [summaryItem(`${prefix}.numberOfPlagiarismComparisons`, dto.numberOfPlagiarismComparisons)]),
+            summaryCategory(`${prefix}.category.communication`, [
+                summaryItem(`${prefix}.numberOfCommunicationPosts`, dto.numberOfCommunicationPosts),
+                summaryItem(`${prefix}.numberOfAnswerPosts`, dto.numberOfAnswerPosts),
+            ]),
+            summaryCategory(`${prefix}.category.content`, [
+                summaryItem(`${prefix}.numberOfExampleSubmissions`, dto.numberOfExampleSubmissions),
+                summaryItem(`${prefix}.numberOfCompetencyLinks`, dto.numberOfCompetencyLinks),
+                summaryItem(`${prefix}.numberOfLectureUnitLinks`, dto.numberOfLectureUnitLinks),
+            ]),
+            summaryCategory(`${prefix}.category.infrastructure`, [summaryItem(`${prefix}.numberOfBuilds`, isProgramming ? dto.numberOfBuilds : undefined, true)]),
+        ]);
+    }
+
+    getUpcomingExercises(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Exercise[]>(`${this.adminResourceUrl}/upcoming`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
+    }
+
+    /**
+     * Returns all exercises of the given exercises parameter which have no due date or a due date in the future within delayInDays days
+     * The returned exercises are sorted by due date, with the earliest due date being sorted first, and no due date sorted last
+     *
+     * @param { Exercise[] } exercises - The exercises to filter and sort
+     * @param delayInDays - The amount of days an exercise can be due into the future, defaults to seven
+     */
+    getNextExercisesForDays(exercises: Exercise[], delayInDays: number = 7): Exercise[] {
+        return exercises
+            .filter((exercise) => {
+                if (!exercise.dueDate) {
+                    return true;
+                }
+
+                const dueDate = exercise.dueDate;
+                return dayjs().isBefore(dueDate) && dayjs().add(delayInDays, 'day').isSameOrAfter(dueDate);
+            })
+            .sort((exerciseA: Exercise, exerciseB: Exercise) => {
+                if (!exerciseA.dueDate) {
+                    // If A has no due date, sort B first
+                    return 1;
+                } else if (!exerciseB.dueDate) {
+                    // If B has no due date, sort A first
+                    return -1;
+                } else {
+                    // Sort the one with the next due date first
+                    return exerciseA.dueDate.isBefore(exerciseB.dueDate) ? -1 : 1;
+                }
+            });
+    }
+
+    getExistingExerciseDetailsInCourse(courseId: number, exerciseType: ExerciseType): Observable<CourseExistingExerciseDetailsType> {
+        return this.http
+            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details?exerciseType=${exerciseType}`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => {
+                    const details = response.body!;
+                    return {
+                        exerciseTitles: new Set(details.exerciseTitles ?? []),
+                        shortNames: new Set(details.shortNames ?? []),
+                    };
+                }),
+            );
+    }
+
+    isActiveQuiz(exercise: QuizExercise) {
+        return (
+            exercise?.quizBatches?.some((batch) => batch.started) ||
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.INITIALIZED ||
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.FINISHED
+        );
+    }
+
+    /**
+     * Converts all dates of a server-exercise to the client timezone
+     * @param { Exercise } exercise - Exercise from server whose date is adjusted
+     * @returns { Exercise } - Exercise with adjusted times
+     */
+    static convertExerciseDatesFromServer(exercise?: Exercise): Exercise | undefined {
+        if (exercise) {
+            exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+            exercise.startDate = convertDateFromServer(exercise.startDate);
+            exercise.dueDate = convertDateFromServer(exercise.dueDate);
+            exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
+            exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
+            // The embedded variant group carries the shared group timeline. Convert its dates too so the group-timeline
+            // lock dialog opens with real dayjs values; otherwise it would save the group back with missing dates and
+            // wipe the shared timeline.
+            const group = exercise.exerciseVariantGroup;
+            if (group) {
+                group.releaseDate = convertDateFromServer(group.releaseDate);
+                group.startDate = convertDateFromServer(group.startDate);
+                group.dueDate = convertDateFromServer(group.dueDate);
+                group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
+                group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
+            }
+        }
+        return exercise;
+    }
+
+    /**
+     * Converts all dates of server-exercises to the client timezone
+     * @param { Exercise[] } exercises - Array of server-exercises whose date are adjusted
+     * @returns { Exercise[] } - Array of exercises with adjusted times
+     */
+    static convertExercisesDateFromServer(exercises?: Exercise[]): Exercise[] {
+        const convertedExercises: Exercise[] = [];
+        if (exercises && exercises.length > 0) {
+            exercises.forEach((exercise: Exercise) => {
+                const convertedExercise = ExerciseService.convertExerciseDatesFromServer(exercise);
+                if (convertedExercise) {
+                    convertedExercises.push(convertedExercise);
+                }
+            });
+        }
+        return convertedExercises;
+    }
+
+    /**
+     * Converts all dates of a client-exercise to the server timezone
+     * @param { Exercise } exercise - Exercise from client whose date is adjusted
+     */
+    static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
+        return cloneWith(exercise, {
+            releaseDate: convertDateFromClient(exercise.releaseDate),
+            startDate: convertDateFromClient(exercise.startDate),
+            dueDate: convertDateFromClient(exercise.dueDate),
+            assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
+            exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
+        });
+    }
+
+    /**
+     * Replace dates in http-response including an exercise with the corresponding client time.
+     * @param res - Response from server including one exercise
+     */
+    static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body) {
+            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
+            res.body.startDate = convertDateFromServer(res.body.startDate);
+            res.body.dueDate = convertDateFromServer(res.body.dueDate);
+            res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
+            res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
+            res.body.latestExamEndDate = convertDateFromServer(res.body.latestExamEndDate);
+            res.body.assessmentPossibleFrom = convertDateFromServer(res.body.assessmentPossibleFrom);
+            res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
+        }
+        return res;
+    }
+
+    /**
+     * Replace dates in http-response including an array of exercises with the corresponding client time
+     * @param res - Response from server including an array of exercise
+     */
+    static convertExerciseArrayDatesFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => {
+                ExerciseService.convertExerciseDatesFromServer(exercise);
+            });
+        }
+        return res;
+    }
+
+    /**
+     * Converts the exercise category json string into ExerciseCategory objects (if it exists).
+     * @param res the response
+     */
+    static convertExerciseCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body && res.body.categories) {
+            ExerciseService.parseExerciseCategories(res.body);
+        }
+        return res;
+    }
+
+    /**
+     * Serializes an exercise's categories into JSON strings in place (to send them to the server). Does nothing if no
+     * categories exist. The parameter is a structural view that also admits the serialized string form, so the in-place
+     * conversion needs no cast; the {@link Exercise} model field stays typed as {@link ExerciseCategory}[] for all readers.
+     * @param exercise the exercise whose categories are serialized in place
+     */
+    static stringifyExerciseCategories(exercise: { categories?: (ExerciseCategory | string)[] }): void {
+        if (exercise.categories) {
+            // Skip already-serialized entries so a second call (e.g. on a reused DTO) does not double-encode them.
+            exercise.categories = exercise.categories.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+        }
+    }
+
+    /**
+     * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
+     * @param res the response
+     */
+    static convertExerciseCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => ExerciseService.parseExerciseCategories(exercise));
+        }
+        return res;
+    }
+
+    /**
+     * Parses the exercise categories JSON string into {@link ExerciseCategory} objects.
+     * @param exercise - the exercise, or any other server entity that carries categories (for example a course statistics entry)
+     */
+    static parseExerciseCategories(exercise?: { categories?: (ExerciseCategory | string)[] }) {
+        if (exercise?.categories) {
+            exercise.categories = exercise.categories
+                .map((category) => {
+                    try {
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs). The explicit
+                        // type makes property access below compiler-checked (JSON.parse alone returns `any`).
+                        const categoryObj: SerializedExerciseCategory = typeof category === 'string' ? parseJson<SerializedExerciseCategory>(category) : category;
+                        return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                    } catch {
+                        // Skip malformed category entries
+                        return undefined;
+                    }
+                })
+                .filter((category): category is ExerciseCategory => category !== undefined);
+        }
+    }
+
+    /**
+     * Create Array of exercise categories from array of strings
+     * @param categories that are converted to categories
+     */
+    convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
+        // Build real ExerciseCategory instances (not plain parsed objects) so callers can use equals()/compare().
+        // Skip malformed entries instead of throwing, mirroring parseExerciseCategories above.
+        return categories
+            .map((category) => {
+                try {
+                    const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                    return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                } catch {
+                    return undefined;
+                }
+            })
+            .filter((category): category is ExerciseCategory => category !== undefined);
+    }
+
+    /**
+     * Prepare client-exercise to be uploaded to the server
+     * @param exercise - Exercise that will be modified
+     */
+    static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
+        // convertExerciseDatesFromClient already returns a detached copy, so no separate copy step is needed
+        // (the previous `Object.assign(exercise, {})` was a no-op that returned the argument itself).
+        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
+        ExerciseService.stringifyExerciseCategories(copy);
+        if (copy.course) {
+            copy.course.exercises = [];
+            copy.course.lectures = [];
+        }
+        copy.studentParticipations = [];
+        return copy;
+    }
+
+    /**
+     * Get the "exerciseId" exercise with data useful for tutors.
+     * @param exerciseId - Id of exercise to retrieve
+     */
+    getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Retrieve a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
+     * @param exerciseId - Id of exercise to retrieve the stats for
+     */
+    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * Makes sure that bonus points are zero and respect the constraint by includedInOverallScore
+     * @param exercise exercise for which to set the bonus points
+     */
+    static setBonusPointsConstrainedByIncludedInOverallScore(exercise: Exercise) {
+        if (exercise.bonusPoints === undefined || exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            exercise.bonusPoints = 0;
+        }
+        return exercise;
+    }
+
+    isIncludedInScore(exercise?: Exercise) {
+        if (!exercise?.includedInOverallScore) {
+            return '';
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return this.translateService.instant('artemisApp.exercise.bonus');
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return this.translateService.instant('artemisApp.exercise.yes');
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return this.translateService.instant('artemisApp.exercise.no');
+        }
+    }
+
+    toggleSecondCorrection(exerciseId: number): Observable<boolean> {
+        return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityResponses.
+     * @param exerciseRes
+     */
+    public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
+        ExerciseService.convertExerciseResponseDatesFromServer(exerciseRes);
+        ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
+        this.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        this.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
+        return exerciseRes;
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Exercise EntityArrayResponses.
+     * @param exerciseResArray
+     */
+    public processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
+        ExerciseService.convertExerciseArrayDatesFromServer(exerciseResArray);
+        ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
+        this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        exerciseResArray?.body?.forEach((exercise) => {
+            this.sendExerciseTitleToTitleService(exercise);
+        });
+        return exerciseResArray;
+    }
+
+    public setAccessRightsExerciseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => {
+                this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
+            });
+        }
+        return res;
+    }
+
+    public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body);
+        }
+        return res;
+    }
+
+    public sendExerciseTitleToTitleService(exercise?: Exercise) {
+        if (exercise) {
+            this.entityTitleService.setExerciseTitle(exercise);
+        }
+        if (exercise?.course) {
+            this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
+        }
+    }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
+    }
+
+    private static isExampleSolutionPublished(exercise: Exercise) {
+        let exampleSolutionPublicationDate;
+        if (exercise.exerciseGroup) {
+            exampleSolutionPublicationDate = exercise.exerciseGroup.exam?.exampleSolutionPublicationDate;
+        } else {
+            exampleSolutionPublicationDate = exercise.exampleSolutionPublicationDate;
+        }
+
+        return exampleSolutionPublicationDate && !dayjs().isBefore(exampleSolutionPublicationDate);
+    }
+
+    /**
+     * Returns an ExampleSolutionInfo object containing the processed example solution and related fields
+     * if exampleSolution exists on the exercise. The example solution is processed (parsed, sanitized, etc.)
+     * depending on the exercise type.
+     *
+     * @param exercise Exercise model that may have an exampleSolution.
+     * @param artemisMarkdown An ArtemisMarkdownService instance so we don't need to include it in the same bundle with ExerciseService when compiling.
+     */
+    static extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
+        // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
+        // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
+        // it exceeded maximum budget.
+
+        if (!ExerciseService.isExampleSolutionPublished(exercise)) {
+            return { exampleSolutionPublished: false };
+        }
+
+        let modelingExercise: ModelingExercise | undefined = undefined;
+        let exampleSolution: SafeHtml | undefined = undefined;
+        let exampleSolutionUML: UMLModel | undefined = undefined;
+        let programmingExercise: ProgrammingExercise | undefined = undefined;
+
+        switch (exercise.type) {
+            case ExerciseType.MODELING:
+                modelingExercise = exercise;
+                if (modelingExercise.exampleSolutionModel) {
+                    exampleSolutionUML = parseJson<UMLModel>(modelingExercise.exampleSolutionModel);
+                }
+                break;
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
+                const textOrFileUploadExercise = exercise as TextExercise & FileUploadExercise;
+                if (textOrFileUploadExercise.exampleSolution) {
+                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadExercise.exampleSolution);
+                }
+                break;
+            case ExerciseType.PROGRAMMING:
+                programmingExercise = exercise;
+                break;
+        }
+
+        return {
+            modelingExercise,
+            exampleSolution,
+            exampleSolutionUML,
+            programmingExercise,
+            exampleSolutionPublished: true,
+        };
+    }
+
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
+    }
+
+    static isExerciseVisibleToStudents(exercise: Exercise): boolean {
+        const effectiveDate = exercise.releaseDate ?? exercise.startDate;
+        if (!effectiveDate) {
+            return false;
+        }
+        return dayjs().isSameOrAfter(effectiveDate);
+    }
+}

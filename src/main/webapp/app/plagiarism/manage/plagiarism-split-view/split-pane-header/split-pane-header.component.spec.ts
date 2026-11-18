@@ -1,0 +1,241 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
+import { Subject } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
+describe('SplitPaneHeaderComponent', () => {
+    let comp1: SplitPaneHeaderComponent;
+    let comp2: SplitPaneHeaderComponent;
+    let fixture1: ComponentFixture<SplitPaneHeaderComponent>;
+    let fixture2: ComponentFixture<SplitPaneHeaderComponent>;
+
+    const files = [
+        { file: 'src/Main.java', hasMatch: true },
+        { file: 'src/Utils.java', hasMatch: false },
+        { file: 'src/Other.java', hasMatch: true },
+    ];
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+        const fileSelectedSubject = new Subject();
+        const showFilesSubject = new Subject<boolean>();
+        const dropdownHoverSubject = new Subject();
+        fixture1 = TestBed.createComponent(SplitPaneHeaderComponent);
+        comp1 = fixture1.componentInstance;
+        fixture2 = TestBed.createComponent(SplitPaneHeaderComponent);
+        comp2 = fixture2.componentInstance;
+
+        fixture1.componentRef.setInput('studentLogin', 'ts10abc');
+        fixture1.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
+        fixture1.componentRef.setInput('showFilesSubject', showFilesSubject);
+        fixture1.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
+        fixture1.componentRef.setInput('files', files);
+
+        fixture2.componentRef.setInput('studentLogin', 'ts10abc');
+        fixture2.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
+        fixture2.componentRef.setInput('showFilesSubject', showFilesSubject);
+        fixture2.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
+        fixture2.componentRef.setInput('files', files);
+    });
+
+    it.each([false, true])('only exposes the file toggle when files exist (%s)', (active) => {
+        fixture1.componentRef.setInput('files', active ? files : []);
+        fixture1.detectChanges();
+        const header = fixture1.nativeElement.querySelector('.split-pane-header-top') as HTMLElement;
+        const toggle = vi.spyOn(comp1, 'toggleShowFiles');
+        expect(header.getAttribute('role')).toBe(active ? 'button' : null);
+        expect(header.getAttribute('aria-expanded')).toBe(active ? 'false' : null);
+        expect(header.tabIndex).toBe(active ? 0 : -1);
+        const event = new KeyboardEvent('keydown', { key: ' ', repeat: true, bubbles: true, cancelable: true });
+        header.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(active);
+        expect(toggle).not.toHaveBeenCalled();
+        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(toggle).toHaveBeenCalledTimes(active ? 1 : 0);
+        expect(comp1.showFiles()).toBe(active);
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        // Closing also synchronizes the local state through the shared subject.
+        expect(toggle.mock.calls.filter(([propagate]) => propagate)).toHaveLength(active ? 2 : 0);
+        expect(comp1.showFiles()).toBe(false);
+    });
+
+    it('selects the first file on change', () => {
+        const emitSpy = vi.spyOn(comp1.selectFile, 'emit');
+        fixture1.detectChanges();
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith(files[0].file);
+    });
+
+    it('does not find an active file', () => {
+        fixture2.componentRef.setInput('files', []);
+        fixture2.detectChanges();
+        const activeFile = comp2.hasActiveFile();
+
+        expect(activeFile).toBe(false);
+    });
+
+    it('returns the active file', () => {
+        const activeFile = comp1.getActiveFile();
+
+        expect(activeFile).toBe(files[0].file);
+    });
+
+    it('handles selection of a file', () => {
+        const idx = 1;
+        comp1.showFiles.set(true);
+        vi.spyOn(comp1.selectFile, 'emit');
+
+        comp1.handleFileSelect(files[idx], idx, true);
+
+        expect(comp1.activeFileIndex).toBe(idx);
+        expect(comp1.showFiles()).toBe(false);
+        expect(comp1.selectFile.emit).toHaveBeenCalledOnce();
+        expect(comp1.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
+    });
+
+    it('has no files', () => {
+        fixture2.componentRef.setInput('files', []);
+        expect(comp2.hasFiles()).toBe(false);
+    });
+
+    it('has files', () => {
+        expect(comp1.hasFiles()).toBe(true);
+    });
+
+    it('toggles "show files"', () => {
+        comp1.showFiles.set(false);
+
+        comp1.toggleShowFiles(false);
+
+        expect(comp1.showFiles()).toBe(true);
+    });
+
+    it('does not toggle "show files"', () => {
+        fixture2.componentRef.setInput('files', []);
+        comp2.showFiles.set(false);
+
+        comp2.toggleShowFiles(false);
+
+        expect(comp2.showFiles()).toBe(false);
+    });
+
+    it('should emit selected file through fileSelectedSubject', () => {
+        const selectedFile = { idx: 0, file: files[0] };
+        let emittedFile: PlagiarismFileElement | undefined;
+        comp1.fileSelectedSubject()!.subscribe((file) => {
+            emittedFile = file;
+        });
+
+        comp1.fileSelectedSubject()!.next(selectedFile);
+
+        // Assert
+        expect(emittedFile).toBe(selectedFile);
+    });
+
+    it('should sync file selection when lockFilesEnabled true', () => {
+        const idx = 0;
+        const selectedFile = { idx: idx, file: files[idx] };
+        const lockFilesEnabled = true;
+        comp1.showFiles.set(true);
+        comp2.showFiles.set(true);
+        fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
+        fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
+
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
+
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
+
+        comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
+
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
+
+        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledExactlyOnceWith(selectedFile.file, selectedFile.idx, false);
+    });
+
+    it('should not sync file selection when lockFilesEnabled false', () => {
+        const idx = 0;
+        const selectedFile = { idx: idx, file: files[idx] };
+        const lockFilesEnabled = false;
+
+        fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
+        fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
+
+        const handleFileSelect = vi.spyOn(comp1, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
+        comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
+
+        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledTimes(0);
+        expect(handleFileSelect).toHaveBeenCalledOnce();
+    });
+
+    it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
+        comp1.showFiles.set(true);
+        fixture1.changeDetectorRef.detectChanges();
+
+        const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
+        expect(fileList).toBeTruthy();
+
+        const fileItems = fileList.queryAll(By.css('.split-pane-header-file'));
+        expect(fileItems.length).toBeGreaterThan(0);
+
+        const firstFileItem = fileItems[0];
+        const triggerMouseEnterSpy = vi.spyOn(comp1 as any, 'triggerMouseEnter');
+
+        firstFileItem.triggerEventHandler('mouseenter', null);
+        expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files()[0], 0);
+    });
+
+    it('should create dropdownHoverSubject on ngOnInit', () => {
+        // Arrange
+        const mockFile = files[0];
+        const mockIdx = 0;
+
+        fixture1.componentRef.setInput('isLockFilesEnabled', true);
+        vi.spyOn(comp1 as any, 'handleDropdownHover');
+
+        comp1.ngOnInit();
+        comp1.dropdownHoverSubject()!.next({ file: mockFile, idx: mockIdx });
+
+        expect(comp1['handleDropdownHover']).toHaveBeenCalledWith(mockFile, mockIdx);
+        expect(comp1.hoveredFileIndex()).toBe(mockIdx);
+    });
+
+    it('should update showFiles when hasFiles returns true', () => {
+        comp1.hasFiles = vi.fn().mockReturnValue(true);
+        const initialShowFiles = comp1.showFiles();
+
+        comp1.toggleShowFiles(false);
+
+        expect(comp1.showFiles()).not.toBe(initialShowFiles);
+    });
+
+    it('should not update showFiles when hasFiles returns false', () => {
+        comp1.hasFiles = vi.fn().mockReturnValue(false);
+        const initialShowFiles = comp1.showFiles();
+
+        comp1.toggleShowFiles(false);
+
+        expect(comp1.showFiles()).toBe(initialShowFiles);
+    });
+
+    it('should set hoveredFileIdx to -1 if file does not match and getIndexOf returns -1', () => {
+        const mockFile = { file: 'testFile', hasMatch: true };
+        const mockIdx = files.length;
+
+        vi.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
+
+        (comp1 as any).handleDropdownHover(mockFile, mockIdx);
+
+        expect(comp1.hoveredFileIndex()).toBe(-1);
+    });
+});

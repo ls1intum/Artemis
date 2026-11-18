@@ -1,0 +1,1651 @@
+import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as vitestAfterEach } from 'vitest';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { LiveQuizParticipationStatus, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { StudentQuizParticipation } from 'app/openapi/model/student-quiz-participation';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answer-question/short-answer-question.component';
+import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
+
+vi.mock('app/core/error-reporting/capture-exception', () => ({
+    captureException: vi.fn(),
+}));
+
+const now = dayjs();
+const question1: QuizQuestion = {
+    id: 1,
+    type: QuizQuestionType.DRAG_AND_DROP,
+    points: 1,
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+};
+const question2: MultipleChoiceQuestion = {
+    id: 2,
+    type: QuizQuestionType.MULTIPLE_CHOICE,
+    points: 2,
+    answerOptions: [{ id: 1 } as AnswerOption],
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+};
+const question3: ShortAnswerQuestion = {
+    id: 3,
+    type: QuizQuestionType.SHORT_ANSWER,
+    points: 3,
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+    text: 'Short answer question text',
+    matchLetterCase: false,
+    similarityValue: 0,
+    spots: [],
+};
+
+// The fixtures are written in the class graph the component renders, while the generated API declares the wire shape
+// the mapper converts from. The two agree field by field, so a cast feeds a fixture through the real mapper.
+const asGeneratedParticipation = (participation: StudentParticipation): StudentQuizParticipation => participation as unknown as StudentQuizParticipation;
+
+const createQuizExercise = (): QuizExercise => ({
+    id: 1,
+    quizQuestions: [question1, question2, question3],
+    releaseDate: dayjs(now).subtract(2, 'minutes'),
+    duration: 60 * 4,
+    dueDate: dayjs(now).add(2, 'minutes'),
+    quizStarted: true,
+    quizBatches: [
+        {
+            startTime: dayjs(now).subtract(2, 'minutes'),
+            started: true,
+        },
+    ],
+    quizMode: QuizMode.SYNCHRONIZED,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+});
+
+const quizExerciseForPractice: QuizExercise = {
+    id: 1,
+    quizQuestions: [question1, question2, question3],
+    releaseDate: dayjs(now).subtract(4, 'minutes'),
+    dueDate: dayjs(now).subtract(2, 'minutes'),
+    quizStarted: true,
+    quizEnded: true,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+
+const quizExerciseForResults: QuizExercise = {
+    id: 1,
+    quizQuestions: [question1, question2, question3],
+    releaseDate: dayjs(now).subtract(4, 'minutes'),
+    dueDate: dayjs(now).subtract(2, 'minutes'),
+    duration: 60 * 2,
+    quizStarted: true,
+    quizEnded: true,
+    quizBatches: [
+        {
+            startTime: dayjs(now).subtract(4, 'minutes'),
+            started: true,
+        },
+    ],
+    quizMode: QuizMode.SYNCHRONIZED,
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+
+const quizExerciseUnreleased: QuizExercise = {
+    id: 1,
+    quizQuestions: [question1, question2, question3],
+    releaseDate: dayjs(now).add(2, 'days'),
+    dueDate: dayjs(now).add(4, 'days'),
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+
+// Single setupTestBed for all tests in this file
+
+describe('QuizParticipationComponent - live mode', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let participationSpy: MockInstance;
+    let httpMock: HttpTestingController;
+    let quizParticipationApi: QuizParticipationApi;
+    let quizExerciseService: QuizExerciseService;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'live' }),
+                        parent: { parent: { params: of({ courseId: 1 }) } },
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        quizParticipationApi = TestBed.inject(QuizParticipationApi);
+        const participation: StudentParticipation = { exercise: { ...quizExercise } };
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation(participation)));
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise }));
+        httpMock = TestBed.inject(HttpTestingController);
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('autosaves changed answers and retains dirty state only on failure=%s', (failed) => {
+        fixture.detectChanges();
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.onSelectionChanged();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.triggerSave();
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercises/1/submissions/live?submit=false' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1 }] })]));
+        if (failed) req.flush({}, { status: 400, statusText: 'Bad Request' });
+        else req.flush({ id: 7, submissionDate: now.toISOString() });
+        expect(component.unsavedChanges()).toBe(failed);
+        expect(component.isSubmitting()).toBe(false);
+        if (failed) expect(alerts).toHaveBeenCalledOnce();
+        else expect(alerts).not.toHaveBeenCalled();
+    });
+
+    it('submits live answers and emits the confirmed submission once', () => {
+        fixture.detectChanges();
+        component.remainingTimeSeconds.set(10);
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.unsavedChanges.set(true);
+        const emitted: QuizSubmission[] = [];
+        component.quizSubmittedEvent.subscribe((submission) => emitted.push(submission));
+        component.submitExercise();
+        expect(component.isSubmitting()).toBe(true);
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercises/1/submissions/live?submit=true' });
+        expect(req.request.body.submittedAnswers).toEqual(expect.arrayContaining([expect.objectContaining({ selectedOptions: [{ id: 1 }] })]));
+        req.flush({ id: 7, submitted: true, submittedAnswers: [], submissionDate: now.toISOString() });
+        expect(component.isSubmitting()).toBe(false);
+        expect(component.unsavedChanges()).toBe(false);
+        expect(emitted).toEqual([expect.objectContaining({ id: 7, submitted: true })]);
+    });
+
+    it('updates a waiting batch from websocket channels and displays its result', () => {
+        fixture.detectChanges();
+        component.waitingForQuizStart.set(true);
+        component.quizBatch.set({ id: 9, started: false });
+        component.subscribeToWebsocketChannels();
+        const websocket = TestBed.inject(WebsocketService) as WebsocketService & Pick<MockWebsocketService, 'emit'>;
+        const started = { ...quizExercise, quizMode: QuizMode.BATCHED, quizBatches: [{ id: 9, started: true, startTime: now }], quizStarted: true };
+        websocket.emit('/topic/courses/1/quizExercises/9', started);
+        expect(component.waitingForQuizStart()).toBe(false);
+        expect(component.quizExercise().quizQuestions).toHaveLength(3);
+        const received: StudentParticipation[] = [];
+        component.liveQuizResultParticipation.subscribe((participation) => received.push(participation));
+        websocket.emit('/user/topic/exercise/1/participation', {
+            exercise: { ...started, quizEnded: true },
+            submissions: [{ id: 7, submitted: true, submittedAnswers: [], results: [{ id: 8, score: 80 }] }],
+        });
+        expect(component.showingResult()).toBe(true);
+        expect(component.result()?.id).toBe(8);
+        expect(received).toHaveLength(1);
+        expect(received[0].submissions?.[0].id).toBe(7);
+    });
+
+    it.each([false, true])('joins a password-protected batch and starts only when ready=%s', (started) => {
+        fixture.detectChanges();
+        component.password = 'quiz-secret';
+        const refresh = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise, quizBatches: [{ id: 9, started, startTime: now }] }));
+        refresh.mockClear();
+        component.joinBatch();
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/quiz-exercises/1/join' });
+        expect(req.request.body).toEqual({ password: 'quiz-secret' });
+        req.flush({ id: 9, started });
+        if (!started) expect(component.quizBatch()?.id).toBe(9);
+        expect(refresh).toHaveBeenCalledTimes(started ? 1 : 0);
+        if (!started) expect(component.quizBatch()?.started).toBe(false);
+    });
+
+    it('shows a rejected password join without replacing the current batch', () => {
+        fixture.detectChanges();
+        const previous = component.quizBatch();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.password = 'wrong';
+        component.joinBatch();
+        const req = httpMock.expectOne((r) => r.url.includes('/join'));
+        req.flush({}, { status: 403, statusText: 'Forbidden', headers: { 'X-artemisApp-message': 'Wrong password' } });
+        expect(component.quizBatch()).toBe(previous);
+        expect(alerts).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Wrong password'), disableTranslation: true }));
+    });
+
+    it('falls back to the error message when a rejected join carries no server message', () => {
+        fixture.detectChanges();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.password = 'wrong';
+        component.joinBatch();
+        const req = httpMock.expectOne((r) => r.url.includes('/join'));
+        req.flush({}, { status: 429, statusText: 'Too Many Requests' });
+        const message = alerts.mock.calls.at(-1)?.[0].message as string;
+        expect(message).toContain('Joining the quiz was not possible: ');
+        expect(message).not.toContain('null');
+        expect(message).toContain('429');
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+    });
+
+    it('lets students dismiss the submission confirmation while waiting for live quiz results', () => {
+        fixture.detectChanges();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        const confirmation = () => fixture.nativeElement.querySelector('[data-testid="quiz-submission-confirmation"]');
+        expect(confirmation()?.textContent).toContain('artemisApp.quizExercise.successfullySubmittedText');
+        const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
+        expect(dismissButton).not.toBeNull();
+        dismissButton.click();
+        fixture.detectChanges();
+
+        expect(confirmation()).toBeNull();
+        expect(component.submission().submitted).toBe(true);
+        expect(component.showingResult()).toBe(false);
+    });
+
+    it('keeps the submission confirmation dismissed when the same live quiz refreshes', () => {
+        fixture.detectChanges();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+        const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
+        dismissButton.click();
+
+        component.refreshQuiz(true);
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        expect(component.submissionConfirmationDismissed()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]')).toBeNull();
+        expect(component.submission().submitted).toBe(true);
+        expect(component.showingResult()).toBe(false);
+    });
+
+    it('shows the submission confirmation again when another live quiz starts', () => {
+        fixture.detectChanges();
+        component.submissionConfirmationDismissed.set(true);
+
+        component.quizId = 2;
+        component.initLiveMode();
+        component.submission.set({ submitted: true });
+        fixture.detectChanges();
+
+        expect(component.submissionConfirmationDismissed()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]')).not.toBeNull();
+    });
+
+    it('should capture exception when element is not found', () => {
+        const questionIndex = 1;
+        vi.spyOn(document, 'getElementById').mockReturnValue(null);
+
+        component.navigateToQuestion(questionIndex);
+
+        expect(captureException).toHaveBeenCalledWith('navigateToQuestion: element not found for index ' + questionIndex);
+    });
+
+    it('should highlight the correct quiz question', () => {
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const mockQuestion: QuizQuestion = {
+            id: 1,
+            type: QuizQuestionType.MULTIPLE_CHOICE,
+            points: 1,
+            randomizeOrder: false,
+            invalid: false,
+            exportQuiz: false,
+        };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [mockQuestion] });
+
+        component['highlightQuestion'](0);
+
+        expect(addTemporaryHighlightToQuestionSpy).toHaveBeenCalledWith(mockQuestion);
+    });
+
+    it('should not highlight if question is not found', () => {
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [] });
+
+        component['highlightQuestion'](1);
+
+        expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not highlight if quizQuestions is undefined', () => {
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        component.quizExercise.set({ ...quizExercise, quizQuestions: undefined });
+
+        component['highlightQuestion'](1);
+
+        expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fetch exercise and create a new submission', () => {
+        fixture.detectChanges();
+
+        expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+        expect(component.quizExercise().id).toBe(quizExercise.id);
+        expect(component.quizExercise().quizQuestions).toHaveLength(quizExercise.quizQuestions!.length);
+        expect(component.waitingForQuizStart()).toBe(false);
+        expect(component.totalScore()).toBe(6);
+        expect(component.dragAndDropMappings().get(question1.id!)).toEqual([]);
+        expect(component.selectedAnswerOptions().get(question2.id!)).toEqual([]);
+        expect(component.shortAnswerSubmittedTexts().get(question3.id!)).toEqual([]);
+        expect(component.submission()).not.toBeNull();
+    });
+
+    // These tests verify interval-based behavior by removing the second detectChanges() call
+    // that caused ExpressionChangedAfterItHasBeenCheckedError in zoneless mode
+    it('should update in intervals of individual quiz', () => {
+        vi.useFakeTimers();
+        const individualQuizExercise = { ...quizExercise };
+        individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
+        individualQuizExercise.quizStarted = false;
+        individualQuizExercise.quizBatches = [
+            {
+                startTime: dayjs(now).subtract(2, 'minutes'),
+                started: false,
+            },
+        ];
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation({ exercise: individualQuizExercise })));
+        fixture.detectChanges();
+
+        const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
+        const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
+        vi.advanceTimersByTime(5000);
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
+
+        expect(updateSpy).toHaveBeenCalledTimes(50);
+        expect(refreshSpy).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should update in intervals of not individual quiz', () => {
+        vi.useFakeTimers();
+        const notIndividualQuizExercise = { ...quizExercise };
+        notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
+        notIndividualQuizExercise.quizStarted = false;
+        notIndividualQuizExercise.quizBatches = [
+            {
+                startTime: dayjs(now).subtract(2, 'minutes'),
+                started: false,
+            },
+        ];
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation({ exercise: notIndividualQuizExercise })));
+        fixture.detectChanges();
+
+        const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
+        const refreshSpy = vi.spyOn(component, 'refreshQuiz').mockImplementation(() => {});
+        vi.advanceTimersByTime(5000);
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
+
+        expect(updateSpy).toHaveBeenCalledTimes(50);
+        expect(refreshSpy).toHaveBeenCalledTimes(0);
+
+        vi.useRealTimers();
+    });
+
+    it('should check quiz end in intervals', () => {
+        vi.useFakeTimers();
+        fixture.detectChanges();
+
+        const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
+        vi.advanceTimersByTime(5000);
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
+
+        expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
+        vi.useRealTimers();
+    });
+
+    it('should trigger a save on quiz end if the answers were not submitted', () => {
+        vi.useFakeTimers();
+        fixture.detectChanges();
+
+        component.endDate = dayjs().add(1, 'seconds');
+        component.quizExercise().quizMode = QuizMode.BATCHED;
+        component.submission().submissionDate = dayjs();
+        component.submission().submitted = false;
+
+        const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
+        const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
+
+        vi.advanceTimersByTime(2000);
+        // Don't call fixture.detectChanges() here - spies capture calls synchronously
+
+        expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
+        expect(triggerSaveStub).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should refresh quiz when called directly', () => {
+        fixture.detectChanges();
+
+        // Set up component state for refresh
+        component.quizExercise().quizStarted = false;
+        component.quizBatch.set({ started: false });
+
+        const quizExerciseService = TestBed.inject(QuizExerciseService);
+        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise, quizStarted: true, quizEnded: true }));
+        const initQuizSpy = vi.spyOn(component, 'initQuiz');
+        const initLiveModeSpy = vi.spyOn(component, 'initLiveMode').mockImplementation(() => {});
+
+        component.refreshQuiz();
+
+        expect(findForStudentSpy).toHaveBeenCalledWith(quizExercise.id);
+        expect(initQuizSpy).toHaveBeenCalled();
+        expect(initLiveModeSpy).toHaveBeenCalled();
+    });
+
+    it('should return true if student didnt interact with any question', () => {
+        component.quizExercise.set({ ...quizExercise, quizQuestions: undefined });
+        expect(component.areAllQuestionsAnswered()).toBe(true);
+
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [] });
+        expect(component.areAllQuestionsAnswered()).toBe(true);
+
+        component.quizExercise.set(quizExercise);
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.selectedAnswerOptions.update((map) => new Map(map).set(2, []));
+        expect(component.areAllQuestionsAnswered()).toBe(false);
+
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        component.dragAndDropMappings.update((map) => new Map(map).set(1, []));
+        expect(component.areAllQuestionsAnswered()).toBe(false);
+
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        component.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
+        component.shortAnswerSubmittedTexts.update((map) => new Map(map).set(3, []));
+        expect(component.areAllQuestionsAnswered()).toBe(false);
+    });
+
+    it('should show results after ending', () => {
+        fixture.detectChanges();
+
+        const answer: SubmittedAnswer = { scoreInPoints: 1, quizQuestion: question2 };
+        const quizSubmission: QuizSubmission = {
+            submissionDate: now.subtract(3, 'minutes'),
+            submitted: true,
+            submittedAnswers: [answer],
+        };
+        const result: Result = {
+            submission: quizSubmission,
+        };
+        component.result.set(result);
+        component.submission.set(quizSubmission);
+        component.quizExercise.set(quizExerciseForResults);
+        component.showingResult.set(true);
+
+        expect(component.showingResult()).toBe(true);
+    });
+
+    it('should mark changes as unsaved when an answer changes', () => {
+        fixture.detectChanges();
+        component.unsavedChanges.set(false);
+        component.onSelectionChanged();
+        expect(component.unsavedChanges()).toBe(true);
+    });
+
+    it.each([undefined, ''])('should fall back to the HTTP error message when the alert header is %s', (header) => {
+        fixture.detectChanges();
+
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'addAlert');
+
+        const error = new HttpErrorResponse({
+            status: 400,
+            statusText: 'Bad Request',
+            headers: header === undefined ? new HttpHeaders() : new HttpHeaders({ 'X-artemisApp-message': header }),
+        });
+        component.isSubmitting.set(true);
+        component.onSubmitError(error);
+        expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({ message: `Submitting the quiz was not possible. ${error.message}` }));
+        expect(component.isSubmitting()).toBe(false);
+    });
+
+    it('should prefer the server alert header when reporting submission errors', () => {
+        fixture.detectChanges();
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.onSubmitError(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-message': 'Quiz is closed' }) }));
+        expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'Submitting the quiz was not possible. Quiz is closed' }));
+    });
+
+    it('should express timespan in humanized text', () => {
+        fixture.detectChanges();
+
+        component.remainingTimeSeconds.set(90);
+        const result = component.relativeTimeText(component.remainingTimeSeconds());
+        expect(result).toBeDefined();
+    });
+
+    it('should set waitingForQuizStart when quiz hasnt started', () => {
+        fixture.detectChanges();
+
+        // Set up an unreleased quiz that hasn't started - quizBatch not started
+        const unreleasedQuiz = {
+            ...quizExerciseUnreleased,
+            quizEnded: false,
+            quizBatches: [{ started: false }],
+        };
+
+        // applyQuizFull sets waitingForQuizStart based on quiz state
+        component.applyQuizFull(unreleasedQuiz);
+
+        expect(component.waitingForQuizStart()).toBe(true);
+    });
+
+    it('should show the planned start time of the batch, which the countdown is based on, while waiting for the quiz start', () => {
+        fixture.detectChanges();
+
+        const batchStart = dayjs(now).add(2, 'days').add(1, 'hour');
+        component.applyQuizFull({
+            ...quizExerciseUnreleased,
+            quizMode: QuizMode.SYNCHRONIZED,
+            quizEnded: false,
+            quizBatches: [{ started: false, startTime: batchStart }],
+        });
+        fixture.detectChanges();
+
+        const plannedStart = fixture.nativeElement.querySelector('[data-testid="quiz-planned-start-time"]') as HTMLElement;
+        expect(plannedStart.textContent).toContain(batchStart.format('LT'));
+        expect(plannedStart.textContent).not.toContain(quizExerciseUnreleased.releaseDate!.format('LT'));
+    });
+
+    it('should update participation from server', () => {
+        fixture.detectChanges();
+
+        const participation: StudentParticipation = {
+            exercise: quizExercise,
+            submissions: [{ submittedAnswers: [] } as QuizSubmission],
+        };
+
+        component.updateParticipationFromServer(participation);
+
+        expect(component.quizExercise().id).toBe(quizExercise.id);
+        expect(component.quizExercise().quizQuestions).toHaveLength(quizExercise.quizQuestions!.length);
+    });
+
+    it('should return false if there is no answer in any question type', () => {
+        component.selectedAnswerOptions.set(new Map());
+        component.dragAndDropMappings.set(new Map());
+        component.shortAnswerSubmittedTexts.set(new Map());
+
+        expect(component.hasAnyAnswer()).toBe(false);
+    });
+
+    it('should return true if there is at least one multiple choice answer', () => {
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>([[question2.id!, question2.answerOptions!]]));
+        component.dragAndDropMappings.set(new Map());
+        component.shortAnswerSubmittedTexts.set(new Map());
+
+        expect(component.hasAnyAnswer()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
+        component.submission().submitted = true;
+        component.remainingTimeSeconds.set(-100);
+        component.syncSubmitState();
+
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.syncSubmitState();
+
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.syncSubmitState();
+
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission().submissionDate = dayjs();
+        component.syncSubmitState();
+
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission().id = 42;
+        component.syncSubmitState();
+
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    describe('shouldTreatAsSubmittedForUi for a finished attempt', () => {
+        beforeEach(() => {
+            component.submission().submitted = false;
+            component.remainingTimeSeconds.set(100);
+            vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        });
+
+        it('should be true in practice mode while an existing practice result is opened', () => {
+            component.mode.set('practice');
+            component.viewingExistingPracticeResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+        });
+
+        it('should be true in practice mode while a result is shown', () => {
+            component.mode.set('practice');
+            component.showingResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+        });
+
+        it('should be false in practice mode for a fresh attempt', () => {
+            component.mode.set('practice');
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        });
+
+        it('should not treat a shown result as submitted in live mode', () => {
+            component.mode.set('live');
+            component.showingResult.set(true);
+            component.viewingExistingPracticeResult.set(true);
+            component.syncSubmitState();
+
+            expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        });
+    });
+
+    it.each([
+        ['live', true, false, 0, false, LiveQuizParticipationStatus.NOT_STARTED],
+        ['live', false, false, 0, false, LiveQuizParticipationStatus.PARTICIPATING],
+        ['live', false, true, -100, false, LiveQuizParticipationStatus.SUBMITTED],
+        ['live', false, false, -1, true, LiveQuizParticipationStatus.MISSED],
+    ])('should emit the live quiz status from syncSubmitState', (mode, waiting, submitted, remaining, quizEnded, expected) => {
+        component.mode.set(mode as string);
+        component.quizExercise.set({ id: 1, quizEnded: quizEnded as boolean } as QuizExercise);
+        component.waitingForQuizStart.set(waiting as boolean);
+        component.showingResult.set(false);
+        component.submission().submitted = submitted as boolean;
+        component.remainingTimeSeconds.set(remaining as number);
+        let emitted: LiveQuizParticipationStatus | undefined;
+        component.liveQuizStatusChange.subscribe((status) => (emitted = status));
+
+        component.syncSubmitState();
+
+        expect(emitted).toBe(expected);
+    });
+
+    it('should show the remaining time box in practice mode even though the official quiz has ended', () => {
+        // In practice the official quiz has already ended, but the practice run has its own countdown that must still show.
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+
+        component.syncSubmitState();
+
+        const info = component.liveHeaderInfo();
+        expect(info?.showRemainingTime).toBe(true);
+        expect(info?.remainingTimeText).toBe('5 min');
+    });
+
+    it('should keep the same liveHeaderInfo reference across ticks when nothing displayed changes', () => {
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).toBe(first);
+    });
+
+    it('should produce a new liveHeaderInfo when a displayed field changes', () => {
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+
+        component.remainingTimeText.set('4 min');
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).not.toBe(first);
+        expect(component.liveHeaderInfo()?.remainingTimeText).toBe('4 min');
+    });
+
+    it('should not emit a live quiz status before the quiz has loaded', () => {
+        component.mode.set('live');
+        component.quizExercise.set(undefined as unknown as QuizExercise);
+        component.waitingForQuizStart.set(false);
+        let emitCount = 0;
+        component.liveQuizStatusChange.subscribe(() => emitCount++);
+
+        component.syncSubmitState();
+
+        expect(emitCount).toBe(0);
+    });
+
+    it('should clear the live quiz status override when leaving live mode', () => {
+        // Start in live mode so an override is emitted, then switch away and ensure it is cleared.
+        component.mode.set('live');
+        component.quizExercise.set({ id: 1 } as QuizExercise);
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        const emitted: (LiveQuizParticipationStatus | undefined)[] = [];
+        component.liveQuizStatusChange.subscribe((status) => emitted.push(status));
+
+        component.syncSubmitState();
+        component.mode.set('practice');
+        component.syncSubmitState();
+
+        expect(emitted).toEqual([LiveQuizParticipationStatus.PARTICIPATING, undefined]);
+    });
+
+    it('should emit the practice participation with its result after a practice submission', () => {
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizQuestions: [] } as unknown as QuizExercise);
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted: StudentParticipation | undefined;
+        component.practiceParticipationChanged.subscribe((p) => (emitted = p));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(participation);
+        expect(emitted!.testRun).toBe(true);
+        expect(emitted!.submissions).toEqual([submission]);
+        expect(submission.results).toEqual([result]);
+    });
+
+    it('should not emit a practice participation in preview mode', () => {
+        component.mode.set('preview');
+        component.quizExercise.set({ id: 1, quizQuestions: [] } as unknown as QuizExercise);
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted = false;
+        component.practiceParticipationChanged.subscribe(() => (emitted = true));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(false);
+    });
+
+    it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] })),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
+    });
+
+    it('should not show missed deadline message when student submitted', () => {
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: true }] })),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
+    });
+
+    it('should not show missed deadline message when student effectively submitted', () => {
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] })),
+        );
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.remainingTimeSeconds.set(-1);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
+    });
+
+    it('should not show missed deadline message when deadline has not passed', () => {
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] })),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
+    });
+});
+
+describe('QuizParticipationComponent - preview mode', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let httpMock: HttpTestingController;
+    let exerciseService: QuizExerciseService;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        exerciseService = TestBed.inject(QuizExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('should load exam preview mode from ancestor exam context', () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 1 };
+        const ancestor = new ActivatedRouteSnapshot();
+        ancestor.params = { examId: 2 };
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([ancestor, snapshot]);
+        TestBed.inject(ActivatedRoute).snapshot = snapshot;
+        const examFind = vi.spyOn(exerciseService, 'findForExam').mockReturnValue(of(quizExercise));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+        component.quizId = 1;
+        component.initPreview();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(1);
+        expect(exerciseService.find).not.toHaveBeenCalled();
+    });
+
+    it('should initialize', () => {
+        const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+        fixture.detectChanges();
+        expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
+    });
+
+    it('should initialize and start', () => {
+        const quizService = TestBed.inject(ArtemisQuizService);
+        const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+        const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
+        const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
+        fixture.detectChanges();
+
+        expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
+        expect(startSpy).toHaveBeenCalledOnce();
+        expect(randomizeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should submit quiz', () => {
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+        fixture.detectChanges();
+
+        component.submitExercise();
+
+        httpMock.expectOne({ method: 'POST', url: `/api/quiz/exercises/${quizExercise.id}/submissions/preview` }).flush({
+            submissionDate: now,
+            submitted: true,
+            submission: { submittedAnswers: [], participation: { exercise: quizExercise } },
+        });
+    });
+});
+
+describe('QuizParticipationComponent - practice mode', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let httpMock: HttpTestingController;
+    let exerciseService: QuizExerciseService;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ courseId: 1, exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'practice' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        exerciseService = TestBed.inject(QuizExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
+        fixture.detectChanges();
+
+        expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+    });
+
+    it('should initialize and start', () => {
+        const quizService = TestBed.inject(ArtemisQuizService);
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
+        const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
+        const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
+        fixture.detectChanges();
+
+        expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+        expect(startSpy).toHaveBeenCalledOnce();
+        expect(randomizeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should submit quiz', () => {
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
+        fixture.detectChanges();
+
+        component.submitExercise();
+
+        httpMock.expectOne({ method: 'POST', url: `/api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice` }).flush({
+            submissionDate: now,
+            submitted: true,
+            submission: { submittedAnswers: [], participation: { exercise: quizExerciseForPractice } },
+        });
+
+        expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+    });
+
+    // An expired attempt never counts as submitted while it is empty, so only practiceAttemptFinished offers a restart
+    // — and only once nothing is in flight, since a restart under a pending submission would receive its response.
+    it.each([
+        { mode: 'practice', remainingSeconds: 100, answered: false, submitting: false, finished: false },
+        { mode: 'practice', remainingSeconds: -1, answered: false, submitting: false, finished: true },
+        { mode: 'practice', remainingSeconds: -1, answered: false, submitting: true, finished: false },
+        { mode: 'practice', remainingSeconds: -1, answered: true, submitting: true, finished: false },
+        { mode: 'practice', remainingSeconds: -1, answered: true, submitting: false, finished: true },
+        { mode: 'live', remainingSeconds: -1, answered: false, submitting: false, finished: false },
+    ])('should report a $mode attempt ($remainingSeconds s left, answered=$answered, submitting=$submitting) as finished=$finished', (row) => {
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(row.answered);
+        component.mode.set(row.mode);
+        component.remainingTimeSeconds.set(row.remainingSeconds);
+        component.isSubmitting.set(row.submitting);
+        component.syncSubmitState();
+
+        expect(component.practiceAttemptFinished()).toBe(row.finished);
+    });
+
+    it('should let the student start another attempt when the automatic submission of an expired empty attempt fails', () => {
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
+        fixture.detectChanges();
+
+        // The working time ran out without a single answer, so the component submits automatically.
+        component.remainingTimeSeconds.set(-1);
+        component.submitExercise();
+
+        expect(component.practiceAttemptFinished()).toBe(false);
+
+        httpMock.expectOne({ method: 'POST' }).flush({}, { status: 500, statusText: 'Internal Server Error' });
+
+        // Submit stays disabled and nothing was submitted, so "Start Practice Mode" is the only way out.
+        expect(component.isSubmitDisabled()).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
+        expect(component.practiceAttemptFinished()).toBe(true);
+    });
+
+    it('should not submit again at the original deadline of a practice attempt that was already submitted', () => {
+        vi.useFakeTimers();
+        const practiceQuiz = { ...quizExerciseForPractice, duration: 120 } as QuizExercise;
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(practiceQuiz));
+        fixture.detectChanges();
+
+        component.submitExercise();
+        httpMock.expectOne({ method: 'POST' }).flush({
+            submissionDate: now,
+            submitted: true,
+            submission: { submittedAnswers: [], participation: { exercise: practiceQuiz } },
+        });
+
+        vi.advanceTimersByTime(practiceQuiz.duration! * 1000);
+
+        expect(component.isSubmitting()).toBe(false);
+        expect(component.practiceAttemptFinished()).toBe(true);
+        vi.useRealTimers();
+    });
+
+    it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
+        const existingResultResponse = new Subject<StudentQuizParticipation>();
+        vi.spyOn(TestBed.inject(QuizParticipationApi), 'getParticipationResult').mockReturnValue(existingResultResponse);
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
+        const updateSpy = vi.spyOn(component, 'updateParticipationFromServer');
+
+        // Open an existing practice result: the header already treats the attempt as finished and offers a restart.
+        component.mode.set('practice');
+        component.initPracticeMode(7);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+
+        // The student restarts before the existing result has arrived.
+        component.restartPractice();
+        existingResultResponse.next(asGeneratedParticipation({ id: 7, testRun: true }));
+
+        expect(existingResultResponse.observed).toBe(false);
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(component.viewingExistingPracticeResult()).toBe(false);
+    });
+});
+
+describe('QuizParticipationComponent - solution mode', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let exerciseService: QuizExerciseService;
+    let resultForSolutionServiceSpy: MockInstance;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ courseId: 1, exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'solution' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        exerciseService = TestBed.inject(QuizExerciseService);
+        resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should load exam solution mode from ancestor exam context', () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { exerciseId: 1 };
+        const ancestor = new ActivatedRouteSnapshot();
+        ancestor.params = { examId: 2 };
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([ancestor, snapshot]);
+        TestBed.inject(ActivatedRoute).snapshot = snapshot;
+        const examFind = vi.spyOn(exerciseService, 'findForExam').mockReturnValue(of(quizExerciseForPractice));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
+        component.quizId = 1;
+        component.initShowSolution();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(1);
+        expect(exerciseService.find).not.toHaveBeenCalled();
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+    });
+
+    it('should initialize and show solution', () => {
+        fixture.detectChanges();
+
+        expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
+        expect(component.showingResult()).toBe(true);
+        expect(component.totalScore()).toBe(6);
+    });
+
+    it('should update time', () => {
+        fixture.detectChanges();
+
+        component.remainingTimeSeconds.set(100);
+        component.updateDisplayedTimes();
+
+        // In solution mode, we're just showing results
+        expect(component.showingResult()).toBe(true);
+    });
+});
+
+describe('QuizParticipationComponent - relativeTimeText', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should return minutes for more than 210 seconds', () => {
+        const result = component.relativeTimeText(250);
+        expect(result).toBe('5 min');
+    });
+
+    it('should return minutes and seconds for 60-210 seconds', () => {
+        const result = component.relativeTimeText(125);
+        expect(result).toBe('2 min 5 s');
+    });
+
+    it('should return only seconds for less than 60 seconds', () => {
+        const result = component.relativeTimeText(45);
+        expect(result).toBe('45 s');
+    });
+
+    it('should return exactly 60 seconds in minutes format', () => {
+        const result = component.relativeTimeText(60);
+        expect(result).toBe('1 min 0 s');
+    });
+
+    it('should return 0 seconds', () => {
+        const result = component.relativeTimeText(0);
+        expect(result).toBe('0 s');
+    });
+});
+
+describe('QuizParticipationComponent - applySelection', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should convert selections to submitted answers', () => {
+        fixture.detectChanges();
+
+        // Set up selections
+        const answerOption = { id: 1 } as AnswerOption;
+        component.selectedAnswerOptions.update((map) => new Map(map).set(question2.id!, [answerOption]));
+
+        const mapping = { dragItem: { id: 1, invalid: false }, dropLocation: { id: 1, invalid: false }, invalid: false } as DragAndDropMapping;
+        component.dragAndDropMappings.update((map) => new Map(map).set(question1.id!, [mapping]));
+
+        const submittedText = { text: 'answer' } as ShortAnswerSubmittedText;
+        component.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question3.id!, [submittedText]));
+
+        component.applySelection();
+
+        expect(component.submission().submittedAnswers).toHaveLength(3);
+    });
+
+    it('should log error when question not found for multiple choice', () => {
+        fixture.detectChanges();
+
+        // Set up selection for non-existent question
+        const answerOption = { id: 1 } as AnswerOption;
+        component.selectedAnswerOptions.update((map) => new Map(map).set(999, [answerOption]));
+
+        component.applySelection();
+
+        expect(captureException).toHaveBeenCalled();
+    });
+});
+
+describe('QuizParticipationComponent - showResult', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should calculate user score and question scores', () => {
+        fixture.detectChanges();
+
+        component.submission.set({
+            scoreInPoints: 5,
+            submittedAnswers: [
+                { quizQuestion: question1, scoreInPoints: 1 },
+                { quizQuestion: question2, scoreInPoints: 2 },
+            ],
+        } as QuizSubmission);
+
+        const result = { submission: component.submission() } as Result;
+
+        component.showResult(result);
+
+        expect(component.showingResult()).toBe(true);
+        expect(component.userScore()).toBe(5);
+        expect(component.questionScores()[question1.id!]).toBe(1);
+        expect(component.questionScores()[question2.id!]).toBe(2);
+    });
+
+    it('should handle undefined result', () => {
+        fixture.detectChanges();
+
+        component.showResult(undefined as unknown as Result);
+
+        expect(component.showingResult()).toBeFalsy();
+    });
+
+    it('should use 0 when scoreInPoints is undefined', () => {
+        fixture.detectChanges();
+
+        component.submission.set({
+            scoreInPoints: undefined,
+            submittedAnswers: [],
+        } as QuizSubmission);
+
+        const result = { submission: component.submission() } as Result;
+
+        component.showResult(result);
+
+        expect(component.userScore()).toBe(0);
+    });
+});
+
+describe('QuizParticipationComponent - onSaveError', () => {
+    let fixture: ComponentFixture<QuizParticipationComponent>;
+    let component: QuizParticipationComponent;
+    let alertService: AlertService;
+    let quizExercise: QuizExercise;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+        quizExercise = createQuizExercise();
+
+        await TestBed.configureTestingModule({
+            imports: [
+                QuizParticipationComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(DragAndDropQuestionComponent),
+                MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ButtonComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                QuizParticipationApi,
+                ArtemisDurationFromSecondsPipe,
+                QuizExerciseService,
+                QuizSubmissionApi,
+                ArtemisQuizService,
+                SubmissionService,
+                AlertService,
+                ArtemisServerDateService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: 1 }),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
+                        data: of({ mode: 'preview' }),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        const exerciseService = TestBed.inject(QuizExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
+
+        alertService = TestBed.inject(AlertService);
+
+        fixture = TestBed.createComponent(QuizParticipationComponent);
+        component = fixture.componentInstance;
+    });
+
+    vitestAfterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show alert and reset flags on save error', () => {
+        fixture.detectChanges();
+
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        component.onSaveError('Test error message');
+
+        expect(alertSpy).toHaveBeenCalled();
+        expect(component.unsavedChanges()).toBe(true);
+        expect(component.isSubmitting()).toBe(false);
+    });
+
+    it('should not show alert for empty error', () => {
+        fixture.detectChanges();
+
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        component.onSaveError('');
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+});

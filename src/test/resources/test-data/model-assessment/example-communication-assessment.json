@@ -1,0 +1,47 @@
+[
+    {
+        "text": "correct activity, but missing elements",
+        "reference": "ObjectName:31fa86c8-c245-4e30-aa47-328d1fd2d2c0",
+        "credits": 0.0,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "reference": "ObjectAttribute:2bc1c0f7-a674-4cda-b496-c038d406aa69",
+        "credits": 0.5,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "text": "good",
+        "reference": "ObjectMethod:1f4fb014-9fc6-4b57-a3d6-de23021600d1",
+        "credits": 0.5,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "reference": "ObjectName:3d3a94d1-7922-44d3-8914-12d11733b7ee",
+        "credits": 0.5,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "reference": "ObjectAttribute:f79a4b0c-14aa-4c90-b1d7-a96e0adb02d2",
+        "credits": 0.0,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "reference": "ObjectMethod:b7101509-7573-40ab-80ba-3c7ceceb401d",
+        "credits": 0.0,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "text": "not necessary, but fine",
+        "reference": "CommunicationLink:30e30816-dd49-4958-b9b0-87c9ee4a1eec",
+        "credits": 0.0,
+        "positive": true,
+        "type": "MANUAL"
+    }
+]

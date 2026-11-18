@@ -1,0 +1,44 @@
+classes/
+generated-sources/
+generated-test-sources/
+h2db/
+maven-archiver/
+maven-status/
+reports/
+surefire-reports/
+test-classes/
+test-results/
+www/
+!*.jar
+!*.war
+
+# Deny-all: a build input reaches the image only if a `!` line below re-admits it. An omission is
+# silent — a tool that cannot find its config falls back to its defaults and still exits 0.
+.*
+# supplies the commit id stamped into the build
+!.git
+# raises the Node heap the client build needs; pnpm reads nothing else from this file
+!.npmrc
+# registers @tailwindcss/postcss; nothing else in the repo ties Tailwind to the build
+!.postcssrc.json
+!.browserslistrc
+# `**/` is load-bearing: unlike .gitignore, a bare `node_modules` matches only the root one, and a
+# host install would shadow the one the image builds for its own platform
+**/node_modules
+# the .war exception feeds the external_builder stage, which packages a WAR built outside Docker
+build/*
+!build/libs/*.war
+
+# local config and private keys; never re-admit
+/src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
+
+# holds this Dockerfile, which `docker build -f` reads from the host rather than from the context
+deployment/docker/
+
+CITATION.cff
+.github/CODE_OF_CONDUCT.md
+LICENSE
+README.md
+.github/SECURITY.md

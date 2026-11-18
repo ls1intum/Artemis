@@ -1,0 +1,23 @@
+{
+  "scanSettings": {
+    "enableScan": true,
+    "baseBranches": ["develop"],
+    "scanDependabotPR": false
+  },
+  "checkRunSettings": {
+    "vulnerableCheckRunConclusionLevel": "failure",
+    "displayMode": "diff",
+    "useMendCheckNames": true
+  },
+  "issueSettings": {
+    "minSeverityLevel": "MEDIUM",
+    "issueType": "DEPENDENCY"
+  },
+  "remediateSettings": {
+    "workflowRules": {
+      "enabled": true,
+        "minVulnerabilityScore": 1.5,
+        "maxVulnerabilityScore": 10
+    }
+  }
+}

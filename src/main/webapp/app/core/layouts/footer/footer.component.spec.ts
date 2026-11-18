@@ -1,0 +1,92 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
+import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RouterModule } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FooterComponent } from 'app/core/layouts/footer/footer.component';
+import dayJs from 'dayjs/esm';
+
+describe('FooterComponent', () => {
+    let component: FooterComponent;
+    let fixture: ComponentFixture<FooterComponent>;
+    let profileService: ProfileService;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), RouterModule.forRoot([])],
+            providers: [{ provide: ProfileService, useClass: MockProfileService }, provideTranslateService()],
+        });
+        await TestBed.compileComponents();
+
+        profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(FooterComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should have an About Us link with correct routing', () => {
+        const aboutUsLink = fixture.debugElement.nativeElement.querySelector('#about');
+        expect(aboutUsLink.getAttribute('href')).toContain('/about');
+    });
+    it('should have an Imprint link with correct routing', () => {
+        const aboutUsLink = fixture.debugElement.nativeElement.querySelector('#imprint');
+        expect(aboutUsLink.getAttribute('href')).toContain('/imprint');
+    });
+
+    describe('Git Information', () => {
+        it('should display git information if not in production or on a test server', () => {
+            component.isProduction.set(false);
+            component.isTestServer.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git');
+            expect(gitInfoElement).not.toBeNull();
+        });
+    });
+
+    it('should not display git information if in production and not a test server', () => {
+        component.isProduction.set(true);
+        component.isTestServer.set(false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper');
+        expect(gitInfoElement).toBeNull();
+    });
+
+    describe('Git Information Detailed Testing', () => {
+        beforeEach(() => {
+            component.gitBranch.set('main');
+            component.gitCommitId.set('abc123');
+            component.gitTimestamp.set(dayJs.utc('2023-04-01T12:00:00Z'));
+            component.gitCommitUser.set('user123');
+            component.isProduction.set(false);
+            component.isTestServer.set(false);
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should display all git information', () => {
+            const footerGit = fixture.debugElement.nativeElement.querySelector('.footer-git');
+
+            expect(footerGit.textContent).toContain('main'); // for git branch
+            expect(footerGit.textContent).toContain('abc123'); // for git commit ID
+            expect(footerGit.textContent).toContain('2023-04-01 12:00'); // for git timestamp
+            expect(footerGit.textContent).toContain('user123'); // for git commit user
+        });
+    });
+});

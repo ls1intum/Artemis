@@ -1,0 +1,71 @@
+{
+    "artemisApp": {
+        "exerciseChatbot": {
+            "inputMessage": "Write a message...",
+            "accept": "Accept",
+            "decline": "Decline",
+            "title": "Iris: Your AI-Powered Learning Assistant",
+            "subtext": "Iris is an intelligent virtual tutor powered by the EduTelligence suite. She enhances your learning journey by providing personalized assistance, answering questions, and supporting you through programming exercises and course content.",
+            "subheading1": "About Iris & EduTelligence",
+            "text1_1": "<b>EduTelligence Integration:</b> Iris is powered by Pyris, which is part of the EduTelligence suite - a comprehensive collection of AI-powered microservices designed to enhance educational technology platforms.",
+            "text1_2": "<b>Data Processing & Privacy:</b> Your interactions with Iris may be processed within external European data centers, such as the Microsoft Azure Cloud. Please check with your institution's privacy policy and ensure you agree to the data processing before using Iris.",
+            "subheading2": "Key Features of Iris",
+            "text2_1": "<b>Programming Assistance:</b> Iris can help with programming questions, including syntax, algorithms, data structures, debugging, and code improvement suggestions.",
+            "text2_2": "<b>Contextual Understanding:</b> Unlike generic chatbots, Iris has access to your exercise context, including problem statements, your code submissions, build results, and course materials.",
+            "text2_3": "<b>Educational Guidance:</b> Iris is designed to guide your learning rather than provide direct solutions. She offers hints, explanations, and step-by-step assistance to help you understand concepts.",
+            "text2_4": "<b>Multi-Exercise Support:</b> Iris can assist with various exercise types including programming, modeling, and text exercises, adapting her responses to the specific context.",
+            "text2_5": "<b>Continuous Learning:</b> Your feedback helps improve Iris's performance. Rate responses and conversations to contribute to the system's enhancement.",
+            "subheading3": "Usage Guidelines & Limitations",
+            "text3_1": "<b>Learning-Focused:</b> Iris won't provide complete solutions but will guide you through the problem-solving process to enhance your understanding.",
+            "text3_2": "<b>Academic Scope:</b> Iris focuses on course-related content and programming topics. She won't engage in off-topic conversations or provide organizational information.",
+            "text3_3": "<b>Responsible Use:</b> Use Iris as a learning aid while maintaining academic integrity. Always ensure your final submissions represent your own understanding and work.",
+            "subheading4": "Interface Features",
+            "text4_1": "<b>Flexible Positioning:</b> Click and drag the chat widget to move it around your screen for optimal positioning while working on exercises.",
+            "text4_2": "<b>Resizable Window:</b> Adjust the widget size by dragging its borders to fit your workspace and preferences.",
+            "text4_3": "<b>Full Screen Mode:</b> Expand the widget to full screen for more detailed conversations and better readability.",
+            "text4_4": "<b>Session Management:</b> Start a new conversation anytime using the \"New\" button. Previous conversations remain accessible in your chat history.",
+            "text4_5": "<b>Persistent History:</b> Your conversation history is maintained across sessions, allowing you to continue previous discussions.",
+            "supportText": "(For technical issues or feedback about Iris, please contact your course instructors or create an issue on GitHub: https://github.com/ls1intum/Artemis.)",
+            "clearSession": {
+                "title": "New conversation",
+                "text": "Are you sure you want to start a new conversation?",
+                "submit": "Confirm"
+            },
+            "errors": {
+                "invalidSessionState": "Iris session state is invalid. It is impossible to send messages in this state.",
+                "historyLoadFailed": "Could not fetch messages.",
+                "sessionLoadFailed": "Could not fetch session details.",
+                "sessionCreationFailed": "Could not create a new session.",
+                "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
+                "rateMessageFailed": "Could not rate message. Please try again later.",
+                "irisDisabled": "Iris has been disabled for this exercise.",
+                "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
+                "emptyMessage": "You cannot submit empty messages.",
+                "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
+                "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "The template is invalid. Error message is: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Model {{ model }} is not available to use. Please contact your administrator if this problem persists.",
+                "noResponse": "No response from Iris was received.",
+                "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}",
+                "technicalError": "There has been a technical error. Please contact Artemis Administrators if this error message persists.",
+                "irisNotAvailable": "Iris is not available. Please try again later!",
+                "rateLimitExceeded": "You have reached the maximum number of messages you can send to Iris in a {{ hours }} hour window. Please try again later!",
+                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris."
+            },
+            "disclaimer": "Iris can make mistakes. Consider checking important information.",
+            "disclaimerGPT": "ChatGPT can make mistakes. Consider checking important information.",
+            "rateLimitTooltip": "This is the maximum number of messages you can send to Iris in a {{ hours }} hour window.",
+            "goToRelatedEntityButton": {
+                "exerciseLabel": "Related Exercise",
+                "lectureLabel": "Related Lecture"
+            },
+            "actions": {
+                "copy": "Copy",
+                "goodResponse": "Good response",
+                "badResponse": "Bad response",
+                "send": "Send message"
+            },
+            "scrollToBottom": "Scroll to the latest message"
+        }
+    }
+}

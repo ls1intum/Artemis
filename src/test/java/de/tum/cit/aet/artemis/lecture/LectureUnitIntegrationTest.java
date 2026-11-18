@@ -1,0 +1,902 @@
+package de.tum.cit.aet.artemis.lecture;
+
+import static java.util.stream.Collectors.toMap;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+
+class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "lectureunitintegration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    private static final String CITED_VIDEO_SOURCE = "https://live.rbg.tum.de/w/citation/1";
+
+    @Autowired
+    private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    @Autowired
+    private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
+
+    @Autowired
+    private LectureTranscriptionRepository lectureTranscriptionRepository;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    private Lecture lecture1;
+
+    private TextUnit textUnit;
+
+    private TextUnit textUnit2;
+
+    private TextUnit textUnit3;
+
+    private Exercise exerciseOfCourse1;
+
+    private AttachmentVideoUnit attachmentVideoUnit;
+
+    @BeforeEach
+    void initTestCase() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
+        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
+        var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
+        // a programming exercise, so the projection's programming-only fields (IDE flags, language, final test date, feedback view settings) are covered
+        this.exerciseOfCourse1 = course1.getExercises().stream().filter(ProgrammingExercise.class::isInstance).min(Comparator.comparing(Exercise::getId)).orElseThrow();
+        this.lecture1 = sortedLectures.getFirst();
+        var lecture2 = sortedLectures.get(1);
+
+        // Add users that are not in the course
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
+
+        this.textUnit = lectureUtilService.createTextUnit(lecture1);
+        this.attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
+        this.textUnit2 = lectureUtilService.createTextUnit(lecture2);
+        // textUnit3 belongs to a different lecture to test invalid lecture-unit combinations
+        this.textUnit3 = lectureUtilService.createTextUnit(lecture2);
+
+        lectureUtilService.addLectureUnitsToLecture(lecture2, List.of(textUnit2, textUnit3));
+        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
+        this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
+        this.textUnit3 = textUnitRepository.findById(textUnit3.getId()).orElseThrow();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAll_asTutor() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAll_asStudent() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    private void testAllPreAuthorize() throws Exception {
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnit() throws Exception {
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_asStudent_shouldReturnDetailsProjectionWithLectureAndCourse() throws Exception {
+        String url = "/api/lecture/lecture-units/" + textUnit.getId();
+        var unit = assertThatDb(() -> request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class)).hasBeenCalledAtMostTimes(6);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.TextUnitDTO.class);
+        LectureDetailsDTO.TextUnitDTO textUnitDTO = (LectureDetailsDTO.TextUnitDTO) unit;
+        assertThat(textUnitDTO.id()).isEqualTo(textUnit.getId());
+        assertThat(textUnitDTO.content()).isEqualTo(textUnit.getContent());
+        assertThat(textUnitDTO.completed()).isFalse();
+        assertThat(textUnitDTO.visibleToStudents()).isTrue();
+        // the learning path page reads the lecture id and the course's communication configuration off the unit
+        assertThat(textUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
+        assertThat(textUnitDTO.lecture().course().id()).isEqualTo(lecture1.getCourse().getId());
+        assertThat(textUnitDTO.lecture().course().courseInformationSharingConfiguration()).isEqualTo(lecture1.getCourse().getCourseInformationSharingConfiguration());
+
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + textUnit.getId() + "/completion?completed=true", null, HttpStatus.OK, null);
+        LectureDetailsDTO.TextUnitDTO completedUnit = (LectureDetailsDTO.TextUnitDTO) request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+        assertThat(completedUnit.completed()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_athenaFormativeFeedbackEnabled_shouldReportItEnabled() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(lecture1.getCourse().getId());
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        var unit = (LectureDetailsDTO.TextUnitDTO) request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        // the discussion section reads this switch; the configuration is lazy, so an unfetched one would report false here
+        assertThat(unit.lecture().course().athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_exerciseUnit_shouldProjectTheExerciseLikeTheCourseOverview() throws Exception {
+        var exerciseUnit = lectureUtilService.createExerciseUnit(exerciseOfCourse1, lecture1);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(exerciseUnit));
+
+        var unit = request.get("/api/lecture/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.ExerciseUnitDTO.class);
+        LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) unit;
+        assertThat(exerciseUnitDTO.id()).isEqualTo(exerciseUnit.getId());
+        assertThat(exerciseUnitDTO.name()).isEqualTo(exerciseOfCourse1.getTitle());
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(exerciseOfCourse1.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(exerciseOfCourse1.getExerciseType());
+        assertThat(exerciseUnitDTO.exercise().title()).isEqualTo(exerciseOfCourse1.getTitle());
+        // fields the exercise row's code button reads
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseOfCourse1;
+        assertThat(exerciseUnitDTO.exercise().programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(exerciseUnitDTO.exercise().allowOnlineIde()).isEqualTo(programmingExercise.isAllowOnlineIde());
+        assertThat(exerciseUnitDTO.exercise().allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+        // fields the result string and the feedback view read
+        assertThat(exerciseUnitDTO.exercise().buildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        assertThat(exerciseUnitDTO.exercise().showTestNamesToStudents()).isEqualTo(programmingExercise.getShowTestNamesToStudents());
+        assertThat(exerciseUnitDTO.exercise().maxStaticCodeAnalysisPenalty()).isEqualTo(programmingExercise.getMaxStaticCodeAnalysisPenalty());
+        assertThat(exerciseUnitDTO.lecture().course().id()).isEqualTo(lecture1.getCourse().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getLectureUnitById_attachmentVideoUnit_asInstructor_shouldCarryTheAttachment() throws Exception {
+        var unit = request.get("/api/lecture/lecture-units/" + attachmentVideoUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        assertThat(unit).isInstanceOf(LectureDetailsDTO.AttachmentUnitDTO.class);
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = (LectureDetailsDTO.AttachmentUnitDTO) unit;
+        assertThat(attachmentUnitDTO.id()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(attachmentUnitDTO.description()).isEqualTo(attachmentVideoUnit.getDescription());
+        assertThat(attachmentUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentUnitDTO.attachment().id()).isEqualTo(attachmentVideoUnit.getAttachment().getId());
+        assertThat(attachmentUnitDTO.attachment().link()).isEqualTo(attachmentVideoUnit.getAttachment().getLink());
+        assertThat(attachmentUnitDTO.lecture().isTutorialLecture()).isEqualTo(lecture1.isTutorialLecture());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void getLectureUnitById_asStudentNotInCourse_shouldBeForbidden() throws Exception {
+        request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.FORBIDDEN, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_unitNotReleasedYet_shouldBeForbiddenForStudentsAndAvailableForStaff() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+        String url = "/api/lecture/lecture-units/" + textUnit.getId();
+
+        request.get(url, HttpStatus.FORBIDDEN, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_unitReleased_shouldBeAvailableForStudents() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_attachmentNotReleasedYet_unitStaysAvailableLikeInTheLectureDetails() throws Exception {
+        // The availability of the unit follows its own release date, as on the lecture details page. The attachment content is served by the file endpoints, which check the
+        // attachment's own release date.
+        attachmentVideoUnit.setReleaseDate(null);
+        attachmentVideoUnit.getAttachment().setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepository.save(attachmentVideoUnit.getAttachment());
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        String url = "/api/lecture/lecture-units/" + attachmentVideoUnit.getId();
+
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
+        var lectureUnit = lecture1.getLectureUnits().getFirst();
+        var competency = competencyUtilService.createCompetency(lecture1.getCourse());
+        lectureUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)));
+        lectureRepository.save(lecture1);
+
+        var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().getFirst().getCompetencyLinks()).isNotEmpty();
+
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
+        var lectureUnit = lecture1.getLectureUnits().getFirst();
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        LectureUnitCompletion completion = new LectureUnitCompletion();
+        completion.setLectureUnit(lectureUnit);
+        completion.setUser(user);
+        completion.setCompletedAt(ZonedDateTime.now().minusDays(1));
+        lectureUnitCompletionRepository.save(completion);
+
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isPresent();
+
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnit_notPartOfLecture_shouldReturnBadRequest() throws Exception {
+        var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
+        request.delete("/api/lecture/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * We have to make sure to reorder the list of lecture units when we delete a lecture unit to prevent hibernate
+     * from entering nulls into the list to keep the order of lecture units
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits()).hasSize(3);
+        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().orElseThrow();
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLectureUnitOrder_asInstructor_shouldUpdateLectureUnitOrder() throws Exception {
+        List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
+        Collections.swap(newlyOrderedList, 0, 1);
+        // The endpoint returns the reordered units as polymorphic LectureUnitDTOs (a 200 proves they serialize);
+        // verify the persisted order directly, which is the actual contract the client relies on.
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.OK);
+        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits();
+        assertThat(reorderedUnits).extracting(LectureUnit::getId).containsExactlyElementsOf(newlyOrderedList);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLectureUnitOrder_wrongSizeOfIds_shouldReturnBadRequest() throws Exception {
+        List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).skip(1).toList();
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLectureUnitOrder_newTextUnitInOrderedList_shouldReturnBadRequest() throws Exception {
+        List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
+        // textUnit3 is not in specified lecture
+        newlyOrderedList.set(1, this.textUnit3.getId());
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnForbidden() throws Exception {
+        request.put("/api/lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setLectureUnitCompletion() throws Exception {
+        Long lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
+        // Set lecture unit as completed for current user
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId + "/completion?completed=true", null, HttpStatus.OK, null);
+
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
+        LectureUnit lectureUnit = this.lecture1.getLectureUnits().stream().filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
+
+        assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
+        assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isTrue();
+
+        // Set lecture unit as uncompleted for user
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId + "/completion?completed=false", null, HttpStatus.OK, null);
+
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1.getId());
+        lectureUnit = this.lecture1.getLectureUnits().stream().filter(unit -> unit.getId().equals(lectureUnitId)).findFirst().orElseThrow();
+
+        assertThat(lectureUnit.getCompletedUsers()).isEmpty();
+        assertThat(lectureUnit.isCompletedFor(userTestRepository.getUser())).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnBadRequest() throws Exception {
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null,
+                HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setLectureUnitCompletion_withoutLecture_shouldReturnBadRequest() throws Exception {
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null,
+                HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setLectureUnitCompletion_lectureUnitNotVisible_shouldReturnBadRequest() throws Exception {
+        this.textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(this.textUnit);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit.getId() + "/completion?completed=true", null,
+                HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
+        // User is not in same course as lecture unit
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
+                null, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsAsStudentOfCourse() throws Exception {
+        final var result = request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK,
+                LectureUnitForLearningPathNodeDetailsDTO.class);
+        assertThat(result).isEqualTo(LectureUnitForLearningPathNodeDetailsDTO.of(textUnit));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsAndMaterialVersionsOfUnreleasedUnitAsStudent_forbidden() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsOfUnreleasedUnitAsTutor() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetLectureUnitForLearningPathNodeDetailsForNonExistingLectureUnit() throws Exception {
+        // Administrators pass the access check without the lecture unit, so the lecture unit itself is looked up.
+        request.get("/api/lecture/lecture-units/123124123123/for-learning-path-node-details", HttpStatus.NOT_FOUND, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsAsStudentNotInCourse() throws Exception {
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void retryProcessing_wrongUnitType_shouldReturnBadRequest() throws Exception {
+        // Try to retry processing for a text unit (not attachment video unit)
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + textUnit.getId() + "/retry-processing", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void retryProcessing_asStudent_shouldBeForbidden() throws Exception {
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.FORBIDDEN,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void retryProcessing_whenInFailedState_shouldSucceed() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with FAILED phase
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.FAILED);
+        processingState.setRetryCount(3);
+        processingState.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint - it should succeed (return 200)
+        // Note: The processing itself may not actually change the state if the unit has no video/PDF to process
+        // but the endpoint should still return OK for a unit in FAILED state
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.OK, null);
+
+        // The endpoint returns OK if the unit was in FAILED state
+        // The actual processing behavior depends on the unit's content (video/PDF)
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void retryProcessing_whenNotInFailedState_shouldReturnBadRequest() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with TRANSCRIBING phase (not FAILED)
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.TRANSCRIBING);
+        processingState.setRetryCount(0);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint - should return BAD_REQUEST
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null,
+                HttpStatus.BAD_REQUEST, null);
+
+        // Verify the processing state was not changed
+        var unchangedState = lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).orElseThrow();
+        assertThat(unchangedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+    }
+
+    // --- Tests for the bulk status endpoint: GET /lectures/{lectureId}/lecture-units/statuses ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void getUnitStatuses_asEditor_shouldReturnStatusesForVideoUnits() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state for the video unit
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.TRANSCRIBING);
+        processingState.setRetryCount(1);
+        processingState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Create a transcription for the video unit
+        LectureTranscription transcription = new LectureTranscription();
+        transcription.setLectureUnit(attachmentVideoUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        transcription.setLanguage("en");
+        lectureTranscriptionRepository.save(transcription);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains only the video unit
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(status.retryCount()).isEqualTo(1);
+        assertThat(status.startedAt()).isNotNull();
+        assertThat(status.transcriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getUnitStatuses_asStudent_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getUnitStatuses_asTutor_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void getUnitStatuses_asInstructorNotInCourse_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_withNoProcessingStateOrTranscription_shouldReturnIdleStatus() throws Exception {
+        // Get the attachment video unit from the lecture - no processing state or transcription exists
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Clean up any existing processing states and transcriptions for this unit
+        lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureUnitProcessingStateRepository::delete);
+        lectureTranscriptionRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureTranscriptionRepository::delete);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains the video unit with IDLE status
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(status.retryCount()).isZero();
+        assertThat(status.startedAt()).isNull();
+        assertThat(status.processingErrorKey()).isNull();
+        assertThat(status.transcriptionStatus()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_withFailedProcessingState_shouldReturnErrorKey() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a failed processing state with error key
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.FAILED);
+        processingState.setRetryCount(3);
+        processingState.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains the error information
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(status.retryCount()).isEqualTo(3);
+        assertThat(status.processingErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_withOnlyTranscription_shouldReturnIdleProcessingWithTranscriptionStatus() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Clean up any existing processing states
+        lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureUnitProcessingStateRepository::delete);
+
+        // Create only a transcription (no processing state)
+        LectureTranscription transcription = new LectureTranscription();
+        transcription.setLectureUnit(attachmentVideoUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription.setLanguage("de");
+        lectureTranscriptionRepository.save(transcription);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response shows IDLE processing but with transcription status
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(status.transcriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_shouldFilterOutNonVideoUnits() throws Exception {
+        // The lecture has text unit, online unit, and attachment video unit
+        // Only the attachment video unit should be returned
+
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify only video units are returned (not text or online units)
+        assertThat(statuses).hasSize(1);
+
+        // Verify the returned ID is the attachment video unit's ID
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        assertThat(statuses.getFirst().lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_forNonExistentLecture_shouldBeForbidden() throws Exception {
+        // Note: Returns 403 (not 404) to avoid leaking information about resource existence
+        // This is the expected behavior from @EnforceAtLeastEditorInLecture annotation
+        request.getList("/api/lecture/lectures/" + 999999L + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getUnitStatuses_withMultipleVideoUnits_shouldReturnAllStatuses() throws Exception {
+        // Add a second attachment video unit to the lecture
+        AttachmentVideoUnit attachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(attachmentVideoUnit2));
+
+        // Get all video units
+        var videoUnits = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).map(lu -> (AttachmentVideoUnit) lu).toList();
+        assertThat(videoUnits).hasSize(2);
+
+        // Create different states for each
+        LectureUnitProcessingState state1 = new LectureUnitProcessingState(videoUnits.get(0));
+        state1.setPhase(ProcessingPhase.INGESTING);
+        lectureUnitProcessingStateRepository.save(state1);
+
+        LectureUnitProcessingState state2 = new LectureUnitProcessingState(videoUnits.get(1));
+        state2.setPhase(ProcessingPhase.DONE);
+        lectureUnitProcessingStateRepository.save(state2);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify both video units are returned
+        assertThat(statuses).hasSize(2);
+
+        var statusIds = statuses.stream().map(LectureUnitCombinedStatusDTO::lectureUnitId).collect(Collectors.toSet());
+        assertThat(statusIds).containsExactlyInAnyOrder(videoUnits.get(0).getId(), videoUnits.get(1).getId());
+
+        // Verify each has the correct phase
+        var statusMap = statuses.stream().collect(toMap(LectureUnitCombinedStatusDTO::lectureUnitId, s -> s));
+        assertThat(statusMap.get(videoUnits.get(0).getId()).processingPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        assertThat(statusMap.get(videoUnits.get(1).getId()).processingPhase()).isEqualTo(ProcessingPhase.DONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void findIngestedVersions_reportsWhatIrisHasIngested() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        var otherCourse = courseUtilService.createCourse();
+        var otherLecture = new Lecture();
+        otherLecture.setTitle("Other course lecture");
+        otherLecture.setCourse(otherCourse);
+        otherLecture = lectureRepository.save(otherLecture);
+        var foreignUnit = lectureUtilService.createAttachmentVideoUnit(otherLecture, false);
+        assertThat(lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId())).extracting(LectureUnitIngestedVersionsDTO::lectureUnitId)
+                .doesNotContain(foreignUnit.getId());
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.lectureUnitId()).isEqualTo(unit.getId());
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+            assertThat(versions.videoVersion()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void findIngestedVersions_reportsNothingWhileUnitIsBeingReprocessed() {
+        var unit = citedUnitFixture(ProcessingPhase.INGESTING);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        // While reprocessing, the vector database still serves the previous revision, so there is nothing trustworthy to pin
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.attachmentVersion()).isNull();
+            assertThat(versions.videoVersion()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void findIngestedVersions_reportsNoVideoVersionWhenTheTranscriptionWasDeleted() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        // Without a transcription there are no timestamps left to pin, while the slides keep their version
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void findIngestedVersions_reportsNoVideoVersionForAPendingTranscription() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByCourseId(lecture1.getCourse().getId()).stream().filter(versions -> versions.lectureUnitId() == unit.getId())
+                .toList();
+
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_returnsCurrentVersionsOfBothMaterials() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The instructor re-uploaded the PDF after Iris ingested version 3
+        var attachment = unit.getAttachment();
+        attachment.setVersion(4);
+        attachmentRepository.save(attachment);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.attachmentVersion()).isEqualTo(4);
+        assertThat(versions.videoVersion()).isEqualTo(2);
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheTranscriptionIsMissingButTheVideoIsNot_reportsTheVideoAsStillPresent() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The state a unit is in while its video is being re-transcribed: the transcription row is deleted and rewritten, the video itself never goes away
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Nothing is left to compare a cited timestamp against, but the video is still there — which is what keeps the client from calling it gone
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whileTheVideoIsBeingReTranscribed_reportsNoVideoVersion() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.TRANSCRIBING);
+        // What a raw checkpoint of a run in progress leaves behind: a pending transcription, while the version still describes the completed one before it
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Reporting the retained version here would let a citation of the previous video pass as current and jump to a timestamp that no longer says what it said
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+        assertThat(versions.attachmentVersion()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheVideoWasRemoved_reportsNoVideo() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+        unit.setVideoSource(null);
+        attachmentVideoUnitRepository.saveWithVideoSource(unit);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void getMaterialVersions_asStudentNotInCourse_shouldBeForbidden() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+
+        request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    /**
+     * Creates an attachment video unit with a PDF at version 3 and a transcribed video at version 2, both already ingested by Iris in the given processing phase.
+     */
+    private AttachmentVideoUnit citedUnitFixture(ProcessingPhase phase) {
+        var unit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        unit.setVideoSource(CITED_VIDEO_SOURCE);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+
+        var attachment = unit.getAttachment();
+        attachment.setVersion(3);
+        attachmentRepository.save(attachment);
+
+        var transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Hello", 1)), unit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        var processingState = new LectureUnitProcessingState(unit);
+        processingState.setPhase(phase);
+        processingState.setAttachmentVersion(3);
+        processingState.setTranscriptionVersion(2);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        return unit;
+    }
+}

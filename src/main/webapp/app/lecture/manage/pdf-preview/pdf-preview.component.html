@@ -1,0 +1,209 @@
+<div class="flex flex-wrap justify-center">
+    <div class="w-full">
+        <div class="flex justify-between items-center">
+            <div class="flex text-start">
+                <h4>
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
+                    @if (attachmentVideoUnit()) {
+                        {{ attachmentVideoUnit()!.id! }}: {{ attachmentVideoUnit()!.name! }}
+                    }
+                </h4>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-2 text-end">
+                @if (attachmentVideoUnit()) {
+                    @if (hasHiddenPages()) {
+                        <button
+                            tumAetUiButton
+                            severity="success"
+                            variant="solid"
+                            size="default"
+                            type="button"
+                            class="truncate"
+                            aria-label="Show selected pages"
+                            [disabled]="isPdfLoading() || selectedPages().size === 0 || !hasHiddenSelectedPages()"
+                            [tumAetUiPopoverTrigger]="showPagePopover"
+                        >
+                            <fa-icon [icon]="faEye" />
+                            <span jhiTranslate="artemisApp.attachment.pdfPreview.showPageButton"></span>
+                        </button>
+                    }
+                    <button
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="default"
+                        type="button"
+                        class="truncate"
+                        aria-label="Hide selected pages"
+                        [disabled]="isPdfLoading() || selectedPages().size === 0"
+                        [tumAetUiPopoverTrigger]="hidePopover"
+                    >
+                        <fa-icon [icon]="faEyeSlash" />
+                        <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
+                    </button>
+
+                    <tumaet-ui-popover #showPagePopover placement="right" [ariaLabel]="'artemisApp.attachment.pdfPreview.showPageButton' | artemisTranslate">
+                        <div class="confirmation-box">
+                            <div class="preview-heading mb-2">
+                                <h5>
+                                    <span jhiTranslate="artemisApp.attachment.pdfPreview.showPagesTitle" [translateValues]="{ param: selectedPages().size }"> </span>
+                                </h5>
+                                <div class="mt-4! mb-4!">
+                                    @for (page of sortedHiddenSelectedPages(); track page.slideId) {
+                                        <div class="page-info mb-2">
+                                            <strong>Page {{ page.order }}:</strong>
+                                            <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
+                                            @if (hiddenPages()[page.slideId]!.date!.isSame(FOREVER, 'day')) {
+                                                <span class="text-muted-color" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                            } @else {
+                                                <span>
+                                                    {{ hiddenPages()[page.slideId]!.date!.format('MMM D, YYYY - HH:mm') }}
+                                                </span>
+                                            }
+                                            @if (hiddenPages()[page.slideId]!.exerciseId) {
+                                                <span
+                                                    class="text-primary"
+                                                    jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
+                                                    [translateValues]="{ param: hiddenPages()[page.slideId]!.exerciseId }"
+                                                ></span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div class="submit-container mt-4! flex justify-between">
+                                    <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="showPopover().close()">
+                                        <span jhiTranslate="entity.action.cancel"></span>
+                                    </button>
+                                    <button
+                                        tumAetUiButton
+                                        severity="primary"
+                                        variant="solid"
+                                        size="default"
+                                        type="button"
+                                        (click)="showPages(selectedPages()); showPopover().close()"
+                                    >
+                                        <span jhiTranslate="entity.action.show"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </tumaet-ui-popover>
+                    <tumaet-ui-popover #hidePopover placement="right" [ariaLabel]="'artemisApp.attachment.pdfPreview.hidePageButton' | artemisTranslate">
+                        @if (hidePopover.isOpen()) {
+                            <jhi-pdf-preview-date-box-component
+                                [courseId]="courseId()"
+                                [selectedPages]="Array.from(selectedPages())"
+                                (hiddenPagesOutput)="hidePages($event); hidePopover.close()"
+                                (selectionCancelledOutput)="hidePopover.close()"
+                            />
+                        }
+                    </tumaet-ui-popover>
+                }
+                <button
+                    tumAetUiButton
+                    severity="danger"
+                    variant="solid"
+                    size="default"
+                    type="button"
+                    jhiDeleteButton
+                    [renderButtonStyle]="false"
+                    [renderButtonText]="false"
+                    [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
+                    (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
+                    [dialogError]="dialogError$"
+                    [disabled]="isPdfLoading() || selectedPages().size === 0"
+                    aria-label="Delete selected pages"
+                >
+                    <fa-icon [icon]="faTrash" />
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
+                </button>
+                <input
+                    [attr.aria-label]="'accessibility.mergePdf' | artemisTranslate"
+                    type="file"
+                    #fileInput
+                    style="display: none"
+                    accept="application/pdf"
+                    (change)="mergePDF($event)"
+                />
+                <button
+                    tumAetUiButton
+                    severity="primary"
+                    variant="solid"
+                    size="default"
+                    type="button"
+                    (click)="triggerFileInput()"
+                    class="truncate"
+                    aria-label="Append PDF file"
+                    [disabled]="!currentPdfUrl() || isPdfLoading()"
+                >
+                    <fa-icon [icon]="faFileImport" />
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
+                </button>
+            </div>
+        </div>
+
+        @if (isPdfLoading()) {
+            <div class="empty-pdf-container">
+                <div class="loading-container">
+                    <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+                </div>
+            </div>
+        } @else if (currentPdfUrl()) {
+            <jhi-pdf-preview-thumbnail-grid-component
+                [courseId]="courseId()"
+                [currentPdfUrl]="currentPdfUrl()"
+                [isAppendingFile]="isAppendingFile()"
+                [hiddenPages]="hiddenPages()"
+                [isAttachmentVideoUnit]="!!attachmentVideoUnit()"
+                [updatedSelectedPages]="selectedPages()"
+                [orderedPages]="pageOrder()"
+                (selectedPagesOutput)="selectedPages.set($event)"
+                (hiddenPagesOutput)="hiddenPages.set($event)"
+                (pageOrderOutput)="onPageOrderChange($event)"
+            />
+        } @else {
+            <div class="empty-pdf-container">
+                <fa-icon [icon]="faExclamationCircle" />
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.noPDFAvailable"></span>
+            </div>
+        }
+        <div class="flex justify-end">
+            <!-- Cancel asks first, because it drops changes; without changes there is nothing to confirm, and the page just goes back. -->
+            @if (hasChanges()) {
+                <jhi-confirm-button
+                    [title]="'artemisApp.attachment.pdfPreview.cancelButton'"
+                    confirmationText="artemisApp.attachment.pdfPreview.cancelEditingQuestion"
+                    confirmationTitle="artemisApp.attachment.pdfPreview.confirmCancelEditing"
+                    [translateText]="true"
+                    [icon]="faCancel"
+                    [btnType]="ButtonType.SECONDARY"
+                    [disabled]="isSaving()"
+                    (onConfirm)="navigateBack()"
+                    class="mx-1"
+                    data-testid="pdf-preview-cancel"
+                />
+            } @else {
+                <button tumAetUiButton type="button" severity="secondary" [disabled]="isSaving()" (click)="navigateBack()" class="mx-1" data-testid="pdf-preview-back">
+                    <fa-icon [icon]="faArrowLeft" /><span jhiTranslate="entity.action.back"></span>
+                </button>
+            }
+            <button
+                tumAetUiButton
+                severity="primary"
+                variant="solid"
+                size="default"
+                type="submit"
+                (click)="updateAttachmentWithFile()"
+                [disabled]="isSaving() || isPdfLoading() || totalPages() === 0 || !hasChanges()"
+            >
+                @if (isSaving()) {
+                    <!-- Inline, because the kit sets the spinner's 100px size in unlayered component styles that a Tailwind utility cannot override. -->
+                    <tumaet-ui-progress-spinner [style.width.rem]="1" [style.height.rem]="1" [ariaLabel]="'loading' | artemisTranslate" />
+                } @else {
+                    <fa-icon [icon]="faSave" [tumAetUiTooltip]="'entity.action.save' | artemisTranslate" />
+                }
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
+        </div>
+    </div>
+</div>

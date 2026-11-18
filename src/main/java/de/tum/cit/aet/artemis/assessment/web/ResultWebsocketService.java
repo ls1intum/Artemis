@@ -1,0 +1,115 @@
+package de.tum.cit.aet.artemis.assessment.web;
+
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.EXERCISE_RESULTS;
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.NEW_RESULTS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+
+/**
+ * This service is responsible for sending websocket notifications when a new result got created.
+ */
+@Lazy
+@Service
+@Profile(PROFILE_CORE)
+public class ResultWebsocketService {
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    private final Optional<ExamDateApi> examDateApi;
+
+    private final ExerciseDateService exerciseDateService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final TeamRepository teamRepository;
+
+    public ResultWebsocketService(WebsocketMessagingService websocketMessagingService, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService,
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+        this.websocketMessagingService = websocketMessagingService;
+        this.examDateApi = examDateApi;
+        this.exerciseDateService = exerciseDateService;
+        this.authCheckService = authCheckService;
+        this.teamRepository = teamRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+    }
+
+    /**
+     * Broadcast a new result to the client.
+     *
+     * @param participation the id is used in the destination (so that only clients who have subscribed the specific participation will receive the result)
+     * @param result        the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
+     *                          As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
+     *                          problem statement and the course with all potential attributes
+     */
+    public void broadcastNewResult(Participation participation, Result result) {
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views,
+        // so the websocket DTO keeps its established shape
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
+
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            broadcastNewResultToParticipants(studentParticipation, result);
+        }
+
+        // Send to tutors, instructors and admins
+        websocketMessagingService.sendMessage(EXERCISE_RESULTS.at(participation.getExercise().getId()), ResultDTO.of(result));
+    }
+
+    private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
+        final var exercise = studentParticipation.getExercise();
+        boolean isWorkingPeriodOver;
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            isWorkingPeriodOver = api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
+        }
+        else {
+            isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
+        }
+        // Don't send students results after the exam ended
+        boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && exercise.getExam().getExamMode().isReal();
+        // If the assessment due date is not over yet, do not send manual feedback to students!
+        boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || AssessmentType.AUTOMATIC_ATHENA == result.getAssessmentType()
+                || exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+
+        if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
+            var students = studentParticipation.getStudents();
+
+            var resultDTO = ResultDTO.of(result);
+            // An instructor conducting an exam test run simulates a student and must see what the student exam shows, see ResultService#filterSensitiveInformationIfNecessary
+            boolean isExamTestRun = studentParticipation.isTestRun() && exercise.isExamExercise();
+            students.stream().filter(student -> !isExamTestRun && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), resultDTO));
+
+            var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
+            var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
+
+            students.stream().filter(student -> isExamTestRun || !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), filteredFeedbackResultDTO));
+        }
+    }
+}

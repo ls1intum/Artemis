@@ -1,0 +1,63 @@
+<div class="flex flex-col h-full">
+    <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
+    <div *adminTitleBarActions>
+        <button type="button" tumAetUiButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
+        </button>
+    </div>
+    <div class="flex min-h-0 flex-1 flex-col">
+        <tumaet-ui-table
+            [columns]="columns()"
+            [rows]="organizations()"
+            [totalRecords]="totalCount()"
+            [trackBy]="trackByOrgId"
+            (dataRequest)="loadOrganizations($event)"
+            [rowActions]="organizationActions"
+            [loading]="isLoading()"
+            [striped]="true"
+            fill
+        />
+    </div>
+</div>
+
+<ng-template #nameColumn let-params>
+    <span
+        ><a [routerLink]="['./', params.data.id]">{{ params.data.name }}</a></span
+    >
+</ng-template>
+
+<ng-template #organizationActions let-organization>
+    <div class="flex items-center justify-end gap-2" data-testid="organization-row-actions">
+        <button
+            tumAetUiButton
+            size="small"
+            severity="warn"
+            type="button"
+            [routerLink]="['./', organization.id, 'edit']"
+            queryParamsHandling="merge"
+            (click)="$event.stopPropagation()"
+            data-testid="edit-organization-btn"
+        >
+            <fa-icon [icon]="faPencil" />
+            <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+            <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
+            jhiDeleteButton
+            [entityTitle]="organization.name"
+            deleteQuestion="artemisApp.organizationManagement.delete.question"
+            (delete)="deleteOrganization(organization.id)"
+            [dialogError]="dialogError$"
+            (click)="$event.stopPropagation()"
+            data-testid="delete-organization-btn"
+        >
+            <fa-icon [icon]="faTrash" />
+        </button>
+    </div>
+</ng-template>

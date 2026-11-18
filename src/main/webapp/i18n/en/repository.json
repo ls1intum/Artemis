@@ -1,0 +1,56 @@
+{
+    "artemisApp": {
+        "repository": {
+            "title": "Repository",
+            "source": "Source",
+            "toggleInlineFeedback": {
+                "show": "Show inline feedback",
+                "hide": "Hide inline feedback"
+            },
+            "commitHistory": {
+                "title": "Commit History",
+                "openCommitHistory": "Open Commit History",
+                "commitDetails": {
+                    "title": "Commit Details",
+                    "commitMessage": "Commit Message",
+                    "commitHash": "Commit Hash",
+                    "author": "Author",
+                    "date": "Date",
+                    "commit": "Commit",
+                    "empty": "No changes",
+                    "fileUnchanged": "No changes in the file content",
+                    "fileTooLarge": "Changes are too large to display. Showing approximate summary."
+                }
+            },
+            "vcsAccessLog": {
+                "title": "VCS Access Log",
+                "openVcsAccessLog": "Open Access Log",
+                "userId": "User Id",
+                "author": "Author",
+                "actionType": "Action Type",
+                "authMechanism": "Access Type",
+                "commitHash": "Commit Hash",
+                "timeStamp": "Timestamp",
+                "includeBuildAgents": "Include build agent access",
+                "error": "VCS Access log could not be retrieved",
+                "searchPlaceholder": "Search by user, author, action, access type, commit or date",
+                "empty": "No access log entries match your search."
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Solution-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Auxiliary-Repository"
+            }
+        }
+    }
+}

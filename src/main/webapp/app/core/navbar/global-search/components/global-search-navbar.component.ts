@@ -1,0 +1,26 @@
+import { Component, inject } from '@angular/core';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OsDetectorService } from '../services/os-detector.service';
+import { SearchOverlayService } from '../services/search-overlay.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-global-search-navbar',
+    standalone: true,
+    templateUrl: './global-search-navbar.component.html',
+    styleUrls: ['./global-search-navbar.component.scss'],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
+})
+export class GlobalSearchNavbarComponent {
+    private readonly osDetector = inject(OsDetectorService);
+    private readonly searchOverlay = inject(SearchOverlayService);
+
+    protected readonly faSearch = faSearch;
+    protected actionKeyLabel = this.osDetector.actionKeyLabel;
+    protected isMac = this.osDetector.isMac;
+
+    openSearch() {
+        this.searchOverlay.open();
+    }
+}

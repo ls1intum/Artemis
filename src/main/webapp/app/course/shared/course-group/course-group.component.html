@@ -1,0 +1,76 @@
+<jhi-table-view
+    [cols]="columns()"
+    [vals]="rows()"
+    [totalRows]="totalRows()"
+    [loading]="isLoading()"
+    [tableActions]="tableActionsTemplate"
+    [rowActions]="rowActionsTemplate"
+    [options]="tableOptions"
+    (onLazyLoad)="onLazyLoad($event)"
+/>
+
+<!-- Import / export buttons rendered in the table caption bar -->
+<ng-template #tableActionsTemplate>
+    @if (course().isAtLeastInstructor) {
+        <div class="flex items-center gap-1">
+            <p-button size="small" data-testid="course-group-add-users-button" (onClick)="openAddUsersModal()">
+                <i class="pi pi-user-plus"></i>
+                <span jhiTranslate="artemisApp.course.courseGroup.addUsers"></span>
+            </p-button>
+            <p-button size="small" severity="secondary" (onClick)="openImportDialog($event)">
+                <i class="pi pi-file-import"></i>
+                <span jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
+            </p-button>
+            <p-button size="small" severity="secondary" (onClick)="exportUserInformation()">
+                <i class="pi pi-download"></i>
+                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
+            </p-button>
+        </div>
+    }
+</ng-template>
+
+<!-- Profile-picture cell template -->
+<ng-template #profilePictureTemplate let-cell>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.8"
+        imageId="user-profile-picture"
+        defaultPictureId="user-default-profile-picture"
+        [authorId]="cell.data.id"
+        [authorName]="cell.data.name"
+        [imageUrl]="addPublicFilePrefix(cell.data.imageUrl)"
+    />
+</ng-template>
+
+<!-- Login cell — admin link when admin -->
+<ng-template #loginTemplate let-cell>
+    @if (isAdmin()) {
+        <a routerLink="/admin/user-management/{{ cell.value }}">{{ cell.value }}</a>
+    } @else {
+        <span>{{ cell.value }}</span>
+    }
+</ng-template>
+
+<!-- Row actions -->
+<ng-template #rowActionsTemplate let-user>
+    <button
+        type="button"
+        pButton
+        jhiDeleteButton
+        severity="danger"
+        outlined
+        size="small"
+        [renderButtonStyle]="false"
+        [actionType]="ActionType.Remove"
+        [entityTitle]="user.login"
+        deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
+        (delete)="removeFromGroup(user)"
+        [dialogError]="dialogError$"
+    >
+        <i class="pi pi-user-minus"></i>
+    </button>
+</ng-template>
+
+<jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onMembersAdded()" />
+
+<jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onMembersAdded()" />

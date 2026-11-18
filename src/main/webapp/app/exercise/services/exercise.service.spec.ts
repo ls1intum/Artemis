@@ -1,0 +1,788 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import dayjs from 'dayjs/esm';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { MockProvider } from 'ng-mocks';
+import { SafeHtml } from '@angular/platform-browser';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+
+import { AccountService } from 'app/core/auth/account.service';
+import { provideHttpClient } from '@angular/common/http';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
+
+describe('Exercise Service', () => {
+    let service: ExerciseService;
+    let httpMock: HttpTestingController;
+    let artemisMarkdown: ArtemisMarkdownService;
+    let exercise: Exercise;
+    let currentDate: dayjs.Dayjs;
+
+    const modelingExercise = {
+        id: 23,
+        type: ExerciseType.MODELING,
+        studentParticipations: [],
+        exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
+        exampleSolutionExplanation: 'Solution<br>Explanation',
+    } as unknown as ModelingExercise;
+
+    const textExercise = {
+        id: 24,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as TextExercise;
+
+    const fileUploadExercise = {
+        id: 25,
+        type: ExerciseType.FILE_UPLOAD,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as FileUploadExercise;
+
+    const programmingExercise = {
+        id: 26,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        exam: 'Example<br>Solution',
+        exampleSolutionPublished: true,
+    } as unknown as ProgrammingExercise;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ArtemisMarkdownService),
+                MockProvider(AccountService),
+                MockProvider(EntityTitleService),
+                MockProvider(ProfileService),
+            ],
+        });
+        service = TestBed.inject(ExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+        artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
+        currentDate = dayjs();
+
+        exercise = new TextExercise(undefined, undefined);
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    it.each([
+        [ExerciseType.PROGRAMMING, 'api/programming/programming-exercises/5/export-instructor-exercise'],
+        [ExerciseType.TEXT, 'api/text/text-exercises/5/export'],
+        [ExerciseType.MODELING, 'api/modeling/modeling-exercises/5/export'],
+        [ExerciseType.FILE_UPLOAD, 'api/fileupload/file-upload-exercises/5/export'],
+        [ExerciseType.QUIZ, 'api/quiz/quiz-exercises/5/export'],
+    ])('should export a %s exercise to a file', (type, url) => {
+        service.exportToFile({ id: 5, type } as Exercise).subscribe();
+        const request = httpMock.expectOne({ method: 'GET', url });
+        expect(request.request.responseType).toBe('blob');
+        request.flush(new Blob(['zip']));
+    });
+
+    it('should fetch only the exercise title projection for selection lists', () => {
+        const titles: ExerciseTitle[] = [
+            { id: 1, title: 'Text title', type: ExerciseType.TEXT },
+            { id: 2, title: 'Programming title', type: ExerciseType.PROGRAMMING },
+        ];
+        let received: ExerciseTitle[] | undefined;
+
+        service.getTitlesForCourse(7).subscribe((response) => (received = response));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/courses/7/exercise-titles' });
+        expect(request.request.params.keys()).toEqual([]);
+        expect(request.request.body).toBeNull();
+        request.flush(titles);
+
+        expect(received).toEqual(titles);
+        expect(received?.map(({ id, title, type }) => ({ id, title, type }))).toEqual(titles);
+    });
+
+    it.each([
+        ['findForStaff', 'for-staff'],
+        ['findForExamAssessment', 'for-exam-assessment'],
+        ['findForExamManagement', 'for-exam-management'],
+    ] as const)('should use the explicit %s route and preserve conversion', (method, suffix) => {
+        let received: Exercise | undefined;
+        service[method](42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/exercises/42/${suffix}` });
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: '2026-01-01T10:00:00Z',
+            categories: [JSON.stringify({ category: 'staff', color: '#123456' })],
+            gradingInstructions: 'grading',
+        });
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.gradingInstructions).toBe('grading');
+        expect(received?.categories).toEqual([new ExerciseCategory('staff', '#123456')]);
+    });
+
+    it.each([false, true])('should select accessible course titles from known course membership: staff=%s', (staff) => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourseWithId').mockReturnValue(staff);
+        let received: ExerciseTitle[] | undefined;
+        service.getTitlesForAccessibleCourse(7).subscribe((titles) => (received = titles));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/7/exercise-titles${staff ? '/for-staff' : ''}` });
+        request.flush([{ id: 1, title: 'Title', type: ExerciseType.TEXT }]);
+        expect(received?.[0].title).toBe('Title');
+    });
+
+    it('should reject equal dates', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.startDateError = false;
+        exercise.dueDateError = false;
+        exercise.assessmentDueDateError = false;
+        exercise.exampleSolutionPublicationDateError = false;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.startDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(1, 'day');
+        exercise.assessmentDueDate = currentDate.add(1, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(1, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.startDateError).toBe(true);
+        expect(exercise.dueDateError).toBe(true);
+        expect(exercise.assessmentDueDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should validate dates', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.startDateError = true;
+        exercise.dueDateError = true;
+        exercise.assessmentDueDateError = true;
+        exercise.exampleSolutionPublicationDateError = true;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.startDate = currentDate.add(2, 'day');
+        exercise.dueDate = currentDate.add(3, 'day');
+        exercise.assessmentDueDate = currentDate.add(4, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(5, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.startDateError).toBe(false);
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+    });
+
+    it('should reject an example solution publication date before the assessment due date', () => {
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(4, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should reject an example solution publication date equal to the assessment due date', () => {
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(3, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should set errors on invalid due and assessment due dates', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.dueDateError = false;
+        exercise.assessmentDueDateError = false;
+
+        exercise.releaseDate = currentDate.add(3, 'day');
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(1, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(true);
+        expect(exercise.assessmentDueDateError).toBe(true);
+    });
+
+    it('should not set an assessment due date error when no assessment due date is set', () => {
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = undefined;
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(false);
+    });
+
+    it('should require a due date when an assessment due date is set', () => {
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.startDate = currentDate.add(2, 'day');
+        exercise.dueDate = undefined;
+        exercise.assessmentDueDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(true);
+    });
+
+    it('should validate empty example solution publication date with assessment due date', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.dueDateError = true;
+        exercise.assessmentDueDateError = true;
+        exercise.exampleSolutionPublicationDateError = true;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(4, 'day');
+        exercise.exampleSolutionPublicationDate = undefined;
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+    });
+
+    it('should validate empty example solution publication date', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.dueDateError = true;
+        exercise.exampleSolutionPublicationDateError = true;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.exampleSolutionPublicationDate = undefined;
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+    });
+
+    it('should set error when due date is before release date', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.dueDateError = false;
+
+        exercise.releaseDate = currentDate.add(5, 'day');
+        exercise.dueDate = currentDate.add(2, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(true);
+    });
+
+    it('should validate the due date against every configured preceding date', () => {
+        exercise.startDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.releaseDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(true);
+    });
+
+    it('should set error when example solution publication date is before release date', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.exampleSolutionPublicationDateError = false;
+
+        exercise.releaseDate = currentDate.add(5, 'day');
+        exercise.dueDate = undefined;
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBeFalsy();
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should allow an example solution publication date when the due date is unset', () => {
+        exercise.exampleSolutionPublicationDateError = true;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.dueDate = undefined;
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+    });
+
+    it('should set error when example solution publication date is before due date', () => {
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.exampleSolutionPublicationDateError = false;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(5, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should set error when example solution publication date is before due date for an exercise that is not included in the score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+
+        // Set flags to opposite of what is expected so we know they are changed.
+        exercise.exampleSolutionPublicationDateError = false;
+
+        exercise.releaseDate = currentDate.add(1, 'day');
+        exercise.dueDate = currentDate.add(5, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.dueDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should fill & empty example modeling solution', () => {
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
+    });
+
+    it('should fill & empty example text solution', () => {
+        const artemisMarkdownSpy = vi.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
+    });
+
+    it('should fill & empty example file upload solution', () => {
+        const artemisMarkdownSpy = vi.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
+    });
+
+    it('should fill & empty example programming exercise solution', () => {
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().add(1, 'm') }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
+    });
+
+    it('should determine is included in score string', () => {
+        const translateService = TestBed.inject(TranslateService);
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
+
+        let callCount = 0;
+        const result = service.isIncludedInScore({} as Exercise);
+        expect(result).toBe('');
+        expect(translateServiceSpy).not.toHaveBeenCalled();
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.bonus');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.yes');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.no');
+    });
+
+    it.each([
+        [{ quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],
+        [{ quizBatches: [{ started: false }, { started: false }] } as QuizExercise, false],
+        [{ studentParticipations: [{ initializationState: InitializationState.INITIALIZED }] } as QuizExercise, true],
+        [{ studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, true],
+        [{ studentParticipations: [{ initializationState: InitializationState.INACTIVE }] } as QuizExercise, false],
+    ])('should determine correctly if quiz is active', (quizExercise: QuizExercise, expected: boolean) => {
+        expect(service.isActiveQuiz(quizExercise)).toEqual(expected);
+    });
+
+    it('should process exercise entity response', () => {
+        const accountService = TestBed.inject(AccountService);
+        const entityTitleService = TestBed.inject(EntityTitleService);
+        const profileService = TestBed.inject(ProfileService);
+
+        const accountServiceSpy = vi.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
+        const entityTitleServiceSpy = vi.spyOn(entityTitleService, 'setExerciseTitle');
+        const profileServiceSpy = vi.spyOn(profileService, 'getProfileInfo');
+
+        const category = {
+            color: '#6ae8ac',
+            category: 'category1',
+        } as ExerciseCategory;
+
+        const releaseDate = dayjs();
+
+        const exerciseFromServer: Exercise = Object.assign({}, textExercise, {
+            title: 'My Title',
+            categories: [JSON.stringify(category)],
+            releaseDate: releaseDate.toJSON(),
+        });
+
+        const processedExercise = service.processExerciseEntityResponse({ body: exerciseFromServer } as EntityResponseType).body!;
+
+        expect(processedExercise.id).toBe(exerciseFromServer.id);
+        expect(processedExercise.categories).toHaveLength(1);
+        expect(processedExercise.categories![0]).toEqual(category);
+
+        expect(processedExercise.releaseDate).toEqual(releaseDate);
+        expect(processedExercise.startDate).toBeUndefined();
+
+        expect(accountServiceSpy).toHaveBeenCalledOnce();
+        expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
+
+        expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
+
+        expect(profileServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should convert exercise dates and categories from client', () => {
+        const category = {
+            color: '#6ae8ac',
+            category: 'category1',
+        } as ExerciseCategory;
+
+        const releaseDate = dayjs();
+
+        exercise = Object.assign({}, textExercise, {
+            categories: [category],
+            releaseDate,
+        });
+
+        const converted = ExerciseService.convertExerciseFromClient(exercise);
+
+        expect(converted.categories).toHaveLength(1);
+        expect(converted.categories![0]).toBe(JSON.stringify(category));
+
+        expect(converted.releaseDate).toBe(releaseDate.toJSON());
+        expect(converted.startDate).toBeUndefined();
+    });
+
+    it('should convert category strings from server into real ExerciseCategory instances', () => {
+        const categories = [JSON.stringify({ color: '#6ae8ac', category: 'category1' }), JSON.stringify({ color: '#123456', category: 'category2' })];
+
+        const result = service.convertExerciseCategoriesAsStringFromServer(categories);
+
+        expect(result).toHaveLength(2);
+        // Must be real instances (not plain parsed objects), so the class methods are available.
+        expect(result[0]).toBeInstanceOf(ExerciseCategory);
+        expect(result[0].category).toBe('category1');
+        expect(result[0].color).toBe('#6ae8ac');
+        expect(result[0].equals(new ExerciseCategory('category1', '#6ae8ac'))).toBe(true);
+        expect(result[1].category).toBe('category2');
+    });
+
+    it('should skip malformed category strings instead of throwing', () => {
+        const categories = [JSON.stringify({ color: '#6ae8ac', category: 'category1' }), '{ not valid json', JSON.stringify({ color: '#123456', category: 'category2' })];
+
+        const result = service.convertExerciseCategoriesAsStringFromServer(categories);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((c) => c.category)).toEqual(['category1', 'category2']);
+    });
+
+    it('should get exercise details', () => {
+        const exerciseId = 123;
+
+        const expectedReturnedExerciseDetails = {
+            exercise: {
+                id: exerciseId,
+                posts: undefined,
+            } as ProgrammingExercise,
+            activatedExerciseHints: [{ id: 42, title: 'testHint' }],
+        } as ExerciseDetailsType;
+
+        const result = service.getExerciseDetails(exerciseId);
+
+        let actualReturnedExerciseDetails: ExerciseDetailsType | undefined = undefined;
+        result.subscribe((exerciseResponse) => (actualReturnedExerciseDetails = exerciseResponse.body!));
+
+        const testRequest = httpMock.expectOne({
+            url: `api/exercise/exercises/${exerciseId}/details`,
+            method: 'GET',
+        });
+
+        testRequest.flush(expectedReturnedExerciseDetails);
+
+        expect(actualReturnedExerciseDetails).toEqual(expectedReturnedExerciseDetails);
+        expect(expectedReturnedExerciseDetails.exercise!.posts).toEqual([]);
+    });
+
+    it('should get exercise for example solution', () => {
+        const serviceSpy = vi.spyOn(service, 'processExerciseEntityResponse');
+
+        const exerciseId = 124;
+
+        const expectedReturnedExercise = {
+            id: exerciseId,
+            exampleSolutionPublicationDate: dayjs().subtract(1, 'm'),
+            exampleSolution: 'Example solution',
+        } as TextExercise;
+
+        const result = service.getExerciseForExampleSolution(exerciseId);
+
+        let actualReturnedExercise = undefined;
+        result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+
+        const testRequest = httpMock.expectOne({
+            url: `api/exercise/exercises/${exerciseId}/example-solution`,
+            method: 'GET',
+        });
+
+        testRequest.flush(expectedReturnedExercise);
+
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
+    });
+
+    it('should send a reset request', () => {
+        const exerciseId = 125;
+
+        service.reset(exerciseId).subscribe();
+
+        httpMock.expectOne({
+            url: `api/exercise/exercises/${exerciseId}/reset`,
+            method: 'DELETE',
+        });
+    });
+
+    it('should toggle second correction', () => {
+        const exerciseId = 127;
+
+        service.toggleSecondCorrection(exerciseId).subscribe();
+
+        httpMock.expectOne({
+            url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
+            method: 'PUT',
+        });
+    });
+
+    describe('getDeletionSummary', () => {
+        const exerciseId = 128;
+        const prefix = 'artemisApp.exercise.delete.summary';
+
+        function fetchSummary(exercise: Exercise, dto: ExerciseDeletionSummaryDTO): EntitySummaryCategory[] | undefined {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary(exercise).subscribe((summary) => (result = summary));
+            httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/deletion-summary`, method: 'GET' }).flush(dto);
+            return result;
+        }
+
+        it('should group everything that is deleted with a programming exercise into readable categories', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise, {
+                numberOfStudentParticipations: 50,
+                numberOfSubmissions: 70,
+                numberOfResults: 60,
+                numberOfAssessments: 25,
+                numberOfComplaints: 2,
+                numberOfPlagiarismComparisons: 4,
+                numberOfCommunicationPosts: 10,
+                numberOfAnswerPosts: 5,
+                numberOfExampleSubmissions: 1,
+                numberOfCompetencyLinks: 3,
+                numberOfLectureUnitLinks: 2,
+                numberOfBuilds: 100,
+            });
+
+            expect(result!.map((category) => category.titleKey)).toEqual([
+                `${prefix}.category.studentWork`,
+                `${prefix}.category.assessment`,
+                `${prefix}.category.plagiarism`,
+                `${prefix}.category.communication`,
+                `${prefix}.category.content`,
+                `${prefix}.category.infrastructure`,
+            ]);
+            expect(result![0].items).toEqual([
+                { labelKey: `${prefix}.numberOfStudentParticipations`, value: 50, highlight: false },
+                { labelKey: `${prefix}.numberOfSubmissions`, value: 70, highlight: false },
+            ]);
+            // builds are no student work that would be lost, so they are never emphasised
+            expect(result![5].items).toEqual([{ labelKey: `${prefix}.numberOfBuilds`, value: 100, highlight: false, neverHighlight: true }]);
+        });
+
+        it('should leave out builds for non-programming exercises and rows without data', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.TEXT } as Exercise, {
+                numberOfStudentParticipations: 30,
+                numberOfBuilds: 50,
+                numberOfAssessments: 20,
+            });
+
+            expect(result!.map((category) => category.titleKey)).toEqual([`${prefix}.category.studentWork`, `${prefix}.category.assessment`]);
+            expect(result!.flatMap((category) => category.items.map((item) => item.labelKey))).not.toContain(`${prefix}.numberOfBuilds`);
+        });
+
+        it('should leave out builds and manual assessments for quiz exercises', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.QUIZ } as Exercise, {
+                numberOfStudentParticipations: 3,
+                numberOfBuilds: 5,
+                numberOfAssessments: 7,
+                numberOfResults: 3,
+            });
+
+            const labels = result!.flatMap((category) => category.items.map((item) => item.labelKey));
+            expect(labels).toEqual([`${prefix}.numberOfStudentParticipations`, `${prefix}.numberOfResults`]);
+        });
+
+        it('should return no categories when nothing would be deleted', () => {
+            expect(fetchSummary({ id: exerciseId, type: ExerciseType.TEXT } as Exercise, {})).toEqual([]);
+        });
+
+        it('should return no categories for exercise without id', () => {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary({ type: ExerciseType.TEXT } as Exercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return no categories for exercise without type', () => {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary({ id: exerciseId } as Exercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual([]);
+        });
+    });
+
+    it('loads the generic exercise projection and converts exercise dates and categories', () => {
+        let received: Exercise | undefined;
+        service.find(42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/exercises/42' });
+        const dates = {
+            releaseDate: '2026-01-01T10:00:00Z',
+            startDate: '2026-01-02T10:00:00Z',
+            dueDate: '2026-01-03T10:00:00Z',
+            assessmentDueDate: '2026-01-04T10:00:00Z',
+            exampleSolutionPublicationDate: '2026-01-05T10:00:00Z',
+        };
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: dates.releaseDate,
+            categories: [JSON.stringify({ category: 'shared', color: '#123456' })],
+            exerciseVariantGroup: { id: 9, ...dates },
+        });
+
+        expect(received?.id).toBe(42);
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.categories).toEqual([new ExerciseCategory('shared', '#123456')]);
+        // Exam and exercise-list consumers also convert the shared group timeline through this public mapper.
+        ExerciseService.convertExercisesDateFromServer([received!]);
+        for (const [key, value] of Object.entries(dates)) {
+            const converted = received?.exerciseVariantGroup?.[key as keyof typeof dates];
+            expect(dayjs.isDayjs(converted)).toBe(true);
+            expect(converted?.toISOString()).toBe(dayjs(value).toISOString());
+        }
+    });
+
+    it('serializes a detached exercise without shipping its course graph or participation data', () => {
+        const source = new TextExercise(undefined, undefined);
+        source.id = 7;
+        source.releaseDate = dayjs('2026-01-01T10:00:00Z');
+        source.course = { id: 1, exercises: [new TextExercise(undefined, undefined)], lectures: [{ id: 2 }] };
+        source.studentParticipations = [{ id: 3 }];
+        source.categories = [new ExerciseCategory('Practice', '#123456')];
+        const converted = ExerciseService.convertExerciseFromClient(source);
+        expect(converted).not.toBe(source);
+        expect(converted.course).toMatchObject({ id: 1, exercises: [], lectures: [] });
+        expect(converted.studentParticipations).toEqual([]);
+        expect(converted.categories).toEqual([JSON.stringify(new ExerciseCategory('Practice', '#123456'))]);
+        expect(source.course.exercises).toHaveLength(1);
+        expect(source.course.lectures).toHaveLength(1);
+        expect(source.studentParticipations).toEqual([{ id: 3 }]);
+        expect(dayjs.isDayjs(source.releaseDate)).toBe(true);
+    });
+
+    it('loads upcoming exercises with converted dates for the administrator overview', () => {
+        service.getUpcomingExercises().subscribe((response) => {
+            expect(response.body?.[0].id).toBe(7);
+            expect(response.body?.[0].dueDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exercise/admin/exercises/upcoming' }).flush([{ id: 7, type: ExerciseType.TEXT, dueDate: '2026-01-01T10:00:00Z' }]);
+    });
+
+    it('uses the release date before the start date when deciding student visibility', () => {
+        const ex = new TextExercise(undefined, undefined);
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
+        ex.startDate = dayjs().subtract(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(true);
+        ex.releaseDate = dayjs().add(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
+    });
+});

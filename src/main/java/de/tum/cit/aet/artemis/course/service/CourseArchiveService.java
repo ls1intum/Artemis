@@ -1,0 +1,258 @@
+package de.tum.cit.aet.artemis.course.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+
+/**
+ * Service for archiving courses, which includes exporting course data and cleaning up exercises.
+ * This service is used to create a zip file containing student submissions for both course exercises and exams.
+ */
+@Service
+@Profile(PROFILE_CORE)
+@Lazy
+public class CourseArchiveService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseArchiveService.class);
+
+    public static final int TOTAL_ARCHIVE_STEPS = 4;
+
+    @Value("${artemis.course-archives-path}")
+    private Path courseArchivesDirPath;
+
+    private final CourseRepository courseRepository;
+
+    private final CourseExamExportService courseExamExportService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final UserRepository userRepository;
+
+    private final AuditEventRepository auditEventRepository;
+
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final Optional<ExamApi> examApi;
+
+    private final ExerciseDeletionService exerciseDeletionService;
+
+    private final CourseOperationProgressService progressService;
+
+    public CourseArchiveService(CourseRepository courseRepository, CourseExamExportService courseExamExportService, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExamApi> examApi,
+            ExerciseDeletionService exerciseDeletionService, CourseOperationProgressService progressService) {
+        this.courseRepository = courseRepository;
+        this.courseExamExportService = courseExamExportService;
+        this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
+        this.auditEventRepository = auditEventRepository;
+        this.examRepositoryApi = examRepositoryApi;
+        this.examApi = examApi;
+        this.exerciseDeletionService = exerciseDeletionService;
+        this.progressService = progressService;
+    }
+
+    /**
+     * Retrieves inactive courses that the current user can access.
+     *
+     * @return A list of courses for the course archive.
+     */
+    public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
+        var user = userRepository.getUserWithAuthorities();
+        boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
+        return courseRepository.findInactiveCoursesForUserRolesForArchive(isAdmin, user.getId(), ZonedDateTime.now());
+    }
+
+    /**
+     * Archives the course by creating a zip file will student submissions for
+     * both the course exercises and exams.
+     *
+     * @param course         the course to archive
+     * @param operationClaim the claim acquired before crossing the asynchronous boundary
+     */
+    @Async("longRunningJobExecutor")
+    public void archiveCourse(Course course, CourseOperationClaim operationClaim) {
+        archiveCourseSynchronously(course, operationClaim);
+    }
+
+    /**
+     * Synchronously archives the course by creating a zip file with student submissions for both the course exercises
+     * and exams, storing the resulting archive path on the course. Unlike {@link #archiveCourse(Course, CourseOperationClaim)} this runs on the
+     * calling thread, so callers can rely on {@link Course#hasCourseArchive()} being up to date once it returns. This is
+     * required by the data-privacy retention flow, which must ensure an archive exists (instructor backup) before it may
+     * reset a course's student data.
+     *
+     * @param course the course to archive
+     * @return {@code true} if an archive was created, {@code false} otherwise (e.g. the course is not over yet, or the
+     *         export failed)
+     */
+    public boolean archiveCourseSynchronously(Course course) {
+        // Archiving a course is only possible after the course is over
+        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
+            return false;
+        }
+
+        ZonedDateTime startedAt = ZonedDateTime.now();
+        CourseOperationClaim operationClaim = progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
+        return archiveCourseSynchronously(course, operationClaim);
+    }
+
+    private boolean archiveCourseSynchronously(Course course, CourseOperationClaim operationClaim) {
+        long start = System.nanoTime();
+
+        // This contains possible errors encountered during the archive process
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+
+        try {
+            SecurityUtils.setAuthorizationObject();
+            progressService.verifyOperationClaim(operationClaim);
+
+            // Create course archives directory if it doesn't exist
+            Files.createDirectories(courseArchivesDirPath);
+            log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
+
+            // Pre-fetch exam scores data to avoid circular dependencies
+            // (ExamApi -> ExamService -> CourseExamExportService would create a cycle if called from within CourseExamExportService)
+            Map<Long, ExamScoresDTO> examScoresData = fetchExamScoresForCourse(course.getId(), exportErrors);
+
+            // Export the course to the archives' directory.
+            var archivedCoursePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, examScoresData, operationClaim);
+
+            // Attach the path to the archive to the course and save it in the database
+            if (archivedCoursePath.isPresent()) {
+                progressService.verifyOperationClaim(operationClaim);
+                course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
+                courseRepository.saveAndFlush(course);
+                progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
+            }
+            else {
+                progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, exportErrors.size(), "No course archive was created", 0);
+            }
+            log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
+            return archivedCoursePath.isPresent();
+        }
+        catch (Exception e) {
+            var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
+            progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
+        }
+        finally {
+            progressService.releaseOperationClaim(operationClaim);
+        }
+
+        log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
+        return false;
+    }
+
+    /**
+     * Cleans up a course by cleaning up all exercises from that course. This deletes all student
+     * repositories and build plans. Note that a course has to be archived first before being cleaned up.
+     *
+     * @param courseId  The id of the course to clean up
+     * @param principal the user that wants to cleanup the course
+     */
+    public void cleanupCourse(Long courseId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_COURSE, "course=" + courseId);
+        auditEventRepository.add(auditEvent);
+        // Get the course with all exercises
+        var course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
+        if (!course.hasCourseArchive()) {
+            log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
+            return;
+        }
+
+        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepositoryApi.map(api -> api.getExercisesByCourseId(courseId)).orElse(Set.of());
+
+        var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
+        exercisesToCleanup.forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseDeletionService.cleanup(exercise.getId());
+            }
+        });
+
+        log.info("The course {} has been cleaned up!", courseId);
+    }
+
+    /**
+     * Fetches exam scores for all exams in a course.
+     * This is done in CourseArchiveService (rather than CourseExamExportService) to avoid
+     * circular dependencies: ExamApi -> ExamService -> CourseExamExportService.
+     *
+     * @param courseId the ID of the course
+     * @param errors   list to collect any errors
+     * @return map of exam ID to ExamScoresDTO
+     */
+    private Map<Long, ExamScoresDTO> fetchExamScoresForCourse(long courseId, List<String> errors) {
+        Map<Long, ExamScoresDTO> examScoresData = new HashMap<>();
+
+        if (examRepositoryApi.isEmpty() || examApi.isEmpty()) {
+            return examScoresData;
+        }
+
+        try {
+            Set<Long> examIds = examRepositoryApi.get().findExamIdsByCourseId(courseId);
+            for (Long examId : examIds) {
+                try {
+                    ExamScoresDTO examScores = examApi.get().calculateExamScoresForExport(examId);
+                    if (examScores != null && examScores.studentResults() != null && !examScores.studentResults().isEmpty()) {
+                        examScoresData.put(examId, examScores);
+                    }
+                }
+                catch (Exception e) {
+                    String message = "Failed to fetch exam scores for exam " + examId + " in course " + courseId;
+                    log.error(message, e);
+                    errors.add(message);
+                }
+            }
+        }
+        catch (Exception e) {
+            String message = "Failed to find exams for course " + courseId;
+            log.error(message, e);
+            errors.add(message);
+        }
+
+        return examScoresData;
+    }
+}

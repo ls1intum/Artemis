@@ -1,0 +1,114 @@
+@if (form) {
+    <div class="config-hero">
+        <div class="config-hero-icon" aria-hidden="true">
+            <fa-icon [icon]="faUsers" />
+        </div>
+        <div class="config-hero-text">
+            <h2 class="config-hero-title" jhiTranslate="artemisApp.forms.configurationForm.hero.title"></h2>
+            <p class="config-hero-desc" jhiTranslate="artemisApp.forms.configurationForm.hero.description"></p>
+        </div>
+    </div>
+    <form class="config-form" [formGroup]="form" (ngSubmit)="submitForm()">
+        <!-- Period: two date pickers, start and end; the form's period control carries them as one [start, end] pair. -->
+        <section class="config-field">
+            <span id="period-label" class="config-field-label" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></span>
+            <div class="config-period" role="group" aria-labelledby="period-label">
+                <tumaet-ui-date-picker
+                    inputId="period-start"
+                    data-testid="period-start"
+                    [dateOnly]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="true"
+                    labelName="artemisApp.pages.tutorialFreePeriodsManagement.form.from"
+                    [value]="periodStart()"
+                    (valueChange)="onPeriodStartChange($event)"
+                    (inputValidityChange)="onPeriodStartTextValidityChange($event)"
+                    (touch)="markPeriodAsTouched()"
+                    [invalid]="isPeriodStartInvalid"
+                    [ariaDescribedBy]="periodErrorId"
+                />
+                <tumaet-ui-date-picker
+                    inputId="period-end"
+                    data-testid="period-end"
+                    [dateOnly]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="true"
+                    labelName="artemisApp.pages.tutorialFreePeriodsManagement.form.to"
+                    [value]="periodEnd()"
+                    (valueChange)="onPeriodEndChange($event)"
+                    (inputValidityChange)="onPeriodEndTextValidityChange($event)"
+                    (touch)="markPeriodAsTouched()"
+                    [invalid]="isPeriodEndInvalid"
+                    [ariaDescribedBy]="periodErrorId"
+                />
+            </div>
+            <p class="config-field-hint" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></p>
+            @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
+                @if (periodControl?.errors?.required) {
+                    <p
+                        id="period-required-error"
+                        class="config-field-error"
+                        data-testid="period-error"
+                        jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"
+                    ></p>
+                }
+                @if (periodControl?.errors?.invalidRange) {
+                    <p
+                        id="period-range-error"
+                        class="config-field-error"
+                        data-testid="period-error"
+                        jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"
+                    ></p>
+                }
+            }
+        </section>
+
+        <!-- Channels: only when the course has communication enabled. -->
+        @if (isMessagingEnabled(course())) {
+            <section class="config-field">
+                <div class="config-checkbox-row">
+                    <tumaet-ui-checkbox
+                        inputId="useTutorialGroupChannels"
+                        name="useTutorialGroupChannels"
+                        formControlName="useTutorialGroupChannels"
+                        [checked]="!!useTutorialGroupChannelsControl?.value"
+                    />
+                    <label for="useTutorialGroupChannels" jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"></label>
+                </div>
+                <p class="config-field-hint" jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation"></p>
+                @if (showChannelDeletionWarning) {
+                    <tumaet-ui-message
+                        id="channelDeletionWarning"
+                        severity="error"
+                        [text]="'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate"
+                    />
+                }
+
+                @if (useTutorialGroupChannelsControl?.value) {
+                    <div class="config-subfield">
+                        <label id="usePublicChannelsLabel" class="config-field-label" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
+                        <tumaet-ui-select-button
+                            size="small"
+                            aria-labelledby="usePublicChannelsLabel"
+                            formControlName="usePublicTutorialGroupChannels"
+                            [options]="channelVisibilityOptions"
+                            optionValue="value"
+                            [allowEmpty]="false"
+                            [itemTemplate]="visibilityItem"
+                        />
+                        <ng-template #visibilityItem let-item>
+                            <span [jhiTranslate]="item.labelKey"></span>
+                        </ng-template>
+                        <p class="config-field-hint" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"></p>
+                    </div>
+                }
+            </section>
+        }
+
+        <div class="config-form-actions">
+            <button id="submitButton" tumAetUiButton type="submit" [disabled]="!isSubmitPossible">
+                <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
+            </button>
+        </div>
+    </form>
+}

@@ -1,0 +1,31 @@
+<div class="font-mono text-sm">
+    @if (!previewText()) {
+        <p class="inline whitespace-pre-wrap break-words">{{ feedback().text }}</p>
+    } @else {
+        @if (isCollapsed()) {
+            <div>
+                <div
+                    class="inline cursor-pointer"
+                    (click)="toggleCollapse()"
+                    [attr.aria-expanded]="!isCollapsed()"
+                    #keyboardAction7
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction7.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction7.click() : undefined"
+                >
+                    <fa-icon [icon]="faAngleRight" />
+                    <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
+                </div>
+                <!-- Only show first line as preview -->
+                <p class="inline whitespace-pre-wrap break-words">{{ previewText() }}</p>
+            </div>
+        } @else {
+            <div>
+                <fa-icon class="cursor-pointer" [icon]="faAngleDown" (click)="toggleCollapse()" />
+                <jhi-feedback-text [feedback]="feedback()" />
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,174 @@
+import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import dayjs from 'dayjs/esm';
+import { User } from 'app/account/user/user.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { AnswerPostComponent } from '../answer-post/answer-post.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { NgClass } from '@angular/common';
+
+interface PostGroup {
+    author: User | undefined;
+    posts: AnswerPost[];
+}
+
+/**
+ * Returns a new {@link AnswerPost} reference differing only in `isConsecutive`. See the equivalent helper in
+ * conversation-messages.component.ts: grouping must not deep-copy the answers it renders.
+ */
+function withConsecutiveFlag(answerPost: AnswerPost, isConsecutive: boolean): AnswerPost {
+    const flagged = AnswerPost.withSameValues(answerPost);
+    flagged.isConsecutive = isConsecutive;
+    return flagged;
+}
+
+@Component({
+    selector: 'jhi-posting-footer',
+    templateUrl: './posting-footer.component.html',
+    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
+})
+export class PostingFooterComponent implements OnInit, OnDestroy {
+    private communicationService = inject(CommunicationService);
+
+    constructor() {
+        effect(() => {
+            // Track sortedAnswerPosts signal input (replaces ngOnChanges)
+            this.sortedAnswerPosts();
+            untracked(() => {
+                this.groupAnswerPosts();
+            });
+        });
+    }
+
+    lastReadDate = input<dayjs.Dayjs | undefined>();
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
+    hasChannelModerationRights = input<boolean>(false);
+    showAnswers = input<boolean>(false);
+    isCommunicationPage = input<boolean>(false);
+    sortedAnswerPosts = input<AnswerPost[]>([]);
+    isThreadSidebar = input<boolean>(false);
+    posting = input<Posting>();
+
+    // Output Signals
+    openThread = output<void>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
+
+    readonly answerPostCreateEditModal = viewChild(AnswerPostCreateEditModalComponent);
+    readonly containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    readonly createAnswerPostModalComponent = viewChild.required<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
+
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
+    isAtLeastTutorInCourse = false;
+    courseId!: number;
+    readonly groupedAnswerPosts = signal<PostGroup[]>([]);
+
+    ngOnInit(): void {
+        this.courseId = this.communicationService.getCourse().id!;
+        this.isAtLeastTutorInCourse = this.communicationService.currentUserIsAtLeastTutorInCourse();
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+        this.groupAnswerPosts();
+    }
+
+    ngOnDestroy(): void {
+        const modal = this.answerPostCreateEditModal();
+        modal?.createEditAnswerPostContainerRef()?.clear();
+    }
+
+    /**
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
+     * @return AnswerPost created empty default answer post
+     */
+    createEmptyAnswerPost(): AnswerPost {
+        const answerPost = new AnswerPost();
+        answerPost.content = '';
+        answerPost.post = this.posting();
+        answerPost.resolvesPost = this.isAtLeastTutorInCourse;
+        return answerPost;
+    }
+
+    groupAnswerPosts(): void {
+        if (!this.sortedAnswerPosts() || this.sortedAnswerPosts().length === 0) {
+            this.groupedAnswerPosts.set([]);
+            return;
+        }
+
+        const sortedAnswerPosts = this.sortedAnswerPosts().slice().reverse();
+
+        const sortedPosts = sortedAnswerPosts.sort((a, b) => {
+            return a.creationDate!.valueOf() - b.creationDate!.valueOf();
+        });
+
+        const groups: PostGroup[] = [];
+        let currentGroup: PostGroup = {
+            author: sortedPosts[0].author,
+            posts: [withConsecutiveFlag(sortedPosts[0], false)],
+        };
+
+        for (let i = 1; i < sortedPosts.length; i++) {
+            const currentPost = sortedPosts[i];
+            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+
+            let timeDiff = Number.MAX_SAFE_INTEGER;
+            if (currentPost.creationDate && lastPostInGroup.creationDate) {
+                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
+            }
+
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
+                currentGroup.posts.push(withConsecutiveFlag(currentPost, true)); // consecutive post
+            } else {
+                groups.push(currentGroup);
+                currentGroup = {
+                    author: currentPost.author,
+                    posts: [withConsecutiveFlag(currentPost, false)],
+                };
+            }
+        }
+
+        groups.push(currentGroup);
+        this.groupedAnswerPosts.set(groups);
+    }
+
+    trackGroupByFn(_: number, group: PostGroup): number {
+        return group.posts[0].id!;
+    }
+
+    trackPostByFn(_: number, post: AnswerPost): number {
+        return post.id!;
+    }
+
+    isLastPost(group: PostGroup, answerPost: AnswerPost): boolean {
+        const lastPostInGroup = group.posts[group.posts.length - 1];
+        return lastPostInGroup.id === answerPost.id;
+    }
+
+    /**
+     * Prepares an empty draft and reopens the reply input, so that the user can answer the thread multiple times in a row
+     */
+    onAnswerPostCreated(): void {
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+        this.openCreateAnswerPostModal();
+    }
+
+    /**
+     * Open create answer modal
+     */
+    openCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent()?.open();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent()?.close();
+    }
+
+    protected postsTrackByFn(_index: number, post: Post): number {
+        return post.id!;
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "register": {
+        "title": "Registration",
+        "form": {
+            "login": "Username",
+            "login.placeholder": "Username",
+            "button": "Register"
+        },
+        "messages": {
+            "validate": {
+                "login": {
+                    "required": "Your username is required.",
+                    "minlength": "Your username is required to be at least {{min}} characters.",
+                    "maxlength": "Your username cannot be longer than {{max}} characters.",
+                    "pattern": "Your username can only contain letters and digits."
+                }
+            },
+            "success": "<strong>Registration saved!</strong> Please check your email for confirmation.",
+            "error": {
+                "fail": "<strong>Registration failed!</strong> Please try again later.",
+                "userExists": "<strong>Login name already registered!</strong> Please choose another one.",
+                "emailExists": "<strong>Email is already in use!</strong> Please choose another one.",
+                "emailNotAllowed": "<strong>This email address is not allowed.</strong> Please use one of the allowed email addresses.",
+                "blocked": "<strong>Registration is blocked for the email and/or login!</strong> Please try again later."
+            }
+        }
+    }
+}

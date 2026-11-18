@@ -1,0 +1,38 @@
+{
+    "artemisApp": {
+        "courseExamArchive": {
+            "archiveCourse": "Kurs archivieren",
+            "archiveExam": "Prüfung archivieren",
+            "archiveCourseSuccess": "Der Kurs wurde archiviert!",
+            "archiveExamSuccess": "Die Prüfung wurde archiviert!",
+            "archiveSuccessWithWarnings": "Der Archivierungsprozess wurde mit den folgenden Warnungen abgeschlossen:",
+            "archiveCourseError": {
+                "NOTHING_TO_EXPORT": "Der Kurs '{{ courseName }}' wurde nicht archiviert, da er leer ist.",
+                "DIR_NOT_CREATED": "Der Kurs '{{ courseName }}' konnte nicht archiviert werden: Der Ordner konnte nicht erstellt werden",
+                "ZIP_NOT_CREATED": "Der Kurs '{{ courseName }}' konnte nicht archiviert werden: Die ZIP-Datei konnte nicht erstellt werden."
+            },
+            "archiveExamError": "Die Prüfung '{{ examName }}' konnte nicht archiviert werden.",
+            "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
+            "downloadArchive": "Kursarchiv herunterladen",
+            "popup": {
+                "course": {
+                    "title": "Kurs Archivieren",
+                    "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich archivieren?",
+                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen.",
+                    "statement1b": "Zusätzlich enthält das Archiv umfassende Studierendendaten: Kurs- und Prüfungspunkte, Teilnahmeergebnisse mit Feedback, Beiträge und Nachrichten, Kompetenzfortschritt, Lernerprofile, Tutoriumsregistrierungen, Iris-Chat-Sitzungen und LLM-Token-Nutzungsprotokolle."
+                },
+                "exam": {
+                    "title": "Prüfung Archivieren",
+                    "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich archivieren?",
+                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen der Prüfung."
+                },
+                "statement2": "<strong class='text-danger'>Dieser Vorgang kann einige Stunden dauern, abhängig von der Anzahl an Studierenden und Programmieraufgaben, und wird viele Serverkapazitäten in Anspruch nehmen. Bitte starte diesen Vorgang nur wenn die Serverauslastung gering ist (z.B. in den frühen Morgenstunden).</strong>",
+                "footerStatement": "Du wirst eine Benachrichtigung erhalten, wenn der Prozess abgeschlossen ist. Dann kannst du das Archiv als Zip-Datei von dieser Seite herunterladen."
+            },
+            "confirmArchive": {
+                "title": "Achtung: Ein Archiv existiert bereits!",
+                "message": "Warnung! Der Kurs wurde bereits archiviert. Wenn du fortfährst, wird das Archiv überschrieben! Bist du sicher, dass du fortfahren möchtest?"
+            }
+        }
+    }
+}

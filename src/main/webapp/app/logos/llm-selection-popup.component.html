@@ -1,0 +1,35 @@
+<tumaet-ui-dialog
+    [visible]="isVisible()"
+    (visibleChange)="onVisibleChange($event)"
+    size="large"
+    [showHeader]="false"
+    [dismissableMask]="true"
+    [ariaLabel]="'artemisApp.llmSelectionPopup.header' | artemisTranslate"
+>
+    @if (isVisible()) {
+        <div class="llm-modal" data-testid="llm-selection-modal">
+            <div class="llm-modal-header">
+                <h1 id="ai-modal-title" jhiTranslate="artemisApp.llmSelectionPopup.header"></h1>
+                <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleOne"></p>
+                <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleTwo"></p>
+            </div>
+
+            <jhi-ai-mode-selector [currentSelection]="currentSelection()" [isOnPremiseEnabled]="isOnPremiseEnabled()" (choice)="selectMode($event)" />
+
+            <div class="footer-note">
+                <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
+                <a
+                    class="learn-more-link"
+                    (click)="onLearnMoreClick($event)"
+                    jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"
+                    #keyboardAction307
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                ></a>
+            </div>
+        </div>
+    }
+</tumaet-ui-dialog>

@@ -1,0 +1,49 @@
+import { ActivatedRoute, ActivatedRouteSnapshot, Data, Params, UrlSegment, convertToParamMap } from '@angular/router';
+import { ReplaySubject } from 'rxjs';
+
+export class MockActivatedRoute extends ActivatedRoute {
+    private queryParamsSubject = new ReplaySubject<Params>(1);
+    private paramSubject = new ReplaySubject<Params>(1);
+    private dataSubject = new ReplaySubject<Data>(1);
+    private urlSubject = new ReplaySubject<UrlSegment[]>(1);
+
+    constructor(parameters?: any) {
+        super();
+        this.queryParams = this.queryParamsSubject.asObservable();
+        this.params = this.paramSubject.asObservable();
+        this.data = this.dataSubject.asObservable();
+        this.url = this.urlSubject.asObservable();
+        this.setParameters(parameters);
+        this.urlSubject.next([]);
+        // Provide a default snapshot with paramMap and queryParamMap
+        this.snapshot = {
+            paramMap: convertToParamMap(parameters || {}),
+            queryParamMap: convertToParamMap(parameters || {}),
+        } as ActivatedRouteSnapshot;
+    }
+
+    setParameters(parameters: Params): void {
+        this.queryParamsSubject.next(parameters);
+        this.paramSubject.next(parameters);
+        this.dataSubject.next({
+            ...parameters,
+            defaultSort: 'id,desc',
+            pagingParams: {
+                page: 10,
+                ascending: false,
+                predicate: 'id',
+            },
+        });
+    }
+
+    override get root(): ActivatedRoute {
+        return this;
+    }
+
+    override get firstChild(): ActivatedRoute {
+        return this;
+    }
+    override get parent(): ActivatedRoute {
+        return this;
+    }
+}

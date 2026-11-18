@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "multipleChoiceSubmittedAnswer": {
+            "home": {
+                "title": "Multiple-Choice eingereichte Antwort",
+                "createLabel": "Multiple-Choice eingereichte Antwort erstellen"
+            },
+            "created": "Multiple-Choice eingereichte Antwort erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice eingereichte Antwort aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice eingereichte Antwort gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Multiple-Choice eingereichte Antwort {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Multiple-Choice eingereichte Antwort"
+            },
+            "selectedOptions": "Ausgewählte Optionen"
+        }
+    }
+}

@@ -1,0 +1,200 @@
+{
+    "version": "2.0.0",
+    "type": "SyntaxTree",
+    "size": {
+        "width": 540,
+        "height": 580
+    },
+    "interactive": {
+        "elements": [
+        ],
+        "relationships": [
+        ]
+    },
+    "elements": [
+        {
+            "id": "8e21a66e-9fc4-4f82-b2d1-3d26a51b309a",
+            "name": "stmt",
+            "type": "SyntaxTreeNonterminal",
+            "owner": null,
+            "bounds": {
+                "x": 160,
+                "y": 0,
+                "width": 80,
+                "height": 30
+            }
+        },
+        {
+            "id": "2ea3a753-b2d9-4a57-881e-1f10837ef5a2",
+            "name": "a",
+            "type": "SyntaxTreeTerminal",
+            "owner": null,
+            "bounds": {
+                "x": 0,
+                "y": 90,
+                "width": 80,
+                "height": 30
+            }
+        },
+        {
+            "id": "3a54da7e-ad8c-410d-83d3-541ec58ea038",
+            "name": "=",
+            "type": "SyntaxTreeTerminal",
+            "owner": null,
+            "bounds": {
+                "x": 110,
+                "y": 90,
+                "width": 80,
+                "height": 30
+            }
+        },
+        {
+            "id": "76c37862-7cb7-4044-8250-764ca9b1a216",
+            "name": "4",
+            "type": "SyntaxTreeTerminal",
+            "owner": null,
+            "bounds": {
+                "x": 220,
+                "y": 90,
+                "width": 80,
+                "height": 30
+            }
+        },
+        {
+            "id": "d2025889-3fe5-4ad5-9f42-d1ea57256dcc",
+            "name": ";",
+            "type": "SyntaxTreeTerminal",
+            "owner": null,
+            "bounds": {
+                "x": 320,
+                "y": 90,
+                "width": 80,
+                "height": 30
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "200cbd5f-4ce1-4d96-8bbd-34ef89aae533",
+            "name": "",
+            "type": "SyntaxTreeLink",
+            "owner": null,
+            "bounds": {
+                "x": 40,
+                "y": 30,
+                "width": 160,
+                "height": 60
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 60
+                },
+                {
+                    "x": 160,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Up",
+                "element": "2ea3a753-b2d9-4a57-881e-1f10837ef5a2"
+            },
+            "target": {
+                "direction": "Down",
+                "element": "8e21a66e-9fc4-4f82-b2d1-3d26a51b309a"
+            }
+        },
+        {
+            "id": "7afce32d-7faa-489d-ac8f-10964961edc5",
+            "name": "",
+            "type": "SyntaxTreeLink",
+            "owner": null,
+            "bounds": {
+                "x": 150,
+                "y": 30,
+                "width": 50,
+                "height": 60
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 60
+                },
+                {
+                    "x": 50,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Up",
+                "element": "3a54da7e-ad8c-410d-83d3-541ec58ea038"
+            },
+            "target": {
+                "direction": "Down",
+                "element": "8e21a66e-9fc4-4f82-b2d1-3d26a51b309a"
+            }
+        },
+        {
+            "id": "0a40b242-028b-4013-b239-016345c16965",
+            "name": "",
+            "type": "SyntaxTreeLink",
+            "owner": null,
+            "bounds": {
+                "x": 200,
+                "y": 30,
+                "width": 60,
+                "height": 60
+            },
+            "path": [
+                {
+                    "x": 60,
+                    "y": 60
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Up",
+                "element": "76c37862-7cb7-4044-8250-764ca9b1a216"
+            },
+            "target": {
+                "direction": "Down",
+                "element": "8e21a66e-9fc4-4f82-b2d1-3d26a51b309a"
+            }
+        },
+        {
+            "id": "c147a351-0b47-4f3d-92a4-8d8b35fc25e7",
+            "name": "",
+            "type": "SyntaxTreeLink",
+            "owner": null,
+            "bounds": {
+                "x": 200,
+                "y": 30,
+                "width": 160,
+                "height": 60
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 160,
+                    "y": 60
+                }
+            ],
+            "source": {
+                "direction": "Down",
+                "element": "8e21a66e-9fc4-4f82-b2d1-3d26a51b309a"
+            },
+            "target": {
+                "direction": "Up",
+                "element": "d2025889-3fe5-4ad5-9f42-d1ea57256dcc"
+            }
+        }
+    ],
+    "assessments": [
+    ]
+}

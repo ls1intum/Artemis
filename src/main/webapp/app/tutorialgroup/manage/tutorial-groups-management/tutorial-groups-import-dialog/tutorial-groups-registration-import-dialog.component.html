@@ -1,0 +1,466 @@
+<tumaet-ui-dialog
+    [header]="'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    size="large"
+    data-testid="tutorial-groups-import-dialog"
+>
+    <div class="tutorial-group-import-dialog">
+        <!-- Intro-->
+        <div class="mb-4!">
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.description"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.requirements"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label"></p>
+            <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.format"></p>
+            <ul>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired"></li>
+                <ul>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle"></li>
+                </ul>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.requiredIfStudentRegistration"></li>
+                <ul>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login"></li>
+                </ul>
+                <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysOptional"></li>
+                <ul>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.campus"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.language"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.additionalInformation"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.capacity"></li>
+                    <li jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.isOnline"></li>
+                </ul>
+            </ul>
+        </div>
+        <!-- Example Tables -->
+        <div class="mb-4!">
+            <div class="flex items-center">
+                <h3 class="text-base font-bold">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example1"></span>
+                </h3>
+                <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example1)">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></span>
+                </button>
+            </div>
+            <table tumAetUiTable size="small" [striped]="true" class="mt-2">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                    </tr>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mb-4!">
+            <div class="flex items-center">
+                <h3 class="text-base font-bold">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example2"></span>
+                </h3>
+                <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example2)">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></span>
+                </button>
+            </div>
+            <table tumAetUiTable size="small" [striped]="true" class="mt-2">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.firstName"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.lastName"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                        <td>123456</td>
+                        <td>John</td>
+                        <td>Doe</td>
+                    </tr>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                        <td>555555</td>
+                        <td>Jonas</td>
+                        <td>Krapfen</td>
+                    </tr>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
+                        <td>789012</td>
+                        <td>Anna</td>
+                        <td>Smith</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mb-4!">
+            <div class="flex items-center">
+                <h3 class="text-base font-bold">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example3"></span>
+                </h3>
+                <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example3)">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></span>
+                </button>
+            </div>
+            <table tumAetUiTable size="small" [striped]="true" class="mt-2">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.login"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.firstName"></th>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.lastName"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                        <td>ge12abc</td>
+                        <td>John</td>
+                        <td>Doe</td>
+                    </tr>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                        <td>ge14abc</td>
+                        <td>Jonas</td>
+                        <td>Krapfen</td>
+                    </tr>
+                    <tr>
+                        <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
+                        <td>ge13abc</td>
+                        <td>Anna</td>
+                        <td>Smith</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mb-4!">
+            <div class="flex items-center">
+                <h3 class="text-base font-bold">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example4"></span>
+                </h3>
+                <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example4)">
+                    <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.template"></span>
+                </button>
+            </div>
+            <div class="table-wrapper-scroll-y scrollbar">
+                <table tumAetUiTable size="small" [striped]="true" class="mt-2">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.firstName"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.lastName"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.campus"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.language"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.additionalInformation"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.capacity"></th>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.isOnline"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                            <td>123456</td>
+                            <td>John</td>
+                            <td>Doe</td>
+                            <td>Main Campus</td>
+                            <td>English</td>
+                            <td>Extra info</td>
+                            <td>20</td>
+                            <td>true</td>
+                        </tr>
+                        <tr>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupA"></th>
+                            <td>555555</td>
+                            <td>Jonas</td>
+                            <td>Krapfen</td>
+                            <td>Main Campus</td>
+                            <td>English</td>
+                            <td>Extra info</td>
+                            <td>20</td>
+                            <td>true</td>
+                        </tr>
+                        <tr>
+                            <th jhiTranslate="artemisApp.tutorialGroupImportDialog.table.groupB"></th>
+                            <td>789012</td>
+                            <td>Anna</td>
+                            <td>Smith</td>
+                            <td>City Campus</td>
+                            <td>German</td>
+                            <td>Extra info</td>
+                            <td>15</td>
+                            <td>false</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- File Upload -->
+        <div class="mb-4!">
+            <div class="flex items-end">
+                <div>
+                    <label for="tutorial-group-registration-csv" class="font-bold" jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.label"></label>
+                </div>
+                @if (isCSVParsing()) {
+                    <fa-icon class="relative ms-1" [icon]="faSpinner" animation="spin" />
+                }
+            </div>
+            <div class="mt-2">
+                <input
+                    id="tutorial-group-registration-csv"
+                    data-testid="tutorial-groups-import-file"
+                    [attr.aria-label]="'artemisApp.tutorialGroupImportDialog.csvFile.label' | artemisTranslate"
+                    #fileInput
+                    type="file"
+                    accept=".csv"
+                    (change)="onCSVFileSelected($event)"
+                />
+                @if (validationErrors().length > 0) {
+                    <div class="mt-6! mb-2 text-state-danger">
+                        <div jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.validationFailed"></div>
+                        <ul class="mt-1">
+                            @for (validationError of validationErrors(); track validationError) {
+                                <li>
+                                    <b>{{ validationError }}</b>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- Fixed Place Filter Form -->
+        <form [formGroup]="fixedPlaceForm">
+            <!-- Specify Fixed Place -->
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="checkbox" data-testid="tutorial-groups-import-fixed-place" formControlName="specifyFixedPlace" />
+                <label for="checkbox" jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.label"></label>
+            </div>
+            <div [hidden]="specifyFixedPlaceControl?.value === false">
+                <div>
+                    <small jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.explanation"></small>
+                </div>
+                <!-- Status Header -->
+                <div class="mb-4!">
+                    <label for="status-header" jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.label"></label>
+                    <input
+                        type="text"
+                        tumAetUiInput
+                        id="status-header"
+                        data-testid="tutorial-groups-import-status-header"
+                        formControlName="statusHeader"
+                        [placeholder]="'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.placeholder' | artemisTranslate"
+                    />
+                    @if (statusHeaderControl?.invalid && (statusHeaderControl?.dirty || statusHeaderControl?.touched)) {
+                        <tumaet-ui-message severity="error">
+                            @if (statusHeaderControl?.errors?.maxlength) {
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
+                            }
+                        </tumaet-ui-message>
+                    }
+                </div>
+                <!-- Fixed Place Value -->
+                <div class="mb-4!">
+                    <label for="fixed-place" jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.label"></label>
+                    <input
+                        type="text"
+                        tumAetUiInput
+                        id="fixed-place"
+                        data-testid="tutorial-groups-import-fixed-value"
+                        formControlName="fixedPlaceValue"
+                        [placeholder]="'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.placeholder' | artemisTranslate"
+                    />
+                    @if (fixedPlaceValueControl?.invalid && (fixedPlaceValueControl?.dirty || fixedPlaceValueControl?.touched)) {
+                        <tumaet-ui-message severity="error">
+                            @if (fixedPlaceValueControl?.errors?.maxlength) {
+                                <div
+                                    jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError"
+                                    [translateValues]="{ max: '255' }"
+                                ></div>
+                            }
+                        </tumaet-ui-message>
+                    }
+                </div>
+            </div>
+        </form>
+        <div>
+            <button
+                tumAetUiButton
+                size="small"
+                severity="secondary"
+                type="button"
+                [disabled]="isParseDisabled"
+                (click)="onParseClicked()"
+                data-testid="tutorial-groups-import-parse"
+            >
+                <span jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.parseCSVButton"></span>
+            </button>
+        </div>
+        @if (isImportDone()) {
+            <hr />
+        }
+        <!-- Not Imported Filter -->
+        @if (isImportDone()) {
+            <div>
+                <tumaet-ui-select-button
+                    data-testid="tutorial-groups-import-filter"
+                    [attr.aria-label]="'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate"
+                    [options]="[
+                        { value: 'onlyImported', label: ('artemisApp.tutorialGroupImportDialog.table.showImportedButton' | artemisTranslate) },
+                        { value: 'onlyNotImported', label: ('artemisApp.tutorialGroupImportDialog.table.showNotImportedButton' | artemisTranslate) },
+                        { value: 'all', label: ('artemisApp.tutorialGroupImportDialog.table.showAllButton' | artemisTranslate) },
+                    ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                    [ngModel]="selectedFilter()"
+                    (ngModelChange)="onFilterChange($event)"
+                />
+            </div>
+        }
+        <!-- Overview Table -->
+        @if (isImportDone() || registrationsDisplayedInTable()?.length) {
+            <div class="mb-4! mt-6!">
+                <tumaet-ui-table-layout class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]" [empty]="!registrationsDisplayedInTable()?.length">
+                    <table tumAetUiTable size="small" [striped]="true" data-testid="tutorial-groups-import-preview">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.title"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.login"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.firstName"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.lastName"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.campus"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.language"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.additionalInformation"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.capacity"></th>
+                                <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.isOnline"></th>
+                                @if (isImportDone() && numberOfNotImportedRegistration() > 0) {
+                                    <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.error"></th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody class="table-body">
+                            @for (registration of registrationsDisplayedInTable(); track registration; let i = $index) {
+                                <tr [class]="{ 'bg-state-success/15!': wasImported(registration), 'bg-state-danger/15!': wasNotImported(registration) }">
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px">{{ i + 1 }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px"> {{ registration?.title ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span> {{ registration?.student?.registrationNumber ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px">{{ registration?.student?.login ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 100px">{{ registration?.student?.firstName ?? '' }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 100px">{{ registration?.student?.lastName ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px">{{ registration?.campus ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px">{{ registration?.language ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 200px">{{ registration?.additionalInformation ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 100px">{{ registration?.capacity ?? '' }} </span>
+                                    </td>
+                                    <td>
+                                        <span class="inline-block truncate" style="max-width: 100px">{{ registration?.isOnline ?? '' }} </span>
+                                    </td>
+                                    @if (isImportDone() && numberOfNotImportedRegistration() > 0) {
+                                        <td>
+                                            <span class="inline-block truncate" style="max-width: 400px">
+                                                {{
+                                                    registration?.error
+                                                        ? ('artemisApp.tutorialGroupImportDialog.serverErrors.' + registration.error!.replaceAll('_', '').trim().toLocaleLowerCase()
+                                                          | artemisTranslate)
+                                                        : ''
+                                                }}
+                                            </span>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
+            </div>
+        }
+    </div>
+    <ng-template #footer>
+        <div class="flex w-full flex-wrap items-center justify-between gap-2">
+            @if (allRegistrations() && allRegistrations().length > 0) {
+                <div class="me-2 flex flex-wrap gap-2">
+                    @if (!isImportDone()) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations().length }"></strong>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong
+                                jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported"
+                                [translateValues]="{ count: numberOfImportedRegistrations() }"
+                            ></strong>
+                        </div>
+                        <div class="ms-2">
+                            <strong
+                                jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
+                                [translateValues]="{ count: numberOfNotImportedRegistration() }"
+                            ></strong>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="grow flex justify-end gap-2">
+                @if (!isImportDone()) {
+                    <button tumAetUiButton size="small" severity="secondary" class="cancel" type="button" (click)="clear()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+                @if (!isImportDone()) {
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        size="small"
+                        type="submit"
+                        id="import"
+                        data-testid="tutorial-groups-import-submit"
+                        name="importButton"
+                        [disabled]="isSubmitDisabled"
+                        (click)="import()"
+                    >
+                        <fa-icon [icon]="faFileImport" class="me-2" />
+                        <span jhiTranslate="entity.action.to-import"></span>
+                        <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                    </button>
+                } @else {
+                    <button tumAetUiButton size="small" severity="success" type="button" id="finish-button" data-testid="tutorial-groups-import-finish" (click)="onFinish()">
+                        <fa-icon [icon]="faCheck" class="me-2" />
+                        <span jhiTranslate="entity.action.finish"></span>
+                    </button>
+                }
+            </div>
+        </div>
+    </ng-template>
+</tumaet-ui-dialog>

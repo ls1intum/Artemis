@@ -1,0 +1,142 @@
+package de.tum.cit.aet.artemis.core.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+
+/**
+ * Helper service for checking which module features are active
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ModuleFeatureService {
+
+    private final Environment environment;
+
+    private final ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
+
+    public ModuleFeatureService(Environment environment) {
+        this.environment = environment;
+    }
+
+    /**
+     * Check if the Passkey feature is enabled.
+     *
+     * @return true if the Passkey feature is enabled, false otherwise
+     */
+    public boolean isPasskeyEnabled() {
+        return artemisConfigHelper.isPasskeyEnabled(environment);
+    }
+
+    /**
+     * Check if the Sharing feature is enabled.
+     *
+     * @return true if the Sharing feature is enabled, false otherwise
+     */
+    public boolean isSharingEnabled() {
+        return artemisConfigHelper.isSharingEnabled(environment);
+    }
+
+    /**
+     * Check if the Atlas module is enabled.
+     *
+     * @return true if the Atlas module is enabled, false otherwise
+     */
+    public boolean isAtlasEnabled() {
+        return artemisConfigHelper.isAtlasEnabled(environment);
+    }
+
+    /**
+     * Check if the Hyperion module is enabled.
+     *
+     * @return true if the Hyperion module is enabled, false otherwise
+     */
+    public boolean isHyperionEnabled() {
+        return artemisConfigHelper.isHyperionEnabled(environment);
+    }
+
+    /**
+     * Check if the Iris module is enabled.
+     *
+     * @return true if the Iris module is enabled, false otherwise
+     */
+    public boolean isIrisEnabled() {
+        return artemisConfigHelper.isIrisEnabled(environment);
+    }
+
+    /**
+     * Check if the exam module is enabled.
+     *
+     * @return true if the exam module is enabled, false otherwise
+     */
+    public boolean isExamEnabled() {
+        return artemisConfigHelper.isExamEnabled(environment);
+    }
+
+    /**
+     * Check if the Plagiarism module is enabled.
+     *
+     * @return true if the Plagiarism module is enabled, false otherwise
+     */
+    public boolean isPlagiarismEnabled() {
+        return artemisConfigHelper.isPlagiarismEnabled(environment);
+    }
+
+    /**
+     * Check if the text module is enabled.
+     *
+     * @return true if the text module is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled() {
+        return artemisConfigHelper.isTextExerciseEnabled(environment);
+    }
+
+    /**
+     * Check if the tutorial group feature is enabled.
+     *
+     * @return true if the tutorial group feature is enabled, false otherwise
+     */
+    public boolean isTutorialGroupEnabled() {
+        return artemisConfigHelper.isTutorialGroupEnabled(environment);
+    }
+
+    /**
+     * Check if the LTI module is enabled.
+     *
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled() {
+        return artemisConfigHelper.isLtiEnabled(environment);
+    }
+
+    /**
+     * Check if the Theia module is enabled.
+     *
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled() {
+        return artemisConfigHelper.isTheiaEnabled(environment);
+    }
+
+    public boolean isAthenaEnabled() {
+        return artemisConfigHelper.isAthenaEnabled(environment);
+    }
+
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
+
+    public boolean isLdapEnabled() {
+        return artemisConfigHelper.isLdapEnabled(environment);
+    }
+
+    public boolean isSaml2Enabled() {
+        return artemisConfigHelper.isSaml2Enabled(environment);
+    }
+}

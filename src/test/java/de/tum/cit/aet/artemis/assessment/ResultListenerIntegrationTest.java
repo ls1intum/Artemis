@@ -1,0 +1,485 @@
+package de.tum.cit.aet.artemis.assessment;
+
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.round;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "resultlistenerintegrationtest";
+
+    private Long idOfIndividualTextExercise;
+
+    private Long idOfTeamTextExercise;
+
+    private Long idOfTeam1;
+
+    private Long idOfStudent1;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private StudentScoreRepository studentScoreRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private ResultService resultService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @AfterEach
+    void cleanup() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+    }
+
+    @BeforeEach
+    void setupTestScenario() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
+        ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
+
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        idOfStudent1 = student1.getId();
+        // creating course
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
+        idOfIndividualTextExercise = textExercise.getId();
+        Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
+        idOfTeamTextExercise = teamExercise.getId();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
+        setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Exercise exercise;
+        if (isTeamTest) {
+            exercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+        }
+        else {
+            exercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
+        }
+        exercise.setMaxPoints(100.0);
+        exercise.setBonusPoints(100.0);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.put("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of((TextExercise) exercise), HttpStatus.OK);
+
+        participantScoreScheduleService.executeScheduledTasks();
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
+
+            ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
+            assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
+            assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
+        });
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_ShouldCreateStudentScore(boolean isTeamTest) {
+        setupTestScenarioWithOneResultSaved(true, isTeamTest);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_ShouldCreateStudentScore(boolean isTeamTest) {
+        setupTestScenarioWithOneResultSaved(false, isTeamTest);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        // creating a new rated result should trigger the entity listener and update the student score
+        Result newResult = createNewResult(isTeamTest, true);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalStudentScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalStudentScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        // creating a new rated result should trigger the entity listener and update the student score
+        Result newResult = createNewResult(isTeamTest, true);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
+        resultService.deleteResult(newResult, true);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, true);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
+        resultService.deleteResult(newResult, true);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
+        resultService.deleteResult(newResult, true);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, true);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
+        resultService.deleteResult(newResult, true);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setScore(0D);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_makeResultRated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setRated(true);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), updatedResult.getId(), updatedResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setScore(0D);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), updatedResult.getId(), updatedResult.getScore());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_makeResultUnrated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // update the associated student score should trigger the entity listener and update the student score
+        originalResult.setRated(false);
+        Result updatedResult = resultRepository.saveAndFlush(originalResult);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result persistedResult = originalParticipantScore.getLastResult();
+        // removing the result should trigger the entity listener and remove the associated student score
+        resultService.deleteResult(persistedResult, true);
+
+        // Wait for the scheduler to execute its task
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveUnratedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
+        Result persistedResult = originalParticipantScore.getLastResult();
+        // removing the result should trigger the entity listener and remove the associated student score
+        resultService.deleteResult(persistedResult, true);
+
+        // Wait for the scheduler to execute its task
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherUnratedResult_then_removeRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
+        resultService.deleteResult(originalResult, true);
+        assertThat(resultRepository.findById(originalResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(newResult.getId())).isPresent();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void saveRatedResult_then_saveAnotherUnratedResult_then_removeUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
+        ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
+        Result originalResult = originalParticipantScore.getLastResult();
+        // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
+        Result newResult = createNewResult(isTeamTest, false);
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
+        resultService.deleteResult(newResult, true);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
+    }
+
+    private void assertParticipantScoreStructure(ParticipantScore participantScore, Long expectedExerciseId, Long expectedParticipantId, Long expectedLastResultId,
+            Double expectedLastScore, Long expectedLastRatedResultId, Double expectedLastRatedScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
+        assertThat(participantScore.getExercise().getId()).isEqualTo(expectedExerciseId);
+
+        if (participantScore.getClass().equals(StudentScore.class)) {
+            StudentScore studentScore = (StudentScore) participantScore;
+            assertThat(studentScore.getUser().getId()).isEqualTo(expectedParticipantId);
+        }
+        else {
+            TeamScore teamScore = (TeamScore) participantScore;
+            assertThat(teamScore.getTeam().getId()).isEqualTo(expectedParticipantId);
+        }
+
+        if (expectedLastResultId == null) {
+            assertThat(participantScore.getLastResult()).isNull();
+        }
+        else {
+            // Asserted separately (rather than chaining straight into .getId()) so a still-null lastResult during
+            // the async recompute window raises a retryable AssertionError instead of a NullPointerException, which
+            // Awaitility's untilAsserted() would otherwise propagate immediately instead of retrying.
+            assertThat(participantScore.getLastResult()).as("participant score's last result").isNotNull();
+            assertThat(participantScore.getLastResult().getId()).isEqualTo(expectedLastResultId);
+        }
+        assertThat(participantScore.getLastScore()).isEqualTo(expectedLastScore);
+        assertThat(participantScore.getLastPoints()).isEqualTo(expectedLastPoints);
+
+        if (expectedLastRatedResultId == null) {
+            assertThat(participantScore.getLastRatedResult()).isNull();
+        }
+        else {
+            assertThat(participantScore.getLastRatedResult()).as("participant score's last rated result").isNotNull();
+            assertThat(participantScore.getLastRatedResult().getId()).isEqualTo(expectedLastRatedResultId);
+        }
+        assertThat(participantScore.getLastRatedScore()).isEqualTo(expectedLastRatedScore);
+        assertThat(participantScore.getLastRatedPoints()).isEqualTo(expectedLastRatedPoints);
+    }
+
+    private Result createNewResult(boolean isTeamTest, boolean isRated) {
+        StudentParticipation studentParticipation;
+        SecurityUtils.setAuthorizationObject();
+        if (isTeamTest) {
+            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(idOfTeamTextExercise, idOfStudent1)
+                    .getFirst();
+        }
+        else {
+            studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).getFirst();
+        }
+        return participationUtilService.createSubmissionAndResult(studentParticipation, 100, isRated);
+    }
+
+    private ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
+        Long idOfExercise;
+        Participant participant;
+        if (isTeam) {
+            participant = teamRepository.findById(idOfTeam1).orElseThrow();
+            idOfExercise = idOfTeamTextExercise;
+        }
+        else {
+            participant = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            idOfExercise = idOfIndividualTextExercise;
+        }
+
+        var exercise = exerciseRepository.findById(idOfExercise).orElseThrow();
+
+        Result persistedResult = participationUtilService.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
+
+        // Wait for the scheduler to process the result and create the participant score.
+        // Use untilAsserted because the first executeScheduledTasks() call may miss the result
+        // if lastScheduledRun hasn't been initialized yet (its Instant.now() fallback can be
+        // after the result's lastModifiedDate, causing findAllByLastModifiedDateAfter to miss it).
+        // Retrying ensures subsequent scheduler cycles pick it up.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            var scores = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(scores).isNotEmpty();
+        });
+
+        var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
+        assertThat(savedParticipantScores).hasSize(1);
+        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
+        Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
+        if (isRatedResult) {
+            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), persistedResult.getId(),
+                    persistedResult.getScore(), pointsAchieved, pointsAchieved);
+        }
+        else {
+            assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null,
+                    pointsAchieved, null);
+        }
+        return savedParticipantScore;
+    }
+
+    private void verifyStructureOfParticipantScoreInDatabase(boolean isTeamTest, Long expectedLastResultId, Double expectedLastScore, Long expectedLastRatedResultId,
+            Double expectedLastRatedScore) {
+        Long idOfExercise;
+        Participant participant;
+        if (isTeamTest) {
+            participant = teamRepository.findById(idOfTeam1).orElseThrow();
+            idOfExercise = idOfTeamTextExercise;
+        }
+        else {
+            participant = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            idOfExercise = idOfIndividualTextExercise;
+        }
+
+        var exercise = exerciseRepository.findById(idOfExercise).orElseThrow();
+
+        // Wait for the scheduler to execute its task
+        participantScoreScheduleService.executeScheduledTasks();
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        Double lastPoints = expectedLastScore != null ? round(expectedLastScore * 0.01 * 10.0) : null;
+        Double lastRatedPoints = expectedLastRatedScore != null ? round(expectedLastRatedScore * 0.01 * 10.0) : null;
+
+        // Use await().untilAsserted() to handle timing issues with asynchronous participant score updates
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(savedParticipantScore).isNotEmpty();
+            assertThat(savedParticipantScore).hasSize(1);
+            ParticipantScore updatedParticipantScore = savedParticipantScore.getFirst();
+
+            assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
+                    expectedLastRatedScore, lastPoints, lastRatedPoints);
+        });
+    }
+
+}

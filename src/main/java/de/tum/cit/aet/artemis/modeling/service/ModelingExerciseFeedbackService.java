@@ -1,0 +1,225 @@
+package de.tum.cit.aet.artemis.modeling.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
+import de.tum.cit.aet.artemis.assessment.service.AthenaFeedbackScheduler;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+
+@Conditional(ModelingEnabled.class)
+@Lazy
+@Service
+public class ModelingExerciseFeedbackService {
+
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseFeedbackService.class);
+
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
+    private final AthenaFeedbackScheduler athenaFeedbackScheduler;
+
+    private final ParticipationService participationService;
+
+    private final AthenaFeedbackRequestRepository athenaFeedbackRequestRepository;
+
+    private final UserRepository userRepository;
+
+    public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, AthenaFeedbackRequestRepository athenaFeedbackRequestRepository,
+            ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
+        this.athenaFeedbackApi = athenaFeedbackApi;
+        this.athenaFeedbackRequestRepository = athenaFeedbackRequestRepository;
+        this.athenaFeedbackScheduler = new AthenaFeedbackScheduler(athenaFeedbackRequestRepository, resultWebsocketService);
+        this.participationService = participationService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
+     * <p>
+     * The submission is the one the caller validated, not a freshly read one: test runs of the same exercise share a
+     * participation, so re-reading it here could pick up an answer another run saved in the meantime.
+     *
+     * @param participation    the student participation associated with the exercise
+     * @param modelingExercise the modeling exercise
+     * @param submission       the submission that was validated as eligible for feedback
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise, Submission submission) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        if (!(submission instanceof ModelingSubmission modelingSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: submission {} is not a ModelingSubmission", participation.getId(),
+                    modelingExercise.getId(), submission.getId());
+            return;
+        }
+        if (modelingSubmission.isEmpty()) {
+            return;
+        }
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
+        if (api.submissionHasAthenaResult(modelingSubmission)) {
+            return;
+        }
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        try {
+            scheduleFeedback(modelingSubmission, participation, modelingExercise, requestingUser);
+        }
+        catch (BadRequestAlertException duplicateOrLimit) {
+            log.debug("Skipping duplicate or rate-limited test-exam feedback for submission {}", submission.getId());
+        }
+    }
+
+    /**
+     * Handles the request for generating feedback for a modeling exercise.
+     * Unlike programming exercises a tutor is not notified if Athena is not available.
+     *
+     * @param participation    the student participation associated with the exercise.
+     * @param modelingExercise the modeling exercise object.
+     * @return StudentParticipation updated modeling exercise for an AI assessment
+     */
+    public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
+        if (this.athenaFeedbackApi.isPresent()) {
+            AthenaFeedbackApi api = athenaFeedbackApi.get();
+            api.checkRateLimitOrThrow(participation);
+
+            Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
+                    .findLatestSubmission();
+
+            if (submissionOptional.isEmpty()) {
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
+            }
+
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
+
+            api.checkSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+
+            if (modelingSubmission.isEmpty()) {
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
+            }
+
+            User requestingUser = userRepository.getUser();
+            scheduleFeedback(modelingSubmission, participation, modelingExercise, requestingUser);
+        }
+        return participation;
+    }
+
+    private void scheduleFeedback(ModelingSubmission submission, StudentParticipation participation, ModelingExercise exercise, User requestingUser) {
+        athenaFeedbackScheduler.schedule(submission, participation, pending -> generateAutomaticNonGradedFeedback(submission, participation, exercise, requestingUser, pending));
+    }
+
+    /**
+     * Generates automatic non-graded feedback for a modeling exercise submission.
+     * This method leverages the Athena service to generate feedback based on the latest submission.
+     *
+     * @param modelingSubmission the modeling submission associated with the student participation.
+     * @param participation      the student participation associated with the exercise.
+     * @param modelingExercise   the modeling exercise object.
+     * @param requestingUser     the user that requested the feedback generation
+     * @param automaticResult    the durable reservation owned by this worker
+     */
+    private void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise,
+            User requestingUser, Result automaticResult) {
+        log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
+
+        try {
+            log.debug("Submission id: {}", modelingSubmission.getId());
+
+            List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, modelingSubmission, requestingUser);
+
+            double totalFeedbackScore = calculateTotalFeedbackScore(feedbacks, modelingExercise);
+
+            double score = Math.max(0, Math.min(totalFeedbackScore, 100));
+            if (athenaFeedbackRequestRepository.completeAthenaFeedbackRequest(automaticResult, score, feedbacks, java.util.Set.of())) {
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                automaticResult.setScore(score);
+                automaticResult.setRated(true);
+                automaticResult.setSuccessful(true);
+                automaticResult.setFeedbacks(feedbacks);
+                athenaFeedbackScheduler.notifyResult(participation, automaticResult);
+            }
+        }
+        catch (Exception e) {
+            log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
+            if (athenaFeedbackRequestRepository.failAthenaFeedbackRequest(automaticResult)) {
+                automaticResult.setSuccessful(false);
+                automaticResult.setCompletionDate(ZonedDateTime.now());
+                athenaFeedbackScheduler.notifyResult(participation, automaticResult);
+            }
+        }
+    }
+
+    /**
+     * Retrieves feedback from the Athena service.
+     *
+     * @param modelingExercise the modeling exercise
+     * @param submission       the modeling submission
+     * @param requestingUser   the user that requested the feedback generation
+     * @return a list of Feedback objects
+     * @throws NetworkingException if there's a problem communicating with Athena
+     */
+    private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission, User requestingUser) throws NetworkingException {
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
+        return api.getModelingFeedbackSuggestions(modelingExercise, submission, false, requestingUser).stream().filter(feedbackItem -> feedbackItem.description() != null)
+                .map(this::convertToFeedback).toList();
+    }
+
+    /**
+     * Converts an Athena feedback suggestion to a Feedback object.
+     *
+     * @param feedbackItem the Athena feedback suggestion
+     * @return the Feedback object
+     */
+    private Feedback convertToFeedback(ModelingFeedbackDTO feedbackItem) {
+        Feedback feedback = new Feedback();
+        feedback.setText(feedbackItem.title());
+        feedback.setDetailText(feedbackItem.description());
+        feedback.setHasLongFeedbackText(false);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setCredits(feedbackItem.credits());
+        feedback.setReference(feedbackItem.reference());
+        return feedback;
+    }
+
+    /**
+     * Calculates the total feedback score based on the list of feedbacks and the exercise's max points.
+     *
+     * @param feedbacks        the list of feedbacks
+     * @param modelingExercise the modeling exercise
+     * @return the total feedback score
+     */
+    private double calculateTotalFeedbackScore(List<Feedback> feedbacks, ModelingExercise modelingExercise) {
+        double totalCredits = feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
+        Double maxPoints = modelingExercise.getMaxPoints();
+
+        if (maxPoints == null || maxPoints == 0) {
+            throw new IllegalArgumentException("Maximum points must be greater than zero.");
+        }
+
+        return (totalCredits / maxPoints) * 100;
+    }
+}

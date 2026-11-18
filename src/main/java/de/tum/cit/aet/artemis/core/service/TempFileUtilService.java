@@ -1,0 +1,173 @@
+package de.tum.cit.aet.artemis.core.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+/**
+ * Utility service for creating temporary files and directories.
+ * <p>
+ * All temporary files and directories should be created using this service to ensure
+ * proper isolation within the configured temp path ({@code artemis.temp-path}).
+ * <p>
+ * <b>Important:</b> Code must NOT directly call {@link Files#createTempDirectory} or
+ * {@link Files#createTempFile}. This is enforced by an architecture test.
+ *
+ * @see de.tum.cit.aet.artemis.core.architecture.TempFileArchitectureTest
+ */
+@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Lazy
+@Service
+public class TempFileUtilService {
+
+    private static final Logger log = LoggerFactory.getLogger(TempFileUtilService.class);
+
+    private Path tempPath;
+
+    /**
+     * Default constructor for Spring dependency injection.
+     * The tempPath will be injected via {@code @Value}.
+     */
+    public TempFileUtilService() {
+        // tempPath is set by Spring via @Value
+    }
+
+    /**
+     * Constructor for manual instantiation (e.g., in unit tests without Spring context).
+     *
+     * @param tempPath the base path for temporary files
+     */
+    public TempFileUtilService(Path tempPath) {
+        this.tempPath = tempPath;
+    }
+
+    @Value("${artemis.temp-path}")
+    void setTempPath(Path tempPath) {
+        this.tempPath = tempPath;
+    }
+
+    /**
+     * Creates a temporary directory within the configured temp path.
+     *
+     * @param prefix the prefix string to be used in generating the directory's name
+     * @return the path to the newly created directory
+     * @throws IOException if an I/O error occurs or the temp directory does not exist
+     */
+    public Path createTempDirectory(String prefix) throws IOException {
+        Files.createDirectories(tempPath);
+        return Files.createTempDirectory(tempPath, prefix);
+    }
+
+    /**
+     * Creates a temporary directory within the specified parent directory.
+     * <p>
+     * Use this method when you need to create subdirectories within an already-created
+     * temp directory, or when using a different base path (e.g., data-export-path).
+     *
+     * @param parent the parent directory path
+     * @param prefix the prefix string to be used in generating the directory's name
+     * @return the path to the newly created directory
+     * @throws IOException if an I/O error occurs or the parent directory does not exist
+     */
+    public @NonNull Path createTempDirectory(Path parent, String prefix) throws IOException {
+        Files.createDirectories(parent);
+        return Files.createTempDirectory(parent, prefix);
+    }
+
+    /**
+     * Creates a temporary file within the configured temp path.
+     *
+     * @param prefix the prefix string to be used in generating the file's name
+     * @param suffix the suffix string to be used in generating the file's name (e.g., ".txt")
+     * @return the path to the newly created file
+     * @throws IOException if an I/O error occurs or the temp directory does not exist
+     */
+    public Path createTempFile(String prefix, String suffix) throws IOException {
+        Files.createDirectories(tempPath);
+        return Files.createTempFile(tempPath, prefix, suffix);
+    }
+
+    /**
+     * Creates a temporary file within the specified parent directory.
+     * <p>
+     * Use this method when you need to create temp files within an already-created
+     * temp directory, or when using a different base path.
+     *
+     * @param parent the parent directory path
+     * @param prefix the prefix string to be used in generating the file's name
+     * @param suffix the suffix string to be used in generating the file's name (e.g., ".txt")
+     * @return the path to the newly created file
+     * @throws IOException if an I/O error occurs or the parent directory does not exist
+     */
+    public Path createTempFile(Path parent, String prefix, String suffix) throws IOException {
+        Files.createDirectories(parent);
+        return Files.createTempFile(parent, prefix, suffix);
+    }
+
+    /**
+     * Replaces a file through a temporary file in the target directory. The final move is atomic where the file system supports it, so readers never observe partially written
+     * contents.
+     *
+     * @param trustedRoot the trusted root directory that must contain the target
+     * @param targetPath  the file to create or replace
+     * @param fileData    the complete replacement contents
+     * @return the target path
+     * @throws IOException if the replacement cannot be installed
+     */
+    public Path replaceFileAtomically(Path trustedRoot, Path targetPath, byte[] fileData) throws IOException {
+        Path normalizedRoot = trustedRoot.toAbsolutePath().normalize();
+        Path normalizedTarget = targetPath.toAbsolutePath().normalize();
+        if (normalizedTarget.equals(normalizedRoot) || !normalizedTarget.startsWith(normalizedRoot)) {
+            throw new IOException("Atomic replacement target must be contained in the trusted root");
+        }
+
+        // Keep the temporary name independent of the target name so valid long target filenames do not exceed the file system's per-component limit.
+        Path temporaryPath = createTempFile(normalizedTarget.getParent(), ".replace-", ".tmp");
+        try {
+            FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
+            moveReplacing(temporaryPath, normalizedTarget);
+            return normalizedTarget;
+        }
+        finally {
+            try {
+                Files.deleteIfExists(temporaryPath);
+            }
+            catch (IOException cleanupException) {
+                log.warn("Failed to clean up atomic-replacement temporary file {}", temporaryPath, cleanupException);
+            }
+        }
+    }
+
+    void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (AtomicMoveNotSupportedException | FileAlreadyExistsException ignored) {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /**
+     * Returns the configured temp path.
+     *
+     * @return the temp path
+     */
+    public Path getTempPath() {
+        return tempPath;
+    }
+}

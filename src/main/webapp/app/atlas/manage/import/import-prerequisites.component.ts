@@ -1,0 +1,35 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject } from '@angular/core';
+import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
+import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-import-prerequisites',
+    templateUrl: './import-course-competencies.component.html',
+    imports: [ButtonComponent, TranslateDirective, FormsModule, ImportCompetenciesTableComponent, CompetencySearchComponent, ArtemisTranslatePipe],
+})
+export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
+    private readonly prerequisiteService = inject(PrerequisiteService);
+
+    entityType = CourseCompetencyType.PREREQUISITE;
+    override allowRelationImport = false;
+
+    onSubmit() {
+        this.prerequisiteService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, false).subscribe({
+            next: (res) => {
+                this.alertService.success('artemisApp.prerequisite.import.success', { numPrerequisites: res.body?.length ?? 0 });
+                this.isSubmitted = true;
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+}

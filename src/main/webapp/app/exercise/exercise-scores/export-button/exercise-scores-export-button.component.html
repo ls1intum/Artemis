@@ -1,0 +1,54 @@
+@if (isProgrammingExerciseResults) {
+    <div class="inline">
+        <button
+            [attr.aria-label]="'artemisApp.exercise.export.results.title' | artemisTranslate"
+            size="small"
+            severity="secondary"
+            tumAetUiButton
+            type="button"
+            id="export-results-dropdown"
+            class="me-1"
+            [tumAetUiMenuTrigger]="exportMenu"
+        >
+            <fa-icon [icon]="faDownload" />
+            <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        </button>
+        <ng-template #exportMenu
+            ><tumaet-ui-menu>
+                <button type="button" tumAetUiMenuItem (triggered)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
+                <button
+                    type="button"
+                    tumAetUiTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate }}"
+                    tumAetUiTooltipPlacement="left"
+                    tumAetUiMenuItem
+                    (triggered)="exportResults(true, false)"
+                    jhiTranslate="artemisApp.exercise.export.results.withTestCases"
+                ></button>
+                <button
+                    type="button"
+                    tumAetUiTooltip="{{ 'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate }}"
+                    tumAetUiTooltipPlacement="left"
+                    tumAetUiMenuItem
+                    (triggered)="exportResults(true, true)"
+                    jhiTranslate="artemisApp.exercise.export.results.withTestCasesAndFeedback"
+                >
+                    With test cases<br />and feedback
+                </button>
+            </tumaet-ui-menu></ng-template
+        >
+    </div>
+}
+@if (!isProgrammingExerciseResults) {
+    <button
+        [attr.aria-label]="'artemisApp.exercise.export.results.title' | artemisTranslate"
+        size="small"
+        severity="secondary"
+        tumAetUiButton
+        type="button"
+        class="me-1"
+        (click)="exportResults(false, false)"
+    >
+        <fa-icon [icon]="faDownload" />
+        <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+    </button>
+}

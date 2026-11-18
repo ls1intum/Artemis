@@ -1,0 +1,323 @@
+package de.tum.cit.aet.artemis.lti.service;
+
+import java.util.List;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
+
+@Lazy
+@Service
+@Conditional(LtiEnabled.class)
+public class LtiService {
+
+    @Value("${artemis.lti.trustExternalLTISystems:false}")
+    private boolean trustExternalLTISystems;
+
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
+
+    private static final Logger log = LoggerFactory.getLogger(LtiService.class);
+
+    private static final int MAX_LOGIN_SUFFIX = 1000;
+
+    private static final int MAX_CREATION_ATTEMPTS = 3;
+
+    private final UserCreationService userCreationService;
+
+    private final UserRepository userRepository;
+
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    private final JWTCookieService jwtCookieService;
+
+    private final UserLtiRepository userLtiRepository;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository,
+            UserRecoveryKeyService userRecoveryKeyService) {
+        this.userCreationService = userCreationService;
+        this.userLtiRepository = userLtiRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.jwtCookieService = jwtCookieService;
+    }
+
+    /**
+     * Signs in the LTI user into the exercise app. If necessary, it will create a user.
+     *
+     * @param email               the user's email
+     * @param username            the user's username if we create a new user
+     * @param firstName           the user's firstname if we create a new user
+     * @param lastName            the user's lastname if we create a new user
+     * @param requireExistingUser false if it's not allowed to create new users
+     * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
+     */
+    public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser) throws InternalAuthenticationServiceException {
+        log.info("Authenticating LTI user with email: {}, username: {}, firstName: {}, lastName: {}, requireExistingUser: {}", email, username, firstName, lastName,
+                requireExistingUser);
+        if (!StringUtils.hasLength(email)) {
+            log.warn("No email address sent by launch request. Please make sure the user has an accessible email address.");
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
+        if (SecurityUtils.isAuthenticated()) {
+            log.info("User is already signed in. Checking if email matches the one provided in the launch.");
+            User user = userRepository.getUser();
+            if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
+                log.info("User is already signed in and email matches the one provided in the launch. No further action required.");
+                return;
+            }
+            else {
+                log.info("User is already signed in but email does not match the one provided in the launch. Signing out user.");
+                SecurityContextHolder.getContext().setAuthentication(null); // User is signed in but email does not match, meaning launch is for a different user
+            }
+        }
+
+        // 2. Case: Lookup user with the LTI email address and make sure it's not in use
+        if (artemisAuthenticationProvider.getUsernameForEmail(email).isPresent() || userRepository.findOneByEmailIgnoreCase(email).isPresent()) {
+            log.info("User with email {} already exists. Email is already in use.", email);
+
+            if (trustExternalLTISystems) {
+                log.info("Trusting external LTI system. Authenticating user with email: {}", email);
+                User user = userRepository.findOneWithAuthoritiesByEmailIgnoreCase(email).orElseThrow();
+                if (!mayBeTrustedFromLaunch(user)) {
+                    log.warn(
+                            "Not authenticating the account with email {} from a launch: only active accounts without administrator authority are accepted from trusted LTI systems",
+                            email);
+                    throw new LtiAccountNotAcceptedException();
+                }
+                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
+                return;
+            }
+
+            throw new LtiEmailAlreadyInUseException();
+        }
+
+        // 3. Case: Create new user if an existing user is not required
+        if (!requireExistingUser) {
+            log.info("Creating new user from launch request: {}, username: {}, firstName: {}, lastName: {}", email, username, firstName, lastName);
+            SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
+            return;
+        }
+
+        log.info("Could not find existing user or create new LTI user.");
+        throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
+    }
+
+    /**
+     * Whether the account may be signed in on the word of a trusted platform: not an administrator, and active.
+     *
+     * @param user the account with its authorities
+     * @return true if the platform may sign in as this account
+     */
+    private boolean mayBeTrustedFromLaunch(User user) {
+        boolean administrator = user.getAuthorities().stream().map(Authority::getName)
+                .anyMatch(name -> Role.ADMIN.getAuthority().equals(name) || Role.SUPER_ADMIN.getAuthority().equals(name));
+        // An inactive account is not accepted. This includes an account that a launch created and that has not been initialised yet: it cannot be told from a deactivated one.
+        return !administrator && user.getActivated();
+    }
+
+    /**
+     * Creates the account for a launch and returns its sign-in. The login is derived from names that the platform supplies and is not unique, so an existing account
+     * is only reused when it has the email address of the launch. Otherwise a new account is created with a free login.
+     *
+     * @param email     the email address of the launching user, which no account has yet
+     * @param login     the derived login; a numeric suffix is added if an account already has it
+     * @param firstName the first name
+     * @param lastName  the last name
+     * @return the sign-in of the new account
+     */
+    @NonNull
+    public Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
+        final var user = userRepository.findOneByLogin(login).filter(existing -> email.equalsIgnoreCase(existing.getEmail())).orElseGet(() -> {
+            var password = RandomUtil.generatePassword();
+            final User newUser = createUserWithUnusedLogin(login, password, firstName, lastName, email);
+            // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
+            // the account, so the id is available and no further save of the user itself is needed.
+            userLtiRepository.save(new UserLti(newUser.getId(), true));
+            // createUser issues an activation key for every internal account. A launch-provisioned account never receives
+            // the activation mail and must not be activatable by that key, so it is dropped again here - the account uses
+            // `activated` as its own "already initialised" marker instead. See User#activated.
+            userRecoveryKeyService.clearActivationKey(newUser.getId());
+
+            log.info("Created new user {}", newUser);
+            return newUser;
+
+        });
+
+        log.info("createNewUserFromLaunchRequest: {}", user);
+
+        log.info("Signing in as {}", user.getLogin());
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
+    }
+
+    /**
+     * Creates the account under the login or, if an account has it, under the login with the lowest numeric suffix that no account has. Two launches that choose the same
+     * free login at the same time collide when the second account is saved, so the allocation is repeated for that case. Other failures are not retried.
+     */
+    private User createUserWithUnusedLogin(String login, String password, String firstName, String lastName, String email) {
+        for (int attempt = 1; attempt <= MAX_CREATION_ATTEMPTS; attempt++) {
+            try {
+                return userCreationService.createUser(unusedLogin(login), password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            }
+            catch (DataIntegrityViolationException e) {
+                if (attempt == MAX_CREATION_ATTEMPTS) {
+                    throw e;
+                }
+                log.info("The login for the launching user was taken in the meantime, choosing another one");
+            }
+        }
+        throw new InternalAuthenticationServiceException("Could not create the account of the launching user.");
+    }
+
+    /**
+     * Returns the login, or the login with the lowest numeric suffix that no account has. The suffix is part of the login, so the base is shortened to keep the login within its
+     * maximum length.
+     *
+     * @param login the derived login
+     * @return a login that no account has
+     */
+    private String unusedLogin(String login) {
+        if (userRepository.findOneByLogin(login).isEmpty()) {
+            return login;
+        }
+        for (int suffix = 2; suffix < MAX_LOGIN_SUFFIX; suffix++) {
+            String suffixText = String.valueOf(suffix);
+            String candidate = login.substring(0, Math.min(login.length(), Constants.USERNAME_MAX_LENGTH - suffixText.length())) + suffixText;
+            if (userRepository.findOneByLogin(candidate).isEmpty()) {
+                return candidate;
+            }
+        }
+        throw new InternalAuthenticationServiceException("Could not find an unused login for the launching user.");
+    }
+
+    /**
+     * Handler for successful LTI auth. Enrolls the user as a student in the exercise's course.
+     *
+     * @param user     The user that is authenticated
+     * @param exercise Exercise to launch
+     */
+    public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
+        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
+    }
+
+    /**
+     * Enrolls a user as a student in the given course.
+     *
+     * @param user   the user to enroll
+     * @param course the course to enroll the user in
+     */
+    private void enrollUserInCourse(User user, Course course) {
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
+        }
+    }
+
+    /**
+     * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
+     *
+     * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response             the response to add the JWT cookie to
+     */
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        User user = userRepository.getUser();
+
+        // Gated on the launch's own marker, not on `activated`: an account an administrator has deactivated is also
+        // inactive, and offering it the initialisation dialog only leads to a request the endpoint refuses.
+        if (needsInitialization(user)) {
+            log.info("User has not completed the initialization from its first launch. Adding initialize parameter to query.");
+            uriComponentsBuilder.queryParam("initialize", "");
+        }
+
+        log.info("Add/Update JWT cookie so the user will be logged in.");
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+    }
+
+    /**
+     * Whether the account was provisioned by a launch and still has to complete the initialisation that hands it its
+     * password.
+     *
+     * @param user the account
+     * @return true if the account still has to be initialised
+     */
+    public boolean needsInitialization(User user) {
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId());
+    }
+
+    /**
+     * Claims the one-time initialisation of a launch-provisioned account, so that only the first caller proceeds.
+     *
+     * @param user the account
+     * @return true if this caller claimed it and may hand out a password
+     */
+    public boolean claimInitialization(User user) {
+        return user.getId() != null && userLtiRepository.claimInitialization(user.getId()) == 1;
+    }
+
+    /**
+     * Checks if a user was created as part of an LTI launch.
+     *
+     * @param user the user to check if
+     * @return true if the user was created as part of an LTI launch
+     */
+    public boolean isLtiCreatedUser(User user) {
+        // Null-checked because the marker is a row keyed on the user id, so an account that has not been persisted cannot
+        // have one. Callers do pass transient users here, and looking one up by a null id would fail.
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId());
+    }
+
+    /**
+     * Include logout JWT cookie to response.
+     *
+     * @param response the response to add the JWT cookie to
+     */
+    public void prepareLogoutCookie(HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+    }
+}

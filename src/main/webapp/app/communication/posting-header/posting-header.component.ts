@@ -1,0 +1,209 @@
+import { Component, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { EmojiComponent } from 'app/communication/emoji/emoji.component';
+import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { User } from 'app/account/user/user.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { tap } from 'rxjs';
+import { faRobot, faTriangleExclamation, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { DisplayPriority, UserRole } from 'app/communication/communication.util';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-posting-header',
+    templateUrl: './posting-header.component.html',
+    styleUrls: ['../communication.component.scss'],
+    imports: [
+        ProfilePictureComponent,
+        NgClass,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        EmojiComponent,
+        TumAetUiTagComponent,
+    ],
+})
+export class PostingHeaderComponent implements OnInit {
+    private communicationService = inject(CommunicationService);
+    private accountService = inject(AccountService);
+
+    lastReadDate = input<dayjs.Dayjs>();
+    posting = input<Posting>();
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
+    hasChannelModerationRights = input<boolean>(false);
+    isCommunicationPage = input<boolean>();
+    isDeleted = input<boolean>(false);
+    isUnverifiedIris = input<boolean>(false);
+
+    isModalOpen = output<void>();
+    readonly onUserNameClicked = output<void>();
+
+    isAtLeastInstructorInCourse = false;
+    isAtLeastTutorInCourse = false;
+    readonly isAuthorOfPosting = signal(false);
+    readonly postingIsOfToday = signal(false);
+    readonly todayFlag = signal<string | undefined>(undefined);
+    readonly userAuthorityIcon = signal<IconProp>(undefined!);
+    readonly userAuthority = signal<string>(undefined!);
+    readonly userRoleBadge = signal<string>(undefined!);
+    readonly userAuthorityTooltip = signal<string>(undefined!);
+    readonly currentUser = signal<User | undefined>(undefined);
+
+    // Icons
+    readonly faPencilAlt = faPencilAlt;
+    readonly faCheckSquare = faCheckSquare;
+    readonly faTriangleExclamation = faTriangleExclamation;
+
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            this.posting();
+            this.hasChannelModerationRights();
+            untracked(() => {
+                if (this.posting()) {
+                    this.setUserProperties();
+                    this.setUserAuthorityIconAndTooltip();
+                }
+            });
+        });
+    }
+
+    isPostResolved = computed<boolean>(() => {
+        const posting = this.posting();
+        return this.isPost(posting) && posting.resolved === true;
+    });
+
+    isPostPinned = computed<boolean>(() => {
+        const posting = this.posting();
+        return this.isPost(posting) && posting.displayPriority == DisplayPriority.PINNED;
+    });
+
+    /**
+     * on initialization: determines if user is author of posting by invoking the communication service,
+     * determines if posting is of today and sets the today flag to be shown in the header of the posting
+     * determines icon and tooltip for authority type of the author
+     */
+    ngOnInit(): void {
+        this.accountService
+            .getAuthenticationState()
+            .pipe(
+                tap((user: User | undefined) => {
+                    this.currentUser.set(user);
+                    this.setUserProperties();
+                }),
+            )
+            .subscribe();
+        this.postingIsOfToday.set(dayjs().isSame(this.posting()?.creationDate, 'day'));
+        this.todayFlag.set(this.getTodayFlag());
+    }
+
+    private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
+        return posting !== undefined && 'resolved' in posting;
+    }
+
+    /**
+     * Indicates if the posting was created after the last time the current user read the conversation
+     */
+    get isAfter(): boolean | undefined {
+        return this.posting()?.creationDate?.isAfter(this.lastReadDate());
+    }
+
+    /**
+     * Returns the author of the current posting
+     */
+    get authorOfPosting(): User | undefined {
+        return this.posting()?.author;
+    }
+
+    /**
+     * Returns the creation date of the posting
+     */
+    get creationDate(): dayjs.Dayjs | undefined {
+        return this.posting()?.creationDate;
+    }
+
+    /**
+     * sets a flag that replaces the date by "Today" in the posting's header if applicable
+     */
+    getTodayFlag(): string | undefined {
+        if (this.postingIsOfToday()) {
+            return 'artemisApp.communication.today';
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * Sets various user properties related to the posting and course.
+     * Checks if the current user is the author of the posting and sets the `isAuthorOfPosting` flag accordingly.
+     * Calls `setUserAuthorityIconAndTooltip()` to set the user's authority icon and tooltip based on their role.
+     *
+     * @returns {void}
+     */
+    setUserProperties(): void {
+        this.isAuthorOfPosting.set(this.communicationService.currentUserIsAuthorOfPosting(this.posting()!));
+        this.setUserAuthorityIconAndTooltip();
+    }
+
+    /**
+     * assigns suitable icon and tooltip for the author's authority type
+     */
+    setUserAuthorityIconAndTooltip(): void {
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
+        const roleBadgeTranslationPath = 'artemisApp.communication.userRoles.';
+        this.userAuthorityIcon.set(faUser);
+        if (this.posting()?.author?.bot) {
+            this.userAuthorityIcon.set(faRobot);
+            this.userAuthority.set('bot');
+            this.userRoleBadge.set(roleBadgeTranslationPath + 'bot');
+            this.userAuthorityTooltip.set(toolTipTranslationPath + 'bot');
+        } else if (this.posting()?.authorRole === UserRole.USER) {
+            this.userAuthority.set('student');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
+        } else if (this.posting()?.authorRole === UserRole.INSTRUCTOR) {
+            this.userAuthorityIcon.set(faUserGraduate);
+            this.userAuthority.set('instructor');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
+        } else if (this.posting()?.authorRole === UserRole.TUTOR) {
+            this.userAuthorityIcon.set(faUserCheck);
+            this.userAuthority.set('tutor');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
+        } else {
+            this.userAuthority.set('student');
+            this.userRoleBadge.set('artemisApp.communication.userRoles.deleted');
+            this.userAuthorityTooltip.set('artemisApp.communication.userAuthorityTooltips.deleted');
+        }
+    }
+
+    /**
+     * Emits the event to open a user profile or direct chat when the author's name is clicked,
+     * unless the user is the author themself or role is missing
+     */
+    protected userNameClicked() {
+        if (this.isAuthorOfPosting() || !this.posting()?.authorRole) {
+            return;
+        }
+
+        this.onUserNameClicked.emit();
+    }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+}

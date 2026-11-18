@@ -1,0 +1,622 @@
+package de.tum.cit.aet.artemis.programming.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class BuildLogEntryService {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildLogEntryService.class);
+
+    private final BuildLogEntryRepository buildLogEntryRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProfileService profileService;
+
+    private final BuildJobRepository buildJobRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final FailedBuildLogService failedBuildLogService;
+
+    /** How many expired rows are deleted in one statement, and how many such statements one nightly run issues. Mirrors the audit log cleanup. */
+    private static final int DELETE_BATCH_SIZE = 5_000;
+
+    private static final int MAX_DELETE_BATCHES_PER_RUN = 200;
+
+    @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
+    private int expiryDays;
+
+    @Value("${artemis.continuous-integration.build-log.failed-build-retention-days:365}")
+    private int failedBuildRetentionDays;
+
+    @Value("${artemis.build-logs-path:./build-logs}")
+    private Path buildLogsPath;
+
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService,
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, FailedBuildLogService failedBuildLogService) {
+        this.buildLogEntryRepository = buildLogEntryRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.profileService = profileService;
+        this.buildJobRepository = buildJobRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.failedBuildLogService = failedBuildLogService;
+    }
+
+    /**
+     * Stores the build logs of a failed result. Other failed results of the same submission remain available.
+     * <p>
+     * The entries go to {@link FailedBuildLogService}, not to the database. A multi-line entry is written as several entries sharing its timestamp, which is why the returned
+     * list can be longer than the one that was passed in.
+     *
+     * @param buildLogs             build logs to save
+     * @param programmingSubmission submission of the build logs
+     * @param result                persisted result of the failed build
+     * @return the entries as they were stored, which is what a subsequent read returns
+     */
+    public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
+        List<BuildLogEntry> stored;
+        try {
+            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
+            stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
+        }
+        catch (UncheckedIOException e) {
+            // A build result must not fail because its logs could not be written, and the rows below are deliberately left alone: a submission that still has them keeps
+            // showing the logs of its previous build, which is more use than the nothing it would otherwise be left with.
+            log.error("Could not store the build logs of submission {}; any rows it still has are kept", programmingSubmission.getId(), e);
+            return List.of();
+        }
+
+        // Only now that the result file exists. Rows of a build that predates the file store are removed rather than left behind, so that a submission is never represented in
+        // both stores and the read below never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+        return stored;
+    }
+
+    /**
+     * Discards the stored logs of a result whose build did not fail.
+     * <p>
+     * A result that is updated in place rather than replaced keeps its id, so a build that succeeds after an earlier one failed writes nothing and would leave the earlier
+     * failure's file behind under the very id that now stands for a successful build. Only this result's file is removed; other failed results of the same submission keep
+     * theirs.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param result                result whose build did not fail
+     */
+    public void deleteBuildLogsOfSucceededResult(ProgrammingSubmission programmingSubmission, Result result) {
+        failedBuildLogService.deleteBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId());
+    }
+
+    /**
+     * Retrieves the latest build logs for a given programming submission.
+     *
+     * @param programmingSubmission submission for which to retrieve the build logs
+     * @return the build log entries
+     */
+    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        // Builds that failed before this release still have their logs in build_log_entry and nothing moves them, so a submission without a file falls back to the table for
+        // as long as its rows survive the retention period. Both branches are removed once the table has drained.
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        return failedBuildLogService.getLatestBuildLogs(exerciseId, programmingSubmission.getId()).orElseGet(() -> programmingSubmissionRepository
+                .findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElseGet(List::of));
+    }
+
+    /**
+     * Retrieves the failed build logs of one result.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs to retrieve
+     * @return the build log entries
+     */
+    public List<BuildLogEntry> getBuildLogs(ProgrammingSubmission programmingSubmission, long resultId) {
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        Optional<List<BuildLogEntry>> storedForResult = failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), resultId);
+        if (storedForResult.isPresent()) {
+            return storedForResult.get();
+        }
+
+        // The rows that predate the file store are not attributed to a result, so they may only answer for the one build they can have come from: the submission's newest, and
+        // only while it is still the failed one. Without that gate a submission that failed before this release and has since been rebuilt successfully would answer a request
+        // for the successful result with the earlier failure's logs. Removed together with the table once it has drained.
+        if (!legacyRowsBelongToResult(programmingSubmission, resultId)) {
+            return List.of();
+        }
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf)
+                .orElseGet(List::of);
+    }
+
+    /**
+     * Decides whether the legacy rows of a submission can be the logs of the requested result. They carry no result of their own, so they are only attributable while the
+     * submission's newest result is the requested one and that build is still failed.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs were requested
+     * @return true if the rows can only have come from the requested result
+     */
+    private boolean legacyRowsBelongToResult(ProgrammingSubmission programmingSubmission, long resultId) {
+        if (!programmingSubmission.isBuildFailed()) {
+            return false;
+        }
+        return programmingSubmissionRepository.findLatestResultIdBySubmissionId(programmingSubmission.getId()).filter(latestResultId -> latestResultId == resultId).isPresent();
+    }
+
+    /**
+     * Drains what is left of build_log_entry.
+     * <p>
+     * Nothing writes to the table any more, so it only shrinks: rows expire on the same retention period as the files that replaced them, and once the last one is gone the
+     * entity, this job and the fallback in {@link #getLatestBuildLogs} can all be deleted together with the table. The work is batched because the backlog is large - on a
+     * long-lived instance most of the table is already past a one-year cutoff on the day this ships - and a single delete of that size is not something to hand a live database.
+     */
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.failed-build-cleanup-schedule:0 30 3 * * ?}")
+    public void deleteExpiredBuildLogEntryRows() {
+        if (!profileService.isSchedulingActive()) {
+            return;
+        }
+
+        ZonedDateTime cutoff = ZonedDateTime.now().minusDays(failedBuildRetentionDays);
+        int deleted = 0;
+        for (int batch = 0; batch < MAX_DELETE_BATCHES_PER_RUN; batch++) {
+            List<Long> expiredIds = buildLogEntryRepository.findExpiredIds(cutoff, PageRequest.of(0, DELETE_BATCH_SIZE));
+            if (expiredIds.isEmpty()) {
+                if (deleted > 0) {
+                    log.info("Deleted {} build log entry rows older than {} days", deleted, failedBuildRetentionDays);
+                }
+                return;
+            }
+            buildLogEntryRepository.deleteAllByIdIn(expiredIds);
+            deleted += expiredIds.size();
+        }
+        log.info("Deleted {} build log entry rows older than {} days and reached the per-run limit; the remainder follows on the next run", deleted, failedBuildRetentionDays);
+    }
+
+    private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
+            "Please consider reporting this to the maintainers of", "to enable warnings of further illegal reflective access operations",
+            "All illegal access operations will be denied in a future release");
+
+    /**
+     * Determines if a given build log string can be categorized as an illegal reflection
+     *
+     * @param logString current build log string
+     * @return boolean indicating an illegal reflection log or not
+     */
+    public boolean isIllegalReflectionLog(String logString) {
+        return logString.startsWith("WARNING") && ILLEGAL_REFLECTION_LOGS.stream().anyMatch(logString::contains);
+    }
+
+    /**
+     * Determines if a given build log string can be categorized as an unnecessary log which does not need to be shown to the student
+     *
+     * @param logString           current build log string
+     * @param programmingLanguage programming language of exercise
+     * @return boolean indicating an unnecessary build log or not
+     */
+    public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
+        boolean isUnnecessaryLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
+        if (isUnnecessaryLog) {
+            return true;
+        }
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return isUnnecessaryJavaLog(logString);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT || programmingLanguage == ProgrammingLanguage.C) {
+            return isUnnecessaryCOrSwiftLog(logString);
+        }
+        return false;
+    }
+
+    private static final Set<String> UNNECESSARY_JAVA_LOGS = Set.of("NOTE: Picked up JDK_JAVA_OPTIONS", "Picked up JAVA_TOOL_OPTIONS", "[withMaven]", "$ docker");
+
+    private boolean isUnnecessaryJavaLog(String log) {
+        return isMavenErrorLog(log) || isGradleErrorLog(log) || isGradleInfoLog(log) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> UNNECESSARY_C_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
+
+    private boolean isUnnecessaryCOrSwiftLog(String log) {
+        return UNNECESSARY_C_SWIFT_LOGS.stream().anyMatch(log::contains) || log.startsWith("Digest:") || log.startsWith("Status:") || log.contains("github.com");
+    }
+
+    private boolean isInfoLog(String log) {
+        return (log.startsWith("[INFO]") && !log.contains("error")) || log.contains("Downloading") || log.contains("Downloaded") || log.contains("Progress (");
+    }
+
+    private static final Set<String> GRADLE_LOGS = Set.of("Downloading https://services.gradle.org", "...........10%", "Here are the highlights of this release:", "- ",
+            "For more details see", "Starting a Gradle Daemon", "Deprecated Gradle features were used", "You can use '--warning-mode all' to show");
+
+    private boolean isGradleInfoLog(String log) {
+        return log.contains("userguide/command_line_interface.html#sec:command_line_warnings") || GRADLE_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private boolean isWarningLog(String log) {
+        return log.startsWith("[WARNING]");
+    }
+
+    private static final Set<String> MAVEN_ERROR_LOGS = Set.of("[ERROR] [Help 1]", "[ERROR] For more information about the errors and possible solutions",
+            "[ERROR] Re-run Maven using", "[ERROR] To see the full stack trace of the errors", "[ERROR] -> [Help 1]", "[ERROR] Failed to execute goal org.apache.maven.plugins");
+
+    private boolean isMavenErrorLog(String log) {
+        return "[ERROR]".equals(log.strip()) || MAVEN_ERROR_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> GRADLE_ERROR_LOGS = Set.of("> Run with", "FAILURE", "* What went wrong:", "Execution failed", "* Get more help", "* Try:");
+
+    private boolean isGradleErrorLog(String log) {
+        return log.contains("actionable tasks:") || GRADLE_ERROR_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private boolean isDockerImageLog(String log) {
+        return (log.startsWith("Unable to find image '") && log.endsWith("' locally")) || (log.startsWith("Digest: sha256:") && log.length() == 79)
+                || log.startsWith("Status: Downloaded newer image for ") || "Jenkins does not seem to be running inside a container".equals(log)
+                || log.startsWith("Jenkins seems to be running inside container ") || ".".equals(log)
+                // Each of the following is prefixed by a 12 character hash, so the length is the length of the suffix + 12
+                || (log.endsWith(": Pulling fs layer") && log.length() == 30) || (log.endsWith(": Waiting") && log.length() == 21)
+                || (log.endsWith(": Verifying Checksum") && log.length() == 32) || (log.endsWith(": Download complete") && log.length() == 31)
+                || (log.endsWith(": Pull complete") && log.length() == 27) || log.startsWith("~~~~~~~~~~~~~~~~~~~~ Pull image progress:");
+    }
+
+    private static final Set<String> GIT_LOGS = Set.of("Checking out", "Switched to branch", ".git", "Fetching 'refs/heads", "Updating source code to revision",
+            "Updated source code to revision", "Creating local git repository", "hint: ", "Initialized empty Git", "Warning: Permanently added", "From ssh://");
+
+    private boolean isGitLog(String log) {
+        return log.contains("* [new branch]") || GIT_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> BUILD_TASK_LOGS = Set.of("Executing build", "Starting task", "Finished task", "Running pre-build action", "Failing task", "Running post build",
+            "Running on server", "Finalising the build...", "Stopping timer.", "Finished building", "All post build plugins have finished", "Publishing an artifact",
+            "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin",
+            "Running in ", "Build ", "Remote agent on ", "Parsing test results", "Successfully removed working directory", "Generating build results summary",
+            "Saving build results to disk", "Store variable context");
+
+    private boolean isTaskLog(String log) {
+        return BUILD_TASK_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    /**
+     * Determines if a given build log string shall be added to the build logs which are shown to the user.
+     * It avoids duplicate entries and only allows not more than one empty log.
+     *
+     * @param programmingLanguage programming language of build log
+     * @param buildLogs           accumulated build logs
+     * @param shortenedLogString  current build log string
+     * @return boolean indicating a build log should be added to the overall build logs
+     */
+    public boolean checkIfBuildLogIsNotADuplicate(ProgrammingLanguage programmingLanguage, List<BuildLogEntry> buildLogs, String shortenedLogString) {
+        // C outputs duplicate but necessary output, so we need to skip it
+        boolean skipLanguage = ProgrammingLanguage.C.equals(programmingLanguage);
+        if (!skipLanguage && !buildLogs.isEmpty()) {
+            // E.g. Swift produces a lot of duplicate build logs when a build fails
+            var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+            String lastLog = buildLogs.getLast().getLog();
+            // If the log does not exist already or if the log is a single blank log add it to the build logs (avoid more than one empty log in a row)
+            boolean isSingleBlankLog = shortenedLogString.isBlank() && !lastLog.isBlank();
+            return existingLog.isEmpty() || isSingleBlankLog;
+        }
+        return true;
+    }
+
+    /**
+     * Filters out unnecessary build logs that a student should not see.
+     *
+     * @param buildLogEntries     the build logs
+     * @param programmingLanguage the programming language
+     * @return filtered build logs
+     */
+    private List<BuildLogEntry> removeUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> filteredLogs = new ArrayList<>();
+        for (BuildLogEntry buildLog : buildLogEntries) {
+
+            String logString = buildLog.getLog();
+            if (isCompilationError(logString) && isBuildFailure(logString)) {
+                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
+                break;
+            }
+
+            // filter unnecessary logs and illegal reflection logs
+            if (isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || isIllegalReflectionLog(logString)) {
+                continue;
+            }
+
+            // filter blank entries
+            if (logString.isBlank()) {
+                continue;
+            }
+
+            // Avoid duplicate log entries
+            if (checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredLogs, logString)) {
+                filteredLogs.add(new BuildLogEntry(buildLog.getTime(), logString, buildLog.getProgrammingSubmission()));
+            }
+        }
+
+        return filteredLogs;
+    }
+
+    private boolean isCompilationError(String log) {
+        return log.contains("COMPILATION ERROR") || log.startsWith("> Compilation failed");
+    }
+
+    private boolean isBuildFailure(String log) {
+        return log.contains("BUILD FAILURE") || log.startsWith("BUILD FAILED");
+    }
+
+    /**
+     * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     *
+     * @param buildLogEntries     the original, unfiltered list
+     * @param programmingLanguage the programming language for filtering out language-specific logs
+     * @return the filtered list
+     */
+    public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> buildLogs = removeUnnecessaryLogs(buildLogEntries, programmingLanguage);
+        // Replace some unnecessary information and hide complex details to make it easier to read the important information
+        return buildLogs.stream().peek(buildLog -> buildLog.setLog(ContinuousIntegrationService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
+    }
+
+    /**
+     * Delete the build log entries for the given programming submission
+     *
+     * @param programmingSubmission the programming submission for which the build logs should be deleted
+     */
+    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId());
+        programmingSubmission.setBuildLogEntries(Set.of());
+        programmingSubmissionRepository.save(programmingSubmission);
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+    }
+
+    private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {
+        var persistedExerciseId = programmingSubmissionRepository.findExerciseIdBySubmissionId(programmingSubmission.getId());
+        if (persistedExerciseId.isPresent()) {
+            return persistedExerciseId.get();
+        }
+
+        Result latestResult = programmingSubmission.getLatestResult();
+        if (latestResult != null) {
+            return latestResult.getExerciseId();
+        }
+        throw new IllegalArgumentException("No programming submission found with id " + programmingSubmission.getId());
+    }
+
+    /**
+     * Saves a list of build log entries to a file for a specific build job.
+     *
+     * <p>
+     * The log file path is constructed based on the course's short name, the exercise's short name,
+     * and the build job ID. If the directory structure for the logs does not already exist, it is created.
+     * Each log entry is written to the log file in the format of "time\tlog message".
+     *
+     * @param buildLogEntries     A list of {@link BuildLogDTO} objects containing the build log information to be saved.
+     * @param buildJobId          The unique identifier of the build job whose logs are being saved.
+     * @param programmingExercise The programming exercise associated with the build job, used to
+     *                                retrieve the course and exercise short names.
+     * @throws IllegalStateException If the directory for storing the logs could not be created.
+     * @throws RuntimeException      If an I/O error occurs while writing the log file.
+     */
+    public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
+        if (hasPathElements(buildJobId)) {
+            // the id is used as a file name
+            log.warn("Not saving build logs for a build job ID that is not a plain file name");
+            return;
+        }
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
+        String exerciseShortName = programmingExercise.getShortName();
+        Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
+        if (!Files.exists(exerciseLogsPath)) {
+            try {
+                Files.createDirectories(exerciseLogsPath);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("Could not create directory for build logs", e);
+            }
+        }
+
+        Path logPath = exerciseLogsPath.resolve(buildJobId + ".log");
+
+        StringBuilder logsStringBuilder = new StringBuilder();
+        for (BuildLogDTO buildLogEntry : buildLogEntries) {
+            logsStringBuilder.append(buildLogEntry.time()).append("\t").append(buildLogEntry.log());
+        }
+
+        try {
+            FileUtils.writeStringToFile(logPath.toFile(), logsStringBuilder.toString(), StandardCharsets.UTF_8);
+            log.debug("Saved build logs for build job {} to file {}", buildJobId, logPath);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Whether the id cannot be used as a plain file name: it is missing, or it contains a path separator, a parent directory reference or a colon.
+    private static boolean hasPathElements(String buildJobId) {
+        return buildJobId == null || buildJobId.contains("/") || buildJobId.contains("\\") || buildJobId.contains("..") || buildJobId.contains(":");
+    }
+
+    /**
+     * Retrieves the build logs for a specific build job from the file system as a {@link FileSystemResource}.
+     *
+     * <p>
+     * The method first attempts to locate the log file in the directory corresponding to the course
+     * and exercise short names. If the file is not found, it will attempt to retrieve the log from a
+     * parent directory for backward compatibility.
+     *
+     * @param buildJobId The unique identifier of the build job whose logs are being retrieved.
+     * @return A {@link FileSystemResource} representing the log file if it exists, or {@code null} if the log file cannot be found.
+     */
+    public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
+        if (hasPathElements(buildJobId)) {
+            log.warn("Rejected a build job ID that is not a plain file name");
+            throw new IllegalArgumentException("Invalid build job ID");
+        }
+
+        ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
+        String exerciseShortName = programmingExercise.getShortName();
+        Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
+
+        FileSystemResource fileSystemResource = new FileSystemResource(logPath);
+        if (fileSystemResource.exists()) {
+            log.debug("Retrieved build logs for programming exercise {}", programmingExercise.getId());
+            return fileSystemResource;
+        }
+
+        // If the file is not found in the exercise directory, try to find it in the parent directory (for backwards compatibility)
+        log.warn("Build log file for programming exercise {} not found in the exercise directory. Searching in Parent directory...", programmingExercise.getId());
+        logPath = buildLogsPath.resolve(buildJobId + ".log");
+        fileSystemResource = new FileSystemResource(logPath);
+        if (fileSystemResource.exists()) {
+            log.debug("Retrieved build logs for programming exercise {}", programmingExercise.getId());
+            return fileSystemResource;
+        }
+
+        log.warn("Could not find build logs for programming exercise {}", programmingExercise.getId());
+        return null;
+    }
+
+    private ProgrammingExercise retrieveProgrammingExerciseByBuildJobId(String buildJobId) {
+        BuildJob buildJob = buildJobRepository.findByBuildJobIdElseThrow(buildJobId);
+        return programmingExerciseRepository.findByIdElseThrow(buildJob.getExerciseId());
+    }
+
+    /**
+     * Scheduled task that deletes old build log files from the continuous integration system.
+     * <p>
+     * This method runs based on the cron schedule defined in the application properties, with
+     * a default value of 3:00 AM every day if no custom schedule is provided.
+     * The task will only execute if scheduling is active, which is checked via the {@code profileService}.
+     * </p>
+     * <p>
+     * The method iterates through the files in the configured build logs directory and deletes
+     * files that were last modified before the configured expiry period (in days). The expiration
+     * period is specified by the {@code expiryDays} variable, and files older than this period are deleted.
+     * </p>
+     * <p>
+     * In case of an error during file deletion, it logs the error and continues processing.
+     * </p>
+     *
+     */
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 * * ?}")
+    public void deleteOldBuildLogsFiles() {
+        // only execute this if scheduling is active
+        if (!profileService.isSchedulingActive()) {
+            return;
+        }
+
+        log.info("Deleting old build log files");
+
+        try {
+            deleteExpiredBuildLogFilesRecursively(buildLogsPath);
+        }
+        catch (IOException e) {
+            log.error("Error occurred while trying to delete old build log files", e);
+        }
+    }
+
+    private void deleteExpiredBuildLogFilesRecursively(Path path) throws IOException {
+        if (!Files.isDirectory(path)) {
+            deleteFileIfExpired(path);
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path subPath : stream) {
+                deleteExpiredBuildLogFilesRecursively(subPath);
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while processing directory: {}", path, e);
+        }
+
+        if (!path.equals(buildLogsPath)) {
+            deleteDirectoryIfEmpty(path);
+        }
+    }
+
+    private void deleteFileIfExpired(Path file) throws IOException {
+        ZonedDateTime now = ZonedDateTime.now();
+
+        ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
+        if (Files.isRegularFile(file) && lastModified.isBefore(now.minusDays(expiryDays))) {
+            Files.deleteIfExists(file);
+            log.info("Deleted old build log file {}", file);
+        }
+
+    }
+
+    private void deleteDirectoryIfEmpty(Path directory) {
+        if (Files.isDirectory(directory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                if (!stream.iterator().hasNext()) {
+                    Files.deleteIfExists(directory);
+                    log.info("Deleted empty directory {}", directory);
+                }
+            }
+            catch (IOException e) {
+                log.error("Error occurred while trying to delete empty directory {}", directory, e);
+            }
+        }
+    }
+
+    /**
+     * Checks if the log file for a specific build job exists in the file system.
+     *
+     * <p>
+     * The log file path is constructed based on the course's short name, the exercise's short name,
+     * and the build job ID. The file is expected to be located at:
+     * {@code buildLogsPath/<courseShortName>/<exerciseShortName>/<buildJobId>.log}.
+     *
+     * @param buildJobId The unique identifier of the build job whose log file is being checked.
+     * @param names      A DTO containing the course and exercise short names.
+     * @return {@code true} if the log file exists, otherwise {@code false}.
+     */
+    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExerciseNamesDTO names) {
+        Path logPath = buildLogsPath.resolve(names.courseShortName()).resolve(names.exerciseShortName()).resolve(buildJobId + ".log");
+        boolean existsInExerciseFolder = Files.exists(logPath);
+        if (existsInExerciseFolder) {
+            return true;
+        }
+
+        // Check parent folder for backwards compatibility
+        logPath = buildLogsPath.resolve(buildJobId + ".log");
+        return Files.exists(logPath);
+    }
+}

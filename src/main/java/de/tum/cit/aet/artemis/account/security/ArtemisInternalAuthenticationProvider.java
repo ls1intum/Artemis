@@ -1,0 +1,90 @@
+package de.tum.cit.aet.artemis.account.security;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Locale;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Component;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+
+@Profile(PROFILE_CORE)
+@Component
+@Lazy
+public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticationProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
+
+    private final PasswordService passwordService;
+
+    private final UserRepository userRepository;
+
+    public ArtemisInternalAuthenticationProvider(PasswordService passwordService, UserRepository userRepository) {
+        this.passwordService = passwordService;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        log.info("Trying to authenticate user {} with internal authentication provider", authentication.getName());
+        String lowercaseLoginOrEmail = authentication.getName().toLowerCase(Locale.ENGLISH);
+
+        Optional<User> optionalUser;
+        if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
+            // It's an email, try to find the user based on the email
+            // Load authorities only — courseRoles are not needed to build the authentication token
+            optionalUser = userRepository.findOneWithAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true);
+        }
+        else {
+            // It's a login, try to find the user based on the login
+            // Load authorities only — courseRoles are not needed to build the authentication token
+            optionalUser = userRepository.findOneWithAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true);
+        }
+        if (optionalUser.isEmpty()) {
+            log.warn("User {} was not found in the database", lowercaseLoginOrEmail);
+            // Internal user not found in the database. Skipping internal authentication.
+            return null;
+        }
+        final var user = optionalUser.get();
+        if (user.isBot()) {
+            // A refusal, not a system problem: AuthenticationServiceException means the request could not be processed, and
+            // the login endpoint answers that with a 500 on purpose.
+            throw new BadCredentialsException("Bot users cannot authenticate interactively");
+        }
+        if (!user.getActivated()) {
+            throw new UserNotActivatedException("User " + user.getLogin() + " was not activated");
+        }
+        if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.getPassword())) {
+            // BadCredentialsException rather than AuthenticationServiceException: the request is rejected, nothing failed.
+            // The distinction decides the status code the caller sees, and it keeps the login out of the message, which
+            // callers are free to propagate. The attempt is logged by the caller - PublicUserJwtResource for the web login
+            // and LocalVCFetchFilter for a git fetch, which also writes a VCS access log entry. LocalVCPushFilter does not
+            // log it, which is unchanged by this class and left as it is here.
+            throw new BadCredentialsException("Invalid credentials");
+        }
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
+    }
+
+    @Override
+    public Optional<String> getUsernameForEmail(String email) {
+        return userRepository.findOneByEmailIgnoreCase(email).flatMap(user -> Optional.of(user.getLogin()));
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+}

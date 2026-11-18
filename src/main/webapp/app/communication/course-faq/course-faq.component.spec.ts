@@ -1,0 +1,280 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, NavigationEnd, ParamMap, Router, convertToParamMap } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CourseFaqComponent } from 'app/communication/course-faq/course-faq.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { ElementRef, signal } from '@angular/core';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+
+function createFaq(id: number, category: string, color: string): Faq {
+    const faq = new Faq();
+    faq.id = id;
+    faq.questionTitle = 'questionTitle ' + id;
+    faq.questionAnswer = 'questionAnswer ' + id;
+    faq.categories = [new FaqCategory(category, color)];
+    return faq;
+}
+
+describe('CourseFaqs', () => {
+    let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
+    let courseFaqComponent: CourseFaqComponent;
+
+    let faqService: FaqService;
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
+    let alertService: AlertService;
+
+    let faq1: Faq;
+    let faq2: Faq;
+    let faq3: Faq;
+    let queryParams: BehaviorSubject<ParamMap>;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(() => {
+        // In beforeEach:
+        faq1 = createFaq(1, 'category1', '#94a11c');
+        faq2 = createFaq(2, 'category2', '#0ab84f');
+        faq3 = createFaq(3, 'category3', '#0ab84f');
+        queryParams = new BehaviorSubject(convertToParamMap({ faqId: '1' }));
+
+        TestBed.configureTestingModule({
+            imports: [
+                MockComponent(CustomExerciseCategoryBadgeComponent),
+                MockComponent(CourseFaqAccordionComponent),
+                FaIconComponent,
+                CourseFaqComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
+            ],
+            providers: [
+                MockProvider(FaqService),
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: {
+                            snapshot: {
+                                paramMap: convertToParamMap({ courseId: '1', faqId: '1' }),
+                            },
+                        },
+                        snapshot: {
+                            queryParamMap: convertToParamMap({ faqId: '1' }),
+                        },
+                        queryParamMap: queryParams,
+                    },
+                },
+                MockProvider(FaqService, {
+                    findAllByCourseIdAndState: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [faq1, faq2, faq3],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    delete: () => {
+                        return of(new HttpResponse<void>({ status: 200 }));
+                    },
+                    findAllCategoriesByCourseId: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findAllCategoriesByCourseIdAndCategory: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    convertFaqCategoriesAsStringFromServer: () => [],
+                    applyFilters: () => {
+                        return [faq2, faq3];
+                    },
+                    hasSearchTokens: () => {
+                        return true;
+                    },
+                }),
+            ],
+        });
+
+        courseFaqComponentFixture = TestBed.createComponent(CourseFaqComponent);
+        courseFaqComponent = courseFaqComponentFixture.componentInstance;
+
+        faqService = TestBed.inject(FaqService);
+        alertService = TestBed.inject(AlertService);
+    });
+
+    it('should initialize', () => {
+        courseFaqComponentFixture.detectChanges();
+        expect(courseFaqComponent).not.toBeNull();
+        courseFaqComponent.ngOnDestroy();
+    });
+
+    it('should fetch faqs when initialized', () => {
+        const findAllSpy = vi.spyOn(faqService, 'findAllByCourseIdAndState');
+
+        courseFaqComponentFixture.detectChanges();
+        expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1, FaqState.ACCEPTED);
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
+    });
+
+    it('should toggle filter correctly', () => {
+        const toggleFilterSpy = vi.spyOn(faqService, 'toggleFilter');
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.toggleFilters('category2');
+        expect(toggleFilterSpy).toHaveBeenCalledOnce();
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
+    });
+
+    it('lists the categories in a popover that is only available when categories exist', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.existingCategories.set([new FaqCategory('category1', '#94a11c'), new FaqCategory('category2', '#0ab84f')]);
+        courseFaqComponent.hasCategories.set(false);
+        courseFaqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const trigger = (view.rootNodes[0] as HTMLElement).querySelector('#filter-dropdown-button') as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
+
+        courseFaqComponent.hasCategories.set(true);
+        courseFaqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(trigger.disabled).toBe(false);
+        const toggleFilters = vi.spyOn(courseFaqComponent, 'toggleFilters').mockImplementation(() => {});
+        trigger.click();
+        view.detectChanges();
+
+        const checkboxes = document.querySelectorAll<HTMLInputElement>('.cdk-overlay-container input[type="checkbox"]');
+        expect(Array.from(checkboxes).map((checkbox) => checkbox.id)).toEqual(['filter-category1', 'filter-category2']);
+        checkboxes[0].click();
+        expect(toggleFilters).toHaveBeenCalledExactlyOnceWith('category1');
+        view.destroy();
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
+    });
+
+    it('should search through already filtered array', () => {
+        const searchSpy = vi.spyOn(faqService, 'hasSearchTokens');
+        const applyFilterSpy = vi.spyOn(faqService, 'applyFilters');
+        courseFaqComponent.setSearchValue('questionTitle');
+        courseFaqComponent.refreshFaqList(courseFaqComponent.searchInput.getValue());
+        expect(applyFilterSpy).toHaveBeenCalledOnce();
+        expect(searchSpy).toHaveBeenCalledTimes(2);
+        expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
+        expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
+    });
+
+    it('should catch error if no categories are found', () => {
+        alertServiceStub = vi.spyOn(alertService, 'error');
+        const error = { status: 404 };
+        vi.spyOn(faqService, 'findAllCategoriesByCourseIdAndCategory').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        courseFaqComponentFixture.detectChanges();
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+    });
+
+    it('should display FAQs in the order received from server (server-side sorting)', () => {
+        // Mock service to return FAQs in descending order by creation date (newest first)
+        const newestFaq = createFaq(3, 'category3', '#0ab84f');
+        const middleFaq = createFaq(2, 'category2', '#0ab84f');
+        const oldestFaq = createFaq(1, 'category1', '#94a11c');
+
+        vi.spyOn(faqService, 'findAllByCourseIdAndState').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [newestFaq, middleFaq, oldestFaq], // Server returns sorted
+                    status: 200,
+                }),
+            ),
+        );
+
+        courseFaqComponentFixture.detectChanges();
+
+        // Verify component displays FAQs in the exact order received from server
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
+        expect(courseFaqComponent.faqs()[0].id).toBe(3); // Newest
+        expect(courseFaqComponent.faqs()[1].id).toBe(2);
+        expect(courseFaqComponent.faqs()[2].id).toBe(1); // Oldest
+    });
+
+    it('should scroll and focus on the faq element with given id', () => {
+        const nativeElement1 = { id: 'faq-1', scrollIntoView: vi.fn(), focus: vi.fn() };
+        const nativeElement2 = { id: 'faq-2', scrollIntoView: vi.fn(), focus: vi.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        courseFaqComponent.faqElements = signal([elementRef1, elementRef2]);
+
+        courseFaqComponent.scrollToFaq(1);
+
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
+    });
+
+    it('follows a faqId that changes while the page stays open', () => {
+        courseFaqComponentFixture.detectChanges();
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
+    });
+
+    // The mocked FaqService.applyFilters always returns FAQ 2 and 3, so FAQ 1 counts as hidden by the filters.
+    it('clears the filters that would hide a referenced faq', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        queryParams.next(convertToParamMap({ faqId: '1' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+    });
+
+    it('reveals the referenced faq again when it is opened once more after a filter hid it', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        // The same faqId again: the query does not change, only another navigation to the same URL is reported.
+        (TestBed.inject(Router) as unknown as MockRouter).eventSubject.next(new NavigationEnd(2, '/courses/1/faq?faqId=1', '/courses/1/faq?faqId=1'));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+    });
+
+    it('keeps the filters when the referenced faq is visible', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(1);
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
+    });
+});

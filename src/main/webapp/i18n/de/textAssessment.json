@@ -1,0 +1,50 @@
+{
+    "artemisApp": {
+        "textAssessment": {
+            "title": "Bewertungseditor für Textaufgaben",
+            "loading": "Bitte warte, bis Artemis die Abgabe findet!",
+            "heading": {
+                "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
+                "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
+            },
+            "assessor": "Bewertet von",
+            "save": "Bewertung speichern",
+            "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+            "submit": "Bewertung einreichen",
+            "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+            "override": "Bewertung überschreiben",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da andere Tutor:innen bereits bewertet haben.",
+            "exampleSubmissionInstruction": "Erstelle eine Beispielabgabe",
+            "error": {
+                "invalidAssessments": "Deine Bewertung ist nicht gültig!",
+                "invalidScoreMustBeNumber": "Das Punkte-Feld muss eine Zahl sein und darf nicht leer sein!",
+                "invalidNeedScoreOrFeedback": "Jedes Feedback-Element muss mindestens eine Punktzahl oder ein Feedback enthalten.",
+                "feedbackReferenceTooLong": "Wähle bitte einen Textabschnitt mit weniger als 2000 Zeichen aus."
+            },
+            "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
+            "predefineTextBlocks": "Textblöcke automatisch anlegen",
+            "lock": "Diese Abgabe kann jetzt nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe, bevor du eine neue öffnest.",
+            "submissionLocked": "Abgabe gesperrt",
+            "studentSubmission": "Studentische Abgabe",
+            "instructions": "&nbsp; Aufgabenstellung &nbsp;",
+            "editor": {
+                "assess": "Bewerten"
+            },
+            "dashboard": {
+                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
+            },
+            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
+            "cancel": "Bewertung abbrechen",
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
+            "feedbackEditor": {
+                "dismissFeedback": "Soll das Feedback gelöscht werden?",
+                "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
+                "connectToInstruction": "Feedback mit einer Bewertungsanweisung verknüpfen",
+                "noTitle": "(Kein Titel)"
+            },
+            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabschnitts."
+        }
+    }
+}

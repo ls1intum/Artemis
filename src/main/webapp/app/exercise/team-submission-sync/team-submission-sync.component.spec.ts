@@ -1,0 +1,231 @@
+/**
+ * Vitest tests for TeamSubmissionSyncComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockProvider } from 'ng-mocks';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Subject, of } from 'rxjs';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { SubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
+import { User } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
+import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ConnectionState } from 'app/foundation/service/websocket.service';
+import { ApollonEditor } from '@tumaet/apollon';
+
+describe('Team Submission Sync Component', () => {
+    let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
+    let component: TeamSubmissionSyncComponent;
+    let websocketService: WebsocketService;
+    let textSubmissionWithParticipation: Submission;
+    let submissionSyncPayload: SubmissionSyncPayload;
+    let currentUser: User;
+    let otherUser: User;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TeamSubmissionSyncComponent],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(SessionStorageService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: HttpClient, useClass: MockHttpService },
+            ],
+        })
+            .overrideTemplate(TeamSubmissionSyncComponent, '')
+            .compileComponents();
+
+        currentUser = new User();
+        currentUser.login = 'ge12ebc';
+        otherUser = new User();
+        otherUser.login = 'other';
+        vi.spyOn(TestBed.inject(AccountService), 'identity').mockResolvedValue(currentUser);
+
+        fixture = TestBed.createComponent(TeamSubmissionSyncComponent);
+        component = fixture.componentInstance;
+        websocketService = TestBed.inject(WebsocketService);
+
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const participation = new StudentParticipation(ParticipationType.STUDENT);
+        participation.id = 3;
+        fixture.componentRef.setInput('participation', participation);
+
+        textSubmissionWithParticipation = new TextSubmission();
+        textSubmissionWithParticipation.participation = new StudentParticipation();
+        fixture.componentRef.setInput('submissionObservable', of(textSubmissionWithParticipation));
+
+        // Ensure the identity promise in the constructor resolves.
+        await Promise.resolve();
+
+        submissionSyncPayload = new SubmissionSyncPayload();
+        const submission = new TextSubmission();
+        submission.id = 12;
+        submissionSyncPayload.submission = submission;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('ngOnInit should work correctly', () => {
+        const expectedWebsocketTopic = '/topic/participations/3/team/text-submissions';
+        submissionSyncPayload.sender = otherUser;
+        const submissionSyncObservable = of(submissionSyncPayload);
+
+        const receiveSubmissionEmitSpy = vi.spyOn(component.receiveSubmission, 'emit');
+        const websocketSubscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
+        const websocketSendSpy = vi.spyOn(websocketService, 'send');
+
+        component.ngOnInit();
+
+        expect(component.websocketTopic).toBe(expectedWebsocketTopic);
+        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
+        expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
+
+        // checks for setupReceiver
+        expect(receiveSubmissionEmitSpy).toHaveBeenCalledTimes(1);
+        expect(receiveSubmissionEmitSpy).toHaveBeenCalledWith(submissionSyncPayload?.submission);
+
+        // checks for setupSender
+        expect(textSubmissionWithParticipation).toBeDefined();
+        expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
+        expect(textSubmissionWithParticipation?.participation?.submissions).toHaveLength(0);
+        expect(websocketSendSpy).toHaveBeenCalledTimes(2);
+        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, '/app/participations/3/team/text-submissions/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy.mock.calls[1][0]).toBe('/app/participations/3/team/text-submissions/patch');
+        expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
+    });
+
+    it('should handle submission patch payloads.', () => {
+        const mockEmitter = new Subject<SubmissionPatchPayload>();
+        const receiver = vi.fn();
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(mockEmitter.asObservable());
+
+        component.ngOnInit();
+        component.receiveSubmissionPatch.subscribe(receiver);
+
+        const patchString = JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]);
+        mockEmitter.next({
+            submissionPatch: { patch: patchString },
+            sender: currentUser.login!,
+        });
+
+        expect(receiver).toHaveBeenCalledWith({ patch: patchString });
+    });
+
+    it('should properly send submission patches.', () => {
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        const mockEmitter = new Subject<SubmissionPatch>();
+
+        fixture.componentRef.setInput('submissionPatchObservable', mockEmitter);
+        component.ngOnInit();
+
+        const expectedTopic = '/app/participations/3/team/text-submissions/patch';
+        const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
+        mockEmitter.next(patch);
+        expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
+    });
+
+    it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
+        const mock = websocketService as unknown as MockWebsocketService;
+        const expectedTopic = '/app/participations/3/team/text-submissions/patch';
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+
+        // Drop the submissionObservable so the only thing that produces /patch sends is the reconnect path
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+
+        // BehaviorSubject in MockWebsocketService starts as connected=true → exactly one initial sync + one reconnect emission
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+        expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
+        expect(sendSpy.mock.calls[0][1]).toBeInstanceOf(SubmissionPatch);
+        expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
+
+        // Disconnect — no fresh sync, no fresh reconnect signal
+        mock.setConnectionState(new ConnectionState(false, true));
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
+
+        // Reconnect — initial sync and reconnect signal fire again
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        // A duplicate connected=true must not re-fire (distinctUntilChanged on the `connected` field)
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        generateInitialSyncSpy.mockRestore();
+    });
+
+    it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', () => {
+        // The shared (re)connect lifecycle is covered by the test above; this asserts only the modeling delta:
+        // modeling sends a second patch carrying the initial awareness sync, on the first connect and on every reconnect.
+        const mock = websocketService as unknown as MockWebsocketService;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
+        const expectedTopic = '/app/participations/3/team/modeling-submissions/patch';
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+
+        expect(sendSpy.mock.calls.map((call) => [call[0], (call[1] as SubmissionPatch).patch])).toEqual([
+            [expectedTopic, 'initial-sync-stub'],
+            [expectedTopic, 'initial-awareness-stub'],
+        ]);
+
+        mock.setConnectionState(new ConnectionState(false, true));
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(4);
+        expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
+
+        generateInitialSyncSpy.mockRestore();
+        generateInitialAwarenessSyncSpy.mockRestore();
+    });
+
+    it('should stop reacting to connection-state changes after ngOnDestroy', () => {
+        const mock = websocketService as unknown as MockWebsocketService;
+        vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
+
+        component.ngOnDestroy();
+        mock.setConnectionState(new ConnectionState(false, true));
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
+    });
+});

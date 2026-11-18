@@ -1,0 +1,60 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+
+describe('DifficultyBadge', () => {
+    let component: DifficultyBadgeComponent;
+    let fixture: ComponentFixture<DifficultyBadgeComponent>;
+    let exercise: ProgrammingExercise;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [DifficultyBadgeComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        exercise = new ProgrammingExercise(undefined, undefined);
+        fixture = TestBed.createComponent(DifficultyBadgeComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('showNoLevel', false);
+    });
+
+    it('should show an info badge if no difficulty level should be shown', () => {
+        fixture.componentRef.setInput('showNoLevel', true);
+
+        expect(component.badgeClass()).toBe('bg-state-info');
+    });
+
+    it('should show no badge if the exercise has no difficulty level', () => {
+        fixture.componentRef.setInput('showNoLevel', false);
+
+        expect(component.badgeClass()).toBeUndefined();
+    });
+
+    it('should a success badge for easy exercises', () => {
+        exercise.difficulty = DifficultyLevel.EASY;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        expect(component.badgeClass()).toBe('bg-state-success');
+    });
+
+    it('should a warning badge for medium difficulty exercises', () => {
+        exercise.difficulty = DifficultyLevel.MEDIUM;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        expect(component.badgeClass()).toBe('bg-state-warning');
+    });
+
+    it('should a danger badge for hard exercises', () => {
+        exercise.difficulty = DifficultyLevel.HARD;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        expect(component.badgeClass()).toBe('bg-state-danger');
+    });
+});

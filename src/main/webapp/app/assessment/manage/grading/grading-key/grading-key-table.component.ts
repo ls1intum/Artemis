@@ -1,0 +1,116 @@
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { Component, OnInit, inject, input, model, signal } from '@angular/core';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { ScoreType } from 'app/foundation/constants/score-type.constants';
+import { ActivatedRoute } from '@angular/router';
+import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading/grading-key-overview/grading-key-helper';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
+
+@Component({
+    selector: 'jhi-grade-key-table',
+    templateUrl: './grading-key-table.component.html',
+    styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
+})
+export class GradingKeyTableComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private gradingService = inject(GradingService);
+    private bonusService = inject(BonusService);
+    private scoresStorageService = inject(ScoresStorageService);
+
+    readonly purpose = input<'student' | 'management'>('student');
+
+    readonly faChevronLeft = faChevronLeft;
+
+    readonly GradeEditMode = GradeEditMode;
+
+    studentGradeOrBonusPointsOrGradeBonus = model<string>();
+    forBonus = model<boolean>();
+
+    readonly plagiarismGrade = signal<string | undefined>(undefined);
+    readonly noParticipationGrade = signal<string | undefined>(undefined);
+
+    isExam = false;
+
+    courseId?: number;
+    examId?: number;
+
+    readonly title = signal<string | undefined>(undefined);
+    readonly gradeSteps = signal<GradeStep[]>([]);
+    readonly isBonus = signal(false);
+
+    readonly hasPointsSet = signal(false);
+
+    ngOnInit(): void {
+        const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
+        this.courseId = courseId;
+        this.examId = examId;
+        this.forBonus.set(this.forBonus() || forBonus);
+        this.isExam = isExam;
+        this.studentGradeOrBonusPointsOrGradeBonus.set(this.studentGradeOrBonusPointsOrGradeBonus() || studentGradeOrBonusPointsOrGradeBonus);
+
+        this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
+            if (gradeSteps) {
+                this.title.set(gradeSteps.title);
+                this.isBonus.set(gradeSteps.gradeType === GradeType.BONUS);
+                this.gradeSteps.set(this.gradingService.sortGradeSteps(gradeSteps.gradeSteps));
+                this.plagiarismGrade.set(gradeSteps.plagiarismGrade);
+                this.noParticipationGrade.set(gradeSteps.noParticipationGrade);
+                if (gradeSteps.maxPoints !== undefined) {
+                    if (!this.isExam) {
+                        let maxPoints = 0;
+                        const totalScoresForCourse = this.scoresStorageService.getStoredTotalScores(this.courseId!);
+                        if (totalScoresForCourse) {
+                            maxPoints = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
+                        }
+                        this.gradingService.setGradePoints(this.gradeSteps(), maxPoints);
+                    } else {
+                        // for exams the max points filed should equal the total max points (otherwise exams can't be started)
+                        this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints);
+                    }
+                }
+                this.hasPointsSet.set(this.gradingService.hasPointsSet(this.gradeSteps()));
+            } else {
+                this.hasPointsSet.set(false);
+            }
+        });
+    }
+
+    private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
+        if (!this.forBonus()) {
+            return this.gradingService.findGradeSteps(courseId, examId, this.purpose());
+        } else {
+            // examId must be present if forBonus is true.
+            return this.bonusService.findBonusForExam(courseId, examId!, true).pipe(
+                map((bonusResponse) => {
+                    const source = bonusResponse.body?.sourceGradingScale;
+                    if (!source) {
+                        return undefined;
+                    }
+                    return {
+                        title: this.gradingService.getGradingScaleTitle(source)!,
+                        gradeType: source.gradeType,
+                        gradeSteps: source.gradeSteps,
+                        maxPoints: this.gradingService.getGradingScaleMaxPoints(source),
+                        plagiarismGrade: source.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                        noParticipationGrade: source.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+                        presentationsNumber: source.presentationsNumber,
+                        presentationsWeight: source.presentationsWeight,
+                    };
+                }),
+            );
+        }
+    }
+}

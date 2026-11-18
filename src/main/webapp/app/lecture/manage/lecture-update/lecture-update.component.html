@@ -1,0 +1,135 @@
+<div *titleBarTitle class="flex items-center gap-1">
+    <h4 id="jhi-lecture-heading" class="m-0" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h4>
+    <jhi-documentation-button [type]="documentationType" />
+</div>
+@let currentCourseId = courseId();
+@let showsSingleLectureForm = !(isLectureSeriesCreationMode() && currentCourseId);
+@if (showsSingleLectureForm) {
+    <!-- The sections stay reachable from the title bar, which stays in view while the page scrolls. -->
+    <nav *titleBarActions class="flex items-center gap-2" [attr.aria-label]="'artemisApp.lecture.sections.navigation' | artemisTranslate" data-testid="lecture-section-links">
+        <span class="hidden text-sm text-muted-color sm:inline" jhiTranslate="artemisApp.lecture.sections.jumpTo"></span>
+        <tumaet-ui-button-group>
+            @for (section of formStatusSections(); track section.title) {
+                <tumaet-ui-button severity="secondary" size="small" variant="outlined" data-testid="lecture-section-link" (clicked)="scrollToSection(section.title)">
+                    @if (!section.valid) {
+                        <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" aria-hidden="true" />
+                    }
+                    <span [jhiTranslate]="section.title"></span>
+                    @if (!section.valid) {
+                        <span class="sr-only">({{ 'artemisApp.lecture.sections.needsAttention' | artemisTranslate }})</span>
+                    }
+                </tumaet-ui-button>
+            }
+        </tumaet-ui-button-group>
+    </nav>
+}
+<!-- The footer is a sibling of the centered column, so it spans the whole content area; a sticky element only sticks within its parent. -->
+<div class="flex flex-col gap-6">
+    <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        @if (pdfUploadConfirmationText(); as confirmationText) {
+            <tumaet-ui-message severity="success" [icon]="faCircleCheck" dismissible (dismissed)="dismissPdfUploadConfirmation()" data-testid="pdf-upload-confirmation">
+                <span class="flex flex-col gap-1 py-1">
+                    <strong [jhiTranslate]="confirmationText.title"></strong>
+                    <span>
+                        {{ confirmationText.body | artemisTranslate: confirmationText.params }}
+                        @if (confirmationText.release && confirmationText.releaseDate) {
+                            {{ confirmationText.release | artemisTranslate: { date: (confirmationText.releaseDate | artemisDate: 'short') } }}
+                        }
+                    </span>
+                </span>
+            </tumaet-ui-message>
+        }
+        @if (!isEditMode() && currentCourseId) {
+            <div class="flex justify-end">
+                <tumaet-ui-select-button
+                    data-testid="lecture-creation-mode"
+                    [options]="createLectureOptions()"
+                    [ngModel]="selectedCreateLectureOption()"
+                    (ngModelChange)="selectedCreateLectureOption.set($event)"
+                    [allowEmpty]="false"
+                    optionLabel="label"
+                    optionValue="mode"
+                    size="small"
+                />
+            </div>
+        }
+        @if (!showsSingleLectureForm && currentCourseId) {
+            <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
+        } @else {
+            <div class="flex flex-col gap-6">
+                <section #detailsSection class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6" aria-labelledby="artemisApp.lecture.sections.title">
+                    <div class="flex flex-col gap-1">
+                        <h3
+                            id="artemisApp.lecture.sections.title"
+                            tabindex="-1"
+                            class="m-0 scroll-mt-4 text-lg font-semibold"
+                            jhiTranslate="artemisApp.lecture.sections.title"
+                        ></h3>
+                        <p class="lecture-update-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.titleDescription"></p>
+                    </div>
+                    <jhi-lecture-title-channel-name [lecture]="lecture()" (lectureChange)="onLectureChange($event)" />
+                    @if (lecture()) {
+                        <div id="field_description" class="flex flex-col gap-1">
+                            <span class="text-sm font-medium" jhiTranslate="artemisApp.lecture.description"></span>
+                            <jhi-markdown-editor-monaco
+                                class="markdown-editor"
+                                [domainActions]="domainActionsDescription"
+                                [(markdown)]="lecture().description"
+                                (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                                [initialEditorHeight]="MarkdownEditorHeight.INLINE"
+                                [resizableMinHeight]="MarkdownEditorHeight.INLINE"
+                                [resizableMaxHeight]="MarkdownEditorHeight.SMALL"
+                            />
+                        </div>
+                    }
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox inputId="tutorial-lecture-checkbox" name="isTutorialLecture" [(checked)]="isTutorialLecture" />
+                        <label class="m-0" for="tutorial-lecture-checkbox" jhiTranslate="artemisApp.lecture.tutorialLecture.tutorialLectureCheckboxLabel"></label>
+                        @let tutorialLectureTooltip = 'artemisApp.lecture.tutorialLecture.tutorialLectureTooltip' | artemisTranslate;
+                        <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
+                            type="button"
+                            class="inline-flex cursor-help border-0 p-0"
+                            [attr.aria-label]="tutorialLectureTooltip"
+                            [tumAetUiTooltip]="tutorialLectureTooltip"
+                            tumAetUiTooltipDescribesHost="false"
+                        >
+                            <fa-icon [icon]="faCircleInfo" />
+                        </button>
+                    </div>
+                </section>
+                <section #periodSection class="lecture-update-section rounded-lg p-3.5 sm:p-6">
+                    <jhi-lecture-timeline
+                        [(startDate)]="lecture().startDate"
+                        [(endDate)]="lecture().endDate"
+                        (periodValidChange)="isPeriodValid.set($event)"
+                        (datesChanged)="updateIsChangesMadeToTitleOrPeriodSection()"
+                    />
+                </section>
+                @if (isEditMode()) {
+                    <section class="lecture-update-section rounded-lg p-3.5 sm:p-6">
+                        <jhi-lecture-update-units [lecture]="lecture()" />
+                    </section>
+                }
+            </div>
+        }
+    </div>
+    @if (showsSingleLectureForm) {
+        <jhi-lecture-edit-footer
+            [hasChanges]="isChangeMadeToTitleOrPeriodSection()"
+            [isSaving]="isSaving()"
+            [invalidReason]="saveBlockedReason()"
+            [savedAt]="lastSavedAt()"
+            [changedSections]="unsavedSections()"
+            [hasUnsavedContent]="!!unitSection()?.hasUnsavedContent()"
+            [isSavingContent]="!!unitSection()?.isSavingContent()"
+            [isEditMode]="isEditMode()"
+            (save)="save()"
+            (leave)="previousState()"
+        />
+    }
+</div>
+<tumaet-ui-confirm-dialog />

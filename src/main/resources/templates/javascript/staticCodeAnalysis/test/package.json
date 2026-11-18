@@ -1,0 +1,21 @@
+{
+    "name": "artemis-test",
+    "private": true,
+    "scripts": {
+        "test": "vitest run",
+        "test:ci": "vitest run --reporter=default --reporter=./artemis-junit-reporter.mjs",
+        "lint": "eslint ${studentParentWorkingDirectoryName}",
+        "lint:ci": "eslint --format @microsoft/eslint-formatter-sarif --output-file eslint.sarif ${studentParentWorkingDirectoryName}"
+    },
+    "workspaces": [
+        "${studentParentWorkingDirectoryName}"
+    ],
+    "devDependencies": {
+        "@eslint/js": "^9.20.0",
+        "@microsoft/eslint-formatter-sarif": "^3.1.0",
+        "eslint": "^9.20.1",
+        "globals": "^15.15.0",
+        "vite": "^8.3.5",
+        "vitest": "^5.0.5"
+    }
+}

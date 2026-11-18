@@ -1,0 +1,95 @@
+package de.tum.cit.aet.artemis.account.security;
+
+import java.io.IOException;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.stereotype.Component;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
+import de.tum.cit.aet.artemis.account.config.OIDCConstants;
+import de.tum.cit.aet.artemis.account.config.OIDCEnabled;
+
+/**
+ * Custom failure handler for OIDC authentication exceptions.
+ * Prevents Spring Security from failing silently and redirects the user to the login page with an error code.
+ */
+@Lazy
+@Component
+@Conditional(OIDCEnabled.class)
+public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
+
+    /**
+     * The error code Spring Security uses when a callback matches no stored authorization request. It is a literal in Spring's OAuth2LoginAuthenticationFilter.
+     */
+    private static final String AUTHORIZATION_REQUEST_NOT_FOUND = "authorization_request_not_found";
+
+    private final TemplateEngine templateEngine;
+
+    public OIDCAuthenticationFailureHandler(TemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
+
+    /**
+     * Handles OIDC authentication failures by logging the exception and redirecting the client to the sign-in page.
+     *
+     * @param request   the request during which the authentication failure occurred.
+     * @param response  the response according to which the error routing is handled.
+     * @param exception the exception that was thrown during the authentication process.
+     * @throws IOException      if priority redirect fails due to an I/O error.
+     * @throws ServletException if the servlet detects an unhandled failure.
+     */
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+        if (exception instanceof OAuth2AuthenticationException oauth2Exception && AUTHORIZATION_REQUEST_NOT_FOUND.equals(oauth2Exception.getError().getErrorCode())) {
+            // The browser came back without the state cookie of its login attempt, e.g. because the cookie expired, was blocked or the login was opened in another browser.
+            // That is not a defect of the server and the user simply signs in again, so there is no stack trace to analyse.
+            log.warn("OIDC authentication failed: {}", exception.getMessage());
+        }
+        else {
+            log.error("OIDC authentication failed: {}", exception.getMessage(), exception);
+        }
+        // Absent if the callback could not be matched to an authorization request, e.g. because it expired or was already used
+        String redirectTarget = null;
+        if (request.getAttribute(OIDCConstants.OIDC_AUTHORIZATION_REQUEST_ATTRIBUTE) instanceof OAuth2AuthorizationRequest authorizationRequest) {
+            redirectTarget = authorizationRequest.getAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_ATTRIBUTE);
+        }
+        // If user is not validated
+        boolean isDeactivated = exception instanceof OAuth2AuthenticationException oauth2Exception && "user_deactivated".equals(oauth2Exception.getError().getErrorCode());
+        String errorCode = isDeactivated ? "deactivated" : "oidcFailure";
+
+        if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {
+            String deepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?error=" + errorCode;
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("text/html;charset=UTF-8");
+
+            Context context = new Context();
+            context.setVariable("deepLink", deepLink);
+            context.setVariable("isError", true);
+            context.setVariable("errorMessage", "Authentication failed: " + errorCode);
+
+            String htmlContent = templateEngine.process("account/vscode-callback", context);
+            response.getWriter().write(htmlContent);
+            response.getWriter().flush();
+        }
+        else if (OIDCConstants.IOS_REDIRECT_TARGET.equals(redirectTarget)) {
+            response.sendRedirect(OIDCConstants.IOS_DEEP_LINK_BASE + "?error=" + errorCode);
+        }
+        else {
+            response.sendRedirect("/sign-in?loginError=" + errorCode);
+        }
+    }
+}

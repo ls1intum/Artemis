@@ -1,0 +1,26 @@
+package de.tum.cit.aet.artemis.quiz.test_repository;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Repository;
+
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+
+@Lazy
+@Repository
+@Primary
+public interface QuizExerciseTestRepository extends QuizExerciseRepository {
+
+    /**
+     * Get one quiz exercise by id and eagerly load questions, categories, and batches.
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the quiz exercise entity
+     */
+    @Nullable
+    default QuizExercise findOneWithQuestionsAndCategoriesAndBatches(Long quizExerciseId) {
+        return findWithEagerQuestionsAndCategoriesAndBatchesById(quizExerciseId).orElse(null);
+    }
+}

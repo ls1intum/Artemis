@@ -1,0 +1,319 @@
+---
+name: client-conventions
+description: Apply Artemis conventions when changing Angular application or TUM AET UI code, migrating components, or fixing client lint violations.
+---
+
+# Artemis client conventions
+
+Use `reference/migration-recipes.md` for migration examples. Check changes with `pnpm run lint`
+and `pnpm run prettier:check`. Prefer standalone components.
+
+## Signals are mandatory for new code
+
+Use `input()` / `input.required()`, `output()`, `viewChild()` / `viewChild.required()`,
+`viewChildren()`, `signal()`, `computed()`, `effect()`, and `inject()` for dependency injection.
+
+The legacy decorators `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, and
+`@ContentChildren` are banned throughout the application, including co-located specs and test
+helpers. `localRules/enforce-signal-apis` (`config/eslint/rules/enforce-signal-apis.mjs`) enforces this under
+`src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
+component; there is no unmigrated-module exception.
+
+A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read a signal, or it
+never re-runs; a value that reads none is a constant and belongs in a plain `readonly` field
+(`@angular-eslint/reactive-context-must-read-signal`).
+
+Read a signal with `()` when checking its value; `@angular-eslint/no-uncalled-signals` catches
+accidental checks of the signal function. Keep Angular lifecycle hooks synchronous. Delegate
+work that awaits to a separate async method (`@angular-eslint/no-async-lifecycle-method`).
+Do not repeat a declaration in a component's metadata arrays
+(`@angular-eslint/no-duplicates-in-metadata-arrays`).
+
+## Injection and services
+
+Declare every `inject()` field before any other class member (`@angular-eslint/inject-at-top`).
+Fields initialize in declaration order, so a getter called from an earlier initializer would read
+`undefined` from a service declared further down.
+
+Declare an application-wide service with `@Service()`, not `@Injectable({ providedIn: 'root' })`
+(`@angular-eslint/prefer-service-decorator`, autofixable). `@Service()` rejects constructor
+injection and cannot share a class with another Angular decorator. The rule still reports a `@Pipe`
+that is also injected as a service, and its autofix then breaks `ng build` with NG1006 (Vitest
+compiles JIT and does not notice), so keep `@Injectable` on such a pipe with a justified line-level
+disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
+
+## Checking access before a request
+
+Ask `AccountService` before sending a request that needs more than a signed-in user, above all one
+the client sends on its own (on sign-in, on page init, from the navbar): a refused request shows a
+403 alert on the current page. Use its high-level methods such as `hasEditorAccess()` rather than
+`hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)`, which counts an administrator whose session the server
+does not grant the administrator rights. When no method fits, add one to `AccountService` and
+`MockAccountService` instead of combining authorities, module features and passkey state in the
+caller.
+
+## `ngOnChanges` is banned
+
+Use `computed()` or `effect()`. Enforced at error level by
+`localRules/prefer-signal-reactivity-over-ngonchanges` (`config/eslint/rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
+across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs
+and undecorated base classes.
+
+This is a consistency ban, not a correctness fix. Angular does call inherited `ngOnChanges` hooks
+and does fire them for signal inputs, so existing uses are not dead code.
+
+A genuinely unavoidable case, meaning you need `SimpleChanges.previousValue` or `isFirstChange()`,
+or ordering before child initialisation, needs a detailed comment and a justified line-level
+`eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected.
+
+## Template control flow
+
+Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
+
+Every `@switch` has a `@default` (`@angular-eslint/template/require-switch-default`). Use
+`@default never;` when the cases cover the whole union or enum, so the strict template check
+reports a missing case, and an empty `@default {}` otherwise. Both render nothing for an unmatched
+value.
+
+Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngStyle]`
+(`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
+bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
+
+Do not use `$any()` in templates (`@angular-eslint/template/no-any`). Prefer a typed template
+reference for DOM input values and a typed component method for library event payloads.
+
+## Images and keyboard order
+
+Use `NgOptimizedImage` with `ngSrc` for images with known intrinsic dimensions or a positioned,
+sized container for `fill`. Mark an image `priority` only when it is expected to be the largest
+visible image on initial load. For arbitrary user images that must retain their intrinsic layout,
+keep native `src` and use appropriate loading and decoding hints.
+
+Give every `<img>` a useful, localized text alternative, or `alt=""` when the image is decorative
+or already described next to it (`@angular-eslint/template/alt-text`). Keep keyboard focus in DOM
+order; do not use a positive `tabindex` to reorder controls
+(`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
+
+## Components created in code
+
+Do not call `ComponentRef.setInput` in production code. It takes the input name as a plain string
+and accepts any value, so a misspelled input only logs NG0303 at runtime (no exception) and the
+component silently keeps its default. For a closed set of components, declare them in a template
+with a `@switch`; the template compiler checks the inputs (`SidebarCardComponent`). When a
+component has to be created in code, use `setInputs(ref, { ... })` from
+`app/foundation/util/set-inputs.util`, which checks names and value types at compile time; a
+value must have the declared type of its input, so `undefined` needs an input that allows it.
+Inputs are named by class member, and an aliased input is set under its alias. When the component is chosen
+from data, `switch` on the discriminant and pass component and data to one generic method
+(`ExerciseDetailDirective.render`), because `InputSignal` is invariant and a lookup table cannot
+tie a component to its data. `@tumaet/ui-angular` owns and exports the helper; the application utility re-exports the same implementation.
+Package code imports it locally from `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`.
+
+`localRules/no-component-ref-set-input` bans any use of the `setInput` member, also aliased or
+destructured, at error level in production code of the application and the UI kit; specs are
+exempt. The package helper is the only place that disables it. Pass `setInputs` a plain object and a ref to
+one component type; a union of components is rejected.
+`inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
+string names too and are no substitute; the rule does not cover them.
+
+## Redirecting from guards and resolvers
+
+A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
+when it needs `replaceUrl`, `skipLocationChange` or `state`. This also applies inside RxJS and
+promise callbacks: return the redirect rather than throw it. The guards in one `canActivate`
+array run together, and the first emitted result that is not `true`, in array order, wins.
+A returned or emitted redirect waits for every guard ahead of it to return `true`; a thrown
+`RedirectCommand` bypasses that ordering and can redirect before an earlier authority check
+rejects the route.
+
+A resolver returns or emits a `RedirectCommand`; a `UrlTree` returned from a resolver becomes
+route data and does not redirect. Inside a resolver's RxJS operator or promise callback, it can
+throw the `RedirectCommand` instead. The router cancels the running navigation with a redirect
+that keeps its `replaceUrl` and `skipLocationChange`, and alerts shown before the throw still
+appear.
+
+Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver. It cancels the running
+navigation on the spot and starts a new one, so the original `replaceUrl` and
+`skipLocationChange` are lost (Back then redirects forward again), a caller awaiting the original
+navigation receives `false`, and the navigation still happens when another guard rejects the
+route. A `return false` or `EMPTY` after the call changes nothing.
+
+`localRules/no-navigation-in-guard-or-resolver` (`config/eslint/rules/no-navigation-in-guard-or-resolver.mjs`)
+enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
+into methods of its own class reached through `this`, and into functions of the same file. It is
+file-local and does not resolve types, so it misses navigation in an injected service the guard
+calls, a `Router` from a base-class field, `const router = this.router` or `injector.get(Router)`,
+namespace imports, static helper calls and route objects without a marker key such as `path`.
+Moving the call into a service silences the rule without fixing anything. A `catchError` after a
+thrown redirect must rethrow what it does not handle.
+
+In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and assert the result:
+`router.serializeUrl(result as UrlTree)` for a returned redirect, or an `error` callback that
+receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. For guard
+combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
+as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
+
+## Form labels
+
+Associate each visible form label with its native input using a matching `for` and `id`, or wrap
+the input in the label. For a custom control, connect the label to the input inside the component,
+not its host element. Use a heading or `span` for informational text that does not label a control;
+give groups of controls an accessible group name. The
+`@angular-eslint/template/label-has-associated-control` rule checks the label association, not
+the element choice or group names, in TUM AET UI and the client template areas listed in
+`eslint.config.mjs`.
+
+## Points inputs
+
+Enter points, bonus points and credits only with `jhi-points-input` (`PointsInputComponent`,
+`app/shared-ui/tum-aet-ui-integration/points-input`), not with `<input type="number">` or PrimeNG. It fixes
+the setup (three fraction digits, `.` and `,` accepted, no grouping) on `tumaet-ui-input-number` and works with
+`ngModel`, `formControlName` and `formControl`. Bind `[min]`/`[max]` on it (a native attribute does not validate
+a custom control) and pass `inputId` for labels and E2E locators. In specs, type with `typeIntoInputNumber` from
+`src/test/javascript/spec/helpers/input-number-test-helpers.ts`; the adapter writes a model value to its inner input
+one microtask late, so await `fixture.whenStable()` before reading it. Percentages, durations and counts are not points.
+
+## Copying objects
+
+In production `src/main/webapp/app/**/*.ts`, use the wrappers in
+`src/main/webapp/app/foundation/util/deep-clone.util.ts`:
+
+- `deepClone(x)` detaches nested state while preserving supported prototypes.
+- `cloneWith(x, { a, b })` deep-clones the source and applies overrides by reference.
+- `hydrate(new Course(), dto)` gives a parsed DTO its prototype.
+
+`config/eslint/rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
+scope, even for plain objects; specs are exempt. `eslint.config.mjs` also restricts direct lodash
+cloning imports. Array spread and object rest remain allowed.
+
+Shallow copies share nested state; `structuredClone` loses custom prototypes such as `dayjs`.
+Do not clone merely to notify a signal if nested identity must survive. For that case and the
+child-input identity boundary, read the cloning section of `reference/migration-recipes.md`.
+
+`packages/tum-aet-ui` is outside these application rules and must not import `app/` utilities.
+Choose copying behavior appropriate to the package's data and identity requirements.
+
+## Exercise update forms
+
+The text, modeling and file upload exercise forms keep the exercise in an `ExerciseFormState`
+(`src/main/webapp/app/exercise/util/exercise-form-state.ts`). It notifies on every write and keeps
+the object, so what the form derives (footer reasons, status bar sections) is a `computed()`.
+
+- Write only through the state: `[ngModel]="exercise.maxPoints"` with
+  `(ngModelChange)="exerciseState.patch('maxPoints', $event)"`, never `[(ngModel)]="exercise.maxPoints"`;
+  `exerciseState.update(...)` in code, also in HTTP callbacks.
+- A child that writes a field the form derives state from emits `exerciseChange` with the same
+  object; the form binds `[(exercise)]` to a setter that calls `set`, or
+  `(exerciseChange)="exerciseState.set($event)"`.
+- Derive validity from the model with `src/main/webapp/app/exercise/util/exercise-validation.util.ts`,
+  never from `NgModel.valid` or `control.errors`, and never keep it in sync with a `valueChanges`
+  subscription. A child exposes what only it knows as a signal (`isTitleDisallowed`, `invalidControlNames`).
+- Do not copy the exercise per edit: a new reference re-runs what every child derives from it and
+  re-creates rows tracked by identity.
+
+Details: the _Exercise update forms_ subsection of
+`documentation/docs/developer/guidelines/client-development.mdx`.
+
+## Styling
+
+Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
+ng-bootstrap in new work.
+
+Choose button severity by the established action family and its context, following
+[Button intent and hierarchy](../../documentation/docs/developer/guidelines/client-theming.mdx#button-intent-and-hierarchy).
+Across the client, preserve blue workflow/navigation/Create/Save, yellow authoring/configuration, cyan
+analytics/assessment, green preview/reference and positive execution/activation, red destructive/stop
+or consequential bulk actions, and neutral utilities consistently across course lists, exam lists
+and details. Use variants and grouping for
+emphasis rather than changing an action's category. Equivalent utilities share a size and severity;
+an exercise toolbar may contain several action families. Data transfer is a distinct functional
+category: standalone import/export/download buttons, including report exports and dialog launchers,
+use gray `secondary`; menu entries retain menu styling. Neutral `secondary` is an
+enabled gray-toned utility style, independent of disabled state. Distinguish action colours from
+status/validation feedback.
+Let TUM AET UI choose the contrasting foreground; do not override button text or icon colours.
+
+Button colors have one light/dark source: the Button palette blocks in
+`packages/tum-aet-ui/themes.css`, using `--tumaet-ui-button-<severity>-background`, `-contrast` and
+`-foreground`. Keep button-only adjustments separate from status colors. Bootstrap compatibility
+styles and the PrimeNG button preset consume these same tokens; they are migration bridges, not
+an API for new markup. Prefer native `tumAetUiButton` and migrate adjacent action groups to the
+same size, typography and spacing. Attribute-selector components that already own a native button
+host use `tumAetUiButtonClasses()` rather than attaching a second component to that element.
+Trace reset/cancel/retry handlers: saved-work deletion/overrides stay danger, ordinary view refresh
+is secondary, and persisted grading resets are danger. Conditional Create/Edit uses primary/warn;
+ordinary Save stays primary. Selected-state colors are separate; use a solid semantic variant on a
+colored selected row when text/outlined contrast would be insufficient. Remove local color
+hover/foreground overrides when migrating. Check the Button Palette Storybook browser tests after
+changing shared tokens and retain permission/feature/disabled/loading/submit behavior.
+
+The client lint gate enforces `localRules/enforce-button-intent` in external and inline application
+templates. Common labels (resolved through the English catalog) must match their action family;
+native TUM buttons cannot override their palette with local color classes/styles. Use the component's
+`ariaLabel` input when an icon-only `<tumaet-ui-button>` needs a name;
+an `aria-label` on its wrapper does not name the native button. For an opaque action
+label, declare `data-button-intent`; for a contextual exception, also declare a static
+`data-button-intent-reason` describing the behavior. Preserve destructive cancellation/editing and
+documented variant-authoring exceptions rather than recoloring them from their labels. Semantic
+selection controls and a provably disabled green completion state remain distinct from actions.
+Do not use a generic lint suppression. Unknown dynamic labels/severities still need behavioral
+tests and review. Run `pnpm run test:rules` and `pnpm run lint` after changing this policy.
+
+Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
+`text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
+primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary
+`text-(--danger)` form.
+
+`localRules/no-raw-tailwind-color-palette` enforces the palette part across
+`src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. **The Bootstrap ban is
+only partly enforced**: the modules in `migratedModules` of `eslint.config.mjs` are locked, plus a few
+directories of other modules. In a locked module lint rejects
+Bootstrap classes in external and inline templates (`localRules/no-bootstrap-classes`), Bootstrap class
+names built in TypeScript (`localRules/no-bootstrap-classes-in-code`), bare spacing utilities,
+imports of PrimeNG, ng-bootstrap and Bootstrap (specs included), and, in Stylelint, `--bs-*` and `--p-*`
+values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selectors.
+The convention applies throughout the client even where lint does not enforce it. Add a newly
+migrated module to `migratedModules`, to the Stylelint override and to the `@source` list of
+`tailwind.css`; `pnpm run test:rules` checks that the three agree.
+
+Bootstrap and Tailwind share the spacing class names (`m`, `p` and `gap` with their side and axis
+forms) but differ for 3 to 5: Bootstrap renders 16, 24 and 48px, Tailwind 12, 16 and 20px, and
+Bootstrap's `!important` rule wins while it is loaded. `localRules/no-ambiguous-spacing-utility`
+therefore rejects a bare `*-3`, `*-4` or `*-5` and suggests the important spelling that keeps the
+value Bootstrap renders (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`) or the Tailwind
+value (`mb-3!`, `mb-4!`, `mb-5!`). Never write a bare `mb-6`: it loses to Bootstrap's Reboot margins
+and to component SCSS.
+
+The rule is enabled for every module in `migratedModules` (external and inline templates) and for a few
+further folders, in the block of `eslint.config.mjs` that lists them. To adopt it elsewhere, add
+`<folder>/**/*.html` to that block, make sure `tailwind.css` scans the folder with `@source`
+(`migration-source-coverage` checks it), apply the suggestion that keeps the value, and update the
+specs that assert the old class names. See _Ambiguous Spacing Utilities_ in
+`documentation/docs/developer/guidelines/client-development.mdx`.
+
+Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
+the real PrimeNG component so its styles load deterministically. Enforced by
+`localRules/no-primeng-component-classes`.
+
+PrimeNG itself is a transitional fallback, used only when a TUM AET UI gap cannot reasonably be closed
+in the same change. Explain the contained fallback in the pull request.
+
+If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
+Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
+primitives, and keep Artemis-specific composition in the application. See
+`documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
+
+## Data tables
+
+A table that is the main content of a page or a large dialog sits in `tumaet-ui-table-layout`: a toolbar of at most
+40px that never wraps, a body that is the only part that scrolls under a sticky 30px column header, and a footer of at
+most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) must not sit directly
+in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
+[Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
+
+## Other rules worth knowing
+
+Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
+`localRules/no-as-unknown-cast` block the usual escape hatches. Filenames are kebab-case.
+
+Full guidance: `documentation/docs/developer/guidelines/client-development.mdx`.

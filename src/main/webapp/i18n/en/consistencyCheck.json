@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "consistencyCheck": {
+            "button": "Check Consistency",
+            "title": "Consistency Check",
+            "text": "The check on programming exercises is being performed. Found inconsistencies will be displayed below.",
+            "warning": "For courses with many programming exercises this will take some time.",
+            "error": {
+                "type": "Error Type",
+                "VCS_PROJECT_MISSING": "Missing VCS project",
+                "TEMPLATE_REPO_MISSING": "Missing template repository",
+                "SOLUTION_REPO_MISSING": "Missing solution repository",
+                "AUXILIARY_REPO_MISSING": "Missing auxiliary repository",
+                "TEST_REPO_MISSING": "Missing test repository",
+                "TEMPLATE_BUILD_PLAN_MISSING": "Missing template build plan",
+                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan",
+                "programmingExerciseImportFailed": "Import of programming exercise failed, as the source exercise is inconsistent. Please see the consistency check on the source exercise for more details."
+            },
+            "noInconsistencies": "No inconsistencies found",
+            "inconsistenciesFound": "Following inconsistencies have been found",
+            "inconsistenciesFoundAlert": "Inconsistencies detected in the exercise configuration. Please check the consistency settings."
+        }
+    }
+}

@@ -1,0 +1,19 @@
+package de.tum.cit.aet.artemis.lti.service;
+
+import java.util.Locale;
+
+public enum DeepLinkingType {
+
+    EXERCISE, GROUPED_EXERCISE, LECTURE, GROUPED_LECTURE, COMPETENCY, LEARNING_PATH, IRIS;
+
+    /**
+     * Get the enum value from a string.
+     *
+     * @param type The string representation of the deep linking type.
+     * @return The corresponding DeepLinkingType.
+     * @throws IllegalArgumentException if the type does not match any enum value.
+     */
+    public static DeepLinkingType fromString(String type) {
+        return DeepLinkingType.valueOf(type.toUpperCase(Locale.ROOT));
+    }
+}

@@ -1,0 +1,31 @@
+<form [formGroup]="formGroup" (ngSubmit)="confirm()">
+    <div class="message-inline-input-form__wrapper">
+        <jhi-posting-markdown-editor
+            formControlName="content"
+            [draftIdentity]="'message:' + (posting()?.id ?? 'new')"
+            [activeConversation]="activeConversation()"
+            [maxContentLength]="maxContentLength"
+            [isInputLengthDisplayed]="false"
+            (keydown.enter)="confirm()"
+            (keydown.control.enter)="confirm()"
+            (keydown.meta.enter)="confirm()"
+            [isButtonLoading]="isLoading()"
+            [isFormGroupValid]="formGroup.valid"
+            [editType]="editType"
+            [course]="course()"
+        />
+        <div class="mt-1 flex justify-end gap-1">
+            @if (editType === EditType.UPDATE) {
+                <button type="button" tumAetUiButton size="small" severity="secondary" variant="outlined" (click)="isModalOpen.emit()">
+                    {{ 'artemisApp.communication.cancel' | artemisTranslate }}
+                </button>
+                <button type="submit" id="save" tumAetUiButton size="small" variant="outlined" [disabled]="isLoading() || !formGroup.valid">
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                    }
+                    {{ 'artemisApp.conversationsLayout.saveMessage' | artemisTranslate }}
+                </button>
+            }
+        </div>
+    </div>
+</form>

@@ -1,0 +1,108 @@
+package de.tum.cit.aet.artemis.lti.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.LOGIN_REGEX;
+import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.ENTITY_NAME;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
+
+/**
+ * Service Implementation for OnlineCourseConfiguration.
+ */
+@Lazy
+@Service
+@Conditional(LtiEnabled.class)
+public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
+
+    private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
+
+    /** The shared login expression, compiled once. {@code Constants.LOGIN_REGEX} stays a string because request mappings interpolate it. */
+    private static final Pattern LOGIN_PATTERN = Pattern.compile(LOGIN_REGEX);
+
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+    }
+
+    public List<ClientRegistration> getAllClientRegistrations() {
+        // TODO: we should avoid findAll() and instead try to retrieve the correct object directly from the database, potentially in a batch
+        return ltiPlatformConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
+    }
+
+    @Override
+    public ClientRegistration findByRegistrationId(String registrationId) {
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
+        return ltiPlatformConfiguration.map(this::getClientRegistration).orElse(null);
+    }
+
+    /**
+     * Validates the online course configuration
+     *
+     * @param ocConfiguration the online course configuration being validated
+     */
+    public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
+        if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !LOGIN_PATTERN.matcher(ocConfiguration.getUserPrefix()).matches()) {
+            throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
+        }
+
+        if (ocConfiguration.getLtiPlatformConfiguration() != null) {
+            Long platformId = ocConfiguration.getLtiPlatformConfiguration().getId();
+            if (platformId == null || ltiPlatformConfigurationRepository.findById(platformId).isEmpty()) {
+                throw new BadRequestAlertException("No platform registration found", ENTITY_NAME, "invalidRegistrationId");
+            }
+        }
+    }
+
+    /**
+     * Converts the ltiPlatformConfiguration to a ClientRegistration if the necessary fields are filled
+     *
+     * @param ltiPlatformConfiguration the lti platform configuration
+     * @return the clientRegistration from the converted lti platform configuration
+     */
+    public ClientRegistration getClientRegistration(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        if (ltiPlatformConfiguration == null) {
+            return null;
+        }
+        try {
+            return ClientRegistration.withRegistrationId(ltiPlatformConfiguration.getRegistrationId()) // formatting
+                    .clientId(ltiPlatformConfiguration.getClientId()) //
+                    .authorizationUri(ltiPlatformConfiguration.getAuthorizationUri()) //
+                    .jwkSetUri(ltiPlatformConfiguration.getJwkSetUri()) //
+                    .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
+                    .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
+                    .scope("openid") //
+                    .authorizationGrantType(LTIAuthorizationGrantType.IMPLICIT) //
+                    .build();
+        }
+        catch (IllegalArgumentException e) {
+            // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
+            log.warn("Could not build Client Registration from ltiPlatformConfiguration. Reason: {}", e.getMessage());
+            return null;
+        }
+    }
+
+}

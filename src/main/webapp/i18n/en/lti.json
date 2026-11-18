@@ -1,0 +1,169 @@
+{
+    "artemisApp": {
+        "lti": {
+            "home": {
+                "title": "LTI Configuration"
+            },
+            "contentSelectionTable": {
+                "exercises": "Exercises",
+                "lectures": "Lectures",
+                "competencies": {
+                    "header": "Add competencies",
+                    "selector": "Confirm whether you want to add a link to the competencies of your course"
+                },
+                "learningPaths": {
+                    "header": "Add learning paths",
+                    "selector": "Confirm whether you want to add a link to the learning paths of your course"
+                },
+                "iris": {
+                    "header": "Add Iris",
+                    "selector": "Confirm whether you want to add a link to Iris"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Activate exercise grouping:",
+                        "selector": "If activated, selecting multiple exercises in the table will group them and display them in the Artemis sidebar within the exercise view"
+                    },
+                    "groupedLectures": {
+                        "header": "Activate lecture grouping:",
+                        "selector": "If activated, selecting multiple lectures in the table will group them and display them in the Artemis sidebar within the lecture view"
+                    }
+                }
+            },
+            "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
+            "initialization": {
+                "header": "LTI User Initialization",
+                "body": {
+                    "welcome": "Welcome to Artemis! We have automatically created an account for you.",
+                    "loginLabel": "Your login name",
+                    "passwordLabel": "Your password",
+                    "passwordHint": "Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br>If you forget your password or want to change it, you can reset it on the login page. You can also change your password now:",
+                    "passwordChange": "Change password",
+                    "readAndUnderstood": "I have read the information above and understand that I should save the password displayed above.",
+                    "confirm": "Confirm"
+                }
+            },
+            "version13": "LTI 1.3",
+            "dynamicRegistrationUrl": "Dynamic Registration URL",
+            "deepLinkingUrl": "Deep Linking URL",
+            "toolUrl": "Tool URL",
+            "keysetUrl": "Keyset URL",
+            "initiateLoginUrl": "Initiate Login URL",
+            "redirectUri": "Redirect URI",
+            "generalConfiguration": "General Configuration",
+            "platformRegistration": "Platform Registration",
+            "serviceUrls": "Service URLs",
+            "version13Configuration": "LTI 1.3 Configuration",
+            "userPrefix": "User Prefix",
+            "registrationId": "Registration ID",
+            "clientId": "Client ID",
+            "originalURL": "Original URL",
+            "authorizationUri": "Authorization URI",
+            "tokenUri": "Token URI",
+            "jwkSetUri": "JWKSet URI",
+            "customName": "Custom Name",
+            "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
+            "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please log in as user {{user}}.",
+            "exercises": "Exercises",
+            "lectures": "Lectures",
+            "lti": "LTI",
+            "configurationForCourse": "LTI Configuration for course {{ title }}",
+            "lti13LaunchUrl": "LTI 1.3 Launch URL",
+            "ltiLaunchTarget": "LTI Launch Target",
+            "scored": "Scored",
+            "requestUsername": "Request user's username",
+            "requestEmail": "Request user's email",
+            "requireExistingUser": "Require existing user",
+            "dynamicRegistrationTooltip": "You can use this URL to automatically register an LTI 1.3 Platform with this Artemis instance.",
+            "configuredPlatformsTooltip": "View and manage the LTI platforms that are currently configured for integration. This table includes essential details like platform names, registration IDs, client IDs, and authorization endpoints necessary for secure communication between Artemis and the platforms.",
+            "launchTargetTooltip": "The recommended launch target is 'New Window' for the best user experience",
+            "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
+            "edit": {
+                "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
+                "documentationLink": "For detailed instructions on configuring LTI platforms, see the",
+                "documentationLinkText": "LTI Configuration Documentation",
+                "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
+                "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
+                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses.",
+                "clientIdTooltip": "The Client ID provided by the LTI platform (e.g., Moodle, Canvas) when registering Artemis as an external tool. This uniquely identifies Artemis to the platform.",
+                "originalUrlTooltip": "The base URL of the LTI platform (e.g., https://moodle.example.com). This helps identify and organize multiple platform configurations.",
+                "authorizationUriTooltip": "The OAuth 2.0 authorization endpoint of the LTI platform. This URL is used during the LTI launch to authenticate users. Usually found in the platform's LTI configuration.",
+                "tokenUriTooltip": "The OAuth 2.0 token endpoint of the LTI platform. This URL is used to exchange authorization codes for access tokens. Usually found in the platform's LTI configuration.",
+                "jwkSetUriTooltip": "The JSON Web Key Set (JWKS) endpoint of the LTI platform. This URL provides the public keys used to verify JWT tokens from the platform.",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "User prefix cannot contain special characters.",
+                        "maxlength": "User prefix is too long."
+                    }
+                },
+                "customNameIdTooltip": "Enter a recognizable name for the platform to easily identify it in the list. This name is for administrative reference only and will not affect the platform's actual configuration or connectivity."
+            },
+            "configuredPlatforms": "Configured Platforms",
+            "viewAdvancedSettings": "View Advanced Settings",
+            "closeAdvancedSettings": "Close Advanced Settings",
+            "addLtiPlatform": "Add LTI Platform Configuration",
+            "editLtiPlatform": "Edit LTI Platform Configuration",
+            "editConfiguration": {
+                "loadError": "Failed to load the LTI platform configuration. Cannot save changes."
+            },
+            "validation": {
+                "clientIdRequired": "Client ID is required.",
+                "authorizationUriRequired": "Authorization URI is required.",
+                "tokenUriRequired": "Token URI is required.",
+                "jwkSetUriRequired": "JWK Set URI is required.",
+                "customNameRequired": "Custom name is required."
+            }
+        },
+        "onlineCourseConfiguration": {
+            "userPrefix": "User Prefix",
+            "requireExistingUser": "Require existing user"
+        },
+        "ltiPlatformConfigurationUpdate": {
+            "registrationId": "Registration ID",
+            "clientId": "Client ID",
+            "originalUrl": "Original URL",
+            "customName": "Custom Name",
+            "authorizationUri": "Authorization URI",
+            "jwkSetUri": "JWKSet URI",
+            "tokenUri": "Token URI"
+        },
+        "lti13": {
+            "launch": {
+                "title": "Launch exercise",
+                "launching": "Launching...",
+                "launchFailed": "Could not launch exercise. Please try again later or contact the administrator."
+            },
+            "dynamicRegistration": {
+                "title": "Dynamic Registration",
+                "registering": "Registering",
+                "registeredSuccessfully": "Registered course successfully",
+                "registerFailed": "Error during dynamic registration"
+            },
+            "deepLinking": {
+                "title": "Deep Linking",
+                "linking": "Linking",
+                "linkedSuccessfully": "Linked exercises successfully",
+                "linkedFailed": "Error during deep linking",
+                "link": "Link",
+                "selectToLink": "Select exercises to link",
+                "unknownError": "Unsuccessful due to an unknown error. Please contact an admin!",
+                "noCoursesError": "You do not have any LTI-enabled courses in Artemis yet. Please configure at least one course to use this feature.",
+                "learnMore": "Learn more about enabling LTI in your course..",
+                "parameterError": "There was an error when processing the parameters"
+            },
+            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work. Please contact the administrator for configuration.",
+            "selectContentFromCourse": "Select content from course {{ title }}",
+            "deletePlatformError": "Could not delete LTI Platform",
+            "selectContentTooltip": "Simply select your preferred exercises and then click the Link button to integrate it into the platform.",
+            "externalToolSettings": "External Tool Settings",
+            "externalToolSettingsTooltip": "An External Tool is required for exercise linking and participation, allowing seamless integration with external resources and activities",
+            "editExternalToolSettingsTooltip": "Please select an External Tool for this course to enable successful LTI communication. Once a pre-configured External Tool is chosen, this online course will become available for exercise linking and participation.",
+            "selectExternalTool": "Select an External Tool",
+            "selectCourse": "Select Course",
+            "addNewPlatform": "Add new platform configuration"
+        },
+        "lti-platform": {
+            "deleted": "LTI platform deleted successfully"
+        }
+    }
+}

@@ -1,0 +1,381 @@
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
+import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
+import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { FileWithHasMatch } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { escape } from 'lodash-es';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
+import { Subject } from 'rxjs';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
+import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
+
+type FilesWithType = { [p: string]: FileType };
+
+@Component({
+    selector: 'jhi-text-submission-viewer',
+    styleUrls: ['./text-submission-viewer.component.scss'],
+    templateUrl: './text-submission-viewer.component.html',
+    encapsulation: ViewEncapsulation.None,
+    imports: [TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass, ArtemisTranslatePipe],
+})
+export class TextSubmissionViewerComponent {
+    private repositoryService = inject(CodeEditorRepositoryFileService);
+    private textSubmissionService = inject(TextSubmissionService);
+
+    viewingPurpose = input<EditorViewingPurpose>('owner');
+    exercise = input<ProgrammingExercise | TextExercise | PlagiarismCaseExercise>();
+    matches = input<Map<string, FromToElement[]>>();
+    plagiarismSubmission = input<PlagiarismSubmission>();
+    hideContent = input<boolean>();
+    fileSelectedSubject = input.required<Subject<PlagiarismFileElement>>();
+    isLockFilesEnabled = input<boolean>();
+    showFilesSubject = input.required<Subject<boolean>>();
+    dropdownHoverSubject = input.required<Subject<PlagiarismFileElement>>();
+
+    /**
+     * Name of the currently selected file.
+     */
+    readonly currentFile = signal<string | undefined>(undefined);
+
+    /**
+     * Content of the currently selected file.
+     */
+    readonly fileContent = signal<string | undefined>(undefined);
+
+    /**
+     * List of files the given submission consists of.
+     * `null` for text exercises.
+     */
+    readonly files = signal<FileWithHasMatch[]>([]);
+
+    /**
+     * True, if the given exercise is of type 'programming'.
+     */
+    readonly isProgrammingExercise = signal(false);
+
+    /**
+     * True, if the file content for the given submission is being loaded.
+     */
+    readonly loading = signal(false);
+
+    /**
+     * Token that marks the beginning of a highlighted match.
+     */
+    private readonly tokenStart = '<span class="plagiarism-match">';
+
+    /**
+     * Token that marks the end of a highlighted match.
+     */
+    private readonly tokenEnd = '</span>';
+
+    /**
+     * True if currently selected file is not a text file.
+     */
+    readonly binaryFile = signal<boolean | undefined>(undefined);
+
+    /**
+     * True if fetching submission files resulted in an error.
+     */
+    readonly cannotLoadFiles = signal(false);
+
+    faExclamationTriangle = faExclamationTriangle;
+
+    constructor() {
+        // Replaces ngOnChanges: (re)load the submission's files/content whenever the plagiarism submission changes.
+        // The load runs untracked so only the submission and viewing purpose retrigger it (hideContent()/exercise() are read at
+        // load time, not as triggers, mirroring the former `if (changes.plagiarismSubmission)` guard).
+        effect(() => {
+            const plagiarismSubmission = this.plagiarismSubmission();
+            this.viewingPurpose();
+            untracked(() => {
+                if (plagiarismSubmission && !this.hideContent()) {
+                    this.loading.set(true);
+
+                    if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+                        this.loadProgrammingExercise(plagiarismSubmission);
+                    } else {
+                        this.loadTextExercise(plagiarismSubmission);
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * Initializes this component with a programming exercise submission.
+     *
+     * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
+     */
+    private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission) {
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
+        this.repositoryService.getRepositoryContentForPlagiarismView(domain).subscribe({
+            next: (files: FilesWithType) => {
+                this.cannotLoadFiles.set(false);
+                this.isProgrammingExercise.set(true);
+                this.loading.set(false);
+                this.files.set(this.programmingExerciseFilesWithMatches(files));
+            },
+            error: () => {
+                this.cannotLoadFiles.set(true);
+                this.loading.set(false);
+            },
+        });
+    }
+
+    /**
+     * Computes the list of all files that should be shown for the plagiarism view.
+     *
+     * @param files An unfiltered list of files.
+     * @return A sorted list of files that should be shown for the plagiarism view.
+     */
+    private programmingExerciseFilesWithMatches(files: FilesWithType): Array<FileWithHasMatch> {
+        return this.filterFiles(files)
+            .map((file) => ({ file, hasMatch: this.hasMatch(file) }))
+            .sort(TextSubmissionViewerComponent.compareFileWithHasMatch);
+    }
+
+    /**
+     * Compares two files.
+     *
+     * Files which have got a match have got precedence over ones which don’t.
+     * If two files either both or neither have a match, then they are sorted lexicographically.
+     *
+     * @param file1 Some file with information if it has a match.
+     * @param file2 Some other file with information if it has a match.
+     * @return `-1`, if `file1` is smaller according to the sorting order described above, `1` otherwise.
+     */
+    private static compareFileWithHasMatch(file1: FileWithHasMatch, file2: FileWithHasMatch): number {
+        if (file1.hasMatch === file2.hasMatch) {
+            return file1.file.localeCompare(file2.file);
+        } else if (file1.hasMatch) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    /**
+     * Initializes this component with a text exercise submission.
+     *
+     * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
+     */
+    private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission) {
+        this.isProgrammingExercise.set(false);
+
+        this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId, this.viewingPurpose()).subscribe({
+            next: (submission: TextSubmission) => {
+                this.loading.set(false);
+                this.fileContent.set(this.insertMatchTokens(submission.text || ''));
+            },
+            error: () => {
+                this.loading.set(false);
+            },
+        });
+    }
+
+    filterFiles(files: FilesWithType) {
+        return Object.keys(files).filter((fileName) => files[fileName] === FileType.FILE);
+    }
+
+    handleFileSelect(file: string) {
+        this.currentFile.set(file);
+        this.loading.set(true);
+
+        const fileExtension = file.split('.').last()!;
+        if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
+            this.binaryFile.set(false);
+
+            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission()?.submissionId }];
+            this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
+                next: ({ fileContent }) => {
+                    this.loading.set(false);
+                    this.fileContent.set(this.insertMatchTokens(fileContent));
+                },
+                error: () => {
+                    this.loading.set(false);
+                },
+            });
+        } else {
+            this.binaryFile.set(true);
+            this.loading.set(false);
+        }
+    }
+
+    /**
+     * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
+     */
+    downloadCurrentFile() {
+        const currentFile = this.currentFile();
+        const exercise = this.exercise();
+        const exerciseName = exercise && 'shortName' in exercise ? exercise.shortName : (exercise?.id ?? 'exercise');
+        this.repositoryService.downloadFile(currentFile!, exerciseName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
+    }
+
+    getMatchesForCurrentFile() {
+        return this.matches()?.get(this.currentFile() || 'none') || [];
+    }
+
+    private hasMatch(file: string): boolean {
+        return this.matches()?.has(file) || false;
+    }
+
+    insertMatchTokens(fileContent: string): string {
+        const matches = this.getMatchesForCurrentFile()
+            .filter((match) => match.from && match.to)
+            .sort((m1, m2) => {
+                const lines = m1.from.line - m2.from.line;
+                if (lines === 0) {
+                    return m1.from.column - m2.from.column;
+                }
+                return lines;
+            });
+
+        if (!matches.length) {
+            return escape(fileContent);
+        }
+
+        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+            return this.buildFileContentWithHighlightedMatchesAsWholeLines(fileContent, matches);
+        }
+        return this.buildFileContentWithHighlightedMatches(fileContent, matches);
+    }
+
+    /**
+     * Builds the required HTML to highlight the lines with matches in the file content.
+     * Use with programming exercises to improve user experience,
+     * as matches provided by JPlag for them may not be precise for code submissions.
+     *
+     * @param fileContent The text inside a file.
+     * @param matches The found matching plagiarism fragments.
+     * @return The file content as HTML with highlighted lines with plagiarism matches.
+     */
+    private buildFileContentWithHighlightedMatchesAsWholeLines(fileContent: string, matches: FromToElement[]): string {
+        const fileLines = fileContent.split('\n');
+        let result = '';
+
+        const linesWithMatches = new Set<number>();
+        for (const match of matches) {
+            // As below: the last token of a match can end on a later line than it starts on, so the whole-line
+            // highlighting has to run to the reported end line rather than to the line the token begins on.
+            for (let i = match.from.line - 1; i < (match.to.endLine ?? match.to.line); i++) {
+                linesWithMatches.add(i);
+            }
+        }
+
+        for (let i = 0; i < fileLines.length; i++) {
+            if (linesWithMatches.has(i)) {
+                result += this.tokenStart + escape(fileLines[i]) + this.tokenEnd;
+            } else {
+                result += escape(fileLines[i]);
+            }
+            if (i != fileLines.length - 1) {
+                result += '\n';
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Builds the required HTML to highlight the matches in the file content.
+     *
+     * @param fileContent The text inside a file.
+     * @param matches The found matching plagiarism fragments.
+     * @return The file content as HTML with highlighted plagiarism matches.
+     */
+    private buildFileContentWithHighlightedMatches(fileContent: string, matches: FromToElement[]): string {
+        const fileLines = fileContent.split('\n');
+        let result = '';
+
+        // if the first match does not start at the beginning of the content append not affected symbols to the result
+        if (!(matches[0].from.line == 1 && matches[0].from.column == 0)) {
+            for (let i = 0; i < matches[0].from.line - 1; i++) {
+                result += escape(fileLines[i]) + '\n';
+            }
+            result += escape(fileLines[matches[0].from.line - 1].slice(0, matches[0].from.column - 1));
+        }
+
+        for (let i = 0; i < matches.length; i++) {
+            result += this.buildFileContentPartForMatch(matches, i, fileLines);
+        }
+
+        return result;
+    }
+
+    /**
+     * Adds the highlights to the file content for a single match.
+     *
+     * @param matches All matches for the file.
+     * @param match_index The index of the match for which the highlighting should be added.
+     * @param fileLines The file content split by lines.
+     * @return The part of the file content relevant to the match extended with the required HTML tags for the
+     *         highlighting.
+     */
+    private buildFileContentPartForMatch(matches: FromToElement[], match_index: number, fileLines: string[]): string {
+        const match = matches[match_index];
+        const idxLineFrom = match.from.line - 1;
+        // Where the last token of the match ends. JPlag reports this explicitly; `length` excludes line breaks, so
+        // deriving the end from it only holds while the token stays on one line. Results computed before the end
+        // position was recorded have no value here, and for those the old derivation is still the best available: it
+        // is what JPlag itself used to compute (`endColumn = column + length`).
+        const lineTo = match.to.endLine ?? match.to.line;
+        const idxLineTo = lineTo - 1;
+
+        const idxColumnFrom = match.from.column > 0 ? match.from.column - 1 : 0;
+        const idxColumnTo = match.to.endColumn ?? match.to.column + match.to.length;
+
+        let result = this.tokenStart;
+
+        if (idxLineFrom === idxLineTo) {
+            result += escape(fileLines[idxLineFrom].slice(idxColumnFrom, idxColumnTo)) + this.tokenEnd;
+        } else {
+            let j = idxLineFrom;
+            // if match does not start at the first character add only contents after the match start
+            // and move the iterator to the next line
+            if (idxColumnFrom > 0) {
+                result += escape(fileLines[idxLineFrom].slice(idxColumnFrom));
+                j += 1;
+            }
+            for (; j < idxLineTo; j++) {
+                // if not at the beginning of the match add the new line character
+                if (result.trim() != this.tokenStart) {
+                    result += '\n';
+                }
+                result += escape(fileLines[j]);
+            }
+            result += '\n' + escape(fileLines[idxLineTo].slice(0, idxColumnTo)) + this.tokenEnd;
+        }
+
+        // escape everything up until the next match (or the end of the string if there is no more match)
+        if (match_index === matches.length - 1) {
+            result += escape(fileLines[idxLineTo].slice(idxColumnTo));
+            for (let j = idxLineTo + 1; j < fileLines.length; j++) {
+                result += '\n' + escape(fileLines[j]);
+            }
+        } else if (matches[match_index + 1].from.line === lineTo) {
+            result += escape(fileLines[idxLineTo].slice(idxColumnTo, matches[match_index + 1].from.column - 1));
+        } else {
+            result += escape(fileLines[idxLineTo].slice(idxColumnTo)) + '\n';
+            for (let j = idxLineTo + 1; j < matches[match_index + 1].from.line - 1; j++) {
+                result += escape(fileLines[j]) + '\n';
+            }
+            result += escape(fileLines[matches[match_index + 1].from.line - 1].slice(0, matches[match_index + 1].from.column - 1));
+        }
+
+        return result;
+    }
+}

@@ -1,0 +1,275 @@
+import { vi } from 'vitest';
+import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
+import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('CompetencyFormComponent', () => {
+    let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
+    let competencyFormComponent: CompetencyFormComponent;
+
+    let translateService: TranslateService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
+            declarations: [],
+            providers: [
+                MockProvider(CourseCompetencyService, {
+                    getCourseCompetencyTitles: () => of(new HttpResponse({ body: [] })),
+                }),
+                MockProvider(LectureUnitService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
+        competencyFormComponent = competencyFormComponentFixture.componentInstance;
+        competencyFormComponentFixture.componentRef.setInput('competency', new Competency());
+
+        translateService = TestBed.inject(TranslateService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        competencyFormComponentFixture.detectChanges();
+        expect(competencyFormComponent).toBeDefined();
+    });
+
+    it('should submit valid form', () => {
+        vi.useFakeTimers();
+        try {
+            // stubbing competency service for asynchronous validator
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            const getAllTitlesSpy = vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+
+            const competencyOfResponse: Competency = { id: 1, title: 'test' };
+
+            const response: HttpResponse<Competency[]> = new HttpResponse({
+                body: [competencyOfResponse],
+                status: 200,
+            });
+
+            vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
+
+            competencyFormComponentFixture.detectChanges();
+
+            const exampleTitle = 'uniqueName';
+            competencyFormComponent.titleControl!.setValue(exampleTitle);
+            const exampleDescription = 'lorem ipsum';
+            competencyFormComponent.descriptionControl!.setValue(exampleDescription);
+            const exampleLectureUnit = new TextUnit();
+            exampleLectureUnit.id = 1;
+
+            const exampleLecture = new Lecture();
+            exampleLecture.id = 1;
+            exampleLecture.lectureUnits = [exampleLectureUnit];
+
+            competencyFormComponentFixture.detectChanges();
+            vi.advanceTimersByTime(250); // async validator fires after 250ms and fully filled in form should now be valid!
+            expect(competencyFormComponent.form.valid).toBeTruthy();
+            expect(getAllTitlesSpy).toHaveBeenCalledOnce();
+            expect(getAllTitlesSpy).toHaveBeenCalledWith(0, undefined);
+            const submitFormSpy = vi.spyOn(competencyFormComponent, 'submitForm');
+            const submitFormEventSpy = vi.spyOn(competencyFormComponent.formSubmitted, 'emit');
+
+            const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+            submitButton.click();
+            competencyFormComponentFixture.detectChanges();
+
+            vi.runOnlyPendingTimers();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should correctly set form values in edit mode', () => {
+        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+        const textUnit = new TextUnit();
+        textUnit.id = 1;
+        const formData: CourseCompetencyFormData = {
+            id: 1,
+            title: 'test',
+            description: 'lorem ipsum',
+            softDueDate: dayjs(),
+            taxonomy: CompetencyTaxonomy.ANALYZE,
+            optional: true,
+        };
+        competencyFormComponentFixture.detectChanges();
+        competencyFormComponentFixture.componentRef.setInput('formData', formData);
+        competencyFormComponentFixture.detectChanges();
+
+        expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
+        expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(competencyFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
+        expect(competencyFormComponent.optionalControl?.value).toEqual(formData.optional);
+    });
+
+    describe('soft due date picker', () => {
+        const pickerInput = () => competencyFormComponentFixture.nativeElement.querySelector('tumaet-ui-date-picker#softDueDate input#softDueDate-input') as HTMLInputElement;
+
+        it('should show the soft due date of the form as a date without time', () => {
+            competencyFormComponentFixture.detectChanges();
+            competencyFormComponent.softDueDateControl!.setValue(dayjs('2030-05-17T10:30'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(pickerInput().value).toBe('17.05.2030');
+        });
+
+        it('should write a typed date to the soft due date control', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            pickerInput().value = '15.06.2030';
+            pickerInput().dispatchEvent(new Event('input'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(competencyFormComponent.softDueDateControl!.value?.format('YYYY-MM-DD')).toBe('2030-06-15');
+            expect(competencyFormComponent.softDueDateControl!.dirty).toBe(true);
+        });
+
+        it('should hand the picker the translation key of its label, which the picker translates itself', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            const picker = competencyFormComponentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+            expect(picker.componentInstance.labelName()).toBe('artemisApp.competency.create.softDueDate');
+        });
+
+        it('should describe the input with the always visible hint', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            const hint = competencyFormComponentFixture.nativeElement.querySelector('#softDueDate-hint');
+            expect(hint).not.toBeNull();
+            expect(pickerInput().getAttribute('aria-describedby')).toBe('softDueDate-hint');
+        });
+
+        it('should block the form while the soft due date holds text that is not a date', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            pickerInput().value = '15.06.';
+            pickerInput().dispatchEvent(new Event('input'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(competencyFormComponent.softDueDateControl!.hasError('invalidDate')).toBe(true);
+            expect(competencyFormComponent.form.invalid).toBe(true);
+        });
+    });
+
+    it('should suggest taxonomy when title changes', () => {
+        competencyFormComponentFixture.detectChanges();
+
+        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const translateSpy = createTranslateSpy();
+
+        const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
+        titleInput.value = 'Building a tool: create a plan and implement something!';
+        titleInput.dispatchEvent(new Event('input'));
+
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledTimes(12);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
+    });
+
+    it('should suggest taxonomy when description changes', () => {
+        competencyFormComponentFixture.detectChanges();
+
+        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const translateSpy = createTranslateSpy();
+
+        competencyFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
+
+        expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledTimes(12);
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
+            'artemisApp.courseCompetency.taxonomies.REMEMBER',
+            'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
+        ]);
+    });
+
+    it('validator should verify title is unique', () => {
+        vi.useFakeTimers();
+        try {
+            const existingTitles = ['nameExisting'];
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+            competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+            competencyFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
+            competencyFormComponentFixture.detectChanges();
+
+            const titleControl = competencyFormComponent.titleControl!;
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+            titleControl.setValue('anotherName');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+            titleControl.setValue('');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
+
+            titleControl.setValue('nameExisting');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('validator should exclude the edited competency id when checking titles', () => {
+        vi.useFakeTimers();
+        try {
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            const getTitlesSpy = vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+            competencyFormComponentFixture.componentRef.setInput('courseId', 42);
+            competencyFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
+            competencyFormComponentFixture.detectChanges();
+
+            competencyFormComponent.titleControl!.setValue('changed title');
+            vi.advanceTimersByTime(250);
+
+            expect(getTitlesSpy).toHaveBeenLastCalledWith(42, 7);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    function createTranslateSpy() {
+        return vi.spyOn(translateService, 'instant').mockImplementation((key) => {
+            switch (key) {
+                case 'artemisApp.courseCompetency.keywords.REMEMBER':
+                    return 'Something';
+                case 'artemisApp.courseCompetency.keywords.UNDERSTAND':
+                    return 'invent, build';
+                default:
+                    return key;
+            }
+        });
+    }
+});

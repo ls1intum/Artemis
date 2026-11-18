@@ -1,0 +1,321 @@
+package de.tum.cit.aet.artemis.account.repository;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.jpa.domain.Specification;
+
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
+
+/**
+ * This class contains possible specifications to query for specified users.
+ */
+public class UserSpecs {
+
+    private static final String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
+
+    /** The filter entries that name a role within courses instead of a global authority. */
+    private static final Map<String, CourseRole> COURSE_ROLE_BY_FILTER = Map.of(Role.TEACHING_ASSISTANT.getAuthority(), CourseRole.TEACHING_ASSISTANT, Role.EDITOR.getAuthority(),
+            CourseRole.EDITOR, Role.INSTRUCTOR.getAuthority(), CourseRole.INSTRUCTOR);
+
+    /**
+     * Creates the specification to match the provided search term within the user’s login, email, and name attributes.
+     *
+     * @param searchTerm term to match
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getSearchTermSpecification(String searchTerm) {
+        // Lower case on both sides: PostgreSQL compares case sensitively, so a term the user typed in any other case would match nothing.
+        String extendedSearchTerm = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+        return (root, query, criteriaBuilder) -> {
+            String[] columns = { User_.LOGIN, User_.EMAIL, User_.FIRST_NAME, User_.LAST_NAME };
+            Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.like(criteriaBuilder.lower(root.get(column)), extendedSearchTerm))
+                    .toArray(Predicate[]::new);
+
+            return criteriaBuilder.or(predicates);
+        };
+    }
+
+    /**
+     * This method creates the specification that matches the specified authorities.
+     * Each user must match all the specified authorities.
+     * Users with more than the required authorities are also returned.
+     * <p>
+     * Uses one {@code MEMBER OF} check per authority instead of {@code GROUP BY ... HAVING}: the derived count query of a grouped
+     * query returns one row per user, which the distinct projection collapses into a single row, so the total count was wrong.
+     *
+     * @param authorities set of possible authorities
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder
+                .and(authorities.stream().map(authority -> criteriaBuilder.isMember(new Authority(authority), root.get(User_.AUTHORITIES))).toArray(Predicate[]::new));
+    }
+
+    /**
+     * This method creates the specification that matches the empty authorities. That mean that we match all users without any authority.
+     *
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getAllUsersMatchingEmptyAuthorities() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES));
+    }
+
+    /**
+     * This method returns the selected authority specification based on the provided list of authorities.
+     * <p>
+     * The global authorities (user, administrator, super administrator) are matched on the user. The teaching authorities (tutor, editor, instructor) are not global, so they
+     * select users who hold at least that role in some course. A user has to match every selected entry.
+     *
+     * @param authorities provided authorities
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getAuthoritySpecification(Set<String> authorities) {
+        if (authorities.contains(FILTER_NO_AUTHORITY)) {
+            // Empty authorities
+            return getAllUsersMatchingEmptyAuthorities();
+        }
+        Specification<User> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        Set<String> globalAuthorities = authorities.stream().filter(authority -> !COURSE_ROLE_BY_FILTER.containsKey(authority)).collect(Collectors.toSet());
+        if (!globalAuthorities.isEmpty()) {
+            specification = specification.and(getAllUsersMatchingAuthorities(globalAuthorities));
+        }
+        for (String authority : authorities) {
+            CourseRole courseRole = COURSE_ROLE_BY_FILTER.get(authority);
+            if (courseRole != null) {
+                specification = specification.and(hasAtLeastCourseRoleInSomeCourse(courseRole));
+            }
+        }
+        return specification;
+    }
+
+    /**
+     * Matches users that hold at least the given role in at least one course.
+     *
+     * @param minimum the lowest acceptable course role
+     * @return specification matching users with such a course role
+     */
+    @NonNull
+    public static Specification<User> hasAtLeastCourseRoleInSomeCourse(CourseRole minimum) {
+        return (root, query, criteriaBuilder) -> {
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<UserCourseRole> userCourseRole = subquery.from(UserCourseRole.class);
+            subquery.select(criteriaBuilder.literal(1)).where(criteriaBuilder.equal(userCourseRole.get(UserCourseRole_.USER), root),
+                    userCourseRole.get(UserCourseRole_.ROLE).in(CourseRole.valuesAtLeast(minimum)));
+            return criteriaBuilder.exists(subquery);
+        };
+    }
+
+    /**
+     * Creates the specification to match the state of the user (internal or external).
+     *
+     * @param internal true if the account should be internal
+     * @param external true if the account should be external
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
+        if (!internal && !external) {
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        }
+        else {
+            return (root, query, criteriaBuilder) -> {
+                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.INTERNAL), internal);
+                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.INTERNAL), external);
+
+                return criteriaBuilder.and(internalPredicate, externalPredicate);
+            };
+        }
+    }
+
+    /**
+     * Creates the specification to look for the user without Registration Numbers.
+     *
+     * @param noRegistrationNumber   true if the account should not have a registration number
+     * @param withRegistrationNumber true if the account should have a registration number
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
+        if (!noRegistrationNumber && !withRegistrationNumber) {
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        }
+        else {
+            return (root, query, criteriaBuilder) -> {
+                if (noRegistrationNumber) {
+                    Predicate userWithoutRegistrationNumber = criteriaBuilder.isNull(root.get(User_.REGISTRATION_NUMBER));
+                    return criteriaBuilder.and(userWithoutRegistrationNumber);
+                }
+                else {
+                    Predicate userWithRegistrationNumber = criteriaBuilder.notEqual(root.get(User_.REGISTRATION_NUMBER), "");
+                    return criteriaBuilder.and(userWithRegistrationNumber);
+                }
+            };
+        }
+    }
+
+    /**
+     * Creates the specification to match the state of the user (activated or deactivated).
+     *
+     * @param activated   true if the account should be activated
+     * @param deactivated true if the account should be deactivated
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
+        if (!activated && !deactivated) {
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        }
+        else {
+            return (root, query, criteriaBuilder) -> {
+                Predicate activatedPredicate = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
+                Predicate deactivatedPredicate = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
+
+                return criteriaBuilder.and(activatedPredicate, deactivatedPredicate);
+            };
+        }
+    }
+
+    /**
+     * Creates the specification to find all users that have no course enrollment (i.e. no {@code user_course_role} rows).
+     *
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> getAllUsersWithoutCourseEnrollment() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.COURSE_ROLES));
+    }
+
+    /**
+     * Creates the specification to get distinct results.
+     *
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> distinct() {
+        return (root, query, criteriaBuilder) -> {
+            if (query != null) {
+                query.distinct(true);
+            }
+            return criteriaBuilder.conjunction();
+        };
+    }
+
+    /**
+     * Creates the specification to get results that were not soft-deleted.
+     *
+     * @return specification used to chain database operations
+     */
+    @NonNull
+    public static Specification<User> notSoftDeleted() {
+        return (root, query, criteriaBuilder) -> {
+            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.DELETED), false);
+
+            return criteriaBuilder.and(notDeletedPredicate);
+        };
+    }
+
+    /**
+     * Matches users that have the given role in the given course.
+     *
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @return specification matching users with the given role in the given course
+     */
+    @NonNull
+    public static Specification<User> inCourseWithRole(long courseId, CourseRole role) {
+        return (root, query, cb) -> {
+            Join<User, UserCourseRole> ucr = root.join(User_.COURSE_ROLES, JoinType.INNER);
+            return cb.and(cb.equal(ucr.get(UserCourseRole_.COURSE).get(DomainObject_.ID), courseId), cb.equal(ucr.get(UserCourseRole_.ROLE), role));
+        };
+    }
+
+    /**
+     * Case-insensitive search across {@code login}, {@code email}, {@code registrationNumber}, and the concatenated full name
+     * ({@code firstName + ' ' + lastName}). Returns a no-op predicate when the search term is blank.
+     *
+     * @param searchTerm the text to search for; may be {@code null} or blank
+     * @return specification matching users whose login, email, registration number, or full name contains the search term
+     */
+    @NonNull
+    public static Specification<User> searchByLoginNameEmailOrRegistrationNumber(@Nullable String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return (root, query, cb) -> cb.conjunction();
+        }
+        String pattern = "%" + StringUtil.escapeForLikeLowerCase(searchTerm) + "%";
+        return (root, query, cb) -> {
+            var fullName = cb.lower(cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), "")));
+            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(fullName, pattern, '\\'),
+                    cb.like(cb.lower(cb.coalesce(root.get(User_.EMAIL), "")), pattern, '\\'),
+                    cb.like(cb.lower(cb.coalesce(root.get(User_.REGISTRATION_NUMBER), "")), pattern, '\\'));
+        };
+    }
+
+    /**
+     * Orders {@code User} results by the given column, applying it as a {@code CriteriaQuery.orderBy()} side effect. Shared by the paged course-role
+     * member list and the organization member list. {@code "name"} sorts by the concatenated {@code firstName + ' ' + lastName} expression, not by the
+     * two columns as a tuple, since the two orderings can disagree (e.g. "Ann"/"Zulu" vs "Ann Maria"/"Alpha"). {@code "id"} is what an unsorted
+     * table sends, so it sorts by id in the requested direction; an unrecognised column falls back to the id tiebreaker alone. Always adds an
+     * {@code id} tiebreaker, and is a no-op for the count query since ordering there is meaningless.
+     *
+     * @param sortedColumn {@code "login"}, {@code "email"}, {@code "visibleRegistrationNumber"}, {@code "name"} or {@code "id"}
+     * @param sortingOrder ascending or descending; {@code null} means ascending
+     * @return specification that sets ORDER BY as a side effect and always returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<User> orderByColumn(@Nullable String sortedColumn, @Nullable SortingOrder sortingOrder) {
+        return (root, query, cb) -> {
+            if (query == null || Long.class.equals(query.getResultType())) {
+                return null;
+            }
+            boolean asc = sortingOrder != SortingOrder.DESCENDING;
+            List<Order> orders = new ArrayList<>();
+
+            switch (sortedColumn != null ? sortedColumn : "") {
+                case "login" -> orders.add(asc ? cb.asc(root.get(User_.LOGIN)) : cb.desc(root.get(User_.LOGIN)));
+                case "email" -> orders.add(asc ? cb.asc(root.get(User_.EMAIL)) : cb.desc(root.get(User_.EMAIL)));
+                case "visibleRegistrationNumber" -> orders.add(asc ? cb.asc(root.get(User_.REGISTRATION_NUMBER)) : cb.desc(root.get(User_.REGISTRATION_NUMBER)));
+                case "name" -> {
+                    Expression<String> fullName = cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), ""));
+                    orders.add(asc ? cb.asc(fullName) : cb.desc(fullName));
+                }
+                case "id" -> orders.add(asc ? cb.asc(root.get(User_.ID)) : cb.desc(root.get(User_.ID)));
+                default -> {
+                    // unrecognised column: the id tiebreaker below is the only ordering
+                }
+            }
+
+            orders.add(cb.asc(root.get(User_.ID)));
+            query.orderBy(orders);
+            return null;
+        };
+    }
+}

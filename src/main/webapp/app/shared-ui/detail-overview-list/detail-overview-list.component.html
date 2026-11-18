@@ -1,0 +1,137 @@
+@if (headlines().length > 1) {
+    <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines()" />
+}
+@for (section of sections(); track section) {
+    <div class="detail-section-heading">
+        <h2 class="section-headline" [id]="headlinesRecord()[section.headline]">{{ section.headline | artemisTranslate }}</h2>
+        @if (sectionActions()[section.headline]; as actions) {
+            <ng-container *ngTemplateOutlet="actions" />
+        }
+    </div>
+    <dl class="section-detail-list">
+        @for (detail of section.details; track $index) {
+            @if (!!detail) {
+                @if (detail.title) {
+                    <dt id="detail-title-{{ detail.title }}">
+                        <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
+                        @if (detail.titleHelpText) {
+                            <jhi-help-icon text="{{ detail.titleHelpText }}" />
+                        }
+                    </dt>
+                }
+                @switch (detail.type) {
+                    @case (DetailType.ProgrammingProblemStatement) {
+                        @if (detail.data.exercise?.templateParticipation) {
+                            @defer (on idle) {
+                                <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
+                                    <jhi-programming-exercise-instructions
+                                        [exercise]="detail.data.exercise"
+                                        [participation]="detail.data.exercise.templateParticipation!"
+                                        [personalParticipation]="true"
+                                    />
+                                </dd>
+                            } @placeholder {
+                                <dd class="p-4! border border-(--tumaet-ui-border-color)! detail-defer-placeholder"></dd>
+                            }
+                        }
+                    }
+                    @case (DetailType.ProgrammingTimeline) {
+                        @defer (on idle) {
+                            <dd id="detail-value-{{ detail.title }}">
+                                <jhi-programming-exercise-timeline
+                                    [releaseDate]="detail.data.exercise.releaseDate"
+                                    [startDate]="detail.data.exercise.startDate"
+                                    [dueDate]="detail.data.exercise.dueDate"
+                                    [buildAndTestStudentSubmissionsAfterDueDate]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                    [assessmentDueDate]="detail.data.exercise.assessmentDueDate"
+                                    [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
+                                />
+                            </dd>
+                        } @placeholder {
+                            <dd class="detail-defer-placeholder"></dd>
+                        }
+                    }
+                    @case (DetailType.Markdown) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            @if (detail.data.innerHtml) {
+                                <div class="p-4! border border-(--tumaet-ui-border-color)! markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
+                            } @else {
+                                <ng-container *ngTemplateOutlet="noData" />
+                            }
+                        </dd>
+                    }
+                    @case (DetailType.GradingCriteria) {
+                        @defer (on idle) {
+                            <dd class="md:w-1/2 mt-6!" id="detail-value-{{ detail.title }}">
+                                <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
+                            </dd>
+                        } @placeholder {
+                            <dd class="md:w-1/2 mt-6! detail-defer-placeholder"></dd>
+                        }
+                    }
+                    @case (DetailType.ModelingEditor) {
+                        <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
+                            @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
+                                @defer (on idle) {
+                                    @if (detail.data.isApollonEnabled) {
+                                        <button
+                                            type="button"
+                                            (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
+                                            tumAetUiButton
+                                            severity="secondary"
+                                            class="m-2"
+                                            jhiTranslate="entity.action.export"
+                                        ></button>
+                                    }
+                                    <jhi-modeling-editor
+                                        class="editor-outline-background"
+                                        [readOnly]="true"
+                                        [diagramType]="detail.data.diagramType"
+                                        [umlModel]="detail.data.umlModel"
+                                    />
+                                } @placeholder {
+                                    <div class="detail-defer-placeholder-editor"></div>
+                                }
+                            } @else {
+                                <ng-container *ngTemplateOutlet="noData" />
+                            }
+                        </dd>
+                    }
+                    @case (DetailType.ProgrammingBuildPhases) {
+                        @defer (on idle) {
+                            <dd id="detail-value-{{ detail.title }}">
+                                <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
+                            </dd>
+                        } @placeholder {
+                            <dd class="detail-defer-placeholder"></dd>
+                        }
+                    }
+                    @case (DetailType.Image) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <img [alt]="detail.data.altText" class="details-image rounded-lg" [ngSrc]="addPublicFilePrefix(detail.data.imageUrl)!" width="48" height="48" />
+                        </dd>
+                    }
+                    @case (DetailType.DefaultProfilePicture) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <strong class="details-default-profile-picture rounded-lg" [style.background-color]="detail.data.color">{{ detail.data.initials }}</strong>
+                        </dd>
+                    }
+                    @default {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <div jhiExerciseDetail [detail]="detail"></div>
+                        </dd>
+                    }
+                }
+            }
+        }
+    </dl>
+    <ng-template #noData><jhi-no-data /></ng-template>
+}
+@if (footerSection(); as section) {
+    <div class="detail-section-heading">
+        <h2 class="section-headline" [id]="headlinesRecord()[section.headline]">{{ section.headline | artemisTranslate }}</h2>
+    </div>
+    <div class="section-detail-list">
+        <ng-container *ngTemplateOutlet="section.content" />
+    </div>
+}

@@ -1,0 +1,14 @@
+@let currentIssues = issues();
+@if (currentIssues.length) {
+    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-state-warning" [tumAetUiTooltip]="tooltipContent" data-testid="programming-build-warning" />
+} @else if (buildsSuccessful()) {
+    <fa-icon [icon]="faCheckCircle" size="2x" class="text-state-success" data-testid="programming-build-success" />
+}
+<ng-template #tooltipContent>
+    @if (currentIssues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)) {
+        <div jhiTranslate="artemisApp.programmingExercise.status.templateFulfillsTest"></div>
+    }
+    @if (currentIssues.includes(ProgrammingExerciseIssues.SOLUTION_FAILING)) {
+        <div jhiTranslate="artemisApp.programmingExercise.status.solutionFailsTest"></div>
+    }
+</ng-template>

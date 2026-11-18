@@ -1,0 +1,272 @@
+import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { Subscription, firstValueFrom, map } from 'rxjs';
+import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import {
+    ImportAllCourseCompetenciesModalComponent,
+    ImportAllCourseCompetenciesModalData,
+    ImportAllCourseCompetenciesResult,
+} from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
+import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
+import { AccountService } from 'app/core/auth/account.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
+
+@Component({
+    selector: 'jhi-competency-management',
+    templateUrl: './competency-management.component.html',
+    styleUrl: './competency-management.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
+        CompetencyManagementTableComponent,
+        TranslateDirective,
+        FontAwesomeModule,
+        RouterModule,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+    ],
+})
+export class CompetencyManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
+
+    protected readonly faEdit = faEdit;
+    protected readonly faPlus = faPlus;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faRobot = faRobot;
+    protected readonly faCircleQuestion = faCircleQuestion;
+
+    readonly getIcon = getIcon;
+    readonly documentationType: DocumentationType = 'Competencies';
+    readonly CourseCompetencyType = CourseCompetencyType;
+
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    readonly isLoading = signal<boolean>(false);
+
+    readonly courseCompetencies = signal<CourseCompetency[]>([]);
+    competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
+    prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
+
+    irisEnabled = signal<boolean>(false);
+    standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
+    agentChatEnabled = signal<boolean>(false);
+
+    private agentChatSubscription?: Subscription;
+
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            void untracked(async () => await this.loadCourseCompetencies(courseId));
+        });
+        effect(() => {
+            const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+            void untracked(async () => {
+                if (irisEnabled) {
+                    await this.loadIrisEnabled();
+                }
+            });
+        });
+    }
+
+    ngOnInit(): void {
+        const lastVisit = this.localStorageService.retrieve('alreadyVisitedCompetencyManagement');
+        if (!lastVisit) {
+            this.openCourseCompetencyExplanation();
+        }
+        this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
+
+        // The agent itself only exists when AtlasLLM is configured; the runtime toggle is a finer gate on top of it.
+        // Without the module check, an instance that enables the toggle without a chat model would offer a chat whose
+        // endpoint is not registered at all.
+        const atlasLLMActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
+        this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
+            const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
+            this.agentChatEnabled.set(atlasLLMActive && hasAuthority && isFeatureEnabled);
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.agentChatSubscription?.unsubscribe();
+    }
+
+    private async loadIrisEnabled() {
+        try {
+            const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()));
+            this.irisEnabled.set(courseSettings?.settings?.enabled ?? false);
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        }
+    }
+
+    private async loadCourseCompetencies(courseId: number) {
+        const done = this.pendingTasks.add();
+        try {
+            this.isLoading.set(true);
+            const [competenciesResult, progressResult] = await Promise.allSettled([
+                this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId),
+                this.courseCompetencyApiService.getCourseProgressForCourse(courseId),
+            ]);
+            if (competenciesResult.status === 'rejected') {
+                this.alertService.error(competenciesResult.reason);
+                return;
+            }
+            const courseCompetencies = competenciesResult.value;
+            if (progressResult.status === 'fulfilled') {
+                const progressMap = new Map(progressResult.value.map((p) => [p.competencyId, p]));
+                courseCompetencies.forEach((c) => {
+                    c.courseProgress = progressMap.get(c.id);
+                });
+            }
+            this.courseCompetencies.set(courseCompetencies);
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLoading.set(false);
+            done();
+        }
+    }
+
+    protected openCourseCompetenciesRelationModal(): void {
+        this.dialogService.open(CourseCompetenciesRelationModalComponent, {
+            ariaLabel: this.translateService.instant('artemisApp.courseCompetency.manage.editRelationsButton'),
+            showHeader: false,
+            size: 'full',
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                courseId: this.courseId(),
+                courseCompetencies: this.courseCompetencies(),
+            },
+        });
+    }
+
+    /**
+     * Opens a modal for selecting a course to import all competencies from.
+     */
+    async openImportAllModal() {
+        const dialogRef = this.dialogService.open<ImportAllCourseCompetenciesModalComponent, ImportAllCourseCompetenciesResult, ImportAllCourseCompetenciesModalData>(
+            ImportAllCourseCompetenciesModalComponent,
+            {
+                header: this.translateService.instant('artemisApp.courseCompetency.importAll.title'),
+                size: 'medium',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+                data: { courseId: this.courseId() },
+            },
+        );
+        const importResults = await firstValueFrom(dialogRef.onClose, { defaultValue: undefined });
+        if (!importResults) {
+            return;
+        }
+        const courseTitle = importResults.course.title ?? '';
+        try {
+            const importedCompetencies = await this.courseCompetencyApiService.importAllByCourseId(this.courseId(), importResults.courseCompetencyImportOptions);
+            if (importedCompetencies.length) {
+                this.alertService.success(`artemisApp.courseCompetency.importAll.success`, {
+                    noOfCompetencies: importedCompetencies.length,
+                    courseTitle: courseTitle,
+                });
+                this.updateDataAfterImportAll(importedCompetencies);
+            } else {
+                this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
+            }
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        }
+    }
+
+    /**
+     * Updates the component with the new data from the importAll modal
+     * @param res Array of DTOs containing the new competencies
+     * @private
+     */
+    updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
+        const importedCourseCompetencies = res.map((dto) => dto.competency!);
+        const newCourseCompetencies = importedCourseCompetencies.filter(
+            (competency) => !this.courseCompetencies().some((existingCompetency) => existingCompetency.id === competency.id),
+        );
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(newCourseCompetencies));
+    }
+
+    onRemoveCompetency(competencyId: number) {
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((cc) => cc.id !== competencyId));
+    }
+
+    onCompetenciesAdded(added: CourseCompetency[]) {
+        // Merge added items into parent-owned list, avoiding duplicates
+        const current = this.courseCompetencies();
+        const newOnes = added.filter((c) => !current.some((e) => e?.id === c?.id));
+        if (newOnes.length) {
+            this.courseCompetencies.update((list) => list.concat(newOnes));
+        }
+    }
+
+    openCourseCompetencyExplanation(): void {
+        this.dialogService.open(CourseCompetencyExplanationModalComponent, {
+            ariaLabel: this.translateService.instant('artemisApp.courseCompetency.manage.helpButton'),
+            showHeader: false,
+            size: 'large',
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+        });
+    }
+
+    /**
+     * Opens the Agent Chat Modal for AI-powered competency assistance.
+     * Listens for competency changes and refreshes the list immediately.
+     */
+    protected openAgentChatModal(): void {
+        this.dialogService.open(AgentChatModalComponent, {
+            ariaLabel: 'AI Assistant',
+            showHeader: false,
+            size: 'medium',
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+            data: {
+                courseId: this.courseId(),
+                onCompetencyChanged: () => this.loadCourseCompetencies(this.courseId()),
+            },
+        });
+    }
+}

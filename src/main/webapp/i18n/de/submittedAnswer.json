@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "submittedAnswer": {
+            "home": {
+                "title": "Eingereichte Antworten",
+                "createLabel": "Eingereichte Antwort erstellen"
+            },
+            "created": "Eingereichte Antwort erstellt mit ID {{ param }}",
+            "updated": "Eingereichte Antwort aktualisiert mit ID {{ param }}",
+            "deleted": "Eingereichte Antwort gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Eingereichte Antwort {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Eingereichte Antwort"
+            },
+            "scoreInPoints": "Ergebnis in Punkten",
+            "question": "Frage",
+            "submission": "Einreichung"
+        }
+    }
+}

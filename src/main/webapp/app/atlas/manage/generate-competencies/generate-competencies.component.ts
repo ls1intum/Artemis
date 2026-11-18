@@ -1,0 +1,323 @@
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { Observable, Subscription, finalize, firstValueFrom, map, switchMap, takeWhile } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
+import { IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+
+export type CompetencyFormControlsWithViewed = {
+    competency: FormGroup<CompetencyFormControls>;
+    viewed: FormControl<boolean>;
+};
+
+export type CompetencyFormControls = {
+    title: FormControl<string | undefined>;
+    description: FormControl<string | undefined>;
+    taxonomy: FormControl<CompetencyTaxonomy | undefined>;
+};
+
+export type CompetencyRecommendation = {
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+};
+
+type CompetencyGenerationStatusUpdate = {
+    runState: IrisRunState;
+    error?: IrisStatusError;
+    result?: CompetencyRecommendation[];
+};
+
+@Component({
+    selector: 'jhi-generate-competencies',
+    templateUrl: './generate-competencies.component.html',
+    providers: [TumAetUiConfirmationService],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        ButtonComponent,
+        DocumentationButtonComponent,
+        CourseDescriptionFormComponent,
+        TranslateDirective,
+        CompetencyRecommendationDetailComponent,
+        ArtemisTranslatePipe,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiProgressSpinnerComponent,
+    ],
+})
+export class GenerateCompetenciesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private courseManagementService = inject(CourseManagementService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private competencyService = inject(CompetencyService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private websocketService = inject(WebsocketService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
+
+    courseId!: number; // set in ngOnInit() from the route params
+    readonly isLoading = signal(false);
+    /** True until the current course's description has loaded; generation stays disabled so no other course's text can be submitted. */
+    readonly isDescriptionLoading = signal(false);
+    submitted = false;
+    form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
+
+    //Icons
+    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+
+    //Other constants
+    protected readonly ButtonType = ButtonType;
+    readonly documentationType: DocumentationType = 'GenerateCompetencies';
+    private generationSubscription?: Subscription;
+    private courseEpoch = 0;
+
+    ngOnInit(): void {
+        this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const courseId = Number(params['courseId']);
+            if (courseId === this.courseId) {
+                return;
+            }
+            this.generationSubscription?.unsubscribe();
+            const isCourseSwitch = this.courseId !== undefined;
+            const epoch = ++this.courseEpoch;
+            this.courseId = courseId;
+            this.competencies.clear();
+            this.isLoading.set(false);
+            this.isDescriptionLoading.set(true);
+            this.submitted = false;
+            if (isCourseSwitch) {
+                // A reused component still shows the previous course's description; it must not be submittable for this course.
+                this.courseDescriptionForm().setCourseDescription('');
+            }
+            // Description loading is asynchronous so the child view exists before its form is populated.
+            firstValueFrom(this.courseManagementService.findForInstructor(courseId))
+                .then((course) => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        this.courseDescriptionForm().setCourseDescription(course.body?.description ?? '');
+                        this.isDescriptionLoading.set(false);
+                    }
+                })
+                .catch((res: HttpErrorResponse) => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        this.isDescriptionLoading.set(false);
+                        onError(this.alertService, res);
+                    }
+                });
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.generationSubscription?.unsubscribe();
+    }
+
+    /**
+     * Parses competency recommendations from the given course description and adds them to the form
+     * @param courseDescription
+     */
+    getCompetencyRecommendations(courseDescription: string) {
+        if (this.isLoading()) {
+            return;
+        }
+        const courseId = this.courseId;
+        const epoch = this.courseEpoch;
+        this.isLoading.set(true);
+        // One subscription owns HTTP preparation, generation and streaming; route changes cancel every stage.
+        this.generationSubscription = this.getCurrentCompetencies(courseId)
+            .pipe(
+                switchMap((currentCompetencies) => this.courseCompetencyService.generateCompetenciesFromCourseDescription(courseId, courseDescription, currentCompetencies)),
+                switchMap(() => this.websocketService.subscribe<CompetencyGenerationStatusUpdate>(`/user/topic/iris/competencies/${courseId}`)),
+                takeWhile((update) => update.runState === IrisRunState.RUNNING, true),
+                finalize(() => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch) {
+                        this.isLoading.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (update) => {
+                    if (this.destroyRef.destroyed || this.courseEpoch !== epoch || this.courseId !== courseId) {
+                        return;
+                    }
+                    if (update.result) {
+                        for (const competency of update.result) {
+                            this.addCompetencyToForm(competency);
+                        }
+                    }
+                    if (update.runState === IrisRunState.FINISHED) {
+                        this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
+                    } else if (update.runState === IrisRunState.FAILED) {
+                        this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
+                    }
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
+    }
+
+    /**
+     * Returns the title, description, and taxonomy of all current competencies saved in this course,
+     * and the competency recommendations that are currently in the form.
+     * @private
+     */
+    private getCurrentCompetencies(courseId: number): Observable<CompetencyRecommendation[]> {
+        const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
+        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(courseId);
+        if (courseCompetenciesObservable) {
+            return courseCompetenciesObservable.pipe(
+                map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
+                map((competencies) => currentCompetencySuggestions.concat(competencies ?? [])),
+            );
+        }
+        return new Observable<CompetencyRecommendation[]>((subscriber) => {
+            subscriber.next(currentCompetencySuggestions);
+            subscriber.complete();
+        });
+    }
+
+    /**
+     * Adds a competency to the form
+     * @param competency
+     * @private
+     */
+    private addCompetencyToForm(competency: CompetencyRecommendation) {
+        const formGroup: FormGroup<CompetencyFormControlsWithViewed> = this.formBuilder.nonNullable.group({
+            competency: this.formBuilder.nonNullable.group({
+                title: [competency.title],
+                description: [competency.description],
+                taxonomy: [competency.taxonomy],
+            }),
+            viewed: [false],
+        });
+        this.competencies.push(formGroup);
+    }
+
+    /**
+     * Handles deletion of a competency recommendation
+     * @param index of the competency
+     */
+    onDelete(index: number) {
+        const competencyTitle = this.competencies.at(index).controls.competency.controls.title.getRawValue() ?? '';
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.competency.generate.deleteModalTitle'),
+            message: this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle }),
+            acceptLabel: this.translateService.instant('global.form.confirm'),
+            acceptSeverity: 'danger',
+            rejectLabel: this.translateService.instant('global.form.cancel'),
+            accept: () => this.competencies.removeAt(index),
+        });
+    }
+
+    /**
+     * Cancels the parsing and navigates back
+     */
+    onCancel() {
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+    }
+
+    /**
+     * Submits and opens an additional confirmation modal if needed
+     */
+    onSubmit() {
+        if (!this.isSubmitPossibleWithoutConfirmation()) {
+            this.confirmationService.confirm({
+                header: this.translateService.instant('artemisApp.competency.generate.saveModalTitle'),
+                message: this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText'),
+                acceptLabel: this.translateService.instant('global.form.confirm'),
+                acceptSeverity: 'danger',
+                rejectLabel: this.translateService.instant('global.form.cancel'),
+                accept: () => this.save(),
+            });
+        } else {
+            this.save();
+        }
+    }
+
+    /**
+     * Saves the competency recommendations as competencies and navigates back
+     */
+    save() {
+        const competenciesToSave = this.competencies.getRawValue().map((c) => hydrate(new Competency(), c.competency));
+        this.competencyService.createBulkFromCourseDescription(competenciesToSave, this.courseId).subscribe({
+            next: () => {
+                this.submitted = true;
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    /**
+     * Only allows submitting if no form controls have validation errors
+     */
+    get isSubmitPossible() {
+        return !this.form.invalid;
+    }
+
+    /**
+     * Needs confirmation to submit if not all competency recommendations were viewed
+     */
+    private isSubmitPossibleWithoutConfirmation() {
+        const viewedArray = this.form.getRawValue().competencies?.map((c) => c.viewed);
+        return !viewedArray?.includes(false);
+    }
+
+    //getter for form controls
+    get competencies() {
+        return this.form.controls.competencies;
+    }
+
+    /**
+     * Only allow to leave page after submitting or if no pending changes exist
+     */
+    canDeactivate(): boolean {
+        return this.submitted || (!this.isLoading() && this.competencies.length === 0);
+    }
+
+    get canDeactivateWarning(): string {
+        return this.translateService.instant('pendingChanges');
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.canDeactivateWarning;
+        }
+        return true;
+    }
+}

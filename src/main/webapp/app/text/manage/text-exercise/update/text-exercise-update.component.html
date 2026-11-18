@@ -1,0 +1,182 @@
+<form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="textExercise" (exerciseChange)="textExercise = $event" />
+    <div class="flex items-center gap-2">
+        @if (!textExercise.id) {
+            <h2 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel"></h2>
+        } @else if (!isImport() && textExercise.id) {
+            <h2 data-testid="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel"></h2>
+        } @else if (isImport()) {
+            <h2 id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h2>
+        }
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <jhi-form-status-bar [formStatusSections]="formSectionStatus()" />
+    <div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
+        <jhi-exercise-title-channel-name [(exercise)]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport()" [isExamMode]="isExamMode()" />
+        @if (!isExamMode()) {
+            <div class="relative mb-4!">
+                <label jhiTranslate="artemisApp.exercise.categories"></label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+                <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
+            </div>
+        }
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.difficulty"></label>
+            <div>
+                <jhi-difficulty-picker [exercise]="textExercise" />
+            </div>
+        </div>
+        <jhi-team-config-form-group class="form-element" [(exercise)]="textExercise" [isImport]="isImport()" />
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement"></label>
+            <jhi-markdown-editor-monaco
+                id="problemStatement"
+                class="markdown-editor"
+                [domainActions]="domainActionsProblemStatement"
+                [markdown]="textExercise.problemStatement"
+                (markdownChange)="exerciseState.patch('problemStatement', $event)"
+            />
+        </div>
+        @if (!isExamMode()) {
+            <div class="mb-4!">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [ngModel]="textExercise.competencyLinks"
+                    (ngModelChange)="exerciseState.patch('competencyLinks', $event)"
+                    name="competencyLinks"
+                />
+            </div>
+        }
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution"></label>
+            <jhi-markdown-editor-monaco
+                id="exampleSolution"
+                class="markdown-editor"
+                [domainActions]="domainActionsExampleSolution"
+                [markdown]="textExercise.exampleSolution"
+                (markdownChange)="exerciseState.patch('exampleSolution', $event)"
+            />
+        </div>
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
+        <div class="grading-layout">
+            @if (!isExamMode()) {
+                <jhi-exercise-timeline
+                    class="exercise-timeline"
+                    [releaseDate]="textExercise.releaseDate"
+                    (releaseDateChange)="exerciseState.patch('releaseDate', $event)"
+                    [startDate]="textExercise.startDate"
+                    (startDateChange)="exerciseState.patch('startDate', $event)"
+                    [dueDate]="textExercise.dueDate"
+                    (dueDateChange)="exerciseState.patch('dueDate', $event)"
+                    [assessmentDueDate]="textExercise.assessmentDueDate"
+                    (assessmentDueDateChange)="exerciseState.patch('assessmentDueDate', $event)"
+                    [exampleSolutionPublicationDate]="textExercise.exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="exerciseState.patch('exampleSolutionPublicationDate', $event)"
+                    [exampleSolutionPublicationDateErrorStringKey]="
+                        textExercise.exampleSolutionPublicationDate && !textExercise.exampleSolution
+                            ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
+                            : undefined
+                    "
+                    [exercisePartOfExerciseGroup]="variantLock.locked()"
+                    [isImport]="isImport()"
+                    (timelineStatus)="timelineStatus.set($event)"
+                />
+            }
+            <div class="grading-options">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-4!" (editGroupDates)="variantLock.openModal()" />
+                }
+                <div class="mb-4!">
+                    <label jhiTranslate="artemisApp.exercise.includedInOverallScore{{ textExercise.course ? 'Course' : 'Exam' }}Label"></label>
+                    <div>
+                        <jhi-included-in-overall-score-picker
+                            [includedInOverallScore]="textExercise.includedInOverallScore"
+                            (includedInOverallScoreChange)="exerciseState.patch('includedInOverallScore', $event)"
+                            [allowNotIncluded]="!isExamMode()"
+                        />
+                    </div>
+                </div>
+                <div class="score-fields">
+                    <div class="mb-4!">
+                        <label jhiTranslate="artemisApp.exercise.points" for="field_points"></label><span class="text-state-danger" aria-hidden="true">*</span>
+                        <jhi-points-input
+                            required
+                            fluid
+                            [min]="1"
+                            [max]="9999"
+                            name="points"
+                            #points="ngModel"
+                            inputId="field_points"
+                            [ngModel]="textExercise.maxPoints"
+                            (ngModelChange)="exerciseState.patch('maxPoints', $event)"
+                        />
+                        @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
+                            <tumaet-ui-message class="mt-2" severity="error"><span jhiTranslate="artemisApp.exercise.pointsError"></span></tumaet-ui-message>
+                        }
+                    </div>
+                    <!--
+                        Removed rather than hidden. A hidden control stays registered, and `min`/`max` are plain
+                        attributes, so an out of range value kept the form invalid after the score mode moved away
+                        from it - with Save refusing to submit, the reason for it suppressed because bonus points no
+                        longer apply, and the field itself out of reach to correct.
+                    -->
+                    @if (textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <div class="mb-4!">
+                            <label jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label><span class="text-state-danger" aria-hidden="true">*</span>
+                            <jhi-points-input
+                                required
+                                fluid
+                                [min]="0"
+                                [max]="9999"
+                                name="bonusPoints"
+                                inputId="field_bonusPoints"
+                                [ngModel]="textExercise.bonusPoints"
+                                (ngModelChange)="exerciseState.patch('bonusPoints', $event)"
+                                #bonusPoints="ngModel"
+                            />
+                            @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
+                                <tumaet-ui-message class="mt-2" severity="error"><span jhiTranslate="artemisApp.exercise.bonusPointsError"></span></tumaet-ui-message>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (!isExamMode()) {
+                    <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
+                        <jhi-exercise-update-plagiarism [exercise]="textExercise" />
+                    </jhi-feature-overlay>
+                }
+                <jhi-presentation-score-checkbox [exercise]="textExercise" />
+            </div>
+        </div>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="textExercise"
+                [editable]="!isSaving()"
+                [exampleSolution]="textExercise.exampleSolution"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
+        </div>
+    </div>
+    <jhi-form-footer
+        [isCreation]="!textExercise.id"
+        [isImport]="isImport()"
+        [isSaving]="isSaving()"
+        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
+        [invalidReasons]="invalidReasons()"
+        (onCancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
+</form>

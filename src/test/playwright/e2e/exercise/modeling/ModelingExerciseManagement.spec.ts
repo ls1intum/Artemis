@@ -1,0 +1,191 @@
+import dayjs from 'dayjs';
+
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+
+import { admin, instructor, studentOne } from '../../../support/users';
+import { generateUUID, readResponseJson } from '../../../support/utils';
+import { test } from '../../../support/fixtures';
+import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+
+test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
+    test.describe('Create Modeling Exercise', () => {
+        let modelingExercise: ModelingExercise;
+
+        test('Create a new modeling exercise', async ({ login, page, courseManagementExercises, modelingExerciseCreation, modelingExerciseEditor, modelingExerciseAssessment }) => {
+            // The full create-edit-example-assess flow includes three modeling-canvas warmups
+            // (each waiting on the Apollon editor + react-flow nodes), an example-submission
+            // creation, and an example-assessment cycle. The cumulative work routinely overruns
+            // the 60s @fast budget under multi-node CI load; observed worst case ~150s. Lift
+            // the per-test timeout to 180s via test.slow().
+            test.slow();
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/exercises`);
+            await page.waitForLoadState('domcontentloaded');
+            await courseManagementExercises.createModelingExercise();
+            await modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
+            await modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
+            await modelingExerciseCreation.setPoints(10);
+            await modelingExerciseCreation.setReleaseDate(dayjs().subtract(1, 'hour'));
+            await modelingExerciseCreation.setStartDate(dayjs());
+            await modelingExerciseCreation.setDueDate(dayjs().add(1, 'day'));
+            await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+            const response = await modelingExerciseCreation.save();
+            modelingExercise = await readResponseJson(response);
+            await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+            await expect(page.locator('.react-flow__node').first()).toBeAttached();
+            await modelingExerciseCreation.save();
+
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.clickCreateExampleSubmission();
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(3);
+            await modelingExerciseEditor.clickCreateNewExampleSubmission();
+            await modelingExerciseEditor.showExampleAssessment();
+            await modelingExerciseAssessment.openAssessmentForComponent(1);
+            await modelingExerciseAssessment.assessComponent(-1, 'False');
+            await modelingExerciseAssessment.clickNextAssessment();
+            await modelingExerciseAssessment.assessComponent(2, 'Good');
+            await modelingExerciseAssessment.clickNextAssessment();
+            await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
+            await modelingExerciseAssessment.submitExample();
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.waitForExampleSolutionEditor();
+            await expect(modelingExerciseEditor.getModelingCanvas()).toBeVisible();
+        });
+
+        test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {
+            if (modelingExercise) {
+                await login(admin);
+                await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+            }
+        });
+    });
+
+    test.describe('Update Example Submission After Revisit', () => {
+        let modelingExercise: ModelingExercise;
+
+        test.beforeEach('Create Modeling Exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        });
+
+        test('Saves a reopened example submission that has an example assessment', async ({ login, page, modelingExerciseEditor, modelingExerciseAssessment }) => {
+            // Regression guard for the two #13095 echo defects (missing submissionExerciseType, missing
+            // Result.exerciseId). Both are invisible on the create-then-save path the test above takes: the
+            // exercise detail was fetched before any example submission existed, so the echoed save body is
+            // clean. Only a FRESH page load of an existing example submission - the second visit - makes the
+            // page echo the example-submission projection and the DTO-shaped example assessment back into the
+            // entity-typed save PUT, which is where both defects lived.
+            test.slow();
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.clickCreateExampleSubmission();
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
+            await modelingExerciseEditor.clickCreateNewExampleSubmission();
+            await expect(page).toHaveURL(/example-submissions\/\d+/);
+            await modelingExerciseEditor.showExampleAssessment();
+            await modelingExerciseAssessment.openAssessmentForComponent(1);
+            await modelingExerciseAssessment.assessComponent(5, 'Good');
+            await modelingExerciseAssessment.submitExample();
+
+            // The step under proof: reopen in a fresh load, change the model, save again.
+            await page.reload();
+            await page.waitForLoadState('domcontentloaded');
+            await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
+            const savePromise = page.waitForResponse((response) => response.url().includes('/example-submissions') && response.request().method() === 'PUT');
+            await modelingExerciseEditor.saveExampleSubmission();
+            const saveResponse = await savePromise;
+            expect(saveResponse.status()).toBe(200);
+            await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]')).toHaveCount(0);
+        });
+
+        test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {
+            if (modelingExercise) {
+                await login(admin);
+                await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+            }
+        });
+    });
+
+    test.describe('Edit Modeling Exercise', () => {
+        let modelingExercise: ModelingExercise;
+
+        test.beforeEach('Create Modeling Exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        });
+
+        test('Edit Existing Modeling Exercise', async ({ page, modelingExerciseCreation, courseManagementExercises }) => {
+            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            const newTitle = 'New Modeling Exercise Title';
+            const points = 100;
+            await modelingExerciseCreation.setTitle(newTitle);
+            await modelingExerciseCreation.pickDifficulty({ hard: true });
+            await modelingExerciseCreation.setReleaseDate(dayjs().add(1, 'day'));
+            await modelingExerciseCreation.setDueDate(dayjs().add(2, 'day'));
+            await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(3, 'day'));
+            await modelingExerciseCreation.includeInOverallScore();
+            await modelingExerciseCreation.setPoints(points);
+            await modelingExerciseCreation.save();
+            await page.goto(`/course-management/${course.id}/exercises`);
+            await expect(courseManagementExercises.getModelingExerciseTitle(modelingExercise.id!)).toContainText(newTitle);
+            await expect(courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!)).toContainText(points.toString());
+        });
+
+        test.afterEach('Delete exercise', async ({ exerciseAPIRequests }) => {
+            await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+        });
+    });
+
+    test.describe('Delete Modeling Exercise', () => {
+        let modelingExercise: ModelingExercise;
+
+        test.beforeEach('Create Modeling exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin, '/');
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        });
+
+        test('Deletes an existing Modeling exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
+            await login(instructor, '/');
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.deleteModelingExercise(modelingExercise);
+            await expect(courseManagementExercises.getExercise(modelingExercise.id!)).not.toBeAttached();
+        });
+
+        test.afterEach('Delete exercise', async ({ exerciseAPIRequests }) => {
+            await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+        });
+    });
+
+    test.describe('Modeling Exercise Release', () => {
+        let modelingExercise: ModelingExercise;
+
+        test('Student can not see unreleased Modeling Exercise', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
+            await login(instructor);
+            const exerciseTitle = 'Modeling ' + generateUUID();
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course }, exerciseTitle, dayjs().add(1, 'hour'));
+            await login(studentOne, `/courses/${course.id}/exercises`);
+            await expect(courseOverview.getExercise(exerciseTitle)).toHaveCount(0);
+        });
+
+        test('Student can see released Modeling Exercise', async ({ login, page, exerciseAPIRequests }) => {
+            await login(instructor);
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour'));
+            await login(studentOne, '/courses');
+            await page.goto('/courses/' + course.id + '/exercises/' + modelingExercise.id);
+        });
+    });
+
+    // Seed courses are persistent — no cleanup needed
+});

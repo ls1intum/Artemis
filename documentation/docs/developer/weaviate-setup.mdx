@@ -1,0 +1,363 @@
+---
+id: weaviate-setup
+title: Weaviate Setup
+sidebar_label: Weaviate Setup
+last_reviewed: 2026-11-14
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+This guide sets up Weaviate for local development and explains how Artemis global search indexes and searches.
+Weaviate is used in two independent ways:
+
+- **Global search (Artemis)**: Artemis stores a search index of courses, lectures, lecture units, exercises, exams,
+  FAQs, channels and posts in Weaviate. It is switched on with `artemis.weaviate.enabled` and works without Pyris.
+- **Iris / Pyris (EduTelligence)**: Pyris stores its own collections in Weaviate with its own configuration. Both can
+  share one Weaviate instance if Artemis uses a non-empty `collection-prefix`, such as `Artemis_`.
+
+<Callout variant={CalloutVariant.info}>
+
+  You need Weaviate only to work on global search or to run Pyris locally. For production setup, the embedding
+  model, load limits and the index rebuild, see the [admin guide](/admin/global-search-weaviate).
+
+</Callout>
+
+## Prerequisites
+
+- Docker with Docker Compose
+- About 2 GB of free disk space, plus about 1 GB for the local embedding model
+
+## Quick start
+
+Run the commands in this section from `deployment/docker`:
+
+```bash
+cd deployment/docker
+```
+
+### Keyword search
+
+Start Weaviate:
+
+```bash
+docker compose -f weaviate.yml up -d
+```
+
+Add to `src/main/resources/config/application-local.yml`:
+
+```yaml
+artemis:
+    weaviate:
+        enabled: true
+        http-host: localhost
+        http-port: 8001
+        grpc-port: 50051
+        scheme: http
+        collection-prefix: Artemis_
+        vectorizer-module: none
+```
+
+### Hybrid search with a local embedding model
+
+Hybrid search finds items by their words and by their meaning. Artemis computes the vectors itself through an
+OpenAI-compatible embedding API; Weaviate needs no extra module. For development, run a small model on the CPU with
+[Ollama](https://ollama.com):
+
+```bash
+docker compose -f weaviate.yml up -d
+docker compose -f ollama-embeddings.yml up -d
+docker compose -f ollama-embeddings.yml logs -f ollama-pull   # wait until the model download has finished
+```
+
+`ollama-embeddings.yml` starts Ollama on port 11434 and downloads `qwen3-embedding:0.6b` once into the volume
+`artemis-ollama`. Check that it answers:
+
+```bash
+curl -s http://localhost:11434/v1/embeddings -H 'Content-Type: application/json' \
+     -d '{"model": "qwen3-embedding:0.6b", "input": ["test"]}' | jq '.data[0].embedding | length'
+```
+
+The result is `1024`. Then add to `application-local.yml`:
+
+```yaml
+artemis:
+    weaviate:
+        enabled: true
+        http-host: localhost
+        http-port: 8001
+        grpc-port: 50051
+        scheme: http
+        collection-prefix: Artemis_
+        vectorizer-module: text2vec-openai
+        open-ai-base-url: http://localhost:11434      # as Artemis reaches Ollama; no /v1 suffix
+        open-ai-embedding-model: qwen3-embedding:0.6b
+        gpu-api-key: ollama                            # Ollama ignores it, but it must not be empty
+        open-ai-query-instruction: "Instruct: Given a student's search on a university learning platform, retrieve the course item (exercise, lecture, lecture unit, exam, FAQ, channel) it refers to\nQuery: "
+```
+
+If Artemis itself runs in a Docker container, use `http://host.docker.internal:11434` instead of `localhost`.
+
+Ollama in Docker on macOS runs on the CPU only. If a query takes more than about 2 seconds (check with `time` in front
+of the `curl` command above), the 3-second query limit makes searches fall back to keywords. Then either set
+`embedding.query-timeout: 10s` under `artemis.weaviate` for local development, or run Ollama natively, which uses the
+GPU of Apple silicon: `brew install ollama`, `ollama serve`, `ollama pull qwen3-embedding:0.6b`, and stop the Compose
+service first so port 11434 is free.
+
+To use a remote GPU server instead, set `open-ai-base-url`, `open-ai-embedding-model` and `gpu-api-key` to its values.
+The [admin guide](/admin/global-search-weaviate#connect-an-embedding-model) lists all settings and the requirements for
+the server.
+
+### Verify and stop
+
+```bash
+curl http://localhost:8001/v1/.well-known/ready     # 200 means Weaviate is ready
+docker compose -f ollama-embeddings.yml down
+docker compose -f weaviate.yml down
+```
+
+About 30 seconds after Artemis starts, it creates its collections. The background repair then indexes all items,
+starting at the next full minute; on a small development database this takes a few minutes. The log of the
+scheduling node shows `queued … entities the index had no record of` while it works.
+
+## How global search works
+
+This section describes the code paths. All classes are in the module
+`src/main/java/de/tum/cit/aet/artemis/globalsearch/`.
+
+### Writing the index
+
+Every change of a searchable item is written to the database table `weaviate_outbox` (`SearchableEntityWeaviateService`).
+The upsert of an exercise, an exam, a lecture, a lecture unit, a FAQ, a channel or a course is written on the
+`weaviateOutboxEnqueueExecutor` thread and not on the request thread, so the person who edits an item does not wait for it.
+The executor has one thread, which keeps the rows of a node in the order of the changes, and a request that finds its queue
+full waits for room instead of overtaking what is queued. An upsert that is still queued when a node stops is lost, like one
+whose write failed, and the reconcile passes repair it. Deletes, including the bulk deletes of a course reset or of a deleted
+post or channel, and the upserts of posts and answer posts are written before the request returns: the reconcile passes skip
+posts and answer posts by default, and a delete that is lost leaves removed data searchable. Under the `test` profile the
+executor is synchronous, so a test finds the row of its change before it continues. Live deletes, including bulk deletes,
+use the same queue as live upserts and wait for their outbox write to finish before source cleanup continues. This keeps
+an older queued update from receiving a newer outbox id and restoring a search hit while its source is being deleted.
+Reconcile writes stay on their calling thread so a failed write reaches the pass that retries it. The `WeaviateOutboxDispatcher` on the scheduling
+node is the only writer to Weaviate. It reads the outbox and applies the entries:
+
+1. `SearchableEntityResolver` loads the item from the database and builds its property map. It adds
+   `chunk_hashes` (the SHA-256 of every embedding input) and `chunker_version`.
+2. `SearchableEntityChunker` splits the item into embedding inputs ("chunks"). Each chunk is a header line (type
+   label, title, and for example the exercise type, the short name or the lecture title) and a piece of the cleaned
+   description. The cleaning removes code blocks, formulas, PlantUML, images, HTML and links. A chunk has at most 470
+   estimated tokens and 2048 bytes; consecutive chunks overlap by about 10%.
+3. `SearchableEntityVectorWriter` reads the stored row and reuses the vector of every chunk whose hash is unchanged.
+   Only new chunks are embedded by `SearchableEntityEmbeddingClient`, which calls `POST {open-ai-base-url}/v1/embeddings`.
+4. The row is written with **all** its vectors, one per chunk, in chunk order. A row is never written with missing
+   vectors, because Weaviate drops the vectors of a row that is replaced without them.
+
+The outbox has two kinds of entries. `LIVE` entries come from user actions and are applied at once, without a limit.
+Entries with a `RECONCILE_*` origin come from the background repair. They are applied in small steps between the live
+entries, within a per-minute budget (`BackgroundWriteBudget`), and the dispatcher never waits for that budget. The
+chunks of all rows of one step are embedded together, up to `max-inputs-per-request` per request. The step sends one
+request at a time and applies due `LIVE` entries between two requests, so a user's change waits for at most one
+request. When the request budget runs out, rows that are not complete stay in the outbox, and the vectors already
+computed for them are kept in memory for the next step.
+
+### Searching
+
+`SearchableEntityWeaviateService#searchSearchableEntities` embeds the query with the configured
+`open-ai-query-instruction` in front and sends a hybrid query with that vector. The collection uses multi-vector
+storage with MaxSim scoring: for one query vector, a row scores with its best matching chunk. The vector and keyword
+scores are combined with relative score fusion and `alpha` 0.75 (`SearchableEntityWeaviateService.HYBRID_ALPHA`).
+Always set `alpha` explicitly: the Java client sends none by default, and Weaviate then uses 0, which is pure keyword
+search. If connecting to the
+embedding API or waiting for its answer takes longer than `embedding.query-timeout` (each), or the hybrid query fails,
+the search uses BM25 keyword search.
+
+For Iris, `searchEntityCandidatesForAnswer` also returns the vectors of each hit. `SearchableEntityPassages` picks the
+chunk closest to the query, derives it again from the stored properties, checks it against the stored
+`chunk_hashes`, and returns its text as the `passage` of the candidate. Iris shows its reranker that passage instead
+of the beginning of the description.
+
+### Index signature and rebuild
+
+`SearchableEntityIndexRebuildService` stores a signature in the `SchemaVersion` collection, for example
+`layout=2;mode=text2vec-openai;model=qwen3-embedding:0.6b`. At startup, before the dispatcher writes anything, it
+compares the stored signature with the configuration. If they differ, it deletes and recreates the collections,
+clears the sync state of the reconcile passes, starts the `REFILL` pass for posts and answer posts, and writes the new
+signature last. The missing pass then indexes every item again, as fast as the background budget allows.
+
+When you change the code:
+
+- **Bump `SearchableEntityChunker.CHUNKER_VERSION`** when a chunking rule changes. Stored vectors are then not reused
+  for chunks with the old rules; rows are re-embedded when they are next written or repaired.
+- **Bump `SearchableEntityIndexRebuildService.INDEX_LAYOUT_VERSION`** when the collection layout changes in a way that
+  needs a new collection, for example a different vector configuration. Every installation then rebuilds once at the
+  next start. Adding a property needs no bump: `WeaviateService` adds missing properties at startup.
+
+### Deterministic UUIDs and dates
+
+Each row has a deterministic UUID v3 derived from the item type and its database id, so every node addresses the same
+row for the same item. Date properties are normalized to ISO 8601 (`yyyy-MM-dd'T'HH:mm:ss.SSSXXX`) when they are
+written and read.
+
+## Tests
+
+The chunker has parity tests against fixtures in `src/test/resources/globalsearch/chunker-parity-fixtures.json`.
+Each fixture holds an input and the exact expected chunks. They pin the chunking rules that the chunk size was
+evaluated with. When you change a rule on purpose, update the expected chunks of the affected fixtures and bump
+`CHUNKER_VERSION` in the same change.
+
+Tests that need Weaviate start it with Testcontainers in the version `weaviate_server_version` from
+`gradle.properties`; they are skipped if Docker is not available. `SearchableEntityMultiVectorWeaviateTest` covers the
+multi-vector layout, the rebuild, vector reuse and hybrid search with a fake embedding model, without a Spring
+context:
+
+```bash
+./gradlew test -x webapp --tests "de.tum.cit.aet.artemis.globalsearch.*"
+```
+
+## Configuration reference
+
+### Weaviate environment file
+
+`weaviate.yml` reads `deployment/docker/weaviate/default.env`:
+
+```bash
+QUERY_DEFAULTS_LIMIT=25
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+PERSISTENCE_DATA_PATH=/var/lib/weaviate
+DEFAULT_VECTORIZER_MODULE=none
+# Artemis computes all vectors itself, so Weaviate needs no vectorizer module in any global search mode.
+#ENABLE_MODULES=
+CLUSTER_HOSTNAME=artemis
+LIMIT_RESOURCES=true
+DISK_USE_WARNING_PERCENTAGE=80
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `QUERY_DEFAULTS_LIMIT` | 25 | Default limit for query results |
+| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true | Allow anonymous access (set to `false` when using API key authentication) |
+| `AUTHENTICATION_APIKEY_ENABLED` | (not set) | Enable API key authentication (see [Authentication](#authentication)) |
+| `AUTHENTICATION_APIKEY_ALLOWED_KEYS` | (not set) | Comma-separated list of allowed API keys |
+| `AUTHENTICATION_APIKEY_USERS` | (not set) | Comma-separated list of user identities, mapped to the keys by position |
+| `AUTHORIZATION_ADMINLIST_ENABLED` | (not set) | Enable admin list authorization |
+| `AUTHORIZATION_ADMINLIST_USERS` | (not set) | Comma-separated list of admin users |
+| `PERSISTENCE_DATA_PATH` | /var/lib/weaviate | Path for data inside the container |
+| `DEFAULT_VECTORIZER_MODULE` | none | Leave at `none`; Artemis provides the vectors |
+| `CLUSTER_HOSTNAME` | artemis | Hostname of the Weaviate node |
+| `LIMIT_RESOURCES` | true | Enable resource limits |
+| `DISK_USE_WARNING_PERCENTAGE` | 80 | Warn when disk usage exceeds this percentage |
+
+### Ollama Compose file
+
+| Variable | Default | Description |
+|---|---|---|
+| `OLLAMA_VERSION` | 0.40.13 | Ollama image version |
+| `OLLAMA_PORT` | 11434 | Port on the host |
+| `OLLAMA_EMBEDDING_MODEL` | qwen3-embedding:0.6b | Model the `ollama-pull` service downloads; use the same name in `open-ai-embedding-model` |
+
+The Compose file sets `OLLAMA_KEEP_ALIVE=-1`, so Ollama keeps the model in memory instead of unloading it after
+5 idle minutes.
+
+Set them in `deployment/docker/.env` or in the shell before `docker compose up`.
+
+### Artemis properties
+
+All properties with defaults are listed in the [admin guide](/admin/global-search-weaviate#settings). The commented
+block under `artemis.weaviate` in `src/main/resources/config/application-dev.yml` shows them with their defaults. You
+can also switch global search on with the environment variable `ARTEMIS_WEAVIATE_ENABLED=true` or the command-line
+argument `--artemis.weaviate.enabled=true`.
+
+### Authentication
+
+Anonymous access is enabled for local development. To test API key authentication, uncomment the authentication lines
+in `deployment/docker/weaviate/default.env`:
+
+```bash
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false
+AUTHENTICATION_APIKEY_ENABLED=true
+AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+AUTHENTICATION_APIKEY_USERS=admin@example.com
+AUTHORIZATION_ADMINLIST_ENABLED=true
+AUTHORIZATION_ADMINLIST_USERS=admin@example.com
+```
+
+Replace `admin-key` with a secure key. Several keys and users can be given as comma-separated lists; they are mapped by
+position. Restart Weaviate:
+
+```bash
+docker compose -f weaviate.yml down && docker compose -f weaviate.yml up -d
+```
+
+Then set the key in Artemis:
+
+```yaml
+artemis:
+    weaviate:
+        api-key: admin-key    # must match AUTHENTICATION_APIKEY_ALLOWED_KEYS
+```
+
+Check it:
+
+```bash
+curl -v http://localhost:8001/v1/.well-known/ready                                  # 401
+curl -v -H "Authorization: Bearer admin-key" http://localhost:8001/v1/.well-known/ready   # 200
+```
+
+See the [Weaviate authentication documentation](https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication)
+for details.
+
+## Troubleshooting
+
+### Port conflicts
+
+If port 8001, 50051 or 11434 is in use, set other ports in `deployment/docker/.env` (it is ignored by Git):
+
+```bash
+WEAVIATE_REST_PORT=8002
+WEAVIATE_GRPC_PORT=50052
+OLLAMA_PORT=11435
+```
+
+Use the same ports in the Artemis configuration. `WEAVIATE_SERVER_VERSION` selects another Weaviate version; it must
+be 1.37 or newer (tested with 1.37.2 and 1.40.5) and compatible with the
+[Java client](https://docs.weaviate.io/weaviate/release-notes).
+
+### Container logs
+
+```bash
+docker compose -f weaviate.yml logs weaviate
+docker compose -f ollama-embeddings.yml logs ollama ollama-pull
+```
+
+### Search uses keywords only
+
+If the Artemis log shows `Global search uses keyword search because the query could not be embedded`:
+
+- the model is not downloaded yet: wait for `ollama-pull` to finish, or run
+  `docker exec artemis-ollama ollama pull qwen3-embedding:0.6b`;
+- the model name in `open-ai-embedding-model` differs from the one Ollama serves: compare with
+  `docker exec artemis-ollama ollama list`;
+- Artemis cannot reach `open-ai-base-url`: test it with the `curl` command from the [quick start](#hybrid-search-with-a-local-embedding-model)
+  on the machine where Artemis runs.
+
+### Resetting data
+
+```bash
+docker compose -f weaviate.yml down -v
+docker compose -f weaviate.yml up -d
+```
+
+This deletes the index. At the next start, Artemis finds no signature, creates the collections again and indexes
+everything from the database in the background.
+
+## Additional resources
+
+- [Weaviate documentation](https://weaviate.io/developers/weaviate)
+- [Weaviate multi-vector embeddings](https://docs.weaviate.io/weaviate/tutorials/multi-vector-embeddings)
+- [Ollama OpenAI compatibility](https://docs.ollama.com/api/openai-compatibility)
+- [EduTelligence repository](https://github.com/ls1intum/edutelligence)

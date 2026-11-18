@@ -1,0 +1,374 @@
+package de.tum.cit.aet.artemis.atlas.competency;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+
+class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
+
+    private static final String TEST_PREFIX = "prerequisite";
+
+    /** Student/instructor not enrolled in either test course; exercises the wrong-course branches. */
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @BeforeEach
+    void setupTestScenario() {
+        super.setupTestScenario(TEST_PREFIX, OTHER_PREFIX, prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Nested
+    class PreAuthorize {
+
+        private void testAllPreAuthorizeEditor() throws Exception {
+            request.put("/api/atlas/courses/" + course.getId() + "/prerequisites", toRequestDto(courseCompetency), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.delete("/api/atlas/courses/" + course.getId() + "/prerequisites/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/bulk", List.of(), HttpStatus.FORBIDDEN);
+            // import
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-standardized", List.of(), HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void shouldFailAsTutor() throws Exception {
+            this.testAllPreAuthorizeEditor();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldFailAsStudent() throws Exception {
+            this.testAllPreAuthorizeEditor();
+        }
+    }
+
+    Prerequisite getCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
+        return request.get("/api/atlas/courses/" + courseId + "/prerequisites/" + competencyId, expectedStatus, Prerequisite.class);
+    }
+
+    private static CourseCompetencyRequestDTO toRequestDto(CourseCompetency competency) {
+        return new CourseCompetencyRequestDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(),
+                competency.getTaxonomy(), competency.isOptional());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnCompetencyForStudent() throws Exception {
+        super.shouldReturnCompetencyForStudent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldOnlySendUserSpecificData() throws Exception {
+        super.testShouldOnlySendUserSpecificData(TEST_PREFIX);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForUserNotInCourse() throws Exception {
+        super.shouldReturnForbiddenForUserNotInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestForWrongCourse() throws Exception {
+        super.shouldReturnBadRequestForWrongCourse();
+    }
+
+    @Override
+    List<? extends CourseCompetency> getAllCall(long courseId, HttpStatus expectedStatus) throws Exception {
+        return request.getList("/api/atlas/courses/" + courseId + "/prerequisites", expectedStatus, Prerequisite.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
+        super.shouldReturnCompetenciesForCourse(new Prerequisite());
+    }
+
+    @Override
+    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
+        throw new UnsupportedOperationException("Not implemented for prerequisites");
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void shouldRefuseListingForStudentNotInCourseWhenEnrollmentIsOff() throws Exception {
+        getAllCall(course.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void shouldReturnPrerequisitesForStudentWhoMayEnrollInTheCourse() throws Exception {
+        // The registration page shows the prerequisites before the user is a member
+        course.setEnrollmentEnabled(true);
+        course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(1));
+        course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(1));
+        courseRepository.save(course);
+
+        List<? extends CourseCompetency> prerequisites = getAllCall(course.getId(), HttpStatus.OK);
+
+        assertThat(prerequisites).isNotNull();
+    }
+
+    void deleteCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
+        request.delete("/api/atlas/courses/" + courseId + "/prerequisites/" + competencyId, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldDeleteCompetencyWhenEditor() throws Exception {
+        super.shouldDeleteCompetencyWhenEditor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldDeleteCompetencyAndRelations() throws Exception {
+        super.shouldDeleteCompetencyAndRelations(prerequisiteUtilService.createPrerequisite(course));
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
+        super.shouldReturnForbiddenForInstructorOfOtherCourseForDelete();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deleteCourseShouldAlsoDeleteCompetencyAndRelations() throws Exception {
+        super.deleteCourseShouldAlsoDeleteCompetencyAndRelations(prerequisiteUtilService.createPrerequisite(course));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureShouldUpdateCompetency() throws Exception {
+        super.deleteLectureShouldUpdateCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureUnitShouldUpdateCompetency() throws Exception {
+        super.deleteLectureUnitShouldUpdateCompetency();
+    }
+
+    CourseCompetency updateCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception {
+        return request.putWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites", toRequestDto(competency), Prerequisite.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldUpdateCompetency() throws Exception {
+        super.shouldUpdateCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldReturnBadRequestForCompetencyWithoutId() throws Exception {
+        super.shouldReturnBadRequestForCompetencyWithoutId();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(IncludedInOverallScore.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldUpdateCompetencyToOptionalWhenSettingOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
+        super.shouldUpdateCompetencyToOptionalWhenSettingOptional(new Prerequisite(), includedInOverallScore);
+    }
+
+    CourseCompetency createCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception {
+        return request.postWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites", toRequestDto(competency), Prerequisite.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldCreateValidCompetency() throws Exception {
+        super.shouldCreateValidCompetency(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithNoTitleForCreate() throws Exception {
+        super.forCompetencyWithNoTitleForCreate(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithEmptyTitleForCreate() throws Exception {
+        super.forCompetencyWithEmptyTitleForCreate(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithIdForCreate() throws Exception {
+        super.forCompetencyWithIdForCreate(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorOfOtherCourseForCreate() throws Exception {
+        super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Prerequisite());
+    }
+
+    CourseCompetency importCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import", importOptions, Prerequisite.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportCompetency() throws Exception {
+        super.shouldImportCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
+        super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();
+    }
+
+    List<? extends CourseCompetency> createBulkCall(long courseId, List<? extends CourseCompetency> competencies, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/bulk", competencies, Prerequisite.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldCreateCompetencies() throws Exception {
+        super.shouldCreateCompetencies(new Prerequisite(), new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithNoTitle() throws Exception {
+        super.forCompetencyWithNoTitle(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithEmptyTitle() throws Exception {
+        super.forCompetencyWithEmptyTitle(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void forCompetencyWithId() throws Exception {
+        super.forCompetencyWithId(new Prerequisite());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk() throws Exception {
+        super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
+    }
+
+    List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportAllCompetencies() throws Exception {
+        super.shouldImportAllCompetencies(prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
+        shouldImportAllCompetenciesWithSomeExisting(Prerequisite::new, 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
+        super.shouldReturnForbiddenForInstructorNotInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldReturnBadRequestForImportFromSameCourse() throws Exception {
+        super.shouldReturnBadRequestForImportFromSameCourse();
+    }
+
+    List<CompetencyImportResponseDTO> importStandardizedCall(long courseId, List<Long> idList, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-standardized", idList, CompetencyImportResponseDTO.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportStandardizedCompetencies() throws Exception {
+        super.shouldImportStandardizedCompetencies();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldReturnNotFoundForNotExistingIds() throws Exception {
+        super.shouldReturnNotFoundForNotExistingIds();
+    }
+
+    List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import/bulk", importOptions, CompetencyWithTailRelationDTO.class,
+                expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
+        super.shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportCompetencies() throws Exception {
+        super.shouldImportCompetencies(prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
+    }
+}

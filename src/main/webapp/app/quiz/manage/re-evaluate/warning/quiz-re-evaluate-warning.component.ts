@@ -1,0 +1,282 @@
+import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
+import { toQuizExerciseReEvaluate } from 'app/quiz/shared/util/quiz-exercise-reevaluate-request.util';
+import { toNamedFiles } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+@Component({
+    selector: 'jhi-quiz-re-evaluate-warning',
+    templateUrl: './quiz-re-evaluate-warning.component.html',
+    styleUrls: ['../../../shared/quiz.scss'],
+    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent],
+})
+export class QuizReEvaluateWarningComponent implements OnInit {
+    private dialogRef = inject(TumAetUiDialogRef<boolean>);
+    private dialogConfig = inject(TumAetUiDialogConfig<{ quizExercise: QuizExercise; files: Map<string, File> }>);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseEvaluationApi = inject(QuizExerciseEvaluationApi);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
+    isSaving = false;
+
+    readonly successful = signal(false);
+    readonly failed = signal(false);
+    readonly busy = signal(false);
+
+    readonly questionElementDeleted = signal(false);
+    readonly questionElementInvalid = signal(false);
+    readonly questionCorrectness = signal(false);
+    readonly questionDeleted = signal(false);
+    readonly questionInvalid = signal(false);
+    readonly scoringChanged = signal(false);
+    readonly solutionAdded = signal(false);
+
+    quizExercise!: QuizExercise; // set in ngOnInit() from the dialog config data
+    backUpQuiz!: QuizExercise; // set in ngOnInit() from the server response before it is read
+
+    files!: Map<string, File>; // set in ngOnInit() from the dialog config data
+
+    // Icons
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faTimes = faTimes;
+    faCheck = faCheck;
+    faCheckCircle = faCheckCircle;
+
+    /**
+     * Reset saving status, load the quiz by id and back it up.
+     */
+    ngOnInit(): void {
+        this.quizExercise = this.dialogConfig.data!.quizExercise;
+        this.files = this.dialogConfig.data!.files;
+        this.isSaving = false;
+        (this.quizExercise.exerciseGroup ? this.quizExerciseService.findForExam(this.quizExercise.id!) : this.quizExerciseService.find(this.quizExercise.id!)).subscribe(
+            (quizExercise) => {
+                this.backUpQuiz = quizExercise;
+                this.loadQuizSuccess();
+            },
+        );
+    }
+
+    /**
+     * Closes the modal
+     */
+    clear(): void {
+        this.dialogRef.close();
+    }
+
+    /**
+     * check if the changes affect the existing results
+     *  1. check if a question is deleted
+     *  2. check for each question if:
+     *          - it is set invalid
+     *          - it has another scoringType
+     *          - an answer was deleted
+     *  3. check for each question-element if:
+     *          - it is set invalid
+     *          - the correctness was changed
+     */
+    loadQuizSuccess(): void {
+        // question deleted?
+        this.questionDeleted.set(this.backUpQuiz.quizQuestions!.length !== this.quizExercise.quizQuestions!.length);
+
+        // check each question
+        this.quizExercise.quizQuestions!.forEach((question) => {
+            // find same question in backUp (necessary if the order has been changed)
+            const backUpQuestion = this.backUpQuiz.quizQuestions?.find((questionBackUp) => question.id === questionBackUp.id);
+            if (backUpQuestion) {
+                this.checkQuestion(question, backUpQuestion);
+            }
+        });
+    }
+
+    /**
+     * 1. compare backUpQuestion and question
+     * 2. set flags based on detected changes
+     *
+     * @param question changed question
+     * @param backUpQuestion original not changed question
+     */
+    checkQuestion(question: QuizQuestion, backUpQuestion: QuizQuestion): void {
+        if (backUpQuestion) {
+            // question set invalid?
+            if (question.invalid !== backUpQuestion.invalid) {
+                this.questionInvalid.set(true);
+            }
+            // question scoring changed?
+            if (question.scoringType !== backUpQuestion.scoringType) {
+                this.scoringChanged.set(true);
+            }
+            // check MultipleChoiceQuestions
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                this.checkMultipleChoiceQuestion(question, backUpQuestion);
+            }
+            // check DragAndDropQuestions
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                this.checkDragAndDropQuestion(question, backUpQuestion);
+            }
+            // check ShortAnswerQuestions
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                this.checkShortAnswerQuestion(question as ShortAnswerQuestion, backUpQuestion as ShortAnswerQuestion);
+            }
+        }
+    }
+
+    /**
+     * 1. check MultipleChoiceQuestion-Elements
+     * 2. set flags based on detected changes
+     *
+     * @param question changed Multiple-Choice-Question
+     * @param backUpQuestion original not changed Multiple-Choice-Question
+     */
+    checkMultipleChoiceQuestion(question: MultipleChoiceQuestion, backUpQuestion: MultipleChoiceQuestion): void {
+        // question-Element deleted?
+        if (question.answerOptions!.length !== backUpQuestion.answerOptions!.length) {
+            this.questionElementDeleted.set(true);
+        }
+        // check each answer
+        question.answerOptions!.forEach((answer) => {
+            // only check if there are no changes on the question-elements yet
+            if (!this.questionCorrectness() || !this.questionElementInvalid()) {
+                const backUpAnswer = backUpQuestion.answerOptions!.find((answerBackUp) => answerBackUp.id === answer.id);
+                if (backUpAnswer) {
+                    // answer set invalid?
+                    if (answer.invalid !== backUpAnswer.invalid) {
+                        this.questionElementInvalid.set(true);
+                    }
+                    // answer correctness changed?
+                    if (answer.isCorrect !== backUpAnswer.isCorrect) {
+                        this.questionCorrectness.set(true);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 1. check DragAndDrop-Question-Elements
+     * 2. set flags based on detected changes
+     *
+     * @param question changed DragAndDrop-Question
+     * @param backUpQuestion original not changed DragAndDrop-Question
+     */
+    checkDragAndDropQuestion(question: DragAndDropQuestion, backUpQuestion: DragAndDropQuestion): void {
+        // check if a dropLocation or dragItem was deleted
+        if (question.dragItems!.length !== backUpQuestion.dragItems!.length || question.dropLocations!.length !== backUpQuestion.dropLocations!.length) {
+            this.questionElementDeleted.set(true);
+        }
+        // check if the correct Mappings has changed
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+            this.questionCorrectness.set(true);
+        }
+        // only check if there are no changes on the question-elements yet
+        if (!this.questionElementInvalid()) {
+            // check each dragItem
+            question.dragItems!.forEach((dragItem) => {
+                const backUpDragItem = backUpQuestion.dragItems?.find((dragItemBackUp) => dragItemBackUp.id === dragItem.id);
+                // dragItem set invalid?
+                if (backUpDragItem && dragItem.invalid !== backUpDragItem.invalid) {
+                    this.questionElementInvalid.set(true);
+                }
+            });
+            // check each dropLocation
+            question.dropLocations!.forEach((dropLocation) => {
+                const backUpDropLocation = backUpQuestion.dropLocations?.find((dropLocationBackUp) => dropLocationBackUp.id === dropLocation.id);
+                // dropLocation set invalid?
+                if (backUpDropLocation && dropLocation.invalid !== backUpDropLocation.invalid) {
+                    this.questionElementInvalid.set(true);
+                }
+            });
+        }
+    }
+
+    /**
+     * 1. We check all ShortAnswer-Question-Elements in case a spot, solution or mapping has changed/was deleted
+     * 2. Set flags based on detected changes to inform the instructor in the UI what their changes have for consequences.
+     *
+     * @param question
+     * @param backUpQuestion
+     */
+    checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
+        // check if a spot or solution was deleted
+        if (question.solutions!.length < backUpQuestion.solutions!.length || question.spots!.length < backUpQuestion.spots!.length) {
+            this.questionElementDeleted.set(true);
+        }
+        // check if a spot or solution was added
+        if (question.solutions!.length > backUpQuestion.solutions!.length || question.spots!.length > backUpQuestion.spots!.length) {
+            this.solutionAdded.set(true);
+        }
+
+        // check if the correct Mappings has changed
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+            this.questionCorrectness.set(true);
+        }
+        // only check if there are no changes on the question-elements yet
+        if (!this.questionElementInvalid()) {
+            // check each solution
+            question.solutions!.forEach((solution) => {
+                const backUpSolution = backUpQuestion.solutions?.find((solutionBackUp) => {
+                    return solutionBackUp.id === solution.id;
+                });
+                // check if a solution was added
+                if (this.solutionAdded() && backUpSolution === undefined) {
+                    return;
+                }
+                // solution set invalid?
+                if (backUpSolution && solution.invalid !== backUpSolution.invalid) {
+                    this.questionElementInvalid.set(true);
+                }
+            });
+            // check each spot
+            question.spots!.forEach((spot) => {
+                const backUpSpot = backUpQuestion.spots?.find((spotBackUp) => {
+                    return spotBackUp.id === spot.id;
+                });
+                // spot set invalid?
+                if (backUpSpot && spot.invalid !== backUpSpot.invalid) {
+                    this.questionElementInvalid.set(true);
+                }
+            });
+        }
+    }
+
+    /**
+     * Confirm changes
+     *  => send changes to server and wait for result
+     *  if saving failed -> show failed message
+     */
+    confirmChange(): void {
+        this.busy.set(true);
+
+        this.quizExerciseEvaluationApi.reEvaluateQuizExercise(this.quizExercise.id!, toQuizExerciseReEvaluate(this.quizExercise), toNamedFiles(this.files)).subscribe({
+            next: () => {
+                this.busy.set(false);
+                this.successful.set(true);
+            },
+            error: () => {
+                this.busy.set(false);
+                this.failed.set(true);
+            },
+        });
+    }
+
+    /**
+     * Close modal and navigate to the overview page
+     */
+    closeAndNavigate(): void {
+        // Close with a truthy result so the opener persists the saved entity (cancel closes with undefined).
+        this.dialogRef.close(true);
+        // It doesn't navigate without the timeout...
+        setTimeout(() => this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise));
+    }
+}

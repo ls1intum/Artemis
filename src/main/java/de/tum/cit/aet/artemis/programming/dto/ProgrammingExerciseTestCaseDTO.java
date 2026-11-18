@@ -1,0 +1,21 @@
+package de.tum.cit.aet.artemis.programming.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+
+/**
+ * This is a DTO for updating a programming exercise test case.
+ * It is only allowed to alter the weight, bonus multiplier, bonus points and visibility flag of a test case from an
+ * endpoint, the other attributes are generated automatically.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record ProgrammingExerciseTestCaseDTO(Long id, Double weight, Double bonusMultiplier, Double bonusPoints, Visibility visibility) {
+
+    public static ProgrammingExerciseTestCaseDTO of(ProgrammingExerciseTestCase testCase) {
+        return new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(), testCase.getBonusPoints(), testCase.getVisibility());
+    }
+}

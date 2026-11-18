@@ -1,0 +1,68 @@
+package de.tum.cit.aet.artemis.hyperion.service.websocket;
+
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_STATE;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
+
+@Lazy
+@Service
+@Conditional(HyperionEnabled.class)
+public class HyperionWebsocketService {
+
+    private static final Logger log = LoggerFactory.getLogger(HyperionWebsocketService.class);
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    public HyperionWebsocketService(WebsocketMessagingService websocketMessagingService) {
+        this.websocketMessagingService = websocketMessagingService;
+    }
+
+    /**
+     * Notifies editors when a generation acquires or releases an exercise's mutation slot.
+     *
+     * @param event the new exercise state
+     */
+    @EventListener
+    public void sendExerciseState(ExerciseGenerationStateChangedEvent event) {
+        var state = event.state();
+        websocketMessagingService.sendMessage(EXERCISE_GENERATION_STATE.at(state.exerciseId()), state);
+    }
+
+    /**
+     * Sends a websocket message to a specific user under the Hyperion namespace.
+     * <p>
+     * The message is handed off and this method returns right away; a delivery failure is only logged. It must not wait for
+     * the send to finish: {@link WebsocketMessagingService} runs every send on the shared {@code taskExecutor}, and that is
+     * also the pool the {@code @Async} code generation jobs calling this method run on. A job thread waiting for a send that
+     * is queued behind the running jobs only gets it once another pool thread frees up, and once every pool thread waits
+     * like that the pool is deadlocked until the server restarts. {@code IrisWebsocketService#send} hands off the same way.
+     * <p>
+     * Each message is its own task, so this method makes no promise about the order in which the messages of one job
+     * reach the client. Both Hyperion clients finish on the terminal event and refresh their state from the server then,
+     * so an event that overtakes a neighbour costs at most a stale label.
+     *
+     * @param userLogin   the receiver's login
+     * @param destination a destination of one of the {@link de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics}
+     * @param payload     the payload to send
+     */
+    public void send(String userLogin, WebsocketUserDestination destination, Object payload) {
+        websocketMessagingService.sendMessageToUser(userLogin, destination, payload).whenComplete((ignored, throwable) -> {
+            if (throwable != null) {
+                log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, destination, payload, throwable);
+            }
+            else {
+                log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, destination, payload);
+            }
+        });
+    }
+}

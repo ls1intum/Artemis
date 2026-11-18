@@ -1,0 +1,495 @@
+package de.tum.cit.aet.artemis.atlas.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+
+/**
+ * Service providing LLM-callable tools for the Exercise Mapper Agent using Spring AI's function calling API.
+ * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
+ * by large language models during conversations.
+ *
+ * Main Responsibilities:
+ * - Preview exercise-to-competency mappings before creation
+ * - Create/update/delete exercise-competency links
+ */
+@Lazy
+@Service
+@Conditional(AtlasLLMEnabled.class)
+public class ExerciseMappingToolsService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseMappingToolsService.class);
+
+    /**
+     * Wrapper class for exercise-competency mapping operations.
+     * Used by tools to accept mapping data from the LLM.
+     */
+    public static class ExerciseCompetencyMappingOperation {
+
+        @JsonProperty
+        @NotNull
+        private Long competencyId;
+
+        @JsonProperty
+        @NotNull
+        private Double weight;
+
+        @JsonProperty
+        private Boolean alreadyMapped;
+
+        @JsonProperty
+        private Boolean suggested;
+
+        public ExerciseCompetencyMappingOperation(Long competencyId, Double weight, Boolean alreadyMapped, Boolean suggested) {
+            this.competencyId = competencyId;
+            this.weight = weight;
+            this.alreadyMapped = alreadyMapped != null && alreadyMapped;
+            this.suggested = suggested != null && suggested;
+        }
+
+        public Long getCompetencyId() {
+            return competencyId;
+        }
+
+        public Double getWeight() {
+            return weight;
+        }
+
+        public Boolean getAlreadyMapped() {
+            return alreadyMapped;
+        }
+
+        public Boolean getSuggested() {
+            return suggested;
+        }
+    }
+
+    /**
+     * ThreadLocal storage for the current session ID.
+     * Set by AtlasAgentService before delegating to the Exercise Mapper sub-agent.
+     */
+    private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
+
+    /**
+     * ThreadLocal storage for exercise mapping preview data.
+     * Used to pass preview data from tool methods to the service layer for rendering in the client.
+     */
+    private static final ThreadLocal<ExerciseCompetencyMappingDTO> exerciseMappingPreview = new ThreadLocal<>();
+
+    /** Suppresses a retained preview when its latest replacement failed, until another preview succeeds. */
+    private static final ThreadLocal<Boolean> exerciseMappingPreviewRejected = new ThreadLocal<>();
+
+    /**
+     * ThreadLocal storage for user-selected exercise mappings (from the client approval payload).
+     * When set, {@link #saveExerciseCompetencyMappings} uses these instead of the LLM-provided mappings,
+     * ensuring the user's checkbox selections and weight choices are respected.
+     */
+    private static final ThreadLocal<List<ExerciseCompetencyMappingOperation>> userSelectedMappings = new ThreadLocal<>();
+
+    /**
+     * Set the user-selected mappings before delegating to the exercise mapper agent for saving.
+     *
+     * @param mappings the competency mappings selected by the user in the client
+     */
+    public static void setUserSelectedMappings(List<ExerciseCompetencyMappingOperation> mappings) {
+        userSelectedMappings.set(mappings);
+    }
+
+    /**
+     * Clear the user-selected mappings ThreadLocal.
+     */
+    public static void clearUserSelectedMappings() {
+        userSelectedMappings.remove();
+    }
+
+    /**
+     * Set the current session ID for this request.
+     * Called by AtlasAgentService before routing to the Exercise Mapper sub-agent.
+     *
+     * @param sessionId the session ID
+     */
+    public static void setCurrentSessionId(String sessionId) {
+        currentSessionId.set(sessionId);
+    }
+
+    /**
+     * Clear the current session ID after request completes.
+     */
+    public static void clearCurrentSessionId() {
+        currentSessionId.remove();
+    }
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final UserRepository userRepository;
+
+    private final AtlasAgentSessionCacheService sessionCacheService;
+
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
+
+    public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, AtlasAgentSessionCacheService sessionCacheService) {
+        this.exerciseRepository = exerciseRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.courseRepository = courseRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
+        this.sessionCacheService = sessionCacheService;
+    }
+
+    /**
+     * Retrieves all competencies for a given course with their IDs.
+     * The LLM should call this method FIRST to find competency IDs by title before creating mappings.
+     *
+     * @param courseId ID of the course
+     * @return JSON response containing the list of competencies with IDs and titles
+     */
+    @Tool(description = "Get all course competencies with their IDs. CRITICAL: Call this FIRST to find competency IDs by title before creating relations.")
+    public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (courseOptional.isEmpty()) {
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
+        }
+
+        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+
+        record CompetencyInfo(Long id, String title) {
+        }
+        List<CompetencyInfo> competencyList = competencies.stream().map(c -> new CompetencyInfo(c.getId(), c.getTitle())).toList();
+
+        record Response(Long courseId, List<CompetencyInfo> competencies) {
+        }
+        return toJson(new Response(courseId, competencyList));
+    }
+
+    /**
+     * Generates a preview of exercise-to-competency mappings before saving.
+     * Shows which competencies will be mapped to the exercise with their weights.
+     * Existing mappings are marked as alreadyMapped for styling in the client.
+     *
+     * @param courseId   The course ID
+     * @param exerciseId The exercise ID to map
+     * @param mappings   List of competency mappings (can include suggested mappings)
+     * @param viewOnly   If true, no action buttons shown (for display only)
+     * @return JSON string with preview data or error message
+     */
+    @Tool(description = """
+            Generates a preview of exercise-to-competency mappings before saving.
+            Shows which competencies will be linked to the exercise with their weights (LOW=0.25, MEDIUM=0.5, HIGH=1.0).
+            Existing mappings are automatically marked as 'alreadyMapped'.
+            The preview is displayed to the user for confirmation before applying changes.
+            Before choosing suggested flags and weights, call getExerciseContent for this exercise and getCourseCompetencies.
+            Base suggestions on the expected student work in that learning content, not on the exercise title alone.
+            Set suggested=true only for the 1-3 competencies that best match the exercise.
+            """)
+    public String previewExerciseCompetencyMapping(@ToolParam(description = "The ID of the course") Long courseId,
+            @ToolParam(description = "The ID of the exercise to map") Long exerciseId,
+            @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0) and suggested.") List<ExerciseCompetencyMappingOperation> mappings,
+            @ToolParam(description = "If true, display only (no action buttons)") Boolean viewOnly) {
+
+        exerciseMappingPreviewRejected.set(true);
+        try {
+            log.info("Generating exercise mapping preview for exercise {} in course {}", exerciseId, courseId);
+
+            Optional<Course> courseOpt = courseRepository.findById(courseId);
+            if (courseOpt.isEmpty()) {
+                return error("Course not found with ID: " + courseId);
+            }
+
+            Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
+
+            if (mappings == null) {
+                return error("mappings is required. Provide the competency mappings list and retry the preview.");
+            }
+            if (mappings.stream().anyMatch(mapping -> mapping == null || mapping.getCompetencyId() == null)) {
+                return error("Every mapping must include a competencyId. Call getCourseCompetencies and retry the preview with valid competency IDs.");
+            }
+
+            long suggestedCount = mappings.stream().filter(mapping -> Boolean.TRUE.equals(mapping.getSuggested())).map(ExerciseCompetencyMappingOperation::getCompetencyId)
+                    .distinct().count();
+            if (suggestedCount > 3) {
+                return error("Suggest at most 3 competencies. Keep suggested=true only for the best learning-content matches "
+                        + "and set suggested=false for the others, then retry the preview.");
+            }
+
+            // Validate every requested competency against the course in one bulk lookup before publishing a preview.
+            List<Long> allCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).toList();
+            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(allCompetencyIds).stream()
+                    .collect(Collectors.toMap(CourseCompetency::getId, competency -> competency));
+            if (allCompetencyIds.stream().anyMatch(id -> {
+                CourseCompetency competency = competencyById.get(id);
+                return competency == null || competency.getCourse() == null || !courseId.equals(competency.getCourse().getId());
+            })) {
+                return error("Every competency must exist in the specified course. Call getCourseCompetencies and retry the preview with valid competency IDs.");
+            }
+
+            List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
+            Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+
+            ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(), mappings.stream().map(op -> {
+                return new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), competencyById.get(op.getCompetencyId()).getTitle(), op.getWeight(),
+                        existingCompetencyIds.contains(op.getCompetencyId()), Boolean.TRUE.equals(op.getSuggested()));
+            }).toList(), viewOnly != null && viewOnly);
+
+            exerciseMappingPreview.set(preview);
+
+            // Also write to Hazelcast so cross-node requests can retrieve the preview
+            String sessionId = currentSessionId.get();
+            if (sessionId != null) {
+                sessionCacheService.cacheExerciseMappingPreview(sessionId, preview);
+            }
+
+            exerciseMappingPreviewRejected.remove();
+            return success("Preview generated successfully for exercise-to-competency mapping.");
+
+        }
+        catch (Exception e) {
+            log.error("Error generating preview for exercise {}", exerciseId, e);
+            return error("Failed to generate preview: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Saves exercise-to-competency mappings to the database.
+     * Creates new links and removes unchecked existing links.
+     * Avoids re-persisting unchanged existing mappings.
+     *
+     * @param courseId   The course ID
+     * @param exerciseId The exercise ID
+     * @param mappings   List of competency mappings to save
+     * @return Success or error message
+     */
+    @Tool(description = """
+            Saves exercise-to-competency mappings to the database.
+            Creates new links for newly checked competencies.
+            Deletes links for unchecked existing competencies.
+            Avoids re-persisting unchanged existing mappings.
+            Use this after the user has confirmed the preview.
+            """)
+    public String saveExerciseCompetencyMappings(@ToolParam(description = "The ID of the course") Long courseId, @ToolParam(description = "The ID of the exercise") Long exerciseId,
+            @ToolParam(description = "List of competency mappings to save") List<ExerciseCompetencyMappingOperation> mappings) {
+
+        try {
+            log.info("Saving exercise mappings for exercise {} in course {}", exerciseId, courseId);
+
+            Optional<Course> courseOpt = courseRepository.findById(courseId);
+            if (courseOpt.isEmpty()) {
+                return error("Course not found with ID: " + courseId);
+            }
+
+            Course course = courseOpt.get();
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, userRepository.getUser());
+
+            Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
+
+            // If the user explicitly selected mappings via the client approval, use those
+            // instead of the LLM-provided ones to honour checkbox and weight choices.
+            List<ExerciseCompetencyMappingOperation> selected = userSelectedMappings.get();
+            if (selected != null) {
+                mappings = selected;
+                userSelectedMappings.remove();
+            }
+
+            List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
+
+            List<Long> newCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).distinct().toList();
+            Map<Long, CompetencyExerciseLink> existingLinksByCompetencyId = existingLinks.stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
+
+            List<CompetencyExerciseLink> linksToDelete = existingLinks.stream().filter(link -> !newCompetencyIds.contains(link.getCompetency().getId())).toList();
+
+            // Only load competencies not yet linked — and validate they belong to this course
+            List<Long> missingCompetencyIds = newCompetencyIds.stream().filter(id -> !existingLinksByCompetencyId.containsKey(id)).toList();
+
+            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(missingCompetencyIds).stream().filter(c -> courseId.equals(c.getCourse().getId()))
+                    .collect(Collectors.toMap(CourseCompetency::getId, c -> c));
+
+            List<CompetencyExerciseLink> linksToCreate = new ArrayList<>();
+            List<CompetencyExerciseLink> linksToUpdate = new ArrayList<>();
+
+            for (ExerciseCompetencyMappingOperation mapping : mappings) {
+                CompetencyExerciseLink existing = existingLinksByCompetencyId.get(mapping.getCompetencyId());
+                if (existing != null) {
+                    // Update weight if it changed
+                    if (Double.compare(existing.getWeight(), mapping.getWeight()) != 0) {
+                        existing.setWeight(mapping.getWeight());
+                        linksToUpdate.add(existing);
+                    }
+                }
+                else {
+                    CourseCompetency competency = competencyById.get(mapping.getCompetencyId());
+                    if (competency != null) {
+                        CompetencyExerciseLink link = new CompetencyExerciseLink();
+                        link.setCompetency(competency);
+                        link.setExercise(exercise);
+                        link.setWeight(mapping.getWeight());
+                        link.setGeneratedByAi(true);
+                        linksToCreate.add(link);
+                    }
+                    else {
+                        log.warn("Skipping competency {} — not found in course {}", mapping.getCompetencyId(), courseId);
+                    }
+                }
+            }
+
+            if (!linksToDelete.isEmpty()) {
+                competencyExerciseLinkRepository.deleteAll(linksToDelete);
+                log.info("Deleted {} competency links for exercise {}", linksToDelete.size(), exerciseId);
+            }
+
+            if (!linksToCreate.isEmpty()) {
+                competencyExerciseLinkRepository.saveAll(linksToCreate);
+                log.info("Created {} new competency links for exercise {}", linksToCreate.size(), exerciseId);
+            }
+
+            if (!linksToUpdate.isEmpty()) {
+                competencyExerciseLinkRepository.saveAll(linksToUpdate);
+                log.info("Updated weight for {} competency links for exercise {}", linksToUpdate.size(), exerciseId);
+            }
+
+            exerciseMappingPreview.remove();
+
+            return success("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.".formatted(linksToCreate.size(), linksToUpdate.size(),
+                    linksToDelete.size()));
+
+        }
+        catch (Exception e) {
+            log.error("Error saving exercise mappings for exercise {}", exerciseId, e);
+            exerciseMappingPreview.remove();
+            return error("Failed to save mappings: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get the preview data stored in ThreadLocal.
+     * Called by the service layer to retrieve preview for rendering in the client.
+     *
+     * @return The exercise mapping preview DTO or null
+     */
+    public static ExerciseCompetencyMappingDTO getExerciseMappingPreview() {
+        return exerciseMappingPreview.get();
+    }
+
+    /**
+     * Indicates that the latest preview attempt failed, so response assembly must not reuse retained or cached mappings.
+     *
+     * @return whether an unsuccessful replacement is awaiting a successful retry
+     */
+    public static boolean hasRejectedExerciseMappingPreview() {
+        return Boolean.TRUE.equals(exerciseMappingPreviewRejected.get());
+    }
+
+    /**
+     * Clear the ThreadLocal preview data.
+     * Should be called after preview has been consumed by the client.
+     */
+    public static void clearExerciseMappingPreview() {
+        exerciseMappingPreview.remove();
+        exerciseMappingPreviewRejected.remove();
+        currentSessionId.remove();
+    }
+
+    /**
+     * Loads an exercise by ID and validates it belongs to the given course.
+     *
+     * @param exerciseId the exercise ID to load
+     * @param courseId   the expected course ID
+     * @return the validated Exercise
+     * @throws IllegalArgumentException if the exercise is not found or does not belong to the course
+     */
+    private Exercise loadAndValidateExercise(Long exerciseId, Long courseId) {
+        Exercise exercise = exerciseRepository.findWithCompetenciesById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + exerciseId));
+
+        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
+            throw new IllegalArgumentException("Exercise " + exerciseId + " does not belong to course " + courseId);
+        }
+
+        return exercise;
+    }
+
+    /**
+     * Format a success response for the LLM.
+     *
+     * @param message The success message
+     * @return Formatted JSON success response
+     */
+    private String success(String message) {
+        try {
+            return objectMapper.writeValueAsString(Map.of("success", true, "message", message));
+        }
+        catch (JacksonException e) {
+            return "{\"success\": true, \"message\": \"Operation completed\"}";
+        }
+    }
+
+    /**
+     * Format an error response for the LLM.
+     *
+     * @param message The error message
+     * @return Formatted JSON error response
+     */
+    private String error(String message) {
+        try {
+            return objectMapper.writeValueAsString(Map.of("success", false, "error", message));
+        }
+        catch (JacksonException e) {
+            return "{\"success\": false, \"error\": \"Operation failed\"}";
+        }
+    }
+
+    /**
+     * Convert object to JSON using Jackson JsonMapper.
+     */
+    private String toJson(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        }
+        catch (JacksonException e) {
+            return "{\"error\": \"Failed to serialize response\"}";
+        }
+    }
+}

@@ -1,0 +1,33 @@
+@if (isLoading()) {
+    <div class="m-6! flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+}
+@if (lectureUnit(); as lectureUnit) {
+    <div class="flex flex-wrap">
+        <div class="min-w-0 flex-1">
+            @switch (lectureUnit.type) {
+                @case (LectureUnitType.TEXT) {
+                    <jhi-text-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                    <jhi-attachment-video-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @case (LectureUnitType.EXERCISE) {
+                    @if (lecture()?.course; as course) {
+                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="course" />
+                    }
+                }
+                @case (LectureUnitType.ONLINE) {
+                    <jhi-online-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @default {}
+            }
+        </div>
+        @if (isCommunicationEnabled()) {
+            <div class="w-full md:w-auto">
+                <jhi-discussion-section [lecture]="this.lecture()" />
+            </div>
+        }
+    </div>
+}

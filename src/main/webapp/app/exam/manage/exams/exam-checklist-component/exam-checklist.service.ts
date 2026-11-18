@@ -1,0 +1,185 @@
+import { AccountService } from 'app/core/auth/account.service';
+import { HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { EMPTY, Observable } from 'rxjs';
+import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
+import { filter, map } from 'rxjs/operators';
+
+@Service()
+export class ExamChecklistService {
+    private examService = inject(ExamManagementService);
+    private accountService = inject(AccountService);
+
+    /**
+     * indicates whether all student exams are generated
+     * @param exam the corresponding exam
+     * @param examChecklist the examChecklist for the exam
+     */
+    checkAllExamsGenerated(exam: Exam, examChecklist: ExamChecklist): boolean {
+        return examChecklist.numberOfGeneratedStudentExams === exam.numberOfExamUsers;
+    }
+
+    /**
+     * Fetches examChecklist from the Server
+     * @param exam exam the checklist should be fetched
+     * @returns examChecklist as Observable
+     */
+    getExamStatistics(exam: Exam): Observable<ExamChecklist> {
+        const courseId = Number(exam.course!.id!);
+        const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'tutor';
+        return this.examService.getExamStatistics(courseId, exam.id!, audience).pipe(
+            filter((res) => !!res.body),
+            map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
+        );
+    }
+
+    getExamConductionCounts(exam: Exam): Observable<ExamConductionCounts> {
+        const courseId = Number(exam.course!.id!);
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(courseId)) {
+            return EMPTY;
+        }
+        return this.examService.getExamConductionCounts(courseId, exam.id!);
+    }
+
+    /**
+     * indicates whether the max points of the exam can be reached by the current configuration
+     * @param pointsExercisesEqual flag indicating whether within every exercise groups the max points equal
+     * @param exam the corresponding exam
+     */
+    checkTotalPointsMandatory(pointsExercisesEqual: boolean, exam: Exam): boolean {
+        let totalPointsMandatory = false;
+        let totalPointsMandatoryOptional = false;
+        let sumPointsExerciseGroupsMandatory = 0;
+        let sumPointsExerciseGroupsOptional = 0;
+
+        // calculate mandatory points and optional points
+        if (pointsExercisesEqual) {
+            exam.exerciseGroups!.forEach((exerciseGroup) => {
+                if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
+                    if (exerciseGroup.isMandatory) {
+                        sumPointsExerciseGroupsMandatory += exerciseGroup.exercises[0].maxPoints!;
+                    } else {
+                        sumPointsExerciseGroupsOptional += exerciseGroup.exercises[0].maxPoints!;
+                    }
+                }
+            });
+
+            if (sumPointsExerciseGroupsMandatory <= exam.examMaxPoints!) {
+                totalPointsMandatory = true;
+            }
+            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= exam.examMaxPoints!) {
+                totalPointsMandatoryOptional = true;
+            }
+        }
+        return totalPointsMandatory && totalPointsMandatoryOptional;
+    }
+
+    /**
+     * indicates whether the max points within every exercise group equal
+     * @param exam the corresponding exam
+     */
+    checkPointsExercisesEqual(exam: Exam): boolean {
+        let pointsExercisesEqual = true;
+        if (!exam.exerciseGroups) {
+            return false;
+        }
+        exam.exerciseGroups?.forEach((exerciseGroup) => {
+            let maxPoints = 0;
+            if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                maxPoints = exerciseGroup.exercises?.[0].maxPoints!;
+            }
+            return exerciseGroup.exercises?.some((exercise) => {
+                if (exercise.maxPoints !== maxPoints) {
+                    pointsExercisesEqual = false;
+                    return true;
+                }
+                return false;
+            });
+        });
+        return pointsExercisesEqual;
+    }
+
+    /**
+     * Method to calculate the number of Points in an exam
+     * @param pointsExercisesEqual flag indicating whether within every exercise groups the max points equal
+     * @param exam the corresponding exam
+     */
+    calculateExercisePoints(pointsExercisesEqual: boolean, exam: Exam): number {
+        let sumPointsExerciseGroups = 0;
+        if (pointsExercisesEqual) {
+            exam.exerciseGroups!.forEach((exerciseGroup) => {
+                if (exerciseGroup.exercises && exerciseGroup.exercises.length !== 0) {
+                    sumPointsExerciseGroups += exerciseGroup.exercises[0].maxPoints!;
+                }
+            });
+        }
+        return sumPointsExerciseGroups;
+    }
+
+    /**
+     * indicates whether every exercise group of an exam contains at least one exercise
+     * @param exam the corresponding exam
+     */
+    checkEachGroupContainsExercise(exam: Exam): boolean {
+        if (!exam.exerciseGroups) {
+            return false;
+        }
+        let allGroupsContainExercise = true;
+        exam.exerciseGroups.some((exerciseGroup) => {
+            if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
+                allGroupsContainExercise = false;
+                return true;
+            }
+            return false;
+        });
+        return allGroupsContainExercise;
+    }
+
+    /**
+     * indicates whether an exam has at least one exercise group
+     * @param exam the corresponding exam
+     */
+    checkAtLeastOneExerciseGroup(exam: Exam): boolean {
+        return (exam.exerciseGroups && exam.exerciseGroups.length > 0) ?? false;
+    }
+
+    /**
+     * indicates whether the number of exam exercises is in range between the number of mandatory exercise groups and the number of all exercise groups
+     * @param exam the corresponding exam
+     */
+    checkNumberOfExerciseGroups(exam: Exam): boolean {
+        const numberOfMandatoryExerciseGroups = exam.exerciseGroups?.filter((group) => group.isMandatory).length ?? 0;
+        return (
+            (exam.exerciseGroups && numberOfMandatoryExerciseGroups <= (exam.numberOfExercisesInExam ?? 0) && (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length) ??
+            false
+        );
+    }
+
+    /**
+     * indicates whether at least one student is registered for an exam
+     * @param exam the corresponding exam
+     */
+    checkAtLeastOneRegisteredStudent(exam: Exam): boolean {
+        return !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0;
+    }
+
+    /**
+     * Returns the topic to get updates of submitted exams.
+     * @param exam corresponding exam
+     */
+    getSubmittedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/submitted`;
+    }
+
+    /**
+     * Returns the topic to get updates of started exams
+     * @param exam corresponding exam
+     */
+    getStartedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/started`;
+    }
+}

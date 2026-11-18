@@ -1,0 +1,169 @@
+package de.tum.cit.aet.artemis.localvc.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+
+import java.io.IOException;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
+import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.UploadPack;
+import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
+import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
+
+/**
+ * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
+ */
+@Profile(PROFILE_LOCALVC)
+@Lazy
+@Service
+public class ArtemisGitServletService extends GitServlet {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
+
+    private final transient LocalVCServletService localVCServletService;
+
+    private final transient LocalVCRepositoryResolverService repositoryResolver;
+
+    private final transient LocalVCAccessLogRecorderService accessLogRecorder;
+
+    private final transient LocalVCPushProcessingService pushProcessingService;
+
+    private final transient PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
+    private final transient LocalVCUsageTrackingService usageTrackingService;
+
+    /**
+     * Constructor for ArtemisGitServlet.
+     *
+     * @param localVCServletService               the service for authenticating and authorizing users
+     * @param repositoryResolver                  finds the repository on disk
+     * @param accessLogRecorder                   writes the access log of fetch operations
+     * @param pushProcessingService               handles what a push leads to
+     * @param passwordAuthenticationNoticeService tells users who push with a password to switch
+     * @param usageTrackingService                counts completed fetch and push operations for the feature usage analysis
+     */
+    public ArtemisGitServletService(LocalVCServletService localVCServletService, LocalVCRepositoryResolverService repositoryResolver,
+            LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, LocalVCUsageTrackingService usageTrackingService) {
+        this.localVCServletService = localVCServletService;
+        this.repositoryResolver = repositoryResolver;
+        this.accessLogRecorder = accessLogRecorder;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
+        this.usageTrackingService = usageTrackingService;
+    }
+
+    /**
+     * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
+     * Sets the pre/post receive/upload hooks.
+     * <p>
+     * For a git push the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>POST /git-receive-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
+     * For a git pull / clone the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-upload-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-upload-pack (with Authentication header)</li>
+     * <li>POST /git-upload-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
+     * For general information on the different hooks and git packs see the git documentation:
+     * <p>
+     * <a href="https://git-scm.com/docs/git-receive-pack">https://git-scm.com/docs/git-receive-pack</a>
+     * <p>
+     * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
+     */
+    @PostConstruct
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        // Disable dumb HTTP protocol (serving raw files like /HEAD, /objects/).
+        // Only the smart HTTP protocol (info/refs + git-upload-pack/git-receive-pack) is allowed,
+        // which goes through our authentication and authorization filters.
+        this.setAsIsFileService(AsIsFileService.DISABLED);
+
+        this.setRepositoryResolver((request, name) -> {
+            // request – the current request, may be used to inspect session state including cookies or user authentication.
+            // name – name of the repository, as parsed out of the URL (everything after /git/).
+
+            // Return the opened repository instance.
+            return repositoryResolver.resolveRepository(name);
+        });
+
+        // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
+        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, accessLogRecorder, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, usageTrackingService));
+
+        this.setReceivePackFactory((request, repository) -> {
+            // we only need the hooks and the separate place for the objects of a push for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
+            if (!isAuthorizedPostRequest(request)) {
+                return LocalVCReceivePackLimits.apply(new ReceivePack(repository));
+            }
+            final User user;
+            try {
+                user = localVCServletService.getUserByAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
+            }
+            catch (LocalVCAuthException e) {
+                throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
+            }
+            // The hook prevents illegal actions on push (delete branch, rename branch, force push), and examines the content of the push.
+            GitOperationAudit audit = accessLogRecorder.auditOf(request);
+            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit);
+            final ReceivePack receivePack;
+            try {
+                // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
+                receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
+            }
+            catch (IOException e) {
+                log.warn("Could not prepare the receipt of a push to {}", repository.getDirectory(), e);
+                throw new ServiceNotEnabledException("Could not prepare the push");
+            }
+            receivePack.setPreReceiveHook(prePushHook);
+            // Add a hook that triggers the creation of a new submission after the push went through successfully.
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
+                    () -> localVCServletService.getAuthenticationMechanism(request), audit::onPushAccepted));
+            return receivePack;
+        });
+
+        this.setUploadPackFactory((request, repository) -> {
+            UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
+            // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
+            if (isAuthorizedPostRequest(request)) {
+                // Add the custom pre-upload hook, which tells the audit whether data is sent and whether the client is cloning or pulling
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder.auditOf(request)));
+            }
+            return uploadPack;
+        });
+    }
+
+    /**
+     * Checks if the request is an authorized POST request.
+     *
+     * @param request the HTTP request
+     * @return true if the request is a POST request with an Authorization header, false otherwise
+     */
+    private static boolean isAuthorizedPostRequest(HttpServletRequest request) {
+        return HttpMethod.POST.name().equals(request.getMethod()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null;
+    }
+}

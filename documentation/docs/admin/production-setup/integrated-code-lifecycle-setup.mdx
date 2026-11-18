@@ -1,0 +1,238 @@
+---
+id: integrated-code-lifecycle-setup
+title: Integrated Code Lifecycle Setup
+sidebar_label: Integrated Code Lifecycle Setup
+last_reviewed: 2026-11-03
+---
+
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+This section describes how to set up a programming exercise environment based on the Integrated Code Lifecycle, which includes a local Version Control system and a local Continuous Integration system.
+These two systems are integrated into the Artemis server application, and thus, the setup is greatly simplified compared to the external options.
+This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
+
+If you are setting Artemis up for the first time, these are the steps you should follow:
+
+- Install and run Docker: https://docs.docker.com/get-docker (required for processing and testing student submissions)
+- Start the database: [Database Setup](/developer/setup#database-setup) (ignore if previously done, you should either have a database running locally or in a container)
+- [Configure Artemis](#configure-artemis-for-integrated-code-lifecycle)
+- (optional) [Configure Build Management](#configure-build-management)
+- [Start Artemis](#start-artemis-with-integrated-code-lifecycle)
+- [Test the Setup](#test-the-integrated-code-lifecycle-setup)
+
+You can see the configuration in the following video:
+
+<TumLiveVideo src={"34536"} title={"Video version of the setup guide on TUM-Live"} />
+
+## Configure Artemis for Integrated Code Lifecycle
+
+Create a file `src/main/resources/config/application-local.yml` with the following content:
+
+```yaml
+artemis:
+    user-management:
+        use-external: false # set to true if you want to use ldap as external user management system. For development, this should be false for easy setup.
+    version-control:
+        url: http://localhost:8080
+        # order and supported authentication mechanisms:
+        repository-authentication-mechanisms: token,ssh,password
+    continuous-integration:
+        # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+        # ARM-based systems include Apple M-series, Raspberry Pi, etc.
+        image-architecture: arm64
+        # Only necessary on Windows:
+        docker-connection-uri: tcp://localhost:2375
+eureka:
+    client:
+        register-with-eureka: false
+        fetch-registry: false
+```
+
+The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
+The `repository-authentication-mechanisms` field configures the repository authentication mechanisms (password, token, or SSH).
+
+Users who access a repository with their account password get an email (at most one per day) and a message in the terminal when they push, asking them to switch to a token or an SSH key.
+To tell them by when, set the date on which you plan to stop accepting passwords:
+
+```yaml
+artemis:
+    version-control:
+        password-authentication-end-date: 2027-01-15 # ISO date, empty by default
+```
+
+The date only appears in the email and the push message. Artemis does not reject passwords on that day, so removing `password` from `repository-authentication-mechanisms`
+(which hides it in the Code button) does not stop password authentication either. A malformed date stops Artemis from starting.
+
+If you are running Artemis on Windows, you also need to add a property `artemis.continuous-integration.docker-connection-uri` with the value `tcp://localhost:2375` as shown above.
+If you are running Artemis inside of a docker container, use `tcp://host.docker.internal:2375` instead.
+Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
+
+When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin".
+You can then use that admin user to create further users in Artemis' internal user management system.
+
+## Configure Build Management
+
+This step is optional for development purposes.
+
+The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions.
+By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores.
+You can manually determine this number by adding the following property to the `src/main/resources/config/application-local.yml` file:
+
+```yaml
+artemis:
+    continuous-integration:
+        specify-concurrent-builds: true
+        # The number of concurrent builds that can be executed
+        concurrent-build-size: 2
+        # More options can be found in application-localci.yml and application-buildagent.yml
+```
+
+More options can be found in `src/main/resources/config/application-localci.yml` and `src/main/resources/config/application-buildagent.yml`.
+
+### Bulk builds
+
+An instructor can trigger the builds of a whole exercise (**Trigger All** on the grading page) or of selected submissions, for example to rebuild the ones that failed.
+Such a run does not queue all of its builds at once.
+The server queues them one after the other in the background, pauses after every batch, and waits while the build queue is longer than the build agents can work off.
+
+- The pause after every batch is set with `artemis.external-system-request.batch-size` (default 50 builds) and `artemis.external-system-request.batch-waiting-time` (default 30 seconds).
+- The wait for room in the queue is set in `application-localci.yml`:
+
+```yaml
+artemis:
+    continuous-integration:
+        bulk-trigger:
+            # How many queued jobs each build slot may have before a bulk trigger waits. 0 turns the wait off.
+            max-queued-jobs-per-build-slot: 2
+            # The longest one bulk trigger waits in total, in minutes. After that, it queues the rest of its builds without waiting.
+            max-wait-minutes: 180
+```
+
+A build slot is one build that a build agent runs at the same time, so the number of build slots is the sum of the concurrent builds of all connected build agents that are not paused.
+With 20 build slots and the default of 2, a bulk trigger waits while 40 or more jobs are queued and continues as soon as the queue is shorter.
+Jobs of other bulk runs and of students' pushes count towards the queue, because they compete for the same slots.
+Builds triggered by a student's push and the builds at the start and the end of an exam are never held back.
+A bulk trigger also does not wait while no build agent is connected, because the queue cannot shrink then; its builds stay queued until an agent is available.
+
+<Callout variant={CalloutVariant.info}>
+
+  The wait only controls how fast a run adds builds to the queue. It does not reduce how many builds run at the same time on a build agent.
+  If builds fail with timeouts while many of them run, lower the concurrent builds of the build agents with `specify-concurrent-builds: true` and a smaller `concurrent-build-size`.
+
+</Callout>
+
+A run lives on the core node that received the request. If that node restarts while a long run is waiting, the builds that were not queued yet are not queued later, and the instructor has to trigger them again.
+
+What a build sees in its container, how to use a private image registry and how to give builds a dependency mirror is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
+By default, every build runs in a Docker container on the build agent, which is what the rest of this page assumes.
+A production installation can instead let each build run as a Kubernetes Job; see
+[LocalCI Build Runners](/admin/production-setup/build-runners).
+
+## Start Artemis with Integrated Code Lifecycle
+
+For the development environment, you can start Artemis with the following additional profiles: `localci`, `localvc` and `buildagent`.
+It is important to consider the **correct order** of the profiles, as the `core` profile needs to overwrite the `buildagent` profile, e.g.:
+
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
+```
+
+All of these profiles are enabled by default when using the `Artemis (Server, LocalVC & LocalCI)` run configuration in IntelliJ.
+Please read [Run the server via a run configuration in IntelliJ](/developer/setup#run-the-server-via-a-run-configuration-in-intellij) for more details.
+
+## Test the Integrated Code Lifecycle Setup
+
+You can now test the setup:
+
+To create a course with registered users, you can use the scripts from `supporting_scripts/course-scripts/quick-course-setup`.
+
+- Create a course and a programming exercise.
+
+<TumLiveVideo src={"34537"} title={"Video of creating a programming exercise on TUM-Live"} />
+
+- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
+
+<TumLiveVideo src={"34538"} title={"Video showcasing how to participate in a programming exercise from the online editor and from a local Git client on TUM-Live"} />
+
+- Make sure that the result of your submission is displayed in the Artemis UI.
+- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first [configure SSH](/admin/production-setup/security#ssh-access).
+
+For unauthorized access, your Git client will display the respective error message:
+
+<TumLiveVideo src={"34539"} title={"Video showcasing unauthorized access to a local VC repository on TUM-Live"} />
+
+## Setup with Docker Compose
+
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and PostgreSQL containers:
+
+```bash
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
+```
+
+<Callout variant={CalloutVariant.info}>
+  **Unix systems:** When running the Artemis container on a Linux system with a native Docker daemon, you will have to give the user running the container permission to access the Docker socket. Pass the group ID of the `docker` group of the host in the environment variable `ARTEMIS_DOCKER_GROUP_ID`, which `services.artemis-app.group_add` in `deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml` reads, for example `ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3) docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up`. The default value is `0`, which works with Docker Desktop on macOS and Windows.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  **Windows:** If you want to run the Docker containers locally on Windows, you will have to change the value for the Docker connection URI. You can add `ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="tcp://host.docker.internal:2375"` to the environment file, found in `deployment/docker/artemis/config/dev-local-vc-local-ci.env`. This overwrites the default value `unix:///var/run/docker.sock` for this property defined in `src/main/resources/config/application-docker.yml`.
+</Callout>
+
+## Podman as Docker alternative
+
+[Podman](https://podman.io/) offers a container runtime that is API-compatible with Docker.
+Rather than having a system-wide socket that runs with administrative permissions, Podman allows creating containers with only user permissions.
+In single-user setups this might not be as relevant, but offers additional security in a production environment where the Artemis CI has to execute untrusted student code.
+
+<Callout variant={CalloutVariant.info}>
+  Podman is supported on a best-effort basis. We are relying on the API compatibility to provide support but are not actively testing against Podman on a test system or in continuous integration. If you notice any issues, feel free to open an issue or pull request so that we can try to fix them.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  These setup steps are mostly focused on Linux systems. On Mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway. Therefore, there is little technical benefit relevant to Artemis for choosing one over the other in local development setups. If in doubt, we recommend using Docker, since that solution is most likely to be tested by Artemis developers.
+</Callout>
+
+### Linux setup
+
+Podman itself should be available via your regular package manager.
+
+After the installation, you have to ensure that your user is allowed to create containers.
+This is managed by the files `/etc/subuid` and `/etc/subgid`.
+Ensure both files contain a line starting with your username.
+If not, you can generate the relevant lines by executing the following command:
+
+```bash
+#! /usr/bin/env sh
+
+printf "%s:%d:65536\n" "$USER" "$(( $(id -u) * 65536 ))" | tee -a /etc/subuid /etc/subgid
+```
+
+After that, enable the Podman user socket that provides the API for the container management:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+
+Configure the connection to this socket in Artemis by replacing `${UID}` with your actual user id (`id -u`):
+
+```yaml
+artemis:
+    continuous-integration:
+        docker-connection-uri: "unix:///run/user/${UID}/podman/podman.sock"
+        # alternatively, if you use the `DOCKER_HOST` environment variable already
+        # to tell other tools to use the Podman socket instead of the Docker one:
+        # docker-connection-uri: "${DOCKER_HOST}"
+```
+
+### Windows or Mac setup
+
+Podman offers a [desktop application](https://podman-desktop.io/) similar to [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [CLI tools](https://podman.io) for Windows, macOS, and Linux.
+As with Docker, to run containers on Windows or macOS, the runtime has to start a small virtual Linux machine that then actually runs the containers.
+You can probably connect to this VM similarly as described in the regular setup steps above ([additional Podman documentation](https://podman-desktop.io/docs/migrating-from-docker/using-the-docker_host-environment-variable)).
+
+<Callout variant={CalloutVariant.info}>
+  If you try out Podman on a Windows or Mac system and have additional setup tips, feel free to submit a pull request to extend this documentation section.
+</Callout>

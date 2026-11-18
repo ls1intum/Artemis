@@ -1,0 +1,144 @@
+{
+    "artemisApp": {
+        "assessment": {
+            "assessment": "Bewertung",
+            "feedbackAndNotes": "Feedback und Notizen",
+            "assessmentNote": "Interne Notiz",
+            "testRunAssessment": "Bewertungstestlauf",
+            "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
+            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
+            "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
+            "suggestion": {
+                "suggested": "KI-Feedback-Vorschlag",
+                "adapted": "Angepasster KI-Feedback-Vorschlag"
+            },
+            "gradingInstructionUsageWarning": "Diese Bewertungsanweisung wird {{count}}-mal verwendet. Nur {{limit}} Anwendungen zählen zur Gesamtpunktzahl. Du kannst sie weiterhin für zusätzliches Feedback verwenden.",
+            "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
+            "error": {
+                "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
+            },
+            "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
+            "assessmentLockedComplaintView": "Ursprüngliche:r Tutor:in: {{otherUser}}",
+            "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
+            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Andere:r Tutor:in muss antworten.",
+            "moreFeedbackRequest": "Du musst auf die Feedbackanfrage antworten.",
+            "teamComplaint": "Du musst auf die Beschwerde antworten.",
+            "automaticAssessmentComplaint": "Du kannst auf die Beschwerde antworten.",
+            "automaticAssessmentFeedbackRequest": "Du kannst auf die Feedbackanfrage antworten.",
+            "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
+            "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
+            "diffView": {
+                "differenceActivate": "Aktiviere Vergleichsansicht",
+                "differenceDeactivate": "Deaktiviere Vergleichsansicht",
+                "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
+                "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
+                "correctionRoundDiffFirst": "Erste Korrekturrunde",
+                "correctionRoundDiffSecond": "Zweite Korrekturrunde"
+            },
+            "button": {
+                "overrideAssessment": "Bewertung überschreiben",
+                "nextSubmission": "Nächste Abgabe bewerten",
+                "resolveConflict": "Konflikte behandeln",
+                "useAsExampleSubmission": "Als Beispielabgabe verwenden",
+                "control": "Strg"
+            },
+            "detail": {
+                "feedback": "Feedback",
+                "assessmentNote": "Private Notizen für Tutor:innen",
+                "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
+                "feedbackWithColon": "Feedback:",
+                "scoreFor": "Bewertung für",
+                "tutorComment": "Kommentar von Tutor:in:",
+                "points": {
+                    "one": "{{points}} Punkt",
+                    "many": "{{points}} Punkte"
+                },
+                "otherFeedback": "Weiteres Feedback",
+                "baseAward": "Vergebene Punkte",
+                "deductions": "Abzüge",
+                "finalScore": "Gesamt",
+                "pointsShort": "{{points}} Pkt.",
+                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt."
+            },
+            "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
+            "messages": {
+                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
+                "acceptComplaintWithoutMoreScore": "Bist du sicher, dass du diese Beschwerde annehmen willst, ohne dem Studenten mehr Punkte zu geben?",
+                "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
+                "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+                "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
+                "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+                "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
+                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?"
+            },
+            "dashboard": {
+                "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
+                "warningIndividual": "Achtung: Die allgemeine Einreichungsfrist ist abgelaufen, aber manche Studierende mit verlängerter Bearbeitungszeit dürfen noch ihre Einreichungen abgeben. Bitte stelle vor Beginn einer Korrektur sicher, dass diese Studierenden nicht mehr abgeben können.",
+                "empty": "Keine Abgabe gefunden!",
+                "emptySearch": "Bitte gib den Namen eines Studierenden ein, um nach Abgaben zu suchen.",
+                "loading": "Laden..",
+                "columns": {
+                    "submissionDate": "Einreichungsdatum",
+                    "result": "Letztes Ergebnis",
+                    "submissionCount": "Anzahl der Einreichungen",
+                    "score": "Punkte",
+                    "duration": "Dauer",
+                    "assessmentType": "Bewertungsart",
+                    "student": "Studierende:r",
+                    "assessor": "Bewertet von",
+                    "assessors": "Bewertet von",
+                    "action": "Bewertungsaktionen",
+                    "assessmentFirst": "Korrekturrunde 1",
+                    "assessmentSecond": "Korrekturrunde 2"
+                },
+                "minutes": "Minuten",
+                "actions": {
+                    "open": "Bewertung öffnen",
+                    "cancel": "Bewertung abbrechen",
+                    "assess": "Abgabe bewerten",
+                    "continue": "Bewertung fortsetzen",
+                    "examCorrectionRound": {
+                        "open": "Bewertung von Korrekturrunde {{correctionRound}} öffnen",
+                        "cancel": "Bewertung von Korrekturrunde {{correctionRound}} abbrechen",
+                        "assess": "Abgabe in Korrekturrunde {{correctionRound}} bewerten",
+                        "continue": "Bewertung in Korrekturrunde {{correctionRound}} fortsetzen"
+                    }
+                },
+                "filters": {
+                    "showAll": "Alle anzeigen",
+                    "showLocked": "Nur gesperrte anzeigen"
+                },
+                "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxPoints}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde.",
+                "resetFilter": "Filter zurücksetzen",
+                "activeFilter": "Aktiver Filter",
+                "unassessedSubmissions": "Zeige nur nicht bewertete Abgaben",
+                "manuallyAssessedSubmissions": "Zeige nur manuell bewertete Abgaben",
+                "semiAutomaticallyAssessedSubmissions": "Zeige nur Abgaben, die mit automatischer Assistenz bewertet wurden"
+            },
+            "feedbackSuggestions": {
+                "automaticAssessmentAvailable": "Teile dieser Abgabe wurden automatisch bewertet. Bitte überprüfe und bestätige die Bewertung.",
+                "generativeAIAssessmentAvailable": "Feedback-Vorschläge wurden von KI generiert und können Fehler enthalten. Überprüfe wichtige Informationen.",
+                "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
+                "loading": "KI-Feedback-Vorschläge werden generiert…",
+                "chrome": {
+                    "automaticAssessment": "Automatische Bewertung",
+                    "suggestions": "KI-Feedback-Vorschläge",
+                    "loading": "Vorschläge werden generiert…"
+                }
+            },
+            "locks": {
+                "home": {
+                    "title": "Gesperrte Bewertungen"
+                },
+                "title": "Von dir gesperrte Bewertungen",
+                "titleAll": "Alle gesperrten Bewertungen",
+                "exercise": "Aufgabe",
+                "type": "Aufgabentyp",
+                "empty": "Keine von dir gesperrten Bewertungen vorhanden!"
+            }
+        }
+    }
+}

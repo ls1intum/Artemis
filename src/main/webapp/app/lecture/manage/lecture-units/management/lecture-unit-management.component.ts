@@ -1,0 +1,719 @@
+import { Component, ElementRef, OnDestroy, OnInit, TemplateRef, inject, input, output, signal, viewChildren } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { concatMap, finalize, map } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { Subject, Subscription, from } from 'rxjs';
+import {
+    LectureUnitCombinedStatus,
+    LectureUnitProcessingStatus,
+    LectureUnitService,
+    ProcessingPhase,
+    toProcessingStatus,
+} from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
+import {
+    IconDefinition,
+    faCheck,
+    faExclamationTriangle,
+    faEye,
+    faEyeSlash,
+    faFile,
+    faFileCircleQuestion,
+    faFileLines,
+    faFilePdf,
+    faFileVideo,
+    faFlag,
+    faGripVertical,
+    faLink,
+    faPencilAlt,
+    faRepeat,
+    faScroll,
+    faSpinner,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+
+@Component({
+    selector: 'jhi-lecture-unit-management',
+    templateUrl: './lecture-unit-management.component.html',
+    styleUrls: ['./lecture-unit-management.component.scss'],
+    imports: [
+        TranslateDirective,
+        IngestionStatusBadgeComponent,
+        UnitCreationCardComponent,
+        CdkDropList,
+        CdkDrag,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        NgTemplateOutlet,
+        FaIconComponent,
+        RouterLink,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        PdfDropZoneComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
+})
+export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+    protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly tumLiveUploadService = inject(TumLiveUploadService);
+    private readonly websocketService = inject(WebsocketService);
+
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faEye = faEye;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faRepeat = faRepeat;
+    protected readonly faEyeSlash = faEyeSlash;
+    protected readonly faFlag = faFlag;
+    protected readonly faGripVertical = faGripVertical;
+    protected readonly faCheck = faCheck;
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ActionType = ActionType;
+
+    showCreationCard = input<boolean>(true);
+    showCompetencies = input<boolean>(true);
+    showDropZone = input<boolean>(true);
+    emitEditEvents = input<boolean>(false);
+    lectureId = input<number | undefined>(undefined);
+
+    onEditLectureUnitClicked = output<LectureUnit>();
+    /** The unit that is edited in place, if any. Only one is; the others are dimmed and the order is fixed meanwhile. */
+    readonly editingUnitId = input<number | undefined>(undefined);
+    /** The form of the unit that is edited in place, shown right below it. */
+    readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
+    /** Emits when Done of the unit that is edited in place is pressed. */
+    readonly onDoneEditingClicked = output<LectureUnit>();
+    private readonly editButtons = viewChildren('editButton', { read: ElementRef<HTMLButtonElement> });
+
+    lectureUnits = signal<LectureUnit[]>([]);
+    /** The units whenever they are loaded, reordered or deleted, for a page that works with them too. */
+    readonly lectureUnitsChange = outputFromObservable(toObservable(this.lectureUnits));
+    lecture = signal<Lecture | undefined>(undefined);
+    isLoading = signal(false);
+    isStatusLoading = signal(true);
+    viewButtonAvailable = signal<Record<number, boolean>>({});
+    transcriptionStatus = signal<Record<number, TranscriptionStatus>>({});
+    processingStatus = signal<Record<number, LectureUnitProcessingStatus>>({});
+    isRetryingProcessing = signal<Record<number, boolean>>({});
+    isUploadingPdfs = signal<boolean>(false);
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+    routerEditLinksBase: { [key: string]: string } = {
+        [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
+        [LectureUnitType.TEXT]: 'text-units',
+        [LectureUnitType.ONLINE]: 'online-units',
+    };
+
+    private resolvedLectureId: number | undefined;
+    private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+    private processingStateSubscription?: Subscription;
+    private hasCompletedInitialStatusLoad = false;
+
+    /**
+     * Identifies the most recent load. loadData() is triggered by several independent events (init, a delete, a
+     * creation), so two chains can be in flight at once and their responses can resolve in either order. Only the
+     * latest chain is allowed to write: without this an older response, which describes the lecture as it was
+     * before the newer one's change, would land second and replace the fresher maps with its stale snapshot.
+     */
+    private loadSequence = 0;
+
+    ngOnInit(): void {
+        this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
+        if (this.resolvedLectureId) {
+            // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+            // ideally the router could load the details directly
+            this.loadData();
+            this.subscribeToProcessingStateUpdates(this.resolvedLectureId);
+        }
+    }
+
+    ngOnDestroy(): void {
+        for (const timeoutId of this.retryProcessingTimeouts.values()) {
+            clearTimeout(timeoutId);
+        }
+        this.retryProcessingTimeouts.clear();
+        this.processingStateSubscription?.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
+    }
+
+    loadData() {
+        const sequence = ++this.loadSequence;
+        // A reload keeps the list in place, so the form of a unit that is edited in place stays open with what was typed.
+        this.isLoading.set(!this.lecture());
+        this.isStatusLoading.set(true);
+        // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
+        // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
+        this.lectureService
+            .findWithDetails(this.resolvedLectureId!)
+            .pipe(
+                map((response: HttpResponse<Lecture>) => response.body!),
+                finalize(() => {
+                    if (sequence === this.loadSequence) {
+                        this.isLoading.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (lecture) => {
+                    if (sequence !== this.loadSequence) {
+                        return; // superseded by a newer load
+                    }
+                    this.lecture.set(lecture);
+                    this.loadTumLiveUploads(lecture?.course?.id);
+                    if (lecture?.lectureUnits) {
+                        this.lectureUnits.set(lecture.lectureUnits);
+                        const viewAvailable: Record<number, boolean> = {};
+                        lecture.lectureUnits.forEach((lectureUnit) => {
+                            viewAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                        });
+                        this.viewButtonAvailable.set(viewAvailable);
+                        // Load all statuses in a single bulk request
+                        this.loadAllStatuses(sequence);
+                    } else {
+                        this.lectureUnits.set([]);
+                        this.isStatusLoading.set(false);
+                    }
+                },
+                error: (errorResponse: HttpErrorResponse) => {
+                    if (sequence !== this.loadSequence) {
+                        return; // superseded by a newer load
+                    }
+                    onError(this.alertService, errorResponse);
+                    this.isStatusLoading.set(false);
+                },
+            });
+    }
+
+    updateOrder() {
+        if (this.resolvedLectureId === undefined || isNaN(this.resolvedLectureId)) {
+            return;
+        }
+
+        this.lectureUnitService
+            .updateOrder(this.resolvedLectureId, this.lectureUnits())
+            .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
+            .subscribe({
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+    }
+
+    drop(event: CdkDragDrop<LectureUnit[]>) {
+        const units = [...this.lectureUnits()];
+        moveItemInArray(units, event.previousIndex, event.currentIndex);
+        this.lectureUnits.set(units);
+        this.updateOrder();
+    }
+
+    /**
+     * Moves the keyboard focus to the Edit button of a unit, for a page that closed the form of the unit that is edited in place.
+     * @param unitId the id of the unit
+     */
+    focusEditButton(unitId: number): void {
+        this.editButtons()
+            .find((button) => button.nativeElement.dataset.unitId === String(unitId))
+            ?.nativeElement.focus();
+    }
+
+    /**
+     * Shows a unit as it was just saved, without loading the whole lecture again, which would replace the form of a unit that is edited in place.
+     * @param lectureUnit the saved unit
+     */
+    replaceLectureUnit(lectureUnit: LectureUnit): void {
+        this.lectureUnits.update((units) => units.map((unit) => (unit.id === lectureUnit.id ? lectureUnit : unit)));
+        if (lectureUnit.id !== undefined) {
+            this.viewButtonAvailable.set(cloneWith(this.viewButtonAvailable(), { [lectureUnit.id]: this.isViewButtonAvailable(lectureUnit) }));
+        }
+    }
+
+    getDeleteQuestionKey(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.question';
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return 'artemisApp.attachmentVideoUnit.delete.question';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.question';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.question';
+            default:
+                return '';
+        }
+    }
+
+    getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return 'artemisApp.attachmentVideoUnit.delete.typeNameToConfirm';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.typeNameToConfirm';
+            default:
+                return '';
+        }
+    }
+
+    getActionType(lectureUnit: LectureUnit) {
+        if (lectureUnit.type === LectureUnitType.EXERCISE) {
+            return ActionType.Unlink;
+        } else {
+            return ActionType.Delete;
+        }
+    }
+
+    /** The units with a video Artemis uploaded to TUM.Live, also one that still converts; deleting one asks whether to delete the video there too. */
+    readonly tumLiveUploadedUnitIds = signal<Set<number>>(new Set());
+
+    /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
+    private tumLiveUploadsSequence = 0;
+
+    /** Set while reading the uploaded units failed: deleting a file or video unit then asks about TUM.Live, since it may have a video there. */
+    readonly tumLiveUploadsUnknown = signal(false);
+
+    /**
+     * Whether deleting the unit asks whether to delete its video in TUM.Live too.
+     * @param lectureUnit the unit
+     */
+    asksAboutTumLiveVideo(lectureUnit: LectureUnit): boolean {
+        return this.tumLiveUploadedUnitIds().has(lectureUnit.id!) || (this.tumLiveUploadsUnknown() && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
+    }
+
+    /** Reads again which units have a video uploaded to TUM.Live, for example after a file was sent there. */
+    refreshTumLiveUploads() {
+        this.loadTumLiveUploads(this.lecture()?.course?.id);
+    }
+
+    private loadTumLiveUploads(courseId: number | undefined) {
+        if (courseId === undefined) {
+            return;
+        }
+        const sequence = ++this.tumLiveUploadsSequence;
+        this.tumLiveUploadService.getUploadedUnits(courseId).subscribe({
+            next: (units) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId)));
+                    this.tumLiveUploadsUnknown.set(false);
+                }
+            },
+            // Say so and ask about every file or video unit: an empty set would delete units without asking about their videos in TUM.Live.
+            error: (errorResponse: HttpErrorResponse) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadsUnknown.set(true);
+                    onError(this.alertService, errorResponse);
+                }
+            },
+        });
+    }
+
+    deleteLectureUnit(lectureUnitId: number, checks: { [key: string]: boolean } = {}) {
+        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!, !!checks.deleteTumLiveRecordings).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.loadData();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO: {
+                const attachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
+                return attachmentVideoUnit.attachment?.link?.toLowerCase().endsWith('.pdf') ?? false;
+            }
+            default:
+                return false;
+        }
+    }
+
+    editButtonAvailable(lectureUnit: LectureUnit) {
+        switch (lectureUnit?.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+            case LectureUnitType.TEXT:
+            case LectureUnitType.ONLINE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Client mirror of the server's ContentExtractionService.isLectureUnitEligibleForOrchestration: only offer a manual
+     * Atlas run for units whose learning text the orchestrator can actually read, so a blank unit never gets a trigger
+     * that could only end as a no-op.
+     */
+    isOrchestrationAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                return !!(lectureUnit as TextUnit).content?.trim();
+            case LectureUnitType.ONLINE:
+                return true;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return !!(lectureUnit as AttachmentVideoUnit).description?.trim();
+            default:
+                return false;
+        }
+    }
+
+    onEditButtonClicked(lectureUnit: LectureUnit) {
+        this.onEditLectureUnitClicked.emit(lectureUnit);
+    }
+
+    getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return (lectureUnit as ExerciseUnit)?.exercise?.releaseDate || undefined;
+            default:
+                return lectureUnit.releaseDate || undefined;
+        }
+    }
+
+    /**
+     * Whether students do not see the unit yet, because its release date lies ahead.
+     * @param lectureUnit the unit to check
+     */
+    isReleasedLater(lectureUnit: LectureUnit): boolean {
+        const releaseDate = this.getLectureUnitReleaseDate(lectureUnit);
+        return !!releaseDate && dayjs(releaseDate).isAfter(dayjs());
+    }
+
+    /**
+     * The icon of a unit's kind; a file unit shows whether it holds a PDF, another file, a video or both.
+     * @param lectureUnit the unit to show
+     */
+    getTypeIcon(lectureUnit: LectureUnit): IconDefinition {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo, empty: faFileCircleQuestion }[this.getAttachmentVideoKind(lectureUnit)];
+            case LectureUnitType.EXERCISE:
+                return faCheck;
+            case LectureUnitType.ONLINE:
+                return faLink;
+            default:
+                return faScroll;
+        }
+    }
+
+    /**
+     * The translation key of a unit's kind, as the list names it above the unit's name.
+     * @param lectureUnit the unit to show
+     */
+    getTypeLabelKey(lectureUnit: LectureUnit): string {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return `artemisApp.lectureUnit.management.type.${this.getAttachmentVideoKind(lectureUnit)}`;
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.lectureUnit.management.type.exercise';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.lectureUnit.management.type.online';
+            default:
+                return 'artemisApp.lectureUnit.management.type.text';
+        }
+    }
+
+    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' | 'empty' {
+        const hasFile = !!unit.attachment?.link;
+        if (hasFile && unit.videoSource) {
+            return 'fileAndVideo';
+        }
+        if (hasFile) {
+            return unit.attachment!.link!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'file';
+        }
+        // A unit can be saved without both, so its video can be uploaded to TUM.Live afterwards.
+        return unit.videoSource ? 'video' : 'empty';
+    }
+
+    getAttachmentVersion(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return (lectureUnit as AttachmentVideoUnit)?.attachment?.version || undefined;
+            default:
+                return undefined;
+        }
+    }
+
+    /**
+     * Load all processing and transcription statuses for attachment video units in a single bulk request.
+     * This reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
+     */
+    private loadAllStatuses(sequence: number): void {
+        if (!this.resolvedLectureId) {
+            this.isStatusLoading.set(false);
+            return;
+        }
+
+        this.lectureUnitService.getUnitStatuses(this.resolvedLectureId).subscribe({
+            next: (statuses: LectureUnitCombinedStatus[]) => {
+                if (sequence !== this.loadSequence) {
+                    return; // superseded by a newer load, whose snapshot is the fresher one
+                }
+                const processingMap: Record<number, LectureUnitProcessingStatus> = {};
+                const transcriptionMap: Record<number, TranscriptionStatus> = {};
+
+                for (const status of statuses) {
+                    processingMap[status.lectureUnitId] = toProcessingStatus(status);
+                    if (status.transcriptionStatus) {
+                        transcriptionMap[status.lectureUnitId] = status.transcriptionStatus;
+                    }
+                }
+
+                if (this.hasCompletedInitialStatusLoad) {
+                    // A later refresh (after a delete or a PDF drop) is an authoritative snapshot: let it
+                    // win so it heals any live entry that went stale during a WebSocket outage and prunes
+                    // units that no longer exist.
+                    this.processingStatus.set(processingMap);
+                    this.transcriptionStatus.set(transcriptionMap);
+                } else {
+                    // Initial load only: a live WebSocket update can arrive before this first bulk response
+                    // resolves (the STOMP client is usually already connected while the request round-trips).
+                    // During that window a live entry is strictly fresher than the request-time snapshot, so
+                    // preserve existing entries rather than clobbering a fresher phase/stage with a stale one.
+                    this.processingStatus.update((current) => this.mergePreservingLive(processingMap, current));
+                    this.transcriptionStatus.update((current) => this.mergePreservingLive(transcriptionMap, current));
+                }
+                // The initial-load window closes once the first bulk load resolves; every later load
+                // replaces authoritatively.
+                this.hasCompletedInitialStatusLoad = true;
+                this.isStatusLoading.set(false);
+            },
+            error: () => {
+                if (sequence !== this.loadSequence) {
+                    return; // superseded by a newer load
+                }
+                // The first load attempt is over even if it failed, so a later refresh must not keep
+                // merging (which would never heal a stale live entry or prune a removed unit).
+                this.hasCompletedInitialStatusLoad = true;
+                this.isStatusLoading.set(false);
+            },
+        });
+    }
+
+    /**
+     * Merge a REST snapshot with the current live map, letting existing (live) entries win.
+     * Used only for the initial load, where a WebSocket update may have raced ahead of the bulk response.
+     * The live entries are carried over by reference: safe because every writer replaces a per-unit
+     * value wholesale (never mutates it in place), so the merged map never aliases mutable state.
+     */
+    private mergePreservingLive<T>(snapshot: Record<number, T>, live: Record<number, T>): Record<number, T> {
+        const merged = deepClone(snapshot);
+        for (const key of Object.keys(live)) {
+            merged[Number(key)] = live[Number(key)];
+        }
+        return merged;
+    }
+
+    /**
+     * Subscribe to WebSocket updates for processing state changes.
+     * When Iris callbacks update the processing state, the server pushes the new state
+     * so the UI updates in real time without requiring a page refresh.
+     */
+    private subscribeToProcessingStateUpdates(lectureId: number): void {
+        const topic = `/topic/lectures/${lectureId}/unit-processing-state`;
+        this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
+            this.processingStatus.update((current) => {
+                const updated = deepClone(current);
+                updated[status.lectureUnitId] = toProcessingStatus(status);
+                return updated;
+            });
+            this.transcriptionStatus.update((current) => {
+                const updated = deepClone(current);
+                if (status.transcriptionStatus) {
+                    updated[status.lectureUnitId] = status.transcriptionStatus;
+                } else {
+                    delete updated[status.lectureUnitId];
+                }
+                return updated;
+            });
+        });
+    }
+
+    hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
+    }
+
+    isTranscriptionPending(lectureUnit: AttachmentVideoUnit): boolean {
+        const status = this.transcriptionStatus()[lectureUnit.id!];
+        return status === TranscriptionStatus.PENDING;
+    }
+
+    isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.FAILED;
+    }
+
+    isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
+    }
+
+    isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
+    }
+
+    /**
+     * Check if the course is currently active (within start and end dates).
+     * A course is active if: startDate <= now <= endDate (null dates are treated as no restriction)
+     */
+    isCourseActive(): boolean {
+        const course = this.lecture()?.course;
+        if (!course) {
+            return false;
+        }
+        const now = dayjs();
+        const startOk = !course.startDate || dayjs(course.startDate).isBefore(now) || dayjs(course.startDate).isSame(now);
+        const endOk = !course.endDate || dayjs(course.endDate).isAfter(now) || dayjs(course.endDate).isSame(now);
+        return startOk && endOk;
+    }
+
+    /**
+     * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
+     */
+    isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
+        // Don't show "awaiting" while status is still loading to prevent flash
+        if (this.isStatusLoading()) {
+            return false;
+        }
+        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
+        // If processing is in progress or done, it's not awaiting
+        if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
+            return false;
+        }
+        // A unit without a file and a video, such as one waiting for its TUM.Live upload, has nothing to process
+        if (!lectureUnit.attachment && !lectureUnit.videoSource) {
+            return false;
+        }
+        // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
+        return this.isCourseActive();
+    }
+
+    /**
+     * Retry processing for a failed lecture unit.
+     * @param lectureUnit the lecture unit to retry processing for
+     */
+    retryProcessing(lectureUnit: AttachmentVideoUnit) {
+        if (!this.resolvedLectureId || !lectureUnit.id) {
+            return;
+        }
+
+        this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: true }));
+        this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
+            next: (status) => {
+                this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
+                // Update status from the returned value
+                this.processingStatus.update((current) =>
+                    cloneWith(current, {
+                        [status.lectureUnitId]: toProcessingStatus(status),
+                    }),
+                );
+                // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)
+                this.transcriptionStatus.update((current) => {
+                    const updated = deepClone(current);
+                    if (status.transcriptionStatus) {
+                        updated[status.lectureUnitId] = status.transcriptionStatus;
+                    } else {
+                        delete updated[status.lectureUnitId];
+                    }
+                    return updated;
+                });
+                this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: false }));
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+                this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: false }));
+            },
+        });
+    }
+
+    /**
+     * Handles PDF files dropped on the drop zone
+     * Creates attachment units for each file with name from filename and release date 15 min in future
+     * Navigates to edit page for the last created unit
+     */
+    onPdfFilesDropped(files: File[]): void {
+        if (files.length === 0 || !this.resolvedLectureId) {
+            return;
+        }
+
+        this.isUploadingPdfs.set(true);
+        let lastCreatedUnit: AttachmentVideoUnit | undefined;
+
+        from(files)
+            .pipe(
+                concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                map((response) => response.body as AttachmentVideoUnit),
+            )
+            .subscribe({
+                next: (unit) => {
+                    lastCreatedUnit = unit;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isUploadingPdfs.set(false);
+                    onError(this.alertService, error);
+                },
+                complete: () => {
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    // Navigate to edit page for the last created unit
+                    const lectureValue = this.lecture();
+                    if (lastCreatedUnit?.id && lectureValue?.course?.id) {
+                        void this.router.navigate([
+                            '/course-management',
+                            lectureValue.course.id,
+                            'lectures',
+                            this.resolvedLectureId,
+                            'unit-management',
+                            'attachment-video-units',
+                            lastCreatedUnit.id,
+                            'edit',
+                        ]);
+                    } else {
+                        this.loadData();
+                    }
+                },
+            });
+    }
+
+    /**
+     * Creates a single attachment unit from a file
+     */
+    private createAttachmentUnitFromFile(file: File) {
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.resolvedLectureId!, file);
+    }
+}

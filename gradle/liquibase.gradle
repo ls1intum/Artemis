@@ -1,0 +1,114 @@
+import org.gradle.internal.os.OperatingSystem
+
+configurations {
+    liquibaseRuntime.extendsFrom sourceSets.main.compileClasspath
+}
+
+dependencies {
+    implementation("org.liquibase:liquibase-core:${liquibase_version}") {
+        exclude group: 'com.opencsv', module: 'opencsv'
+    }
+    liquibaseRuntime "org.liquibase:liquibase-core:${liquibase_version}"
+    // Dependency required to parse options. Refer to https://github.com/liquibase/liquibase-gradle-plugin/tree/Release_2.2.0#news.
+    liquibaseRuntime "info.picocli:picocli:4.7.7"
+
+    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
+    // REMOVE_IN_ARTEMIS_11 (MySQL): remove the MySQL driver
+    liquibaseRuntime "com.mysql:mysql-connector-j:${mysql_connector_version}"
+    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
+}
+
+ext.isWindows = OperatingSystem.current().isWindows()
+
+if (isWindows) {
+    tasks.register("pathingLiquibaseJar", Jar) {
+        dependsOn configurations.liquibaseRuntime
+        archiveAppendix = "pathingLiquibase"
+
+        doFirst {
+            manifest {
+                attributes "Class-Path": (sourceSets.main.runtimeClasspath + configurations.liquibaseRuntime).collect {
+                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, "/")
+                }.join(" ")
+            }
+        }
+    }
+}
+
+tasks.register("initPaths", {
+    group = "liquibase"
+    dependsOn tasks.named("compileJava")
+    if (isWindows) {
+        dependsOn tasks.named("pathingLiquibaseJar")
+    }
+})
+
+// The schema verification in supporting_scripts/liquibase drives the Liquibase CLI from its Docker image,
+// which ships without JDBC drivers. Exporting them from the build rather than downloading them keeps the
+// driver versions the checks run against the same ones the application runs against.
+tasks.register("exportLiquibaseDrivers", Copy) {
+    group = "liquibase"
+    description = "Copies the MySQL and PostgreSQL JDBC drivers into build/liquibase-drivers"
+    // Copy adds, it does not replace. After a driver version bump the previous jar would stay behind and
+    // the verification would find two candidates for one engine, which it refuses rather than guess between.
+    doFirst {
+        delete(layout.buildDirectory.dir("liquibase-drivers"))
+    }
+    from(configurations.liquibaseRuntime.filter { file ->
+        file.name.startsWith("mysql-connector-j-") || file.name.startsWith("postgresql-")
+    })
+    into(layout.buildDirectory.dir("liquibase-drivers"))
+}
+
+def liquibaseCommand(command) {
+    tasks.register("runLiquibaseCommand", JavaExec) {
+        if (isWindows) {
+            classpath tasks.named("pathingLiquibaseJar").get().outputs.files
+        } else {
+            classpath sourceSets.main.runtimeClasspath
+            classpath configurations.liquibaseRuntime
+        }
+        mainClass = "liquibase.integration.commandline.LiquibaseCommandLine"
+
+        args = [
+            "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
+            "--referenceUsername=root",
+            "--referencePassword=",
+            // we need an empty database to compare with for the creation of the new initial schema
+            // REMOVE_IN_ARTEMIS_11 (MySQL): the diff/generate tasks use MySQL; switch them to PostgreSQL before removal
+            "--referenceUrl=jdbc:mysql://localhost:3306/ArtemisEmpty?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--username=root",
+            "--password=",
+            "--url=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--driver=com.mysql.cj.jdbc.Driver",
+            command
+        ]
+    }.get().exec()
+}
+
+tasks.register("liquibaseDiffChangeLog", {
+    dependsOn tasks.named("initPaths")
+    doLast {
+        liquibaseCommand("diffChangeLog")
+    }
+})
+
+tasks.register("liquibaseClearChecksums", {
+    dependsOn tasks.named("initPaths")
+    doLast {
+        liquibaseCommand("clearChecksums")
+    }
+})
+
+tasks.register("liquibaseGenerateChangelog", {
+    dependsOn tasks.named("initPaths")
+    doLast {
+        liquibaseCommand("generateChangeLog")
+    }
+})
+
+static def buildTimestamp() {
+    def date = new Date()
+    def formattedDate = date.format("yyyyMMddHHmmss")
+    return formattedDate
+}

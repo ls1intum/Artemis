@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "quizQuestionStatistic": {
+            "home": {
+                "title": "Question Statistics",
+                "createLabel": "Create a new Question Statistic"
+            },
+            "created": "Created new Question Statistic with identifier {{ param }}",
+            "updated": "Updated Question Statistic with identifier {{ param }}",
+            "deleted": "Deleted Question Statistic with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Question Statistic {{ id }}?"
+            },
+            "detail": {
+                "title": "Question Statistic"
+            },
+            "ratedCorrectCounter": "Rated Correct Counter",
+            "unRatedCorrectCounter": "Un-Rated Correct Counter",
+            "question": "Question"
+        }
+    }
+}

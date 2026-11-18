@@ -1,0 +1,53 @@
+<tumaet-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
+    <input
+        #searchInput
+        tumAetUiInput
+        tumAetUiInputSize="small"
+        class="search-input"
+        type="text"
+        [placeholder]="searchBarPlaceholder()"
+        [attr.aria-label]="searchBarPlaceholder()"
+        [(ngModel)]="searchString"
+        (keydown)="onKeyDown($event)"
+        (focusout)="onInputFocusOut()"
+        (focusin)="onInputFocusIn()"
+    />
+    @if (firstSuggestedStudentsPageLoading()) {
+        <!-- The field owns one icon slot, so the busy indicator sits on the trailing edge on its own. -->
+        <fa-icon class="search-busy" [icon]="faSpinner" animation="spin" aria-hidden="true" />
+    }
+</tumaet-ui-icon-field>
+
+<ng-template #panelTemplate>
+    <div class="search-panel">
+        @let somethingWasSearchedFor = searchString().trim().length !== 0;
+        @let initialSearchComplete = !firstSuggestedStudentsPageLoading();
+        @let noSuggestionsFound = suggestedStudents().length === 0;
+        @if (somethingWasSearchedFor && initialSearchComplete && noSuggestionsFound) {
+            <div class="no-results">
+                <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
+                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.noResultsText"></span>
+            </div>
+        } @else {
+            <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
+                <button
+                    type="button"
+                    *cdkVirtualFor="let student of suggestedStudents(); let index = index; trackBy: trackStudentById"
+                    class="student-row"
+                    [class.active]="suggestionHighlightIndex() === index"
+                    (mousedown)="selectSuggestion(index)"
+                    (mouseenter)="suggestionHighlightIndex.set(index)"
+                >
+                    <span class="student-name">
+                        {{ student.login + (student.name ? ' - ' + student.name : '') }}
+                    </span>
+                </button>
+                @if (nextSuggestedStudentsPageLoading()) {
+                    <div class="loading-row">
+                        <fa-icon [icon]="faSpinner" animation="spin" aria-hidden="true" />
+                    </div>
+                }
+            </cdk-virtual-scroll-viewport>
+        }
+    </div>
+</ng-template>

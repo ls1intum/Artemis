@@ -1,0 +1,60 @@
+package de.tum.cit.aet.artemis.lti.web.open;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import tools.jackson.core.JacksonException;
+
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+
+/**
+ * REST controller to serve the public JWKSet related to all OAuth2 clients.
+ */
+@Conditional(LtiEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.LTI)
+@RestController
+public class PublicOAuth2JWKSResource {
+
+    private static final Logger log = LoggerFactory.getLogger(PublicOAuth2JWKSResource.class);
+
+    private final OAuth2JWKSService jwksService;
+
+    public PublicOAuth2JWKSResource(OAuth2JWKSService jwksService) {
+        this.jwksService = jwksService;
+    }
+
+    /**
+     * GET JWKS: Retrieves the JSON Web Key Set (JWKS).
+     *
+     * @return ResponseEntity containing the JWKS as a JSON string with status 200 (OK). If an error occurs, returns null.
+     */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
+    @GetMapping(".well-known/jwks.json")
+    @EnforceNothing
+    @ManualConfig
+    public ResponseEntity<String> getJwkSet() {
+        String keysAsJson = null;
+        try {
+            keysAsJson = JsonObjectMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
+        }
+        catch (JacksonException exception) {
+            log.debug("Error occurred parsing jwkSet: {}", exception.getMessage());
+        }
+        return new ResponseEntity<>(keysAsJson, HttpStatus.OK);
+    }
+}

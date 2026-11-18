@@ -1,0 +1,135 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+
+describe('ProgrammingExercise Sharing Service', () => {
+    let service: ProgrammingExerciseSharingService;
+    let httpMock: HttpTestingController;
+
+    let defaultShoppingBasket: ShoppingBasket;
+    const defailtSharingInfo: SharingInfo = {
+        basketToken: '123',
+        returnURL: 'http://localhost:9000',
+        apiBaseURL: 'http://localhost:9000/api',
+        checksum: 'checksum',
+        selectedExercise: 123,
+        isAvailable: () => true,
+        clear: () => {},
+        validate: () => {},
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        }).compileComponents();
+
+        service = TestBed.inject(ProgrammingExerciseSharingService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        defaultShoppingBasket = { exerciseInfo: [], userInfo: { email: 'unused', name: 'unused' }, tokenValidUntil: dayjs().add(1, 'hour').toDate() } as ShoppingBasket;
+    });
+
+    describe('Service methods', () => {
+        it('should get an shared exercise', () => {
+            const returnedFromService = {
+                ...defaultShoppingBasket,
+            };
+            service.getSharedExercises(defailtSharingInfo).subscribe((res: ShoppingBasket) => expect(res).toEqual(defaultShoppingBasket));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+        });
+
+        it('should get exercise details', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+            service
+                .loadDetailsForExercises({
+                    basketToken: '123',
+                    returnURL: 'http://localhost:9000',
+                    apiBaseURL: 'http://localhost:9000/api',
+                    checksum: 'checksum',
+                    selectedExercise: 123,
+                    isAvailable: () => true,
+                    clear: () => {},
+                    validate: () => {},
+                })
+                .subscribe((res: ProgrammingExercise) => expect(res).toEqual(programmingExercise));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(programmingExercise);
+        });
+
+        it('should convert the build time window dates of the loaded exercise details', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: '2026-10-01T10:00:00Z' as unknown as dayjs.Dayjs } };
+
+            service.loadDetailsForExercises(defailtSharingInfo).subscribe((exercise) => {
+                const start = exercise.buildConfig!.advancedSettings!.buildTimeWindow!.start;
+                expect(dayjs.isDayjs(start)).toBe(true);
+                expect(start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+            });
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(programmingExercise);
+        });
+
+        it('should setup for import', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+            service
+                .setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo)
+                .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(programmingExercise);
+        });
+
+        it('should setup for import with null body response', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+            service.setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo).subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toBeNull());
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(null);
+        });
+        it('should setup for import without template participation', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.templateParticipation = undefined;
+            programmingExercise.solutionParticipation = undefined;
+
+            service
+                .setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo)
+                .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(programmingExercise);
+        });
+
+        it('should setup for export programming exercise to sharing', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.templateParticipation = undefined;
+            programmingExercise.solutionParticipation = undefined;
+
+            service.exportProgrammingExerciseToSharing(5, 'http://localhost:9000').subscribe((res: HttpResponse<string>) => expect(res.body).toBe('some target URL'));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush('some target URL');
+        });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+});

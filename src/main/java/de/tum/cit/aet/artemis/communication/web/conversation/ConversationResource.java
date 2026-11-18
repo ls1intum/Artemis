@@ -1,0 +1,394 @@
+package de.tum.cit.aet.artemis.communication.web.conversation;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.persistence.Persistence;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
+import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
+@RestController
+@RequestMapping("api/communication/courses/")
+public class ConversationResource extends ConversationManagementResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ConversationResource.class);
+
+    private final ConversationService conversationService;
+
+    private final ChannelAuthorizationService channelAuthorizationService;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final UserRepository userRepository;
+
+    private final ConductAgreementService conductAgreementService;
+
+    public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
+            ConductAgreementService conductAgreementService) {
+        super(courseRepository);
+        this.conversationService = conversationService;
+        this.channelAuthorizationService = channelAuthorizationService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
+        this.conductAgreementService = conductAgreementService;
+    }
+
+    /**
+     * GET courses/:courseId/conversations: Returns all conversations of a course where the requesting user is a member
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
+     */
+    @GetMapping("{courseId}/conversations")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(course);
+
+        // Pre-load course roles: the role check below plus the per-conversation moderator/role checks inside
+        // conversationService.getConversationsOfUser reuse this user, so a single preload avoids a fallback
+        // query per check.
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var conversations = conversationService.getConversationsOfUser(course, requestingUser);
+        return ResponseEntity.ok(new ArrayList<>(conversations));
+    }
+
+    /**
+     * POST courses/:courseId/conversations/:conversationId/favorite : Updates the favorite status of a conversation for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isFavorite     the new favorite status
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("{courseId}/conversations/{conversationId}/favorite")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isFavorite) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var requestingUser = this.userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
+        conversationService.setIsFavorite(conversationId, requestingUser, isFavorite);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST courses/:courseId/conversations/:conversationId/hidden : Updates the hidden status of a conversation for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isHidden       the new hidden status
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("{courseId}/conversations/{conversationId}/hidden")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isHidden) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var requestingUser = this.userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
+        conversationService.setIsHidden(conversationId, requestingUser, isHidden);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST courses/:courseId/conversations/:conversationId/muted : Updates a conversation's muted status for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isMuted        the new muted status
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("{courseId}/conversations/{conversationId}/muted")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam boolean isMuted) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
+        conversationService.setIsMuted(conversationId, requestingUser, isMuted);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET courses/:courseId/unread-messages : Checks for unread messages of the current user
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
+     */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("{courseId}/unread-messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
+    }
+
+    /**
+     * PATCH courses/:courseId/conversations/:conversationId/mark-as-read : Marks all messages as read for the requesting user in the given conversation
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @PatchMapping("{courseId}/conversations/{conversationId}/mark-as-read")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> markAsRead(@PathVariable Long courseId, @PathVariable Long conversationId) {
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithAuthorities();
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkConversationMembership(conversationFromDatabase, requestingUser);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
+
+        conversationService.markAsRead(conversationId, requestingUser.getId());
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PATCH courses/:courseId/conversations/:conversationId/messages/:messageId/mark-as-unread : Marks the conversation as unread for the requesting user starting from the given
+     * message in the given conversation
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param messageId      the id of the message
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PatchMapping("{courseId}/conversations/{conversationId}/messages/{messageId}/mark-as-unread")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> markMessageAsUnread(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable Long messageId) {
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithAuthorities();
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkConversationMembership(conversationFromDatabase, requestingUser);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
+
+        conversationService.markAsUnread(conversationId, requestingUser.getId(), messageId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET courses/:courseId/code-of-conduct/agreement : Checks if the user agrees to the code of conduct
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
+     */
+    @GetMapping("{courseId}/code-of-conduct/agreement")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        return ResponseEntity.ok(conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
+    }
+
+    /**
+     * PATCH courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PatchMapping("{courseId}/code-of-conduct/agreement")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> acceptCodeOfConduct(@PathVariable Long courseId) {
+        checkCommunicationEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        conductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET courses/:courseId/code-of-conduct/responsible-users : Users responsible for the course
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with the status 200 (Ok) and a list of users responsible for the course
+     */
+    @GetMapping("{courseId}/code-of-conduct/responsible-users")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithAuthorities();
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+
+        var responsibleUsers = userRepository.searchAllWithCourseRolesByLoginOrNameInCourse(Pageable.unpaged(), "", course.getId(), Set.of(CourseRole.INSTRUCTOR))
+                .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
+
+        return ResponseEntity.ok(responsibleUsers);
+    }
+
+    /**
+     * GET courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param loginOrName    the search term to search login and names by
+     * @param filter         an additional role filter to only search for users of a specific role
+     * @param pageable       containing the pageable information
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
+     */
+    @GetMapping("{courseId}/conversations/{conversationId}/members/search")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
+            @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter", required = false) ConversationMemberSearchFilters filter, Pageable pageable) {
+        log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
+        if (pageable.getPageSize() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
+        }
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(course);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
+        var requestingUser = userRepository.getUserWithAuthorities();
+        conversationService.checkConversationVisibilityElseThrow(conversationFromDatabase, requestingUser);
+        var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
+                || conversationService.isMember(conversationId, requestingUser.getId());
+        if (!isAllowedToSearchForMembers) {
+            var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
+            if (!atLeastInstructorInCourse) {
+                throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
+            }
+        }
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase(Locale.ROOT).trim() : "";
+        var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, Optional.ofNullable(filter));
+
+        var resultDTO = new ArrayList<ConversationUserDTO>();
+        for (var user : originalPage) {
+            var dto = new ConversationUserDTO(user);
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, User_.COURSE_ROLES) && user.getCourseRoles() != null;
+            if (!courseRolesInitialized) {
+                user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
+            }
+            UserPublicInfoDTO.assignRoleProperties(course, user, dto);
+            if (conversationFromDatabase instanceof Channel channel) {
+                dto.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));
+            }
+            resultDTO.add(dto);
+        }
+        var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), dtoPage);
+        return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
+    }
+
+    private void checkEntityIdMatchesPathIds(Conversation conversation, Optional<Long> courseId, Optional<Long> conversationId) {
+        courseId.ifPresent(courseIdValue -> {
+            if (!conversation.getCourse().getId().equals(courseIdValue)) {
+                throw new BadRequestAlertException("The courseId in the path does not match the courseId in the conversation", "conversation", "courseIdMismatch");
+            }
+        });
+        conversationId.ifPresent(conversationIdValue -> {
+            if (!conversation.getId().equals(conversationIdValue)) {
+                throw new BadRequestAlertException("The conversationId in the path does not match the conversationId in the conversation", "conversation",
+                        "conversationIdMismatch");
+            }
+        });
+    }
+
+    private void checkConversationMembership(Conversation conversation, @NonNull User user) {
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
+        if (conversationService.isMember(conversation.getId(), user.getId())) {
+            return;
+        }
+
+        // suppress error alert with skipAlert: true so that the client can display a custom error message
+        throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this conversation.", "conversation", "noAccess", true);
+    }
+
+    /**
+     * Enables the conversation feature for a course. If withMessaging is true, the course will also allow direct messages.
+     *
+     * @param courseId      the id of the course
+     * @param withMessaging if true, the course will allow direct messages, otherwise only communication in channels
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @FeatureUsage(UserFeature.COURSE_SETTINGS)
+    @PutMapping("{courseId}/enable")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableCommunication(@PathVariable long courseId, @RequestParam(required = false) boolean withMessaging) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (withMessaging) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        }
+        else {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        }
+        courseRepository.save(course);
+        return ResponseEntity.ok().build();
+    }
+}

@@ -1,0 +1,996 @@
+{
+    "artemisApp": {
+        "programmingExercise": {
+            "instructionTableLabel": "Table in the problem statement",
+            "repositoryBuildOverview": {
+                "title": "Repositories and builds",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary repository",
+                "templateDescription": "The starting point for students.",
+                "solutionDescription": "The reference implementation.",
+                "templateExpectedScore": "Expected score: 0% before students implement the solution.",
+                "solutionExpectedScore": "Expected score: 100% for the reference implementation.",
+                "result": "Build result",
+                "resultsLoading": "Loading build result…",
+                "checkoutLoading": "Loading checkout directories…",
+                "checkoutUnavailable": "Checkout directories could not be loaded."
+            },
+            "home": {
+                "title": "Programming Exercise",
+                "createLabel": "Create Programming Exercise",
+                "editLabel": "Edit Programming Exercise",
+                "importLabel": "Import Programming Exercise",
+                "linkLabel": "Link new Programming Exercise",
+                "switchToSimpleMode": "Switch to simple mode",
+                "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
+                "switchToAdvancedMode": "Switch to advanced mode",
+                "advancedModeTooltip": "The advanced mode offers extended configuration options."
+            },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "User Prompt"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "User Prompt"
+            },
+            "created": "Created new Programming Exercise with title {{ param }}",
+            "updated": "Updated Programming Exercise with title {{ param }}",
+            "deleted": "Deleted Programming Exercise with title {{ param }}",
+            "gradingSection": {
+                "invalidReason": "The grading section contains invalid values."
+            },
+            "delete": {
+                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
+                "questionLocalVC": {
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                },
+                "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
+            },
+            "cleanup": {
+                "successMessage": "Cleanup was successful. All build plans were deleted. Students can resume their participation.",
+                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories were deleted. All participations are marked as completed.",
+                "successMessageCleanup": "Cleanup was successful. All student repositories were deleted."
+            },
+            "reset": {
+                "pleaseSelectOperations": "Please select the operations you want to perform on <strong>{{ title }}</strong>:",
+                "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
+                "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
+                "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
+                "recreateCustomizedBuildPlans": "Reset the customized build plans to the default version from the latest exercise template, overwriting any previous changes.",
+                "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
+                "successMessage": "Reset operation was successful.",
+                "errorMessage": "Reset operation failed."
+            },
+            "detail": {
+                "title": "Programming Exercise",
+                "showTemplateSubmissions": "Show Template Submissions",
+                "showSolutionSubmissions": "Show Solution Submissions"
+            },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programming Exercise Metadata",
+                    "noProgrammingData": "This version does not contain programming-specific metadata.",
+                    "emptyValueHint": "Not available in this snapshot",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker Flags",
+                    "theiaImage": "Online IDE Image",
+                    "onlineIdeExperienceLevel": "Online IDE Experience Level",
+                    "postDueDateHandling": "Post Due Date Handling",
+                    "assignmentCheckoutPath": "Assignment Checkout Path",
+                    "solutionCheckoutPath": "Solution Checkout Path",
+                    "testsCheckoutPath": "Tests Checkout Path",
+                    "buildPlanConfiguration": "Build Plan Configuration (JSON)",
+                    "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
+                    "noBuildScript": "No build script in this snapshot"
+                }
+            },
+            "importFromFile": {
+                "title": "Import Programming Exercise from File",
+                "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
+                "GccNotSupportedForC": "The project type is not yet supported for the import from file."
+            },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Information",
+                    "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
+                    "languageStepTitle": "Language",
+                    "gradingStepTitle": "Grading",
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastructure"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "General",
+                    "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
+                    "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
+                    "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
+                    "languageStepTitle": "Language",
+                    "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
+                    "versionControlTitle": "Version Control",
+                    "versionControlMessage": "Decide which version control features should be available.",
+                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise/create-an-exercise\">documentation</a> on the topic of exercise creation.",
+                    "problemStepTitle": "Problem",
+                    "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
+                    "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
+                },
+                "gradingLabels": {
+                    "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
+                    "noBonus": "There is no bonus to achieve.",
+                    "bonus": "{bonusPoints} bonus points can be achieved.",
+                    "assessment": "This exercise will be assessed {assessmentType}.",
+                    "lockedSubmission": "The repositories will be locked after {submissionLimit} submissions.",
+                    "penaltySubmission": "There will be a penalty of {exceedingPenalty} points for every submission after {submissionLimit} submissions.",
+                    "unrestrictedSubmission": "There is no limit for the amount of allowed submissions.",
+                    "staticAnalysisEnabled": "Static code analysis is enabled for this exercise and there is a maximum penalty of {maxPenalty} points from static code analysis.",
+                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise.",
+                    "normalExercise": "exercise",
+                    "bonusExercise": "bonus exercise",
+                    "assessmentAutomatic": "automatically",
+                    "assessmentSemiautomatic": "semi-automatically"
+                }
+            },
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
+            "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
+            "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
+            "templateRepositoryUri": "Template Repository Uri",
+            "testRepositoryUri": "Test Repository Uri",
+            "solutionRepositoryUri": "Solution Repository Uri",
+            "auxiliaryRepositories": "Auxiliary Repositories",
+            "noCheckoutDirectorySet": "No checkout directory was set.",
+            "noCheckoutDirectorySetTooltip": "Since no checkout directory was specified, the repository was not automatically added to a build plan.",
+            "templateBuildPlanId": "Template Build Plan Id",
+            "solutionBuildPlanId": "Solution Build Plan Id",
+            "repositories": "Repositories",
+            "buildplans": "Build Plans",
+            "buildplan": "Build Plan",
+            "buildConfiguration": "Build Configuration",
+            "buildPlanEditor": "Build Plan Editor",
+            "buildPlanConfiguration": {
+                "saved": "The build plan configuration was saved successfully. The template and solution builds were triggered.",
+                "submitTooltip": "Save the build plan configuration and trigger the template and solution builds to verify it."
+            },
+            "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
+            "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
+            "runActionAlways": "Always run, even if other actions fail",
+            "workdir": "Working Directory",
+            "parameters": "Parameters",
+            "dockerImage": "Docker Image",
+            "script": "Build script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB.",
+                "branchRegexTooLong": "The branch regex is too long. The maximum allowed length is 128 characters.",
+                "branchRegexInvalid": "The branch regex is not a valid regular expression.",
+                "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character."
+            },
+            "buildPhasesEditor": {
+                "title": "Build Phases",
+                "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
+                "addPhase": "Add Phase",
+                "phase": "Phase",
+                "phaseName": "Phase name",
+                "phaseNamePlaceholder": "e.g. compile",
+                "phaseNameInvalidCharacters": "Phase name is invalid",
+                "phaseNameDuplicate": "Phase name must be unique",
+                "phaseNameReserved": "Phase name is reserved",
+                "invalidPhaseNames": "Build phase names are invalid. Use only letters, numbers and '_', start with a letter or '_', avoid reserved names (such as 'main'), and ensure names are unique.",
+                "condition": "Inclusion condition",
+                "forceRun": "Execute at end regardless of previous failures",
+                "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
+                "script": "Script",
+                "scriptHelp": "Enter the commands to execute in this phase of the build.",
+                "resultPaths": "Result Paths",
+                "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
+                "testsExpected": "Tests expected",
+                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, click \"Edit build plan\" at the top of this page, set the \"Inclusion condition\" of the phase to \"After due date\" and click \"Submit\".",
+                "expectedTestsBeforeDueDateEditorWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date.",
+                "resultPathPlaceholder": "e.g. **/results/*.xml",
+                "addResultPath": "Add Result Path",
+                "moveUp": "Move up",
+                "moveDown": "Move down",
+                "delete": "Delete",
+                "conditions": {
+                    "always": "Always",
+                    "afterDueDate": "After due date"
+                }
+            },
+            "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
+            "checkoutPath": {
+                "title": "Checkout Path",
+                "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
+                "alert": "Checkout paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character. The paths must be different for each repository.",
+                "edit": "Edit repositories checkout path",
+                "assignment": "Assignment Repository Checkout Path. This can't be edited after creation.",
+                "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
+                "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
+                "invalid": "Invalid checkout paths.",
+                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code.",
+                "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
+            },
+            "timeout": {
+                "title": "Maximum build duration in seconds",
+                "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
+                "alert": "The timeout must be a valid integer value.",
+                "outOfBounds": "The build duration must be between {{ min }} and {{ max }} seconds.",
+                "usesDefault": "(default)"
+            },
+            "allowOnlineEditor": {
+                "title": "Allow Online Editor",
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected."
+            },
+            "onlineEditor": "Online",
+            "allowOfflineIde": {
+                "title": "Allow Offline IDE",
+                "description": "Enables students to download the exercise via Git and to work on it locally using their preferred IDE.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
+            },
+            "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Allow Online IDE",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
+            },
+            "onlineIde": "Online IDE",
+            "allowBranching": {
+                "title": "Allow Custom Branches",
+                "description": "Enables students to push other branches than the default branch. Warning! Custom branches are not shown in the user interface, and there is no merge support in the UI. Students have to manage these branches locally. Only enable this option when it is absolutely required."
+            },
+            "branchRegex": {
+                "title": "Regular Expression for the branch name",
+                "description": "Custom branches names must match the regular expression."
+            },
+            "buildTimeWindow": {
+                "title": "Build Time Window",
+                "message": "Optionally limit when pushes to student repositories are built. Pushes outside the window are saved, but not built, and do not create a submission. Leave both fields empty to build every push.",
+                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise. For a student with an individual due date extension, the end of the window moves by the same extension.",
+                "collapsedMessage": "By default every push is built. Set a window if pushes should only be built during a period, for example from a start date a week after the release.",
+                "addButton": "Set build time window",
+                "removeButton": "Remove build time window",
+                "start": "Build window start",
+                "end": "Build window end",
+                "endNotAfterStart": "The end of the build time window must be after its start.",
+                "outsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+                "invalidInput": "The build time window contains a date that cannot be read.",
+                "triggerDisabled": "Builds cannot be triggered outside of the build time window.",
+                "notice": {
+                    "before": "Builds start on {{ start }}. Pushes before that are saved, but not built or graded.",
+                    "during": "Builds are active until {{ end }}.",
+                    "after": "The build window ended on {{ end }}. Pushes are saved, but not built."
+                }
+            },
+            "showTestNamesToStudents": "Show Test Names to Students",
+            "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
+            "participationMode": "Participation Mode",
+            "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
+            "sequentialTestRuns": {
+                "title": "Sequential Test Runs",
+                "description": "Activate to run structural tests first, and then behavior tests afterwards. Does not support static code analysis. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
+            },
+            "checkoutSolutionRepository": {
+                "title": "Check out repository of sample solution",
+                "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful for comparing the student's submission with the sample solution."
+            },
+            "enableStaticCodeAnalysis": {
+                "title": "Enable Static Code Analysis",
+                "description": "This option enables the execution of static code analysis. Sequential test runs are not supported. Additional options are available on the grading page. This option can be changed on import if the recreate build plans and update template files option is active."
+            },
+            "maxStaticCodeAnalysisPenalty": {
+                "title": "Max Static Code Analysis Penalty",
+                "description": "You can choose a value between 0 and 100 percent or leave the field empty. If the maximum penalty is 20% for a 10 point exercise, a maximum of two points can be deducted because of issues found by static code analysis. If the field is left empty, no penalty limit will be enforced."
+            },
+            "recreateBuildPlans": {
+                "title": "Recreate Build Plans",
+                "buttonText": "Build Plan",
+                "question": "Are you sure you want to recreate the template and solution build plans for the programming exercise <strong>{{ title }}</strong>? All previous changes to those build plans will be overwritten.<br>Student build plans will <strong>not</strong> be removed. They can be deleted separately using the Cleanup function. In combination, these two operations can be used to recreate a consistent state between systems, e.g., after the template for the build plans changed or a data-loss on the continuous integration system occurred.",
+                "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
+            },
+            "programmingLanguage": "Programming Language",
+            "projectType": "Project Type",
+            "projectKey": "Project Key",
+            "testRepositoryProjectType": "Test Repository Project Type",
+            "packageName": "Package Name",
+            "testsCommitId": "Tests Commit Id",
+            "templateCommitId": "Template Commit Id",
+            "solutionCommitId": "Solution Commit Id",
+            "theiaImage": {
+                "title": "Configuration for Online IDE",
+                "noImageAvailable": "The Online IDE is not yet available for this programming language.",
+                "alert": "A valid configuration for the Online IDE must be selected."
+            },
+            "onlineIdeExperienceLevel": {
+                "title": "Starting experience level in the Online IDE",
+                "notSet": "Not set (Artemis adds no configuration)",
+                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. If not set, Artemis adds no file: students start at the level in the template's own .vscode/eduide.json if it has one, otherwise at the Online IDE's default level. Students can still choose another level, and repositories that already exist are not changed.",
+                "levels": {
+                    "BEGINNER": "Beginner",
+                    "ADVANCED": "Advanced",
+                    "EXPERT": "Expert"
+                }
+            },
+            "appName": "App Name",
+            "templateResult": "Template Result",
+            "solutionResult": "Solution Result",
+            "structureTestOracle": "Update Structure Test Oracle",
+            "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
+            "checkPlagiarism": "Plagiarism",
+            "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
+            "repositoryFilesError": "Repository files could not be retrieved.",
+            "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
+            "editable": {
+                "unsaved": "Unsaved.",
+                "unsavedTooltip": "There are unsaved changes in the problem statement.",
+                "saving": "Saving...",
+                "savingTooltip": "Saving your unsaved changes in the problem statement.",
+                "saved": "Saved.",
+                "savedTooltip": "The problem statement is saved."
+            },
+            "problemStatement": {
+                "title": "Problem Statement",
+                "taskCommand": "Task",
+                "testCaseCommand": "Insert Test Case",
+                "tasksOfExercise": "Tasks:",
+                "generationAssistance": "Generate Draft Problem Statement",
+                "refinementAssistance": "Refine Problem Statement",
+                "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
+                "yourRequirements": "Your Requirements",
+                "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
+                "generationSuccess": "Problem statement has been successfully generated.",
+                "generationError": "Failed to generate problem statement. Please try again.",
+                "refinementSuccess": "Problem statement has been successfully refined.",
+                "refinementError": "Failed to refine problem statement. Please try again.",
+                "cannotRefineEmpty": "Cannot refine an empty problem statement. Please add some content first.",
+                "problemStatementTooLong": "The problem statement is too long to refine. Please reduce the content and try again.",
+                "tooLong": "Problem statement must not exceed {{max}} characters.",
+                "reviewChanges": "Review AI Suggestions",
+                "reviewChangesDescription": "The AI suggested the changes shown below. Lines highlighted in green will be added; lines highlighted in red will be removed.",
+                "revertAll": "Discard All",
+                "revertAllTooltip": "Reject all AI suggestions and restore your original problem statement.",
+                "doneReviewing": "Accept & Save",
+                "doneReviewingTooltip": "Accept all AI suggestions and apply them to your problem statement.",
+                "diffView": {
+                    "originalLabel": "Your Original",
+                    "suggestionLabel": "AI Suggestion",
+                    "unifiedHint": "→ highlighted in red will be removed, highlighted in green will be added →"
+                },
+                "aiRefining": "AI is updating the problem statement...",
+                "generate": "Generate",
+                "refine": "Refine",
+                "inlineRefinement": {
+                    "placeholder": "Describe what should change...",
+                    "triggerButton": "Refine Selection",
+                    "submitTooltip": "Submit refinement instruction",
+                    "success": "Selected section has been successfully refined.",
+                    "error": "Failed to refine the selected section. Please try again.",
+                    "emptyStatementError": "Cannot refine: the problem statement is empty.",
+                    "close": "Close",
+                    "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
+                },
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
+            },
+            "status": {
+                "solutionFailsTest": "The solution should score 100% and pass all tests. Check the solution repository and test cases.",
+                "templateFulfillsTest": "The template should score 0%. Check the template repository and test cases if its score differs."
+            },
+            "testCaseAnalysis": {
+                "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
+                "missingTestCases": "There are {{number}} valid test cases in your test repository that were not found in the markdown of the problem statement:",
+                "issues": "Test case issues.",
+                "ok": "Test cases ok.",
+                "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
+                "repeatedTestCase": "The test case '{{id}}' is repeated.",
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behavior:"
+            },
+            "tasksAnalysis": {
+                "issues": "Task issues.",
+                "ok": "Tasks ok.",
+                "numOfTasks": "The number of tasks should not exceed {{limit}}. Currently, there are {{number}} tasks."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but couldn't be found in the database or are not assigned to this programming exercise:",
+                "issues": "Hints issues.",
+                "ok": "Hints ok.",
+                "invalidHint": "The hint with id '{{id}}' could not be found in the database for this programming exercise."
+            },
+            "configureGrading": {
+                "title": "Configure Grading",
+                "shortTitle": "Grading",
+                "save": "Save",
+                "reset": "Reset",
+                "expandAll": "Expand all",
+                "collapseAll": "Collapse all",
+                "status": {
+                    "unsavedChanges": "Unsaved changes",
+                    "unsavedTestCaseChanges": "Unsaved test cases",
+                    "unsavedCategoryChanges": "Unsaved categories",
+                    "noUnsavedChanges": "No unsaved changes"
+                },
+                "testCases": {
+                    "title": "Test Cases",
+                    "resetSuccessful": "The tests were reset successfully.",
+                    "resetFailed": "The tests could not be reset.",
+                    "updated": "The test cases were updated successfully.",
+                    "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
+                    "weightSumError": "The sum of all test case weights is 0 or below. Please adjust at least one test case weight to be greater than 0",
+                    "showInactive": "Show inactive test cases",
+                    "exercisePoints": "Exercise Points:",
+                    "settingNull": "Test case {{testCase}} must not have settings that are empty.",
+                    "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
+                },
+                "categories": {
+                    "titleHeader": "Code Analysis",
+                    "title": "Code Analysis Categories",
+                    "notGraded": "Not graded.",
+                    "noFeedback": "No visible feedback.",
+                    "updated": "The categories were updated successfully.",
+                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
+                    "resetSuccessful": "The categories were reset successfully.",
+                    "resetFailed": "The categories could not be reset.",
+                    "import": "Import Configuration",
+                    "importLabel": "Import SCA configuration from exercise",
+                    "importSuccessful": "Successfully imported the configuration from exercise {{exercise}}.",
+                    "importFailed": "Failed to import categories from exercise {{exercise}}."
+                },
+                "charts": {
+                    "title": "Charts",
+                    "preview": "Preview",
+                    "resetFilter": "Reset Filter",
+                    "testCaseWeights": {
+                        "title": "Test Case Weights",
+                        "sumOfTestWeights": "Sum of test weights:",
+                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details.",
+                        "weight": "Weight",
+                        "weightTooltip": "Weight: {{ percentage }}% of all weights.",
+                        "weightAndBonus": "Weight & Bonus",
+                        "weightAndBonusTooltip": "Weight & Bonus: {{ percentage }}% of all weights and bonuses."
+                    },
+                    "testCasePoints": {
+                        "title": "Total Points",
+                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details.",
+                        "points": "Points",
+                        "pointsTooltip": "Points: {{ percentage }}% of all exercise points."
+                    },
+                    "categoryDistribution": {
+                        "title": "Category Distribution",
+                        "description": "The distribution of categories across the metrics 'Penalty', 'Issues' and 'Points'. This shows how much each category accounts for in each of the three metrics.<br/>The <b>Penalty</b> bar shows the distribution of penalties across the categories.<br/>The <b>Issues</b> bar shows how many issues were detected in each respective category.<br/>The <b>Points</b> bar indicates how many points were actually deducted in each respective category, based on the information in the first two bars. Hover over a colored block to see the category details."
+                    }
+                },
+                "gradingTableHeader": {
+                    "testName": "<b>Task</b> / Test",
+                    "weight": "Weight",
+                    "bonusMultiplier": "Bonus Multiplier",
+                    "bonusPoints": "Bonus Points",
+                    "visibility": "Visibility",
+                    "resultingPoints": "Resulting Points",
+                    "testType": "Type",
+                    "passedPercent": "Passed %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analysis",
+                    "title": "Feedback Analysis for {{exerciseTitle}}",
+                    "occurrence": "Occurrence",
+                    "feedback": "Feedback",
+                    "task": "Task",
+                    "testcase": "Test Case",
+                    "errorCategory": "Error Category",
+                    "error": "An error occurred while loading the feedback.",
+                    "search": "Search ...",
+                    "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
+                    "groupFeedback": "Group Feedback",
+                    "groupFeedbackTooltip": "Group feedback enables the grouping of similar feedback entries that share the same test case and task name into a single entry. This is useful for reducing the number of entries in the table, especially when random values or similar inputs are used and compared in the test cases.",
+                    "feedbackModal": {
+                        "header": "Error Details",
+                        "feedbackTitle": "Test Case Feedback",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filter Options",
+                        "task": "Tasks",
+                        "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
+                        "occurrence": "Occurrence",
+                        "clear": "Clear Filter",
+                        "cancel": "Cancel",
+                        "apply": "Apply Filter"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Sample for Affected Students",
+                        "description": "The following is a sample of affected students for the selected feedback entry, as this is sufficient to analyze the feedback. The list is limited to 5 students. In total, {{count}} students received this feedback.",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "dueDate": "The exercise due date has not passed yet. Keep in mind that this means the result is not final, and the affected students may change in the future. Additionally, the feedback might not be visible to students yet if there are hidden test cases in the exercise. Please verify if you still intend to create a feedback channel!",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Create"
+                        }
+                    }
+                },
+                "help": {
+                    "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
+                    "state": "Determines whether issues in this category should be shown to the students and used for grading.",
+                    "penalty": "Penalty points given on each detected issue of this category.",
+                    "maxPenalty": "Maximum applied penalty for one student across all issues of this category.",
+                    "detectedIssues": "Shows the number of students grouped by number of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
+                    "weight": "Weight: The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
+                    "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
+                    "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
+                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibilityExam": "Feedback and points for test cases marked as ‘After Release Date of Results’ only become visible to students after the exam results release date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
+                    "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
+                },
+                "updatedGradingConfigShort": "Updated grading",
+                "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
+                "updatedGradingConfigTooltip": "You have updated the grading configuration, but this will have no effect on existing results. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions after the grading updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated grading configuration.",
+                "noUpdatedGradingConfig": "No updated grading",
+                "notReleased": "Not released",
+                "notReleasedTooltip": "The programming exercise is not yet released or is released but does not yet have any student results. You may change the grading configuration without having to trigger existing student submissions with the updated settings."
+            },
+            "export": {
+                "downloadRepo": "Download Repository",
+                "downloadExampleSolution": "Download Example Solution",
+                "downloadTests": "Download tests",
+                "downloadTestsWithExampleSolution": "Download tests with example solution",
+                "downloadExercise": "Download Exercise",
+                "downloadAllStudents": "Or download the repositories of all students",
+                "downloadAllTeams": "Or download the repositories of all teams",
+                "filterLateSubmissions": {
+                    "title": "Filter late submissions",
+                    "tooltip": "Cut off all submissions and commits after a certain date"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Date to filter late submissions",
+                    "tooltip": "Defaults to the due date of the exercise if not set"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Exclude practice submissions",
+                    "tooltip": "Ignore submissions marked as practice to only include graded submissions"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Add student name to project",
+                        "team": "Add team name to project",
+                        "teamOrStudent": "Add team/student name to project"
+                    },
+                    "tooltip": "Allows importing multiple projects into Eclipse at the same time"
+                },
+                "combineStudentCommits": {
+                    "title": "Combine changes into one commit",
+                    "tooltip": "Squashes all commits of a student into a single commit for easier review"
+                },
+                "anonymizeRepository": {
+                    "title": "Anonymize repository",
+                    "tooltip": "Hide student names in commit messages and directory name for unbiased evaluation"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Normalize code style",
+                    "tooltip": "Standardize line endings and encoding for consistency"
+                },
+                "successMessageRepo": "Export of repo was successful. The exported zip file is currently being downloaded.",
+                "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
+                "notFoundMessageRepos": "No repos exported for exercise {{exerciseId}}: There are no submissions from the given students.",
+                "errorMessageRepo": "Export of repo failed. The requested repository does not exist.",
+                "noParticipantsSelected": "Select at least one participant, or tick the checkbox to download all repositories, before exporting."
+            },
+            "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
+            "resubmitSingle": "Trigger new build for this participant",
+            "resubmitSingleLabel": "Trigger build",
+            "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
+            "resubmitAllConfirmAfterDueDate": "The due date has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
+            "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your tutor.",
+            "resubmitAll": "Trigger all",
+            "resubmitAllTooltip": "Trigger all participants' last submission again. The results will be marked as graded.",
+            "resubmitAllDialog": "WARNING: Triggering all participants' submissions again is a very expensive operation. This action will start a CI build for every participant in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
+            "resubmitFailed": "Trigger failed",
+            "resubmitFailedTooltip": "Trigger failed submissions for all participants again. Failed submissions don't have a result for their latest submission. This can happen due to communication errors between the CI system and Artemis. The created results will be marked as graded.",
+            "buildingSubmissions": "Building submissions: {{number}}",
+            "failedSubmissions": "Failed submissions: {{number}}",
+            "resultETA": "Result ETA: {{eta}}",
+            "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
+            "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
+            "channelNameTooltip": "A course-wide channel will be created automatically with this name. The name can be changed any time.",
+            "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
+            "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
+            "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
+            "timeline": {
+                "assessmentType": "Assessment Type",
+                "automaticAssessment": "Automatic Assessment",
+                "manualAssessment": "Manual Assessment",
+                "complaintsAllowed": "Complaints Allowed",
+                "automaticTests": "Automatic Tests",
+                "afterDueDate": "Rerun tests after due date",
+                "timelineLabel": "Timeline of the programming exercise",
+                "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
+                "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
+                "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the due date: No manual assessment",
+                "assessmentTypeTooltipManualAssessment": "The type of assessment after the due date: Manual assessment by a tutors and complaints allowed if possible",
+                "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
+                "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
+                "dueDateTooltip": "The due date, upon which submitting and committing new code will be deactivated for all students.",
+                "afterDueDateTooltip": "This option is only available if a due date has been configured. Enable this option to rerun the automatic tests against the last submissions of all students at a specific time after the due date. Otherwise, the tests are executed only directly after a student commits to their repository. The results for the special test run will be marked as 'graded' even though the due date has passed.",
+                "automaticAfterDueDateTooltip": "This setting was activated because the build depends on the due date. These generated results will be marked as 'graded' even though the due date has passed.",
+                "alertNewDueDate": "The due date has been set to the release date!",
+                "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "The example solution publication date has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
+                "assessmentDueDate": "Assessment Due Date",
+                "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
+                "enableManualAssessment": "Enable manual assessment",
+                "enableManualAssessmentTooltip": "This option is only available if a due date has been configured.",
+                "configureExampleSolutionPublication": "Configure example solution publication date",
+                "notSet": "not set",
+                "feedbackRequestsEnabled": "Feedback requests are enabled.",
+                "feedbackRequestsDisabled": "Feedback requests are disabled.",
+                "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
+                "complaintOnAutomaticAssessmentExamModeTooltip": "When manual assessment is disabled, students can complain after receiving an automatic assessment. The complaint will be evaluated by a tutor afterwards.",
+                "complaintOnAutomaticAssessmentTooltip": "When manual assessment is disabled, students can complain after receiving an automatic assessment. The complaint will be evaluated by a tutor afterwards. This option is only available if a due date is configured.",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "exampleSolutionPublicationDateTooltipOnImport": "The date when the Solution Repository becomes available to download for students. Cannot be set on import.",
+                "includeTestsIntoExampleSolution": "Include tests in example solution",
+                "includeTestsIntoExampleSolutionTooltip": "In addition to the example solution, the automatic tests can be published. Only available if an example solution publication date is configured.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results.",
+                "warningLeakFeedbackHeader": "Warning: Potential feedback leak",
+                "warningLeakFeedback": "By unchecking this option, test case results and feedback may become visible to students during the exam. Are you sure you want to proceed?"
+            },
+            "repositoryIsLocked": {
+                "title": "Your repository is locked.",
+                "tooltip": "You are outside the participation timeframe, or you reached your submission limit, your repository is locked. You may still read the code, but you may not make any changes to it."
+            },
+            "checkoutDirectories": "Checkout directories",
+            "preview": {
+                "label": "Preview",
+                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here, you can find their generated names based on the short name of the exercise (and course)",
+                "tooltipLocalVC": "Here, you can find the repositories linked to the exercise and their respective checkout directories during the build execution.",
+                "repositories": "Repositories",
+                "buildPlans": "Build Plans",
+                "templateRepoTooltip": "The repository which contains the template of the exercise",
+                "solutionRepoTooltip": "The repository which contains the solution to the exercise",
+                "testRepoTooltip": "The repository which contains all tests",
+                "auxiliaryRepoTooltip": "{{description}}",
+                "templateBuildPlanTooltip": "The build plan of the template and student submissions. Runs all tests on the exercise template / student submission. The build for the exercise template is used as reference in which all tests must fail.",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed.",
+                "submissionBuildPlan": "Submission build plan",
+                "solutionBuildPlan": "Solution build plan"
+            },
+            "reEvaluate": "Re-evaluate all",
+            "reEvaluateTooltip": "Re-evaluate the automatic results of all participants' latest submissions. Manual results are not affected.",
+            "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
+            "reEvaluateFailed": "The re-evaluation failed: {{message}}",
+            "editSelectedModal": {
+                "currentlyEdited": "You are editing the following exercises:",
+                "errorReadButton": "Ok",
+                "errorOccurred": "The following exercises could not be updated:"
+            },
+            "auxiliaryRepository": {
+                "error": "There is a problem with the auxiliary repository.",
+                "addAuxiliaryRepository": "Add Auxiliary Repository",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The additional code is inserted in the specified checkout directory before the build is created. The inserted files overwrite all files in the checkout directory which have the same name. Files that are not overwritten are retained.",
+                "repositoryName": "Repository Name",
+                "checkoutDirectory": "Checkout Directory",
+                "description": "Description",
+                "invalidRepositoryName": "A repository with that name already exists in this exercise!",
+                "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
+                "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
+                "warning": "Auxiliary repositories can be added, edited and removed. Edit-Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "editedWarningLocalCI": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and the build script must be adjusted manually.",
+                "repositoryNameRequired": {
+                    "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Adjust the auxiliary repository configuration to a valid configuration to switch to the simple mode."
+            },
+            "submissionPolicy": {
+                "title": "Submission Policy",
+                "updateButton": {
+                    "title": "Update",
+                    "tooltip": "Saves the changes to the submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might (un)lock a lot of affected participation repositories!"
+                },
+                "activateButton": {
+                    "title": "Activate",
+                    "tooltip": "Activates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might lock a lot of affected participation repositories!"
+                },
+                "deactivateButton": {
+                    "title": "Deactivate",
+                    "tooltip": "Deactivates the configured submission policy of this programming exercise.\nATTENTION:\nFor Lock Repository Policies this is a very heavy operation as it might unlock a lot of affected participation repositories!"
+                },
+                "created": "The submission policy was created successfully!",
+                "updated": "The submission policy was updated successfully!",
+                "deleted": "The submission policy was deleted successfully!",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} allowed Submissions",
+                "none": {
+                    "optionLabel": "None"
+                },
+                "lockRepository": {
+                    "optionLabel": "Lock Repository"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Submission Penalty",
+                    "detailLabel": "Submission Penalty Points",
+                    "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
+                    "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
+                    "penaltyInputFieldValidationWarning": {
+                        "pattern": "The penalty must be a number greater than 0.",
+                        "required": "The penalty must be set."
+                    },
+                    "penaltyInfoLabel": "(Exceeding Penalty: {{points}} points)",
+                    "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
+                },
+                "submissionPolicyType": {
+                    "title": "Submission Policy Type",
+                    "none": {
+                        "title": "-"
+                    },
+                    "lock_repository": {
+                        "title": "Lock Repository",
+                        "tooltip": "Your participation repository will be locked as soon as you reach the submission limit. You won't be able to participate further in the exercise after your repository is locked."
+                    },
+                    "submission_penalty": {
+                        "title": "Submission Penalty",
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
+                    }
+                },
+                "submissionLimitTitle": "Submissions",
+                "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
+                "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
+                "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
+                "submissionLimitWarning": {
+                    "pattern": "The submission limit must be an integer between 1 and 500.",
+                    "required": "The submission limit must be set."
+                }
+            },
+            "diffReport": {
+                "button": "Review Changes",
+                "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "detailedTooltip": "The comparison view highlights all changes between the template and solution repositories. Red indicates deletions from the template, while green shows additions made in the solution.",
+                "splitView": {
+                    "enable": "Enable split view",
+                    "disable": "Disable split view",
+                    "tooltip": "In the split view, both versions of each changed file are displayed next to each other. Note that the split view will only be shown if your browser window is wide enough."
+                },
+                "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
+                "title": "Template/Solution Comparison",
+                "shortDescription": "Review which changes to the template are expected from students to solve the exercise.",
+                "titleForSubmissions": "Submission-Diff",
+                "template": "Template",
+                "solution": "Solution",
+                "emptyRepository": "Empty Repository",
+                "previousSubmission": "Previous Submission",
+                "previousCommit": "Previous Commit",
+                "currentSubmission": "Current Submission",
+                "currentCommit": "Current Commit",
+                "fileChange": {
+                    "created": "Created",
+                    "deleted": "Deleted",
+                    "renamed": "Renamed"
+                },
+                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
+                "lineStatBetweenSubmissionsTemplateLabel": "and the template",
+                "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
+                "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission.",
+                "lineStatTooltipFullEntryExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission of this file.",
+                "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
+                "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories.",
+                "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file."
+            },
+            "projectTypes": {
+                "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "With exemplary dependency",
+            "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
+            "coveredLineRatio": "Ratio Test-Covered Lines",
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
+            "commitInfo": {
+                "title": "Commit Information",
+                "commitHash": "Commit Hash",
+                "commits": "Commits",
+                "author": "Author",
+                "date": "Date",
+                "message": "Message",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
+                "template": "Template",
+                "history": "Commit History",
+                "result": "Result"
+            },
+            "otherLanguageHints": {
+                "title": "To use another language, complete the following tasks. See the <a href=\"{{documentationLink}}\">documentation</a> for details.",
+                "setImage": "Specify a custom Docker image with the required dependencies (potentially create a custom one and upload it to the <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> or <a href=\"{{dockerhubLink}}\">Docker Hub</a>).",
+                "buildScript": {
+                    "title": "Customize the build script to:",
+                    "dependencies": "Optional: Install exercise specific dependencies.",
+                    "runTests": "Run all tests. They should generate JUnit XML files.",
+                    "moveResults": "Move the XML files into the <code>{{resultsDirectory}}</code> directory."
+                },
+                "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
+                "pushSolution": "Push the solution code to its repository. It will not be checked out.",
+                "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
+            },
+            "dockerFlags": {
+                "useCustomNetwork": {
+                    "title": "Use custom network",
+                    "description": "Enable this option to use your own Docker network, or no network at all.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (no network)",
+                    "disableNetworkAccessWarning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                },
+                "envVars": {
+                    "title": "Environment Variables",
+                    "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
+                    "addEnvVar": "Add Environment Variable",
+                    "removeEnvVar": "Remove"
+                },
+                "cpuCount": {
+                    "label": "Edit CPU count",
+                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation.",
+                    "invalid": "The CPU count must be a whole number of at least 1."
+                },
+                "memory": {
+                    "label": "Edit memory limit (in MB)",
+                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory limit must be a whole number of at least 6 MB."
+                },
+                "memorySwap": {
+                    "label": "Edit memory swap limit (in MB)",
+                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory swap limit must be a whole number of at least 0 MB."
+                }
+            },
+            "artemisIntelligence": {
+                "title": "Artemis Intelligence",
+                "consistencyCheckAlert": {
+                    "title": "Consistency Check Result",
+                    "improvement": "Suggestion for improvement",
+                    "inconsistencies": "Please review the FAQ for inconsistencies and adjust it accordingly to ensure clarity and coherence."
+                }
+            },
+            "sharing": {
+                "import": "Import programming exercise from Sharing Platform",
+                "export": "Export to Sharing",
+                "error": {
+                    "export": "Unable to export programming exercise: {{ message }}"
+                }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "problemStatementTooLong": "The problem statement is too long for the instructor checklist. Please reduce it to at most {{ max }} characters and try again.",
+                "competencies": {
+                    "title": "Estimated Learning Goals",
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "linked": "Linked",
+                    "applyCompetencies": "Apply Competencies",
+                    "applyAll": "Apply All",
+                    "applySelected": "Apply Selected",
+                    "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
+                    "syncSuccess": "Competencies applied to the exercise successfully.",
+                    "allLinked": "All inferred competencies are already linked.",
+                    "syncError": "Failed to apply competencies. Please try again.",
+                    "showDetails": "Details",
+                    "hideDetails": "Hide",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "discardSelected": "Dismiss Selected",
+                    "discarded": "Competency dismissed.",
+                    "discardedMultiple": "Selected competencies dismissed.",
+                    "discardCompetency": "Dismiss this competency",
+                    "selectCompetency": "Select competency"
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "vsDeclared": "vs. Declared:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
+                },
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "fixSelected": "Fix Selected",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Changes proposed — please review the updated problem statement above before saving.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
+            },
+            "buildNotifications": {
+                "enable": "Enable browser notifications for build results",
+                "disable": "Disable browser notifications for build results",
+                "blocked": "Notifications are blocked. Allow them in your browser settings.",
+                "error": "Browser notifications are unavailable. The tab icon still shows build results.",
+                "resultReceived": "Build result received"
+            }
+        },
+        "checklistAnalysisRequest": {
+            "problemStatementMarkdown": "Problem statement"
+        },
+        "checklistActionRequest": {
+            "problemStatementMarkdown": "Problem statement"
+        },
+        "error": {
+            "noparticipations": "No existing user was specified or no submission exists.",
+            "shortNameGenerationFailed": "The short name could not be generated, please switch to the advanced mode and set the short name manually."
+        }
+    }
+}

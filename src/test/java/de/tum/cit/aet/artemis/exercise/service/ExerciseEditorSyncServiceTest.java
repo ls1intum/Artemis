@@ -1,0 +1,229 @@
+package de.tum.cit.aet.artemis.exercise.service;
+
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+
+class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final String TEST_PREFIX = "editorsyncservice";
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Autowired
+    private ExerciseEditorSyncService synchronizationService;
+
+    /**
+     * Stubs websocket messaging to avoid real async behavior during tests.
+     */
+    @BeforeEach
+    void setUp() {
+        doReturn(CompletableFuture.completedFuture(null)).when(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(Object.class));
+        clearInvocations(websocketMessagingService);
+    }
+
+    /**
+     * Clears request context to avoid cross-test leakage.
+     */
+    @AfterEach
+    void resetRequestContext() {
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    /**
+     * Verifies that commit alerts are broadcast with expected payload fields.
+     */
+    @Test
+    void broadcastNewCommitAlert() {
+        synchronizationService.broadcastNewCommitAlert(90L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null, null);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/90/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.TESTS_REPOSITORY);
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
+        assertThat(sentMessage.auxiliaryRepositoryId()).isNull();
+    }
+
+    /**
+     * Verifies that auxiliary repository commit alerts include the repository id.
+     */
+    @Test
+    void broadcastNewCommitAlertForAuxiliaryRepository() {
+        synchronizationService.broadcastNewCommitAlert(100L, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L, null);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/100/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
+        assertThat(sentMessage.auxiliaryRepositoryId()).isEqualTo(25L);
+    }
+
+    /**
+     * The session of the committing client has to reach the payload even though there is no request context here.
+     * <p>
+     * This is the actual bug behind #13459. Exercise versioning runs on the {@code exerciseVersionTaskExecutor}, and this
+     * method used to read the session from {@code RequestContextHolder} itself, which on that thread holds nothing. The
+     * payload therefore carried no origin, the committing editor could not recognise the alert as its own, and every
+     * instructor was warned about the commit they had just made. It stayed invisible in the test suite because the executor
+     * is a {@code SyncTaskExecutor} under the test profile, so tests still ran with the caller's request context.
+     */
+    @Test
+    void broadcastNewCommitAlertCarriesTheCommittingSessionWithoutARequestContext() {
+        // deliberately no request attributes, which is the situation on the versioning executor thread
+        synchronizationService.broadcastNewCommitAlert(101L, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, "client-commits");
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewCommitAlertDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/101/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.sessionId()).isEqualTo("client-commits");
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
+    }
+
+    /**
+     * The helper that callers on a request thread use to capture the session before handing work to an executor.
+     */
+    @Test
+    void getClientSessionIdReadsTheHeaderOnARequestThread() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-commits");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isEqualTo("client-commits");
+    }
+
+    /**
+     * Off a request thread there is nothing to read, which is why the session has to be captured by the caller.
+     */
+    @Test
+    void getClientSessionIdIsNullWithoutARequestThread() {
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
+    }
+
+    /**
+     * Verifies that review-thread updates are broadcast on the synchronization topic.
+     */
+    @Test
+    void broadcastReviewThreadUpdate() {
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(55L);
+
+        synchronizationService.broadcastReviewThreadUpdate(102L, reviewUpdate);
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/102/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.REVIEW_COMMENTS);
+        assertThat(sentMessage.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_DELETED);
+        assertThat(sentMessage.exerciseId()).isEqualTo(102L);
+        assertThat(sentMessage.commentId()).isEqualTo(55L);
+    }
+
+    /**
+     * Verifies that review-thread updates include the client session header when present.
+     */
+    @Test
+    void broadcastReviewThreadUpdateUsesClientSessionHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-review");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(66L);
+        synchronizationService.broadcastReviewThreadUpdate(103L, reviewUpdate);
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/103/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.sessionId()).isEqualTo("client-review");
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
+    }
+
+    /**
+     * Verifies that synchronization topics are generated consistently.
+     */
+    @Test
+    void synchronizationTopicGeneratesCorrectDestination() {
+        assertThat(ExerciseWebsocketTopics.EDITOR_SYNCHRONIZATION.at(123L).value()).isEqualTo("/topic/exercises/123/synchronization");
+    }
+
+    /**
+     * Verifies that the client session id is null without a request context.
+     */
+    @Test
+    void getClientSessionIdReturnsNullWhenNoRequest() {
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
+    }
+
+    /**
+     * Verifies that non-servlet request attributes yield no client session id.
+     */
+    @Test
+    void getClientSessionIdReturnsNullForNonServletAttributes() {
+        RequestAttributes nonServletAttributes = mock(RequestAttributes.class);
+        RequestContextHolder.setRequestAttributes(nonServletAttributes);
+
+        assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
+    }
+
+    /**
+     * Verifies that exercise version alerts are broadcast with expected payload fields.
+     */
+    @Test
+    void broadcastNewExerciseVersionAlert() {
+        User author = new User();
+        author.setLogin("instructor1");
+        author.setFirstName("Test");
+        author.setLastName("Instructor");
+
+        synchronizationService.broadcastNewExerciseVersionAlert(95L, 7L, author, Set.of("title", "maxPoints"));
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/95/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
+        assertThat(sentMessage.exerciseVersionId()).isEqualTo(7L);
+        assertThat(sentMessage.changedFields()).containsExactlyInAnyOrder("title", "maxPoints");
+        assertThat(sentMessage.author()).isNotNull();
+        assertThat(sentMessage.author().getLogin()).isEqualTo("instructor1");
+    }
+}

@@ -1,0 +1,108 @@
+@if (fileUploadExercise()) {
+    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
+        <!--region Left Panel-->
+        <div left-body class="pe-2 pb-2 w-full" [class.ps-2]="!displayedInExamSummary()">
+            <div>
+                @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
+                    <div class="w-full md:w-1/2">
+                        <div class="mb-4!">
+                            <label for="fileUploadInput" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
+                            <div class="flex w-full flex-wrap items-stretch">
+                                <div class="truncate">
+                                    <input #fileInput id="fileUploadInput" type="file" (change)="setFileSubmissionForExercise($event)" />
+                                </div>
+                            </div>
+                            <p class="inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
+                            @if (fileUploadExercise()?.filePattern; as filePattern) {
+                                @for (extension of filePattern.split(','); track extension) {
+                                    <div class="inline-block">
+                                        <tumaet-ui-tag class="ms-1" severity="info" size="sm" [value]="extension | uppercase" />
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (submittedFileName() && submission()?.filePathUrl) {
+                <div data-testid="submitted-file">
+                    @if (!displayedInExamSummary()) {
+                        <h6>
+                            {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
+                            @if (submission()?.submissionDate) {
+                                <span> {{ submission()?.submissionDate | artemisTimeAgo }}</span>
+                            }
+                        </h6>
+                    } @else {
+                        <h5 class="text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                        <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></span>
+                    }
+                    <br />
+                    <div class="mt-2">
+                        @if (submission()?.filePathUrl; as filePathUrl) {
+                            <button
+                                severity="secondary"
+                                type="button"
+                                jhi-exercise-action-button
+                                [smallButton]="true"
+                                [buttonIcon]="faDownload"
+                                [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
+                                (click)="downloadFile(filePathUrl)"
+                            ></button>
+                        }
+                        @if (submittedFileExtension()) {
+                            <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
+                        }
+                    </div>
+                </div>
+            }
+            @if (result()?.feedbacks?.length) {
+                <div>
+                    <br />
+                    <h5 class="text-base! font-semibold!"><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
+                    <div>
+                        @if (unreferencedFeedback(); as feedback) {
+                            @if (feedback.length) {
+                                <div id="additional-feedback" class="w-full xl:w-2/3">
+                                    @for (f of feedback; track f.id) {
+                                        <jhi-unified-feedback
+                                            [feedback]="f"
+                                            [feedbackContent]="buildFeedbackTextForReview(f)"
+                                            [points]="f.credits || 0"
+                                            [scoreAccuracy]="course()?.accuracyOfScores"
+                                        />
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div>
+                        @if (isOwnerOfParticipation() && result() && participation()) {
+                            <div class="mt-2 w-full xl:w-2/3">
+                                <jhi-rating [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
+                <jhi-complaint-student-view
+                    [result]="(resultWithComplaint() ?? result())!"
+                    [participation]="participation()!"
+                    [exercise]="fileUploadExercise()!"
+                    [isCurrentUserSubmissionAuthor]="isOwnerOfParticipation()"
+                />
+            }
+        </div>
+        <!--endregion-->
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
+        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
+        <p right-body class="mb-4! markdown-preview">
+            @if (fileUploadExercise()?.problemStatement; as problemStatement) {
+                <span [jhiMarkdown]="problemStatement"></span>
+            }
+        </p>
+        <!--endregion-->
+    </jhi-resizeable-container>
+}

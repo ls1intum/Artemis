@@ -1,0 +1,594 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
+import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { SidebarCardComponent } from 'app/course/sidebar/sidebar-card/sidebar-card.component';
+import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { By } from '@angular/platform-browser';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
+import { EventEmitter } from '@angular/core';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Component } from '@angular/core';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+
+describe('SidebarComponent', () => {
+    let component: SidebarComponent;
+    let fixture: ComponentFixture<SidebarComponent>;
+    let router: MockRouter;
+    let activatedRoute: MockActivatedRoute;
+    let modalService: TumAetUiDialogService;
+
+    beforeEach(() => {
+        router = new MockRouter();
+        activatedRoute = new MockActivatedRoute();
+        TestBed.configureTestingModule({
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(RouterModule),
+                MockDirective(TranslateDirective),
+                MockComponent(ExerciseFilterModalComponent),
+                FaIconComponent,
+                SidebarComponent,
+                SidebarCardMediumComponent,
+                SidebarCardItemComponent,
+                SidebarCardComponent,
+                SearchFilterPipe,
+                SearchFilterComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockRouterLinkDirective,
+            ],
+            providers: [
+                MockProvider(TumAetUiDialogService),
+                { provide: ActivatedRoute, useValue: activatedRoute },
+                { provide: Router, useValue: router },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(SidebarComponent);
+        component = fixture.componentInstance;
+        modalService = TestBed.inject(TumAetUiDialogService);
+
+        fixture.componentRef.setInput('sidebarData', {
+            sidebarType: 'default',
+        } as SidebarData);
+        fixture.componentRef.setInput('collapseState', {});
+        fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
+    });
+
+    it('should only enable container-height layout when requested', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+
+        fixture.componentRef.setInput('fitContainerHeight', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(true);
+
+        fixture.componentRef.setInput('fitContainerHeight', false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+    });
+
+    describe('inline filter checkbox', () => {
+        it('should not render the checkbox without a label', () => {
+            fixture.changeDetectorRef.detectChanges();
+            expect(fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'))).toBeNull();
+        });
+
+        it('should render the checkbox with a label and reflect its changes', () => {
+            fixture.componentRef.setInput('inlineFilterLabel', 'artemisApp.courseOverview.sidebar.freeSpotsOnly');
+            fixture.changeDetectorRef.detectChanges();
+
+            const checkbox = fixture.debugElement.query(By.css('[data-testid="sidebar-inline-filter"]'));
+            expect(checkbox).not.toBeNull();
+            expect(component.inlineFilterActive()).toBe(false);
+
+            checkbox.componentInstance.checked.set(true);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.inlineFilterActive()).toBe(true);
+        });
+    });
+
+    describe('selected entity params', () => {
+        /**
+         * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on
+         * the activated child route — which also inherits every ancestor param, so the course id rides along and has
+         * to be filtered out.
+         */
+        const setRoute = (ownParams: Params, childParams?: Params): void => {
+            (activatedRoute.snapshot as unknown as { params: Params }).params = ownParams;
+            Object.defineProperty(activatedRoute, 'firstChild', {
+                configurable: true,
+                get: () => (childParams ? ({ snapshot: { params: childParams } } as unknown as ActivatedRoute) : undefined),
+            });
+        };
+
+        it('should keep only the params the child route adds on top of the inherited ones', () => {
+            setRoute({ courseId: '1' }, { courseId: '1', exerciseId: '42' });
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.routeParams()).toEqual({ exerciseId: '42' });
+        });
+
+        it('should re-read them after a navigation, since the child route is swapped out rather than re-emitting', () => {
+            setRoute({ courseId: '1' }, { courseId: '1', exerciseId: '42' });
+            fixture.changeDetectorRef.detectChanges();
+
+            setRoute({ courseId: '1' }, { courseId: '1', groupId: '7' });
+            router.eventSubject.next(new NavigationEnd(1, '/courses/1/exercises/group/7', '/courses/1/exercises/group/7'));
+
+            expect(component.routeParams()).toEqual({ groupId: '7' });
+        });
+
+        it('should fall back to no params when no child route is activated', () => {
+            setRoute({ courseId: '1' }, undefined);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.routeParams()).toEqual({});
+        });
+    });
+
+    it('should display the optional page title in the sidebar header', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.changeDetectorRef.detectChanges();
+
+        const titleComponent = fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent)).componentInstance as CourseTitleBarTitleComponent;
+
+        expect(titleComponent.title()).toBe('overview.exercises');
+    });
+
+    it('should display the sidebar collapse button in the sidebar header while expanded', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeTruthy();
+    });
+
+    it('should hide the sidebar collapse button in the sidebar header while collapsed', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
+    });
+
+    it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
+        const emitSpy = vi.spyOn(component.toggleSidebar, 'emit');
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should filter sidebar items based on search criteria', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: true,
+            ungroupedData: [
+                { title: 'Item 1', type: 'Type A', id: 1, size: 'M' },
+                { title: 'Item 2', type: 'Type B', id: 2, size: 'M' },
+            ],
+        });
+        component.searchValue.set('Item 1');
+        fixture.changeDetectorRef.detectChanges();
+
+        // Check if only the item with title 'Item 1' is being displayed
+        let filteredItems = component.sidebarDataInternal().ungroupedData?.filter((item) => item.title.includes(component.searchValue()));
+        filteredItems = filteredItems ?? [];
+        expect(filteredItems).toHaveLength(1);
+        expect(filteredItems[0].title).toContain('Item 1');
+    });
+
+    it('should display the correct message when no data is found', () => {
+        // Mock sidebarData to have no items
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: true,
+            ungroupedData: [],
+        });
+        component.sidebarDataBeforeFiltering.set({
+            groupByCategory: true,
+            ungroupedData: [] as SidebarCardElement[],
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
+        expect(noDataMessageElement).toBeTruthy();
+        const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
+        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should not show an empty state when only pinned cards exist', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: false,
+            ungroupedData: [],
+            pinnedData: [{ title: 'Pinned presentation', id: 1, size: 'M' }],
+        });
+        fixture.changeDetectorRef.detectChanges();
+        const emptyMessages = fixture.debugElement.queryAll(By.directive(TranslateDirective)).filter((element) => {
+            const key = element.injector.get(TranslateDirective).jhiTranslate();
+            return key === 'artemisApp.courseOverview.general.noDataFound' || key === 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter';
+        });
+        expect(emptyMessages).toHaveLength(0);
+    });
+
+    it('should give the correct size for exercises', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should give the correct size for exams', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: true,
+            sidebarType: 'exam',
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('L');
+    });
+
+    it('should give the correct size for default', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: true,
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should update sidebar event subscription on re emit input event change', () => {
+        fixture.detectChanges();
+        const prevSubscription = component.sidebarEventSubscription;
+        fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
+    });
+
+    describe('openFilterExercisesLink', () => {
+        const FILTER_LINK_SELECTOR = '.filter-link';
+
+        it('should display the filter link', () => {
+            fixture.componentRef.setInput('showFilter', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeTruthy();
+            expect(filterLink.nativeElement.getAttribute('aria-label')).toBe('artemisApp.exercise.filter');
+        });
+
+        it('should NOT display the filter link when sidebarType is NOT exercise', () => {
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeFalsy();
+        });
+
+        it('should open modal on click with initialized filters', () => {
+            fixture.componentRef.setInput('showFilter', true);
+            fixture.changeDetectorRef.detectChanges();
+            const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
+            const mockReturnValue = {
+                result: Promise.resolve({}),
+                componentInstance: {
+                    sidebarData: {},
+                    exerciseFilters: {},
+                    filterApplied: filterAppliedMock,
+                },
+            } as TumAetUiDialogRef;
+            const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const openFilterExercisesDialogSpy = vi.spyOn(component, 'openFilterExercisesDialog');
+            const initFilterOptionsSpy = vi.spyOn(component, 'initializeFilterOptions');
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
+            filterLink.click();
+
+            expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
+            expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, {
+                size: 'large',
+                showHeader: false,
+                ariaLabel: 'artemisApp.courseOverview.exerciseFilter.modalTitle',
+                dismissableMask: false,
+                data: {
+                    sidebarData: component.sidebarDataBeforeFiltering(),
+                    exerciseFilters: component.exerciseFilters(),
+                },
+            });
+        });
+    });
+
+    describe('Chat and Channel Creation Methods', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
+            vi.spyOn(component.onDirectChatPressed, 'emit');
+
+            component.createDirectChat();
+
+            expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
+            vi.spyOn(component.onGroupChatPressed, 'emit');
+
+            component.createGroupChat();
+
+            expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
+            vi.spyOn(component.onBrowsePressed, 'emit');
+
+            component.browseChannels();
+
+            expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
+            vi.spyOn(component.onCreateChannelPressed, 'emit');
+
+            component.createNewChannel();
+
+            expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('openFilterExercisesDialog', () => {
+        it('should subscribe to filterApplied from modal', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
+            const subscribeSpy = vi.spyOn(filterAppliedEmitter, 'subscribe');
+
+            component.openFilterExercisesDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            expect(subscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update variables correctly when filterApplied is emitted', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
+
+            const mockFilterResults: ExerciseFilterResults = {
+                filteredSidebarData: {
+                    sidebarType: 'exercise',
+                    groupByCategory: true,
+                    ungroupedData: [{ title: 'test sidebar card element' } as SidebarCardElement],
+                    groupedData: {
+                        testGroup: {
+                            entityData: [{ title: 'test group element' } as SidebarCardElement],
+                        },
+                    },
+                },
+                appliedExerciseFilters: {
+                    categoryFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                category: new ExerciseCategory('test', undefined),
+                                searched: true,
+                            },
+                        ],
+                    },
+                    exerciseTypesFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                name: 'testType',
+                                value: ExerciseType.PROGRAMMING,
+                                checked: true,
+                                icon: 'testIcon' as unknown as IconProp,
+                            },
+                        ],
+                    },
+                },
+                isFilterActive: true,
+            };
+
+            component.openFilterExercisesDialog();
+            filterAppliedEmitter.emit(mockFilterResults);
+
+            expect(component.sidebarDataInternal()).toEqual(mockFilterResults.filteredSidebarData);
+            expect(component.exerciseFilters()).toEqual(mockFilterResults.appliedExerciseFilters);
+            expect(component.isFilterActive()).toBe(true);
+        });
+
+        it('should show "Create Channel" button when canCreateChannel is true', () => {
+            fixture.componentRef.setInput('inCommunication', true);
+            fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: true } as SidebarData);
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeTruthy();
+        });
+
+        it('should not show "Create Channel" button when canCreateChannel is false', () => {
+            fixture.componentRef.setInput('inCommunication', true);
+            fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: false } as SidebarData);
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeFalsy();
+        });
+    });
+});
+
+/**
+ * Exercises the variant-group highlight against the REAL router, outlet and `routerLinkActive`. The mocked
+ * `RouterModule` used above cannot catch this: it stubs out `routerLinkActive`, whose class bookkeeping is exactly what
+ * the highlight has to coexist with.
+ */
+describe('SidebarComponent variant group selection', () => {
+    @Component({ template: '', standalone: true })
+    class DetailStubComponent {}
+
+    /** Stands in for the course-overview shell that hosts the 'exercises' route. */
+    @Component({ template: '<router-outlet />', standalone: true, imports: [RouterOutlet] })
+    class RootComponent {}
+
+    /**
+     * Stands in for CourseExercisesComponent: the component of the 'exercises' route, holding the sidebar next to the
+     * outlet its children render into. The sidebar must sit inside the routed component, since that is what gives it
+     * the ActivatedRoute whose child carries the selected entity's id.
+     */
+    @Component({
+        template: `
+            <jhi-sidebar [sidebarData]="sidebarData" [collapseState]="{}" [sidebarItemAlwaysShow]="{}" [courseId]="1" />
+            <router-outlet />
+        `,
+        standalone: true,
+        imports: [SidebarComponent, RouterOutlet],
+    })
+    class ExercisesHostComponent {
+        // One variant-group card, exactly as CourseOverviewService.buildGroupedExerciseData emits it: the same card
+        // object in both the time-category accordion and the flat list the sidebar uses for its empty-state check.
+        private readonly groupCard = {
+            title: 'Sorting variants',
+            id: 10,
+            trackId: 'group-10',
+            targetComponentSubRoute: 'group',
+            size: 'M',
+            groupedItems: [
+                { title: 'Variant A', id: 11, size: 'M' },
+                { title: 'Variant B', id: 12, size: 'M' },
+            ],
+        };
+
+        sidebarData: SidebarData = {
+            sidebarType: 'exercise',
+            storageId: 'exercise',
+            groupByCategory: true,
+            groupedData: { current: { entityData: [this.groupCard] } },
+            ungroupedData: [this.groupCard],
+        } as unknown as SidebarData;
+    }
+
+    let hostFixture: ComponentFixture<RootComponent>;
+    let harnessRouter: Router;
+
+    /** The single rendered group card, or undefined while the sidebar has not rendered one. */
+    const groupCardClasses = (): string => (hostFixture.nativeElement.querySelector('#test-sidebar-card-medium') as HTMLElement).className;
+
+    beforeEach(async () => {
+        localStorage.clear();
+        await TestBed.configureTestingModule({
+            imports: [RootComponent],
+            providers: [
+                // Mirrors the real depth from courses.route.ts: the sidebar's route is a child of 'courses/:courseId',
+                // so it carries no id of its own and neither inherits one (paramsInheritanceStrategy is 'emptyOnly').
+                provideRouter([
+                    {
+                        path: 'courses/:courseId',
+                        component: RootComponent,
+                        children: [
+                            {
+                                path: 'exercises',
+                                component: ExercisesHostComponent,
+                                children: [
+                                    { path: 'group/:groupId', component: DetailStubComponent },
+                                    { path: ':exerciseId', component: DetailStubComponent, pathMatch: 'full' },
+                                ],
+                            },
+                        ],
+                    },
+                ]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(TumAetUiDialogService),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
+            ],
+        }).compileComponents();
+
+        harnessRouter = TestBed.inject(Router);
+        hostFixture = TestBed.createComponent(RootComponent);
+    });
+
+    it('should highlight the group card while the detail outlet shows one of its members', async () => {
+        await harnessRouter.navigateByUrl('/courses/1/exercises/12');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).toContain('bg-group-selected');
+    });
+
+    it('should keep highlighting the group card after navigating from the group page to a member', async () => {
+        // The regression the mocked router hid: on the group page routerLinkActive owns the highlight, and on the way
+        // out it removes the classes it manages — so the member highlight must not reuse one of those class names.
+        await harnessRouter.navigateByUrl('/courses/1/exercises/group/10');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+        expect(groupCardClasses()).toContain('bg-selected');
+
+        await harnessRouter.navigateByUrl('/courses/1/exercises/12');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).toContain('bg-group-selected');
+    });
+
+    it('should not highlight the group card for an unrelated exercise', async () => {
+        await harnessRouter.navigateByUrl('/courses/1/exercises/999');
+        hostFixture.detectChanges();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        expect(groupCardClasses()).not.toContain('bg-group-selected');
+    });
+});

@@ -1,0 +1,29 @@
+{
+    "artemisApp": {
+        "documentationLinks": {
+            "prefix": "Open the documentation for ",
+            "course": "courses.",
+            "lecture": "lectures.",
+            "exercise": "exercises.",
+            "quiz": "quizzes.",
+            "model": "modelling exercises.",
+            "programming": "programming exercises.",
+            "sshsetup": "SSH setup.",
+            "text": "text exercises.",
+            "fileupload": "file upload exercises.",
+            "notifications": "notifications.",
+            "competencies": "competencies.",
+            "standardizedcompetencies": "standardized competencies.",
+            "generatecompetencies": "generating competencies.",
+            "communications": "communications.",
+            "exams": "exams.",
+            "plagiarismchecks": "plagiarism checks.",
+            "grading": "grading.",
+            "units": "lecture content.",
+            "assessment": "assessments.",
+            "statistics": "statistics.",
+            "studentstatistics": "statistics.",
+            "suspiciousbehavior": "suspicious behavior."
+        }
+    }
+}

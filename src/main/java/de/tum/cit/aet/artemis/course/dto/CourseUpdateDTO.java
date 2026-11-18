@@ -1,0 +1,131 @@
+package de.tum.cit.aet.artemis.course.dto;
+
+import java.time.ZonedDateTime;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import tools.jackson.databind.annotation.JsonDeserialize;
+
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+
+/**
+ * Data Transfer Object for updating an existing course.
+ * <p>
+ * This DTO is used instead of directly deserializing to a Course entity to prevent
+ * potential issues with entity state management, particularly:
+ * <ul>
+ * <li>Avoiding unintended orphan removal of child entities (e.g., tutorial groups)</li>
+ * <li>The server controls which fields can be updated</li>
+ * <li>Internal entity state (e.g., relationships, computed fields) is not exposed</li>
+ * </ul>
+ * <p>
+ * The {@link #applyTo(Course)} method applies the DTO values to an existing Course entity.
+ *
+ * @see de.tum.cit.aet.artemis.course.web.CourseUpdateResource#updateCourse
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record CourseUpdateDTO(
+        // ID is required for update
+        @NotNull Long id,
+
+        // Basic info
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Nullable @Size(max = 2000) String description,
+        @NotBlank @Size(max = 25) String semester,
+
+        // Dates
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
+        @Nullable ZonedDateTime unenrollmentEndDate,
+
+        // Configuration flags
+        boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Language language, @Nullable ProgrammingLanguage defaultProgrammingLanguage,
+
+        // Complaint settings
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
+        int maxComplaintResponseTextLimit,
+
+        // UI settings
+        @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
+        boolean unenrollmentEnabled, @Nullable @Size(max = 10000) String courseInformationSharingMessagingCodeOfConduct,
+
+        // Course features
+        boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
+        @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+
+        // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
+        // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
+        @Nullable Boolean gradeRelevant,
+
+        // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
+        // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
+        @Nullable Boolean dataRetentionHold,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
+        boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
+
+    /**
+     * Applies the DTO values to an existing Course entity.
+     * <p>
+     * This method updates only the fields that are part of the DTO, leaving
+     * other entity state (like tutorial groups, exercises, etc.) untouched.
+     *
+     * @param course the existing course entity to update
+     * @return the updated course entity
+     */
+    public Course applyTo(Course course) {
+        applyBasicSettingsTo(course);
+        course.setCourseIcon(courseIcon);
+        applyEnrollmentSettingsTo(course);
+        course.setCourseInformationSharingMessagingCodeOfConduct(courseInformationSharingMessagingCodeOfConduct);
+
+        // Course features
+        applyFeatureSettingsTo(course);
+
+        // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
+        // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
+        // This check is defense-in-depth against any caller that builds and applies this DTO directly, bypassing bean validation.
+        if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
+            throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
+        }
+
+        // Only allow transitioning from false to true (one-way)
+        if (onboardingDone) {
+            course.setOnboardingDone(true);
+        }
+
+        // Update the permanent settings row loaded through its own repository by the caller.
+        CourseConfiguration configuration = course.getCourseConfiguration();
+        // Fail safe to grade-relevant (longer retention) when the client omits the flag.
+        configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
+        // the cleanup again.
+        configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        if (presentationAssessmentsEnabled != null) {
+            configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
+        configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+
+        return course;
+    }
+
+}

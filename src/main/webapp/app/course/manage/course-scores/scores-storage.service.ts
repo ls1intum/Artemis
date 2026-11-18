@@ -1,0 +1,101 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
+import { OnDestroy, Service, inject } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
+import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
+import { AccountService } from 'app/core/auth/account.service';
+
+/**
+ * This service is used to store course scores and participation results (the relevant result used for the score calculation for each participation) for the currently logged-in user.
+ * The method {@link CourseManagementService#findAllForDashboard} retrieves the scores and participation results in addition to the {@link Course} objects and saves the scores and participation results in this service.
+ * This way, multiple components that need the scores and participation results can access them without having to retrieve them again from the server.
+ */
+@Service()
+export class ScoresStorageService implements OnDestroy {
+    private readonly accountService = inject(AccountService);
+
+    /**
+     * This map stores the {@link CourseScores} object for each {@link Course} that the currently logged-in user has access to. The number is the id of the course.
+     */
+    private storedTotalScores: Map<number, CourseScores> = new Map();
+
+    /**
+     * This map stores the {@link ScoresPerExerciseType} object for each {@link Course} that the currently logged-in user has access to. The number is the id of the course.
+     * This is a nested map as the {@link ScoresPerExerciseType} object is a map itself. It stores {@link CourseScores}, but not for the total course (like the {@link storedTotalScores} above). Instead, it stores the scores split up per exercise type (programming, text, quiz etc.).
+     */
+    private storedScoresPerExerciseType: Map<number, ScoresPerExerciseType> = new Map();
+
+    /**
+     * This map stores the {@link Result} object for each {@link Participation} of the currently logged-in user. The number is the id of the participation.
+     */
+    private storedParticipationResults: Map<number, ParticipationResultDTO> = new Map();
+
+    /**
+     * This nested map stores, per course id, the points the user earns from each exercise variant group (keyed by group id).
+     * The values are server-computed: capped at the group's maxPoints and adjusted for plagiarism verdicts.
+     */
+    private storedAchievedPointsPerVariantGroup: Map<number, Map<number, number>> = new Map();
+
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears all stored scores. Called on logout / user change to avoid leaking the previous user's scores.
+     */
+    private resetState(): void {
+        this.storedTotalScores.clear();
+        this.storedScoresPerExerciseType.clear();
+        this.storedParticipationResults.clear();
+        this.storedAchievedPointsPerVariantGroup.clear();
+    }
+
+    getStoredTotalScores(courseId: number): CourseScores | undefined {
+        return this.storedTotalScores.get(courseId);
+    }
+
+    setStoredTotalScores(courseId: number, totalScores: CourseScores): void {
+        this.storedTotalScores.set(courseId, totalScores);
+    }
+
+    getStoredScoresPerExerciseType(courseId: number): ScoresPerExerciseType | undefined {
+        return this.storedScoresPerExerciseType.get(courseId);
+    }
+
+    setStoredScoresPerExerciseType(courseId: number, scoresPerExerciseType: ScoresPerExerciseType): void {
+        this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
+    }
+
+    getStoredParticipationResult(participationId: number): ParticipationResultDTO | undefined {
+        return this.storedParticipationResults.get(participationId);
+    }
+
+    setStoredParticipationResults(participationResults?: ParticipationResultDTO[]): void {
+        for (const participationResult of participationResults ?? []) {
+            this.storedParticipationResults.set(participationResult.participationId, participationResult);
+        }
+    }
+
+    /**
+     * The server-computed points the user earns from a variant group (capped where the group has a cap), or
+     * {@code undefined} when nothing was stored for it.
+     */
+    getStoredAchievedGroupPoints(courseId: number, groupId: number): number | undefined {
+        return this.storedAchievedPointsPerVariantGroup.get(courseId)?.get(groupId);
+    }
+
+    setStoredAchievedPointsPerVariantGroup(courseId: number, achievedPointsPerVariantGroup?: { [groupId: number]: number }): void {
+        const perGroup = new Map<number, number>();
+        for (const [groupId, points] of Object.entries(achievedPointsPerVariantGroup ?? {})) {
+            perGroup.set(Number(groupId), points);
+        }
+        this.storedAchievedPointsPerVariantGroup.set(courseId, perGroup);
+    }
+}

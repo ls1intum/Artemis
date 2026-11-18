@@ -1,0 +1,216 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConversationOptionsComponent } from 'app/course/sidebar/conversation-options/conversation-options.component';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
+import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+const examples: (() => ConversationDTO)[] = [
+    () => generateOneToOneChatDTO({}),
+    () => generateExampleGroupChatDTO({}),
+    () => generateExampleChannelDTO({} as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 } as ChannelDTO),
+];
+
+examples.forEach((conversation) => {
+    const testDescription = conversation();
+
+    describe('ConversationOptionsComponent with ' + (testDescription instanceof ChannelDTO ? testDescription.subType + ' ' : '') + testDescription.type, () => {
+        let component: ConversationOptionsComponent;
+        let fixture: ComponentFixture<ConversationOptionsComponent>;
+        let conversationService: ConversationService;
+        let updateIsFavoriteSpy: ReturnType<typeof vi.spyOn>;
+        let updateIsHiddenSpy: ReturnType<typeof vi.spyOn>;
+        let updateIsMutedSpy: ReturnType<typeof vi.spyOn>;
+        const course = { id: 1 } as any;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                providers: [
+                    provideRouter([
+                        { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
+                        { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
+                        { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
+                    ]),
+                    MockProvider(ConversationService),
+                    MockProvider(CourseConversationsService),
+                    MockProvider(AlertService),
+                    MockProvider(TumAetUiDialogService),
+                    { provide: CommunicationService, useClass: MockCommunicationService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
+            }).compileComponents();
+
+            fixture = TestBed.createComponent(ConversationOptionsComponent);
+            conversationService = TestBed.inject(ConversationService);
+            updateIsFavoriteSpy = vi.spyOn(conversationService, 'updateIsFavorite').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsHiddenSpy = vi.spyOn(conversationService, 'updateIsHidden').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsMutedSpy = vi.spyOn(conversationService, 'updateIsMuted').mockReturnValue(of(new HttpResponse<void>()));
+
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('conversation', conversation());
+            component.course = course;
+            fixture.detectChanges();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should center the three-dots icon in its button with symmetric horizontal padding', () => {
+            const toggle = fixture.nativeElement.querySelector('[data-testid="conversation-options-toggle"]') as HTMLElement;
+
+            expect(toggle).not.toBeNull();
+            // An asymmetric padding (ps-0 with pe-1) pushed the icon toward the left edge of the grey hover container.
+            expect(toggle.classList).toContain('px-1!');
+            expect(toggle.classList).not.toContain('ps-0');
+            expect(toggle.classList).not.toContain('pe-1');
+            expect(toggle.classList).toContain('justify-center');
+        });
+
+        it('should create', () => {
+            expect(component).toBeTruthy();
+        });
+
+        // jsdom cannot compute layout, so the alignment is asserted through the structure that guarantees it:
+        // the favorite and the options button are siblings in one flex row with a common cross-axis alignment
+        it('should align the favorite and the options button in one centered flex row', () => {
+            const nativeElement: HTMLElement = fixture.debugElement.nativeElement;
+            const optionButtons = nativeElement.querySelector('.option-buttons');
+            const favoriteButton = optionButtons?.querySelector('.favorite');
+            const dropdown = optionButtons?.querySelector('div[ngbDropdown]');
+            expect(optionButtons).not.toBeNull();
+            expect(favoriteButton).not.toBeNull();
+            expect(dropdown).not.toBeNull();
+
+            expect(optionButtons!.classList).toContain('flex');
+            expect(optionButtons!.classList).toContain('items-center');
+            expect(favoriteButton!.parentElement).toBe(optionButtons);
+            expect(dropdown!.parentElement).toBe(optionButtons);
+            // an inline-block wrapper would put the options button on the text baseline instead of centering it
+            expect(dropdown!.classList).not.toContain('d-inline-block');
+            expect(dropdown!.classList).toContain('flex');
+            expect(dropdown!.classList).toContain('items-center');
+        });
+
+        it('should remove conversation from favorites when hidden', async () => {
+            vi.useFakeTimers();
+            component.conversation().isFavorite = true;
+            component.conversation().isHidden = false;
+            fixture.changeDetectorRef.detectChanges();
+
+            const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
+            hideButton.click();
+            await vi.advanceTimersByTimeAsync(501);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation().id, false);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation().id, true);
+
+            expect(component.conversation().isFavorite).toBe(false);
+            expect(component.conversation().isHidden).toBe(true);
+        });
+
+        it('should remove conversation from hidden when favorited', async () => {
+            vi.useFakeTimers();
+            component.conversation().isFavorite = false;
+            component.conversation().isHidden = true;
+            fixture.changeDetectorRef.detectChanges();
+
+            const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
+            favoriteButton.click();
+            await vi.advanceTimersByTimeAsync(501);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation().id, false);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation().id, true);
+
+            expect(component.conversation().isHidden).toBe(false);
+            expect(component.conversation().isFavorite).toBe(true);
+        });
+
+        it('should call updateIsFavorite when button is clicked', async () => {
+            vi.useFakeTimers();
+            const button = fixture.debugElement.nativeElement.querySelector('.favorite');
+            button.click();
+            await vi.advanceTimersByTimeAsync(501);
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation().id, true);
+        });
+
+        it('should call updateIsHidden when button is clicked', async () => {
+            vi.useFakeTimers();
+            const button = fixture.debugElement.nativeElement.querySelector('.hide');
+            button.click();
+            await vi.advanceTimersByTimeAsync(501);
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation().id, true);
+        });
+
+        it('should call updateIsMuted when button is clicked', async () => {
+            vi.useFakeTimers();
+            const button = fixture.debugElement.nativeElement.querySelector('.mute');
+            button.click();
+            await vi.advanceTimersByTimeAsync(501);
+            expect(updateIsMutedSpy).toHaveBeenCalledOnce();
+            expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, component.conversation().id, true);
+        });
+
+        it('should open channel overview dialog when button is pressed', async () => {
+            if (isOneToOneChatDTO(component.conversation())) {
+                // directMessages do not have a channel overview dialog
+                return;
+            }
+            vi.useFakeTimers();
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(301);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as unknown as TumAetUiDialogRef);
+            fixture.detectChanges();
+
+            const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
+            dialogOpenButton.click();
+            await vi.advanceTimersByTimeAsync(301);
+            await fixture.whenStable();
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationDetailDialogComponent,
+                expect.objectContaining({
+                    showHeader: false,
+                    ariaLabel: expect.any(String),
+                    data: expect.objectContaining({ selectedTab: ConversationDetailTabs.SETTINGS, activeConversation: component.conversation() }),
+                }),
+            );
+        });
+    });
+});

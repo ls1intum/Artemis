@@ -1,0 +1,312 @@
+<form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importTeams()" #editForm="ngForm">
+    <div class="p-4!">
+        <div class="w-full flex justify-center border-b border-border bg-surface-raised p-3!">
+            <div class="inline-flex flex-wrap gap-1">
+                <button
+                    tumAetUiButton
+                    type="button"
+                    [variant]="showImportFromExercise() ? 'solid' : 'outlined'"
+                    [attr.aria-pressed]="showImportFromExercise()"
+                    (click)="setShowImportFromExercise(true)"
+                >
+                    <span jhiTranslate="artemisApp.team.importTeams.fromAnExercise"></span>
+                </button>
+                <button
+                    tumAetUiButton
+                    type="button"
+                    [variant]="!showImportFromExercise() ? 'solid' : 'outlined'"
+                    [attr.aria-pressed]="!showImportFromExercise()"
+                    (click)="setShowImportFromExercise(false)"
+                >
+                    <span jhiTranslate="artemisApp.team.importTeams.fromAFile"></span>
+                </button>
+            </div>
+        </div>
+        <div class="mb-4!">
+            @if (showImportFromExercise()) {
+                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextExercise"></p>
+            }
+            @if (!showImportFromExercise()) {
+                <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextFile"></p>
+            }
+        </div>
+        @if (!showImportFromExercise()) {
+            <div class="mb-4!">
+                <div class="flex items-end">
+                    <jhi-teams-import-from-file-form (teamsChanged)="onTeamsChanged($event)" />
+                </div>
+            </div>
+        }
+        @if (showImportFromExercise()) {
+            <div class="mb-4!">
+                <div class="flex items-end">
+                    <div>
+                        <label class="label-narrow" for="exercise-search-input" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
+                        <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
+                    </div>
+                    @if (searchingExercises()) {
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" animation="spin" />
+                    }
+                    @if (searchingExercisesNoResultsForQuery() === '') {
+                        <span class="error-message text-state-danger">
+                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResults"></span>
+                        </span>
+                    }
+                    @if (searchingExercisesNoResultsForQuery()) {
+                        <span class="error-message text-state-danger">
+                            <span jhiTranslate="artemisApp.team.exerciseSearch.noResultsForSearchTerm"></span>
+                            <strong>{{ searchingExercisesNoResultsForQuery() }}</strong>
+                        </span>
+                    }
+                    @if (searchingExercisesFailed()) {
+                        <span class="error-message text-state-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed"></span>
+                    }
+                </div>
+                <jhi-team-exercise-search
+                    id="teamExercises"
+                    [course]="exercise().course!"
+                    [ignoreExercises]="[exercise()]"
+                    (selectExercise)="onSelectSourceExercise($event)"
+                    (searching)="searchingExercises.set($event)"
+                    (searchNoResults)="searchingExercisesNoResultsForQuery.set($event)"
+                    (searchFailed)="searchingExercisesFailed.set($event)"
+                />
+            </div>
+        }
+        @if (sourceExercise() || sourceTeams()) {
+            <div class="mb-4! mt-2">
+                <div class="flex items-end">
+                    <div>
+                        <span class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label"></span>
+                        <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
+                    </div>
+                    @if (loadingSourceTeams()) {
+                        <fa-icon class="loading-spinner" [icon]="faSpinner" animation="spin" />
+                    }
+                    @if (loadingSourceTeamsFailed()) {
+                        <span class="error-message text-state-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed"></span>
+                    }
+                </div>
+                @if (sourceTeams(); as sourceTeams) {
+                    <div>
+                        <ul class="flex flex-col list-none p-0 team-list--teams mt-2">
+                            @for (team of sourceTeams; track team; let i = $index) {
+                                <li class="team-list-item-container flex items-center">
+                                    <div class="team-list-item-index">
+                                        {{ i + 1 }}
+                                    </div>
+                                    <div
+                                        class="border border-border px-3! py-2 team-list-item--teams"
+                                        [class.has-error]="teamShortNamesAlreadyExistingInExercise().includes(team.shortName!)"
+                                        [class.has-success]="isSourceTeamFreeOfAnyConflicts(team)"
+                                    >
+                                        <div class="team-name">{{ team.shortName }}</div>
+                                        <jhi-team-students-list
+                                            class="team-students"
+                                            [students]="team.students || []"
+                                            [errorStudentLogins]="problematicLogins"
+                                            [withRegistrationNumber]="true"
+                                            [errorStudentRegistrationNumbers]="problematicRegistrationNumbers"
+                                        />
+                                    </div>
+                                </li>
+                            }
+                            @if (!sourceTeams || sourceTeams.length === 0) {
+                                <li class="team-list-item-container flex items-center">
+                                    <div class="team-list-item-index text-text-secondary">1</div>
+                                    <div class="border border-border px-3! py-2 team-list-item--teams py-12!" [class.has-warning]="sourceTeams?.length === 0">
+                                        @if (showImportFromExercise() && sourceTeams?.length === 0) {
+                                            <span jhiTranslate="artemisApp.team.noTeamsInSourceExercise"></span>
+                                        }
+                                        @if (!showImportFromExercise() && sourceTeams?.length === 0) {
+                                            <span jhiTranslate="artemisApp.team.noTeamsInFile"></span>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                        @if (showLegend) {
+                            <div class="source-teams-legend-container mt-6!">
+                                <hr class="mt-4! mb-2" />
+                                <div>
+                                    <span jhiTranslate="artemisApp.team.sourceTeams.legend.label"></span>
+                                    <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1" />
+                                </div>
+                                <div class="source-teams-legend-box">
+                                    <div class="source-teams-legend flex justify-between">
+                                        <div>
+                                            <div class="team-list-item--teams" [class.has-success]="true">
+                                                <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}1</div>
+                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
+                                            </div>
+                                            <div class="label-with-tooltip">
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label"></span>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="me-1" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="team-list-item--teams" [class.has-error]="true">
+                                                <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}2</div>
+                                                <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
+                                            </div>
+                                            <div class="label-with-tooltip">
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label"></span>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="me-1" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="team-list-item--teams">
+                                                <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}3</div>
+                                                <jhi-team-students-list
+                                                    class="team-students"
+                                                    [students]="sampleTeamForLegend.students || []"
+                                                    [errorStudentLogins]="sampleErrorStudentLoginsForLegend"
+                                                />
+                                            </div>
+                                            <div class="label-with-tooltip">
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label"></span>
+                                                <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="me-1" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        @if (showImportStrategyChoices) {
+            <hr class="my-6!" />
+            <div class="mb-4! mb-0" role="group" aria-labelledby="import-strategy-label">
+                <div>
+                    <span id="import-strategy-label" class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label"></span>
+                    <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1" />
+                </div>
+                <div class="flex flex-col mt-2 ps-2">
+                    <label for="import-strategy-purge-existing" class="flex items-start">
+                        <tumaet-ui-radio-button
+                            inputId="import-strategy-purge-existing"
+                            name="importStrategy"
+                            class="radio-input-with-explanation"
+                            [ngModel]="importStrategy()"
+                            (selected)="updateImportStrategy(ImportStrategy.PURGE_EXISTING)"
+                            [value]="ImportStrategy.PURGE_EXISTING"
+                        />
+                        <div class="ms-2 radio-label-with-explanation">
+                            <strong>
+                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | artemisTranslate }}
+                                <span
+                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-danger ms-1"
+                                    jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.badge"
+                                ></span>
+                            </strong>
+                            <p
+                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.PURGE_EXISTING"
+                                class="explanation mb-2"
+                                jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.explanation"
+                            ></p>
+                        </div>
+                    </label>
+                    <label for="import-strategy-create-only" class="flex items-start">
+                        <tumaet-ui-radio-button
+                            inputId="import-strategy-create-only"
+                            name="importStrategy"
+                            class="radio-input-with-explanation"
+                            [ngModel]="importStrategy()"
+                            (selected)="updateImportStrategy(ImportStrategy.CREATE_ONLY)"
+                            [value]="ImportStrategy.CREATE_ONLY"
+                        />
+                        <div class="ms-2 radio-label-with-explanation">
+                            <strong>
+                                {{ 'artemisApp.team.importStrategy.options.createOnly.label' | artemisTranslate }}
+                                <span
+                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-success ms-1"
+                                    jhiTranslate="artemisApp.team.importStrategy.options.createOnly.badge"
+                                ></span>
+                            </strong>
+                            <p
+                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.CREATE_ONLY"
+                                class="explanation mb-0"
+                                jhiTranslate="artemisApp.team.importStrategy.options.createOnly.explanation"
+                            ></p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        @if (showImportPreviewNumbers && sourceTeams(); as sourceTeams) {
+            <div class="shrink-0 me-2 flex">
+                @if (studentsAppearInMultipleTeams()) {
+                    <div>
+                        <strong jhiTranslate="artemisApp.team.importPreview.studentsInMultipleTeams"></strong>
+                    </div>
+                } @else {
+                    @if (numberOfTeamsToBeImported! === 0) {
+                        <div>
+                            @if (sourceTeams.length === 0) {
+                                <strong jhiTranslate="artemisApp.team.importPreview.noTeamsToImport"></strong>
+                            }
+                            @if (sourceTeams.length > 0) {
+                                <strong jhiTranslate="artemisApp.team.importPreview.noConflictFreeTeamsToImport"></strong>
+                            }
+                        </div>
+                    }
+                    @if (numberOfTeamsToBeImported! > 0) {
+                        @if (numberOfTeamsToBeDeleted! > 0) {
+                            <div class="me-4!"><strong jhiTranslate="artemisApp.team.importPreview.teamsToBeDeleted"></strong> {{ numberOfTeamsToBeDeleted! }}</div>
+                        }
+                        @if (numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!) {
+                            <div class="me-4!">
+                                <strong jhiTranslate="artemisApp.team.importPreview.teamsToBeImported"></strong> {{ numberOfTeamsToBeImported! }}
+                                @if (numberOfTeamsToBeImported! < sourceTeams.length) {
+                                    <span jhiTranslate="artemisApp.team.importPreview.outOf" [translateValues]="{ number: sourceTeams.length }">
+                                        (out of {{ sourceTeams.length }})
+                                    </span>
+                                }
+                            </div>
+                        }
+                        <div><strong jhiTranslate="artemisApp.team.importPreview.totalTeamsAfterImport"></strong> {{ numberOfTeamsAfterImport! }}</div>
+                    }
+                }
+            </div>
+        }
+        <div class="grow flex justify-end">
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="cancel" (click)="clear()">
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            @if (importStrategy() !== ImportStrategy.PURGE_EXISTING) {
+                <button severity="secondary" tumAetUiButton type="submit" class="" [disabled]="editForm.invalid || isSubmitDisabled">
+                    <fa-icon [icon]="faUpload" class="me-2" />
+                    <span jhiTranslate="entity.action.to-import"></span>
+                    <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                </button>
+            }
+            @if (importStrategy() === ImportStrategy.PURGE_EXISTING) {
+                <button
+                    data-button-intent="destructive"
+                    data-button-intent-reason="Deletes the existing teams before importing replacements"
+                    tumAetUiButton
+                    type="button"
+                    severity="danger"
+                    [disabled]="editForm.invalid || isSubmitDisabled"
+                    jhiDeleteButton
+                    [renderButtonText]="false"
+                    [renderButtonStyle]="false"
+                    [entityTitle]="exercise().title || ''"
+                    deleteQuestion="artemisApp.team.purgeConfirmationDialog.question"
+                    deleteConfirmationText="artemisApp.team.purgeConfirmationDialog.typeNameToConfirm"
+                    (delete)="purgeAndImportTeams()"
+                    [dialogError]="dialogError$"
+                >
+                    <fa-icon [icon]="faUpload" class="me-1" />
+                    <span jhiTranslate="entity.action.purge"></span> +
+                    <span jhiTranslate="entity.action.to-import"></span>
+                    <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                </button>
+            }
+        </div>
+    </div>
+</form>

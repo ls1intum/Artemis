@@ -1,0 +1,15 @@
+<tumaet-ui-tag
+    [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
+    [title]="!isTestExam() && hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
+>
+    @if (isTestExam()) {
+        <fa-icon [icon]="faInfoCircle" />
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
+    } @else if (hasStudentsWithoutExam()) {
+        <fa-icon [icon]="faExclamationTriangle" />
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
+    } @else {
+        <fa-icon [icon]="faCheck" />
+        <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
+    }
+</tumaet-ui-tag>

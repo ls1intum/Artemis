@@ -1,0 +1,237 @@
+package de.tum.cit.aet.artemis.admin.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+
+@ExtendWith(MockitoExtension.class)
+class RateLimitConfigurationServiceTest {
+
+    @Mock
+    private RateLimitingProperties properties;
+
+    private RateLimitConfigurationService configurationService;
+
+    @BeforeEach
+    void setUp() {
+        configurationService = new RateLimitConfigurationService(properties);
+    }
+
+    @Test
+    void testIsRateLimitingEnabled_WhenEnabled_ShouldReturnTrue() {
+        when(properties.isEnabled()).thenReturn(true);
+
+        assertThat(configurationService.isRateLimitingEnabled()).isTrue();
+    }
+
+    @Test
+    void testIsRateLimitingEnabled_WhenDisabled_ShouldReturnFalse() {
+        when(properties.isEnabled()).thenReturn(false);
+
+        assertThat(configurationService.isRateLimitingEnabled()).isFalse();
+    }
+
+    @Test
+    void testGetEffectiveRpm_PublicType_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getAccountManagementRequestsPerMinute()).thenReturn(10);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
+
+        assertThat(rpm).isEqualTo(10);
+    }
+
+    @Test
+    void testGetEffectiveRpm_PublicType_WithNullValue_ShouldReturnDefault() {
+        when(properties.getAccountManagementRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
+
+        assertThat(rpm).isEqualTo(RateLimitType.ACCOUNT_MANAGEMENT.getDefaultRpm()); // 5
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginRelatedType_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(50);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
+
+        assertThat(rpm).isEqualTo(50);
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginRelatedType_WithNullValue_ShouldReturnDefault() {
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
+
+        assertThat(rpm).isEqualTo(RateLimitType.AUTHENTICATION.getDefaultRpm()); // 30
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginOptions_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(12);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS);
+
+        assertThat(rpm).isEqualTo(12);
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginOptions_WithNullValue_ShouldReturnDefault() {
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS);
+
+        assertThat(rpm).isEqualTo(RateLimitType.LOGIN_OPTIONS.getDefaultRpm()); // 30
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginOptions_DoesNotShareTheAuthenticationBudget() {
+        // The two types must stay independently configurable: the login form calls login-options immediately before
+        // authenticating, so a shared setting would silently halve the login budget.
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(7);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(99);
+
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS)).isEqualTo(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(99);
+    }
+
+    @Test
+    void testGetEffectiveRpm_FailedLogin_UsesTheCustomValueOrTheDefault() {
+        when(properties.getFailedLoginRequestsPerMinute()).thenReturn(4);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).isEqualTo(4);
+
+        when(properties.getFailedLoginRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.FAILED_LOGIN)).isEqualTo(RateLimitType.FAILED_LOGIN.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_GitAuthentication_UsesTheCustomValueOrTheDefault() {
+        when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(300);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
+
+        when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(RateLimitType.GIT_AUTHENTICATION.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_GitAuthentication_DoesNotShareTheLoginBudget() {
+        // Raising what a lecture hall may push must not raise the number of password attempts a login accepts, and the other way round.
+        when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(300);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(20);
+
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(20);
+    }
+
+    @Test
+    void testGetEffectiveRpm_ServiceCredentialFailure_UsesTheCustomValueOrTheDefault() {
+        when(properties.getServiceCredentialFailureRequestsPerMinute()).thenReturn(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.SERVICE_CREDENTIAL_FAILURE)).isEqualTo(7);
+
+        when(properties.getServiceCredentialFailureRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.SERVICE_CREDENTIAL_FAILURE)).isEqualTo(RateLimitType.SERVICE_CREDENTIAL_FAILURE.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_OnlineResourceFetch_UsesTheCustomValueOrTheDefault() {
+        when(properties.getOnlineResourceFetchRequestsPerMinute()).thenReturn(12);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.ONLINE_RESOURCE_FETCH)).isEqualTo(12);
+
+        when(properties.getOnlineResourceFetchRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.ONLINE_RESOURCE_FETCH)).isEqualTo(RateLimitType.ONLINE_RESOURCE_FETCH.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_PerUserTypes_UseTheCustomValueOrTheDefault() {
+        when(properties.getApollonConversionRequestsPerMinute()).thenReturn(3);
+        when(properties.getQuizBatchJoinRequestsPerMinute()).thenReturn(4);
+        when(properties.getProgrammingBuildTriggerRequestsPerMinute()).thenReturn(5);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.APOLLON_CONVERSION)).isEqualTo(3);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.QUIZ_BATCH_JOIN)).isEqualTo(4);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.PROGRAMMING_BUILD_TRIGGER)).isEqualTo(5);
+
+        when(properties.getApollonConversionRequestsPerMinute()).thenReturn(null);
+        when(properties.getQuizBatchJoinRequestsPerMinute()).thenReturn(null);
+        when(properties.getProgrammingBuildTriggerRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.APOLLON_CONVERSION)).isEqualTo(RateLimitType.APOLLON_CONVERSION.getDefaultRpm());
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.QUIZ_BATCH_JOIN)).isEqualTo(RateLimitType.QUIZ_BATCH_JOIN.getDefaultRpm());
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.PROGRAMMING_BUILD_TRIGGER)).isEqualTo(RateLimitType.PROGRAMMING_BUILD_TRIGGER.getDefaultRpm());
+
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(7);
+        when(properties.getCourseRequestRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.COURSE_REQUEST)).isEqualTo(RateLimitType.COURSE_REQUEST.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_EmailAddressCheck_UsesTheCustomValueOrTheDefault() {
+        when(properties.getEmailAddressCheckRequestsPerMinute()).thenReturn(25);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.EMAIL_ADDRESS_CHECK)).isEqualTo(25);
+
+        when(properties.getEmailAddressCheckRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.EMAIL_ADDRESS_CHECK)).isEqualTo(RateLimitType.EMAIL_ADDRESS_CHECK.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_ClientErrorReport_UsesTheCustomValueOrTheDefault() {
+        when(properties.getClientErrorReportRequestsPerMinute()).thenReturn(15);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).isEqualTo(15);
+
+        when(properties.getClientErrorReportRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).isEqualTo(RateLimitType.CLIENT_ERROR_REPORT.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_ContentSearch_UsesTheCustomValueOrTheDefault() {
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(40);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(40);
+
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(RateLimitType.CONTENT_SEARCH.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_StruggleIntervention_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getStruggleInterventionRequestsPerMinute()).thenReturn(50);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.STRUGGLE_INTERVENTION);
+
+        assertThat(rpm).isEqualTo(50);
+    }
+
+    @Test
+    void testGetEffectiveRpm_StruggleIntervention_WithNullValue_ShouldReturnDefault() {
+        when(properties.getStruggleInterventionRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.STRUGGLE_INTERVENTION);
+
+        assertThat(rpm).isEqualTo(RateLimitType.STRUGGLE_INTERVENTION.getDefaultRpm()); // 300
+    }
+
+    @Test
+    void testGetEffectiveRpm_ProblemStatementRendering_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(42);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.PROBLEM_STATEMENT_RENDERING);
+
+        assertThat(rpm).isEqualTo(42);
+    }
+
+    @Test
+    void testGetEffectiveRpm_ProblemStatementRendering_WithNullValue_ShouldReturnDefault() {
+        when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.PROBLEM_STATEMENT_RENDERING);
+
+        assertThat(rpm).isEqualTo(RateLimitType.PROBLEM_STATEMENT_RENDERING.getDefaultRpm()); // 30
+    }
+}

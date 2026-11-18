@@ -1,0 +1,122 @@
+---
+id: team-exercise
+title: Team Exercise
+sidebar_label: Team Exercise
+last_reviewed: 2026-11-06
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import setTeamMode from './assets/team-exercises/set_team_mode.png';
+import manageTeams from './assets/team-exercises/manage_teams.png';
+import teamDialog from './assets/team-exercises/team_dialog.png';
+import importStrategy from './assets/team-exercises/import_strategy.png';
+import liveTeamEditor from './assets/team-exercises/live_team_editor.png';
+import teamOverviewPage from './assets/team-exercises/team_overview_page.png';
+
+A team exercise is one students hand in together: one participation, one submission and one result for the whole
+team. Four of the exercise types support it —
+[programming](/instructor/exercises/programming-exercise),
+[modeling](/instructor/exercises/modeling-exercise),
+[text](/instructor/exercises/text-exercise) and
+[file upload](/instructor/exercises/file-upload-exercise).
+
+## Create a Team Exercise
+
+**Participation**, in the **Mode** section of the creation form, takes **Team** instead of **Individual**.
+**Team Size** appears beside it and takes a **Min** and a **Max**; both are a recommendation that the dialog warns
+about but lets you override when you actually build the teams.
+
+<Image src={setTeamMode} alt="Mode section of the form with Participation set to Team" size={ImageSize.large} caption="Making an exercise a team exercise" />
+
+<Callout variant={CalloutVariant.danger}>
+
+  **Participation** cannot be changed once the exercise exists. An exercise that should have been a team exercise
+  has to be created again.
+
+</Callout>
+
+## Manage the Teams
+
+**Teams** on the exercise's row in the course exercise list opens team management: every team with its tutor and
+its members, and the three things you can do to the set as a whole.
+
+<Image src={manageTeams} alt="Team management with two teams, their tutors and their members" size={ImageSize.large} caption="The exercise's teams" />
+
+### Create Teams by Hand
+
+**Create team** opens a dialog asking for the team's **Name**, its **Short Name** and its **Students**, searched
+for by login or name. A **Tutor** can be given as well; a team without one is still a team, but the tutor is who
+**Own teams** filters the list down to.
+
+The short name identifies the team across the course, so a team of the same people on another exercise reached
+through **Import teams** keeps it.
+
+### Edit and Delete Teams
+
+**Edit** on a team reopens the same dialog on it, and **Delete** removes it along with whatever it handed in.
+
+<Image src={teamDialog} alt="Team dialog with a name, a short name, a tutor and three students" size={ImageSize.medium} caption="Editing a team" />
+
+### Export Teams
+
+**Export teams** writes the exercise's teams to a file that another exercise can import.
+
+### Import Teams
+
+**Import teams** takes teams either from such a file or straight from another exercise in the course. The dialog
+colors each source team by what it would collide with — nothing, a short name already in use, or a student who is
+already on another team here — and then asks for an **Import strategy**:
+
+- **Purge existing** deletes every team in this exercise, and their participations with them, before importing.
+- **Create only** imports the conflict-free teams and leaves everything already here alone.
+
+<Image src={importStrategy} alt="Import teams dialog with the source teams and the import strategy" size={ImageSize.medium} caption="Importing teams from another exercise" />
+
+## Collaboration
+
+A team shares one editor: what one student writes, the others see. [Text](/instructor/exercises/text-exercise) and
+[modeling](/instructor/exercises/modeling-exercise) exercises both work this way, and the text editor also lists the
+team and marks who is in the exercise at that moment.
+
+<Image src={liveTeamEditor} alt="Text editor with the team listed beside the shared answer" size={ImageSize.large} caption="A team writing together" />
+
+## Team Overview
+
+**Team**, on the exercise itself, opens the team's own page: who is on it, who its tutor is, and every exercise in
+the course the team takes part in with what it has handed in for each. Students, tutors and instructors all see the
+same page.
+
+<Image src={teamOverviewPage} alt="Team page with the members and the exercises the team takes part in" size={ImageSize.large} caption="A team's page" />
+
+## What Students See
+
+Students on a team exercise share one participation and one result, and write together in the live editor — see
+[Exercises](/student/exercises/intro) on the student pages.
+
+Once the due date has passed, students can practice. See [Practice Participations](#practice-participations) below and
+[Practice mode](/student/exercises/practice-mode#team-exercises) on the student pages.
+
+## Practice Participations
+
+Practice mode on a team exercise is individual: each student, with or without a team, starts their own practice
+participation, which belongs to the student and never to the team. It never changes the team's participation,
+submission or result, so the team's grading and scores stay as they are. Practice results are unrated and do not enter
+the course score.
+
+<Callout variant={CalloutVariant.info}>
+
+  A practice participation always starts from the exercise's starter code, never from the team's graded code, and
+  text and modeling exercises have no shared editing in it. If you granted a team an extended deadline, its members
+  can practice only once that extension is over.
+
+</Callout>
+
+- **Participations** on the exercise lists every practice participation as a separate row marked as practice, next to
+  the team rows. A practice row shows the name and login of the student, not of a team, and the search finds it by
+  either.
+- The team's page does not list practice participations.
+- For a programming exercise, tutors can read a student's practice repository. Editors and instructors can read and
+  write it. See [Repository Access](/instructor/exercises/programming-exercise/repository-access).

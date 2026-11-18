@@ -1,0 +1,208 @@
+package de.tum.cit.aet.artemis.communication.linkpreview;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+
+class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "linkpreviewintegrationtest";
+
+    // this link will return null for all fields because it does not include OG tags
+    private static final String GOOGLE_URL = "https://google.com";
+
+    private static final String MOCK_FILE_PATH_PREFIX = "src/test/java/de/tum/cit/aet/artemis/communication/linkpreview/mockFiles/";
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var linkPreviewCache = cacheManager.getCache("linkPreview");
+        assertThat(linkPreviewCache).isNotNull();
+        linkPreviewCache.clear();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideUrls")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtraction(String url, File htmlFile) throws Exception {
+        Document document = Jsoup.parse(htmlFile);
+
+        try (MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock = Mockito.mockStatic(LinkPreviewDocumentFetcher.class)) {
+            documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(url)).thenReturn(document);
+
+            // Construct the URL with an encoded query parameter
+            String encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
+            String requestUrl = "/api/communication/link-preview?url=" + encodedUrl;
+
+            // Perform a GET request with the URL as a query parameter
+            LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+            documentFetcherMock.verify(() -> LinkPreviewDocumentFetcher.fetch(url));
+
+            // Assert that the response is not null
+            assertThat(linkPreviewData).isNotNull();
+
+            if (url.equals(GOOGLE_URL)) {
+                assertThat(linkPreviewData.url()).isNull();
+                assertThat(linkPreviewData.description()).isNull();
+                assertThat(linkPreviewData.image()).isNull();
+                assertThat(linkPreviewData.title()).isNull();
+
+                // check that the cache is available
+                var cache = cacheManager.getCache("linkPreview");
+                assertThat(cache).isNotNull();
+                assertThat(cache.get(url)).isNotNull();
+            }
+            else {
+                assertThat(linkPreviewData.url()).isNotNull();
+                assertThat(linkPreviewData.description()).isNotNull();
+                assertThat(linkPreviewData.image()).isNotNull();
+                assertThat(linkPreviewData.title()).isNotNull();
+                assertThat(linkPreviewData.url()).isEqualTo(url);
+
+                // check that the cache is available
+                var cache = cacheManager.getCache("linkPreview");
+                assertThat(cache).isNotNull();
+                assertThat(cache.get(url)).isNotNull();
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewReturnsRequestedUrlWhenOgUrlDiffers() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        Document document = Jsoup.parse("""
+                <html><head>
+                <meta property="og:title" content="AI Tools Directory" />
+                <meta property="og:description" content="A directory" />
+                <meta property="og:image" content="https://example.com/image.png" />
+                <meta property="og:url" content="https://other.example.com/page" />
+                </head><body></body></html>
+                """);
+
+        try (MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock = Mockito.mockStatic(LinkPreviewDocumentFetcher.class)) {
+            documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(requestedUrl)).thenReturn(document);
+
+            String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+            LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+            // The client removes a preview by locating this url in the message text, so it must be the posted link and not og:url.
+            assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+            assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewCachedWithOgUrlIsReturnedWithRequestedUrl() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        var cache = cacheManager.getCache("linkPreview");
+        assertThat(cache).isNotNull();
+        // An entry cached before the service started returning the requested url
+        cache.put(requestedUrl, new LinkPreviewDTO("AI Tools Directory", "A directory", "https://example.com/image.png", "https://other.example.com/page"));
+
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+        LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+        assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+        assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithInvalidUrls() throws Exception {
+        // Construct the URL with an encoded query parameter
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://localhost", StandardCharsets.UTF_8);
+
+        // Perform a GET request with the URL as a query parameter and make sure it throws
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithIpAddress() throws Exception {
+        // Test a blocked private IPv4 address
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://192.168.1.1", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithLoopbackIp() throws Exception {
+        // Test loopback address
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://127.0.0.1", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithIpv6Address() throws Exception {
+        // Test a blocked IPv6 address
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[::1]", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithFullIpv6Address() throws Exception {
+        // Test a blocked IPv6 address
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[2606:4700:4700::1111]", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithInvalidScheme() throws Exception {
+        // Test a non-http/https scheme
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("ftp://example.com", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithJavaScriptUrl() throws Exception {
+        // Test a JavaScript-based URL
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("javascript:void(0);", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewDataExtractionWithInvalidTld() throws Exception {
+        // Test an invalid top-level domain (TLD)
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://example.superlongtldover20chars", StandardCharsets.UTF_8);
+        request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
+    }
+
+    private static Stream<Arguments> provideUrls() {
+        var mockPath = Path.of(MOCK_FILE_PATH_PREFIX);
+        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", mockPath.resolve("github_pull_request_6615.txt").toFile()),
+                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", mockPath.resolve("github_pull_request_6618.txt").toFile()),
+                Arguments.of("https://github.com/", mockPath.resolve("github_home.txt").toFile()), Arguments.of(GOOGLE_URL, mockPath.resolve("google.txt").toFile()));
+    }
+}

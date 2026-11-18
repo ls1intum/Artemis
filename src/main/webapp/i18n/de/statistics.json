@@ -1,0 +1,80 @@
+{
+    "statistics": {
+        "statistics-title": "Statistiken",
+        "amountOfStudents": "# Studierende",
+        "span": {
+            "day": "Tag",
+            "week": "Woche",
+            "month": "Monat",
+            "quarter": "Quartal",
+            "year": "Jahr"
+        },
+        "spanLabel": "Zeitraum",
+        "title": "Nutzungsstatistiken",
+        "course_statistics_title": "Kursstatistiken",
+        "submissions": "Abgaben",
+        "active_users": "Aktive Nutzer:innen",
+        "logged_in_users": "Eingeloggte Nutzer:innen",
+        "released_exercises": "Veröffentlichte Aufgaben",
+        "exercises_due": "Aufgaben mit Abgabeende",
+        "conducted_exams": "Durchgeführte Klausuren",
+        "exam_participations": "Klausurteilnahmen",
+        "exam_registrations": "Klausuranmeldungen",
+        "active_tutors": "Aktive Tutor:innen",
+        "created_results": "Erstellte Resultate",
+        "created_feedbacks": "Erstellte Feedbacks",
+        "posts": "Beiträge",
+        "resolved_posts": "Als geklärt markierte Beiträge",
+        "submissionsTitle": "# Abgaben",
+        "active_usersTitle": "# Nutzer:innen",
+        "logged_in_usersTitle": "# Nutzer:innen",
+        "released_exercisesTitle": "# Aufgaben",
+        "exercises_dueTitle": "# Aufgaben",
+        "conducted_examsTitle": "# Klausuren",
+        "exam_participationsTitle": "# Klausurteilnahmen",
+        "exam_registrationsTitle": "# Klausuranmeldungen",
+        "active_tutorsTitle": "# Tutor:innen",
+        "created_resultsTitle": "# Bewertungen",
+        "created_feedbacksTitle": "# Feedbacks",
+        "postsTitle": "# Beiträge",
+        "resolved_postsTitle": "# Beiträge, die als geklärt markiert sind",
+        "score_distributionTitle": "% Studierende",
+        "scoreDistributionChartAriaLabel": "Balkendiagramm der Anzahl Teilnehmender pro Ergebnisbereich",
+        "score_distribution": "Verteilung der Bewertung"
+    },
+    "calendar_week": "KW",
+    "overview": {
+        "weeksAgo": "Vor {{ amount }} Wochen",
+        "weekAgo": "Vor 1 Woche",
+        "currentWeek": "Aktuelle Woche"
+    },
+    "weekdays": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
+    },
+    "months": {
+        "january": "Januar",
+        "february": "Februar",
+        "march": "März",
+        "april": "April",
+        "may": "Mai",
+        "june": "Juni",
+        "july": "Juli",
+        "august": "August",
+        "september": "September",
+        "october": "Oktober",
+        "november": "November",
+        "december": "Dezember"
+    },
+    "exercise-statistics": {
+        "title": "Aufgabenstatistiken",
+        "averageScore": "Durchschnittspunktzahl",
+        "participationRate": "Teilnahmen",
+        "resolved_posts": "Als geklärt markierte Beiträge"
+    }
+}

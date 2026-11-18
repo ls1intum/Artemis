@@ -1,0 +1,60 @@
+// Entrance animations of the preview. Layout and colours are Tailwind utilities in the template.
+@keyframes quiz-ai-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes quiz-ai-list-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes quiz-ai-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.preview-empty {
+    animation: quiz-ai-fade-in 0.2s ease-out both;
+}
+
+.question-list {
+    animation: quiz-ai-list-enter 0.25s ease-out both;
+}
+
+.question-list > * {
+    animation: quiz-ai-card-enter 0.3s ease-out both;
+}
+
+@for $i from 1 through 10 {
+    .question-list > *:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.07s};
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preview-empty,
+    .question-list,
+    .question-list > * {
+        animation: none;
+    }
+}

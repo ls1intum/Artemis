@@ -1,0 +1,48 @@
+<div data-testid="exam-mode-picker" class="flex flex-col items-start gap-3!">
+    <tumaet-ui-button-group>
+        <button
+            tumAetUiButton
+            type="button"
+            id="standard-mode"
+            data-testid="real-mode"
+            [severity]="isRealExam() ? 'primary' : 'secondary'"
+            [disabled]="disableInput()"
+            [attr.aria-pressed]="isRealExam()"
+            (click)="setExamMode(ExamMode.REAL)"
+            jhiTranslate="artemisApp.examManagement.testExam.realExam"
+            [tumAetUiTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
+        ></button>
+        <button
+            tumAetUiButton
+            type="button"
+            id="practice-mode"
+            data-testid="test-mode"
+            [severity]="isRealExam() ? 'secondary' : 'primary'"
+            [disabled]="disableInput()"
+            [attr.aria-pressed]="!isRealExam()"
+            (click)="selectPracticeExam()"
+            jhiTranslate="artemisApp.examManagement.testExam.testExam"
+            [tumAetUiTooltip]="'artemisApp.examManagement.testExam.testExamTooltip' | artemisTranslate"
+        ></button>
+    </tumaet-ui-button-group>
+    @if (!isRealExam()) {
+        <div class="flex flex-col gap-1" data-testid="supervised-session-option">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox
+                    inputId="supervised-session"
+                    ariaDescribedBy="supervised-session-description"
+                    data-testid="supervised-session-checkbox"
+                    [checked]="hasSupervisedSession()"
+                    [disabled]="disableInput()"
+                    (checkedChange)="setSupervisedSession($event)"
+                />
+                <label for="supervised-session" jhiTranslate="artemisApp.examManagement.testExam.supervisedSession"></label>
+            </div>
+            <p
+                id="supervised-session-description"
+                class="m-0 max-w-prose text-sm text-muted-color"
+                jhiTranslate="artemisApp.examManagement.testExam.supervisedSessionDescription"
+            ></p>
+        </div>
+    }
+</div>

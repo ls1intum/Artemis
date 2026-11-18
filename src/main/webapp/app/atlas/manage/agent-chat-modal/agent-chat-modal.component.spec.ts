@@ -1,0 +1,2373 @@
+import { vi } from 'vitest';
+import type { Mock, Mocked } from 'vitest';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { FormsModule } from '@angular/forms';
+
+import { AgentChatModalComponent } from './agent-chat-modal.component';
+import { AgentChatResponse, AgentChatService, AgentHistoryMessage } from '../services/agent-chat.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ChatMessage, CompetencyMappingViewModel, ExerciseMappingPreviewViewModel } from 'app/atlas/shared/entities/chat-message.model';
+import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { throwError } from 'rxjs';
+import { ElementRef, signal } from '@angular/core';
+import { of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+
+describe('AgentChatModalComponent', () => {
+    let fixture: ComponentFixture<AgentChatModalComponent>;
+    let component: AgentChatModalComponent;
+
+    let mockAgentChatService: Mocked<AgentChatService>;
+    let mockCompetencyService: Mocked<CompetencyService>;
+    let mockTranslateService: TranslateService;
+
+    let mockMessagesContainer: ElementRef;
+    let mockMessageInput: ElementRef<HTMLTextAreaElement>;
+    let mockTextarea: Partial<HTMLTextAreaElement>;
+    let message: ChatMessage;
+    const flushPromises = async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+    };
+
+    beforeEach(async () => {
+        mockAgentChatService = {
+            sendMessage: vi.fn().mockReturnValue(
+                of({
+                    message: 'Default mocked response',
+                    sessionId: 'session',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                }),
+            ),
+            getConversationHistory: vi.fn().mockReturnValue(of([])),
+        } as unknown as Mocked<AgentChatService>;
+
+        mockCompetencyService = {
+            getAll: vi.fn(),
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+        } as unknown as Mocked<CompetencyService>;
+
+        const mockStyle = { height: '' } as unknown as CSSStyleDeclaration;
+        mockTextarea = {
+            focus: vi.fn(),
+            style: mockStyle,
+            scrollHeight: 100,
+        };
+
+        mockMessageInput = {
+            nativeElement: mockTextarea as HTMLTextAreaElement,
+        } as ElementRef<HTMLTextAreaElement>;
+
+        mockMessagesContainer = {
+            nativeElement: {
+                scrollTop: 0,
+                scrollHeight: 500,
+            },
+        } as ElementRef;
+
+        await TestBed.configureTestingModule({
+            imports: [AgentChatModalComponent, FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (value: string) => `translated:${value}`)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: { courseId: 123 } }) },
+                { provide: AgentChatService, useValue: mockAgentChatService },
+                { provide: CompetencyService, useValue: mockCompetencyService },
+            ],
+        })
+            .overrideComponent(AgentChatModalComponent, {
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
+                add: {
+                    imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (value: string) => `translated:${value}`)],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(AgentChatModalComponent);
+        component = fixture.componentInstance;
+
+        mockTranslateService = TestBed.inject(TranslateService);
+
+        component.courseId.set(123);
+
+        const messageInputSignal = () => mockMessageInput;
+        const messagesContainerSignal = () => mockMessagesContainer;
+
+        Object.defineProperty(component, 'messageInput', {
+            get: () => messageInputSignal,
+            configurable: true,
+        });
+        Object.defineProperty(component, 'messagesContainer', {
+            get: () => messagesContainerSignal,
+            configurable: true,
+        });
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.clearAllTimers();
+        if (component) {
+            component.messages.set([]);
+        }
+    });
+
+    describe('Component Initialization', () => {
+        it('should create', () => {
+            expect(component).toBeTruthy();
+        });
+
+        it('should show welcome message after init when history is empty', () => {
+            const welcomeMessage = 'Welcome to the agent chat!';
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
+            component.ngOnInit();
+
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
+            const messages = component.messages();
+            expect(messages.length).toBeGreaterThanOrEqual(1);
+            expect(messages[0].isUser).toBeFalsy();
+        });
+
+        it('should load conversation history when available', () => {
+            const mockHistory: AgentHistoryMessage[] = [
+                { content: 'Previous user message', isUser: true },
+                { content: 'Previous agent response', isUser: false },
+                { content: 'Another user message', isUser: true },
+            ];
+            (mockAgentChatService.getConversationHistory as Mock).mockReturnValue(of(mockHistory));
+            component.ngOnInit();
+            expect(mockAgentChatService.getConversationHistory).toHaveBeenCalledWith(123);
+            const messages = component.messages();
+            expect(messages).toHaveLength(4);
+            expect(messages[1].content).toBe('Previous user message');
+            expect(messages[1].isUser).toBeTruthy();
+            expect(messages[2].content).toBe('Previous agent response');
+            expect(messages[2].isUser).toBeFalsy();
+            expect(messages[3].content).toBe('Another user message');
+            expect(messages[3].isUser).toBeTruthy();
+        });
+
+        it('should show welcome message on history fetch error', () => {
+            const welcomeMessage = 'Welcome message on error';
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
+            (mockAgentChatService.getConversationHistory as Mock).mockReturnValue(throwError(() => new Error('Network error')));
+
+            component.ngOnInit();
+
+            expect(mockAgentChatService.getConversationHistory).toHaveBeenCalledWith(123);
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
+            const messages = component.messages();
+            expect(component.messages().length).toBeGreaterThanOrEqual(2);
+            expect(messages[1].content).toBe(welcomeMessage);
+            expect(messages[1].isUser).toBeFalsy();
+        });
+
+        it('should generate unique message IDs for history messages', () => {
+            const mockHistory: AgentHistoryMessage[] = [
+                { content: 'Message 1', isUser: true },
+                { content: 'Message 2', isUser: false },
+            ];
+            (mockAgentChatService.getConversationHistory as Mock).mockReturnValue(of(mockHistory));
+
+            component.ngOnInit();
+
+            const messageIds = component.messages().map((m) => m.id);
+            const uniqueIds = new Set(messageIds);
+            expect(uniqueIds.size).toBe(messageIds.length);
+        });
+
+        it('should set correct timestamps for history messages', () => {
+            const beforeTime = new Date();
+            const mockHistory: AgentHistoryMessage[] = [{ content: 'Test message', isUser: true }];
+            (mockAgentChatService.getConversationHistory as Mock).mockReturnValue(of(mockHistory));
+
+            component.ngOnInit();
+            const afterTime = new Date();
+
+            const messages = component.messages();
+            expect(messages.length).toBeGreaterThanOrEqual(2); // welcome + history
+            expect(messages[1].timestamp).toBeInstanceOf(Date);
+            expect(messages[1].timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+            expect(messages[1].timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+        });
+    });
+
+    describe('competency operations', () => {
+        it('should handle competency creation by sending approval marker', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                competencyPreviews: [
+                    {
+                        title: 'Test Competency',
+                        description: 'Test Description',
+                        taxonomy: CompetencyTaxonomy.ANALYZE,
+                    },
+                ],
+            };
+
+            component['onCreateCompetencies'](message);
+
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+        });
+
+        it('should handle competency update by sending approval marker', () => {
+            const message: ChatMessage = {
+                id: '2',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                competencyPreviews: [
+                    {
+                        title: 'Updated Competency',
+                        description: 'Updated Description',
+                        taxonomy: CompetencyTaxonomy.ANALYZE,
+                        competencyId: 1,
+                    },
+                ],
+            };
+
+            component['onCreateCompetencies'](message);
+
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+        });
+    });
+
+    describe('agent response handling', () => {
+        it('should handle response with message', () => {
+            const response = {
+                message: 'Agent response',
+                sessionId: 'test-session',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            (mockAgentChatService.sendMessage as Mock).mockReturnValue(of(response));
+            component.currentMessage.set('Test message');
+            component['sendMessage']();
+
+            expect(component.messages().length).toBeGreaterThanOrEqual(2);
+        });
+
+        it('should handle response with null message by using fallback', () => {
+            const response = {
+                message: null as unknown as string,
+                sessionId: 'test-session',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            // The component expects a string fallback from translateService; we mock service to return fallback string when invoked
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Fallback error message');
+            (mockAgentChatService.sendMessage as Mock).mockReturnValue(of(response));
+
+            component.currentMessage.set('Test message');
+            component['sendMessage']();
+
+            expect(component.messages().length).toBeGreaterThanOrEqual(2);
+        });
+
+        it('should handle response with undefined message by using fallback', () => {
+            const response = {
+                message: undefined as unknown as string,
+                sessionId: 'test-session',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Fallback error message');
+            (mockAgentChatService.sendMessage as Mock).mockReturnValue(of(response));
+
+            component.currentMessage.set('Test message');
+            component['sendMessage']();
+
+            expect(component.messages().length).toBeGreaterThanOrEqual(2);
+        });
+    });
+
+    describe('translate service mocking', () => {
+        it('should mock translate service instant method correctly', () => {
+            const spy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue('translated text');
+
+            const result = mockTranslateService.instant('test.key');
+            expect(result).toBe('translated text');
+            expect(spy).toHaveBeenCalledWith('test.key');
+        });
+    });
+    describe('batch operations', () => {
+        it('should handle batch response correctly', () => {
+            const mockBatchResponse = {
+                message: 'Batch completed',
+                sessionId: 'test-session',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: true,
+            };
+
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockBatchResponse));
+
+            component.currentMessage.set('Create batch competencies');
+
+            component['sendMessage']();
+
+            const messages = component.messages();
+            expect(messages).toHaveLength(3);
+
+            expect(messages[2].content).toBe('Batch completed');
+        });
+    });
+
+    describe('canSendMessage computed signal', () => {
+        beforeEach(() => {
+            component.isAgentTyping.set(false);
+        });
+
+        it('should return false for empty input', () => {
+            component.currentMessage.set('');
+
+            expect(component.canSendMessage()).toBeFalsy();
+        });
+
+        it('should return false for whitespace only input', () => {
+            component.currentMessage.set('   \n\t  ');
+
+            expect(component.canSendMessage()).toBeFalsy();
+        });
+
+        it('should return false for too long input', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
+
+            expect(component.canSendMessage()).toBeFalsy();
+        });
+
+        it('should return false when agent is typing', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(true);
+
+            expect(component.canSendMessage()).toBeFalsy();
+        });
+
+        it('should return true for valid input', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(false);
+
+            expect(component.canSendMessage()).toBeTruthy();
+        });
+
+        it('should return true for input at max length limit', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
+            component.isAgentTyping.set(false);
+
+            expect(component.canSendMessage()).toBeTruthy();
+        });
+    });
+
+    describe('sendMessage', () => {
+        beforeEach(() => {
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            component.courseId.set(123);
+        });
+
+        it('should send message when Enter key is pressed', () => {
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Agent response',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            fixture.detectChanges();
+
+            const textarea = fixture.debugElement.nativeElement.querySelector('textarea');
+            const enterEvent = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                shiftKey: false,
+            });
+
+            textarea.dispatchEvent(enterEvent);
+
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
+        });
+
+        it('should handle service error gracefully', () => {
+            component.currentMessage.set('Test message');
+            const errorMessage = 'Connection failed';
+            mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Service error')));
+            const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(errorMessage);
+            fixture.detectChanges();
+
+            vi.clearAllMocks();
+            translateSpy.mockReturnValue(errorMessage);
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+            const messages = component.messages();
+            expect(component.isAgentTyping()).toBeFalsy();
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
+            expect(messages).toHaveLength(3); // Welcome + user message + error message
+            expect(messages[2].content).toBe(errorMessage);
+            expect(messages[2].isUser).toBeFalsy();
+        });
+
+        it('should not send message if canSendMessage is false', () => {
+            component.currentMessage.set('');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Focus behavior', () => {
+        it('should focus input after view init', () => {
+            vi.useFakeTimers();
+            try {
+                component.ngAfterViewInit();
+                vi.advanceTimersByTime(10);
+            } finally {
+                vi.useRealTimers();
+            }
+
+            expect(mockTextarea.focus).toHaveBeenCalled();
+        });
+
+        it('should scroll to bottom when shouldScrollToBottom is true', () => {
+            component.shouldScrollToBottom.set(true);
+
+            component.ngAfterViewChecked();
+
+            expect(mockMessagesContainer.nativeElement.scrollTop).toBe(500); // scrollHeight value
+            expect(component.shouldScrollToBottom()).toBeFalsy();
+        });
+
+        it('should not scroll when shouldScrollToBottom is false', () => {
+            component.shouldScrollToBottom.set(false);
+            const originalScrollTop = mockMessagesContainer.nativeElement.scrollTop;
+
+            component.ngAfterViewChecked();
+
+            expect(mockMessagesContainer.nativeElement.scrollTop).toBe(originalScrollTop);
+        });
+    });
+
+    describe('Template integration', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome message');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should display messages in the template', () => {
+            const userMessage: ChatMessage = {
+                id: '1',
+                content: 'User message',
+                isUser: true,
+                timestamp: new Date(),
+            };
+            const agentMessage: ChatMessage = {
+                id: '2',
+                content: 'Agent response',
+                isUser: false,
+                timestamp: new Date(),
+            };
+            component.messages.set([userMessage, agentMessage]);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const messageElements = fixture.debugElement.nativeElement.querySelectorAll('[data-testid="agent-chat-message"]');
+            expect(messageElements).toHaveLength(2);
+
+            const userMessageElement = messageElements[0];
+            const agentMessageElement = messageElements[1];
+
+            expect(userMessageElement.dataset['sender']).toBe('user');
+            expect(agentMessageElement.dataset['sender']).toBe('agent');
+        });
+
+        it('should show typing indicator when isAgentTyping is true', () => {
+            component.isAgentTyping.set(true);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-typing-indicator"]');
+            expect(typingIndicator).toBeTruthy();
+        });
+
+        it('should hide typing indicator when isAgentTyping is false', () => {
+            component.isAgentTyping.set(false);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-typing-indicator"]');
+            expect(typingIndicator).toBeFalsy();
+        });
+
+        it('should prevent message sending when agent is typing', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(true);
+
+            expect(component.canSendMessage()).toBeFalsy();
+            expect(component.isAgentTyping()).toBeTruthy();
+        });
+
+        it('should disable send button when canSendMessage is false', () => {
+            component.currentMessage.set('');
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            expect(sendButton.disabled).toBeTruthy();
+        });
+
+        it('should enable send button when canSendMessage is true', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(false);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            expect(sendButton.disabled).toBeFalsy();
+        });
+
+        it('should show character count in template', () => {
+            component.currentMessage.set('Test message');
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-char-count"]');
+            expect(charCountElement.textContent.trim()).toContain('12 / 8000');
+        });
+
+        it('should show error styling when message is too long', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-char-count"].text-state-danger');
+            expect(charCountElement).toBeTruthy();
+
+            const errorMessage = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-message-too-long"]');
+            expect(errorMessage).toBeTruthy();
+        });
+    });
+
+    describe('Modal interaction', () => {
+        it('should close the dialog when the close button is clicked', () => {
+            const dialogRef = TestBed.inject(TumAetUiDialogRef);
+            fixture.detectChanges();
+
+            const closeButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-close-button"]');
+            closeButton.click();
+
+            expect(dialogRef.close).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Competency modification events', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should emit competencyChanged event when competenciesModified is true', () => {
+            component.currentMessage.set('Create a competency for OOP');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Competency created successfully',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: true,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not emit competencyChanged event when competenciesModified is false', () => {
+            component.currentMessage.set('What competencies exist?');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Here are the existing competencies...',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Textarea auto-resize behavior', () => {
+        it('should auto-resize textarea on input when content exceeds max height', () => {
+            Object.defineProperty(mockTextarea, 'scrollHeight', {
+                value: 150, // Greater than max height of 120px
+                writable: true,
+                configurable: true,
+            });
+
+            component['onTextareaInput']();
+
+            // Height should be set to max height (120px) when scrollHeight exceeds it
+            expect(mockTextarea.style!.height).toBe('120px');
+        });
+
+        it('should auto-resize textarea on input when content is within max height', () => {
+            Object.defineProperty(mockTextarea, 'scrollHeight', {
+                value: 80, // Less than max height of 120px
+                writable: true,
+                configurable: true,
+            });
+
+            component['onTextareaInput']();
+
+            // Height should be set to scrollHeight when it's less than max height
+            expect(mockTextarea.style!.height).toBe('80px');
+        });
+
+        it('should handle case when textarea element is not available', () => {
+            Object.defineProperty(component, 'messageInput', {
+                get: () => () => null,
+                configurable: true,
+            });
+            expect(() => component['onTextareaInput']()).not.toThrow();
+        });
+    });
+
+    describe('Computed signals', () => {
+        it('should calculate currentMessageLength correctly', () => {
+            component.currentMessage.set('Hello');
+
+            expect(component.currentMessageLength()).toBe(5);
+        });
+
+        it('should correctly identify message as too long', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
+
+            expect(component.isMessageTooLong()).toBeTruthy();
+        });
+
+        it('should correctly identify message as not too long', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
+
+            expect(component.isMessageTooLong()).toBeFalsy();
+        });
+
+        it('should correctly identify empty message as not too long', () => {
+            component.currentMessage.set('');
+
+            expect(component.isMessageTooLong()).toBeFalsy();
+        });
+    });
+
+    describe('Message state management', () => {
+        it('should clear currentMessage after sending', () => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+            component.currentMessage.set('Test message to send');
+            component.isAgentTyping.set(false);
+
+            const mockResponse = {
+                message: 'Agent response',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(component.currentMessage()).toBe('');
+        });
+
+        it('should set isAgentTyping to true when sending message', () => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({
+                    message: 'Response',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                }),
+            );
+
+            fixture.detectChanges();
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(component.isAgentTyping()).toBeFalsy(); // After response completes
+        });
+
+        it('should add user message to messages array', () => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+            const initialMessageCount = component.messages().length;
+            component.currentMessage.set('User test message');
+            component.isAgentTyping.set(false);
+
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({
+                    message: 'Agent response',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                }),
+            );
+
+            fixture.detectChanges();
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            expect(component.messages().length).toBeGreaterThan(initialMessageCount);
+            const userMessage = component.messages().find((msg) => msg.isUser && msg.content === 'User test message');
+            expect(userMessage).toBeDefined();
+        });
+
+        describe('Scroll behavior edge cases', () => {
+            it('should handle scrollToBottom when messagesContainer is null', () => {
+                Object.defineProperty(component, 'messagesContainer', {
+                    get: () => () => null,
+                    configurable: true,
+                });
+                component.shouldScrollToBottom.set(true);
+                expect(() => component.ngAfterViewChecked()).not.toThrow();
+            });
+
+            it('should handle empty response message from service', () => {
+                component.currentMessage.set('Test message');
+                component.isAgentTyping.set(false);
+                const mockResponse = {
+                    message: '',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+                // With ?? (nullish coalescing), empty string is a valid message and used as-is
+                const messages = component.messages();
+                const lastAgentMessage = messages.filter((m) => !m.isUser).pop();
+                expect(lastAgentMessage?.content).toBe('');
+            });
+
+            it('should handle null response message from service', () => {
+                component.currentMessage.set('Test message');
+                component.isAgentTyping.set(false);
+                const errorText = 'Error text';
+                const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(errorText);
+                const mockResponse = {
+                    message: null,
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
+            });
+        });
+
+        describe('Competency Preview Extraction', () => {
+            beforeEach(() => {
+                component.ngOnInit();
+            });
+
+            it('should extract competency preview from JSON in agent response', () => {
+                const mockResponse = {
+                    message: "Here's a competency suggestion:",
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            title: 'Object-Oriented Programming',
+                            description: 'Understanding OOP principles',
+                            taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                            icon: 'comments',
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Create OOP competency');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews?.[0].title).toBe('Object-Oriented Programming');
+                expect(agentMessage?.competencyPreviews?.[0].description).toBe('Understanding OOP principles');
+                expect(agentMessage?.competencyPreviews?.[0].taxonomy).toBe(CompetencyTaxonomy.UNDERSTAND);
+                expect(agentMessage?.competencyPreviews?.[0].icon).toBe('comments');
+            });
+
+            it('should extract competency preview from structured response', () => {
+                const mockResponse = {
+                    message: "Here's a suggestion:",
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            title: 'Data Structures',
+                            description: 'Arrays, lists, trees, and graphs',
+                            taxonomy: CompetencyTaxonomy.APPLY,
+                            icon: 'pen-fancy',
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Create data structures competency');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews?.[0].title).toBe('Data Structures');
+                expect(agentMessage?.competencyPreviews?.[0].taxonomy).toBe(CompetencyTaxonomy.APPLY);
+            });
+
+            it('should extract competencyId for update operations', () => {
+                const mockResponse = {
+                    message: 'Updated competency preview:',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            competency: {
+                                title: 'Updated Title',
+                                description: 'Updated description',
+                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                                icon: 'magnifying-glass',
+                            },
+                            competencyId: 42,
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Update competency 42');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews?.[0].competencyId).toBe(42);
+            });
+
+            it('should extract viewOnly flag when present', () => {
+                const mockResponse = {
+                    message: 'Preview:',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            viewOnly: true,
+                            competency: {
+                                title: 'Read-only Competency',
+                                description: 'For viewing only',
+                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                                icon: 'brain',
+                            },
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Show me competency');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews?.[0].viewOnly).toBeTruthy();
+            });
+
+            it('should not extract preview when no preview is sent', () => {
+                const mockResponse = {
+                    message: 'Response: This is not a preview',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Some message');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toBeUndefined();
+            });
+
+            it('should handle malformed JSON gracefully', () => {
+                const mockResponse = {
+                    message: 'This is a normal response without JSON',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Normal message');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+                const messages = component.messages();
+                const agentMessage = messages[component.messages().length - 1];
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toBeUndefined();
+                expect(agentMessage?.content).toBe('This is a normal response without JSON');
+            });
+        });
+
+        describe('Batch Competency Preview Extraction', () => {
+            beforeEach(() => {
+                vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                component.ngOnInit();
+            });
+
+            it('should extract batch competency preview from structured response', () => {
+                const mockResponse = {
+                    message: 'Here are multiple competencies:',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            title: 'Comp 1',
+                            description: 'Desc 1',
+                            taxonomy: CompetencyTaxonomy.REMEMBER,
+                            icon: 'brain',
+                        },
+                        {
+                            title: 'Comp 2',
+                            description: 'Desc 2',
+                            taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                            icon: 'comments',
+                        },
+                        {
+                            title: 'Comp 3',
+                            description: 'Desc 3',
+                            taxonomy: CompetencyTaxonomy.APPLY,
+                            icon: 'pen-fancy',
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Create multiple competencies');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toHaveLength(3);
+                expect(agentMessage?.competencyPreviews?.[0].title).toBe('Comp 1');
+                expect(agentMessage?.competencyPreviews?.[1].title).toBe('Comp 2');
+                expect(agentMessage?.competencyPreviews?.[2].title).toBe('Comp 3');
+            });
+
+            it('should prioritize batch preview over single preview', () => {
+                const mockResponse = {
+                    message: 'Batch preview:',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [
+                        {
+                            competency: {
+                                title: 'Batch 1',
+                                description: 'Desc 1',
+                                taxonomy: CompetencyTaxonomy.APPLY,
+                                icon: 'pen-fancy',
+                            },
+                        },
+                        {
+                            competency: {
+                                title: 'Batch 2',
+                                description: 'Desc 2',
+                                taxonomy: CompetencyTaxonomy.ANALYZE,
+                                icon: 'magnifying-glass',
+                            },
+                        },
+                    ],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Create batch');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toHaveLength(2);
+            });
+
+            it('should handle empty batch preview gracefully', () => {
+                const mockResponse = {
+                    message: 'Response with empty batch',
+                    sessionId: 'session',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                    competencyPreviews: [],
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+                component.currentMessage.set('Empty batch');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews !== undefined);
+                expect(agentMessage?.competencyPreviews || []).toHaveLength(0);
+            });
+
+            describe('Plan Pending Detection and Approval', () => {
+                beforeEach(() => {
+                    vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                    component.ngOnInit();
+                });
+
+                it('should detect plan pending marker in agent response', () => {
+                    const mockResponse = {
+                        message: 'Here is my plan:\n1. Step 1\n2. Step 2\n[PLAN_PENDING]',
+                        sessionId: 'course_123',
+                        timestamp: new Date().toISOString(),
+                        success: true,
+                        competenciesModified: false,
+                    };
+                    mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                    component.currentMessage.set('Create a plan');
+                    fixture.detectChanges();
+
+                    const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                    sendButton.click();
+
+                    const agentMessage = component.messages().find((msg) => !msg.isUser && msg.planPending);
+                    expect(agentMessage).toBeDefined();
+                    expect(agentMessage?.planPending).toBeTruthy();
+                    expect(agentMessage?.content).not.toContain('[PLAN_PENDING]');
+                });
+
+                it('should send approval message when onApprovePlan is called', () => {
+                    const planApprovalText = 'I approve the plan';
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(planApprovalText);
+                    const approvalResponse = {
+                        message: 'Plan approved, executing...',
+                        sessionId: 'course_123',
+                        timestamp: new Date().toISOString(),
+                        success: true,
+                        competenciesModified: false,
+                    };
+                    mockAgentChatService.sendMessage.mockReturnValue(of(approvalResponse));
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Plan pending',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: true,
+                    };
+                    component.messages.set([message]);
+
+                    component['onApprovePlan'](message);
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(planApprovalText, 123);
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.planApproval');
+
+                    // Find the updated message in the messages array
+                    const updatedMessage = component.messages().find((msg) => msg.id === '1');
+                    expect(updatedMessage?.planApproved).toBeTruthy();
+                    expect(updatedMessage?.planPending).toBeFalsy();
+                });
+
+                it('should emit competencyChanged when approval modifies competencies', () => {
+                    const approvalResponse = {
+                        message: 'Competencies created successfully',
+                        sessionId: 'course_123',
+                        timestamp: new Date().toISOString(),
+                        success: true,
+                        competenciesModified: true,
+                    };
+                    mockAgentChatService.sendMessage.mockReturnValue(of(approvalResponse));
+                    const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Plan',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: true,
+                    };
+
+                    component['onApprovePlan'](message);
+
+                    expect(emitSpy).toHaveBeenCalledOnce();
+                });
+
+                it('should not approve plan twice', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Plan',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: false,
+                        planApproved: true,
+                    };
+
+                    component['onApprovePlan'](message);
+
+                    expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+                });
+
+                it('should handle approval error gracefully', () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Approval failed')));
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Plan',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: true,
+                    };
+
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant');
+
+                    component['onApprovePlan'](message);
+
+                    expect(component.isAgentTyping()).toBeFalsy();
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
+                });
+            });
+
+            describe('Create Competency from Preview', () => {
+                beforeEach(() => {
+                    vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                    component.ngOnInit();
+
+                    message = {
+                        id: '1',
+                        content: 'Create competency',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'New Competency',
+                                description: 'Test description',
+                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                                icon: 'comments',
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+                });
+
+                it('should create new competency when onCreateCompetencies is called', async () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competency created successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
+                    );
+                    const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    expect(component.isAgentTyping()).toBeFalsy();
+                    expect(emitSpy).toHaveBeenCalled();
+                });
+
+                it('should update existing competency when competencyId is present', async () => {
+                    message.competencyPreviews = [
+                        {
+                            title: 'Updated Competency',
+                            description: 'Updated description',
+                            taxonomy: CompetencyTaxonomy.ANALYZE,
+                            icon: 'magnifying-glass',
+                            competencyId: 42,
+                        },
+                    ];
+                    component.messages.set([message]);
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competency updated successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
+                    );
+                    const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    const updatedMessage = component.messages().find((msg) => msg.id === '1');
+                    expect(updatedMessage?.competencyCreated).toBeTruthy();
+                    expect(emitSpy).toHaveBeenCalledOnce();
+                });
+
+                it('should not create competency twice', () => {
+                    message.competencyCreated = true;
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockCompetencyService.create).not.toHaveBeenCalled();
+                    expect(mockCompetencyService.update).not.toHaveBeenCalled();
+                });
+
+                it('should not create competency without preview', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'No preview',
+                        isUser: false,
+                        timestamp: new Date(),
+                    };
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockCompetencyService.create).not.toHaveBeenCalled();
+                });
+
+                it('should handle creation error gracefully', async () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Creation failed')));
+                    const createFailedText = 'Failed to create competency';
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
+
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(component.isAgentTyping()).toBeFalsy();
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
+                    const errorMessage = component.messages().find((msg) => !msg.isUser && msg.content === createFailedText);
+                    expect(errorMessage).toBeDefined();
+                });
+
+                it('should handle update error gracefully', async () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Update failed')));
+                    const updateFailedText = 'Failed to update competency';
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(updateFailedText);
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Preview',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Updated Competency',
+                                description: 'Description',
+                                taxonomy: CompetencyTaxonomy.ANALYZE,
+                                icon: 'magnifying-glass',
+                                competencyId: 42,
+                            },
+                        ],
+                    };
+
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(component.isAgentTyping()).toBeFalsy();
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
+                    const errorMessage = component.messages().find((msg) => !msg.isUser && msg.content === updateFailedText);
+                    expect(errorMessage).toBeDefined();
+                });
+            });
+
+            describe('Invalidate Pending Plan Approvals', () => {
+                beforeEach(() => {
+                    vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                    component.ngOnInit();
+                });
+
+                it('should invalidate pending plans when user sends new message', () => {
+                    const pendingPlanMessage: ChatMessage = {
+                        id: '1',
+                        content: 'Plan 1',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: true,
+                    };
+                    const approvedPlanMessage: ChatMessage = {
+                        id: '2',
+                        content: 'Plan 2',
+                        isUser: false,
+                        timestamp: new Date(),
+                        planPending: false,
+                        planApproved: true,
+                    };
+
+                    component.messages.set([pendingPlanMessage, approvedPlanMessage]);
+                    component.currentMessage.set('New message');
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Response',
+                            sessionId: 'course_123',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: false,
+                        }),
+                    );
+                    fixture.detectChanges();
+
+                    const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                    sendButton.click();
+                    const messages = component.messages();
+                    expect(messages[0].planPending).toBeFalsy();
+                    expect(messages[1].planApproved).toBeTruthy(); // Already approved plans should not be affected
+                });
+            });
+
+            describe('Batch Competency Creation', () => {
+                beforeEach(() => {
+                    vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                    component.ngOnInit();
+                });
+
+                it('should create multiple competencies from batch preview', async () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competencies created successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
+                    );
+                    const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Batch preview',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Comp 1',
+                                description: 'Desc 1',
+                                taxonomy: CompetencyTaxonomy.REMEMBER,
+                                icon: 'brain',
+                            },
+                            {
+                                title: 'Comp 2',
+                                description: 'Desc 2',
+                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                                icon: 'comments',
+                            },
+                            {
+                                title: 'Comp 3',
+                                description: 'Desc 3',
+                                taxonomy: CompetencyTaxonomy.APPLY,
+                                icon: 'pen-fancy',
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    expect(component.isAgentTyping()).toBeFalsy();
+
+                    const updatedMessage = component.messages().find((msg) => msg.id === '1');
+                    expect(updatedMessage?.competencyCreated).toBeTruthy();
+                    expect(emitSpy).toHaveBeenCalledOnce();
+                });
+
+                it('should not create batch competencies twice', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Test',
+                                description: 'Test',
+                                taxonomy: CompetencyTaxonomy.APPLY,
+                                icon: 'pen-fancy',
+                            },
+                        ],
+                        competencyCreated: true,
+                    };
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockCompetencyService.create).not.toHaveBeenCalled();
+                });
+
+                it('should not create batch without preview', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'No batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                    };
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockCompetencyService.create).not.toHaveBeenCalled();
+                });
+
+                it('should not create empty batch', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Empty batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [],
+                    };
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockCompetencyService.create).not.toHaveBeenCalled();
+                });
+
+                it('should handle mixed create and update operations in batch', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Mixed batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'New',
+                                description: 'New desc',
+                                taxonomy: CompetencyTaxonomy.REMEMBER,
+                                icon: 'brain',
+                            },
+                            {
+                                title: 'Update',
+                                description: 'Update desc',
+                                taxonomy: CompetencyTaxonomy.APPLY,
+                                icon: 'pen-fancy',
+                                competencyId: 10,
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    const messages = component.messages();
+                    const successMessage = messages[component.messages().length - 1];
+                    expect(successMessage).toBeDefined();
+                });
+
+                it('should handle all updates in batch', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Update batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Update 1',
+                                description: 'Desc 1',
+                                taxonomy: CompetencyTaxonomy.ANALYZE,
+                                icon: 'magnifying-glass',
+                                competencyId: 1,
+                            },
+                            {
+                                title: 'Update 2',
+                                description: 'Desc 2',
+                                taxonomy: CompetencyTaxonomy.EVALUATE,
+                                icon: 'plus-minus',
+                                competencyId: 2,
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    const messages = component.messages();
+                    const successMessage = messages[component.messages().length - 1];
+                    expect(successMessage).toBeDefined();
+                });
+
+                it('should handle single competency in batch', () => {
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Single batch',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Single',
+                                description: 'Single desc',
+                                taxonomy: CompetencyTaxonomy.CREATE,
+                                icon: 'cubes-stacked',
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
+                    const messages = component.messages();
+                    const successMessage = messages[component.messages().length - 1];
+                    expect(successMessage).toBeDefined();
+                });
+
+                it('should handle batch creation error gracefully', async () => {
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Creation failed')));
+                    const createFailedText = 'Failed to create competency';
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
+
+                    const message: ChatMessage = {
+                        id: '1',
+                        content: 'Batch error',
+                        isUser: false,
+                        timestamp: new Date(),
+                        competencyPreviews: [
+                            {
+                                title: 'Error',
+                                description: 'Error desc',
+                                taxonomy: CompetencyTaxonomy.APPLY,
+                                icon: 'pen-fancy',
+                            },
+                        ],
+                    };
+                    component.messages.set([message]);
+
+                    component['onCreateCompetencies'](message);
+                    await flushPromises();
+
+                    expect(component.isAgentTyping()).toBeFalsy();
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
+                });
+            });
+        });
+
+        describe('Edge Cases for JSON Extraction', () => {
+            beforeEach(() => {
+                vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+                component.ngOnInit();
+            });
+
+            it('should handle null content in extractCompetencyPreview', () => {
+                const mockResponse = {
+                    message: null,
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Error message');
+                component.currentMessage.set('Test');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toBeUndefined();
+            });
+
+            it('should handle undefined content in extractcompetencyPreviews', () => {
+                const mockResponse = {
+                    message: undefined,
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Error message');
+                component.currentMessage.set('Test');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toBeUndefined();
+            });
+
+            it('should handle incomplete JSON in message', () => {
+                const mockResponse = {
+                    message: 'Here is some text {"preview": true, "competency": { incomplete',
+                    sessionId: 'course_123',
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                    competenciesModified: false,
+                };
+                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+                component.currentMessage.set('Test');
+                fixture.detectChanges();
+
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+                sendButton.click();
+
+                const agentMessage = component.messages().find((msg) => !msg.isUser);
+                expect(agentMessage).toBeDefined();
+                expect(agentMessage?.competencyPreviews).toBeUndefined();
+            });
+        });
+    });
+
+    describe('onCreateRelation', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should create relation successfully and mark message as created', () => {
+            const mockRelationResponse = {
+                message: 'Relation created successfully',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockRelationResponse as unknown as AgentChatResponse));
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Relation preview',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'OOP',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'Design Patterns',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+            component.messages.set([message]);
+
+            component['onCreateRelation'](message);
+
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_RELATION]', 123);
+            const updatedMessage = component.messages().find((msg) => msg.id === '1');
+            expect(updatedMessage?.relationCreated).toBeTruthy();
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should handle relation creation error gracefully', () => {
+            mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Relation failed')));
+            const failureText = 'Relation mapping failed';
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue(failureText);
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Relation preview',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.EXTENDS,
+                    },
+                ],
+            };
+            component.messages.set([message]);
+
+            component['onCreateRelation'](message);
+
+            expect(component.isAgentTyping()).toBeFalsy();
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.failure.relationMappingFailed');
+            const errorMsg = component.messages().find((msg) => msg.content === failureText);
+            expect(errorMsg).toBeDefined();
+        });
+
+        it('should not create relation twice when already created', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Already created',
+                isUser: false,
+                timestamp: new Date(),
+                relationCreated: true,
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+
+            component['onCreateRelation'](message);
+
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should not create relation without relation previews', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'No previews',
+                isUser: false,
+                timestamp: new Date(),
+            };
+
+            component['onCreateRelation'](message);
+
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should not create relation with empty relation previews', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Empty previews',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [],
+            };
+
+            component['onCreateRelation'](message);
+
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Relation Preview in addMessage', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should map relation previews from response to message', () => {
+            const mockResponse = {
+                message: 'Here are the relations:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationPreviews: [
+                    {
+                        relationId: 10,
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'OOP Basics',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'Design Patterns',
+                        relationType: CompetencyRelationType.ASSUMES,
+                        viewOnly: true,
+                    },
+                ],
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Show relations');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationPreviews);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.relationPreviews).toHaveLength(1);
+            expect(agentMessage?.relationPreviews?.[0].relationId).toBe(10);
+            expect(agentMessage?.relationPreviews?.[0].headCompetencyId).toBe(1);
+            expect(agentMessage?.relationPreviews?.[0].headCompetencyTitle).toBe('OOP Basics');
+            expect(agentMessage?.relationPreviews?.[0].tailCompetencyId).toBe(2);
+            expect(agentMessage?.relationPreviews?.[0].tailCompetencyTitle).toBe('Design Patterns');
+            expect(agentMessage?.relationPreviews?.[0].relationType).toBe(CompetencyRelationType.ASSUMES);
+            expect(agentMessage?.relationPreviews?.[0].viewOnly).toBeTruthy();
+        });
+
+        it('should not add relation previews when array is empty', () => {
+            const mockResponse = {
+                message: 'No relations',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationPreviews: [],
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('No rels');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => msg.content === 'No relations');
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.relationPreviews).toBeUndefined();
+        });
+    });
+
+    describe('History loading with relation data', () => {
+        it('should load history with relation previews and graph data', () => {
+            const mockHistory: AgentHistoryMessage[] = [
+                {
+                    content: 'User message',
+                    isUser: true,
+                },
+                {
+                    content: 'Agent response with relations',
+                    isUser: false,
+                    relationPreviews: [
+                        {
+                            headCompetencyId: 1,
+                            headCompetencyTitle: 'A',
+                            tailCompetencyId: 2,
+                            tailCompetencyTitle: 'B',
+                            relationType: CompetencyRelationType.ASSUMES,
+                        },
+                    ],
+                    relationGraphPreview: {
+                        nodes: [
+                            { id: '1', label: 'A' },
+                            { id: '2', label: 'B' },
+                        ],
+                        edges: [{ id: 'e1', source: '1', target: '2', relationType: CompetencyRelationType.ASSUMES }],
+                    },
+                },
+            ];
+            (mockAgentChatService.getConversationHistory as Mock).mockReturnValue(of(mockHistory));
+            component.ngOnInit();
+
+            const messages = component.messages();
+            // Welcome message + 2 history messages
+            expect(messages.length).toBeGreaterThanOrEqual(2);
+            const agentMsg = messages.find((msg) => msg.content === 'Agent response with relations');
+            expect(agentMsg?.relationPreviews).toHaveLength(1);
+            expect(agentMsg?.relationGraphPreview).toBeDefined();
+            expect(agentMsg?.graphCompetencies).toHaveLength(2);
+            expect(agentMsg?.graphRelations).toHaveLength(1);
+        });
+    });
+
+    describe('Escaped PLAN_PENDING marker', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should detect escaped plan pending marker', () => {
+            const mockResponse = {
+                message: 'Here is the plan:\\[PLAN_PENDING\\]',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Create a plan');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.planPending);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.planPending).toBeTruthy();
+            expect(agentMessage?.content).not.toContain('PLAN_PENDING');
+        });
+    });
+
+    describe('onKeyPress edge cases', () => {
+        it('should not send message on non-Enter key press', () => {
+            const sendSpy = vi.spyOn(component as any, 'sendMessage');
+            const event = new KeyboardEvent('keydown', { key: 'a' });
+
+            component['onKeyPress'](event);
+
+            expect(sendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not send message on Shift+Enter', () => {
+            const sendSpy = vi.spyOn(component as any, 'sendMessage');
+            const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+
+            component['onKeyPress'](event);
+
+            expect(sendSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onApprovePlan without competency modification', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Plan approved');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should not emit competencyChanged when competenciesModified is false', () => {
+            const approvalResponse = {
+                message: 'Plan executed without modifying competencies',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(approvalResponse));
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Plan',
+                isUser: false,
+                timestamp: new Date(),
+                planPending: true,
+            };
+
+            component['onApprovePlan'](message);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('selectedRelationId signal', () => {
+        it('should initialize to undefined', () => {
+            expect(component.selectedRelationId()).toBeUndefined();
+        });
+
+        it('should be settable', () => {
+            component.selectedRelationId.set(42);
+            expect(component.selectedRelationId()).toBe(42);
+        });
+    });
+
+    describe('Relation Graph Preview Handling', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should handle relation graph preview response', () => {
+            const mockResponse = {
+                message: 'Here is the relation graph:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '1', label: 'OOP Basics' },
+                        { id: '2', label: 'Design Patterns' },
+                    ],
+                    edges: [{ id: 'edge-1', source: '1', target: '2', relationType: CompetencyRelationType.ASSUMES }],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Show me the competency graph');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationGraphPreview);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.relationGraphPreview?.nodes).toHaveLength(2);
+            expect(agentMessage?.relationGraphPreview?.edges).toHaveLength(1);
+        });
+
+        it('should convert nodes to competencies correctly', () => {
+            const mockResponse = {
+                message: 'Graph:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '5', label: 'Algorithms' },
+                        { id: '15', label: 'Data Structures' },
+                    ],
+                    edges: [],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Graph');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphCompetencies);
+            expect(agentMessage?.graphCompetencies?.[0].id).toBe(5);
+            expect(agentMessage?.graphCompetencies?.[0].title).toBe('Algorithms');
+            expect(agentMessage?.graphCompetencies?.[1].id).toBe(15);
+            expect(agentMessage?.graphCompetencies?.[1].title).toBe('Data Structures');
+        });
+
+        it('should convert edges to relations with unique IDs', () => {
+            const mockResponse = {
+                message: 'Relations:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '1', label: 'A' },
+                        { id: '2', label: 'B' },
+                    ],
+                    edges: [
+                        { id: 'edge-1', source: '1', target: '2', relationType: CompetencyRelationType.ASSUMES },
+                        { id: 'edge-2', source: '2', target: '1', relationType: CompetencyRelationType.MATCHES },
+                    ],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Relations');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphRelations);
+            expect(agentMessage?.graphRelations).toHaveLength(2);
+            expect(agentMessage?.graphRelations?.[0].headCompetencyId).toBe(1);
+            expect(agentMessage?.graphRelations?.[0].tailCompetencyId).toBe(2);
+            expect(agentMessage?.graphRelations?.[0].relationType).toBe(CompetencyRelationType.ASSUMES);
+            expect(agentMessage?.graphRelations?.[1].relationType).toBe(CompetencyRelationType.MATCHES);
+            // IDs should be unique
+            expect(agentMessage?.graphRelations?.[0].id).not.toBe(agentMessage?.graphRelations?.[1].id);
+        });
+    });
+
+    describe('isRelationUpdateOperation', () => {
+        it('should return true when relationPreviews has relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        relationId: 123,
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false when relationPreviews has no relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return true when at least one relationPreview has relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                    {
+                        relationId: 456,
+                        headCompetencyId: 3,
+                        headCompetencyTitle: 'C',
+                        tailCompetencyId: 4,
+                        tailCompetencyTitle: 'D',
+                        relationType: CompetencyRelationType.EXTENDS,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false for message without relation previews', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false for empty relationPreviews array', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
+        });
+    });
+
+    describe('isDelegationBrief', () => {
+        it.each(['EXERCISE_ID: 42', '[CREATE_APPROVED_EXERCISE_MAPPING]:{}', '[CREATE_APPROVED_COMPETENCY]:', '[CREATE_APPROVED_RELATION]:', '  EXERCISE_ID: 42'])(
+            'returns true for internal system message: %s',
+            (content) => {
+                expect(component['isDelegationBrief'](content)).toBeTruthy();
+            },
+        );
+
+        it('returns false for normal message or empty string', () => {
+            expect(component['isDelegationBrief']('Please help')).toBeFalsy();
+            expect(component['isDelegationBrief']('')).toBeFalsy();
+        });
+    });
+
+    describe('exercise mapping checkbox state', () => {
+        let msg: ChatMessage;
+        let comp1Selected: ReturnType<typeof signal<boolean>>;
+        let comp2Selected: ReturnType<typeof signal<boolean>>;
+
+        beforeEach(() => {
+            comp1Selected = signal(false);
+            comp2Selected = signal(false);
+            const preview: ExerciseMappingPreviewViewModel = {
+                exerciseId: 10,
+                exerciseTitle: 'Test Exercise',
+                competencies: [
+                    { competencyId: 1, competencyTitle: 'C1', weight: 0.5, selected: comp1Selected },
+                    { competencyId: 2, competencyTitle: 'C2', weight: 1.0, selected: comp2Selected },
+                ],
+            };
+            msg = {
+                id: 'msg-box-1',
+                content: 'Exercise mapping',
+                isUser: false,
+                timestamp: new Date(),
+                exerciseMappingPreview: preview,
+            };
+        });
+
+        it('defaults to false, toggling signal updates selection', () => {
+            expect(comp1Selected()).toBeFalsy();
+            comp1Selected.set(true);
+            expect(comp1Selected()).toBeTruthy();
+        });
+
+        it('getSelectedCompetencies returns only checked entries with weights', () => {
+            comp1Selected.set(true);
+            const selected = component['getSelectedCompetencies'](msg);
+            expect(selected).toEqual([{ competencyId: 1, weight: 0.5 }]);
+        });
+
+        it('getSelectedCompetencies returns empty when no preview', () => {
+            const bare: ChatMessage = { id: 'x', content: '', isUser: false, timestamp: new Date() };
+            expect(component['getSelectedCompetencies'](bare)).toEqual([]);
+        });
+    });
+
+    describe('addMessage with exerciseMappingPreview', () => {
+        it('pre-checks alreadyMapped and suggested competencies, leaves others unchecked', () => {
+            const preview = {
+                exerciseId: 5,
+                exerciseTitle: 'Ex',
+                competencies: [
+                    { competencyId: 10, competencyTitle: 'C10', weight: 0.5, alreadyMapped: true },
+                    { competencyId: 20, competencyTitle: 'C20', weight: 0.5, suggested: true },
+                    { competencyId: 30, competencyTitle: 'C30', weight: 0.5 },
+                ],
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({ message: 'ok', sessionId: 's', timestamp: '', success: true, competenciesModified: false, exerciseMappingPreview: preview } as AgentChatResponse),
+            );
+            component.currentMessage.set('map');
+            component['sendMessage']();
+
+            const agentMsg = component.messages().find((m) => m.exerciseMappingPreview !== undefined)!;
+            const comps = agentMsg.exerciseMappingPreview!.competencies as CompetencyMappingViewModel[];
+            expect(comps.find((c) => c.competencyId === 10)!.selected()).toBeTruthy();
+            expect(comps.find((c) => c.competencyId === 20)!.selected()).toBeTruthy();
+            expect(comps.find((c) => c.competencyId === 30)!.selected()).toBeFalsy();
+        });
+    });
+
+    describe('onApproveExerciseMapping', () => {
+        let exerciseMsg: ChatMessage;
+        let comp1Selected: ReturnType<typeof signal<boolean>>;
+
+        beforeEach(() => {
+            comp1Selected = signal(false);
+            exerciseMsg = {
+                id: 'ex-1',
+                content: 'preview',
+                isUser: false,
+                timestamp: new Date(),
+                exerciseMappingPreview: {
+                    exerciseId: 42,
+                    exerciseTitle: 'Algo',
+                    competencies: [{ competencyId: 1, competencyTitle: 'C1', weight: 0.5, selected: comp1Selected }],
+                },
+            };
+            component.messages.set([exerciseMsg]);
+        });
+
+        it('does nothing when viewOnly, already created, no preview, or no selection', () => {
+            const bare: ChatMessage = { id: '99', content: '', isUser: false, timestamp: new Date() };
+            component['onApproveExerciseMapping'](bare);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingPreview!.viewOnly = true;
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingPreview!.viewOnly = false;
+            exerciseMsg.exerciseMappingCreated = true;
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingCreated = false;
+            // comp1Selected is false — no selection
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('sends correct payload, marks created, and emits competencyChanged on success', async () => {
+            comp1Selected.set(true);
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({ message: 'done', sessionId: 's', timestamp: '', success: true, competenciesModified: false } as AgentChatResponse),
+            );
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+            component['onApproveExerciseMapping'](exerciseMsg);
+            await flushPromises();
+
+            const expectedPayload = JSON.stringify({ exerciseId: 42, mappings: [{ competencyId: 1, weight: 0.5 }] });
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(`[CREATE_APPROVED_EXERCISE_MAPPING]:${expectedPayload}`, 123);
+            expect(component.messages().find((m) => m.id === exerciseMsg.id)?.exerciseMappingCreated).toBeTruthy();
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
+        it('shows error message on failure', async () => {
+            comp1Selected.set(true);
+            mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('fail')));
+
+            component['onApproveExerciseMapping'](exerciseMsg);
+            await flushPromises();
+
+            const msgs = component.messages();
+            expect(msgs[msgs.length - 1].content).toContain('artemisApp.agent.chat.error.exerciseMappingFailed');
+        });
+    });
+});

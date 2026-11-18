@@ -1,0 +1,39 @@
+package de.tum.cit.aet.artemis.localvc.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+
+import org.apache.sshd.git.pack.GitPackCommand;
+import org.apache.sshd.git.pack.GitPackCommandFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
+
+@Profile(PROFILE_LOCALVC)
+@Lazy
+@Service
+public class SshGitCommandFactoryService extends GitPackCommandFactory {
+
+    public final LocalVCServletService localVCServletService;
+
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
+    private final LocalVCPushProcessingService pushProcessingService;
+
+    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
+    public SshGitCommandFactoryService(LocalVCServletService localVCServletService, LocalVCAccessLogRecorderService accessLogRecorder,
+            LocalVCPushProcessingService pushProcessingService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService) {
+        this.localVCServletService = localVCServletService;
+        this.accessLogRecorder = accessLogRecorder;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
+    }
+
+    @Override
+    public GitPackCommand createGitCommand(String command) {
+        return new SshGitCommand(getGitLocationResolver(), command, resolveExecutorService(command), localVCServletService, accessLogRecorder, pushProcessingService,
+                passwordAuthenticationNoticeService);
+    }
+}

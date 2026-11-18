@@ -1,0 +1,58 @@
+{
+    "artemisApp": {
+        "bonus": {
+            "bonusStrategy": {
+                "title": "Select a bonus strategy",
+                "helpText": "Grades: First, calculates the target exam grade. Then, applies the bonus to that.<br>Points: First, applies the bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.",
+                "grades": "Grades",
+                "points": "Points"
+            },
+            "discreteness": {
+                "title": "Select discreteness",
+                "helpText": "Discrete: (Not available yet) Bumps the student's grade to a better grade step. Final grade will be one of the grade steps in the target exam (e.g. from 1.3 to 1.0 or from B to A). <br>Continuous: Applies bonus arithmetically to the student's grade. Final grade can be any numeric value between the best and the worst grade step values (e.g. from 1.3 to 1.2).",
+                "discrete": "Discrete",
+                "continuous": "Continuous"
+            },
+            "calculation": {
+                "title": "Select calculation",
+                "helpText": "− (Default option for Grades): Subtracts bonus from target exam's grades/points. Prefer this when lower means better.<br>+ (Default option for Points): Adds bonus to target exam's grades/points. Prefer this when higher means better."
+            },
+            "bonusSource": {
+                "title": "Select bonus source",
+                "helpText": "Exams and courses with \"Bonus\" type grading keys are listed below. The student's grade for the selected course or exam determines the bonus amount.",
+                "maxPoints": "Max points",
+                "maxPointsCourseHelpText": "The maximum points specified in the course's grading key. This value is only used for example calculations and is not used in the actual bonus calculation. Instead, the bonus is calculated based on the points achievable in the course."
+            },
+            "examples": {
+                "title": "Examples",
+                "helpText": "You can try out custom scenarios by editing the last row.",
+                "examPoints": "Exam Points",
+                "examGrade": "Exam Grade",
+                "bonusSourceStudentPoints": "Bonus Source Student Points",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Final Points",
+                "finalGrade": "Final Grade",
+                "any": "(Any)",
+                "exceedsMax": "The final value exceeds the best possible value, so it is capped there. If that is not intended, double check −/+ selection."
+            },
+            "formula": {
+                "title": "Formula",
+                "examPoints": "Exam<br/>Points",
+                "examGrade": "Exam<br/>Grade",
+                "bonusSourceStudentPoints": "Bonus Source Student Points",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Final<br/>Points",
+                "finalGrade": "Final<br/>Grade",
+                "finalGradeLimit": "(You cannot get a final grade better than {{maxPossibleGrade}})",
+                "finalGradeFromPoints": "Final points will determine final grade by matching against the non-bonus grade scale."
+            },
+            "title": "Bonus",
+            "deleteQuestion": "Do you really want to delete the bonus?",
+            "updated": "Bonus updated.",
+            "created": "Bonus created.",
+            "deleted": "Bonus deleted.",
+            "warnStrategyWeightMismatch": "The bonus strategy and weight combination you have chosen would result in a worse grade for the student. Please reconsider your selections above.",
+            "helpTextExplanation": "You can find the detailed explanation below."
+        }
+    }
+}

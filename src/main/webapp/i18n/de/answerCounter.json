@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "answerCounter": {
+            "home": {
+                "title": "Antwortzähler",
+                "createLabel": "Antwortzähler erstellen"
+            },
+            "created": "Antwortzähler erstellt mit ID {{ param }}",
+            "updated": "Antwortzähler aktualisiert mit ID {{ param }}",
+            "deleted": "Antwortzähler gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Antwortzähler {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Antwortzähler"
+            },
+            "answer": "Antwort",
+            "multipleChoiceQuestionStatistic": "Multiple-Choice Fragestatistik"
+        }
+    }
+}

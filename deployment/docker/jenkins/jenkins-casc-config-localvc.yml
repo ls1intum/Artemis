@@ -1,0 +1,33 @@
+jenkins:
+  systemMessage: "Jenkins has been configured to run with Artemis\n\n"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "artemis_admin" # Artemis admin username
+          password: "artemis_admin" # Artemis admin password
+  labelString: "docker"
+  authorizationStrategy:
+    projectMatrix:
+        permissions:
+            - "Overall/Administer:artemis_admin"  # Make sure that the username matches the Artemis admin username
+            - "Overall/Read:authenticated"
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              id: artemis_notification_plugin_token # Value of the "artemis-authentication-token-key" defined key in application-artemis.yml
+              description: 'Access token for Artemis Test Notification Plugin'
+              scope: GLOBAL
+              secret: artemis_admin  # Value of the "artemis-authentication-token-value" key defined in application-artemis.yml
+          - usernamePassword:
+              id: artemis_localvc_credentials
+              scope: GLOBAL
+              username: "jenkins" # artemis.version-control.build-agent-git-username
+              password: "artemis_admin" # artemis.version-control.build-agent-git-password
+              description: "LocalVC credentials for Artemis"
+unclassified:
+  timestamper:
+    elapsedTimeFormat: "'<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '"
+    systemTimeFormat: "'<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '"

@@ -1,0 +1,343 @@
+package de.tum.cit.aet.artemis.notification.notification;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+
+class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "singleusernotification";
+
+    @Autowired
+    private SingleUserNotificationService singleUserNotificationService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ResultTestRepository resultRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    private User user;
+
+    private Post post;
+
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
+
+    private static final String ANSWER_POST_CONTENT = "answer post content";
+
+    private Course course;
+
+    private static final String COURSE_TITLE = "course title";
+
+    private static final String LECTURE_TITLE = "lecture title";
+
+    private Exercise exercise;
+
+    private PlagiarismCase plagiarismCase;
+
+    /**
+     * Sets up all needed mocks and their wanted behavior
+     */
+    @BeforeEach
+    void setUp() {
+        SecurityUtils.setAuthorizationObject();
+
+        course = courseUtilService.createCourse();
+        course.setTitle(COURSE_TITLE);
+
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User userTwo = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User userThree = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+
+        exercise = new TextExercise();
+        exercise.setCourse(course);
+        exercise.setMaxPoints(10D);
+
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setCourse(course);
+
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        lecture.setTitle(LECTURE_TITLE);
+
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName("test");
+        channel.setCreator(userTwo);
+        channel.setCreationDate(ZonedDateTime.now());
+
+        post = new Post();
+        post.setId(1L);
+        post.setAuthor(userTwo);
+        post.setConversation(channel);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
+
+        Post answerPostPost = new Post();
+        answerPostPost.setConversation(channel);
+        answerPostPost.setAuthor(userTwo);
+        answerPostPost.setId(2L);
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setId(1L);
+        answerPost.setPost(answerPostPost);
+        answerPost.setAuthor(userThree);
+        answerPost.setContent(ANSWER_POST_CONTENT);
+
+        PlagiarismSubmission plagiarismSubmission = new PlagiarismSubmission();
+        plagiarismSubmission.setStudentLogin(user.getLogin());
+
+        PlagiarismResult plagiarismResult = new PlagiarismResult();
+        plagiarismResult.setExercise(exercise);
+
+        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setSubmissionA(plagiarismSubmission);
+        plagiarismComparison.setPlagiarismResult(plagiarismResult);
+
+        plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+
+        Result result = new Result();
+        result.setScore(1D);
+        result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTeachingAssistant(userTwo);
+
+        OneToOneChat oneToOneChat = new OneToOneChat();
+        oneToOneChat.setCourse(course);
+        oneToOneChat.setCreator(userTwo);
+        oneToOneChat.setCreationDate(ZonedDateTime.now());
+        ConversationParticipant conversationParticipant1 = new ConversationParticipant();
+        conversationParticipant1.setUser(user);
+        ConversationParticipant conversationParticipant2 = new ConversationParticipant();
+        conversationParticipant2.setUser(userTwo);
+        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2));
+
+        GroupChat groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        groupChat.setCreator(userTwo);
+        groupChat.setCreationDate(ZonedDateTime.now());
+        ConversationParticipant conversationParticipant3 = new ConversationParticipant();
+        conversationParticipant3.setUser(userThree);
+        groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        DataExport dataExport = new DataExport();
+        dataExport.setUser(user);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldNotifyAllParticipantsWhenPublishingAssessments(boolean teamMode) {
+        var now = ZonedDateTime.now();
+        TextExercise assessedExercise = teamMode ? textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1))
+                : textExerciseUtilService.createIndividualTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<User> recipients = teamMode ? Set.of(user, userUtilService.getUserByLogin(TEST_PREFIX + "student2")) : Set.of(user);
+        StudentParticipation participation;
+        if (teamMode) {
+            var team = teamUtilService.createTeam(recipients, null, assessedExercise, TEST_PREFIX + "publicationteam");
+            participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(assessedExercise, user.getLogin());
+        }
+        Result result = participationUtilService.createSubmissionAndResult(participation, 60, true);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.saveAndFlush(result);
+
+        // No surrounding transaction: recipient loading must also work after the repository session closes.
+        queryInterceptor.startQueryCount();
+        singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(assessedExercise);
+        assertThat(queryInterceptor.getStatements()).allSatisfy(sql -> assertThat(sql).doesNotContain("password_hash"));
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var notifications = courseNotificationRepository.findAll().stream()
+                    .filter(notification -> notification.getCourse().getId().equals(course.getId()) && notification.getType() == 7).toList();
+            assertThat(notifications).hasSize(recipients.size());
+            var notifiedUserIds = notifications.stream()
+                    .flatMap(notification -> userCourseNotificationStatusTestRepository.findAllByCourseNotificationId(notification.getId()).stream())
+                    .map(status -> status.getUser().getId()).toList();
+            assertThat(notifiedUserIds).containsExactlyInAnyOrderElementsOf(recipients.stream().map(User::getId).toList());
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 4 })
+    void shouldLoadPublicationRecipientsWithoutAssessmentEntities(int teamCount) {
+        String prefix = TEST_PREFIX + "publicationload";
+        userUtilService.addUsers(prefix, teamCount * 2, 0, 0, 0);
+        var now = ZonedDateTime.now();
+        var assessedExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.minusDays(2), now.minusDays(1));
+        Set<AssessmentPublicationRecipientDTO> expectedRecipients = new HashSet<>();
+        for (int i = 0; i < teamCount; i++) {
+            Set<User> members = Set.of(userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 1)), userUtilService.getUserByLogin(prefix + "student" + (i * 2 + 2)));
+            var team = teamUtilService.createTeam(members, null, assessedExercise, prefix + i);
+            var participation = participationUtilService.addTeamParticipationForExercise(assessedExercise, team.getId());
+            Result result = participationUtilService.createSubmissionAndResult(participation, 60 + i, true);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.saveAndFlush(result);
+            for (User member : members) {
+                expectedRecipients.add(new AssessmentPublicationRecipientDTO(member.getId(), 60.0 + i, member.getLogin(), member.getEmail(), member.getLangKey(),
+                        member.getFirstName(), member.getLastName(), member.isTestUser()));
+            }
+        }
+
+        var recipients = assertThatDb(() -> studentParticipationRepository.findAssessmentPublicationRecipients(assessedExercise.getId())).hasBeenCalledTimes(1);
+        assertThat(recipients).containsExactlyInAnyOrderElementsOf(expectedRecipients);
+        String sql = queryInterceptor.getStatements().getFirst();
+        String selectedColumns = sql.substring(0, sql.indexOf(" from "));
+        assertThat(selectedColumns).doesNotContain("password_hash", "repository_url", "submission_date", "completion_date");
+    }
+
+    @Test
+    void shouldCreateNewCpcPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        exercise.setTitle("CPC Plagiarism Test Exercise");
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setPost(post);
+
+        singleUserNotificationService.notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
+
+            var hasNewCpcPlagiarismCaseNotification = notifications.stream().anyMatch(notification -> notification.getType() == 13);
+
+            assertThat(hasNewCpcPlagiarismCaseNotification).isTrue();
+
+            Optional<CourseNotification> newCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 13).findFirst();
+
+            assertThat(newCpcPlagiarismCaseNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newCpcPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
+        });
+    }
+
+    @Test
+    void shouldCreateNewPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        exercise.setTitle("Plagiarism Test Exercise");
+        plagiarismCase.setPost(post);
+        plagiarismCase.setExercise(exercise);
+
+        singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
+
+            var hasNewPlagiarismCaseNotification = notifications.stream().anyMatch(notification -> notification.getType() == 14);
+
+            assertThat(hasNewPlagiarismCaseNotification).isTrue();
+
+            // Verify the notification was sent only to the correct user
+            Optional<CourseNotification> newPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 14).findFirst();
+
+            assertThat(newPlagiarismCaseNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
+        });
+    }
+
+    @Test
+    void shouldCreatePlagiarismCaseVerdictNotificationWhenCourseSpecificNotificationsEnabled() {
+        exercise.setTitle("Plagiarism Test Exercise");
+        plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
+        plagiarismCase.setPost(post);
+        plagiarismCase.setExercise(exercise);
+
+        singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            // Scope to this test's course: the embedded database is shared by concurrently executing test classes,
+            // so findAll() also returns notifications of the same type created elsewhere.
+            List<CourseNotification> notifications = courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .toList();
+
+            var hasNewPlagiarismVerdictNotification = notifications.stream().anyMatch(notification -> notification.getType() == 17);
+
+            assertThat(hasNewPlagiarismVerdictNotification).isTrue();
+
+            var newPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getType() == 17).findFirst();
+
+            assertThat(newPlagiarismVerdictNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismVerdictNotification.get().getId(), user.getId())).isTrue();
+        });
+    }
+}

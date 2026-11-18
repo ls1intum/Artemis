@@ -1,0 +1,979 @@
+import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    faChartBar,
+    faDownload,
+    faEllipsisVertical,
+    faFileExport,
+    faFileSignature,
+    faFlask,
+    faHistory,
+    faListAlt,
+    faMagnifyingGlass,
+    faPencilAlt,
+    faTrash,
+    faUndo,
+    faUserCheck,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseType, IncludedInOverallScore, getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
+import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import dayjs from 'dayjs/esm';
+import { getBuildTimeWindow } from 'app/programming/shared/utils/build-time-window.utils';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
+import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
+import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
+
+@Component({
+    selector: 'jhi-programming-exercise-detail',
+    templateUrl: './programming-exercise-detail.component.html',
+    styleUrls: ['./programming-exercise-detail.component.scss'],
+    imports: [
+        HyperionRunLinkComponent,
+        TranslateDirective,
+        ExerciseDetailHeaderComponent,
+        ExerciseDetailActionsComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
+        RouterLink,
+        FaIconComponent,
+        FeatureToggleDirective,
+        FeatureToggleLinkDirective,
+        FeatureToggleHideDirective,
+        ProgrammingExerciseResetButtonDirective,
+        DeleteButtonDirective,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        ArtemisTranslatePipe,
+        ButtonComponent,
+        DeimosDateRangeModalComponent,
+        AtlasOrchestrationTriggerComponent,
+        ConsistencyCheckComponent,
+        CreateVariantWithAiButtonComponent,
+    ],
+})
+export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
+    private deimosService = inject(DeimosService);
+
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private eventManager = inject(EventManager);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private statisticsService = inject(StatisticsService);
+    private router = inject(Router);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private sharingService = inject(ProgrammingExerciseSharingService);
+    private featureToggleService = inject(FeatureToggleService);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
+
+    protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
+
+    protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
+
+    protected readonly dayjs = dayjs;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
+    protected readonly documentationType: DocumentationType = 'Programming';
+
+    protected readonly faUndo = faUndo;
+    protected readonly faTrash = faTrash;
+    protected readonly faWrench = faWrench;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faFileSignature = faFileSignature;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faUsers = faUsers;
+    protected readonly faHistory = faHistory;
+    protected readonly faUserCheck = faUserCheck;
+    protected readonly faDownload = faDownload;
+    protected readonly faEllipsisVertical = faEllipsisVertical;
+    protected readonly faFileExport = faFileExport;
+    protected readonly faFlask = faFlask;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
+    protected readonly programmingFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: false });
+    protected readonly exportsEnabled = toSignal(this.featureToggleService.getFeatureTogglesActive([FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]), {
+        initialValue: false,
+    });
+
+    readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
+    programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
+    repositoryDiffInformation?: RepositoryDiffInformation;
+    templateFileContentByPath?: Map<string, string>;
+    solutionFileContentByPath?: Map<string, string>;
+    readonly isExamExercise = signal<boolean>(false);
+    supportsAuxiliaryRepositories = false; // default value
+    readonly baseResource = signal<string>(undefined!);
+    readonly shortBaseResource = signal<string>(undefined!);
+    readonly teamBaseResource = signal<string>(undefined!);
+    // Signal-backed so the repository/build overview re-renders when the participation
+    // results finish loading; a plain field mutated in the async pipe would not schedule change detection.
+    readonly loadingTemplateParticipationResults = signal(true);
+    readonly loadingSolutionParticipationResults = signal(true);
+    diffReady = false;
+    lineChangesLoading = false;
+
+    // Signal-backed so that late updates (the diff is computed asynchronously after the detail sections render)
+    // schedule change detection in the zoneless app. The child detail component reads these signals reactively.
+    private readonly diffDetailData = {
+        repositoryDiffInformation: signal<RepositoryDiffInformation | undefined>(undefined),
+        templateFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        solutionFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        lineChangesLoading: signal<boolean>(false),
+    };
+
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
+    readonly localCIEnabled = signal(true);
+    readonly plagiarismEnabled = signal(false);
+
+    readonly isExportToSharingEnabled = signal(false);
+
+    isAdmin = false;
+    readonly isBuildPlanEditable = signal(false);
+
+    readonly plagiarismCheckSupported = signal(false); // default value
+
+    /**
+     * Determines if the current user can access participations and scores for this exercise.
+     *
+     * Access rules based on exercise context:
+     * - Course exercises: Teaching assistants (tutors) and above can access
+     * - Exam exercises: Only instructors and above can access (more restrictive for exam confidentiality)
+     *
+     * This aligns with the access rights documented in documentation/docs/admin/access-rights.mdx
+     */
+    readonly canAccessParticipationsAndScores = signal(false);
+
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
+    private diffFetchSubscription?: Subscription;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    /** Declarative consistency-check modal state (rendered in the template). */
+    readonly showConsistencyCheck = signal(false);
+    readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
+
+    readonly exerciseDetailSections = signal<DetailOverviewSection[]>([]);
+
+    private diffRunId = 0;
+    private lastUpdateTime = 0;
+    private readonly UPDATE_DEBOUNCE_MS = 1000;
+
+    ngOnInit() {
+        // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the PROFILE_JENKINS operand below
+        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
+        // Get route data directly from snapshot - no subscription needed
+        const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
+        if (programmingExercise) {
+            this.handleRouteData(programmingExercise);
+            if (this.programmingExercise().isAtLeastInstructor) {
+                this.resumeRunningDeletion();
+            }
+        }
+
+        this.subscribeToSharingStatus();
+    }
+
+    /**
+     * Subscribes to the sharing service to check if exercise export to sharing is enabled.
+     * Updates isExportToSharingEnabled based on the service response, defaulting to false on errors.
+     */
+    private subscribeToSharingStatus(): void {
+        this.sharingEnabledSubscription = this.sharingService
+            .isSharingEnabled()
+            .pipe(
+                map((response) => response ?? false),
+                catchError(() => {
+                    return of(false);
+                }),
+            )
+            .subscribe((isEnabled) => {
+                this.isExportToSharingEnabled.set(isEnabled);
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
+        this.templateAndSolutionParticipationSubscription?.unsubscribe();
+        this.exerciseStatisticsSubscription?.unsubscribe();
+        this.sharingEnabledSubscription?.unsubscribe();
+        this.diffFetchSubscription?.unsubscribe();
+    }
+
+    /**
+     * Handles the route data when the programming exercise is loaded.
+     * This is called from the effect that watches the route data signal.
+     */
+    private handleRouteData(programmingExercise: ProgrammingExercise): void {
+        this.programmingExercise.set(programmingExercise);
+        this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
+        const exerciseId = this.programmingExercise().id!;
+        this.isExamExercise.set(!!this.programmingExercise().exerciseGroup);
+        // Course exercises: TAs and above can access; Exam exercises: only instructors (for exam confidentiality)
+        this.canAccessParticipationsAndScores.set((this.programmingExercise()?.isAtLeastTutor && !this.isExamExercise()) || !!this.programmingExercise()?.isAtLeastInstructor);
+        this.courseId = this.isExamExercise() ? this.programmingExercise().exerciseGroup!.exam!.course!.id! : this.programmingExercise().course!.id!;
+        this.isAdmin = this.accountService.isAdmin();
+        this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise().gradingInstructions);
+
+        if (!this.isExamExercise()) {
+            this.baseResource.set(`/course-management/${this.courseId}/programming-exercises/${exerciseId}/`);
+            this.shortBaseResource.set(`/course-management/${this.courseId}/`);
+            this.teamBaseResource.set(`/course-management/${this.courseId}/exercises/${exerciseId}/`);
+        } else {
+            this.baseResource.set(
+                `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/programming-exercises/${exerciseId}/`,
+            );
+            this.shortBaseResource.set(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/`);
+            this.teamBaseResource.set(
+                `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/exercises/${exerciseId}/`,
+            );
+        }
+
+        this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
+            .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
+            .pipe(
+                tap((exerciseWithParticipations) => {
+                    // Only update the template and solution participations, preserving all other exercise properties
+                    this.programmingExercise().templateParticipation = exerciseWithParticipations.body!.templateParticipation;
+                    this.programmingExercise().solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
+                    this.loadingTemplateParticipationResults.set(false);
+                    this.loadingSolutionParticipationResults.set(false);
+                }),
+                tap(() => {
+                    this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+                    const profileInfo = this.profileService.getProfileInfo();
+                    if (this.programmingExercise().projectKey && this.programmingExercise().templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise().templateParticipation!.buildPlanUrl = createBuildPlanUrl(
+                            profileInfo.buildPlanURLTemplate,
+                            this.programmingExercise().projectKey!,
+                            this.programmingExercise().templateParticipation!.buildPlanId!,
+                        );
+                    }
+                    if (this.programmingExercise().projectKey && this.programmingExercise().solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise().solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
+                            profileInfo.buildPlanURLTemplate,
+                            this.programmingExercise().projectKey!,
+                            this.programmingExercise().solutionParticipation!.buildPlanId!,
+                        );
+                    }
+                    if (programmingExercise.programmingLanguage) {
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
+                    }
+                    this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+                }),
+                mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
+                tap((submissionPolicy) => {
+                    this.programmingExercise().submissionPolicy = submissionPolicy;
+                }),
+            )
+            // split pipe to keep type checks
+            .subscribe({
+                next: () => {
+                    this.checkAndAlertInconsistencies();
+                    if (programmingExercise.programmingLanguage) {
+                        this.plagiarismCheckSupported.set(
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false,
+                        );
+                    }
+
+                    this.startDiffRefresh();
+                },
+                error: (error) => {
+                    this.alertService.error(error.message);
+                },
+            });
+
+        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats.set(statistics);
+        });
+    }
+
+    private ensureExerciseDetailsInitialized() {
+        // The signal is initialized with an empty array (previously an undefined field), so check emptiness.
+        if (this.exerciseDetailSections().length === 0) {
+            this.exerciseDetailSections.set(this.getExerciseDetails());
+        }
+    }
+
+    private startDiffRefresh(
+        previousDiffInfo?: RepositoryDiffInformation,
+        previousTemplateFiles?: Map<string, string>,
+        previousSolutionFiles?: Map<string, string>,
+        errorAlertKey = 'artemisApp.programmingExercise.repositoryFilesError',
+    ): void {
+        this.diffFetchSubscription?.unsubscribe();
+
+        this.diffReady = false;
+        this.repositoryDiffInformation = undefined;
+        this.lineChangesLoading = true;
+
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
+        this.diffDetailData.lineChangesLoading.set(true);
+        this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+        this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
+
+        this.ensureExerciseDetailsInitialized();
+
+        // Increment diff run sequence; used to ignore stale results from previous runs
+        const runId = ++this.diffRunId;
+
+        this.diffFetchSubscription = this.fetchRepositoryFiles()
+            .pipe(
+                catchError(() => {
+                    this.alertService.error(errorAlertKey);
+                    return of({ templateFiles: undefined, solutionFiles: undefined });
+                }),
+                switchMap(({ templateFiles, solutionFiles }) =>
+                    from(this.handleDiff(templateFiles, solutionFiles, runId)).pipe(
+                        tap(() => {
+                            const diffDataChanged =
+                                this.repositoryDiffInformation !== previousDiffInfo ||
+                                this.templateFileContentByPath !== previousTemplateFiles ||
+                                this.solutionFileContentByPath !== previousSolutionFiles;
+
+                            if (diffDataChanged) {
+                                this.lastUpdateTime = Date.now();
+                            }
+                        }),
+                    ),
+                ),
+            )
+            .subscribe({
+                error: () => {
+                    if (runId !== this.diffRunId) {
+                        return;
+                    }
+                    this.lineChangesLoading = false;
+                    this.diffDetailData.lineChangesLoading.set(false);
+                },
+            });
+    }
+
+    /**
+     * <strong>BE CAREFUL WHEN CALLING THIS METHOD!</strong><br>
+     * This method can cause child components to re-render, which can lead to re-initializations resulting
+     * in unnecessary requests putting load on the server.
+     *
+     * <strong>When adding a new call to this method, make sure that no duplicated and unnecessary requests are made.</strong>
+     */
+    getExerciseDetails(): DetailOverviewSection[] {
+        const exercise = this.programmingExercise();
+        exercise.buildConfig = this.programmingExerciseBuildConfig;
+        return [
+            this.getExerciseDetailsGeneralSection(exercise),
+            this.getExerciseDetailsModeSection(exercise),
+            this.getExerciseDetailsLanguageSection(exercise),
+            this.getExerciseDetailsProblemSection(exercise),
+            this.getExerciseDetailsGradingSection(exercise),
+        ] as DetailOverviewSection[];
+    }
+
+    private getDiffReportDetail(): ProgrammingDiffReportDetail | undefined {
+        const showDiffReport =
+            this.diffDetailData.lineChangesLoading() ||
+            !!this.diffDetailData.repositoryDiffInformation() ||
+            this.diffDetailData.templateFileContentByPath().size > 0 ||
+            this.diffDetailData.solutionFileContentByPath().size > 0;
+
+        if (!showDiffReport) {
+            return undefined;
+        }
+
+        return {
+            type: DetailType.ProgrammingDiffReport,
+            title: 'artemisApp.programmingExercise.diffReport.title',
+            titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+            data: this.diffDetailData,
+        };
+    }
+
+    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+            details: [
+                exercise.id !== undefined && { type: DetailType.Text, title: 'artemisApp.exerciseDetail.id', data: { text: String(exercise.id) } },
+                exercise.course && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.course?.title, routerLink: ['/course-management', exercise.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.exerciseGroup?.exam?.course?.id, routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.exam',
+                    data: {
+                        text: exercise.exerciseGroup?.exam?.title,
+                        routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id],
+                    },
+                },
+                { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
+                { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
+                {
+                    type: DetailType.ExerciseCategories,
+                    title: 'artemisApp.exercise.categories',
+                    data: { categories: exercise.categories },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.difficulty',
+                    data: { text: exercise.difficulty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.mode',
+                    data: { text: exercise.mode },
+                },
+                exercise.teamAssignmentConfig && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
+                    data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOfflineIde.title',
+                    data: { boolean: exercise.allowOfflineIde ?? false },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
+                    data: { boolean: exercise.allowOnlineEditor ?? false },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineIde.title',
+                    data: { boolean: exercise.allowOnlineIde ?? false },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
+        const diffReportDetail = this.getDiffReportDetail();
+        const buildTimeWindow = getBuildTimeWindow(exercise);
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.programmingLanguage',
+                    data: { text: exercise.programmingLanguage?.toUpperCase() },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
+                    data: { boolean: exercise.buildConfig?.sequentialTestRuns },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryBuildOverview,
+                    data: {
+                        exercise,
+                        localCIEnabled: this.localCIEnabled(),
+                        supportsAuxiliaryRepositories: this.supportsAuxiliaryRepositories,
+                        editBuildPlanLink: exercise.isAtLeastEditor && this.isBuildPlanEditable() ? [this.baseResource(), 'edit-build-plan'] : undefined,
+                        checkConsistency: exercise.isAtLeastEditor ? () => this.checkConsistencies(exercise) : undefined,
+                        templateStatus: {
+                            exercise,
+                            participation: exercise.templateParticipation,
+                            loading: this.loadingTemplateParticipationResults,
+                            submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
+                            onParticipationChange: () => this.onParticipationChange(),
+                            type: ProgrammingExerciseParticipationType.TEMPLATE,
+                        },
+                        solutionStatus: {
+                            exercise,
+                            participation: exercise.solutionParticipation,
+                            loading: this.loadingSolutionParticipationResults,
+                            submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
+                            onParticipationChange: () => this.onParticipationChange(),
+                            type: ProgrammingExerciseParticipationType.SOLUTION,
+                        },
+                        comparison: diffReportDetail,
+                    },
+                },
+                !!buildPlanPhases?.dockerImage && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.dockerImage',
+                    data: { text: buildPlanPhases?.dockerImage },
+                },
+                !!exercise.buildConfig?.buildScript &&
+                    !!buildPlanPhases?.dockerImage && {
+                        type: DetailType.Markdown,
+                        title: 'artemisApp.programmingExercise.script',
+                        titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
+                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
+                    },
+                this.localCIEnabled() &&
+                    !!buildPlanPhases?.phases?.length && {
+                        type: DetailType.ProgrammingBuildPhases,
+                        title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
+                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise() },
+                    },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.packageName',
+                    data: { text: exercise.packageName },
+                },
+                !!buildTimeWindow?.start && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.start',
+                    data: { date: buildTimeWindow.start },
+                },
+                !!buildTimeWindow?.end && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.end',
+                    data: { date: buildTimeWindow.end },
+                },
+            ],
+        };
+    }
+
+    getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const competencies = getExerciseCompetencies(exercise);
+        const hasCompetencies = competencies.length > 0;
+        const details: Detail[] = [
+            {
+                title: hasCompetencies ? 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle' : undefined,
+                type: DetailType.ProgrammingProblemStatement,
+                data: { exercise: exercise },
+            },
+        ];
+
+        if (hasCompetencies) {
+            details.push({
+                title: 'artemisApp.competency.link.title',
+                type: DetailType.Text,
+                data: { text: competencies.map((competency) => competency.title).join(', ') },
+            });
+        }
+
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+            details: details,
+        };
+    }
+
+    getExerciseDetailsGradingSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
+        const includedInScore: Detail = includedInScoreIsBoolean
+            ? {
+                  type: DetailType.Boolean,
+                  title: 'artemisApp.exercise.includedInOverallScore',
+                  data: { boolean: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY },
+              }
+            : {
+                  type: DetailType.Text,
+                  title: 'artemisApp.exercise.includedInOverallScore',
+                  data: { text: 'BONUS' },
+              };
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+            details: [
+                { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
+                !!exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
+                includedInScore,
+                { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title', data: { boolean: exercise.staticCodeAnalysisEnabled } },
+                exercise.staticCodeAnalysisEnabled && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
+                    data: { text: exercise.maxStaticCodeAnalysisPenalty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title',
+                    data: {
+                        text: this.translateService.instant(
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!exercise.submissionPolicy ? 'none' : exercise.submissionPolicy.type!) +
+                                '.title',
+                        ),
+                    },
+                },
+                exercise.submissionPolicy && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+                    data: { text: exercise.submissionPolicy.submissionLimit },
+                },
+                exercise.submissionPolicy &&
+                    !!exercise.submissionPolicy.exceedingPenalty && {
+                        type: DetailType.Text,
+                        title: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel',
+                        data: { text: exercise.submissionPolicy.exceedingPenalty },
+                    },
+                { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise() } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
+                    data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
+                },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
+                    data: { boolean: exercise.releaseTestsWithExampleSolution },
+                },
+
+                { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
+                exercise.gradingCriteria && {
+                    type: DetailType.GradingCriteria,
+                    title: 'artemisApp.exercise.structuredAssessmentInstructions',
+                    data: { gradingCriteria: exercise.gradingCriteria },
+                },
+            ],
+        };
+    }
+
+    onParticipationChange(): void {
+        // Debounce rapid successive calls to prevent infinite loops
+        const now = Date.now();
+        if (now - this.lastUpdateTime < this.UPDATE_DEBOUNCE_MS) {
+            return;
+        }
+
+        this.startDiffRefresh(
+            this.repositoryDiffInformation,
+            this.templateFileContentByPath,
+            this.solutionFileContentByPath,
+            'artemisApp.programmingExercise.participationChangeError',
+        );
+    }
+
+    /** Downloads the complete exercise from the secondary actions menu. */
+    downloadExercise(): void {
+        const exerciseId = this.programmingExercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.programmingExerciseService.exportInstructorExercise(exerciseId).subscribe({
+            next: (response) => {
+                downloadZipFileFromResponse(response);
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');
+            },
+            error: () => this.alertService.error('error.exportFailed'),
+        });
+    }
+
+    /** Preserves the sharing redirect workflow while presenting it as a menu command. */
+    exportExerciseToSharing(): void {
+        const exerciseId = this.programmingExercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.sharingService.exportProgrammingExerciseToSharing(exerciseId, window.location.href).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    window.location.href = response.body;
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
+                }
+            },
+            error: (errorResponse) => {
+                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', {
+                    message: errorResponse?.error?.message || errorResponse?.error || 'Unknown error',
+                });
+            },
+        });
+    }
+
+    generateStructureOracle() {
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise().id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: res,
+                    disableTranslation: true,
+                });
+            },
+            error: (error) => {
+                const errorMessage = error.headers.get('X-artemisApp-alert');
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+            },
+        });
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal().open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerExerciseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        const exerciseId = this.programmingExercise().id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerExerciseBatch(exerciseId, selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
+            },
+        });
+    }
+
+    deleteProgrammingExercise(event: { [key: string]: boolean }) {
+        const exercise = this.programmingExercise();
+        const request$ = this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseDeletionTarget(exercise), request$).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress, exercise.id);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                // The subject is closed with the component, and the deletion can end after the user left the page.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next('');
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                // The request can fail after the user left the page, when the subject is already closed.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next(error.message);
+                }
+            },
+        });
+    }
+
+    /**
+     * Shows the progress of a deletion of this exercise that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion(): void {
+        const exercise = this.programmingExercise();
+        this.entityDeletionService.resume(exerciseDeletionTarget(exercise), this.destroyRef).subscribe((progress) => this.onDeletionEnded(progress, exercise.id));
+    }
+
+    private onDeletionEnded(progress: EntityDeletionProgress, deletedExerciseId: number | undefined): void {
+        if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+            this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
+            return;
+        }
+        if (!isDeletionCompleted(progress)) {
+            return;
+        }
+        this.eventManager.broadcast({
+            name: 'programmingExerciseListModification',
+            content: 'Deleted a programming exercise',
+        });
+        // Only leave the page while it still shows the deleted exercise, not after the instructor moved on to something else.
+        if (!this.isAlive() || this.programmingExercise().id !== deletedExerciseId) {
+            return;
+        }
+        if (!this.isExamExercise()) {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+        } else {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+        }
+    }
+
+    /**
+     * Opens the declarative consistency-check modal (rendered in the template) for the given programming exercise.
+     * @param exercise the programming exercise to check
+     */
+    checkConsistencies(exercise: ProgrammingExercise) {
+        this.consistencyExercises.set([exercise]);
+        this.showConsistencyCheck.set(true);
+    }
+
+    /**
+     * Executes a consistency check for this programming exercise and alerts the user if any inconsistencies are found
+     * This is only run if the user is at least an instructor in the course
+     */
+    checkAndAlertInconsistencies() {
+        if (this.programmingExercise().isAtLeastEditor) {
+            this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.programmingExercise().id!).subscribe((inconsistencies) => {
+                if (inconsistencies.length) {
+                    this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
+                }
+            });
+        }
+    }
+
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
+        return this.exerciseService.getDeletionSummary(this.programmingExercise());
+    }
+
+    /**
+     * Generates the link to any participation's submissions, used for the link to template and solution submissions
+     * @param participationId of the participation
+     */
+    getParticipationSubmissionLink(participationId: number) {
+        const link = [this.baseResource(), 'participations', participationId];
+        // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
+        if (!this.isExamExercise()) {
+            link.push('submissions');
+        }
+        return link;
+    }
+
+    fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }> {
+        return forkJoin({
+            templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise().id!),
+            solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise().id!),
+        });
+    }
+
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined, runId: number): Promise<void> {
+        if (runId !== this.diffRunId) {
+            return;
+        }
+
+        if (!templateFiles || !solutionFiles) {
+            if (runId === this.diffRunId) {
+                this.templateFileContentByPath = new Map<string, string>();
+                this.solutionFileContentByPath = new Map<string, string>();
+                this.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.repositoryDiffInformation.set(undefined);
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
+            }
+            return;
+        }
+
+        this.templateFileContentByPath = templateFiles;
+        this.solutionFileContentByPath = solutionFiles;
+
+        this.diffReady = false;
+        this.repositoryDiffInformation = undefined;
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
+
+        this.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath.set(templateFiles);
+        this.diffDetailData.solutionFileContentByPath.set(solutionFiles);
+        this.diffDetailData.lineChangesLoading.set(true);
+
+        this.ensureExerciseDetailsInitialized();
+
+        await this.calculateRepositoryDiff(templateFiles, solutionFiles, runId);
+    }
+
+    private async calculateRepositoryDiff(templateFiles: Map<string, string>, solutionFiles: Map<string, string>, runId: number): Promise<void> {
+        try {
+            this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
+            // Ignore stale results
+            if (runId !== this.diffRunId) {
+                return;
+            }
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
+            this.diffReady = true;
+        } catch (error) {
+            if (runId !== this.diffRunId) {
+                return;
+            }
+            this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
+            this.diffReady = false;
+            this.repositoryDiffInformation = {
+                diffInformations: [],
+                totalLineChange: {
+                    addedLineCount: 0,
+                    removedLineCount: 0,
+                },
+            };
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
+        } finally {
+            if (runId === this.diffRunId) {
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
+            }
+        }
+    }
+}

@@ -1,0 +1,112 @@
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { ExerciseDetailDirective } from 'app/shared-ui/detail-overview-list/exercise-detail.directive';
+import { WritableSignal, inputBinding, signal } from '@angular/core';
+import type {
+    BooleanDetail,
+    DateDetail,
+    Detail,
+    LinkDetail,
+    NotShownDetail,
+    ProgrammingDiffReportDetail,
+    ProgrammingRepositoryBuildOverviewDetail,
+    ShownDetail,
+    TextDetail,
+} from 'app/shared-ui/detail-overview-list/detail.model';
+import { TextDetailComponent } from 'app/shared-ui/detail-overview-list/components/text-detail/text-detail.component';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/components/date-detail/date-detail.component';
+import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
+import { BooleanDetailComponent } from 'app/shared-ui/detail-overview-list/components/boolean-detail/boolean-detail.component';
+import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
+import { vi } from 'vitest';
+import { ProgrammingRepositoryBuildOverviewComponent } from 'app/programming/manage/detail/repository-build-overview/programming-repository-build-overview.component';
+
+describe('ExerciseDetailDirective', () => {
+    let fixture: DirectiveFixture<ExerciseDetailDirective>;
+    let detail: WritableSignal<Detail>;
+
+    beforeEach(() => {
+        detail = signal<Detail>(undefined);
+        fixture = TestBed.createDirective(ExerciseDetailDirective, { tagName: 'div', bindings: [inputBinding('detail', detail)] });
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
+    /** tests directive for {@link NotShownDetail}s */
+    describe('should not create component for NotShownDetails', () => {
+        it('detail "false"', async () => {
+            await checkComponentForDetailWasNotCreated(false as NotShownDetail);
+        });
+
+        it('detail "undefined"', async () => {
+            await checkComponentForDetailWasNotCreated(undefined as NotShownDetail);
+        });
+    });
+
+    /** tests directive for {@link ShownDetail}s */
+    describe('should create component for ShownDetails', () => {
+        it('should create TextDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Text } as TextDetail, TextDetailComponent);
+        });
+
+        it('should create DateDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Date } as DateDetail, DateDetailComponent);
+        });
+
+        it('should create LinkDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Link } as LinkDetail, LinkDetailComponent);
+        });
+
+        it('should create BooleanDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.Boolean } as BooleanDetail, BooleanDetailComponent);
+        });
+
+        it('should create the paired repository/build overview', async () => {
+            await checkComponentForDetailWasCreated(
+                { type: DetailType.ProgrammingRepositoryBuildOverview } as ProgrammingRepositoryBuildOverviewDetail,
+                ProgrammingRepositoryBuildOverviewComponent,
+            );
+        });
+
+        it('should create ProgrammingDiffReportDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail, ProgrammingDiffReportDetailComponent);
+        });
+    });
+
+    it('should not create a component when the directive is destroyed while the component is being loaded', async () => {
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        detail.set({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail);
+        fixture.detectChanges();
+
+        const pending = fixture.directiveInstance['initializeExerciseDetailDirective']();
+        fixture.destroy();
+        await pending;
+
+        expect(createComponentSpy).not.toHaveBeenCalled();
+    });
+
+    async function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        detail.set(detailToBeChecked);
+        fixture.detectChanges();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
+
+        expect(createComponentSpy).not.toHaveBeenCalled();
+    }
+
+    async function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
+        const setInput = vi.fn();
+        const createComponentSpy = vi
+            .spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent')
+            .mockReturnValue({ componentType: expectedComponent, setInput, destroy: vi.fn() } as any);
+        detail.set(detailToBeChecked);
+        fixture.detectChanges();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
+
+        expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
+        expect(setInput).toHaveBeenCalledWith('detail', detailToBeChecked);
+    }
+});

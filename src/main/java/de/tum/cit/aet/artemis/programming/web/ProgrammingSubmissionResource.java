@@ -1,0 +1,539 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
+import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.SelectedBuildRunStatusService;
+
+/**
+ * REST controller for managing ProgrammingSubmission.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingSubmissionResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
+
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ParticipationRepository participationRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final UserRepository userRepository;
+
+    private final ExerciseDateService exerciseDateService;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    private final SelectedBuildRunStatusService selectedBuildRunStatusService;
+
+    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
+            SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
+            ExerciseDateService exerciseDateService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository, SelectedBuildRunStatusService selectedBuildRunStatusService) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.selectedBuildRunStatusService = selectedBuildRunStatusService;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingTriggerService = programmingTriggerService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.exerciseRepository = exerciseRepository;
+        this.participationRepository = participationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.authCheckService = authCheckService;
+        this.participationAuthCheckService = participationAuthCheckService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.submissionRepository = submissionRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.userRepository = userRepository;
+        this.exerciseDateService = exerciseDateService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+    }
+
+    /**
+     * Trigger the CI build of the given participation.
+     * The build result will be treated as if the user would have done a commit.
+     *
+     * @param participationId of the participation.
+     * @param submissionType  will be used for the newly created submission.
+     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is
+     *         not available. Answers 429 (Too Many Requests) if the user triggers builds too often.
+     *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
+     */
+    @PostMapping({ "participations/{participationId}/trigger-build", "programming-submissions/{participationId}/trigger-build" })
+    @EnforceAtLeastStudent
+    @FeatureToggle(Feature.ProgrammingExercises)
+    @LimitRequestsPerMinute(type = RateLimitType.PROGRAMMING_BUILD_TRIGGER, perUser = true)
+    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+            throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
+        }
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (submissionType != SubmissionType.MANUAL) {
+            throw new AccessForbiddenException("The ordinary build operation only accepts manual submissions");
+        }
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
+        return triggerSingleBuild(programmingExerciseParticipation, SubmissionType.MANUAL);
+    }
+
+    /**
+     * Triggers an instructor submission for one student participation, preserving the single-build response and notifications.
+     *
+     * @param exerciseId      the owning exercise
+     * @param participationId the student participation
+     * @return an empty successful response once the submission has been handed to the build service
+     */
+    @PostMapping("programming-exercises/{exerciseId}/participations/{participationId}/trigger-instructor-build")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerSingleStudentInstructorBuild(@PathVariable long exerciseId, @PathVariable long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation student) || !participation.getExercise().getId().equals(exerciseId)) {
+            throw new AccessForbiddenException("Select a student participation belonging to this exercise");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return triggerSingleBuild(student, SubmissionType.INSTRUCTOR);
+    }
+
+    /**
+     * Triggers an instructor submission for an editor's template or solution participation.
+     *
+     * @param exerciseId      the owning exercise
+     * @param participationId the template or solution participation
+     * @return an empty successful response once the submission has been handed to the build service
+     */
+    @PostMapping("programming-exercises/{exerciseId}/participations/{participationId}/trigger-editor-build")
+    @EnforceAtLeastEditorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerSingleEditorBuild(@PathVariable long exerciseId, @PathVariable long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation)
+                || !participation.getExercise().getId().equals(exerciseId)) {
+            throw new AccessForbiddenException("Select a template or solution participation belonging to this exercise");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        return triggerSingleBuild((ProgrammingExerciseParticipation) participation, SubmissionType.INSTRUCTOR);
+    }
+
+    private ResponseEntity<Void> triggerSingleBuild(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionType submissionType) {
+        try {
+            var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+            programmingTriggerService.triggerBuildAndNotifyUser(submission);
+        }
+        catch (IllegalStateException ex) {
+            throw new EntityNotFoundException(ex.getMessage());
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * A student must not get around the build time window of the exercise by triggering the build of a commit pushed outside of it.
+     */
+    private void checkInsideBuildTimeWindowElseThrow(ProgrammingExerciseParticipation participation) {
+        if (programmingSubmissionService.findBuildTimeWindowExcluding(participation, userRepository.getUserWithAuthorities(), ZonedDateTime.now()).isPresent()) {
+            throw new BadRequestAlertException("Builds of this exercise are only run inside its build time window", "programmingSubmission", "buildOutsideTimeWindow");
+        }
+    }
+
+    /**
+     * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
+     *
+     * @param participationId to which the submission belongs.
+     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the due date or
+     *                            after the due date by the INSTRUCTOR.
+     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
+     *         build is running.
+     */
+    @PostMapping("participations/{participationId}/trigger-failed-build")
+    @EnforceAtLeastStudent
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
+        final Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+            throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+        // the build runs on the latest commit, which may have been pushed outside the window
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
+
+        ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
+                .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));
+
+        // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
+        if (programmingExerciseParticipation.getBuildPlanId() != null) {
+            // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
+            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
+            if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+                // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
+                // This resets the pending submission timer in the client.
+                programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+                return ResponseEntity.ok().build();
+            }
+        }
+        if (lastGraded && submission.getType() != SubmissionType.INSTRUCTOR && submission.getType() != SubmissionType.TEST && exerciseDateService.isAfterDueDate(participation)) {
+            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
+            // This applies only to students submissions after the exercise due date.
+            throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after the exercise due date");
+        }
+        // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
+        programmingTriggerService.triggerBuildAndNotifyUser(submission);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the CI of all participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     *
+     * @param exerciseId to identify the programming exercise.
+     * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        // Course roles are loaded with the user so the instructor check below resolves in memory instead of issuing its
+        // own membership query.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
+        programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Trigger the CI of the provided participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     * <p>
+     * Note: If a participationId does not belong to the exercise, it will be ignored!
+     * <p>
+     * The builds are queued in the background, one after the other, while the build queue has room for them. The response does not wait for that.
+     * Instead, it names the run, and the server announces the end of that run on the topic {@code SELECTED_BUILDS_RUN_COMPLETED} of the exercise.
+     *
+     * @param exerciseId       to identify the programming exercise.
+     * @param participationIds list of participation ids.
+     * @return the run that queues the builds if the operation was accepted, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed
+     *         to
+     *         access the exercise.
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<SelectedBuildRunDTO> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
+        if (participationIds.isEmpty()) {
+            throw new BadRequestAlertException("participationIds cannot be empty", "ProgrammingSubmission", "participationIdsEmpty");
+        }
+        // Loaded with the associations the trigger reads off the exercise, so no participation has to load either of
+        // them for itself. The template and solution participations this used to fetch are not read here.
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
+
+        log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
+                programmingExercise.getId());
+        var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        var run = new SelectedBuildRunDTO(UUID.randomUUID().toString());
+        // Before the run is handed over, so that a client that polls right after the response finds it going on.
+        selectedBuildRunStatusService.markStarted(run.runId(), exerciseId);
+        programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise, run.runId());
+
+        return ResponseEntity.ok(run);
+    }
+
+    /**
+     * GET programming-exercises/:exerciseId/selected-build-runs/:selectedBuildRunId : tells whether a run that queues the builds of selected participations is still going on.
+     * <p>
+     * The end of a run is also announced with a websocket message. A client that was disconnected at that moment asks here instead.
+     * Only a run that is going on is running, so a run that ended or that the server does not know is reported as not running.
+     *
+     * @param exerciseId         the programming exercise the run belongs to.
+     * @param selectedBuildRunId the run, as returned by the request that started it.
+     * @return the status of the run, forbidden (403) if the user is not an instructor of the exercise.
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<SelectedBuildRunStatusDTO> getSelectedBuildRunStatus(@PathVariable Long exerciseId, @PathVariable String selectedBuildRunId) {
+        return ResponseEntity.ok(new SelectedBuildRunStatusDTO(selectedBuildRunStatusService.isActive(selectedBuildRunId, exerciseId)));
+    }
+
+    /**
+     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or
+     * only the one
+     * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
+     *
+     * @param exerciseId      the id of the exercise.
+     * @param correctionRound the correctionRound for which all submissions should be fetched
+     * @param submittedOnly   if only submitted submissions should be returned.
+     * @param assessedByTutor if the submission was assessed by calling tutor.
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/programming-submissions")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<ProgrammingSubmissionForAssessmentDTO>> getAllProgrammingSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        log.debug("REST request to get all programming submissions");
+        Exercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        final boolean examMode = exercise.isExamExercise();
+        List<ProgrammingSubmission> programmingSubmissions;
+        if (assessedByTutor) {
+            User user = userRepository.getUserWithAuthorities();
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
+                    correctionRound);
+        }
+        else {
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        if (!examMode) {
+            programmingSubmissions.forEach(Submission::removeNullResults);
+        }
+        // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
+        // the service, which detaches it from the participations before returning them.
+        boolean hideParticipant = !participationAuthCheckService.canSeeParticipantInformation(exercise);
+        var submissionDTOs = programmingSubmissions.stream().map(submission -> {
+            var response = ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission);
+            return hideParticipant ? response.withoutParticipantInformation() : response;
+        }).toList();
+        return ResponseEntity.ok().body(submissionDTOs);
+    }
+
+    /**
+     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by its id and locks the corresponding submission for assessment
+     *
+     * @param submissionId    the id of the participation to retrieve
+     * @param correctionRound correction round for which we prepare the submission
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("programming-submissions/{submissionId}/lock")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ProgrammingSubmissionForTutorAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
+        var submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
+        final var participation = submission.getParticipation();
+        if (participation == null) {
+            throw new AccessForbiddenException();
+        }
+        final User user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        if (!(submission instanceof ProgrammingSubmission programmingSubmission)) {
+            throw new BadRequestAlertException("The submission is not a programming submission", "programmingSubmission", "invalidSubmissionType");
+        }
+        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+        // the code editor gates feedback suggestions on the course's Athena setting, which the reload above does not carry
+        courseAthenaConfigRepository.attachToCourseOf(programmingExercise);
+        final var numberOfEnabledCorrectionRounds = programmingExercise.getNumberOfCorrectionRounds();
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
+
+        programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, submissionId, correctionRound);
+        if (!programmingExercise.areManualResultsAllowed()) {
+            throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
+        }
+
+        long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
+
+        // this makes sure that new results are only created if it is really necessary.
+        // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
+        // The second (or third) result for complaint responses is not created here.
+        if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
+            // Check lock limit
+            programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+            // As no manual result is present we need to lock the submission for assessment
+            Result latestAutomaticResult = programmingSubmission.getLatestResult();
+            if (latestAutomaticResult == null) {
+                // if the participation does not have a result we want to create a new result for the submission of the participation.
+                // If there isn't a submission either, we should not create any result.
+                programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+            }
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
+        }
+
+        // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
+        programmingSubmissionService.hideDetails(programmingSubmission, user);
+
+        // Only the manual result of the requested correction round belongs in the response, read off the correction
+        // round stored on the result itself. The automatic results are filtered in the mapper instead of by mutating
+        // the managed submission, whose result collection is mapped with orphanRemoval.
+        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        List<Result> resultsForResponse;
+        if (resultForCorrectionRound == null) {
+            resultsForResponse = List.of();
+        }
+        else {
+            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
+            resultsForResponse = List.of(resultForCorrectionRound);
+        }
+
+        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(programmingSubmission, programmingExercise, resultsForResponse));
+    }
+
+    /**
+     * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
+     *
+     * @param exerciseId      the id of the exercise
+     * @param lockSubmission  optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound the correction round for which we want to find the submission
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingSubmissionForTutorAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        log.debug("REST request to get a programming submission without assessment");
+
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        programmingExercise.setGradingCriteria(gradingCriteria);
+
+        final User user = userRepository.getUserWithAuthorities();
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
+
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // code editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(programmingExercise);
+        // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
+        ProgrammingSubmission submission = programmingSubmissionService
+                .getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound).orElse(null);
+
+        // Check if tutors can start assessing the students submission
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+
+        if (submission == null) {
+            // Keep the genuinely empty 200 body: the dashboard reads "no submission available" from it.
+            return ResponseEntity.ok().body(null);
+        }
+
+        if (lockSubmission) {
+            // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
+        }
+        programmingSubmissionService.hideDetails(submission, user);
+        // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
+        // managed submission, whose result collection is mapped with orphanRemoval.
+        Set<Result> manualResults = submission.getManualResults();
+        // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+        // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+        manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
+
+        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(submission, programmingExercise, manualResults));
+    }
+}

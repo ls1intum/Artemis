@@ -1,0 +1,52 @@
+@if (quizExercise(); as quizExercise) {
+    <div class="grid grid-cols-12 gap-x-6!">
+        <div class="col-span-12 md:col-span-8 md:col-start-3 text-center">
+            <h3>{{ quizExercise.title }}</h3>
+            <div class="text-center">
+                <p class="text-start" class="chart-title-text">
+                    <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore() }}</span>
+                </p>
+                <div class="grid grid-cols-12 gap-x-6!">
+                    <div class="col-span-12 md:col-span-7 text-start">
+                        <p class="chart-title-text">
+                            @if (rated) {
+                                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleRated"></span>
+                            }
+                            @if (!rated) {
+                                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleUnrated"></span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-span-12 md:col-span-5 text-end">
+                        <p class="chart-title-text">
+                            <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
+                        </p>
+                    </div>
+                </div>
+                <div class="quiz-statistic-chart" style="height: 500px">
+                    <tumaet-ui-bar-chart
+                        [labels]="chartData().labels"
+                        [series]="chartData().series"
+                        [config]="chartConfig()"
+                        [ariaLabel]="
+                            (rated ? 'artemisApp.showStatistic.quizPointStatistic.titleRated' : 'artemisApp.showStatistic.quizPointStatistic.titleUnrated') | artemisTranslate
+                        "
+                    />
+                </div>
+                <div class="text-center button-row">
+                    <button (click)="switchRated()" type="button" tumAetUiButton>
+                        <fa-icon [icon]="faSync" />
+                        @if (rated) {
+                            <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                        }
+                        @if (!rated) {
+                            <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+                        }
+                    </button>
+                    <p>&nbsp;</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <jhi-quiz-statistics-footer [isQuizPointStatistic]="true" />
+}

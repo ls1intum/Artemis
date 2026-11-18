@@ -1,0 +1,135 @@
+{
+    "artemisApp": {
+        "gradingSystem": {
+            "title": "Grading Key",
+            "titleCourse": "Grading Key for Course",
+            "titleExam": "Grading Key",
+            "titleBonus": "Grading Key for Bonus",
+            "defaultButton": "Set Default Grading Key",
+            "gradeType": {
+                "title": "Grade Type",
+                "grade": "Grade",
+                "bonus": "Bonus"
+            },
+            "inclusivity": {
+                "title": "Inclusivity",
+                "lower": "Lower Bound Inclusive",
+                "upper": "Upper Bound Inclusive"
+            },
+            "presentationType": {
+                "title": "Presentation Mode",
+                "description": "Select \"Basic\" to set the number of presentations a student must give to receive the course grade bonus. Select \"Graded\" to set the number of tutor graded presentations a student can give and the weighting of the presentations for the course grade.",
+                "none": "None",
+                "basic": "Basic",
+                "graded": "Graded"
+            },
+            "basicPresentation": {
+                "label": "Basic Presentations",
+                "numberOfPresentations": "Presentations"
+            },
+            "gradedPresentation": {
+                "label": "Graded Presentations",
+                "number": "Number",
+                "weight": "Combined Weight (%)"
+            },
+            "csv": {
+                "importButton": "Import CSV",
+                "exportButton": "Export CSV"
+            },
+            "firstPassingGrade": "First Passing Grade",
+            "min": "Min %",
+            "minPoints": "Min Points",
+            "max": "Max %",
+            "maxPoints": "Max Points",
+            "gradeName": "Grade Name",
+            "bonusPoints": "Bonus Points",
+            "delete": "Delete",
+            "deleteQuestion": "Do you really wish to delete the grading key?",
+            "add": "Add Grade Step",
+            "save": "Save",
+            "stickyGradeStep": "The last grade step is always open-ended to handle scores exceeding the maximum. It is stuck to the bottom.",
+            "plagiarismGradeHelp": "This special failing grade is assigned when a student has a confirmed \"Plagiarism\" verdict in any exercise.",
+            "noParticipationGradeHelp": "This special failing grade is assigned when a student did not participate. For courses, this means the student did not start any exercise. For exams, this means the student did not start or did not submit.",
+            "defaultGradeName": "Default: {{default}}",
+            "info": {
+                "title": "Grading Key Help",
+                "general": {
+                    "title": "General Information",
+                    "explanation": "A grading key consists of grade steps that cover all possible percentages from 0 to 100. All adjacent grade steps should overlap on their boundaries (Example: grade steps (60, 70) and (70, 80) overlap at 70%). Which grade step includes that boundary is determined by the \"Lower Bound Inclusivity\". All grade steps also have either a name (1.0, Ausreichend, A,...) or a bonus point count (5, 10,..) depending on the \"Grade Type\""
+                },
+                "maxPoints": {
+                    "title": "Maximum Points",
+                    "explanation": "Determines the maximum points for the given course/exam. The value is necessary if a grading key with absolute points as boundaries instead of percentages is needed. Note that the maximum points do not impact the grade calculation for courses, but they do for exams."
+                },
+                "gradeType": {
+                    "title": "Grade Type",
+                    "explanation": "A grading key can either map directly to grades or to bonus points for the course or the final exam"
+                },
+                "inclusivity": {
+                    "title": "Inclusivity",
+                    "explanation": "Determines whether a grade step's Min % boundary gets included and Max % boundary gets excluded or vice versa (Exception - 0% and 100% always get included in the first and respectively last grade step). Example: 60% score will be mapped to a grade step with range 60% - 70% if lower bound inclusivity is set but not if upper bound inclusivity is set (in this case it would be mapped to the previous grade step)"
+                },
+                "firstPassingGrade": {
+                    "title": "First Passing Grade",
+                    "explanation": "Sets the first passing grade for a grading key. Every grade with higher percentages will be considered passing as well"
+                },
+                "importExport": {
+                    "title": "Import/Export Grade Steps",
+                    "explanation": "Grade steps can be imported and exported via a CSV file.  The structure is as follows, depending on the grade type. Grade Type 'Grade': 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade'. Grade Type 'Bonus': 'bonusPoints,lowerBoundPercentage,upperBoundPercentage'. Points and inclusivity can be set afterwards."
+                }
+            },
+            "error": {
+                "empty": "Grading key must contain at least one grade step!",
+                "negativeMaxPoints": "Maximum points can't be negative",
+                "emptyFields": "All grade step fields must be filled in!",
+                "invalidMinMaxPercentages": "The grade step percentages must be higher than 0 and the Min % may not be higher or equal to the Max %!",
+                "invalidMinMaxPoints": "The grade step points must be all higher than 0 and the Min Points may not be higher or equal to the Max Points!",
+                "nonUniqueGradeNames": "All grade steps must have unique names!",
+                "unsetFirstPassingGrade": "The first passing grade must be set!",
+                "invalidBonusPoints": "The bonus points must be at least 0!",
+                "nonStrictlyIncreasingBonusPoints": "Consecutive grade steps must have increasing bonus point values!",
+                "invalidAdjacency": "The Max % of all grade steps (excluding the last one), must be equal to the Min % of their subsequent grade step!",
+                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be at least 100!",
+                "invalidBasicPresentationIsEnabled": "Presentations are already enabled for this course!",
+                "invalidPresentationsNumber": "The number of presentations must be a whole number above 0!",
+                "invalidPresentationsWeight": "The combined weight of all presentations must be between 0 and 99!",
+                "maxPointsTooHigh": "The maximum number of points must not exceed {{ max }}.",
+                "maxPointsTooLow": "The maximum number of points must be at least {{ min }}.",
+                "maxPointsWholeNumber": "The maximum number of points must be a whole number.",
+                "valueTooHigh": "The value must not exceed {{ max }}."
+            },
+            "overview": {
+                "info": "The grading key is based on the attainable points. It could change until the end of the course when more exercises have been assessed.",
+                "intervals": {
+                    "title": "Intervals:",
+                    "leftInclusiveRightExclusive": "Left boundary is included in and right is excluded from the interval",
+                    "leftExclusiveRightInclusive": "Left boundary is excluded from and right is included in the interval",
+                    "bothInclusive": "Both boundaries are included in the interval"
+                }
+            },
+            "intervalTab": {
+                "title": "Interval",
+                "mode": "Mode",
+                "pointsMode": "Points",
+                "percentageMode": "Percentage"
+            },
+            "detailedTab": {
+                "title": "Detailed"
+            },
+            "gradingStepsAboveMaxPointsWarning": "At least one grading step exceeds the maximum number of points for this course."
+        },
+        "gradingScale": {
+            "created": "Grading key has been created",
+            "updated": "Grading key has been updated",
+            "deleted": "Grading key has been deleted",
+            "plagiarismGrade": "Plagiarism Grade",
+            "noParticipationGrade": "No-participation Grade"
+        },
+        "gradingScaleUpdate": {
+            "courseMaxPoints": "Maximum course points",
+            "coursePresentationScore": "Course presentation score",
+            "examMaxPoints": "Maximum exam points",
+            "presentationsNumber": "Number of presentations"
+        }
+    }
+}

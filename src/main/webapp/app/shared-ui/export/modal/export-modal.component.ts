@@ -1,0 +1,150 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDialogRef,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { faBan, faDownload, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { KeyValuePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+export enum CsvFieldSeparator {
+    TAB = '\t',
+    COMMA = ',',
+    SEMICOLON = ';',
+    SPACE = ' ',
+    PERIOD = '.',
+}
+
+export enum CsvQuoteStrings {
+    QUOTES_DOUBLE = '\x22',
+    QUOTES_SINGLE = '\x27',
+    NONE = '',
+}
+
+export enum CsvDecimalSeparator {
+    COMMA = ',',
+    PERIOD = '.',
+}
+
+export interface CsvExportOptions {
+    fieldSeparator: CsvFieldSeparator;
+    quoteStrings: boolean;
+    quoteCharacter: CsvQuoteStrings;
+    decimalSeparator: CsvDecimalSeparator;
+}
+
+interface ExportDialogCancelledResult {
+    cancelled: true;
+}
+
+export type ExportDialogCloseResult = CsvExportOptions | undefined | ExportDialogCancelledResult;
+
+export const isExportDialogCancelledResult = (result: ExportDialogCloseResult): result is ExportDialogCancelledResult => !!result && 'cancelled' in result;
+
+@Component({
+    selector: 'jhi-csv-export-modal',
+    templateUrl: './export-modal.component.html',
+    imports: [
+        TranslateDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
+        FaIconComponent,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+    ],
+})
+export class ExportModalComponent implements OnInit {
+    private dialogRef = inject<TumAetUiDialogRef<ExportDialogCloseResult>>(TumAetUiDialogRef);
+    private translateService = inject(TranslateService);
+
+    readonly CsvFieldSeparator = CsvFieldSeparator;
+    readonly CsvQuoteStrings = CsvQuoteStrings;
+    readonly CsvDecimalSeparator = CsvDecimalSeparator;
+
+    /** The active export format: 1 is Excel, 2 is CSV. */
+    readonly activeTab = signal<number | string | undefined>(1);
+    readonly options = signal<CsvExportOptions>(undefined!);
+
+    // Icons
+    faBan = faBan;
+    readonly faXmark = faXmark;
+    faDownload = faDownload;
+
+    ngOnInit(): void {
+        // set default csv export options based on the current language
+        switch (this.translateService.getCurrentLang()) {
+            case 'de':
+                this.options.set({
+                    fieldSeparator: CsvFieldSeparator.SEMICOLON,
+                    quoteStrings: true,
+                    quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+                    decimalSeparator: CsvDecimalSeparator.COMMA,
+                });
+                break;
+            default:
+                this.options.set({
+                    fieldSeparator: CsvFieldSeparator.COMMA,
+                    quoteStrings: true,
+                    quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+                    decimalSeparator: CsvDecimalSeparator.PERIOD,
+                });
+        }
+    }
+
+    /**
+     * Sets the field separator for the csv export options
+     * @param separator chosen separator which is used to separate the fields in the generated csv file
+     */
+    setCsvFieldSeparator(separator: CsvFieldSeparator) {
+        this.options.update((options) => cloneWith(options, { fieldSeparator: separator }));
+    }
+
+    /**
+     * Sets the quote string for the csv export options
+     * @param quoteString chosen quoteString option which is used to quote strings in the generated csv file
+     */
+    setCsvQuoteString(quoteString: CsvQuoteStrings) {
+        this.options.update((options) => cloneWith(options, { quoteCharacter: quoteString, quoteStrings: quoteString !== CsvQuoteStrings.NONE }));
+    }
+
+    /**
+     * Sets the decimal separator for the csv export options
+     * @param separator chosen decimal separator which is used in the generated csv file
+     */
+    setCsvDecimalSeparator(separator: CsvDecimalSeparator) {
+        this.options.update((options) => cloneWith(options, { decimalSeparator: separator }));
+    }
+
+    /**
+     * Dismisses the csv export options modal
+     */
+    cancel() {
+        this.dialogRef.close({ cancelled: true } satisfies ExportDialogCancelledResult);
+    }
+
+    /**
+     * Closes the export modal and passes the selected csv options back in case the active page is not set to 1.
+     */
+    onFinish() {
+        if (this.activeTab() === 1) {
+            // Excel export
+            this.dialogRef.close();
+        } else {
+            // CSV export
+            this.dialogRef.close(this.options());
+        }
+    }
+}

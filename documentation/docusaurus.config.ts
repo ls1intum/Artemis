@@ -1,0 +1,298 @@
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
+import type * as Preset from '@docusaurus/preset-classic';
+import warnSphinxRefs from './src/remark/warn-sphinx-refs';
+
+// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
+const EDIT_URL = ARTEMIS_DOCUMENTATION_REPOSITORY_URL + '/tree/develop/documentation/';
+const PAGE_TITLE = 'Artemis Documentation';
+
+const config: Config = {
+    title: `Welcome to the ${PAGE_TITLE}`,
+    tagline: 'Documentation for the Artemis Learning Management System',
+    favicon: 'img/artemis-favicon.svg',
+
+    customFields: {
+        pageTitle: PAGE_TITLE,
+        tumAetUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_AET_UI === 'true',
+    },
+    staticDirectories: ['static', ...(process.env.ARTEMIS_DOCS_TUM_AET_UI === 'true' ? ['../build/documentation-static'] : [])],
+
+    // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
+    future: {
+        v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    },
+
+    // Set the production url of your site here
+    url: 'https://docs.artemis.tum.de',
+    // Set the /<baseUrl>/ pathname under which your site is served
+    // For custom domains, use '/'
+    baseUrl: '/',
+
+    // GitHub pages deployment config.
+    // If you aren't using GitHub pages, you don't need these.
+    organizationName: 'ls1intum', // Usually your GitHub org/username.
+    projectName: 'Artemis', // Usually your repo name.
+
+    onBrokenLinks: 'throw',
+    onBrokenAnchors: 'throw',
+
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'throw',
+        },
+    },
+
+    // Even if you don't use internationalization, you can use this field to set
+    // useful metadata like html lang. For example, if your site is Chinese, you
+    // may want to replace "en" with "zh-Hans".
+    i18n: {
+        defaultLocale: 'en',
+        locales: ['en'],
+    },
+
+    presets: [
+        [
+            'classic',
+            {
+                docs: false,
+                blog: false,
+                theme: {
+                    customCss: './src/css/custom.css',
+                },
+            } satisfies Preset.Options,
+        ],
+    ],
+
+    themes: [
+        [
+            require.resolve('@easyops-cn/docusaurus-search-local'),
+            /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+            {
+                hashed: true,
+                language: ['en'],
+                indexDocs: true,
+                indexBlog: false,
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin', 'about'],
+                searchContextByPaths: [
+                    {
+                        label: 'Student Guide',
+                        path: 'student',
+                    },
+                    {
+                        label: 'Instructor Guide',
+                        path: 'instructor',
+                    },
+                    {
+                        label: 'Developer Guide',
+                        path: 'developer',
+                    },
+                    {
+                        label: 'Admin Guide',
+                        path: 'admin',
+                    },
+                    {
+                        label: 'About Artemis',
+                        path: 'about',
+                    },
+                ],
+                useAllContextsWithNoSearchContext: true,
+            },
+        ],
+    ],
+
+    plugins: [
+        [
+            // The site is served from GitHub Pages, which cannot redirect, so a page
+            // that moves needs a generated stub at its old path. Add an entry here
+            // whenever a URL that has been public changes, and never remove one.
+            '@docusaurus/plugin-client-redirects',
+            {
+                redirects: [
+                    {
+                        // The single exam guide became a category of focused pages.
+                        from: '/instructor/exams/exam-timeline',
+                        to: '/instructor/exams/intro',
+                    },
+                    {
+                        from: '/developer/guidelines/tum-ui-kit',
+                        to: '/developer/guidelines/tum-aet-ui-kit',
+                    },
+                    {
+                        from: '/developer/tum-ui-reference',
+                        to: '/developer/tum-aet-ui-reference',
+                    },
+                    {
+                        from: '/developer/tum-ui/',
+                        to: '../tum-aet-ui/',
+                    },
+                ],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                path: 'docs/student',
+                routeBasePath: 'student',
+                sidebarPath: './sidebar-students.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'instructor',
+                path: 'docs/instructor',
+                routeBasePath: 'instructor',
+                sidebarPath: './sidebar-instructors.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'developer',
+                path: 'docs/developer',
+                routeBasePath: 'developer',
+                sidebarPath: './sidebar-developer.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'admin',
+                path: 'docs/admin',
+                routeBasePath: 'admin',
+                sidebarPath: './sidebar-admin.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'about',
+                path: 'docs/about',
+                routeBasePath: 'about',
+                sidebarPath: './sidebar-about.ts',
+                editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
+            },
+        ],
+    ],
+
+    themeConfig: {
+        // Replace with your project's social card
+        image: 'img/artemis-favicon.svg',
+        colorMode: {
+            respectPrefersColorScheme: true,
+        },
+        navbar: {
+            title: PAGE_TITLE,
+            logo: {
+                alt: 'TUM Logo',
+                src: 'img/tum-logo-blue.svg',
+                srcDark: 'img/tum-logo-blue.svg',
+            },
+            items: [
+                {
+                    to: '/about',
+                    label: 'About',
+                    position: 'left',
+                },
+                {
+                    to: '/compare',
+                    label: 'Compare',
+                    position: 'left',
+                },
+                {
+                    href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                    label: 'GitHub',
+                    position: 'right',
+                },
+            ],
+        },
+        footer: {
+            style: 'dark',
+            links: [
+                {
+                    title: 'Community',
+                    items: [
+                        {
+                            label: 'AET Website',
+                            href: 'https://aet.cit.tum.de',
+                        },
+                        {
+                            label: 'AET LinkedIn',
+                            href: 'https://www.linkedin.com/company/tumaet',
+                        },
+                        {
+                            label: 'AET Instagram',
+                            href: 'https://www.instagram.com/tum.aet',
+                        },
+                    ],
+                },
+                {
+                    title: 'More',
+                    items: [
+                        {
+                            label: 'GitHub - Artemis',
+                            href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                        },
+                        {
+                            label: 'GitHub - AET Projects',
+                            href: 'https://github.com/ls1intum',
+                        },
+                    ],
+                },
+                {
+                    title: 'Project',
+                    items: [
+                        {
+                            label: 'About Artemis',
+                            to: '/about',
+                        },
+                        {
+                            label: 'Trust & Transparency',
+                            to: '/about/trust',
+                        },
+                        {
+                            label: 'Project Governance',
+                            to: '/about/governance',
+                        },
+                        {
+                            label: 'Research & Publications',
+                            to: '/publications',
+                        },
+                    ],
+                },
+                {
+                    title: 'Legal',
+                    items: [
+                        {
+                            label: 'Imprint',
+                            to: '/imprint',
+                        },
+                    ],
+                },
+            ],
+            copyright: `© 2026 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+        },
+        prism: {
+            theme: prismThemes.github,
+            darkTheme: prismThemes.dracula,
+        },
+    },
+} as Config;
+
+export default config;

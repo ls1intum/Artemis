@@ -1,0 +1,357 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaqUpdateComponent } from 'app/communication/faq/faq-update.component';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { Faq } from 'app/communication/shared/entities/faq.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FaqConsistencyComponent } from './faq-consistency.component';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
+import { ModuleFeature } from 'app/app.constants';
+
+describe('FaqUpdateComponent', () => {
+    let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
+    let faqUpdateComponent: FaqUpdateComponent;
+    let faqService: FaqService;
+    let profileService: ProfileService;
+    let activatedRoute: ActivatedRoute;
+    let router: Router;
+    let faq1: Faq;
+    let courseId: number;
+
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
+    let alertService: AlertService;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(() => {
+        faq1 = new Faq();
+        faq1.id = 1;
+        faq1.questionTitle = 'questionTitle';
+        faq1.questionAnswer = 'questionAnswer';
+        faq1.categories = [new FaqCategory('category1', '#94a11c')];
+        courseId = 1;
+        const mockProfileInfo = {
+            activeModuleFeatures: ['hyperion'] as ModuleFeature[],
+        };
+        TestBed.configureTestingModule({
+            imports: [
+                FaIconComponent,
+                FaqUpdateComponent,
+                MockComponent(MarkdownEditorMonacoComponent),
+                MockDirective(MarkdownDirective),
+                MockRouterLinkDirective,
+                MockComponent(FaqConsistencyComponent),
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: {
+                            data: of({ course: { id: 1 } }),
+                        },
+                        snapshot: {
+                            paramMap: convertToParamMap({
+                                courseId: '1',
+                            }),
+                        },
+                    },
+                },
+                MockProvider(FaqService, {
+                    findForManagement: () => {
+                        return of(
+                            new HttpResponse({
+                                body: faq1,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findAllCategoriesForManagement: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [],
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+
+                MockProvider(ProfileService, {
+                    // The mock must return a boolean to match the service method signature
+                    isModuleFeatureActive: (feature: ModuleFeature) => mockProfileInfo.activeModuleFeatures.includes(feature),
+                }),
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                provideHttpClient(),
+            ],
+        });
+
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
+        faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
+
+        faqService = TestBed.inject(FaqService);
+        profileService = TestBed.inject(ProfileService);
+        alertService = TestBed.inject(AlertService);
+
+        router = TestBed.inject(Router);
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        faqUpdateComponentFixture.detectChanges();
+    });
+
+    it('reloads newly proposed FAQ using management detail', () => {
+        const management = vi.spyOn(faqService, 'findForManagement');
+        const student = vi.spyOn(faqService, 'find');
+        faqUpdateComponent.faq = new Faq();
+        faqUpdateComponent['onSaveSuccess'](faq1);
+        expect(management).toHaveBeenCalledExactlyOnceWith(faqUpdateComponent.courseId, faq1.id);
+        expect(student).not.toHaveBeenCalled();
+    });
+
+    it('should create faq', () => {
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = true;
+        const createSpy = vi.spyOn(faqService, 'create').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        questionTitle: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        vi.advanceTimersByTime(0);
+
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
+        expect(faqUpdateComponent.isSaving()).toBe(false);
+    });
+
+    it('should propose faq', () => {
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = false;
+        const createSpy = vi.spyOn(faqService, 'create').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        questionTitle: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        vi.advanceTimersByTime(0);
+
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
+        expect(faqUpdateComponent.isSaving()).toBe(false);
+    });
+
+    it('should edit a faq', () => {
+        activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
+        faqUpdateComponent.isAtLeastInstructor = true;
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
+
+        const updateSpy = vi.spyOn(faqService, 'update').mockReturnValue(
+            of<HttpResponse<Faq>>(
+                new HttpResponse({
+                    body: {
+                        id: 6,
+                        questionTitle: 'test1Updated',
+                        questionAnswer: 'answer',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        vi.advanceTimersByTime(0);
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'ACCEPTED' });
+    });
+
+    it('should propose to edit a faq', () => {
+        activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
+        faqUpdateComponent.isAtLeastInstructor = false;
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
+
+        const updateSpy = vi.spyOn(faqService, 'update').mockReturnValue(
+            of<HttpResponse<Faq>>(
+                new HttpResponse({
+                    body: {
+                        id: 6,
+                        questionTitle: 'test1Updated',
+                        questionAnswer: 'answer',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        vi.advanceTimersByTime(0);
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
+    });
+
+    it('should navigate to previous state', () => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6, questionTitle: '', course: { id: 1 } } });
+
+        faqUpdateComponent.ngOnInit();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const previousState = vi.spyOn(faqUpdateComponent, 'previousState');
+        faqUpdateComponent.previousState();
+        vi.advanceTimersByTime(0);
+        expect(previousState).toHaveBeenCalledOnce();
+
+        const expectedPath = ['course-management', 1, 'faqs'];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+    });
+
+    it('should render the labelled fields and the cancel and save buttons', () => {
+        faqUpdateComponent.faq = { questionTitle: 'title', questionAnswer: 'answer', course: { id: 1, title: 'Course' } } as Faq;
+        faqUpdateComponent.validate();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        const element: HTMLElement = faqUpdateComponentFixture.nativeElement;
+
+        expect(element.querySelector('#jhi-faq-heading')).not.toBeNull();
+        expect(element.querySelector('label[for="field_title"]')).not.toBeNull();
+        expect(element.querySelector('#field_title')).not.toBeNull();
+        expect(element.querySelector('#field_description')).not.toBeNull();
+        expect(element.querySelector<HTMLInputElement>('#field_course')!.disabled).toBe(true);
+
+        const save = element.querySelector<HTMLButtonElement>('#save-entity')!;
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+        faqUpdateComponent.isSaving.set(true);
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        expect(save.disabled).toBe(true);
+
+        const previousState = vi.spyOn(faqUpdateComponent, 'previousState').mockImplementation(() => {});
+        element.querySelector<HTMLButtonElement>('#cancel-save')!.click();
+        expect(previousState).toHaveBeenCalledOnce();
+    });
+
+    it('should update categories', () => {
+        const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        faqUpdateComponent.updateCategories(categories);
+        expect(faqUpdateComponent.faqCategories()).toEqual(categories);
+        expect(faqUpdateComponent.faq.categories).toEqual(categories);
+    });
+
+    it('should not be able to save unless title and question are filled', () => {
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.validate();
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
+        faqUpdateComponent.faq = { questionAnswer: 'test1' } as Faq;
+        faqUpdateComponent.validate();
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
+        faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as Faq;
+        faqUpdateComponent.validate();
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(true);
+    });
+
+    it('should fail while saving with ErrorResponse', () => {
+        alertServiceStub = vi.spyOn(alertService, 'error');
+        const error = { status: 404 };
+        vi.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqUpdateComponent.save();
+        expect(faqUpdateComponent.isSaving()).toBe(false);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+        vi.runAllTimers();
+    });
+
+    it('should handleMarkdownChange properly', () => {
+        faqUpdateComponent.faq = { questionTitle: 'test1', questionAnswer: 'answer' } as Faq;
+        faqUpdateComponent.handleMarkdownChange('test');
+        expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
+    });
+
+    it('should have no intelligence action when HYPERION is not active', () => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
+        faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
+        faqUpdateComponentFixture.detectChanges();
+
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
+
+        expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
+    });
+
+    it('should have intelligence action when HYPERION is active', () => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
+        faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
+        faqUpdateComponent.courseId = 1;
+        faqUpdateComponentFixture.detectChanges();
+
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
+
+        const actions = faqUpdateComponent.artemisIntelligenceActions();
+        expect(actions).toHaveLength(1);
+        expect(actions[0]).toBeInstanceOf(RewriteAction);
+    });
+
+    it('should reset renderedConsistencyCheckResultMarkdown when dismissConsistencyCheck is called', () => {
+        faqUpdateComponent.renderedConsistencyCheckResultMarkdown.set({
+            result: 'Some result',
+            inconsistencies: ['Inconsistency 1'],
+            suggestions: ['Suggestion 1'],
+            improvement: 'Some improvement',
+        });
+
+        faqUpdateComponent.dismissConsistencyCheck();
+
+        expect(faqUpdateComponent.renderedConsistencyCheckResultMarkdown()).toEqual({
+            result: '',
+            inconsistencies: [],
+            suggestions: [],
+            improvement: '',
+        });
+    });
+});

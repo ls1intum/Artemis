@@ -1,0 +1,294 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { FormBuilder } from '@angular/forms';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+
+describe('MessageInlineInputComponent', () => {
+    let component: MessageInlineInputComponent;
+    let fixture: ComponentFixture<MessageInlineInputComponent>;
+    let communicationService: CommunicationService;
+    let communicationServiceCreateStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateStub: ReturnType<typeof vi.spyOn>;
+    let draftService: DraftService;
+    let accountService: AccountService;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [MessageInlineInputComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                FormBuilder,
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: CourseConversationsService, useValue: {} },
+                LocalStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+
+        TestBed.overrideComponent(MessageInlineInputComponent, {
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
+        });
+        fixture = TestBed.createComponent(MessageInlineInputComponent);
+        component = fixture.componentInstance;
+        communicationService = TestBed.inject(CommunicationService);
+        draftService = TestBed.inject(DraftService);
+        accountService = TestBed.inject(AccountService);
+        communicationServiceCreateStub = vi.spyOn(communicationService, 'createPost');
+        communicationServiceUpdateStub = vi.spyOn(communicationService, 'updatePost');
+    });
+
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
+    it('should offer cancel and save buttons only when an existing message is edited', () => {
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelector('#save')).toBeNull();
+
+        component.posting.set({ id: 21, content: 'old content' });
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement;
+        const [cancel, save] = Array.from(element.querySelectorAll<HTMLButtonElement>('button'));
+        expect(cancel.type).toBe('button');
+        expect(save.id).toBe('save');
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+
+        const onModalOpenSpy = vi.spyOn(component.isModalOpen, 'emit');
+        cancel.click();
+        expect(onModalOpenSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the save button and show a spinner while the message is saved', () => {
+        component.posting.set({ id: 21, content: 'old content' });
+        fixture.detectChanges();
+        const save = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#save')!;
+        expect(save.querySelector('fa-icon')).toBeNull();
+
+        component.isLoading.set(true);
+        fixture.detectChanges();
+
+        expect(save.disabled).toBe(true);
+        expect(save.querySelector('fa-icon')).not.toBeNull();
+    });
+
+    it('passes a distinct draft identity when equal-content messages are edited', () => {
+        component.posting.set({ id: 21, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('message:21');
+
+        component.posting.set({ id: 22, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('message:22');
+    });
+
+    it('should invoke communication service with created post', () => {
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+
+        const newContent = 'new content';
+        const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
+        component.formGroup.setValue({
+            content: newContent,
+        });
+        component.confirm();
+        vi.advanceTimersByTime(300);
+        expect(communicationServiceCreateStub).toHaveBeenCalledWith({
+            ...component.posting()!,
+            content: newContent,
+            title: undefined,
+        });
+        vi.advanceTimersByTime(0);
+        expect(component.isLoading()).toBe(false);
+        expect(onCreateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should pass the conversation of the posting to the markdown editor', () => {
+        const conversation = new GroupChatDTO();
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.activeConversation()).toBe(conversation);
+    });
+
+    it('should stop loading when communication service throws error during message creation', () => {
+        communicationServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
+        const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
+
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+
+        const newContent = 'new content';
+        component.formGroup.setValue({
+            content: newContent,
+        });
+
+        component.confirm();
+
+        vi.advanceTimersByTime(300);
+        expect(component.isLoading()).toBe(false);
+        expect(onCreateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should invoke communication service with edited post', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+
+        const editedContent = 'edited content';
+        const onEditSpy = vi.spyOn(component.isModalOpen, 'emit');
+
+        component.formGroup.setValue({
+            content: editedContent,
+        });
+
+        component.confirm();
+
+        expect(communicationServiceUpdateStub).toHaveBeenCalledWith({
+            ...component.posting()!,
+            content: editedContent,
+            title: undefined,
+        });
+        vi.advanceTimersByTime(0);
+        expect(component.isLoading()).toBe(false);
+        expect(onEditSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop loading when communication service throws error during message updating', () => {
+        communicationServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
+
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+
+        const editedContent = 'edited content';
+
+        component.formGroup.setValue({
+            content: editedContent,
+        });
+
+        component.confirm();
+
+        vi.advanceTimersByTime(0);
+        expect(component.isLoading()).toBe(false);
+    });
+
+    describe('Draft functionality', () => {
+        beforeEach(() => {
+            component.posting.set(directMessageUser1);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 1 } as any);
+            component.resetFormGroup();
+            component.ngOnInit();
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should not save draft if conversation or post id is missing', () => {
+            const saveDraftSpy = vi.spyOn(draftService, 'saveDraft');
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('');
+
+            component.posting.set({ content: '' } as any);
+            component.ngOnInit();
+            vi.advanceTimersByTime(0);
+
+            expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+
+        it('should save draft when content changes', () => {
+            const saveDraftSpy = vi.spyOn(draftService, 'saveDraft');
+            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
+
+            component.formGroup.setValue({
+                content: 'test draft content',
+            });
+            vi.advanceTimersByTime(0);
+
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(saveDraftSpy).toHaveBeenCalledWith('message_draft_1_1', 'test draft content');
+        });
+
+        it('should clear draft when content is empty', () => {
+            const clearDraftSpy = vi.spyOn(draftService, 'clearDraft');
+            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
+
+            component.formGroup.setValue({
+                content: '',
+            });
+            vi.advanceTimersByTime(0);
+
+            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
+        });
+
+        it('should load draft on init if available', () => {
+            const draftContent = 'saved draft content';
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
+            vi.spyOn(draftService, 'loadDraft').mockReturnValue(draftContent);
+
+            component.ngOnInit();
+            vi.advanceTimersByTime(0);
+
+            component['loadDraft']();
+            vi.advanceTimersByTime(0);
+
+            expect(component.formGroup.get('content')?.value).toBe(draftContent);
+        });
+
+        it('should clear draft after successful post creation', () => {
+            const clearDraftSpy = vi.spyOn(draftService, 'clearDraft');
+            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
+
+            component.formGroup.setValue({
+                content: 'new content',
+            });
+            vi.advanceTimersByTime(0);
+
+            component.confirm();
+            vi.advanceTimersByTime(0);
+
+            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
+        });
+    });
+});

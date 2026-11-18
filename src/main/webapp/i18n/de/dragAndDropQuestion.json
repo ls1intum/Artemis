@@ -1,0 +1,46 @@
+{
+    "artemisApp": {
+        "dragAndDropQuestion": {
+            "home": {
+                "title": "Drag-and-Drop Fragen",
+                "createLabel": "Drag-and-Drop Frage erstellen"
+            },
+            "created": "Drag-and-Drop Frage erstellt mit ID {{ param }}",
+            "updated": "Drag-and-Drop Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Drag-and-Drop Frage gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Drag-and-Drop Frage {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Drag-and-Drop Frage"
+            },
+            "backgroundFilePath": "Background File Path",
+            "dropLocations": "Drop Locations",
+            "dragItems": "Drag Items",
+            "correctMappings": "Korrekte Zuordnungen",
+            "randomizeOrder": "Drag Items in zufälliger Reihenfolge anzeigen",
+            "selectBackgroundPicture": "Hintergrund Auswählen",
+            "upload": "Hochladen",
+            "uploading": "Lade hoch...",
+            "disabledPreviewTooltip": "Um eine Vorschau zu zeigen, lade bitte zuerst ein Hintergrundbild hoch.",
+            "uploadBackgroundInstructions": "Bitte lade ein Hintergrundbild hoch.",
+            "drawOnBackgroundInstructions": "Zeichne auf den Hintergrund, um Drop Locations zu definieren.",
+            "noBackgroundPicture": "Kein Hintergrundbild",
+            "addDragItemsInstructions": "Benutze die unteren Schaltflächen, um Drag Items hinzuzufügen.",
+            "addMappingsInstructions": "Ziehe Drag Items auf Drop Locations, um korrekte Zuordnungen zu definieren.",
+            "addDragItemPicture": "Drag Item mit Bild Hinzufügen",
+            "addDragItemText": "Drag Item mit Text Hinzufügen",
+            "cutImagesFromDropLocation": "Bilder aus Drop Locations ausschneiden",
+            "cutImagesFromDropLocationTip": "Das Hintergrundbild wird verändert. Dies kann nicht rückgängig gemacht werden.",
+            "studentInstructions": "Drag-and-Drop: Platziere die passenden Elemente auf die zugehörigen Flächen.",
+            "showingYourAnswer": "Deine Abgabe:",
+            "showingSampleSolution": "Musterlösung:",
+            "changeBackgroundPicture": "Hintergrund ändern",
+            "changeDragItemPicture": "Lade Bild für Drag Item Veränderung hoch",
+            "invalid": {
+                "dragItem": "Ungültiges Drag Item",
+                "dropLocation": "Ungültige Drop Location"
+            }
+        }
+    }
+}

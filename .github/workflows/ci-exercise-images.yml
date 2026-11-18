@@ -1,0 +1,39 @@
+name: Exercise Images
+
+# Reusable workflow called by ci.yml when the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart or C#, the configured exercise images
+# or the tooling below change. It needs no Docker and downloads no dependency: it compares the versions the
+# templates pin with the template project of the configured image, read from the image repository at the tag.
+# The nightly workflow builds the exercises in the images without network access (nightly-exercise-images.yml).
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  image-sync:
+    name: Templates match their image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      # The parsers and the assembly decide what the check and the nightly build see, so a regression there would pass silently.
+      - name: Tooling self-test
+        run: python -m unittest discover -s supporting_scripts/tests -p 'test_exercise_images.py'
+      - name: Templates pin only versions their image holds
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/check_exercise_image_sync.py

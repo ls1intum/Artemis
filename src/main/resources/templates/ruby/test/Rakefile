@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+require_relative "assignment_path"
+
+require "minitest/test_task"
+
+Minitest::TestTask.create :test
+
+namespace :ci do
+  Minitest::TestTask.create :test do |task|
+    task.extra_args = ["--verbose", "--junit", "--junit-jenkins", "--junit-filename=report.xml"]
+  end
+end
+
+task default: %i[test]
+task ci: %i[ci:test]

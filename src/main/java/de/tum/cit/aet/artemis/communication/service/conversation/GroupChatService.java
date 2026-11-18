@@ -1,0 +1,111 @@
+package de.tum.cit.aet.artemis.communication.service.conversation;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import jakarta.validation.Valid;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class GroupChatService {
+
+    public static final String GROUP_CHAT_ENTITY_NAME = "messages.groupchat";
+
+    private static final Pattern GROUP_NAME_PATTERN = Pattern.compile("^[a-z0-9-]{0,20}$");
+
+    private final UserRepository userRepository;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    private final ConversationService conversationService;
+
+    private final GroupChatRepository groupChatRepository;
+
+    public GroupChatService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository, ConversationService conversationService,
+            GroupChatRepository groupChatRepository) {
+        this.userRepository = userRepository;
+        this.conversationParticipantRepository = conversationParticipantRepository;
+        this.conversationService = conversationService;
+        this.groupChatRepository = groupChatRepository;
+    }
+
+    /**
+     * Creates a new group chat
+     *
+     * @param course          the course the group chat is created in
+     * @param startingMembers the users that are initially part of the group chat
+     * @return the newly created group chat
+     */
+    public GroupChat startGroupChat(Course course, Set<User> startingMembers) {
+        var requestingUser = userRepository.getUserWithAuthorities();
+        var participantIds = startingMembers.stream().map(User::getId).toList();
+        // Try to find an existing group chat with exactly the same participants (no more, no less)
+        var existingChatBetweenUsers = groupChatRepository.findGroupChatWithExactParticipants(course.getId(), participantIds, startingMembers.size());
+        if (existingChatBetweenUsers.isPresent()) {
+            GroupChat chat = existingChatBetweenUsers.get();
+            // If the existing chat has no messages and was not created by the current user,
+            // we update the creator to the current user (useful in case the chat was pre-created)
+            if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {
+                chat.setCreator(requestingUser);
+                return groupChatRepository.save(existingChatBetweenUsers.get());
+            }
+            // Otherwise, reuse the existing chat as is
+            return existingChatBetweenUsers.get();
+        }
+        // No existing chat found — create a new one
+        var groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        groupChat.setCreator(requestingUser);
+        var savedGroupChat = groupChatRepository.save(groupChat);
+        var participantsToCreate = startingMembers.stream().map(user -> ConversationParticipant.createWithDefaultValues(user, groupChat)).toList();
+        conversationParticipantRepository.saveAll(participantsToCreate);
+        return savedGroupChat;
+    }
+
+    /**
+     * Updates the group chat with the given id
+     *
+     * @param groupChatId  the id of the group chat to update
+     * @param groupChatDTO the DTO containing the new group chat data
+     * @return the updated group chat
+     */
+    public GroupChat updateGroupChat(Long groupChatId, GroupChatDTO groupChatDTO) {
+        var groupChat = groupChatRepository.findByIdElseThrow(groupChatId);
+        if (groupChatDTO.getName() != null && !groupChatDTO.getName().equals(groupChat.getName())) {
+            groupChat.setName(groupChatDTO.getName().trim().isBlank() ? "" : groupChatDTO.getName().trim());
+        }
+        this.groupChatIsValidOrThrow(groupChat);
+        var updatedGroupChat = groupChatRepository.save(groupChat);
+        conversationService.notifyAllConversationMembersAboutUpdate(updatedGroupChat);
+        return updatedGroupChat;
+    }
+
+    /**
+     * Checks if the group chat is valid and throws an exception if it is not
+     *
+     * @param groupChat the group chat to check
+     */
+    public void groupChatIsValidOrThrow(@Valid GroupChat groupChat) {
+        if (groupChat.getName() != null && !GROUP_NAME_PATTERN.matcher(groupChat.getName()).matches()) {
+            throw new BadRequestAlertException("Group names can only contain lowercase letters, numbers, and dashes.", GROUP_CHAT_ENTITY_NAME, "namePatternInvalid");
+        }
+    }
+
+}

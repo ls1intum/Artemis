@@ -1,0 +1,370 @@
+---
+id: client-tests
+title: Client Tests
+sidebar_label: Client Tests
+last_reviewed: 2026-11-03
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+**If you are new to client testing, it is highly recommended that you work through the** [testing part](https://angular.dev/guide/testing) **of the angular tutorial.**
+
+We use [NgMocks](https://www.npmjs.com/package/ng-mocks/) for mocking the dependencies of an angular component.
+
+<Callout variant={CalloutVariant.info}>
+**Vitest** is the testing framework for all client tests.
+
+**Running Vitest tests:**
+
+- Watch mode: `pnpm run vitest`
+- Single run of the whole suite: `pnpm run vitest:run` (a path passed after `--` is ignored and still runs everything)
+- With coverage: `pnpm run vitest:coverage`
+
+</Callout>
+
+You can run all tests by invoking `pnpm test` in the root directory of the Artemis project.
+If you want to run individual tests, you can use the following commands:
+
+1. Run all tests in a file: `pnpm run prebuild && pnpm exec vitest run src/main/webapp/app/fileupload/manage/assess/file-upload-assessment.component.spec.ts`
+2. Run all tests in a module or folder: `pnpm run prebuild && pnpm exec vitest run src/main/webapp/app/fileupload/`
+
+The `prebuild` step builds the UI kit in `packages/tum-aet-ui/dist`, which the tests import as `@tumaet/ui-angular`. Without it, a checkout that has not built the kit
+fails to resolve that import. It is only needed once per checkout and after a change of the kit, and `pnpm run test:one <path>` does both steps.
+
+## Guidelines Overview
+
+The following sections outline **best practices** for writing client tests in Artemis.
+
+## Test Isolation
+
+- Always test a component in isolation.
+- Do not import entire production modules.
+- Use **mock pipes, directives, and components** where possible.
+- Only use real dependencies if absolutely necessary.
+- Prefer [stubs for child components](https://angular.dev/guide/testing/components-scenarios#stubbing-unneeded-components).
+
+**Example: Bad practice**
+
+```ts
+describe('ParticipationSubmissionComponent', () => {
+    ...
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                ArtemisResultModule,
+                ArtemisSharedModule,
+                TranslateModule.forRoot(),
+                ParticipationSubmissionComponent,
+                MockComponent(UpdatingResultComponent),
+                MockComponent(AssessmentDetailComponent),
+                MockComponent(ComplaintsForTutorComponent),
+            ],
+            providers: [
+                provideRouter([]),
+            ],
+        })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .compileComponents();
+    });
+});
+```
+
+Imports large modules → test runtime: 313.931s:
+
+```text
+PASS  src/test/javascript/spec/component/participation-submission/participation-submission.component.spec.ts (313.931 s, 625 MB heap size)
+```
+
+**Example: Good practice**
+
+```ts
+describe('ParticipationSubmissionComponent', () => {
+    ...
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                ParticipationSubmissionComponent,
+                MockComponent(UpdatingResultComponent),
+                MockComponent(AssessmentDetailComponent),
+                MockComponent(ComplaintsForTutorComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisTimeAgoPipe),
+                MockDirective(DeleteButtonDirective),
+                MockComponent(ResultComponent),
+            ],
+            providers: [
+                provideRouter([]),
+            ],
+        })
+            .compileComponents();
+    });
+});
+```
+
+Mocks dependencies → test runtime: 13.685s:
+
+```text
+PASS  src/test/javascript/spec/component/participation-submission/participation-submission.component.spec.ts (13.685 s, 535 MB heap size)
+```
+
+Now the whole testing suite is running **~25 times faster**!
+
+Here are the improvements for the test above:
+
+- **Removed** production module imports:
+
+```text
+- ArtemisResultModule
+- ArtemisSharedModule
+- TranslateModule.forRoot()
+```
+
+- **Mocked** pipes, directives and components that are not supposed to be tested:
+
+```text
++ MockTranslateValuesDirective
++ MockPipe(ArtemisTranslatePipe)
++ MockPipe(ArtemisDatePipe)
++ MockPipe(ArtemisTimeAgoPipe)
++ MockDirective(DeleteButtonDirective)
++ MockComponent(ResultComponent)
++ MockComponent(FaIconComponent)
+```
+
+More examples on test speed improvement can be found in the [following PR](https://github.com/ls1intum/Artemis/pull/3879/files).
+
+## Testing Directives
+
+Test a directive that acts on its own element with `TestBed.createDirective` instead of declaring a host component
+only to apply it. TestBed creates the host element, applies the directive to it and returns a `DirectiveFixture`. The
+fixture exposes the directive as `directiveInstance` and the host element as `nativeElement`, and offers
+`detectChanges()`, `whenStable()` and `destroy()` like a component fixture. Inputs, outputs and models are bound with
+`inputBinding`, `outputBinding` and `twoWayBinding` from `@angular/core`: `inputBinding` reads a signal or a getter
+function, `outputBinding` calls a handler, and `twoWayBinding` writes a `model()` back into a writable signal.
+
+```ts
+import { WritableSignal, inputBinding, outputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+
+describe('MarkdownDirective', () => {
+    let fixture: DirectiveFixture<MarkdownDirective>;
+    let text: WritableSignal<string | undefined>;
+    let renderCount: number;
+
+    beforeEach(() => {
+        text = signal<string | undefined>(undefined);
+        renderCount = 0;
+        fixture = TestBed.createDirective(MarkdownDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('jhiMarkdown', text), outputBinding('markdownRendered', () => renderCount++)],
+        });
+    });
+
+    it('renders markdown into the host element', async () => {
+        text.set('some **bold** text');
+        fixture.detectChanges();
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.innerHTML).toContain('<strong>bold</strong>');
+        });
+        expect(renderCount).toBe(1);
+    });
+});
+```
+
+Pass `tagName` whenever the selector does not name exactly one element: `createDirective` throws for `[jhiMarkdown]`,
+which names none, and for a selector that names two different tags. `table[tumAetUiTable]` creates a `<table>` on its
+own. Bind an input by its public name, which is the alias where the directive declares one; a name the directive does
+not have throws `NG0315` in development mode. Register providers with `TestBed.configureTestingModule` before calling
+`createDirective`; `compileComponents()` is not needed.
+
+Output bindings are subscribed as soon as the directive exists, but input bindings are applied on the first
+`fixture.detectChanges()`. Until then an input holds its default value, and reading a required input throws. After
+that, a changed signal reaches the directive on the next `fixture.detectChanges()`.
+
+The host element starts out empty, directly under `<body>`, and the directive's constructor has already run when
+`createDirective` returns. That is no different from a template: Angular creates a directive before the child elements
+of its host, so a constructor sees no children there either. Content the directive reads in `ngOnInit` or later can be
+appended to `fixture.nativeElement` before the first `fixture.detectChanges()`. `fixture.debugElement` is the host
+element, and it belongs to an internal empty component, so `debugElement.query()` does not find elements inside it.
+Query them through `fixture.nativeElement` instead.
+
+Keep a host component where the directive needs a template around it:
+
+- Structural directives, which inject a `TemplateRef`, such as `*jhiHasAnyAuthority` and `*jhiExtensionPoint`.
+- Directives that need something around or beside them, or content Angular keeps rendering inside them: `tumAetUiSortableColumn`
+  needs `tumAetUiTable` on an enclosing element and renders its own sort trigger, a validator tested through `ngModel`
+  needs the `NgModel` beside it, and `infinite-scroll` has to keep its sentinels around a `@for` list.
+- Directives whose constructor reads a static attribute the template writes on the host, such as the `href` that
+  `jhiSecureLink` must leave alone. Angular writes static attributes before it creates the directive, which
+  `createDirective` cannot do.
+- Inputs that take a `TemplateRef` or a component instance declared in the same template, such as
+  `tumAetUiPopoverTrigger`.
+
+An abstract base directive is still tested through a concrete subclass. One spec can use both: `createDirective` for
+the cases that fit, and a small host component, with a comment saying why, for the case that needs a template.
+`secure-link.directive.spec.ts` does this for its `href` case.
+
+## Mocking Rules
+
+### Services
+
+- Mock services if they just return data from the server.
+- If the service has important logic → keep the real service but mock **HTTP requests and responses** instead.
+- This allows us to test the interaction of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the [official angular documentation](https://angular.dev/guide/http/testing).
+
+```ts
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+describe('SomeComponent', () => {
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [...],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        });
+
+        ...
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        ...
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('should make get request', fakeAsync(() => {
+        const returnedFromApi = {some: 'data'};
+
+        component.callServiceMethod()
+            .subscribe((data) => expect(data.body).toEqual(returnedFromApi));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'urlThatMethodCalls' });
+        req.flush(returnedFromApi);
+        tick();
+    }));
+});
+```
+
+- **Never use** `NO_ERRORS_SCHEMA` ([angular documentation](https://angular.dev/guide/testing/components-scenarios#noerrorsschema)). Use stubs/mocks instead.
+
+- **Reset mocks** with `vi.restoreAllMocks()` in `afterEach`.
+    - This is important if they get defined across multiple tests
+    - Only works if mocks are created with `vi.spyOn`.
+    - Avoid manually assigning `vi.fn()`.
+
+## Coverage & Quality
+
+- Ensure at least **80% line coverage**.
+    - Run `pnpm run vitest:coverage` for a coverage report.
+    - Or [run the tests in IntelliJ IDEA with coverage activated](https://www.jetbrains.com/help/idea/running-test-with-coverage.html).
+
+- Prefer **user-interaction tests** instead of testing internal methods directly.
+    - Example: If you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
+    - Here is an example of such a test for [exercise-update-warning component](https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46)
+
+```ts
+it('should trigger saveExerciseWithoutReevaluation once', () => {
+    const emitSpy = vi.spyOn(comp.confirmed, 'emit');
+    const saveExerciseWithoutReevaluationSpy = vi.spyOn(comp, 'saveExerciseWithoutReevaluation');
+
+    const button = fixture.debugElement.nativeElement.querySelector('#save-button');
+    button.click();
+
+    fixture.detectChanges();
+
+    expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
+    expect(emitSpy).toHaveBeenCalledOnce();
+});
+```
+
+- **Do not** use `overrideTemplate()` to remove templates.
+    - The template is part of the component and must be tested.
+    - Do not do this:
+
+```ts
+describe('SomeComponent', () => {
+    let someComponentFixture: ComponentFixture<SomeComponent>;
+    let someComponent: SomeComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [SomeComponent],
+            providers: [
+                ...
+            ],
+        })
+            .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
+            .compileComponents();
+
+        someComponentFixture = TestBed.createComponent(SomeComponent);
+        someComponent = someComponentFixture.componentInstance;
+    });
+});
+```
+
+## Naming Test Doubles
+
+Use clear terminology for test doubles:
+
+- `Spy` → observes calls, no replacement.
+- `Mock` → spy + returns custom values for specific inputs.
+- `Stub` → spy + returns fixed values regardless of input.
+
+Example:
+
+```ts
+const clearSpy = vi.spyOn(component, 'clear');
+const getNumberStub = vi.spyOn(component, 'getNumber').mockReturnValue(42);
+```
+
+## Expectations
+
+- Make expectations as **specific** as possible.
+    - `expect(value).toBe(5)` is better than `expect(value).not.toBeUndefined()`.
+
+- Always follow `expect` with a matcher.
+    - Use meaningful, specific assertions instead of generic booleans.
+    - Extract as much as possible from the `expect` statement
+    - For example, instead of
+
+```ts
+expect(course == undefined).toBeTrue();
+expect(courseList).toHaveLength(4);
+```
+
+extract as much as possible:
+
+```ts
+expect(course).toBeUndefined();
+expect(courseList).toHaveLength(4);
+```
+
+- If you have minimized `expect`, use the verification function that provides the most meaningful error message in case the verification fails.
+
+- Use a **uniform style** for common cases to keep the codebase as consistent as possible:
+
+| Situation                                  | Solution                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expecting a boolean value                  | `expect(value).toBeTrue();`<br/>`expect(value).toBeFalse();`                                                                                                                                                                                                                                                                                                                                                                                          |
+| Two objects should be the same reference   | `expect(object).toBe(referenceObject);`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| A CSS element should exist                 | `expect(element).not.toBeNull();`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| A CSS element should not exist             | `expect(element).toBeNull();`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| A value should be undefined                | `expect(value).toBeUndefined();`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| A value should be either null or undefined | Use `expect(value).toBeUndefined();` for internal calls.<br/><br/>If an external library uses null value, use `expect(value).toBeNull();` and if not avoidable `expect(value).not.toBeNull();`.<br/><br/>**Never use** `expect(value).not.toBeDefined()` or `expect(value).toBeNil()` as they might not catch all failures under certain conditions.                                                                                                  |
+| A class object should be defined           | Always try to test for certain properties or entries.<br/><br/>`expect(classObject).toContainEntries([[key, value]]);`<br/><br/>`expect(classObject).toEqual(expectedClassObject);`<br/><br/>**Never use** `expect(value).toBeDefined()` as it might not catch all failures under certain conditions.                                                                                                                                                 |
+| A class object should not be undefined     | Try to test for a defined object as described above.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| A spy should not have been called          | `expect(spy).not.toHaveBeenCalled();`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| A spy should have been called once         | `expect(spy).toHaveBeenCalledOnce();`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| A spy should have been called with a value | Always test the number of calls as well:<br/><br/>`expect(spy).toHaveBeenCalledOnce();`<br/>`expect(spy).toHaveBeenCalledWith(value);`<br/><br/>If you have multiple calls, you can verify the parameters of each call separately:<br/><br/>`expect(spy).toHaveBeenCalledTimes(3);`<br/>`expect(spy).toHaveBeenNthCalledWith(1, value0);`<br/>`expect(spy).toHaveBeenNthCalledWith(2, value1);`<br/>`expect(spy).toHaveBeenNthCalledWith(3, value2);` |

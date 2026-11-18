@@ -1,0 +1,409 @@
+---
+id: user-registration
+title: User Management
+sidebar_label: User Management
+last_reviewed: 2026-11-15
+---
+
+This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
+they may authenticate, and how to configure self-registration.
+
+## Account types
+
+Every account is either **internal** or **external**, recorded in the `is_internal` column:
+
+| | Internal account | External account |
+|---|---|---|
+| Password | Hashed and stored by Artemis | Not stored; the identity provider verifies it |
+| Authenticated by | `ArtemisInternalAuthenticationProvider` | `LdapAuthenticationProvider`, `SAML2Service`, or `OIDCService` |
+| Password reset | Through Artemis | Through the institution's own account management |
+| Typical use | Admins, service accounts, guests, instances without an IdP | Students and staff of the operating institution |
+
+An account can be switched between the two through the admin user form. Turning an external account
+internal requires a password, which Artemis generates when the form leaves it blank.
+
+## Where accounts come from
+
+Several paths create accounts. The important column is the last one — see
+[The `activated` flag](#the-activated-flag) for why.
+
+| Provisioning path | Account type | Created activated? |
+|---|---|---|
+| Self-registration, `POST /register` | Internal | **No** — awaits activation by the user |
+| First login through LDAP | External | Yes |
+| First login through SAML2 | External | Yes |
+| First login through OIDC | External | Yes |
+| Course member import, exam registration, admin user import (resolved against LDAP) | External | Yes |
+| LTI launch | Internal | No — activated when the launch hands over the generated password |
+| Admin *Create User* form | As selected | Yes |
+| `internal-admin` bootstrap on startup | Internal | Yes |
+| Iris bot account | Internal | Yes |
+
+Only the first row leaves the account unactivated, and only that row is a user activating their own
+account. Every other path provisions the account on someone's behalf, so it must be usable immediately.
+
+:::note
+Course and exam **import** and **first login** can both create the same person's account, whichever
+happens first. Both must therefore produce an account in the same state — an imported student who has
+never logged in has to be able to use their repositories straight away.
+:::
+
+An LTI launch creates the account unactivated and activates it when it hands the account holder the
+Artemis password generated for them, so they can also sign in outside the LMS.
+
+## Importing users
+
+Instructors add course members and exam participants from a list of identifiers, and administrators can
+import users the same way. Each row may carry any combination of **login**, **email** and **registration
+number**.
+
+Resolution happens in two stages. The Artemis database is searched first and completely; only if nothing
+matches is the configured LDAP consulted, and an account found there is created in Artemis. Within each
+stage the identifiers are tried in the order login, then email, then registration number, stopping at the
+first match. Blank identifiers are skipped, and a row with all three blank is reported as not found.
+
+| Outcome | What happens |
+|---|---|
+| Found in the Artemis database | The existing account is used as it is |
+| Found only in the directory | An external, activated account is created and used |
+| Found nowhere | The row is returned to the caller as *not found* and no account is created |
+
+Accounts created this way are **activated**, exactly like accounts created on first login. This matters:
+an imported student who has not signed in yet must be able to clone and push straight away.
+
+An existing account is otherwise left untouched by an import. The one exception is the case where the
+searched identifier matched nothing locally but the directory resolved it to a login that does already
+exist — for instance an import by registration number for someone whose account predates that number
+being recorded. Only then are the account's name, email and registration number synced from the
+directory.
+
+:::tip
+If an import reports users as not found, check that `artemis.user-management.ldap.enabled` is `true` and
+that the identifiers match what the directory holds. A registration number that does not exist in the
+directory cannot be resolved, since Artemis has nothing else to look the person up by.
+:::
+
+## The `activated` flag
+
+`activated` decides whether an account may authenticate at all. It is enforced by:
+
+- every authentication provider: `ArtemisInternalAuthenticationProvider`, `LdapAuthenticationProvider`,
+  `SAML2Service`, `OIDCService`, and the passkey provider
+- git over HTTPS (`LocalVCServletService`) and git over SSH (`GitPublickeyAuthenticatorService`)
+
+An account is created unactivated **only when its own owner is expected to activate it**, which means the
+account must be **internal**. The activation key is redeemable only through `GET /activate`, so an
+externally managed account — which authenticates against the external directory — is never sent an
+activation mail and cannot redeem a key. Creating one unactivated therefore yields an account that
+*nothing* can ever activate. Historically such an account could still pass web login on an LDAP-only
+instance, because the LDAP provider was the one provider that did not consult the flag while git and every
+other provider refused it. That gap is now closed, so an account in this state cannot authenticate at all.
+
+:::note
+`GET /activate` and the mail carrying the key are both gated behind
+`artemis.user-management.registration.enabled`, so on an instance with self-registration disabled even an
+internal account has no way to redeem a key. Account creation is deliberately **not** narrowed to match, and
+checks only whether the account is internal: the LTI launch is the other path that creates an internal
+account through this factory. The launch discards the key immediately, because it never sends the mail that
+carries one, and records whether it still owes that account the password dialog in `UserLti.initialized`
+rather than in `activated` — see [LTI account provisioning](#lti-account-provisioning) below.
+:::
+
+Consequently there are exactly three reasons for `activated = false`:
+
+| Reason | Set by | Activation key |
+|---|---|---|
+| Awaiting activation | `UserCreationService.createUser` for an internal account, `UserService.registerUser` (always internal) | Present |
+| Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
+| Anonymized by an older version | `UserService.anonymizeUser`, together with `is_deleted`; no longer written, see [Deleting User Accounts](user-deletion.mdx#accounts-left-over-from-older-versions) | Absent |
+
+The activation key therefore distinguishes an account still waiting to be activated from one an
+administrator switched off on purpose. That distinction matters when repairing data: activating rows
+that carry a key never re-enables an account somebody deactivated deliberately.
+
+### Activation and cleanup
+
+A self-registered account is mailed a link containing its activation key. Redeeming it through
+`GET /activate` sets `activated = true` and clears the key. Every other write that activates an account
+clears it too — the administrative activate action, and the LTI launch both when it creates the account and
+when it hands over the generated password — so an activated account never carries one.
+
+An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
+**deleted**. The removal is scheduled when the account is registered and cancelled when it is
+activated, so the timer applies only to self-registration — no other provisioning path schedules it.
+The activation mail states this deadline in minutes, or in hours when the value is a whole number of hours.
+
+### Changing the email address
+
+The email address is where a password reset goes, so changing it must not be possible for someone who only holds a session of the
+account. When a user with an internal account changes the address in the settings, Artemis therefore does not apply it. It stores a
+request and mails one confirmation link to the **current** address and one to the **new** address. The address changes once the owners
+of both addresses have followed their link. Confirming only from the new address changes nothing, because that mailbox is the one an
+intruder would choose.
+
+- A request is valid for 24 hours. The settings page shows what is pending and offers to resend the mails or to cancel the request.
+  At most one request is pending per account, and another one, or a resend, is accepted one minute after the last. That pause is kept
+  across all nodes and is not ended by cancelling the request.
+- Anything that ends an intrusion also cancels a pending request: a completed password reset, a password change, an administrator
+  changing the password or the address, a deactivation and a deletion.
+- The previous address is told when the change has been applied, as before.
+- `allowed-email-pattern` applies to the new address, as it does at registration. The address is checked again when the change is
+  applied.
+- Without a configured mail server (`jhipster.mail.from` left at its default) nothing could be confirmed, so users cannot change
+  their address themselves and the settings field is disabled. An administrator can still change it in the user management, which
+  is also the way out for a user whose old mailbox no longer exists.
+- Accounts managed by an external provider (LDAP, SAML2 or OIDC) do not confirm a change: their address comes from the provider and the settings field is disabled.
+  If an address is nevertheless saved for such an account directly through the REST API while registration is enabled, `allowed-email-pattern` applies to it.
+- A request remembers the address the account had when it was made and the moment its credentials last changed, and the address is
+  applied only while both are still the same. If an administrator assigns another address, or the password is changed or reset,
+  while the request is being stored, the request is dropped instead of being applied.
+- The links in the mails point to `/account/confirm-email-change` on `server.url`. That page is public and confirms only after a
+  click, so a mail scanner that opens links cannot confirm a change. The path has to reach the client, as `/account/reset/finish` does.
+- `POST /api/core/public/account/confirm-email-change` is public and counts against the `ACCOUNT_MANAGEMENT` limit of the
+  application, see [Login form and rate limits](#login-form-and-rate-limits). The shipped nginx configuration has no zone for it.
+- The mails are written in the language the user saves with the request, and a resend uses the language of the account.
+- A request and a completed change are recorded in the [audit log](#audit-log) as `ACCOUNT_EMAIL_CHANGE_REQUESTED` and
+  `ACCOUNT_EMAIL_CHANGED`.
+- The settings of the client read `mailConfigured` from `/management/info`, which is false while `jhipster.mail.from` has its
+  default, to disable the field.
+
+### Sessions and new credentials
+
+A password reset or change, a deactivation and an administrator setting a password record the moment the credentials changed.
+Tokens that are already issued cannot be revoked, so the session in use before that moment would otherwise keep working until its
+token expires, and could use that time to add a passkey, an SSH key or an access token, each of which outlives the password reset.
+Artemis therefore compares the start of the session, the `iat` claim of its token, to that moment before it creates any of these
+credentials, and refuses a session that started earlier with `401`. The client then asks the user to sign in again. The same check
+applies to the repository access token for course staff and to turning a session into a tool token.
+
+Reading a credential back is guarded the same way: the endpoints that return the access token of a participation or of a
+repository require a current session. The account that the client reads when it loads the app is the one place that does not
+refuse an outdated session, because the client would otherwise sign the user out of a session that may still read. It leaves the
+personal VCS access token and its expiry out of the answer for such a session instead.
+
+The check is made when a credential is created or read back, and when the account of a user with a personal access token is
+read, which happens once per load of the app and costs one extra lookup for that user. Other ordinary requests make no check
+and no database access for it. It does not end the read access of an older session, which stays valid until its token expires,
+and a side effect is that a user who has just changed their own password signs in again before adding a new SSH key or passkey.
+The student page [Your Account](/student/getting-started/account) describes what the user sees.
+
+### Deactivation versus deletion
+
+- **Deactivation** keeps the account and its data but refuses authentication. It also revokes the
+  account's credentials — personal and participation VCS access tokens, SSH keys, and passkeys — because
+  the git paths accept a token or key on its own, so deactivation would otherwise not take effect there
+  until those credentials expired. Both routes that deactivate an account — the deactivate endpoint and
+  the admin edit form — write a `DEACTIVATE_USER` entry to the audit log naming the administrator who did
+  it and the account affected; activation is recorded as `ACTIVATE_USER` the same way. These are kept far
+  longer than login records.
+  Any activation or password-reset key still outstanding is discarded as well, so a link mailed before the
+  deactivation cannot be used to get back in.
+- Nothing lets an account holder reverse a deactivation, through an authentication provider or otherwise.
+  Only an administrator can activate an account again.
+- **Permanent deletion** removes the account row together with the data that belongs to it, after an
+  administrator has reviewed an impact preview and confirmed it, or after the retention cleanup has selected
+  the account and every business-domain reference to it is gone. It cannot be undone. See
+  [Deleting User Accounts](user-deletion.mdx) for the dialog, the accounts Artemis refuses to delete, and the
+  automatic paths.
+
+### LTI account provisioning
+
+An LTI launch for a user Artemis does not know creates an internal account and shows that user a dialog
+with a generated password, which is what they authenticate with afterwards. Two things follow from that:
+
+- The account is created with an activation key like any internal account, and the launch discards it
+  immediately. No activation mail is sent for such an account, so a key left in place would be a link
+  nobody ever received that still activates the account.
+- Whether the password dialog is still owed is recorded by the lti module itself, in
+  `user_lti.initialized`, and never inferred from `activated`.
+
+That second point matters because `activated` would otherwise answer two unrelated questions with the same
+value. To the launch, `activated = false` used to mean "this account still has to be initialised"; to an
+administrator it means "this account is disabled". An account that an administrator had deactivated was
+therefore indistinguishable from one that had never been initialised, and `PUT api/account/users/initialize`
+activated it again and handed out a working password. Reaching that endpoint needs only an authenticated
+session, and one issued before the deactivation keeps working.
+
+With a separate marker, initialisation happens at most once per account: the marker is claimed in a single
+conditional statement, so a second — or concurrent — call finds nothing to claim, and a deactivated account
+was initialised earlier and so carries the marker already. It can also happen zero times, which is the point:
+an account deactivated before it ever completed a launch is refused rather than handed a password.
+
+:::note
+The launch itself does not check account state. With `artemis.lti.trust-external-lti-systems` enabled, a
+deactivated account relaunching from the LMS is still issued a session, even though initialisation now
+refuses it. Enforcing account state on the launch is tracked separately.
+:::
+
+## Enabling self-registration
+
+Self-registration is **disabled** unless `artemis.user-management.registration.enabled` is explicitly
+`true`; a missing section counts as disabled. Registered accounts are always internal.
+
+```yaml
+artemis:
+    user-management:
+        registration:
+            enabled: true
+            allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
+            allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
+            cleanup-time-minutes: 60 # non-activated accounts are deleted after this many minutes
+spring:
+    mail:
+        host: <host>
+        port: 25
+        username: <username>
+        password: <password>
+        protocol: smtp
+        tls: true
+        properties.mail.smtp:
+            auth: true
+            starttls:
+                enable: true
+            ssl:
+                trust: <host>
+jhipster:
+    mail:
+        base-url: https://artemis.tum.de
+        from: artemis@xcit.tum.de
+management:
+    health:
+        mail:
+            enabled: true
+```
+
+Users can then register on the start page with any address matching `allowed-email-pattern`. If no
+pattern is configured, any address is accepted. A working mail server is required: without it the
+activation mail is never delivered and the account is deleted once the cleanup time elapses.
+
+### What people see
+
+People who register, or who change their email address in their account settings, can only use an
+address that matches `allowed-email-pattern`. The whole address has to match, and Artemis compares it in
+lowercase, so capital letters in what someone types do not matter. Write the pattern for lowercase letters:
+a pattern that requires a capital letter, such as `[A-Z]+@tum\.de`, never matches.
+
+- The form shows the text from `allowed-email-pattern-readable` next to the email field, for example
+  `@tum.de, @in.tum.de`. Always set it, in words that people understand.
+- A moment after someone stops typing, the form asks the server and says right away if the address is
+  not allowed, so nobody has to fill in the whole form to find out. The server applies the same rule to
+  the address that it applies when the form is sent.
+- If the server cannot answer at that moment, the form does not mark the address and lets the person
+  continue: the address is checked again when the form is sent, and the person then sees that it is not
+  allowed.
+
+You do not have to do anything for this. The pattern is written once and is only ever evaluated by the
+server. Because campus networks can share one address, the check has its own, generous request limit of
+300 per minute and client IP address, which does not use up the limit for registration itself. You can
+change it with `artemis.rate-limiting.email-address-check-requests-per-minute`.
+
+## Related authentication settings
+
+Each of the external mechanisms is enabled by its own property. `ldap.enabled` and `saml2.enabled` have
+no default — Artemis refuses to start if they are absent — while `oidc.enabled` defaults to `false`.
+
+```yaml
+artemis:
+    user-management:
+        ldap:
+            enabled: true       # required; LDAP lookups for user details and LDAP authentication
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'
+        saml2:
+            enabled: false      # required
+        oidc:
+            enabled: false      # optional, defaults to false
+        use-external: true      # advertises external password reset to the client; does NOT enable or disable LDAP
+```
+
+:::warning
+`use-external` does not switch LDAP authentication on or off, despite its name. It is only reported
+through `/management/info` so the client knows whether to send users to an external password reset.
+LDAP is controlled exclusively by `artemis.user-management.ldap.enabled`.
+:::
+
+See [SAML2 Login and Registration](saml2-login-registration.mdx) and
+[OIDC Login and Registration](oidc-login-registration.mdx) for the provider-specific setup.
+
+## Login form and rate limits
+
+The login form asks for an identifier first and then calls `GET /login-options` to decide whether to
+show a password field or send the user to the configured identity provider. The answer is derived from
+local account state only: an internal account gets the password form, and everything else — an external
+account, and an identifier this instance has not seen — is sent to the identity provider, which is also
+where a first-time user is provisioned.
+
+The account endpoints are rate limited in two independent places, and both are needed: nginx keys on the
+real TCP peer, while the application-level limiter runs per Artemis node and covers deployments that do
+not terminate at this nginx configuration.
+
+| Endpoint | nginx zone | Application limit |
+|---|---|---|
+| `POST /authenticate`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `POST /saml2` | `loginlimit`, 30 r/m | none — the SAML2 callback exchanges an already established assertion |
+| `GET /login-options` | `loginoptionslimit`, 30 r/m | `LOGIN_OPTIONS`, 30 rpm |
+| `/register`, `/activate`, `/account/reset-password/*` | `accountrecoverylimit`, 5 r/m | `ACCOUNT_MANAGEMENT`, 5 rpm |
+| `POST /email-allowed` (the check while an address is typed) | none | `EMAIL_ADDRESS_CHECK`, 300 rpm |
+| `POST /account/confirm-email-change` | none | `ACCOUNT_MANAGEMENT`, 5 rpm |
+| git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
+
+Application-level limits can be overridden per type under `artemis.rate-limiting`, for example
+`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is on by default and is switched
+off with `artemis.rate-limiting.enabled: false`. The one exception is the limit for [client error reports](/admin/client-error-reports):
+it cannot be switched off, and it applies even then.
+
+If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
+otherwise only the application-level limits apply — and the SAML2 callback, which has none of its own, is
+then unbounded.
+
+## Audit log
+
+Deliberate changes to an account are recorded in the audit log, which keeps them far longer than login
+records. The entries relevant to account state:
+
+| Event type | Recorded when | Principal | Data |
+|---|---|---|---|
+| `ACTIVATE_USER` | An account is activated, by an administrator or by its owner redeeming an activation key | Whoever performed it, or `system` if unauthenticated | `user=<login>` |
+| `DEACTIVATE_USER` | An account is deactivated, through either the deactivate action or the admin edit form | The acting administrator | `user=<login>` |
+| `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
+| `ACCOUNT_EMAIL_CHANGE_REQUESTED` | An internal account asks for a new address, or has the confirmation mails sent again | The account's login | None |
+| `ACCOUNT_EMAIL_CHANGED` | The address of an account was replaced, after both addresses confirmed or directly for an external account | The account's login | None |
+
+All of them are classified as security events, so they are written to `security_audit_event` and appear under
+the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
+`DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
+revocation itself writes none. Retention is configured separately per log; see
+[Cleanup Service](cleanup-service.mdx).
+
+## Troubleshooting
+
+**A user can sign in to the website but git authentication fails.**
+Their account is not activated. This combination is only possible on a version where the LDAP provider did
+not yet consult the flag, since it now does; on such a version web login succeeded while both git paths
+refused. Check `activated` for the account and activate it if it was never meant to be off.
+
+**A user reports they cannot sign in at all after being deactivated.**
+That is the intended effect: deactivation refuses authentication through every provider and revokes the
+account's tokens, SSH keys and passkeys. Only an administrator can activate the
+account again, and the revoked credentials have to be created anew afterwards.
+
+**A newly registered account disappeared.**
+An account that is not activated within `registration.cleanup-time-minutes` is deleted. Usually the
+activation mail was never delivered — verify the mail configuration and that
+`management.health.mail.enabled` reports healthy.
+
+**An imported student has no registration number.**
+Only accounts resolved through the directory carry one. An account created on first login through SAML2 or
+OIDC has one only if the provider supplies it through the configured registration-number attribute.
+
+## Related pages
+
+- [Access Rights](access-rights.mdx) — roles, groups and what each may do
+- [Your Account](/student/getting-started/account) — what a user sees when changing the email address or signing in again
+- [SAML2 Login and Registration](saml2-login-registration.mdx)
+- [OpenID Connect Login](oidc-login-registration.mdx)
+- [Deleting User Accounts](user-deletion.mdx) — deactivation, permanent deletion, and automatic cleanup of accounts
+- [Cleanup Service](cleanup-service.mdx) — removing inactive accounts and pruning the audit log

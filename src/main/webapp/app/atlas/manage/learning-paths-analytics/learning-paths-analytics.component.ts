@@ -1,0 +1,50 @@
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { CompetencyGraphDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiProgressSpinnerComponent, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-learning-paths-analytics',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CompetencyGraphComponent, TranslateDirective, NgTemplateOutlet, FormsModule, ArtemisTranslatePipe, TumAetUiProgressSpinnerComponent, TumAetUiRadioButtonComponent],
+    templateUrl: './learning-paths-analytics.component.html',
+})
+export class LearningPathsAnalyticsComponent {
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
+
+    protected readonly CompetencyGraphNodeValueType = CompetencyGraphNodeValueType;
+
+    readonly courseId = input.required<number>();
+
+    readonly isLoading = signal<boolean>(false);
+    readonly instructorCompetencyGraph = signal<CompetencyGraphDTO | undefined>(undefined);
+
+    readonly valueSelection = signal<CompetencyGraphNodeValueType>(CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS);
+
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            void untracked(() => this.loadInstructionCompetencyGraph(courseId));
+        });
+    }
+
+    private async loadInstructionCompetencyGraph(courseId: number): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const instructorCompetencyGraph = await this.learningPathApiService.getLearningPathInstructorCompetencyGraph(courseId);
+            this.instructorCompetencyGraph.set(instructorCompetencyGraph);
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+}

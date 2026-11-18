@@ -1,0 +1,119 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { faBan, faCircleNotch, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+interface ProgrammingExerciseResetDialogData {
+    programmingExercise: ProgrammingExercise;
+}
+
+@Component({
+    selector: 'jhi-programming-exercise-reset-dialog',
+    templateUrl: './programming-exercise-reset-dialog.component.html',
+    styles: ['textarea { width: 100%; }'],
+    imports: [FormsModule, TranslateDirective, FaIconComponent],
+})
+export class ProgrammingExerciseResetDialogComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    readonly FeatureToggle = FeatureToggle;
+
+    programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
+
+    programmingExerciseResetOptions: ProgrammingExerciseResetOptions = {
+        deleteParticipationsSubmissionsAndResults: false,
+        recreateBuildPlans: false,
+    };
+    readonly isLoading = signal(false);
+    readonly resetInProgress = signal(false);
+    confirmText = '';
+
+    versionControlName?: string;
+    continuousIntegrationName?: string;
+    readonly hasCustomizedBuildPlans = signal(false);
+
+    // Icons
+    faBan = faBan;
+    faCircleNotch = faCircleNotch;
+    faSpinner = faSpinner;
+    faUndo = faUndo;
+
+    ngOnInit() {
+        this.isLoading.set(true);
+        const profileInfo = this.profileService.getProfileInfo();
+        this.versionControlName = profileInfo.versionControlName;
+        this.continuousIntegrationName = profileInfo.continuousIntegrationName;
+        this.hasCustomizedBuildPlans.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+
+        this.resetInProgress.set(false);
+        this.programmingExerciseResetOptions = {
+            deleteParticipationsSubmissionsAndResults: false,
+            recreateBuildPlans: false,
+        };
+        this.isLoading.set(false);
+    }
+
+    /**
+     * Closes the dialog and dismisses it with a 'cancel' reason
+     */
+    clear() {
+        this.dialogRef.close('cancel');
+    }
+
+    /**
+     * Resets the programming exercise with the given reset options
+     */
+    resetProgrammingExercise() {
+        if (!this.programmingExercise.id) {
+            return;
+        }
+
+        this.resetInProgress.set(true);
+        const reset = this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults
+            ? this.programmingExerciseService.resetParticipations(this.programmingExercise.id, this.programmingExerciseResetOptions)
+            : this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions);
+        reset.subscribe({
+            next: this.handleResetResponse,
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');
+                this.resetInProgress.set(false);
+            },
+        });
+    }
+    /**
+     * Handles the reset response by showing a success message, closing the dialog, and resetting the resetInProgress flag.
+     */
+    handleResetResponse = () => {
+        this.alertService.success('artemisApp.programmingExercise.reset.successMessage');
+        this.dialogRef.close(true);
+        this.resetInProgress.set(false);
+    };
+
+    /**
+     * Check if all security checks are fulfilled and the user can submit the reset
+     * @returns {boolean} true if the user can submit, false otherwise
+     */
+    get canSubmit(): boolean {
+        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress();
+    }
+
+    /**
+     * Check if any reset options are selected
+     * @returns {boolean} true if at least one reset option is selected, false otherwise
+     */
+    get hasSelectedOptions(): boolean {
+        return this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults || this.programmingExerciseResetOptions.recreateBuildPlans;
+    }
+}

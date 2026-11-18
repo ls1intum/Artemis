@@ -1,0 +1,47 @@
+import { Component, computed, input, model, output } from '@angular/core';
+import { TumAetUiDialogComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/league-icon.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { LEAGUES } from 'app/quiz/overview/course-training/league-resource';
+
+@Component({
+    selector: 'jhi-quiz-training-dialog',
+    styleUrl: 'course-training.component.scss',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        TumAetUiDialogComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        LeagueIconComponent,
+        ButtonComponent,
+        FontAwesomeModule,
+    ],
+    templateUrl: './quiz-training-dialog.component.html',
+})
+export class QuizTrainingDialogComponent {
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly leagues = LEAGUES;
+
+    visible = model<boolean>(false);
+    showInLeaderboard = model<boolean>(true);
+    closable = input<boolean>(false);
+    showLeaderboardSettings = input<boolean>(true);
+    initialShowInLeaderboard = input<boolean>(true);
+    disableSaveValidation = input<boolean>(false);
+
+    save = output<void>();
+
+    saveDisabled = computed(() => {
+        if (this.disableSaveValidation()) {
+            return false;
+        }
+        return this.showInLeaderboard() === this.initialShowInLeaderboard();
+    });
+}

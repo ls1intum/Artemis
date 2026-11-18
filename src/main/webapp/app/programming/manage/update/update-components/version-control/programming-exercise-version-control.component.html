@@ -1,0 +1,32 @@
+<section>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlTitle"
+    ></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlMessage"></p>
+    @if (isEditFieldDisplayedRecord().allowBranching) {
+        <div class="form-group">
+            <div class="form-check">
+                <label class="form-check-label" for="field_allowBranching">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="allowBranching"
+                        id="field_allowBranching"
+                        [(ngModel)]="programmingExercise().buildConfig!.allowBranching"
+                    />
+                    <span jhiTranslate="artemisApp.programmingExercise.allowBranching.title"></span>
+                    <jhi-help-icon text="artemisApp.programmingExercise.allowBranching.description" />
+                </label>
+            </div>
+        </div>
+        @if (programmingExercise().buildConfig!.allowBranching) {
+            <div class="form-group">
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.branchRegex.title" for="field_branchRegex"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.branchRegex.description" />
+                <input class="form-control" type="text" name="branchRegex" id="field_branchRegex" [(ngModel)]="programmingExercise().buildConfig!.branchRegex" />
+            </div>
+        }
+        <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlDocumentationLink"></p>
+    }
+</section>

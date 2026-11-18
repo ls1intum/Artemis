@@ -1,0 +1,26 @@
+import org.apache.tools.ant.DirectoryScanner
+
+pluginManagement {
+    repositories {
+        mavenLocal()
+        // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors during plugin resolution)
+        maven {
+            name = "reposiliteRepository"
+            url = "https://reposilite.aet.cit.tum.de/releases"
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    plugins {
+        id "org.liquibase.gradle" version "${liquibase_plugin_version}"
+        id "net.ltgt.apt-eclipse" version "${apt_plugin_version}"
+        id "net.ltgt.apt-idea" version "${apt_plugin_version}"
+        id "net.ltgt.apt" version "${apt_plugin_version}"
+    }
+}
+
+rootProject.name = "Artemis"
+
+// needed for programming exercise templates
+DirectoryScanner.removeDefaultExclude "**/.gitattributes"
+DirectoryScanner.removeDefaultExclude "**/.gitignore"

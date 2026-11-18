@@ -1,0 +1,1262 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
+import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import dayjs from 'dayjs/esm';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription, combineLatest, of, take } from 'rxjs';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { TranslateService } from '@ngx-translate/core';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
+import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
+import {
+    toQuizBatch,
+    toQuizSubmission,
+    toQuizSubmissionFromLiveClient,
+    toQuizSubmissionFromStudent,
+    toResult,
+    toStudentParticipation,
+} from 'app/quiz/shared/util/generated-quiz-exercise.util';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
+import { debounce } from 'lodash-es';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
+import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { QuizParticipationBase } from './quiz-participation.base';
+
+@Component({
+    selector: 'jhi-quiz',
+    templateUrl: './quiz-participation.component.html',
+    providers: [ArtemisDurationFromSecondsPipe],
+    styleUrls: ['./quiz-participation.component.scss'],
+    imports: [
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ButtonComponent,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        JhiConnectionStatusComponent,
+        FormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+    ],
+})
+export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
+    private websocketService = inject(WebsocketService);
+    private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+    private quizExerciseService = inject(QuizExerciseService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
+    private quizParticipationApi = inject(QuizParticipationApi);
+    private quizExerciseBatchApi = inject(QuizExerciseBatchApi);
+    private translateService = inject(TranslateService);
+    private quizService = inject(ArtemisQuizService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private breakpointObserver = inject(BreakpointObserver);
+
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly QuizMode = QuizMode;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly getCourseFromExercise = getCourseFromExercise;
+
+    readonly mcQuestionComponents = viewChildren(MultipleChoiceQuestionComponent);
+
+    readonly dndQuestionComponents = viewChildren(DragAndDropQuestionComponent);
+
+    readonly shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
+
+    quizHeader = viewChild<ElementRef>('quizHeader');
+    stepWizard = viewChild<ElementRef>('stepWizard');
+    private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
+
+    private routeAndDataSubscription?: Subscription;
+
+    runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
+
+    readonly isSubmitting = signal(false);
+    // isSaving = false;
+    readonly lastSavedTimeText = signal('');
+    readonly justSaved = signal(false);
+    readonly waitingForQuizStart = signal(false);
+    readonly refreshingQuiz = signal(false);
+
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
+    readonly timeUntilStart = signal('0');
+    disconnected = false;
+    readonly unsavedChanges = signal(false);
+
+    readonly showingResult = signal(false);
+    readonly viewingExistingPracticeResult = signal(false);
+    readonly userScore = signal<number>(0);
+
+    readonly mode = signal<string>('');
+    readonly submission = signal(new QuizSubmission());
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly quizBatch = signal<QuizBatch | undefined>(undefined);
+    readonly totalScore = signal<number>(0);
+    private readonly answerSelection = new QuizAnswerSelection();
+    readonly selectedAnswerOptions = this.answerSelection.selectedAnswerOptions;
+    readonly dragAndDropMappings = this.answerSelection.dragAndDropMappings;
+    readonly shortAnswerSubmittedTexts = this.answerSelection.shortAnswerSubmittedTexts;
+    readonly onSelectedAnswerOptionsChange = this.answerSelection.onSelectedAnswerOptionsChange;
+    readonly onDragAndDropMappingsChange = this.answerSelection.onDragAndDropMappingsChange;
+    readonly onShortAnswerSubmittedTextsChange = this.answerSelection.onShortAnswerSubmittedTextsChange;
+
+    readonly result = signal<Result>(undefined!);
+    readonly questionScores = signal<{ [id: number]: number }>({});
+    readonly inputExerciseId = input<number>();
+    readonly inputCourseId = input<number>();
+    readonly inputMode = input<string>();
+    readonly quizStartedEvent = output<void>();
+    readonly quizSubmittedEvent = output<QuizSubmission>();
+    readonly practiceParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
+    private lastEmittedLiveQuizStatus: LiveQuizParticipationStatus | undefined;
+
+    private readonly _isSubmitDisabled = signal(true);
+    private readonly _submitTitleKey = signal('entity.action.submit');
+    readonly isSubmitDisabled = this._isSubmitDisabled.asReadonly();
+    readonly submitTitleKey = this._submitTitleKey.asReadonly();
+    private readonly _shouldTreatAsSubmittedForUi = signal(false);
+    readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+    private readonly _practiceAttemptFinished = signal(false);
+    readonly practiceAttemptFinished = this._practiceAttemptFinished.asReadonly();
+
+    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
+    readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
+
+    readonly submissionConfirmationDismissed = signal(false);
+    private submissionConfirmationQuizId?: number;
+
+    quizId!: number; // set in ngOnInit() from route params / inputs
+    courseId!: number; // set in ngOnInit() from route params / inputs
+    interval?: number;
+    autoSaveInterval?: number;
+    autoSaveTimer = 0;
+    quizStarted = false;
+    readonly startDate = signal<dayjs.Dayjs | undefined>(undefined);
+    endDate: dayjs.Dayjs | undefined;
+    password = '';
+    previousRunning = false;
+    isManagementView = false;
+
+    /**
+     * Websocket channels
+     */
+    participationChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizExerciseChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizBatchChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    websocketSubscription?: Subscription;
+    private participationSubscription?: Subscription;
+    private quizExerciseSubscription?: Subscription;
+    private quizBatchSubscription?: Subscription;
+    /** The pending practice load (an existing result or a fresh attempt), cancelled whenever practice mode is re-initialized. */
+    private practiceLoadSubscription?: Subscription;
+
+    /**
+     * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
+     */
+    timeoutJustSaved = debounce(() => {
+        this.justSaved.set(false);
+    }, 2000);
+
+    // Icons
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
+
+    constructor() {
+        super();
+        effect(() => {
+            if (this.quizHeader() && this.stepWizard()) {
+                const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
+                this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
+            }
+        });
+        effect((onCleanup) => {
+            // Center the overlays over the quiz by publishing its horizontal center. A ResizeObserver re-measures
+            // whenever the quiz changes size (window resize, sidebar toggle, ...); its first callback covers the initial layout.
+            const root = this.quizRoot()?.nativeElement;
+            if (!root) {
+                return;
+            }
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- the observer is disconnected via the effect's onCleanup below, which runs on every effect re-run and on component destroy. The rule only scans ngOnDestroy, so it cannot see this teardown.
+            const observer = new ResizeObserver(() => {
+                const rect = root.getBoundingClientRect();
+                root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
+                root.style.setProperty('--quiz-overlay-max-width', `${rect.width}px`);
+                root.style.setProperty('--quiz-overlay-display', rect.width === 0 ? 'none' : 'block');
+            });
+            observer.observe(root);
+            onCleanup(() => observer.disconnect());
+        });
+    }
+
+    ngOnInit() {
+        // set correct mode
+        this.routeAndDataSubscription = combineLatest([
+            this.route.data,
+            this.route.params,
+            this.route.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.parent?.params ?? of<Params>({}),
+        ]).subscribe(([data, params, parentParams, grandParentParams, greatGrandParentParams]) => {
+            this.mode.set(this.inputMode() ?? data.mode);
+            // exerciseId: own params (old componentless route) or parent params (new component-based route)
+            this.quizId = this.inputExerciseId() ?? Number(params['exerciseId'] ?? parentParams['exerciseId']);
+            // courseId: grandparent (old route: courses/:courseId is 2 levels up) or great-grandparent (new route: exercises adds one level)
+            this.courseId = this.inputCourseId() ?? Number(grandParentParams['courseId'] ?? greatGrandParentParams['courseId']);
+            // init according to mode
+            switch (this.mode()) {
+                case 'practice':
+                    this.initPracticeMode(
+                        params['participationId'] ? Number(params['participationId']) : undefined,
+                        params['submissionId'] ? Number(params['submissionId']) : undefined,
+                    );
+                    break;
+                case 'preview':
+                    this.initPreview();
+                    break;
+                case 'solution':
+                    this.initShowSolution();
+                    break;
+                case 'live':
+                    this.initLiveMode();
+                    break;
+            }
+        });
+        // update displayed times in UI regularly
+        this.interval = window.setInterval(() => {
+            this.updateDisplayedTimes();
+            this.checkForQuizEnd();
+        }, UI_RELOAD_TIME);
+        this.isManagementView = this.router.url.startsWith('/course-management');
+    }
+
+    ngOnDestroy() {
+        window.clearInterval(this.interval);
+        window.clearInterval(this.autoSaveInterval);
+        /**
+         * unsubscribe from all subscribed websocket channels when page is closed
+         */
+        this.runningTimeouts.forEach((timeout) => {
+            clearTimeout(timeout);
+        });
+
+        this.participationSubscription?.unsubscribe();
+        this.quizExerciseSubscription?.unsubscribe();
+        this.quizBatchSubscription?.unsubscribe();
+        this.practiceLoadSubscription?.unsubscribe();
+        this.websocketSubscription?.unsubscribe();
+        this.routeAndDataSubscription?.unsubscribe();
+    }
+
+    /**
+     * loads latest submission from server and sets up socket connection
+     */
+    initLiveMode() {
+        if (this.submissionConfirmationQuizId !== this.quizId) {
+            this.submissionConfirmationDismissed.set(false);
+            this.submissionConfirmationQuizId = this.quizId;
+        }
+        // listen to connect / disconnect events
+        this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
+            if (status.connected && this.disconnected) {
+                // if the disconnect happened during the live quiz and there are unsaved changes, we save the submission on the server
+                this.triggerSave(false);
+                // if the quiz was not yet started, we might have missed the quiz start => refresh
+                if (this.quizBatch() && !this.quizBatch()!.started) {
+                    this.refreshQuiz(true);
+                } else if (this.quizBatch() && this.endDate && this.endDate.isBefore(this.serverDateService.now())) {
+                    // if the quiz has ended, we might have missed to load the results => refresh
+                    this.refreshQuiz(true);
+                }
+            }
+            this.disconnected = !status.connected;
+        });
+
+        this.subscribeToWebsocketChannels();
+        this.setupAutoSave();
+
+        // load the quiz (and existing submission if quiz has started)
+        this.quizParticipationApi.startParticipation(this.quizId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * Resets the component state and re-initializes practice mode so the student
+     * can take the quiz again with a fresh submission.
+     */
+    restartPractice(): void {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
+        this.showingResult.set(false);
+        this.isSubmitting.set(false);
+        this.initPracticeMode();
+    }
+
+    /**
+     * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
+     */
+    initPracticeMode(participationId?: number, submissionId?: number) {
+        // The header offers "Start Practice Mode" as soon as an existing result is opened, before it has loaded. Cancel
+        // any load still pending so a late response cannot overwrite the attempt that replaced it.
+        this.practiceLoadSubscription?.unsubscribe();
+        if (participationId) {
+            this.viewingExistingPracticeResult.set(true);
+            this.syncSubmitState();
+            this.loadExistingPracticeResult(participationId, submissionId);
+        } else {
+            this.viewingExistingPracticeResult.set(false);
+            this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
+                next: (quizExercise) => {
+                    if (hasDueDatePassed(quizExercise)) {
+                        this.startQuizPreviewOrPractice(quizExercise);
+                    } else {
+                        alert('Error: This quiz is not open for practice!');
+                    }
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        }
+    }
+
+    /**
+     * loads an existing practice participation result
+     */
+    private loadExistingPracticeResult(participationId: number, submissionId?: number) {
+        this.practiceLoadSubscription = this.quizParticipationApi.getParticipationResult(this.quizId, participationId, submissionId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * loads quiz exercise and starts preview mode
+     */
+    initPreview() {
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
+            next: (quizExercise) => this.startQuizPreviewOrPractice(quizExercise),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    initShowSolution() {
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
+            next: (quizExercise) => {
+                this.quizExercise.set(quizExercise);
+                this.initQuiz();
+                this.showingResult.set(true);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * Start the given quiz in practice or preview mode
+     *
+     * @param quizExercise {object} the quizExercise to start
+     */
+    startQuizPreviewOrPractice(quizExercise: QuizExercise) {
+        // init quiz
+        this.quizExercise.set(quizExercise);
+        this.initQuiz();
+
+        // randomize order
+        this.quizService.randomizeOrder(this.quizExercise().quizQuestions, this.quizExercise().randomizeQuestionOrder);
+
+        // init empty submission
+        this.submission.set(new QuizSubmission());
+
+        // adjust end date
+        this.endDate = dayjs().add(this.quizExercise().duration!, 'seconds');
+
+        // auto submit when time is up
+        this.runningTimeouts.push(
+            setTimeout(() => {
+                this.submitExercise();
+            }, quizExercise.duration! * 1000),
+        );
+    }
+
+    setupAutoSave(): void {
+        // Clear existing autosaves - only one may run at a time
+        this.stopAutoSave();
+        this.autoSaveInterval = window.setInterval(() => {
+            if (this.waitingForQuizStart()) {
+                // The quiz has not started. No need to autosave yet.
+                return;
+            }
+            if (this.remainingTimeSeconds() < 0 || this.submission().submitted) {
+                this.stopAutoSave();
+                return;
+            }
+            this.autoSaveTimer++;
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                this.triggerSave();
+            }
+        }, AUTOSAVE_CHECK_INTERVAL);
+    }
+
+    stopAutoSave(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = undefined;
+    }
+
+    /**
+     * subscribe to any outstanding websocket channels
+     */
+    subscribeToWebsocketChannels() {
+        if (!this.participationChannel) {
+            this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
+            // TODO: subscribe for new results instead if this is what we are actually interested in
+            // participation channel => react to new results
+            this.participationSubscription = this.websocketService
+                .subscribe<StudentParticipation>(this.participationChannel)
+                .subscribe((changedParticipation: StudentParticipation) => {
+                    if (changedParticipation && this.quizExercise() && changedParticipation.exercise!.id === this.quizExercise().id) {
+                        if (this.waitingForQuizStart()) {
+                            // only apply completely if quiz hasn't started to prevent jumping ui during participation
+                            this.updateParticipationFromServer(changedParticipation);
+                        } else {
+                            // update quizExercise and results / submission
+                            this.showQuizResultAfterQuizEnd(changedParticipation);
+                        }
+                    }
+                });
+        }
+
+        if (!this.quizExerciseChannel) {
+            this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
+            // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+            this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
+                if (this.waitingForQuizStart() && this.quizId === quiz.id) {
+                    this.applyQuizFull(quiz);
+                }
+            });
+        }
+
+        if (this.quizBatch() && !this.quizBatch()!.started) {
+            const batchChannel = this.quizExerciseChannel + '/' + this.quizBatch()!.id;
+            if (this.quizBatchChannel !== batchChannel) {
+                this.quizBatchChannel = batchChannel;
+                this.quizBatchSubscription = this.websocketService.subscribe<QuizExercise>(this.quizBatchChannel).subscribe((quiz: QuizExercise) => {
+                    this.applyQuizFull(quiz);
+                });
+            }
+        }
+    }
+
+    /**
+     * updates all displayed (relative) times in the UI
+     */
+    updateDisplayedTimes() {
+        const countdown = quizCountdown(this.endDate, this.serverDateService.now(), this.translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+        this.remainingTimeSeconds.set(countdown.seconds);
+        this.remainingTimeText.set(countdown.text);
+        // update submission time
+        if (this.submission() && this.submission().submissionDate) {
+            // exact value is not important => use default relative time from dayjs for better readability and less distraction
+            this.lastSavedTimeText.set(dayjs(this.submission().submissionDate).fromNow());
+        }
+
+        // update time until start
+        if (this.quizBatch() && this.startDate()) {
+            if (this.startDate()!.isAfter(this.serverDateService.now())) {
+                this.timeUntilStart.set(this.relativeTimeText(this.startDate()!.diff(this.serverDateService.now(), 'seconds')));
+            } else {
+                this.timeUntilStart.set(this.translateService.instant('artemisApp.showStatistic.now'));
+                // Check if websocket has updated the quiz exercise and check that following block is only executed once
+                if (!this.quizBatch()!.started && !this.quizStarted) {
+                    this.quizStarted = true;
+                    if (this.quizExercise().quizMode === QuizMode.INDIVIDUAL) {
+                        // there is not websocket notification for INDIVIDUAL mode so just load the quiz
+                        this.refreshQuiz(true);
+                    } else {
+                        // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                        setTimeout(() => {
+                            // Check again if websocket has updated the quiz exercise within the 5 seconds
+                            if (!this.quizBatch() || !this.quizBatch()!.started) {
+                                this.refreshQuiz(true);
+                            }
+                        }, 5000);
+                    }
+                }
+            }
+        } else {
+            this.timeUntilStart.set('');
+        }
+        this.syncSubmitState();
+    }
+
+    /**
+     * Express the given timespan as humanized text
+     *
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
+     */
+    relativeTimeText(remainingTimeSeconds: number) {
+        return formatQuizRelativeTime(remainingTimeSeconds);
+    }
+
+    checkForQuizEnd() {
+        const running = this.mode() === 'live' && !!this.quizBatch() && this.remainingTimeSeconds() >= 0;
+        if (!running && this.previousRunning) {
+            // Rely on the grace period to store any unsaved changes at the end of the quiz
+            if (!this.submission().submitted) {
+                this.stopAutoSave();
+                this.triggerSave();
+                if (this.hasAnyAnswer() && this.quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
+                    this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                }
+            }
+        }
+        this.previousRunning = running;
+    }
+
+    /**
+     * Initialize the selections / mappings for each question with an empty array
+     */
+    initQuiz() {
+        // calculate score
+        this.totalScore.set(
+            this.quizExercise().quizQuestions
+                ? this.quizExercise().quizQuestions!.reduce((score, question) => {
+                      return score + question.points!;
+                  }, 0)
+                : 0,
+        );
+
+        this.answerSelection.reset(this.quizExercise().quizQuestions);
+    }
+
+    /**
+     * applies the data from the model to the UI (reverse of applySelection):
+     *
+     * Sets the checkmarks (selected answers) for all questions according to the submission data
+     * this needs to be done when we get new submission data, e.g. through the websocket connection
+     */
+    applySubmission() {
+        this.answerSelection.reset(this.quizExercise().quizQuestions, this.submission().submittedAnswers);
+    }
+
+    /**
+     * updates the model according to UI state (reverse of applySubmission):
+     * Creates the submission from the user's selection
+     * this needs to be done when we want to send the submission either for saving (through websocket) or for submitting (through REST call)
+     */
+    applySelection() {
+        // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
+        // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
+        this.submission().submittedAnswers = [];
+
+        // for multiple-choice questions
+        this.selectedAnswerOptions().forEach((answerOptions, questionId) => {
+            // find the question object for the given question id
+            const question = this.quizExercise().quizQuestions?.find((selectedQuestion) => {
+                return selectedQuestion.id === questionId;
+            });
+            if (!question) {
+                captureException('question not found for ID: ' + questionId);
+                return;
+            }
+            // generate the submittedAnswer object
+            const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+            mcSubmittedAnswer.quizQuestion = question;
+            mcSubmittedAnswer.selectedOptions = answerOptions;
+            this.submission().submittedAnswers!.push(mcSubmittedAnswer);
+        }, this);
+
+        // for drag-and-drop questions
+        this.dragAndDropMappings().forEach((mappings, questionId) => {
+            // find the question object for the given question id
+            const question = this.quizExercise().quizQuestions?.find((localQuestion) => {
+                return localQuestion.id === questionId;
+            });
+            if (!question) {
+                captureException('question not found for ID: ' + questionId);
+                return;
+            }
+            // generate the submittedAnswer object
+            const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
+            dndSubmittedAnswer.quizQuestion = question;
+            dndSubmittedAnswer.mappings = mappings;
+            this.submission().submittedAnswers!.push(dndSubmittedAnswer);
+        }, this);
+        // for short-answer questions
+        this.shortAnswerSubmittedTexts().forEach((submittedTexts, questionId) => {
+            // find the question object for the given question id
+            const question = this.quizExercise().quizQuestions?.find((localQuestion) => {
+                return localQuestion.id === questionId;
+            });
+            if (!question) {
+                captureException('question not found for ID: ' + questionId);
+                return;
+            }
+            // generate the submittedAnswer object
+            const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+            shortAnswerSubmittedAnswer.quizQuestion = question;
+            shortAnswerSubmittedAnswer.submittedTexts = submittedTexts;
+            this.submission().submittedAnswers!.push(shortAnswerSubmittedAnswer);
+        }, this);
+    }
+
+    /**
+     * Apply the data of the participation, replacing all old data
+     */
+    updateParticipationFromServer(participation: StudentParticipation) {
+        if (participation) {
+            this.applyQuizFull(participation.exercise as QuizExercise);
+        }
+
+        // apply submission if it exists
+        if (participation?.submissions?.length) {
+            this.submission.set(participation.submissions.first() as QuizSubmission);
+
+            // update submission time
+            this.updateSubmissionTime();
+
+            // show submission answers in UI
+            this.applySubmission();
+
+            if (this.submission().results?.length && this.submission().results![0].score !== undefined && this.quizExercise().quizEnded) {
+                // quiz has ended and results are available
+                this.showResult(this.submission().results![0]);
+                this.emitLiveQuizResult(participation);
+            }
+        } else {
+            this.submission.set(new QuizSubmission());
+            this.initQuiz();
+        }
+
+        // Re-sync after submission state is set (applyQuizFull called syncSubmitState before submission was assigned)
+        this.syncSubmitState();
+    }
+
+    /**
+     * apply the data of the quiz, replacing all old data and enabling reconnect if necessary
+     * @param quizExercise
+     */
+    applyQuizFull(quizExercise: QuizExercise) {
+        const wasWaiting = this.waitingForQuizStart();
+        this.quizExercise.set(quizExercise);
+        this.initQuiz();
+
+        this.quizBatch.set(this.quizExercise().quizBatches?.[0]);
+        if (this.quizExercise().quizEnded) {
+            // quiz is done
+            this.waitingForQuizStart.set(false);
+        } else if (!this.quizBatch() || !this.quizBatch()!.started) {
+            // quiz hasn't started yet
+            this.waitingForQuizStart.set(true);
+
+            if (this.quizBatch() && this.quizBatch()!.startTime) {
+                // synchronize time with server
+                this.startDate.set(dayjs(this.quizBatch()?.startTime ?? this.serverDateService.now()));
+            }
+        } else {
+            // quiz has started
+            this.waitingForQuizStart.set(false);
+
+            // update timeDifference
+            this.startDate.set(dayjs(this.quizBatch()?.startTime ?? this.serverDateService.now()));
+            this.endDate = this.startDate()!.add(this.quizExercise().duration!, 'seconds');
+
+            // check if quiz hasn't ended
+            if (!this.quizBatch()!.ended) {
+                // apply randomized order where necessary
+                this.quizService.randomizeOrder(this.quizExercise().quizQuestions, this.quizExercise().randomizeQuestionOrder);
+            }
+
+            // Notify parent that the quiz has just started (transition from waiting → started)
+            if (wasWaiting) {
+                this.quizStartedEvent.emit();
+            }
+        }
+        this.syncSubmitState();
+    }
+
+    /*
+     * This method only handles the update of the quiz after the quiz has ended
+     */
+    showQuizResultAfterQuizEnd(participation: StudentParticipation) {
+        const quizExercise = participation.exercise as QuizExercise;
+        if (participation.submissions?.first() !== undefined && quizExercise.quizEnded) {
+            // quiz has ended and results are available
+            this.submission.set(participation.submissions.first() as QuizSubmission);
+            if (this.submission().results?.length) {
+                // update submission time
+                this.updateSubmissionTime();
+                this.transferInformationToQuizExercise(quizExercise);
+                this.applySubmission();
+                this.showResult(this.submission().results![0]);
+                this.syncSubmitState();
+                this.emitLiveQuizResult(participation);
+            }
+        }
+    }
+
+    /**
+     * Surfaces the result-bearing participation to the surrounding exercise page (live mode only) so the exercise
+     * header reflects the graded result (status badge + achieved points) as soon as the result arrives, without a
+     * page refresh. The full participation is emitted.
+     */
+    private emitLiveQuizResult(participation: StudentParticipation): void {
+        if (this.mode() === 'live' && participation?.submissions?.some((submission) => submission.results?.length)) {
+            this.liveQuizResultParticipation.emit(participation);
+        }
+    }
+
+    /**
+     * Transfer additional information (explanations, correct answers) from the given full quiz exercise to quizExercise.
+     * This method is typically invoked after the quiz has ended and makes sure that the (random) order of the quiz
+     * questions and answer options for the particular user is respected
+     *
+     * @param fullQuizExerciseFromServer {object} the quizExercise containing additional information
+     */
+    transferInformationToQuizExercise(fullQuizExerciseFromServer: QuizExercise) {
+        this.quizExercise().quizQuestions!.forEach((clientQuestion) => {
+            // find updated question
+            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions?.find((fullQuestion) => {
+                return clientQuestion.id === fullQuestion.id;
+            });
+            if (fullQuestionFromServer) {
+                clientQuestion.explanation = fullQuestionFromServer.explanation;
+
+                switch (clientQuestion.type) {
+                    case QuizQuestionType.MULTIPLE_CHOICE:
+                        const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
+                        const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
+
+                        const answerOptions = mcClientQuestion.answerOptions!;
+                        answerOptions.forEach((clientAnswerOption) => {
+                            // find updated answerOption
+                            const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
+                                return clientAnswerOption.id === option.id;
+                            });
+                            if (fullAnswerOptionFromServer) {
+                                clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
+                                clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
+                            }
+                        });
+                        break;
+                    case QuizQuestionType.DRAG_AND_DROP:
+                        const dndClientQuestion = clientQuestion as DragAndDropQuestion;
+                        const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
+                        dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                        break;
+                    case QuizQuestionType.SHORT_ANSWER:
+                        const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
+                        const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
+                        shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
+                        break;
+                    default:
+                        captureException(new Error('Unknown question type: ' + clientQuestion.type));
+                        break;
+                }
+            }
+        }, this);
+
+        // make sure that a possible explanation is updated correctly in all sub components
+        this.mcQuestionComponents().forEach((mcQuestionComponent) => {
+            mcQuestionComponent.watchCollection();
+        });
+        this.dndQuestionComponents().forEach((dndQuestionComponent) => {
+            dndQuestionComponent.watchCollection();
+        });
+        this.shortAnswerQuestionComponents().forEach((shortAnswerQuestionComponent) => {
+            shortAnswerQuestionComponent.watchCollection();
+        });
+    }
+
+    /**
+     * Display results of the quiz for the user
+     * @param result
+     */
+    showResult(result: Result) {
+        this.result.set(result);
+        if (this.result()) {
+            this.showingResult.set(true);
+            const course = this.quizExercise().course || this.quizExercise()?.exerciseGroup?.exam?.course;
+
+            // assign user score (limit decimal places to 2)
+            this.userScore.set(this.submission().scoreInPoints ? roundValueSpecifiedByCourseSettings(this.submission().scoreInPoints, course) : 0);
+
+            // create dictionary with scores for each question
+            this.questionScores.set({});
+            this.submission().submittedAnswers?.forEach((submittedAnswer) => {
+                // limit decimal places
+                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, course);
+            }, this);
+            this.updateLiveHeaderInfo(this.hasAnyAnswer());
+        }
+    }
+
+    /**
+     * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
+     */
+    onSelectionChanged() {
+        this.unsavedChanges.set(true);
+    }
+
+    // Bound once and handed to the question components by reference. `onSelectionChanged.bind(this)` in the template
+    // created a new function on every change-detection pass, so every question component saw a changed input on every
+    // pass. Three bindings per question made this the busiest churn site in the participation view.
+    readonly selectionChangedCallback = () => this.onSelectionChanged();
+
+    triggerSave(resetAutoSaveTimer = true): void {
+        if (resetAutoSaveTimer) {
+            this.autoSaveTimer = 0;
+        }
+        if (this.unsavedChanges() && !this.isSubmitting()) {
+            this.applySelection();
+            this.submission().submissionDate = this.serverDateService.now();
+            this.quizSubmissionApi
+                .saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(this.submission()), false)
+                .pipe(take(1))
+                .subscribe({
+                    next: () => {
+                        this.unsavedChanges.set(false);
+                        this.updateSubmissionTime();
+                    },
+                    error: (error: HttpErrorResponse) => this.onSaveError(error.message),
+                });
+        }
+    }
+
+    /**
+     * update the value for adjustedSubmissionDate in submission
+     */
+    updateSubmissionTime() {
+        if (this.submission().submissionDate) {
+            if (Math.abs(dayjs(this.submission().submissionDate).diff(this.serverDateService.now(), 'seconds')) < 2) {
+                this.justSaved.set(true);
+                this.timeoutJustSaved();
+            }
+        }
+    }
+
+    /**
+     * Callback function for handling quiz submission after saving submission to server
+     * @param error a potential error during save
+     */
+    onSaveError(error: string) {
+        if (error) {
+            const errorMessage = 'Saving answers failed: ' + error;
+            this.alertService.addAlert({
+                type: AlertType.DANGER,
+                message: errorMessage,
+                disableTranslation: true,
+            });
+            this.unsavedChanges.set(true);
+            this.isSubmitting.set(false);
+        }
+    }
+
+    /**
+     * Checks if the student has interacted with each question of the quiz:
+     * - for a Multiple Choice Questions it checks if an answer option was selected
+     * - for a Drag and Drop Questions it checks if at least one mapping has been made
+     * - for a Short Answer Questions it checks if at least one field has been clicked in
+     * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
+     */
+    areAllQuestionsAnswered(): boolean {
+        if (!this.quizExercise().quizQuestions) {
+            return true;
+        }
+
+        for (const question of this.quizExercise().quizQuestions!) {
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    const options = this.selectedAnswerOptions().get(question.id!);
+                    if (options && options.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    const mappings = this.dragAndDropMappings().get(question.id!);
+                    if (mappings && mappings.length === 0) {
+                        return false;
+                    }
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    const submittedTexts = this.shortAnswerSubmittedTexts().get(question.id!);
+                    if (submittedTexts && submittedTexts.length === 0) {
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * This function is called when the user clicks the 'Submit' button
+     */
+    submitExercise() {
+        const translationBasePath = 'artemisApp.quizExercise.';
+        this.applySelection();
+        let confirmSubmit = true;
+
+        if (this.remainingTimeSeconds() > 15 && !this.areAllQuestionsAnswered()) {
+            const warningText = this.translateService.instant(translationBasePath + 'submissionWarning');
+            confirmSubmit = window.confirm(warningText);
+        }
+        if (confirmSubmit) {
+            this.isSubmitting.set(true);
+            this.syncSubmitState();
+            switch (this.mode()) {
+                case 'practice':
+                    if (!this.submission().id) {
+                        this.quizSubmissionApi.submitForPractice(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
+                            },
+                            error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                        });
+                    }
+                    break;
+                case 'preview':
+                    if (!this.submission().id) {
+                        this.quizSubmissionApi.submitForPreview(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
+                            },
+                            error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                        });
+                    }
+                    break;
+                case 'live':
+                    // copy submission and send it through websocket with 'submitted = true'
+                    const quizSubmission = new QuizSubmission();
+                    quizSubmission.submittedAnswers = this.submission().submittedAnswers;
+                    this.quizSubmissionApi.saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(quizSubmission), true).subscribe({
+                        next: (savedSubmission) => {
+                            this.submission.set(toQuizSubmission(savedSubmission));
+                            this.isSubmitting.set(false);
+                            this.unsavedChanges.set(false);
+                            this.updateSubmissionTime();
+                            this.applySubmission();
+                            this.syncSubmitState();
+                            // Notify the surrounding exercise page so the participation status badge
+                            // ("Submitted, waiting for due date") updates without requiring a page refresh.
+                            this.quizSubmittedEvent.emit(this.submission());
+                            if (this.quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
+                                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                            }
+                        },
+                        error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                    });
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Callback function for handling response after submitting for practice or preview
+     * @param result
+     */
+    onSubmitPracticeOrPreviewSuccess(result: Result) {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
+        this.isSubmitting.set(false);
+        this.syncSubmitState();
+        this.submission.set(result.submission as QuizSubmission);
+        // make sure the additional information (explanations, correct answers) is available
+        const participation: StudentParticipation | undefined = this.submission().participation;
+        const quizExercise = participation?.exercise;
+        if (quizExercise) {
+            this.transferInformationToQuizExercise(quizExercise);
+        }
+        this.applySubmission();
+        this.showResult(result);
+        // Re-sync after the (submitted) submission and result are applied, so the surrounding exercise header
+        // immediately reflects the finished attempt (submit button -> "Start Practice Mode") without waiting for
+        // the next UI interval tick.
+        this.syncSubmitState();
+
+        if (this.mode() === 'practice' && participation) {
+            // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
+            // shows the practice score immediately, without requiring a page refresh. The result payload omits the
+            // practice flag, so set it explicitly and link the result to the submission for the badge to render it.
+            participation.testRun = true;
+            this.submission().results = [result];
+            participation.submissions = [this.submission()];
+            this.practiceParticipationChanged.emit(participation);
+        }
+    }
+
+    /**
+     * Callback function for handling error when submitting
+     * @param error
+     */
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
+        this.isSubmitting.set(false);
+        this.syncSubmitState();
+    }
+
+    private highlightQuestion(questionIndex: number) {
+        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise().quizQuestions ? this.quizExercise().quizQuestions![questionIndex] : undefined;
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
+    }
+
+    /**
+     * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
+     *
+     * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
+     * @param questionIndex
+     */
+    navigateToQuestion(questionIndex: number): void {
+        const questionElement = document.getElementById('question' + questionIndex);
+        if (!questionElement) {
+            captureException('navigateToQuestion: element not found for index ' + questionIndex);
+            return;
+        }
+        questionElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'start',
+        });
+
+        this.highlightQuestion(questionIndex);
+    }
+
+    /**
+     * Refresh quiz
+     */
+    refreshQuiz(refresh = false) {
+        this.refreshingQuiz.set(refresh);
+        this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            next: (quizExercise) => {
+                if (quizExercise.quizStarted) {
+                    if (quizExercise.quizEnded) {
+                        this.waitingForQuizStart.set(false);
+                        this.endDate = dayjs();
+                    }
+                    this.quizExercise.set(quizExercise);
+                    this.initQuiz();
+                    this.initLiveMode();
+                }
+                setTimeout(() => this.refreshingQuiz.set(false), 500); // ensure min animation duration
+            },
+            error: () => {
+                setTimeout(() => this.refreshingQuiz.set(false), 500); // ensure min animation duration
+            },
+        });
+    }
+
+    joinBatch() {
+        this.quizExerciseBatchApi.joinBatch(this.quizId, { password: this.password }).subscribe({
+            next: (batch) => {
+                this.quizBatch.set(toQuizBatch(batch));
+                if (this.quizBatch()?.started) {
+                    this.refreshQuiz();
+                } else {
+                    this.subscribeToWebsocketChannels();
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                const errorMessage = 'Joining the quiz was not possible: ' + (error.headers?.get('X-artemisApp-message') || error.message);
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+            },
+        });
+    }
+
+    /**
+     * Checks whether the current quiz submission contains any user-provided answers.
+     *
+     * This method inspects all supported answer types (multiple choice,
+     * drag-and-drop, and short answer) and returns `true` as soon as at least
+     * one answer entry is present.
+     *
+     * @returns `true` if at least one answer exists in the current submission;
+     *          `false` otherwise.
+     */
+    hasAnyAnswer(): boolean {
+        return (
+            Array.from(this.selectedAnswerOptions().values()).some((v) => v?.length) ||
+            Array.from(this.dragAndDropMappings().values()).some((v) => v?.length) ||
+            Array.from(this.shortAnswerSubmittedTexts().values()).some((v) => v?.length)
+        );
+    }
+
+    /**
+     * Indicates whether the submission should be treated as "effectively submitted"
+     * for UI purposes, even if it has not been finalized on the server yet.
+     *
+     * This is the case if either:
+     * <ul>
+     *   <li>in practice mode, a result is being shown or an existing practice result is opened — the attempt is over, or</li>
+     *   <li>the submission has already been marked as submitted by the server, or</li>
+     *   <li>the quiz working time has expired and the submission shows evidence of user interaction
+     *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
+     * </ul>
+     *
+     * @returns `true` if the submission should be considered submitted in the UI;
+     *          `false` otherwise.
+     */
+    private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
+        const hasSavedOrAnswered = hasAnyAnswer || !!this.submission()?.submissionDate || !!this.submission()?.id;
+        const practiceAttemptOver = this.mode() === 'practice' && (this.viewingExistingPracticeResult() || this.showingResult());
+        return practiceAttemptOver || !!this.submission().submitted || (this.remainingTimeSeconds() < 0 && hasSavedOrAnswered);
+    }
+
+    /**
+     * Syncs the submit button state signals so that the exercise header actions
+     * component can render the correct disabled state and label without relying
+     * on a button inside this component.
+     */
+    syncSubmitState(): void {
+        // hasAnyAnswer() materializes the three answer maps; compute it once per tick and share it with both consumers.
+        const hasAnyAnswer = this.hasAnyAnswer();
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
+        this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        // The practice attempt is also over once it expired: an attempt without a single answer never counts as
+        // submitted, yet Submit is disabled from then on. A submission in flight keeps it open — restarting under one
+        // would let its response land on the fresh attempt.
+        this._practiceAttemptFinished.set(this.mode() === 'practice' && !this.isSubmitting() && (submittedForUi || this.remainingTimeSeconds() < 0));
+        const disabled = submittedForUi || this.isSubmitting() || this.waitingForQuizStart() || this.remainingTimeSeconds() < 0;
+        this._isSubmitDisabled.set(disabled);
+        this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
+        this.emitLiveQuizStatus(submittedForUi);
+        this.updateLiveHeaderInfo(hasAnyAnswer);
+    }
+
+    /**
+     * Emits the display-only live quiz status to the surrounding exercise page (only when it changes), so the
+     * participation status badge reflects the actual in-quiz progress without a page refresh. While the quiz shows
+     * results, or outside live mode, no override is emitted so the badge falls back to its result/data-driven logic.
+     */
+    private emitLiveQuizStatus(submittedForUi: boolean): void {
+        let status: LiveQuizParticipationStatus | undefined;
+        // Only report once the quiz has actually loaded. Before that, waitingForQuizStart still holds its default
+        // (false) and would briefly report PARTICIPATING, flashing the wrong badge when opening/switching quizzes.
+        if (this.mode() === 'live' && this.quizExercise() && !this.showingResult()) {
+            if (submittedForUi) {
+                status = LiveQuizParticipationStatus.SUBMITTED;
+            } else if (this.quizExercise().quizEnded) {
+                status = LiveQuizParticipationStatus.MISSED;
+            } else if (!this.waitingForQuizStart()) {
+                status = LiveQuizParticipationStatus.PARTICIPATING;
+            } else {
+                status = LiveQuizParticipationStatus.NOT_STARTED;
+            }
+        }
+        if (status !== this.lastEmittedLiveQuizStatus) {
+            this.lastEmittedLiveQuizStatus = status;
+            this.liveQuizStatusChange.emit(status);
+        }
+    }
+
+    /** Recomputes the live header info (remaining time / results-available date) for the exercise header; runs on every UI tick via {@link syncSubmitState} and when results are shown. */
+    private updateLiveHeaderInfo(hasAnyAnswer: boolean): void {
+        if (!this.quizExercise() || (this.mode() !== 'live' && this.mode() !== 'practice')) {
+            this._liveHeaderInfo.set(undefined);
+            return;
+        }
+
+        const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
+        if (!this.showingResult()) {
+            if (!this.waitingForQuizStart() && !this.submission().submitted && !!this.endDate && this.remainingTimeSeconds() >= 0) {
+                info.showRemainingTime = true;
+                info.remainingTimeText = this.remainingTimeText();
+                info.remainingTimeColor = this.remainingTimeColor();
+            } else if (this.quizExercise().dueDate && ((!this.quizExercise().quizEnded && this.submission().submitted) || (this.remainingTimeSeconds() < 0 && hasAnyAnswer))) {
+                info.showResultsAvailable = true;
+                info.resultsAvailableDate = this.quizExercise().dueDate;
+            } else if (this.waitingForQuizStart()) {
+                const duration = this.quizExercise().duration;
+                if (duration) {
+                    info.showDuration = true;
+                    info.durationText = this.durationFromSecondsPipe.transform(duration);
+                }
+            }
+        }
+        this._liveHeaderInfo.set(info);
+    }
+
+    /** Maps the remaining seconds to the severity of the header countdown (warning / critical thresholds); undefined for the default severity. */
+    private remainingTimeColor(): string | undefined {
+        const duration = this.quizExercise().duration ?? 0;
+        if (this.remainingTimeSeconds() < 60 || this.remainingTimeSeconds() < duration / 4) {
+            return 'danger';
+        }
+        if (this.remainingTimeSeconds() < 120 || this.remainingTimeSeconds() < duration / 2) {
+            return 'warning';
+        }
+        return undefined;
+    }
+}

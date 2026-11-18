@@ -1,0 +1,136 @@
+@if (nextRelevantExam() && nextRelevantCourseForExam()) {
+    <div>
+        <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam()?.title }"></h3>
+        <div class="mb-3">
+            <div
+                class="d-flex justify-content-between align-items-center exam-container px-3"
+                (click)="openExam()"
+                #keyboardAction5
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+            >
+                <div class="mb-4 mt-4 d-flex" style="width: unset">
+                    <fa-icon [icon]="faPenAlt" size="2x" />
+                    <h4 class="ms-2 fw-medium">{{ nextRelevantExam()?.title }}</h4>
+                </div>
+                <div class="text-end mb-4 mt-4" style="width: unset">
+                    @if (nextRelevantExam()?.startDate) {
+                        <div jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: nextRelevantExam()?.startDate | artemisDate }"></div>
+                    }
+                    @if (nextRelevantExam()?.examMaxPoints) {
+                        <div jhiTranslate="artemisApp.exam.overview.maxPoints" [translateValues]="{ points: nextRelevantExam()?.examMaxPoints }"></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div>
+    <div data-testid="courses-header" class="courses-header flex flex-wrap items-center justify-between gap-2 pb-4!">
+        <h3 data-testid="courses-title" class="courses-title m-0! whitespace-nowrap font-medium">
+            {{ 'artemisApp.studentDashboard.title' | artemisTranslate }} ({{ regularCourses().length + recentlyAccessedCourses().length }})
+        </h3>
+        <div class="courses-actions flex min-w-0 flex-1 items-center justify-end gap-2">
+            <div class="course-sort">
+                <button
+                    id="test-sort"
+                    tumAetUiButton
+                    type="button"
+                    variant="text"
+                    size="small"
+                    (click)="onSort()"
+                    [attr.aria-label]="'artemisApp.studentDashboard.sort' | artemisTranslate"
+                >
+                    <fa-icon [icon]="isSortAscending() ? faArrowDownAZ : faArrowUpAZ" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.studentDashboard.sort"></span>
+                </button>
+            </div>
+            <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="course-search min-w-0" />
+            @if (coursesLoaded()) {
+                <div class="course-secondary-action">
+                    <a
+                        [attr.aria-label]="'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate"
+                        id="course-enrollment"
+                        tumAetUiButton
+                        [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'"
+                        [routerLink]="['/courses/enroll']"
+                        size="small"
+                    >
+                        <fa-icon [icon]="faDoorOpen" />
+                        <span class="hidden md:inline" jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></span>
+                    </a>
+                </div>
+            }
+            @if (canRequestCourse()) {
+                <a class="course-secondary-action" tumAetUiButton id="request-course" [routerLink]="['/course-requests']" size="small">
+                    <fa-icon [icon]="faBook" />
+                    <span jhiTranslate="global.menu.courseRequests"></span>
+                </a>
+            }
+            @if (isAdmin()) {
+                <a
+                    [attr.aria-label]="'artemisApp.course.home.createLabel' | artemisTranslate"
+                    class="course-secondary-action"
+                    tumAetUiButton
+                    id="create-course"
+                    size="small"
+                    [routerLink]="['/course-management/new']"
+                >
+                    <fa-icon [icon]="faPlus" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.course.home.createLabel"></span>
+                </a>
+            }
+        </div>
+    </div>
+    @if (recentlyAccessedCourses().length) {
+        <h4 class="course-section-title mx-0! my-4! font-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: recentlyAccessedCourses() }" />
+        @if (regularCourses().length) {
+            <h4 class="course-section-title mx-0! my-4! font-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses"></h4>
+        }
+    }
+    @if (coursesLoaded() && !regularCourses().length && !recentlyAccessedCourses().length) {
+        @if (!testCourses().length) {
+            <div>
+                <h4 class="text-center text-muted-color" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
+            </div>
+        }
+    } @else {
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses() }" />
+    }
+</div>
+@if (testCourses().length) {
+    <div class="mt-4">
+        <h3 class="course-section-title mb-6! font-medium">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: testCourses() }" />
+    </div>
+}
+@if (coursesLoaded()) {
+    <div class="d-flex justify-content-center mt-5 mb-3">
+        <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
+        <div>&nbsp;</div>
+        <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
+    </div>
+}
+
+<ng-template #courseCardTemplate let-courses>
+    @let filteredCourses = asCourses(courses) | searchFilter: ['title'] : searchCourseText();
+    @if (filteredCourses.length > 0) {
+        <div class="course-grid" data-testid="course-grid">
+            @for (course of filteredCourses; track course) {
+                <div class="course-card-wrapper" data-testid="course-card">
+                    <jhi-overview-course-card [course]="course" />
+                </div>
+            }
+        </div>
+    } @else {
+        @if (coursesLoaded()) {
+            <div class="d-flex justify-content-center">
+                <span class="text-secondary" jhiTranslate="artemisApp.studentDashboard.noCoursesFound"></span>
+            </div>
+        }
+    }
+</ng-template>

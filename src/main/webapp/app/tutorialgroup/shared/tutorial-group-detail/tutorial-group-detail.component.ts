@@ -1,0 +1,497 @@
+import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { NgClass } from '@angular/common';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import {
+    faBan,
+    faBuildingColumns,
+    faCalendar,
+    faCheck,
+    faCircleExclamation,
+    faCirclePlay,
+    faClock,
+    faFlag,
+    faMapPin,
+    faPenToSquare,
+    faPlus,
+    faQuestion,
+    faTag,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { FormsModule } from '@angular/forms';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TutorialSessionCreateOrEditModalComponent,
+    UpdateTutorialGroupSessionData,
+} from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
+
+interface TutorialGroupDetailSession {
+    id: number;
+    date: string;
+    time: string;
+    location: string;
+    isCancelled: boolean;
+    isCancelledByFreePeriod: boolean;
+    locationChanged: boolean;
+    timeChanged: boolean;
+    dateChanged: boolean;
+    attendance?: string;
+}
+
+export interface ModifyTutorialGroupSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    tutorialGroupSessionId: number;
+}
+
+export interface UpdateTutorialGroupSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    tutorialGroupSessionId: number;
+    updateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
+}
+
+export interface CreateTutorialGroupSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    createTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
+}
+
+export interface DeleteTutorialGroupEvent {
+    courseId: number;
+    tutorialGroupId: number;
+}
+
+type ListOption = 'all-sessions' | 'future-sessions';
+
+/**
+ * Access levels for the tutorial group detail component.
+ *
+ * The numeric values are intentionally ordered so they can be compared directly.
+ * `STUDENT` is used for the student-facing detail view, where no management
+ * actions are available. Higher levels progressively unlock management actions
+ * such as accessing registrations, editing or deleting the group, and creating,
+ * editing, cancelling, activating, or deleting sessions.
+ */
+export enum TutorialGroupDetailAccessLevel {
+    STUDENT = 0,
+    TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE = 1,
+    TUTOR_OF_GROUP = 2,
+    EDITOR_OF_GROUP = 3,
+    INSTRUCTOR_OF_GROUP_OR_ADMIN = 4,
+}
+
+@Component({
+    selector: 'jhi-tutorial-group-detail',
+    imports: [
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        ProfilePictureComponent,
+        FaIconComponent,
+        TranslateDirective,
+        FormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiDoughnutChartComponent,
+        TumAetUiSelectButtonComponent,
+        TutorialGroupDetailSessionStatusIndicatorComponent,
+        NgClass,
+        RouterLink,
+        TumAetUiConfirmDialogComponent,
+        TutorialSessionCreateOrEditModalComponent,
+        TumAetUiTooltipDirective,
+        CourseSidebarToggleButtonComponent,
+    ],
+    providers: [TumAetUiConfirmationService],
+    templateUrl: './tutorial-group-detail.component.html',
+    styleUrl: './tutorial-group-detail.component.scss',
+})
+export class TutorialGroupDetailComponent {
+    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
+    private translateService = inject(TranslateService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private alertService = inject(AlertService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private router = inject(Router);
+    activatedRoute = inject(ActivatedRoute);
+
+    protected readonly faFlag = faFlag;
+    protected readonly faUsers = faUsers;
+    protected readonly faTag = faTag;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faCalendar = faCalendar;
+    protected readonly faClock = faClock;
+    protected readonly faMapPin = faMapPin;
+    protected readonly faBuildingColumns = faBuildingColumns;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faCheck = faCheck;
+    protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faPlus = faPlus;
+    protected readonly faTrash = faTrash;
+    protected readonly faBan = faBan;
+    protected readonly faCirclePlay = faCirclePlay;
+    protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
+
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+    private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
+    private averageAttendanceCount = computed<number | undefined>(() => this.computeAverageAttendanceCount(this.tutorialGroup().sessions));
+    private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
+
+    tutorialGroup = input.required<TutorialGroupDetailData>();
+    courseId = input.required<number>();
+    isMessagingEnabled = input.required<boolean>();
+    loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
+    userIsNotTutor = computed(() => this.loggedInUserAccessLevel() !== TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
+    tutorChatLink = computed(() => this.computeTutorChatLink());
+    groupChannelLink = computed(() => this.computeGroupChannelLink());
+    onDeleteGroup = output<DeleteTutorialGroupEvent>();
+    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
+    teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
+    tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
+    tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
+    tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
+    tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
+    attendanceChartLabel = computed<string | undefined>(() => this.computeAttendanceChartLabel());
+    pieChartData = computed<ChartSeriesEntry[]>(() => this.computePieChartData());
+    /** The raw slice colors (CSS variable references), index-aligned with {@link pieChartData}. */
+    pieChartColors = computed<string[]>(() => this.computePieChartColors());
+    readonly chartData = computed(() => singleSeriesChart(this.pieChartData(), this.pieChartColors()));
+    // the chart is rendered edge-to-edge inside its fixed-size container, hence no padding
+    readonly chartConfig: TumAetUiDoughnutChartConfig = { arcWidth: 0.3, legend: false, padding: 0 };
+    sessionListOptions = computed(() => this.computeSessionListOptions());
+    selectedSessionListOption = signal<ListOption>('all-sessions');
+    tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
+    editSessionButtonTooltipLabel = computed(() => this.computeEditSessionButtonTooltipLabel());
+    cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
+    activateSessionButtonTooltipLabel = computed(() => this.computeActivateSessionButtonTooltipLabel());
+    deleteSessionButtonTooltipLabel = computed(() => this.computeDeleteSessionButtonTooltipLabel());
+    onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
+    onCancelSession = output<ModifyTutorialGroupSessionEvent>();
+    onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
+    onCreateSession = output<CreateTutorialGroupSessionEvent>();
+    onActivateSession = output<ModifyTutorialGroupSessionEvent>();
+
+    createTutorChat() {
+        const courseId = this.courseId();
+        const tutorLogin = this.tutorialGroup().tutorLogin;
+        if (courseId) {
+            this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
+                next: (response) => {
+                    const chatId = response.body?.id;
+                    if (chatId) {
+                        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
+                    } else {
+                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
+                    }
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
+                },
+            });
+        }
+    }
+
+    confirmTutorialGroupDeletion(_event: Event) {
+        this.confirmationService.confirm({
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.header'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            acceptSeverity: 'danger',
+            accept: () => {
+                this.deleteTutorialGroup();
+            },
+        });
+    }
+
+    confirmSessionDeletion(_event: Event, sessionId: number) {
+        this.confirmationService.confirm({
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.header'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            acceptSeverity: 'danger',
+            accept: () => {
+                this.deleteTutorialGroupSession(sessionId);
+            },
+        });
+    }
+
+    openSessionModal(sessionId?: number) {
+        if (sessionId) {
+            const session = this.tutorialGroup().sessions.find((session) => session.id == sessionId);
+            if (session) {
+                this.sessionModal().open(session);
+            }
+        } else {
+            this.sessionModal().open();
+        }
+    }
+
+    cancelTutorialGroupSession(sessionId: number) {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        this.onCancelSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
+    }
+
+    activateTutorialGroupSession(sessionId: number) {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        this.onActivateSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
+    }
+
+    updateTutorialGroupSession(updateTutorialGroupSessionData: UpdateTutorialGroupSessionData) {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        const updateTutorialGroupSessionEvent: UpdateTutorialGroupSessionEvent = {
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: updateTutorialGroupSessionData.tutorialGroupSessionId,
+            updateTutorialGroupSessionRequest: updateTutorialGroupSessionData.updateTutorialGroupSessionRequest,
+        };
+        this.onUpdateSession.emit(updateTutorialGroupSessionEvent);
+    }
+
+    createTutorialGroupSession(createTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest) {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        const createTutorialGroupSessionEvent: CreateTutorialGroupSessionEvent = {
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            createTutorialGroupSessionRequest: createTutorialGroupSessionRequest,
+        };
+        this.onCreateSession.emit(createTutorialGroupSessionEvent);
+    }
+
+    private deleteTutorialGroupSession(sessionId: number) {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        this.onDeleteSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
+    }
+
+    private deleteTutorialGroup() {
+        const courseId = this.courseId();
+        const tutorialGroupId = this.tutorialGroup().id;
+        if (courseId) {
+            this.onDeleteGroup.emit({
+                courseId,
+                tutorialGroupId,
+            });
+        }
+    }
+
+    private computeSessionsToDisplay(): TutorialGroupDetailSession[] {
+        this.currentLocale();
+        const selectedListOption = this.selectedSessionListOption();
+        const tutorialGroup = this.tutorialGroup();
+        const sessions = tutorialGroup.sessions;
+        const capacity = tutorialGroup.capacity;
+        const now = dayjs();
+        return sessions
+            .filter((session) => {
+                if (selectedListOption === 'all-sessions') return true;
+                return session.start.isSameOrAfter(now);
+            })
+            .sort((first, second) => first.start.diff(second.start))
+            .map((session) => this.computeSessionDataFrom(session, capacity));
+    }
+
+    private computeAverageAttendanceRatio(sessions: TutorialGroupSession[], capacity: number | undefined): number | undefined {
+        if (capacity === undefined) return undefined;
+        const sessionsWithAttendance = sessions.filter((session) => session.attendance !== undefined && session.attendance !== null);
+        if (sessionsWithAttendance.length === 0) return undefined;
+        const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendance!, 0) / sessionsWithAttendance.length;
+        return averageAttendance / capacity;
+    }
+
+    private computeAttendanceChartLabel(): string | undefined {
+        const attendanceRatio = this.averageAttendanceRatio();
+        if (attendanceRatio !== undefined) {
+            return `Ø ${(attendanceRatio * 100).toFixed(0)}%`;
+        }
+        // Without a capacity there is no ratio, but sessions may still carry attendance: show the average headcount instead of hiding the chart.
+        const attendanceCount = this.averageAttendanceCount();
+        if (attendanceCount !== undefined) {
+            return `Ø ${attendanceCount.toFixed(0)}`;
+        }
+        return undefined;
+    }
+
+    private computeAverageAttendanceCount(sessions: TutorialGroupSession[]): number | undefined {
+        const sessionsWithAttendance = sessions.filter((session) => session.attendance !== undefined && session.attendance !== null);
+        if (sessionsWithAttendance.length === 0) return undefined;
+        return sessionsWithAttendance.reduce((sum, session) => sum + session.attendance!, 0) / sessionsWithAttendance.length;
+    }
+
+    private computePieChartData(): ChartSeriesEntry[] {
+        const averageAttendanceRatio = this.averageAttendanceRatio();
+        if (!averageAttendanceRatio) {
+            return [{ name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended'), value: 100 }];
+        }
+        const attendedValue = averageAttendanceRatio * 100;
+        const notAttendedValue = 100 - attendedValue;
+        return [
+            { name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.attended'), value: attendedValue },
+            { name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended'), value: notAttendedValue },
+        ];
+    }
+
+    private computePieChartColors(): string[] {
+        const averageAttendanceRatio = this.averageAttendanceRatio();
+        if (averageAttendanceRatio === undefined) {
+            return ['var(--tumaet-ui-disabled-background)'];
+        } else {
+            let color: string;
+            if (averageAttendanceRatio >= 0.9) {
+                color = 'var(--tumaet-ui-state-danger)';
+            } else if (averageAttendanceRatio >= 0.8) {
+                color = 'color-mix(in srgb, var(--tumaet-ui-state-warning) 50%, var(--tumaet-ui-state-danger))';
+            } else if (averageAttendanceRatio >= 0.7) {
+                color = 'var(--tumaet-ui-state-warning)';
+            } else {
+                color = 'var(--tumaet-ui-state-success)';
+            }
+            return [color, 'var(--tumaet-ui-disabled-background)'];
+        }
+    }
+
+    private computeTutorChatLink() {
+        const courseId = this.courseId();
+        const tutorChatId = this.tutorialGroup().tutorChatId;
+        if (!courseId || !tutorChatId) return undefined;
+        return {
+            routerLink: ['/courses', courseId, 'communication'],
+            queryParameters: { conversationId: tutorChatId },
+        };
+    }
+
+    private computeGroupChannelLink() {
+        const courseId = this.courseId();
+        const groupChannelId = this.tutorialGroup().groupChannelId;
+        if (!courseId || !groupChannelId) return undefined;
+        return {
+            routerLink: ['/courses', courseId, 'communication'],
+            queryParameters: { conversationId: groupChannelId },
+        };
+    }
+
+    private computeSessionListOptions() {
+        this.currentLocale();
+        const allSessionsLabelKey = 'artemisApp.pages.tutorialGroupDetail.sessionListOptionLabel.allSessions';
+        const futureSessionsLabelKey = 'artemisApp.pages.tutorialGroupDetail.sessionListOptionLabel.futureSessions';
+        return [
+            { label: this.translateService.instant(allSessionsLabelKey), value: 'all-sessions' as const },
+            { label: this.translateService.instant(futureSessionsLabelKey), value: 'future-sessions' as const },
+        ];
+    }
+
+    private computeNextSessionDataUsing(): TutorialGroupDetailSession | undefined {
+        const tutorialGroup = this.tutorialGroup();
+        const sessions = tutorialGroup.sessions;
+        const capacity = tutorialGroup.capacity;
+        if (sessions && sessions.length > 0) {
+            const now = dayjs();
+            const upcoming = sessions.filter((session) => dayjs(session.start).isAfter(now)).sort((first, second) => dayjs(first.start).diff(dayjs(second.start)));
+            if (upcoming.length > 0) {
+                const nextSession = upcoming[0];
+                return this.computeSessionDataFrom(nextSession, capacity);
+            }
+            return undefined;
+        }
+        return undefined;
+    }
+
+    private computeSessionDataFrom(session: TutorialGroupSession, capacity: number | undefined): TutorialGroupDetailSession {
+        const id = session.id;
+        const weekdayStringKey = this.computeWeekdayStringKeyUsing(session.start);
+        const weekday = this.translateService.instant(weekdayStringKey);
+        const date = weekday + ', ' + session.start.format('DD.MM.YYYY');
+        const time = session.start.format('HH:mm') + '-' + session.end.format('HH:mm');
+        const location = session.location;
+        const isCancelled = session.isCancelled;
+        const isCancelledByFreePeriod = session.isCancelledByFreePeriod;
+        const locationChanged = session.locationChanged;
+        const timeChanged = session.timeChanged;
+        const dateChanged = session.dateChanged;
+        let attendance: string | undefined = undefined;
+        if (session.attendance !== undefined) {
+            if (capacity !== undefined) {
+                attendance = session.attendance + ' / ' + capacity;
+            } else {
+                attendance = session.attendance.toString();
+            }
+        }
+        return { id, date, time, location, isCancelled, isCancelledByFreePeriod, locationChanged, timeChanged, dateChanged, attendance };
+    }
+
+    private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {
+        const weekDayIndex = sessionStart.isoWeekday();
+        const keys = [
+            'global.weekdays.monday',
+            'global.weekdays.tuesday',
+            'global.weekdays.wednesday',
+            'global.weekdays.thursday',
+            'global.weekdays.friday',
+            'global.weekdays.saturday',
+            'global.weekdays.sunday',
+        ];
+        return keys[weekDayIndex - 1];
+    }
+
+    private computeEditSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.edit');
+    }
+
+    private computeCancelSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.cancel');
+    }
+
+    private computeActivateSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.activate');
+    }
+
+    private computeDeleteSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.delete');
+    }
+}

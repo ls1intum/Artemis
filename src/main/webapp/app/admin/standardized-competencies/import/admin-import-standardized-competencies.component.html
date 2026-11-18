@@ -1,0 +1,112 @@
+<div class="mx-auto w-full px-2 min-[576px]:max-w-[540px] min-[768px]:max-w-[720px] min-[992px]:max-w-[960px] min-[1200px]:max-w-[1140px] min-[1400px]:max-w-[1320px]">
+    <h5 *adminTitleBarTitle id="import-standardized-competencies-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h5>
+    <div class="mt-4! rounded-lg border">
+        <div
+            class="clickable flex max-w-full items-center p-4!"
+            (click)="toggleCollapse()"
+            data-testid="format-toggle"
+            [attr.aria-expanded]="!isCollapsed()"
+            #keyboardAction1
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
+        >
+            <div class="me-2">
+                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+            </div>
+            <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
+        </div>
+        @if (!isCollapsed()) {
+            <div class="p-4! pt-0!" data-testid="format-body">
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
+                <div [jhiMarkdown]="importExample"></div>
+            </div>
+        }
+    </div>
+    <input
+        [attr.aria-label]="'artemisApp.standardizedCompetency.manage.import.title' | artemisTranslate"
+        class="mt-4!"
+        type="file"
+        accept="application/json"
+        (change)="onFileChange($event)"
+        data-testid="file-input"
+    />
+    <h4 class="mt-4!" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
+    @if (importCount(); as count) {
+        @if (count.knowledgeAreas) {
+            <div
+                class="mb-1"
+                jhiTranslate="artemisApp.standardizedCompetency.manage.import.count"
+                [translateValues]="{ competencies: count.competencies, knowledgeAreas: count.knowledgeAreas }"
+            ></div>
+            <div class="flex">
+                <jhi-knowledge-area-tree class="flex h-full w-1/2 grow" [dataSource]="dataSource()">
+                    <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
+                        <div
+                            class="clickable flex items-center"
+                            (click)="openCompetencyDetails(competency, knowledgeArea.title)"
+                            #keyboardAction31
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction31.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction31.click() : undefined"
+                        >
+                            <fa-icon
+                                class="me-2"
+                                [icon]="getIcon(competency.taxonomy)"
+                                [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                [fixedWidth]="true"
+                            />
+                            <h6 class="mb-0">{{ competency.title }}</h6>
+                        </div>
+                    </ng-template>
+                </jhi-knowledge-area-tree>
+                @if (selectedCompetency(); as competency) {
+                    <div class="ms-1 flex h-full w-full grow rounded-lg border bg-surface-0 dark:bg-surface-900 p-4!" data-testid="competency-detail">
+                        <jhi-standardized-competency-detail
+                            [competency]="competency"
+                            [knowledgeAreaTitle]="knowledgeAreaTitle()"
+                            [sourceString]="sourceString()"
+                            (onClose)="closeCompetencyDetails()"
+                        />
+                    </div>
+                }
+            </div>
+        }
+    } @else {
+        <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
+    }
+    @if (validationErrors().length) {
+        <tumaet-ui-message severity="error" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
+            <div class="flex flex-col">
+                <strong jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.fileValidation" [translateValues]="{ count: validationErrors().length }"></strong>
+                <ul class="mb-0 mt-1">
+                    @for (error of validationErrors().slice(0, 20); track $index) {
+                        <li>{{ error }}</li>
+                    }
+                </ul>
+                @if (validationErrors().length > 20) {
+                    <span
+                        jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.validation.moreErrors"
+                        [translateValues]="{ count: validationErrors().length - 20 }"
+                    ></span>
+                }
+            </div>
+        </tumaet-ui-message>
+    }
+    <div class="mt-4! flex items-center justify-end gap-2">
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="cancel()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tumaet-ui-button>
+        <tumaet-ui-button size="small" severity="secondary" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
+            <fa-icon [icon]="faFileImport" />
+            <span jhiTranslate="entity.action.to-import"></span>
+        </tumaet-ui-button>
+    </div>
+</div>

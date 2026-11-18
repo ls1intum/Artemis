@@ -1,0 +1,213 @@
+---
+id: variant-generation
+title: Generate Variants with AI
+sidebar_label: Variant Generation
+last_reviewed: 2026-11-05
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../src/components/Image/Image';
+
+import createVariantAction from './assets/variant-generation/create-variant-action.png';
+import wizardSelect from './assets/variant-generation/wizard-select.png';
+import wizardPlacement from './assets/variant-generation/wizard-placement.png';
+import wizardGenerating from './assets/variant-generation/wizard-generating.png';
+import wizardResult from './assets/variant-generation/wizard-result.png';
+import navbarTray from './assets/hyperion-generation/activity-light.png';
+import examWizard from './assets/variant-generation/exam-wizard.png';
+
+Writing a second version of an exercise by hand is the expensive part of [exercise variants](/instructor/exercises/exercise-variants). For a programming exercise it means re-theming the problem statement, template, solution and tests consistently, keeping every task-to-test link intact, and making sure the solution still builds green while the template still fails.
+
+Artemis can do that work for you. **Create Variant** takes an existing exercise, asks what should change, and produces a complete, verified Artemis exercise in the background.
+
+<Callout variant={CalloutVariant.info}>
+
+Variant generation is part of [Hyperion](/admin/hyperion) and is available only when your Artemis instance has the Hyperion module enabled. It requires at least the **Editor** role in the course.
+
+</Callout>
+
+## Supported Exercise Types
+
+| Exercise type               | Supported                                                                                                                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Programming                 | Java with Gradle or Maven student and test projects on LocalVC + LocalCI, with whole-exercise generation enabled; no auxiliary repositories, sequential tests, or static code analysis |
+| Quiz                        | Yes, unless the quiz contains drag-and-drop questions                                                                                                                                  |
+| Modeling, Text, File Upload | No                                                                                                                                                                                     |
+
+The action is hidden when the required module is disabled or you lack Editor access. For programming exercises, it is also hidden in exam management. On programming exercise details pages, unsupported configurations show a disabled action with an explanation. In exercise lists, the action is hidden when the list data identifies an unsupported configuration. If that data omits configuration details, the action can remain available; open the details page to see the configuration check and any explanation.
+
+## Starting a Generation
+
+On an exercise's details page, the yellow **Create Variant** button appears with the editing actions. On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant**. For quiz exercises in exams, the same action sits on the rows of an exercise group.
+
+<Image src={createVariantAction} alt="Quiz details with the prominent yellow Create Variant action" size={ImageSize.medium} caption="Create Variant alongside the editing actions on a quiz’s details page" />
+
+A wizard collects the requested changes and placement. Programming variants then
+continue in the shared [AI authoring run view](/instructor/exercises/hyperion-generation);
+quiz variants use the wizard's progress and result steps below.
+
+### Select What Should Change
+
+Pick one or more aspects. You can combine them freely.
+
+<Image src={wizardSelect} alt="Wizard step selecting what to adapt" size={ImageSize.large} caption="Choose the aspects the AI should adapt" />
+
+| Aspect                 | Effect                                                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Difficulty**         | Re-tunes how hard the exercise is. The variant keeps the core concept and the clear majority of its tests — it is never gutted, and a task never becomes easier by handing students working code |
+| **Application Domain** | Moves the exercise to a different real-world theme. Algorithm, data-structure and design-pattern names stay as they are, because they are the learning content                                   |
+| **Storytelling**       | Sets the narrative style, from a plain technical description to a fully told story                                                                                                               |
+| **Custom**             | Free-text instructions of your own                                                                                                                                                               |
+
+### Configure the Aspects
+
+Fill in the details for the aspects you selected: the target difficulty, the new domain, the narrative style, and your custom instructions.
+
+The narrative styles are:
+
+| Style         | Description                                                                   |
+| ------------- | ----------------------------------------------------------------------------- |
+| **Technical** | No story — a plain, concise focus on the technical concepts                   |
+| **Realistic** | A short real-world scenario introduces the task, the rest stays technical     |
+| **Creative**  | A story carries the task: themed setting, named actors, story-driven examples |
+
+### Choose the Placement
+
+Decide where the finished variant goes.
+
+<Image src={wizardPlacement} alt="Wizard placement step" size={ImageSize.large} caption="Placement: create a group with the original, join an existing group, or stay standalone" />
+
+| Option                             | Result                                                                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Create new group with original** | A new variant group holding the source exercise and the variant. You set the group title, points cap and timeline right here |
+| **Add to group "…"**               | The variant joins the group the source exercise already belongs to                                                           |
+| **Add as standalone exercise**     | No group — the variant appears on its own in the exercise list                                                               |
+
+### Follow the Generation
+
+The wizard shows the phases as they happen: the source exercise is analyzed, the change is planned, a real copy is provisioned, the changes are applied, and the result is verified and — if needed — repaired.
+
+<Image src={wizardGenerating} alt="Live phase timeline while generating" size={ImageSize.medium} caption="The live timeline of a running generation" />
+
+A programming variant runs real template and solution builds, so a generation typically takes a few minutes. Quizzes are faster.
+
+For a quiz variant, click **Run in Background** to close the wizard and let the job continue. The shared **AI activity** tray shows quiz variants alongside programming authoring. Open a row to inspect its progress and available cancellation controls; closing or dismissing the tray does not cancel the run.
+
+<Image
+    src={navbarTray}
+    alt="Shared AI activity tray with running, saved, and recovery states"
+    size={ImageSize.medium}
+    caption="The shared activity tray, illustrated with programming runs"
+/>
+
+For quiz variants, canceling ends the job and removes the half-finished copy,
+including its repositories and builds where applicable. Quiz job details remain
+available for 24 hours.
+
+Programming variants use the same cancellation boundary as adaptation: they can
+be cancelled before persistence, but not during draft repository preparation or
+saving. Their destination remains a visible draft when generation fails or is
+cancelled, so you can inspect, retry, or delete it. No unverified generated
+candidate is saved. Owner-scoped run history and status links are temporary:
+the configured retention window defaults to four hours
+(`artemis.hyperion.generation.terminal-replay-ttl`). After the run records expire,
+the run is absent from history and its status link is unavailable. Ordinary
+exercise version snapshots remain available independently. Detailed progress
+and retained working files have their own retention limits.
+
+### Review the Result
+
+<Image src={wizardResult} alt="Successful generation result" size={ImageSize.large} caption="A finished variant with every check green" />
+
+The result step summarizes what the AI did per phase, how many tokens the run used, and offers **Open in Editor** to review the variant.
+
+## What Artemis Checks
+
+Programming variants pass the same isolated verification as
+[programming exercise authoring](/instructor/exercises/hyperion-generation#interpret-the-result):
+the solution must pass, the template must fail the intended graded tests, and
+repository integrity and task bindings must hold. Quality findings remain visible
+for instructor review. Failed verification never saves an unverified candidate.
+
+Quiz variants check question validity, answer options, and points. A best-effort
+quiz critique reviews wording and answer quality. If this AI-backed check cannot
+run, it contributes no finding; a completed quiz still needs instructor review.
+
+## Outcomes
+
+Programming variants report **Saved**, **Needs review**, **Failed**, **Cancelled**,
+or **Partially saved** in the shared run view. Verified output is applied
+without a separate acceptance screen. A placement conflict is reported rather
+than overwriting concurrent edits. A partial save requires reconciliation.
+See [cancel, adapt, and undo](/instructor/exercises/hyperion-generation#cancel-adapt-and-undo)
+for guarded version restoration.
+
+The following result labels and cleanup behavior apply to **quiz variants**:
+
+| Outcome                 | Meaning                                                                                                                                                                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Completed**           | Every hard gate passed, and every best-effort check that ran reported nothing. The variant is placed as configured and ready for review. A best-effort check that could not run is skipped silently, so review the variant yourself rather than reading **Completed** as a full semantic sign-off   |
+| **Draft with warnings** | Some check did not pass within the attempt budget, or the placement failed. The exercise is created all the same, with a short note on what is wrong — open it in the editor and fix that. A warning about the placement means the variant is not in the group you chose, so move it there yourself |
+| **Failed**              | The run could not produce a variant. The result step explains the phase it failed in and how to continue, and the half-provisioned exercise is deleted                                                                                                                                              |
+| **Canceled**            | You stopped the run, and the half-provisioned exercise is deleted                                                                                                                                                                                                                                   |
+
+<Callout variant={CalloutVariant.warning}>
+
+**A generated quiz variant is not held back from students.** A course quiz variant is a real exercise and copies the dates
+of the exercise it was generated from, whatever the outcome — **Completed** as much as **Draft with warnings**.
+Generate a variant of an exercise that is already released and the variant is released too, before you have
+reviewed it. Generate variants before releasing the original, or postpone the variant's **Release Date** as soon as
+the run finishes; for a variant placed in a group, that date belongs to the group.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+Deleting the half-finished copy of a failed or canceled run can itself fail — if the repository or the build
+cannot be removed, the exercise survives. Artemis says so on the result step and links the copy with **Open in
+Editor**, so that a run reporting a cleanup problem is one to follow up on: delete that exercise by hand.
+
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+
+AI-generated content may contain errors. Review a variant carefully before releasing it to students — the gates verify that the exercise builds and hangs together, not that it teaches what you intended.
+
+</Callout>
+
+Programming course destinations start unreleased. After verification, placing a
+destination in a variant group applies that group's timeline, which can already
+be released. Choose placement dates deliberately; automatic verification does
+not replace your teaching review.
+
+## Exam Exercises
+
+Whole-exercise programming generation, adaptation, and variants are not available
+for exam exercises. Existing legacy repository generation is unchanged.
+
+Quiz variant generation remains available for exam exercises. It has two deliberate differences:
+
+- There is **no placement step**. The variant always joins the exercise group of its source, which is what makes it usable as a per-student variant, and it inherits the exam's timing.
+- There is **no difficulty option**. Exam difficulty is reviewed in advance, and handing students variants of differing difficulty would be unfair.
+
+<Image src={examWizard} alt="Wizard for an exam exercise" size={ImageSize.large} caption="For exam exercises the wizard has no placement step and no difficulty card" />
+
+## Troubleshooting
+
+### The Action Is Not Visible
+
+Check that the Hyperion module is enabled on your instance, that you have at least the Editor role in the course, and that the exercise is a programming exercise or a quiz without drag-and-drop questions.
+
+### The Run Ended as a Draft with Warnings
+
+Open **Show technical details** on the result step. It names the gate that did not pass — most often a build that stayed red or a task reference that no longer resolves to a test. Fixing that in the editor is usually a small edit.
+
+The summary above it is written by the model, so read it as a description of what went wrong, not as instructions: the exercise already exists by then, and there is no later publish step to reach. If one of the warnings is about the placement, the variant is not in the group you chose and you have to move it there yourself.
+
+### Generation Is Slow
+
+Programming variants run template and solution builds in the isolated generation
+worker, not the ordinary LocalCI build queue. They require an available worker
+slot. An admitted run can take many minutes; the shared header shows actual
+stages rather than a percentage estimate.

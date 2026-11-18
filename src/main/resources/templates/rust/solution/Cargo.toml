@@ -1,0 +1,27 @@
+[package]
+name = "rust-template-exercise"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false }
+rand = "0.9.3"
+# %static-code-analysis-start%
+
+[lints.rust]
+nonstandard_style = "warn"
+unused = "warn"
+unsafe_code = { level = "warn", priority = 1 }
+
+[lints.clippy]
+correctness = "warn"
+suspicious = "warn"
+style = "warn"
+complexity = "warn"
+perf = "warn"
+pedantic = "allow"
+restriction = "allow"
+nursery = "allow"
+cargo = "allow"
+new_without_default = { level = "allow", priority = 1 }
+# %static-code-analysis-stop%

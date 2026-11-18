@@ -1,0 +1,58 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
+import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+
+type EntityResponseType = HttpResponse<SystemNotification>;
+
+@Service()
+export class AdminSystemNotificationService {
+    private http = inject(HttpClient);
+    private systemNotificationService = inject(SystemNotificationService);
+
+    public resourceUrl = 'api/notification/admin/system-notifications';
+
+    /**
+     * Create a notification on the server using a POST request.
+     * @param notification The notification to create.
+     * @param sendMaintenanceEmail Whether to send maintenance email to instructors of ongoing courses.
+     */
+    create(notification: SystemNotification, sendMaintenanceEmail = false): Observable<EntityResponseType> {
+        const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
+        let params = new HttpParams();
+        if (sendMaintenanceEmail) {
+            params = params.set('sendMaintenanceEmail', 'true');
+        }
+        return this.http
+            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response', params })
+            .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Get the count of instructors who would receive a maintenance email.
+     */
+    getMaintenanceRecipientsCount(): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/maintenance-recipients-count`);
+    }
+
+    /**
+     * Update a notification on the server using a PUT request.
+     * @param notification The notification to update.
+     */
+    update(notification: SystemNotification): Observable<EntityResponseType> {
+        const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
+        return this.http
+            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Delete a notification on the server using a DELETE request.
+     * @param systemNotificationId The id of the notification to delete.
+     */
+    delete(systemNotificationId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
+    }
+}

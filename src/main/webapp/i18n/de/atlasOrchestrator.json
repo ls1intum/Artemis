@@ -1,0 +1,40 @@
+{
+    "artemisApp": {
+        "atlasOrchestrator": {
+            "button": "Kompetenzen vorschlagen",
+            "tooltip": "Den Atlas-Kompetenz-Orchestrator für dieses Lernobjekt ausführen",
+            "error": "Atlas-Orchestrator-Durchlauf fehlgeschlagen. Bitte versuche es später erneut.",
+            "partial": "Atlas-Orchestrator-Durchlauf wurde mittendrin abgebrochen — überprüfe die Teilaktionen im Dialog und mache fehlerhafte ggf. rückgängig.",
+            "inProgress": "Für diesen Kurs läuft bereits ein Atlas-Orchestrator-Durchlauf. Bitte warte, bis dieser abgeschlossen ist.",
+            "resultDialog": {
+                "title": "Ergebnis des Atlas-Orchestrators",
+                "empty": "Der Orchestrator hat keine Änderungen an diesem Kurs vorgenommen.",
+                "columns": {
+                    "action": "Aktion",
+                    "competency": "Kompetenz",
+                    "detail": "Details",
+                    "reason": "Begründung"
+                },
+                "types": {
+                    "CREATE": "Erstellen",
+                    "EDIT": "Bearbeiten",
+                    "ASSIGN": "Zuweisen",
+                    "UNASSIGN": "Verknüpfung entfernen",
+                    "DELETE": "Löschen"
+                },
+                "weightBands": {
+                    "primary": "primär",
+                    "partial": "teilweise",
+                    "incidental": "beiläufig"
+                }
+            },
+            "autoToast": {
+                "noChanges": "Atlas hat {{count}} Lernobjekt(e) automatisch geprüft. Es waren keine Änderungen an den Kompetenzen nötig.",
+                "success": "Atlas wurde automatisch für {{count}} Lernobjekt(e) ausgeführt.",
+                "partial": "Atlas wurde für {{count}} Lernobjekt(e) ausgeführt: {{success}} erfolgreich, {{failure}} fehlgeschlagen.",
+                "incomplete": "Atlas hat für {{count}} Lernobjekt(e) einige Änderungen übernommen, den Lauf aber nicht abgeschlossen. Bitte überprüfe die Kompetenzen des Kurses.",
+                "failure": "Atlas wurde automatisch für {{count}} Lernobjekt(e) ausgeführt, aber alle Läufe sind fehlgeschlagen. Bitte versuche es später erneut."
+            }
+        }
+    }
+}

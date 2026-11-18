@@ -1,0 +1,78 @@
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
+
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { Placement } from '@ng-bootstrap/ng-bootstrap';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { fromEvent } from 'rxjs';
+import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+/**
+ * Displays a sun or a moon in the navbar, depending on the current theme.
+ * Additionally, allows to switch themes by clicking it.
+ * Shows a popover with additional options.
+ */
+@Component({
+    selector: 'jhi-theme-switch',
+    templateUrl: './theme-switch.component.html',
+    styleUrls: ['theme-switch.component.scss'],
+    imports: [NgbPopover, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ThemeSwitchComponent implements OnInit {
+    private readonly themeService = inject(ThemeService);
+
+    protected readonly faSync = faSync;
+
+    popoverPlacement = input.required<Placement>();
+    popover = viewChild.required<NgbPopover>('popover');
+
+    isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
+    isSyncedWithOS = computed(() => this.themeService.userPreference() === undefined);
+
+    closeTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    ngOnInit() {
+        // Workaround as we can't dynamically change the "autoClose" property on popovers
+        fromEvent(window, 'click').subscribe((e) => {
+            const popoverContentElement = document.getElementById('theme-switch-popover-content');
+            if (this.popover().isOpen() && !popoverContentElement?.contains(e.target as Node)) {
+                this.closePopover();
+            }
+        });
+    }
+
+    openPopover() {
+        this.popover().open();
+        clearTimeout(this.closeTimeout);
+    }
+
+    closePopover() {
+        clearTimeout(this.closeTimeout);
+        this.popover().close();
+    }
+
+    mouseLeave() {
+        clearTimeout(this.closeTimeout);
+        this.closeTimeout = setTimeout(() => this.closePopover(), 250);
+    }
+
+    /**
+     * Changes the theme to the currently not active theme.
+     */
+    toggleTheme() {
+        this.themeService.applyThemePreference(this.isDarkTheme() ? Theme.LIGHT : Theme.DARK);
+        setTimeout(() => this.openPopover(), 250);
+    }
+
+    /**
+     * Toggles the synced with OS state:
+     * - if it's currently synced, we explicitly store the current theme as preference
+     * - if it's currently not synced, we remove the preference to apply the system theme
+     */
+    toggleSynced() {
+        this.themeService.applyThemePreference(this.isSyncedWithOS() ? this.themeService.currentTheme() : undefined);
+    }
+}

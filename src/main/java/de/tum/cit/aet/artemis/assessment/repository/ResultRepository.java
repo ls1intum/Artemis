@@ -1,0 +1,1000 @@
+package de.tum.cit.aet.artemis.assessment.repository;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.util.Arrays.asList;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+
+/**
+ * Spring Data JPA repository for the Result entity.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
+     * All child entities must be deleted first.
+     * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
+     *
+     * @param resultId the id of the result to delete
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM Result r WHERE r.id = :resultId")
+    void deleteResultById(@Param("resultId") long resultId);
+
+    /**
+     * Count the number of results for a course by its exercise IDs.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
+     *
+     * @param exerciseIds the ids of the exercises in the course
+     * @return the total number of results
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.exerciseId IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
+
+    /**
+     * Find all results for an exercise ordered by completion date.
+     * Uses the denormalized result.exerciseId for efficient filtering.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of results with submissions, ordered by completion date ascending
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+            WHERE r.exerciseId = :exerciseId
+            ORDER BY r.completionDate ASC
+            """)
+    List<Result> findByExerciseIdOrderByCompletionDateAsc(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Find all results with submissions and feedbacks for an exercise.
+     * Uses the denormalized result.exerciseId for efficient filtering.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of results with submissions and feedbacks
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.exerciseId = :exerciseId
+            """)
+    List<Result> findWithEagerSubmissionAndFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN TREAT(r.submission.participation AS ProgrammingExerciseStudentParticipation) sp
+            WHERE r.completionDate = (
+                    SELECT MAX(rr.completionDate)
+                    FROM Result rr
+                        LEFT JOIN TREAT(rr.submission.participation AS ProgrammingExerciseStudentParticipation) sp2
+                    WHERE rr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                        AND sp2.exercise.id = :exerciseId
+                        AND sp2.student = sp.student
+                )
+                AND sp.exercise.id = :exerciseId
+                AND sp.student IS NOT NULL
+            ORDER BY r.completionDate ASC
+            """)
+    List<Result> findLatestAutomaticResultsForExercise(@Param("exerciseId") long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
+    List<Result> findResultsWithFeedbacksByIdIn(List<Long> ids);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "assessor" })
+    List<Result> findResultsWithFeedbacksAndAssessorByIdIn(Collection<Long> ids);
+
+    /**
+     * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
+     *
+     * @param exerciseId the id of the exercise to load from the database
+     * @return a list of results.
+     */
+    default List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(long exerciseId) {
+        List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
+
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        return findResultsWithFeedbacksByIdIn(ids);
+    }
+
+    Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
+    Optional<Result> findResultWithFeedbacksById(long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "submission" })
+    Optional<Result> findResultWithSubmissionAndFeedbacksById(long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.participation" })
+    Optional<Result> findResultWithSubmissionAndParticipationById(long resultId);
+
+    /**
+     * Finds the first result by participation ID, including its submission and feedback, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with submission and feedback, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithSubmissionAndFeedbacksById(id);
+    }
+
+    Optional<Result> findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
+
+    /**
+     * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.assessmentNote
+                LEFT JOIN FETCH TREAT(r.submission.participation AS StudentParticipation) p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
+
+    /**
+     * Load a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH TREAT (r.submission.participation AS StudentParticipation ) p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "assessmentNote" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(long resultId);
+
+    /**
+     * Gets the number of assessments with a rated result set by an assessor for an exercise
+     *
+     * @param exerciseId the exercise to get the number for
+     * @return the number of assessments with a rated result set by an assessor
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.id)
+            FROM ParticipantScore p
+            WHERE p.exercise.id = :exerciseId
+                AND p.lastResult IS NOT NULL
+                AND p.lastResult.assessor IS NOT NULL
+            """)
+    long countNumberOfRatedResultsForExercise(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+                JOIN p.exercise e
+            WHERE e.id = :exerciseId
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
+            """)
+    long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the submissions of text, modeling and file upload exercises with at least one finished manual result, ignoring test runs.
+     * Every such submission counts exactly once, no matter whether it was submitted in time or late, whether its result is rated and how many results it has
+     * (e.g. after a complaint response). A participation can contain several submitted submissions, which are counted separately.
+     * This matches how {@code SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate} and {@code SubmissionRepository#countAllByExerciseIdsSubmittedAfterDueDate}
+     * count the submissions of the same exercises.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of assessed submissions for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT s)
+            FROM Result r
+                JOIN r.submission s
+                JOIN s.participation p
+                JOIN p.exercise e
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+            """)
+    long countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Counts the participations of programming exercises with a submitted submission and at least one finished manual result, ignoring test runs.
+     * A student can have multiple submissions in a programming exercise, so the participations are counted, like
+     * {@code ProgrammingExerciseRepository#countAllSubmissionsByExerciseIdsSubmitted} does for the submissions of the same exercises.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of assessed participations for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+                JOIN p.exercise e
+            WHERE e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+            """)
+    long countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * @param exerciseId id of exercise
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exercise
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+                AND r.assessor IS NOT NULL
+            GROUP BY p.id
+            """)
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the tutorId, return the number of locked assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exerciseId id of the exam exercise
+     * @param tutorId    id of the tutor
+     * @return a list that contains the count of locked assessments for each studentParticipation of the exercise
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NULL
+                AND r.assessor.id <> :tutorId
+            GROUP BY p.id
+            """)
+    List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
+
+    /**
+     * count the number of finished assessments of an exam with given exerciseIds
+     *
+     * @param exerciseIds ids of the exercises
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exercise ids
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+                AND r.assessor IS NOT NULL
+            GROUP BY p.id
+            """)
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM Participation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND r.assessor IS NOT NULL
+                AND r.assessmentType IN :types
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+            """)
+    long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
+
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM Participation p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND r.assessor IS NOT NULL
+                AND r.assessmentType IN :types
+                AND r.rated = FALSE
+                AND r.completionDate IS NOT NULL
+                AND p.exercise.dueDate IS NOT NULL
+                AND s.submissionDate > p.exercise.dueDate
+            """)
+    long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
+
+    @Query("""
+            SELECT r
+            FROM Exercise e
+                JOIN e.studentParticipations p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND r.completionDate IS NOT NULL
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT r
+            FROM Exercise e
+                JOIN e.studentParticipations p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND r.completionDate IS NOT NULL
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
+    @Query("""
+            SELECT r
+            FROM Exercise e
+                JOIN e.studentParticipations p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT r
+            FROM Exercise e
+                JOIN e.studentParticipations p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
+
+    List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
+
+    /**
+     * Checks if a result for the given participation exists.
+     *
+     * @param participationId the id of the participation to check.
+     * @return true if a result for the given participation exists, false otherwise.
+     */
+    boolean existsBySubmissionParticipationId(long participationId);
+
+    /**
+     * Checks if a result exists for the given submission ID.
+     *
+     * @param submissionId the ID of the submission to check.
+     * @return true if a result exists for the given submission ID, false otherwise.
+     */
+    boolean existsBySubmissionId(long submissionId);
+
+    /**
+     * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a manual result for the given correction round, false otherwise.
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+            WHERE r.submission.id = :submissionId
+                AND r.correctionRound = :correctionRound
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+            """)
+    boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
+
+    /**
+     * Returns the manual results of the given submissions together with the correction round each belongs to.
+     * <p>
+     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
+     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
+     * Automatic and Athena results are left out because they are not correction rounds, which matches
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
+     * type is not set yet.
+     *
+     * @param submissionIds the submissions whose manual results should be read
+     * @return the manual results of those submissions, in no particular order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+                AND (result.assessmentType IS NULL
+                    OR result.assessmentType NOT IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    ))
+            """)
+    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    /**
+     * Returns true if there is at least one result for the given exercise.
+     * Uses the denormalized result.exerciseId for efficient filtering.
+     *
+     * @param exerciseId id of an Exercise.
+     * @return true if there is a result, false if not.
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+            FROM Result r
+            WHERE r.exerciseId = :exerciseId
+            """)
+    boolean existsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exercise                 - the exercise we are interested in
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
+
+        // here we receive a list which contains an entry for each student participation of the exercise.
+        // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
+        List<Long> countList = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exercise                 - the exercise we are interested in
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
+     * @param tutor                    tutor for which we want to count the number of locked assessments
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
+        if (!exercise.isExamExercise()) {
+            return null;
+        }
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+
+        boolean testExamNumberOfCorrectionRounds = numberOfCorrectionRounds == 0;
+        if (testExamNumberOfCorrectionRounds) {
+            return correctionRoundsDataStats;
+        }
+
+        List<Long> resultsCountLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        return convertDatabaseResponseToDueDateStats(resultsCountLockedByOtherTutors, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exerciseIds              - the exercise ids of the exam we are interested in
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Collection<Long> exerciseIds, int numberOfCorrectionRounds) {
+
+        // here we receive a list which contains an entry for each student participation of the exam.
+        // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
+        List<Long> countList = countNumberOfFinishedAssessmentsByExerciseIdsIgnoreTestRuns(exerciseIds);
+        return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Takes the Long List database response and converts it to the according DueDateStats
+     *
+     * @param countList                - the lists returned from the database
+     * @param numberOfCorrectionRounds - number of the correction rounds which is set for the given exam
+     * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
+     */
+    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countList, int numberOfCorrectionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+
+        // numberOfCorrectionRounds can be 0 for test exams
+        if (numberOfCorrectionRounds == 0) {
+            return correctionRoundsDataStats;
+        }
+
+        // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
+        // with either 1 or more manual results, OR 2 or more manual results
+        correctionRoundsDataStats[0] = new DueDateStat(countList.stream().filter(x -> x >= 1L).count(), 0L);
+        if (numberOfCorrectionRounds == 2) {
+            correctionRoundsDataStats[1] = new DueDateStat(countList.stream().filter(x -> x >= 2L).count(), 0L);
+        }
+        // so far the number of correctionRounds is limited to 2
+        return correctionRoundsDataStats;
+    }
+
+    /**
+     * Calculate the number of assessments which are either AUTOMATIC, SEMI_AUTOMATIC for a given exercise
+     *
+     * @param exerciseId the exercise we are interested in
+     * @return number of assessments for the exercise
+     */
+    default DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(long exerciseId) {
+        List<AssessmentType> automaticAssessmentTypes = asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC);
+        return new DueDateStat(countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, automaticAssessmentTypes),
+                countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, automaticAssessmentTypes));
+    }
+
+    /**
+     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a number of assessments for the exercise
+     */
+    default long countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
+        return countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId);
+    }
+
+    /**
+     * Given the exercise ids of a course, return the number of assessed submissions for these exercises that have been completed (e.g. no draft!).
+     * This is the counterpart of the submissions counted for the same exercises, i.e. one per submission for text, modeling and file upload exercises
+     * and one per participation for programming exercises, independent of the due date and the rated flag.
+     *
+     * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
+     * @return a number of assessments for the course
+     */
+    default long countNumberOfAssessments(Set<Long> exerciseIds) {
+        // avoid invoking the query for empty sets, because this can lead to performance issues
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0;
+        }
+        return countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(exerciseIds) + countNumberOfAssessedProgrammingParticipationsForExerciseIdsIgnoreTestRuns(exerciseIds);
+    }
+
+    /**
+     * Get the number of assessments for all tutors of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseIds - ids of the exercises in the course
+     * @return list of TutorLeaderboardAssessments
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
+                r.assessor.id,
+                COUNT(r),
+                SUM(e.maxPoints),
+                AVG(r.score),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
+                SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
+            )
+            FROM Result r
+                JOIN Exercise e ON r.exerciseId = e.id
+                JOIN r.assessor a
+                LEFT JOIN Rating rating ON rating.result = r
+            WHERE r.completionDate IS NOT NULL
+                AND r.exerciseId IN :exerciseIds
+            GROUP BY r.assessor.id
+            """)
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Get the number of assessments for all tutors of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseId - id of the exercise
+     * @return list of TutorLeaderboardAssessments
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
+                r.assessor.id,
+                COUNT(r),
+                SUM(e.maxPoints),
+                AVG(r.score),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
+                SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
+            )
+            FROM Result r
+                JOIN Exercise e ON r.exerciseId = e.id
+                JOIN r.assessor a
+                LEFT JOIN Rating rating ON rating.result = r
+            WHERE r.completionDate IS NOT NULL
+                AND r.exerciseId = :exerciseId
+            GROUP BY r.assessor.id
+            """)
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Get the number of assessments for all tutors of an exam.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
+     *
+     * @param exerciseIds - ids of the exercises to consider
+     * @return list of TutorLeaderboardAssessments
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
+                r.assessor.id,
+                COUNT(r),
+                SUM(e.maxPoints),
+                AVG(r.score),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
+                SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
+            )
+            FROM Result r
+                JOIN Exercise e ON r.exerciseId = e.id
+                JOIN r.assessor a
+                LEFT JOIN Rating rating ON rating.result = r
+            WHERE r.completionDate IS NOT NULL
+                AND r.exerciseId IN :exerciseIds
+            GROUP BY r.assessor.id
+            """)
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    /**
+     * This function is used for submitting a manual assessment/result.
+     * It updates the completion date and saves the updated result in the database.
+     *
+     * @param result the result that should be submitted
+     * @return the updated result
+     */
+    default Result submitManualAssessment(Result result) {
+        result.setCompletionDate(ZonedDateTime.now());
+        save(result);
+        return result;
+    }
+
+    /**
+     * Submitting the result means it is saved with a calculated score and a completion date.
+     *
+     * @param result   the result which should be set to submitted
+     * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
+     * @return the saved result
+     */
+    default Result submitResult(Result result, Exercise exercise) {
+        double maxPoints = exercise.getMaxPoints();
+        double bonusPoints = Objects.requireNonNullElse(exercise.getBonusPoints(), 0.0);
+
+        // Exam results and manual results of programming exercises and example submissions are always to rated
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {
+            result.setRated(true);
+        }
+        else {
+            result.setRatedIfNotAfterDueDate();
+        }
+
+        result.setCompletionDate(ZonedDateTime.now());
+        // Take bonus points into account to achieve a result score > 100%
+        double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
+        double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
+        // Set score according to maxPoints, to establish results with score > 100%
+        result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
+
+        Result savedResult = save(result);
+        // Workaround to prevent the assessor or participant turning into a proxy object after saving
+        savedResult.setAssessor(result.getAssessor());
+        return savedResult;
+    }
+
+    /**
+     * make sure the points are between 0 and maxPoints
+     *
+     * @param calculatedPoints the points which have been calculated
+     * @param maxPoints        the upper bound (potentially including bonus points)
+     * @return a value between [0, maxPoints]
+     */
+    default double constrainToRange(double calculatedPoints, double maxPoints) {
+        double totalPoints = Math.max(0, calculatedPoints);
+        return Math.min(totalPoints, maxPoints);
+    }
+
+    /**
+     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * meaning the structured grading instruction was applied on the assessment model more often than allowed
+     *
+     * @param assessments the collection of feedback items that are used to calculate the points
+     * @return the total points
+     */
+    default double calculateTotalPoints(Collection<Feedback> assessments) {
+        double totalPoints = 0.0;
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+
+        for (Feedback feedback : assessments) {
+            if (feedback.getGradingInstruction() != null) {
+                totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
+            }
+            else {
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit.
+                // A comment-only feedback carries no credits (null); treat it as 0 so score calculation (e.g. during re-evaluation) does not fail.
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
+            }
+        }
+        return totalPoints;
+    }
+
+    /**
+     * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
+     * automatic
+     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
+     * Selecting
+     * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
+     *
+     * @param participationId the participation to load the latest visible result id for
+     * @param dateTime        the reference time compared against the assessment due date (usually now)
+     * @return the latest visible result id, or empty if none is visible
+     */
+    @Query("""
+            SELECT r.id FROM Result r WHERE r.id = (
+                SELECT MAX(r2.id) FROM Result r2
+                    JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
+                WHERE p2.id = :participationId AND (
+                    r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    OR (r2.completionDate IS NOT NULL AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime))
+                )
+            )
+            """)
+    Optional<Long> findLatestVisibleResultIdForParticipation(@Param("participationId") long participationId, @Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Get the latest result a student may see for a participation, together with the list of feedback items, applying the course release gate.
+     *
+     * @param participationId the id of the participation to load from the database
+     * @param withSubmission  determines whether the submission should also be fetched
+     * @param dateTime        the reference time the assessment due date is compared against (usually now)
+     * @return an optional result (might exist or not).
+     */
+    default Optional<Result> findLatestVisibleResultWithFeedbacksForParticipation(long participationId, boolean withSubmission, ZonedDateTime dateTime) {
+        Optional<Long> latestVisibleResultId = findLatestVisibleResultIdForParticipation(participationId, dateTime);
+        if (latestVisibleResultId.isEmpty()) {
+            return Optional.empty();
+        }
+        long id = latestVisibleResultId.get();
+        if (withSubmission) {
+            return findResultWithSubmissionAndFeedbacksById(id);
+        }
+        return findResultWithFeedbacksById(id);
+    }
+
+    default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
+        return getValueElseThrow(findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId), resultId);
+    }
+
+    /**
+     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
+        return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
+    }
+
+    default Result findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(long resultId) {
+        return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId), resultId);
+    }
+
+    /**
+     * Get the result with the given id from the database. The result is loaded together with its feedback. Throws an EntityNotFoundException if no
+     * result could be found for the given id.
+     *
+     * @param resultId the id of the submission that should be loaded from the database
+     * @return the result with the given id
+     */
+    default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
+        return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
+    }
+
+    /**
+     * Given the example submission list, it returns the results of the linked submission, if any
+     *
+     * @param exampleSubmissions list of the example submission we want to retrieve
+     * @return list of result for example submissions
+     */
+    default List<Result> getResultForExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        List<Result> results = new ArrayList<>();
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
+            Submission submission = exampleSubmission.getSubmission();
+            if (!submission.isEmpty() && submission.getLatestResult() != null) {
+                Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLatestResult().getId());
+                results.add(result);
+            }
+        }
+        return results;
+    }
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                 LEFT JOIN FETCH r.feedbacks f
+            WHERE r.submission.id = :submissionId
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = :submissionId
+               )
+            """)
+    Optional<Result> findLatestResultWithFeedbacksForSubmission(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+            WHERE r.submission.id IN :submissionIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = r.submission.id
+               )
+            """)
+    Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    /**
+     * Finds the latest results for the given submission IDs, including the assessment note.
+     *
+     * @param submissionIds the submission IDs for which to find the latest results
+     * @return a set of latest results with assessment notes
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+            LEFT JOIN FETCH r.assessmentNote
+            WHERE r.submission.id IN :submissionIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = r.submission.id
+                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+               )
+            """)
+    Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    @Query("""
+              SELECT r
+              FROM Submission s
+                JOIN s.results r
+                LEFT JOIN FETCH r.feedbacks f
+              WHERE s.id = :submissionId
+                AND r.id = (
+                  SELECT MAX(r2.id)
+                  FROM Submission s2
+                    JOIN s2.results r2
+                  WHERE s2.id = :submissionId
+                    AND (
+                      r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                      OR (
+                        r2.completionDate IS NOT NULL
+                        AND (
+                          s2.participation.exercise.assessmentDueDate IS NULL
+                          OR s2.participation.exercise.assessmentDueDate < :dateTime
+                        )
+                      )
+                    )
+                )
+            """)
+    Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Find the latest results for the given participation IDs.
+     *
+     * @param participationIds the participation IDs for which to find the latest results
+     * @return a set of latest results
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+            WHERE r.submission.participation.id IN :participationIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.participation.id = r.submission.participation.id
+               )
+            """)
+    Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
+}

@@ -1,0 +1,342 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "deleted": "Content deleted",
+            "deepLink": {
+                "unitGone": "The linked lecture content no longer exists, so only the lecture is opened."
+            },
+            "retryProcessing": "Retry processing",
+            "processingRetryStarted": "Processing retry started",
+            "home": {
+                "title": "Lecture Content"
+            },
+            "unitCreationCard": {
+                "title": "Add one item:",
+                "text": "Text",
+                "exercise": "Exercise",
+                "online": "Online resource",
+                "attachmentVideo": "File or video"
+            },
+            "releaseDate": "Release Date",
+            "details": {
+                "title": "Properties"
+            },
+            "completedTooltip": "Click to mark this content as uncompleted",
+            "uncompletedTooltip": "Click to mark this content as completed",
+            "openFullscreen": "Open fullscreen",
+            "closeFullscreen": "Close fullscreen",
+            "fullscreenView": "Fullscreen view of {{ title }}",
+            "irisSidebarLabel": "Iris AI Assistant Chat",
+            "lectureUnit": "Lecture Content",
+            "management": {
+                "list": "Content of the lecture",
+                "actions": "Actions for {{ name }}",
+                "empty": "The lecture has no content yet. Add the first item below.",
+                "visible": "Visible to students",
+                "visibleSince": "Visible since {{ date }}",
+                "visibleFrom": "Hidden until {{ date }}",
+                "version": "Version {{ version }}",
+                "type": {
+                    "pdf": "PDF",
+                    "file": "File",
+                    "video": "Video",
+                    "fileAndVideo": "File and video",
+                    "empty": "No file or video yet",
+                    "text": "Text",
+                    "exercise": "Exercise",
+                    "online": "Online resource"
+                },
+                "editing": "Editing"
+            }
+        },
+        "textUnit": {
+            "created": "New text content created",
+            "updated": "Text content updated",
+            "tooltip": "This is text content",
+            "isolated": "View Fullscreen",
+            "backToLecture": "Back to lecture",
+            "notFound": "This text content does not exist or is not available to you.",
+            "originalVersion": "Original Version",
+            "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
+            "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
+            "createTextUnit": {
+                "title": "Create Text Content",
+                "name": "Name",
+                "content": "Content",
+                "namePlaceHolder": "Give the text content a name",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long."
+            },
+            "editTextUnit": {
+                "title": "Edit Text Content"
+            },
+            "delete": {
+                "question": "Do you really want to delete the text content <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the text content for confirmation.",
+                "buttonText": "Delete"
+            }
+        },
+        "onlineUnit": {
+            "created": "New online content created",
+            "updated": "Online content updated",
+            "tooltip": "This is online content",
+            "description": "Description",
+            "notReleasedTooltip": "Online content only visible to teaching assistants and instructors. Release date:",
+            "doOpen": "Open link",
+            "createOnlineUnit": {
+                "title": "Create Online Content",
+                "name": "Name",
+                "namePlaceHolder": "Give the online content a name",
+                "description": "Description",
+                "descriptionPlaceHolder": "Give the online content a description",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long.",
+                "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
+                "source": "Online Resource URL",
+                "sourcePlaceHolder": "Enter an URL to an external online resource",
+                "sourceRequiredValidationError": "Link is required",
+                "sourceURLValidationError": "Not a valid URL",
+                "urlHelperPlaceholder": "Name and description will be loaded from the metadata of the link",
+                "urlHelperKeepHint": "An empty name or description is filled in from the metadata of the link."
+            },
+            "editOnlineUnit": {
+                "title": "Edit Online Content"
+            },
+            "delete": {
+                "question": "Do you really want to delete the online content <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the online content for confirmation.",
+                "buttonText": "Delete"
+            }
+        },
+        "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "This looks like a YouTube URL but couldn't be parsed. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/...",
+                "invalidVideoSourceScheme": "The video source may only use http or https."
+            },
+            "created": "New file/video content created",
+            "updated": "File/video content updated",
+            "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
+            "transcriptionProcessing": "Transcription Processing",
+            "transcriptionFailed": "Transcription Failed",
+            "hasTranscription": "Transcription complete",
+            "awaitingProcessing": "Awaiting Processing",
+            "processingTranscribing": "Transcribing",
+            "processingIngesting": "Indexing",
+            "processingVerifying": "Verifying",
+            "processingLostContact": "Lost contact",
+            "processingComplete": "Indexed",
+            "processingFailed": "Processing Failed",
+            "processingSkipped": "Not indexed",
+            "processingSkippedTooltip": "Iris did not index this unit. Either Iris is not enabled for this course, or the unit has no PDF and its video is not from YouTube or TUM Live. It is indexed automatically once this changes.",
+            "videoSlideSync": {
+                "toggle": "Synchronize slides and video",
+                "disabledByPointOut": "Synchronization disabled: Iris points to page {{page}} and timestamp {{time}}."
+            },
+            "processing": {
+                "lostContactTooltip": "Iris has stopped reporting liveness for this run. It will be reclaimed and retried automatically without spending the retry budget.",
+                "lastSeen": "seen {{ time }} ago",
+                "cancelled": "Processing was cancelled",
+                "retriedLabelOne": "retry",
+                "retriedLabelOther": "retries",
+                "retriedTooltip": "Automatically retried {{ count }} time(s) after a transient error.",
+                "stage": {
+                    "readingSlides": "Reading slides",
+                    "summarizingSlides": "Summarizing slides",
+                    "summarizingTranscript": "Summarizing transcript",
+                    "indexingTranscript": "Indexing transcript",
+                    "downloadingVideo": "Downloading video",
+                    "extractingAudio": "Extracting audio",
+                    "aligningSlides": "Aligning slides",
+                    "splittingTranscript": "Splitting transcript"
+                },
+                "error": {
+                    "invalidUnitType": "Invalid lecture unit type for processing",
+                    "attachmentUnreadable": "The attachment file could not be read from the server. Re-upload the file to trigger processing again.",
+                    "processingFailed": "Processing failed",
+                    "transcriptionFailed": "The video could not be transcribed.",
+                    "ingestionFailed": "Content indexing failed after multiple attempts",
+                    "noPlaylist": "Video playlist is no longer available",
+                    "timeout": "Processing timed out after multiple attempts",
+                    "youtubePrivate": "The video is private and cannot be transcribed.",
+                    "youtubeLive": "The video is a live stream and cannot be transcribed.",
+                    "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
+                    "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
+                    "youtubeDownloadFailed": "The video could not be downloaded for transcription.",
+                    "videoSourceUnavailable": "The video cannot be loaded right now (for example, it is not public or not recorded yet). It will be retried automatically.",
+                    "noIngestibleContent": "No content could be indexed: the PDF has no readable pages and no transcript could be produced from the video. Check the file and the video source, then retry.",
+                    "recoveryLimitReached": "Processing was interrupted several times in a row without finishing (for example by service restarts). It will be retried automatically."
+                }
+            },
+            "createAttachmentVideoUnits": {
+                "noFile": "There is no file to split. Start the split again from the lecture editor.",
+                "noUnitDetected": "This PDF has no slide with the word “Outline” or “Gliederung”, so Artemis could not propose items. Add the items and their slides with “Add item”.",
+                "pageTitle": "Process content",
+                "addUnit": "Add item",
+                "removeSlides": "Remove slides",
+                "removeSlidesInfo": {
+                    "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",
+                    "secondLine": "Multiple key phrases are comma-separated, key phrases are not case-sensitive.",
+                    "thirdLine": "The following slides will be removed:"
+                },
+                "timeout": "Timed out during automatic content processing. Please try again.",
+                "removeSlidesPlaceholder": "Example: 'Break, Solution slides'",
+                "validation": {
+                    "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
+                    "empty": {
+                        "unitName": "Content name can not be empty.",
+                        "startPage": "Start page can not be empty.",
+                        "endPage": "End page can not be empty."
+                    },
+                    "endPageLower": "End page can not be smaller than 1.",
+                    "startPageBigger": "Start page can not be bigger than {{ max }}.",
+                    "startPage": "Start page must be bigger or equal to 1.",
+                    "endPage": "End page must be less or equal to {{ max }}."
+                },
+                "split": {
+                    "empty": "",
+                    "unitName": "Item name",
+                    "releaseDate": "Release date",
+                    "startPage": "First slide",
+                    "endPage": "Last slide",
+                    "title": "Split the PDF into items",
+                    "summary": "Artemis found {{ count }} sections in {{ slides }} slides.",
+                    "summarySingle": "Artemis found 1 section in {{ slides }} slides.",
+                    "hint": "Each row becomes one content item with its slides. Check the names and slide ranges before you create the items.",
+                    "slides": "Slides",
+                    "summaryNone": "Artemis found no sections in {{ slides }} slides.",
+                    "detectionHint": "Artemis starts a new section at every slide that contains the word “Outline” or “Gliederung”, spelled exactly like this, and proposes a name from the text of that slide. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can be selected. Check the proposed names and slides."
+                },
+                "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient.",
+                "removeSource": "Remove the original PDF item “{{ name }}” after splitting",
+                "removeSourceHint": "Students’ completions of the item and its competency links are deleted with it.",
+                "create": "Create {{ count }} items",
+                "createSingle": "Create 1 item",
+                "createEmpty": "Create items"
+            },
+            "createAttachmentVideoUnit": {
+                "title": "Create File/Video Content",
+                "name": "Name",
+                "namePlaceHolder": "Give the content a name",
+                "description": "Description",
+                "updateNotificationText": "Update Notification Text",
+                "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
+                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 255 characters long.",
+                "descriptionPlaceHolder": "Give the content a description",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long.",
+                "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
+                "file": "File",
+                "version": "Version",
+                "fileRequiredValidationError": "You must select a file to upload.",
+                "chooseFile": "Choose file",
+                "noFileChosen": "No file chosen",
+                "currentFile": "Current file:",
+                "openFile": "Open",
+                "replaceFile": "Replace file",
+                "replacementFile": "New file:",
+                "keepCurrentFile": "Keep current file",
+                "replacementHint": "The new file replaces the current one as a new version. Slides hidden in the current file are not hidden in the new one.",
+                "fileTooBig": "File is too big! The maximum file size is 20 MB.",
+                "fileLimitation": "(max. size 20 MB)",
+                "fileLimitationTooltip": "Supported types: {{ extensions }}",
+                "fileTypeUnsupported": "This file type is not supported. Supported types: {{ extensions }}",
+                "source": "Embeddable Video URL",
+                "sourcePlaceHolder": "Enter an URL to an embeddable video",
+                "sourceRequiredValidationError": "Video URL is required",
+                "sourceURLValidationError": "Not a valid URL",
+                "urlVideoHelper": "Video page link",
+                "urlHelperPlaceholder": "Paste the link of the page that shows the video, for example on YouTube or TUM-Live. “Use as video URL” turns it into the video URL above.",
+                "urlHelperValidationError": "Artemis cannot turn this link into a video URL.",
+                "videoTranscription": "Video Transcription",
+                "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
+                "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page.",
+                "useAsVideoSource": "Use as video URL",
+                "notifyStudents": "Notify students about the new version",
+                "saveVideoSource": "Save video URL",
+                "discardVideoSource": "Keep current URL",
+                "videoSourceHint": "Artemis then transcribes the video and processes it again.",
+                "discardNewFile": "Discard file",
+                "notifyStudentsNewFile": "Notify students about the new file",
+                "discardNewVideoSource": "Discard URL",
+                "uploading": "Uploading…",
+                "replaceFileHint": "A file you choose is uploaded right away as version {{ version }}, and Artemis processes it again. Slides hidden in the current file are shown again.",
+                "newFileHint": "A file you choose is uploaded right away, and Artemis processes it."
+            },
+            "editAttachmentVideoUnit": {
+                "title": "Edit File/Video Content"
+            },
+            "tooltip": "This is a lecture attachment",
+            "uploadDate": "Upload Date",
+            "version": "Version",
+            "FileName": "Filename",
+            "description": "Description",
+            "download": "Download",
+            "delete": {
+                "question": "Do you really want to delete this content <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the content for confirmation.",
+                "buttonText": "Delete"
+            },
+            "transcription": {
+                "started": "Transcript generation started.",
+                "error": "Failed to start transcript generation.",
+                "pendingWarning": "A transcription is currently being processed for this video. Please wait for it to complete before generating a new one",
+                "overwriteWarning": "Generating a new transcript will overwrite the existing transcription for this video.",
+                "statusProcessing": "Please check the status of the transcription later",
+                "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
+                "editStatusProcessing": "A transcription is currently being generated for this video.",
+                "editStatusFailed": "The previous transcription generation failed for this video.",
+                "cancelButton": "Cancel Transcription",
+                "cancelSuccess": "Transcription cancelled successfully.",
+                "cancelError": "Failed to cancel transcription.",
+                "cancelConfirm": "Are you sure you want to cancel the ongoing transcription?"
+            },
+            "videoPlayer": {
+                "transcript": "Transcript",
+                "searchPlaceholder": "Search transcript...",
+                "clearSearch": "Clear search",
+                "previousResult": "Previous result",
+                "nextResult": "Next result",
+                "noResults": "No results",
+                "noMatchingTranscript": "No matching transcript found",
+                "loading": "Loading...",
+                "resetSplitRatio": "Reset split layout",
+                "iframeTitle": "Lecture video"
+            },
+            "pdfViewer": {
+                "title": "PDF Viewer",
+                "loadingPdf": "Loading PDF...",
+                "loadFailed": "Failed to load PDF",
+                "zoomOut": "Zoom out",
+                "zoomIn": "Zoom in",
+                "search": "Search in document",
+                "searchPlaceholder": "Search...",
+                "nextMatch": "Next match",
+                "previousMatch": "Previous match",
+                "clearSearch": "Clear search",
+                "goToPage": "Go to page",
+                "pageInputPlaceholder": "Page",
+                "downloadPdf": "Download PDF",
+                "openFullscreen": "Open fullscreen",
+                "closeFullscreen": "Close fullscreen",
+                "fullscreenDialog": "PDF fullscreen viewer"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Exercise connected with lecture",
+            "createExerciseUnit": {
+                "title": "Exercise Content",
+                "headline": "Connect an Exercise with the Lecture",
+                "description": "Select all the Exercises to connect with the Lecture.",
+                "select": "Select",
+                "noExercises": "Every exercise of the course is already content of this lecture.",
+                "noCourseExercises": "The course has no exercises yet."
+            },
+            "delete": {
+                "question": "Do you really want to unlink the exercise <strong>{{ title }}</strong>? The exercise will be kept! You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the exercise for confirmation.",
+                "buttonText": "Unlink"
+            }
+        }
+    }
+}

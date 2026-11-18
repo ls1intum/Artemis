@@ -1,0 +1,149 @@
+<div>
+    <div *titleBarTitle class="flex items-center">
+        <h5 class="mb-0!">
+            <span jhiTranslate="artemisApp.examManagement.testRun.title"></span>
+        </h5>
+    </div>
+    <ng-template titleBarActions>
+        <div [tumAetUiTooltip]="examContainsExercises() ? '' : ('artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate)">
+            @if (course()?.isAtLeastInstructor) {
+                <button
+                    type="button"
+                    id="createTestRunButton"
+                    tumAetUiButton
+                    size="small"
+                    (click)="openCreateTestRunModal()"
+                    [disabled]="isLoading() || !examContainsExercises()"
+                    [title]="'artemisApp.examManagement.testRun.setup' | artemisTranslate"
+                >
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <fa-icon [icon]="faPlus" />
+                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
+                </button>
+            }
+        </div>
+        @if (exam() && isRealExam(exam())) {
+            <div [tumAetUiTooltip]="testRunCanBeAssessed() ? '' : ('artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate)">
+                @if (course()?.isAtLeastInstructor) {
+                    <a
+                        [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
+                        tumAetUiButton
+                        size="small"
+                        [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
+                        [attr.aria-disabled]="isLoading() || !testRunCanBeAssessed()"
+                        [attr.tabindex]="isLoading() || !testRunCanBeAssessed() ? -1 : undefined"
+                        [class.pointer-events-none]="isLoading() || !testRunCanBeAssessed()"
+                    >
+                        <fa-icon [icon]="faCheck" />
+                        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.assess"></span>
+                    </a>
+                }
+            </div>
+        }
+    </ng-template>
+    <div class="pb-2.5">
+        <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
+    </div>
+    <tumaet-ui-message severity="warn" class="mb-6!" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
+    @if (testRuns()) {
+        <tumaet-ui-table-layout
+            [empty]="testRuns().length === 0 && !isLoading()"
+            emptyTitle="artemisApp.examManagement.testRun.empty.title"
+            emptyDescription="artemisApp.examManagement.testRun.empty.description"
+        >
+            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+                <thead>
+                    <tr>
+                        <th class="hidden md:table-cell" tumAetUiSortableColumn="id"><span jhiTranslate="global.field.id"></span></th>
+                        <th tumAetUiSortableColumn="user.name"><span jhiTranslate="artemisApp.examManagement.testRun.author"></span></th>
+                        <th tumAetUiSortableColumn="workingTime"><span jhiTranslate="artemisApp.studentExams.workingTime"></span></th>
+                        <th tumAetUiSortableColumn="started"><span jhiTranslate="artemisApp.studentExams.started"></span></th>
+                        <th tumAetUiSortableColumn="submitted"><span jhiTranslate="artemisApp.studentExams.submitted"></span></th>
+                        <th tumAetUiSortableColumn="submissionDate"><span jhiTranslate="artemisApp.studentExams.submissionDate"></span></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (testRun of testRuns(); track trackId($index, testRun)) {
+                        <tr [id]="'testrun-' + testRun.id">
+                            <td class="hidden md:table-cell" data-testid="test-run-id">
+                                <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
+                            </td>
+                            <td>
+                                <a> {{ testRun.user?.name || '--' }}</a>
+                            </td>
+                            <td data-testid="test-run-working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
+                            <td data-testid="test-run-started" jhiTranslate="{{ testRun.started ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td data-testid="test-run-submitted" jhiTranslate="{{ testRun.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td>{{ testRun.submissionDate | artemisDate }}</td>
+                            <td class="w-88">
+                                @if (course()?.isAtLeastInstructor) {
+                                    <div class="flex flex-wrap justify-end gap-1">
+                                        @if (testRun.user?.id === instructor()?.id && !testRun.submitted) {
+                                            <a tumAetUiButton size="small" data-testid="test-run-start" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                                @if (!testRun.started) {
+                                                    <span jhiTranslate="artemisApp.course.startDate"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.examParticipation.continue"></span>
+                                                }
+                                            </a>
+                                        } @else {
+                                            <a tumAetUiButton size="small" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                                <span jhiTranslate="artemisApp.exam.summary"></span>
+                                            </a>
+                                        }
+                                        <a
+                                            tumAetUiButton
+                                            size="small"
+                                            data-testid="test-run-manage-worktime"
+                                            [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'test-runs', testRun.id]"
+                                            [attr.aria-disabled]="!!testRun.started"
+                                            [attr.tabindex]="testRun.started ? -1 : undefined"
+                                            [class.pointer-events-none]="testRun.started"
+                                        >
+                                            <span jhiTranslate="artemisApp.examManagement.testRun.manage"></span>
+                                        </a>
+                                        @if (testRun.id) {
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="danger"
+                                                size="small"
+                                                data-testid="test-run-delete"
+                                                [attr.aria-label]="'entity.action.delete' | artemisTranslate"
+                                                (click)="openDeleteDialog(testRun)"
+                                            >
+                                                <fa-icon [icon]="faTimes" />
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div tumAetUiTableEmptyActions>
+                @if (course()?.isAtLeastInstructor && examContainsExercises()) {
+                    <button type="button" tumAetUiButton size="small" data-testid="test-run-empty-create" (click)="openCreateTestRunModal()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
+                    </button>
+                }
+            </div>
+        </tumaet-ui-table-layout>
+    }
+    @if (createTestRunDialogVisible()) {
+        <jhi-create-test-run-modal [exam]="exam()!" [(visible)]="createTestRunDialogVisible" (testRunCreate)="createTestRun($event)" />
+    }
+    <jhi-exam-delete-dialog
+        [(visible)]="deleteDialogVisible"
+        [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
+        deleteQuestion="artemisApp.examManagement.testRun.delete.question"
+        deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
+        [dialogError]="dialogError$"
+        (confirmed)="deleteTestRun(testRunToDelete()!.id!)"
+    />
+</div>

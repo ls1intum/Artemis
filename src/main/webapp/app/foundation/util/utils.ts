@@ -1,0 +1,196 @@
+import { omit, sum } from 'lodash-es';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+
+/**
+ * Generates a random integer within Java's max integer range.
+ * Used for message differentiators and similar use cases.
+ */
+export function randomInt(): number {
+    const maxIntJava = 2147483647;
+    return Math.floor(Math.random() * maxIntJava);
+}
+
+export function cleanString(str?: string): string {
+    if (!str) {
+        return '';
+    }
+    return str.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim();
+}
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
+ * Stringify a circular JSON structure by omitting keys that would close a circle
+ *
+ * @param val The object you want to stringify
+ */
+export const stringifyCircular = (val: unknown): string => {
+    const seen = new WeakSet();
+    return JSON.stringify(val, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+        }
+        return value;
+    });
+};
+
+/**
+ * Stringifies an object ignoring certain top-level fields
+ *
+ * @param val Object to stringify
+ * @param ignoredFields Fields to omit from object before converting to string
+ */
+export const stringifyIgnoringFields = <T extends object>(val: T, ...ignoredFields: string[]): string => {
+    return JSON.stringify(omit(val, ignoredFields));
+};
+
+/**
+ * Helper function to make actually rounding possible
+ * @param value
+ * @param exp
+ */
+export const round = (value: number, exp?: number) => {
+    if (exp == undefined || +exp === 0) {
+        return Math.round(value);
+    }
+
+    const numericValue = +value;
+    const numericExp = +exp;
+
+    if (isNaN(numericValue) || !(numericExp % 1 === 0)) {
+        return NaN;
+    }
+
+    // Shift
+    let shifted = numericValue.toString().split('e');
+    const rounded = Math.round(+(shifted[0] + 'e' + (shifted[1] ? +shifted[1] + numericExp : numericExp)));
+
+    // Shift back
+    shifted = rounded.toString().split('e');
+    return +(shifted[0] + 'e' + (shifted[1] ? +shifted[1] - numericExp : -numericExp));
+};
+
+/**
+ * What of a course the rounding of scores needs. The exercises of the course overview carry no course, so the places that show their scores are handed this instead of
+ * the whole course, which they could not copy cheaply.
+ */
+export type CourseScoreAccuracy = Pick<Course, 'accuracyOfScores'>;
+
+/**
+ * Rounds the score to the specified amount in the course object.
+ * @param relativeScore The score of the student in the value range [0;1]
+ * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
+ * @returns The rounded percent of the score in the range [0;100]
+ */
+export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number, course: CourseScoreAccuracy | undefined) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
+    return round(relativeScore * 100, course?.accuracyOfScores ?? 1);
+};
+
+/**
+ * Rounds the given value to the accuracy defined by the course.
+ * @param value The value that should be rounded.
+ * @param course The course which defines the accuracy to which the value should be rounded.
+ * @returns The rounded value.
+ */
+export const roundValueSpecifiedByCourseSettings = (value: number | undefined, course: CourseScoreAccuracy | undefined) => {
+    if (!course) {
+        captureException(new Error('The course object used for determining the rounding of scores was undefined'));
+    }
+    // `value` is undefined at some call sites (absent scores/points); pass it through unchanged so `round`
+    // yields NaN exactly as it did previously when these values were untyped (`any`).
+    return round(value as number, course?.accuracyOfScores ?? 1);
+};
+
+/**
+ * Computes the average value for the given array.
+ * @param values The array for which the average should be computed.
+ * @returns The average value of the array. Zero for an empty array.
+ */
+export const average = (values: Array<number>): number => {
+    if (values.length === 0) {
+        return 0;
+    } else {
+        return sum(values) / values.length;
+    }
+};
+
+/**
+ * finds the latest result based on the max id
+ * @param results
+ */
+export const findLatestResult = (results?: (Result | null | undefined)[]): Result | undefined => {
+    // discard null / undefined items
+    const clean: Result[] = (results ?? []).filter((r): r is Result => r != null);
+    return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b), clean[0]) : undefined;
+};
+
+export const isDate = (input: unknown) => {
+    return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
+};
+
+/**
+ * Represents the inclusive range with a lower and upper bound
+ */
+export class Range {
+    constructor(
+        public lowerBound: number,
+        public upperBound: number,
+    ) {}
+
+    toString(): string {
+        return '[' + this.lowerBound + '%, ' + this.upperBound + '%' + (this.upperBound === 100 ? ']' : ')');
+    }
+}
+
+/**
+ * Usages:
+ * - when the router keeps the position from the previous page for the new page
+ * - to make sure that a message from the {@link AlertService} is recognized by the user
+ */
+export function scrollToTopOfPage() {
+    // The window itself cannot be scrolled; overflowing content is handled by the page wrapper.
+    const pageWrapper = document.getElementById('page-wrapper');
+    if (pageWrapper) {
+        pageWrapper.scroll(0, 0);
+    }
+}
+
+/**
+ * For exam exercises the course will not be set as exam exercises are linked via exercise groups.
+ *
+ * @param exercise for which is checked if it belongs to an exam
+ */
+export function isExamExercise(exercise: Exercise) {
+    return exercise.course === undefined;
+}
+
+/**
+ * Rounds a value up to the nearest multiple
+ *
+ * @param value    that shall be rounded
+ * @param multiple to which we round up
+ * @param roundUp  if true, we round up, otherwise we round down
+ */
+export function roundToNextMultiple(value: number, multiple: number, roundUp: boolean) {
+    if (roundUp) {
+        return Math.ceil(value / multiple) * multiple;
+    }
+
+    return Math.floor(value / multiple) * multiple;
+}
+
+export function removeSpecialCharacters(input: string): string {
+    return input.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+export function secondsToMilliseconds(seconds: number): number {
+    return seconds * 1000;
+}

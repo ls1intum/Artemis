@@ -1,0 +1,7 @@
+*
+
+!*.asm
+!Makefile
+!.gitignore
+
+!*/

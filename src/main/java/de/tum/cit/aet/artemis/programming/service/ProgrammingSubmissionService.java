@@ -1,0 +1,634 @@
+package de.tum.cit.aet.artemis.programming.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
+import de.tum.cit.aet.artemis.programming.domain.Commit;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionInfoDTO;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+
+// TODO: this class has too many dependencies to other services. We should reduce this
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ProgrammingSubmissionService extends SubmissionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+
+    @Value("${artemis.git.name}")
+    private String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    private String artemisGitEmail;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final AsyncBuildTriggerService asyncBuildTriggerService;
+
+    private final GitService gitService;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            AsyncBuildTriggerService asyncBuildTriggerService, ParticipationService participationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.asyncBuildTriggerService = asyncBuildTriggerService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.gitService = gitService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.participationAuthCheckService = participationAuthCheckService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+    }
+
+    /**
+     * Checks whether a commit belongs to a recorded submission of the specified participation.
+     * A full Git hash alone does not establish that code is part of an assessment snapshot.
+     *
+     * @param participationId the participation whose submissions may be read
+     * @param commitHash      the full hash of the requested commit
+     * @return whether a matching submission exists for this participation
+     */
+    public boolean isCommitSubmitted(long participationId, String commitHash) {
+        return programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participationId, commitHash);
+    }
+
+    /**
+     * Gets the build time window that keeps the given user's push or manual trigger from being built, if one applies.
+     * It applies to students working on their own non-practice participation, and its end moves with the individual due date of the participation. Editors and instructors,
+     * practice mode and the template, solution and test repositories
+     * are never restricted, and neither is a push by an unknown user.
+     *
+     * @param participation the participation that is pushed to or built
+     * @param user          the user who pushed or triggered the build
+     * @param instant       the instant of the push or trigger
+     * @return the exercise's build time window if the instant lies outside of it and builds are therefore skipped, empty otherwise
+     */
+    public Optional<BuildTimeWindow> findBuildTimeWindowExcluding(ProgrammingExerciseParticipation participation, @Nullable User user, ZonedDateTime instant) {
+        if (user == null || !(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || studentParticipation.isPracticeMode()) {
+            return Optional.empty();
+        }
+        Exercise exercise = studentParticipation.getExercise();
+        BuildTimeWindow window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exercise.getId());
+        if (window != null) {
+            window = window.extendedByDueDateExtension(exercise.getDueDate(), studentParticipation.getIndividualDueDate());
+        }
+        if (window == null || window.isBuildAllowedAt(instant) || authCheckService.isAtLeastEditorForExercise(exercise, user)) {
+            return Optional.empty();
+        }
+        return Optional.of(window);
+    }
+
+    /**
+     * Evaluates the shared build-window policy for an operation requested by the currently authenticated user.
+     *
+     * @param participation the participation whose repository is affected
+     * @param instant       the instant at which the operation is evaluated
+     * @return the window blocking the build, or empty if the build is allowed
+     */
+    public Optional<BuildTimeWindow> findBuildTimeWindowExcluding(ProgrammingExerciseParticipation participation, ZonedDateTime instant) {
+        return findBuildTimeWindowExcluding(participation, userRepository.getUser(), instant);
+    }
+
+    /**
+     * This method gets called if a new commit was pushed to the VCS
+     *
+     * @param participation     The Participation, where the push happened
+     * @param commit            the commit that was pushed
+     * @param user              the user who pushed the commit, used for logging and access control
+     * @param triggeredByPushTo the type of repository that was pushed to, so the trigger can reuse the pushed commit hash
+     * @return the ProgrammingSubmission for the last commitHash
+     * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
+     * @throws IllegalStateException    if a ProgrammingSubmission already exists
+     * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
+     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation), or, as the more specific
+     *                                      {@link BuildOutsideTimeWindowException}, if a student pushed outside the build time window of the exercise. Both leave the push
+     *                                      in the repository, but neither a submission nor a build is created.
+     */
+    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Commit commit, User user, RepositoryType triggeredByPushTo)
+            throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
+        // Note: the following line is intentionally at the top of the method to get the most accurate submission date
+        var existingSubmissionCount = participation.getSubmissions().size();
+        ZonedDateTime submissionDate = ZonedDateTime.now();
+
+        log.info("processNewProgrammingSubmission invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(),
+                commit.branch());
+
+        String branch = participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                ? programmingExerciseStudentParticipation.getBranch()
+                : programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
+        if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
+            // if the commit was made in a branch different from the default, ignore this
+            throw new VersionControlException(
+                    "Submission for participation id " + participation.getId() + " in branch " + commit.branch() + " will be ignored! Only the default branch is considered");
+        }
+        if (artemisGitName.equalsIgnoreCase(commit.authorName()) && artemisGitEmail.equalsIgnoreCase(commit.authorEmail()) && SETUP_COMMIT_MESSAGE.equals(commit.message())) {
+            // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
+        }
+
+        findBuildTimeWindowExcluding(participation, user, submissionDate).ifPresent(window -> {
+            throw new BuildOutsideTimeWindowException(participation.getId(), window);
+        });
+
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+            // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
+            // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
+            // as the VCS-server performs the request
+            SecurityUtils.setAuthorizationObject();
+
+            participationService.resumeProgrammingExercise(programmingExerciseStudentParticipation);
+            // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
+        }
+
+        // Queue the build off this thread. Under exam load the queueing step was effectively the entire latency of a git
+        // push, and nothing in the push response depends on the build job existing yet.
+        asyncBuildTriggerService.triggerBuild(participation, commit.commitHash(), triggeredByPushTo);
+
+        // There can't be two submissions for the same participation and commitHash!
+        if (programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participation.getId(), commit.commitHash())) {
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
+        }
+
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setCommitHash(commit.commitHash());
+        log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
+
+        programmingSubmission.setSubmitted(true);
+        programmingSubmission.setSubmissionDate(submissionDate);
+        programmingSubmission.setType(SubmissionType.MANUAL);
+
+        // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
+        if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
+            programmingSubmission.setType(SubmissionType.INSTRUCTOR);
+            log.debug("Setting programmingSubmission with commitHash: {} for participation: {} type to {} because an instructor commited.", commit.commitHash(),
+                    participation.getId(), SubmissionType.INSTRUCTOR);
+        }
+
+        participation.addSubmission(programmingSubmission);
+        programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+        // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
+        programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
+
+        // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
+        return programmingSubmission;
+    }
+
+    /**
+     * A pending submission is one that does not have a result yet.
+     *
+     * @param participationId the id of the participation get the latest submission for
+     * @param filterGraded    if true will not use the latest submission, but the latest graded submission.
+     * @return the latest pending submission if exists or null.
+     * @throws EntityNotFoundException  if the participation for the given id can't be found.
+     * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
+     */
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+            throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
+        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+
+        return findLatestPendingSubmissionForParticipation(participationId, filterGraded);
+    }
+
+    /**
+     * For every student participation of a programming exercise, find its latest pending submission (if any).
+     *
+     * @param programmingExerciseId for which to search pending submissions
+     * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
+     *         submission is populated if the participation's latest submission has no result yet, and {@code null} otherwise.
+     */
+    public List<PendingProgrammingSubmissionDTO> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+        // Only the latest submission per participation is fetched (with its results), instead of the exercise's entire
+        // submission and result history. For large exercises the previous approach transferred tens of thousands of
+        // rows from the database just to inspect one submission per participation.
+        List<Long> participationIds = programmingExerciseStudentParticipationRepository.findStudentParticipationIdsByExerciseId(programmingExerciseId);
+        List<Long> latestSubmissionIds = programmingSubmissionRepository.findLatestSubmissionIdsByExerciseId(programmingExerciseId);
+        // findLatestSubmissionIdsByExerciseId returns exactly one (latest) submission per participation.
+        Map<Long, ProgrammingSubmission> latestSubmissionByParticipationId = programmingSubmissionRepository.findSubmissionsWithResultsByIdIn(latestSubmissionIds).stream()
+                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
+
+        List<PendingProgrammingSubmissionDTO> pendingSubmissions = new ArrayList<>();
+        for (Long participationId : participationIds) {
+            ProgrammingSubmission latestSubmission = latestSubmissionByParticipationId.get(participationId);
+            // A pending submission is the latest submission of a participation that does not have a result yet. There is
+            // one entry per participation; a participation without a pending submission has a null submission (which the
+            // client uses to prime its per-participation build-state cache), and is not an error case.
+            boolean isPending = latestSubmission != null && latestSubmission.getLatestResult() == null;
+            pendingSubmissions.add(new PendingProgrammingSubmissionDTO(participationId, isPending ? ProgrammingSubmissionInfoDTO.of(latestSubmission) : null));
+        }
+        return pendingSubmissions;
+    }
+
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
+        final var optionalSubmission = isGraded
+                ? programmingSubmissionRepository.findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
+                : programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
+
+        if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
+            // This is not an error case, it is very likely that there is no pending submission for a participation.
+            return Optional.empty();
+        }
+        return optionalSubmission;
+    }
+
+    /**
+     * Create a submission with given submission type for the last commit hash of the given participation.
+     * WARNING: The commitHash is used to map incoming results to submissions. Using this method could cause the result to have multiple fitting submissions.
+     * <p>
+     * See <a href="https://github.com/ls1intum/Artemis/pull/712#discussion_r314944129">discussion</a>
+     * <p>
+     * Worst case scenario when using this method:
+     * 1) Student executes a submission, the build is created on CI system
+     * 2) The build takes longer than 2 minutes, this enables the student to trigger the submission again
+     * 3) A new submission with the same commitHash is created on the server, there are now 2 submissions for the same commitHash and 2 running builds
+     * 4) The first build returns a result to Artemis, this result is now attached to the second submission (that was just created)
+     * 5) The second build finishes and returns a result to Artemis, this result is attached to the first submission
+     *
+     * @param participation  to create submission for.
+     * @param submissionType of the submission to create.
+     * @return created or reused submission.
+     * @throws IllegalStateException if the last commit hash can't be retrieved.
+     */
+    public ProgrammingSubmission getOrCreateSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
+            throws IllegalStateException {
+        String lastCommitHash = getLastCommitHashForParticipation(participation);
+        // we first try to get an existing programming submission with the last commit hash
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(),
+                lastCommitHash);
+        // in case no programming submission is available, we create one
+        return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
+    }
+
+    private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
+        try {
+            String commitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            if (commitHash == null) {
+                throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " is null");
+            }
+            return commitHash;
+        }
+        catch (EntityNotFoundException ex) {
+            var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
+            log.warn(message);
+            throw new IllegalStateException(message);
+        }
+    }
+
+    /**
+     * Create a submission with SubmissionType.TEST and the provided commitHash.
+     *
+     * @param programmingExerciseId ProgrammingExercise id.
+     * @param commitHash            last commitHash of the test repository, if null will use the last commitHash of the test repository.
+     * @return The created solutionSubmission.
+     * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
+     * @throws IllegalStateException   If no commitHash was no provided and no commitHash could be retrieved from the test repository.
+     */
+    public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash)
+            throws EntityNotFoundException, IllegalStateException {
+        var solutionParticipation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        // If no commitHash is provided, use the last commitHash for the test repository.
+        if (commitHash == null) {
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
+            try {
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+                if (commitHash == null) {
+                    throw new IllegalStateException(
+                            "Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
+                }
+            }
+            catch (EntityNotFoundException ex) {
+                throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
+            }
+        }
+        return createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, SubmissionType.TEST);
+    }
+
+    /**
+     * Checks whether a successful TEST build result newer than the pre-trigger baseline exists for the given participation and tests commit.
+     *
+     * @param participationId        the solution participation id
+     * @param testsCommitHash        the tests commit hash the submission must reference
+     * @param baselineLatestResultId the latest result id observed before triggering the build, or null when no prior result existed
+     * @return true if a newer matching successful TEST result exists
+     */
+    public boolean existsNewerSuccessfulTestResultForParticipationAndCommitHash(long participationId, String testsCommitHash, @Nullable Long baselineLatestResultId) {
+        return programmingSubmissionRepository.existsNewerSuccessfulTestResultForParticipationAndCommitHash(participationId, testsCommitHash, baselineLatestResultId);
+    }
+
+    private ProgrammingSubmission createSubmissionWithCommitHashAndSubmissionType(ProgrammingExerciseParticipation participation, String commitHash,
+            SubmissionType submissionType) {
+        // Make sure that the new submission has the submission date of now
+        ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash).submitted(true).submissionDate(ZonedDateTime.now())
+                .type(submissionType);
+        newSubmission.setParticipation((Participation) participation);
+        return programmingSubmissionRepository.saveAndFlush(newSubmission);
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has assessed a result
+     * <p>
+     * Exam mode:
+     * The query that returns the participations returns the contained submissions in a particular way:
+     * Due to hibernate, the result list has null values at all places where a result was assessed by another tutor.
+     * At the beginning of the list remain all the automatic results without assessor.
+     * Then filtering out all submissions which have no result at the place of the correction round leaves us with the submissions we are interested in.
+     * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
+     * <p>
+     * Not exam mode (i.e. course exercise):
+     * In this case the query that returns the participations returns the contained submissions in a different way:
+     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the submissions'
+     * single result.
+     *
+     * @param exerciseId      - the id of the exercise we are looking for
+     * @param correctionRound - the correctionRound for which the submissions should be fetched for
+     * @param tutor           - the tutor we are interested in
+     * @param examMode        - flag should be set to ignore the test run submissions
+     * @return an unmodifiable list of programming submissions
+     */
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
+            int correctionRound) {
+        List<Submission> submissions;
+        if (examMode) {
+            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            // Latest submission might be illegal
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    // filter out the submissions that don't have a result (but a null value) for the correctionRound
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
+        }
+        else {
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
+            submissions.forEach(Submission::removeNullResults);
+        }
+        // strip away all automatic results from the submissions list
+        submissions.forEach(Submission::removeAutomaticResults);
+        submissions.forEach(submission -> {
+            var latestResult = submission.getLatestResult();
+            if (latestResult != null) {
+                latestResult.setSubmission(null);
+            }
+        });
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).toList();
+        // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
+        // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
+        return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
+    }
+
+    /**
+     * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of programming submissions for the given exercise id
+     */
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
+        Set<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+                // filter out non submitted submissions if the flag is set to true
+                .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted()))
+                .forEach(optionalSubmission -> programmingSubmissions.add((ProgrammingSubmission) optionalSubmission.get()));
+        return removeExerciseAndSubmissionSet(programmingSubmissions, true);
+    }
+
+    /**
+     * Given a List of ProgrammingSubmissions, this method will remove the attribute participation.exercise.
+     * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
+     * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
+     * This method is intended to reduce the amount of data transferred to the client.
+     *
+     * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
+     * @param removeSubmissionSet       - option to also remove the SubmissionSet from the ProgrammingSubmission
+     * @return a List with ProgrammingSubmissions and removed attributes
+     */
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {
+        programmingSubmissionList.forEach(programmingSubmission -> {
+            if (programmingSubmission.getParticipation() != null) {
+                Participation participation = programmingSubmission.getParticipation();
+                participation.setExercise(null);
+                if (removeSubmissionSet && participation.getSubmissions() != null) {
+                    // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
+                    participation.setSubmissionCount(participation.getSubmissions().size());
+                    participation.setSubmissions(null);
+                }
+            }
+        });
+        return programmingSubmissionList;
+    }
+
+    /**
+     * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue flag to determine if the submission should be retrieved from the assessment queue
+     * @param correctionRound     - the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean skipAssessmentQueue, boolean examMode,
+            int correctionRound) {
+        return super.getRandomAssessableSubmission(programmingExercise, skipAssessmentQueue, examMode, correctionRound,
+                programmingSubmissionRepository::findWithEagerResultsAndFeedbacksById);
+    }
+
+    /**
+     * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param submissionId    the id of the programming submission
+     * @param correctionRound the correctionRound of the programming submission
+     * @return the locked programming submission
+     */
+    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
+        var manualResult = lockSubmission(programmingSubmission, correctionRound);
+        return (ProgrammingSubmission) manualResult.getSubmission();
+    }
+
+    // TODO SE: explain in what context this method is even called
+
+    /**
+     * Locks the programmingSubmission submission. If the submission only has automatic results, and no manual,
+     * create a new manual result. In the second correction round add a second manual result to the submission
+     *
+     * @param submission      the submission to lock
+     * @param correctionRound the correction round for the assessment
+     * @return the result that is locked with the current user
+     */
+    @Override
+    // TODO: why do we override this method and why do we not try to reuse the method in the super class?
+    public Result lockSubmission(Submission submission, int correctionRound) {
+        SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        Optional<Result> optionalExistingResult;
+        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
+            optionalExistingResult = Optional.of(submission.getLatestResult());
+        }
+        else if (correctionRound == 0 && submission.getLatestResult() == null) {
+            // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
+            // When the assessment of such a submission is cancelled, this leaves behind a programming-submission without any results.
+            // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.
+            // New automatic results can be easily created by using the "trigger all" feature
+            optionalExistingResult = Optional.empty();
+        }
+        else {
+            optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
+        }
+
+        // Create a new manual result and try to reuse the existing submission with the latest commit hash
+        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
+                SubmissionType.MANUAL);
+        Result newResult = saveNewEmptyResult(existingSubmission);
+        newResult.setAssessor(userRepository.getUser());
+        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        // Copy automatic feedbacks into the manual result
+        List<Feedback> automaticFeedbacks = new ArrayList<>();
+        if (optionalExistingResult.isPresent()) {
+            Result existingResult = optionalExistingResult.get();
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
+            // Each copy names the new result before it is written: result_id is not nullable, so saving it detached and
+            // attaching it afterwards fails the insert instead of updating the row.
+            for (Feedback feedback : automaticFeedbacks) {
+                feedback.setResult(newResult);
+            }
+            automaticFeedbacks = new ArrayList<>(feedbackRepository.saveAll(automaticFeedbacks));
+
+            // Copy the typed automatic feedback (test cases + static code analysis); the rows are loaded
+            // from the database (the collections may be uninitialized) and the copies share the
+            // deduplicated message rows, so this is cheap.
+            copyTypedFeedbackToResult(newResult, existingResult);
+
+            newResult.copyProgrammingExerciseCounters(existingResult);
+        }
+        newResult.setFeedbacks(automaticFeedbacks);
+
+        // Deliberately keep (and return) the original object instead of the merge result: the merge would
+        // replace the assessor and the eagerly fetched test-case/message associations of the typed copies
+        // with uninitialized proxies, which would break the synthesized serialization of the locked result.
+        resultRepository.save(newResult);
+        log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
+
+        // Make sure that submission is set back after saving
+        newResult.setSubmission(existingSubmission);
+        return newResult;
+    }
+
+    /**
+     * We need to create the submissions for the solution and template repository for the first time,
+     * so that the client displays the correct results
+     *
+     * @param programmingExercise exercise that needs submissions for its template and solution repository
+     */
+    public void createInitialSubmissions(ProgrammingExercise programmingExercise) {
+        createInitialSubmission(programmingExercise, programmingExercise.getSolutionParticipation());
+        createInitialSubmission(programmingExercise, programmingExercise.getTemplateParticipation());
+    }
+
+    /**
+     * Creates an initial submission of an {@link AbstractBaseProgrammingExerciseParticipation} with the current commit hash
+     * in the repository
+     *
+     * @param programmingExercise Exercise for which the participation is created
+     * @param participation       Template or Solution Participation
+     */
+    private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
+        // Populate the initial submission before inserting it, avoiding an immediate merge of the new row and its graph.
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.INSTRUCTOR);
+        submission.setParticipation(participation);
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+        if (latestHash == null) {
+            log.warn("Could not create initial submission for participation {} of programming exercise {} because no commit hash could be found.", participation.getId(),
+                    programmingExercise.getId());
+        }
+        else {
+            submission.setCommitHash(latestHash);
+            submission.setSubmissionDate(ZonedDateTime.now());
+        }
+        participation.addSubmission(submissionRepository.save(submission));
+    }
+}

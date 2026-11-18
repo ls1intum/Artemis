@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="testpackage.SortingExampleBehaviorTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2023-04-04T19:38:04" hostname="DE-ADN-4Q5Q8D3" time="0.147">
+  <properties/>
+  <testcase name="testMergeSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.029"/>
+  <testcase name="testUseBubbleSortForSmallList()" classname="testpackage.SortingExampleBehaviorTest" time="0.029"/>
+  <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.026"/>
+  <testcase name="testUseMergeSortForBigList()" classname="testpackage.SortingExampleBehaviorTest" time="0.027"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testMergeSort()], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-14,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-14,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testMergeSort()], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-15,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-15,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testUseBubbleSortForSmallList() throws java.lang.ReflectiveOperationException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-16,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-16,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testUseBubbleSortForSmallList() throws java.lang.ReflectiveOperationException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-17,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-17,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testBubbleSort()], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-18,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-18,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testBubbleSort()], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-19,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-19,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testUseMergeSortForBigList() throws java.lang.ReflectiveOperationException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-20,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-20,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[void testpackage.SortingExampleBehaviorTest.testUseMergeSortForBigList() throws java.lang.ReflectiveOperationException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-21,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-21,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+]]></system-err>
+</testsuite>

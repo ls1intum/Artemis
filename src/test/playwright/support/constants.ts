@@ -1,0 +1,119 @@
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programming/OnlineEditorPage';
+
+// Constants which are used in the test specs
+
+// Requests
+export const BASE_API = 'api';
+
+export const COURSE_ADMIN_BASE = `${BASE_API}/admin/courses`;
+
+export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming/programming-exercises`;
+export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz/quiz-exercises`;
+export const QUIZ_EXERCISE_BASE_CREATION = new RegExp(`${BASE_API}/quiz/(courses|exercise-groups)/\\d+/quiz-exercises$`);
+export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
+export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
+export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
+
+// Timeformat used when sending dates to the server (ISO-8601, UTC).
+export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
+
+// Format the date picker expects and displays in its date+time mode
+// in its text input. Used when typing dates into the picker through the UI.
+export const DATE_TIME_PICKER_FORMAT = 'DD.MM.YYYY HH:mm';
+
+// ExerciseType
+// Copied from app/entities/exercise.model
+export enum ExerciseType {
+    PROGRAMMING = 'programming',
+    MODELING = 'modeling',
+    QUIZ = 'quiz',
+    TEXT = 'text',
+    FILE_UPLOAD = 'file-upload',
+}
+
+// ProgrammingLanguage
+// Copied from app/entities/programming-exercise.model
+/**
+ * Project types a programming exercise can be created with. Only the ones the tests need are listed; the server
+ * derives the build configuration from this, which is what decides whether the generated repositories carry a build
+ * wrapper such as an executable `gradlew`.
+ */
+export enum ProjectType {
+    PLAIN_MAVEN = 'PLAIN_MAVEN',
+    MAVEN_MAVEN = 'MAVEN_MAVEN',
+    PLAIN_GRADLE = 'PLAIN_GRADLE',
+    GRADLE_GRADLE = 'GRADLE_GRADLE',
+}
+
+export enum ProgrammingLanguage {
+    JAVA = 'JAVA',
+    PYTHON = 'PYTHON',
+    C = 'C',
+    HASKELL = 'HASKELL',
+    KOTLIN = 'KOTLIN',
+    VHDL = 'VHDL',
+    ASSEMBLER = 'ASSEMBLER',
+    SWIFT = 'SWIFT',
+    OCAML = 'OCAML',
+    EMPTY = 'EMPTY',
+}
+
+// ProgrammingExerciseAssessmentType
+export enum ProgrammingExerciseAssessmentType {
+    AUTOMATIC,
+    SEMI_AUTOMATIC,
+    MANUAL,
+}
+
+// AdditionalData
+export class AdditionalData {
+    quizExerciseID?: number;
+    submission?: ProgrammingExerciseSubmission;
+    expectedScore?: number;
+    textFixture?: string;
+    fileUploadFixture?: string;
+    practiceMode?: boolean;
+    skipBuildResultCheck?: boolean;
+    progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    /** Whether students may complain about an automatic result of the programming exercise, which a tutor then answers manually. */
+    allowComplaintsForAutomaticAssessments?: boolean;
+    programmingLanguage?: ProgrammingLanguage;
+}
+
+// Exercise
+// Copied from src\main\webapp\app\entities\exercise.model.ts
+export type Exercise = {
+    title?: string;
+    type?: ExerciseType;
+    id?: number;
+    additionalData?: AdditionalData;
+    exerciseGroup?: ExerciseGroup;
+};
+
+// ExerciseMode
+// Copied from src\main\webapp\app\entities\exercise.model.ts
+export enum ExerciseMode {
+    INDIVIDUAL = 'INDIVIDUAL',
+    TEAM = 'TEAM',
+}
+
+// Copied from src\main\webapp\app\entities\quiz\quiz-exercise.model.ts
+export enum QuizMode {
+    SYNCHRONIZED = 'SYNCHRONIZED',
+    BATCHED = 'BATCHED',
+    INDIVIDUAL = 'INDIVIDUAL',
+}
+
+// Exercise commit entity displayed in commit history
+export type ExerciseCommit = {
+    message: string;
+    result?: string;
+};
+
+// Copied from src/main/webapp/app/exam/shared/entities/exam.model.ts
+export enum ExamMode {
+    REAL = 'REAL',
+    TEST = 'TEST',
+    TEST_WITH_SUPERVISED_SESSION = 'TEST_WITH_SUPERVISED_SESSION',
+}

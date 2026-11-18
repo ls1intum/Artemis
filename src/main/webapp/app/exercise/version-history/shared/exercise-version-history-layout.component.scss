@@ -1,0 +1,26 @@
+.version-history-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.left-pane,
+.right-pane {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: auto;
+    background: var(--tumaet-ui-content-background);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 10px;
+}
+
+.left-pane {
+    padding: 0.15rem 0.25rem;
+}
+
+.right-pane {
+    padding: 0.35rem 0.45rem;
+}

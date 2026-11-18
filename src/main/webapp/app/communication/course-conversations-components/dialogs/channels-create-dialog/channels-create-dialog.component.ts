@@ -1,0 +1,57 @@
+import { Component, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { ChannelFormData, ChannelType } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ChannelFormComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-channels-create-dialog',
+    templateUrl: './channels-create-dialog.component.html',
+    imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
+})
+export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
+    protected readonly faXmark = faXmark;
+
+    course = signal<Course | undefined>(undefined);
+
+    override initialize() {
+        super.initialize(['course']);
+    }
+
+    channelToCreate: ChannelDTO = new ChannelDTO();
+    readonly isPublicChannel = signal<boolean>(true);
+    readonly isAnnouncementChannel = signal<boolean>(false);
+    readonly isCourseWideChannel = signal<boolean>(false);
+
+    onChannelTypeChanged($event: ChannelType) {
+        this.isPublicChannel.set($event === 'PUBLIC');
+    }
+
+    onIsAnnouncementChannelChanged($event: boolean) {
+        this.isAnnouncementChannel.set($event);
+    }
+
+    onIsCourseWideChannelChanged($event: boolean) {
+        this.isCourseWideChannel.set($event);
+    }
+
+    onFormSubmitted($event: ChannelFormData) {
+        this.createChannel($event);
+    }
+
+    createChannel(formData: ChannelFormData) {
+        const { name, description, isPublic, isAnnouncementChannel, isCourseWideChannel } = formData;
+        this.channelToCreate.name = name ? name.trim() : undefined;
+        this.channelToCreate.description = description ? description.trim() : undefined;
+        this.channelToCreate.isPublic = isPublic ?? false;
+        this.channelToCreate.isAnnouncementChannel = isAnnouncementChannel ?? false;
+        this.channelToCreate.isCourseWide = isCourseWideChannel ?? false;
+        this.close(this.channelToCreate);
+    }
+}

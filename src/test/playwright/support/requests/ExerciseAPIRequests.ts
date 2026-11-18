@@ -1,0 +1,1088 @@
+import dayjs from 'dayjs';
+import { APIResponse, Page } from '@playwright/test';
+
+import type { Course } from 'app/course/shared/entities/course.model';
+import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+
+import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
+import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
+import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
+import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
+import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
+import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
+import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
+import quizTemplate from '../../fixtures/exercise/quiz/template.json';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import {
+    ExerciseMode,
+    MODELING_EXERCISE_BASE,
+    PROGRAMMING_EXERCISE_BASE,
+    ProgrammingExerciseAssessmentType,
+    ProgrammingLanguage,
+    ProjectType,
+    QUIZ_EXERCISE_BASE,
+    QuizMode,
+    TEXT_EXERCISE_BASE,
+    UPLOAD_EXERCISE_BASE,
+} from '../constants';
+import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { BUILD_FINISH_TIMEOUT } from '../timeouts';
+import { awaitDeletion } from '../deletion';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import type { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
+import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
+import { Fixtures } from '../../fixtures/fixtures';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
+
+type PatchProgrammingExerciseTestVisibilityDto = {
+    id: number;
+    weight: number;
+    bonusPoints: number;
+    bonusMultiplier: number;
+    visibility: Visibility;
+}[];
+
+const RETRY_DELAY: number = 3000;
+// Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
+const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
+
+function fileUploadDateToString(date: dayjs.Dayjs | string | undefined): string | undefined {
+    return date === undefined || typeof date === 'string' ? date : dayjsToString(date);
+}
+
+function fileUploadCategoriesToStrings(categories: unknown[] | undefined): string[] | undefined {
+    return categories?.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+}
+
+export class ExerciseAPIRequests {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * Creates a programming exercise with the specified title and other data
+     * @param options An object containing the options for creating the programming exercise
+     *   - course: The course the exercise will be added to
+     *   - exerciseGroup: The exercise group the exercise will be added to
+     *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
+     *                    If sca should be disabled, pass null or omit this property
+     *   - releaseDate: When the programming exercise should be available
+     *   - dueDate: When the programming exercise should be due
+     *   - title: The title of the programming exercise
+     *   - programmingShortName: The short name of the programming exercise
+     *   - programmingLanguage: The programming language for the exercise
+     *   - packageName: The package name of the programming exercise
+     *   - assessmentDate: The due date of the assessment, which the server requires to be strictly after the due date
+     *   - assessmentType: The assessment type of the exercise
+     *   - buildPlanConfiguration: Serialized LocalCI build phases used when the exercise is created
+     * @returns Promise<ProgrammingExercise> representing the programming exercise created.
+     */
+    async createProgrammingExercise(options: {
+        course?: Course;
+        exerciseGroup?: ExerciseGroup;
+        scaMaxPenalty?: number | undefined;
+        releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
+        buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+        title?: string;
+        programmingShortName?: string;
+        programmingLanguage?: ProgrammingLanguage;
+        projectType?: ProjectType;
+        packageName?: string;
+        assessmentDate?: dayjs.Dayjs;
+        exampleSolutionPublicationDate?: dayjs.Dayjs;
+        assessmentType?: ProgrammingExerciseAssessmentType;
+        mode?: ExerciseMode;
+        teamAssignmentConfig?: TeamAssignmentConfig;
+        problemStatement?: string;
+        buildPlanConfiguration?: string;
+        // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
+        auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
+        /** Whether students may work in the online editor; the server default of the template applies when omitted. */
+        allowOnlineEditor?: boolean;
+        /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
+        allowOfflineIde?: boolean;
+        /** Whether students may complain about an automatic result, which a tutor then answers manually; the server default of the template applies when omitted. */
+        allowComplaintsForAutomaticAssessments?: boolean;
+    }): Promise<ProgrammingExercise> {
+        const {
+            course,
+            exerciseGroup,
+            scaMaxPenalty = undefined,
+            releaseDate = dayjs(),
+            dueDate = dayjs().add(1, 'day'),
+            buildAndTestStudentSubmissionsAfterDueDate,
+            title = 'Programming ' + generateUUID(),
+            programmingShortName = 'programming' + generateUUID(),
+            programmingLanguage = ProgrammingLanguage.JAVA,
+            projectType,
+            packageName = 'de.test',
+            // Derived from the due date rather than from now: the server requires a strictly increasing date sequence, and a
+            // caller passing a due date two days out would otherwise land in the same millisecond as an absolute default
+            assessmentDate = dueDate.add(1, 'day'),
+            exampleSolutionPublicationDate,
+            assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
+            mode = ExerciseMode.INDIVIDUAL,
+            teamAssignmentConfig,
+            problemStatement,
+            buildPlanConfiguration,
+            auxiliaryRepositories,
+            allowOnlineEditor,
+            allowOfflineIde,
+            allowComplaintsForAutomaticAssessments,
+        } = options;
+
+        let programmingExerciseTemplate = {};
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            programmingExerciseTemplate = pythonProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExerciseTemplate = cProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExerciseTemplate = javaProgrammingExerciseTemplate;
+        }
+
+        const exercise = {
+            ...programmingExerciseTemplate,
+            title,
+            shortName: programmingShortName,
+            packageName,
+            channelName: 'exercise-' + titleLowercase(title),
+            assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
+            ...(course ? { course } : {}),
+            ...(exerciseGroup ? { exerciseGroup } : {}),
+            ...(problemStatement ? { problemStatement } : {}),
+            ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
+            ...(projectType ? { projectType } : {}),
+            ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
+            ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
+            ...(allowComplaintsForAutomaticAssessments !== undefined ? { allowComplaintsForAutomaticAssessments } : {}),
+        } as ProgrammingExercise;
+
+        if (!exerciseGroup) {
+            exercise.releaseDate = asModelDate(releaseDate);
+            exercise.dueDate = asModelDate(dueDate);
+            exercise.assessmentDueDate = asModelDate(assessmentDate);
+        }
+        if (exampleSolutionPublicationDate) {
+            exercise.exampleSolutionPublicationDate = asModelDate(exampleSolutionPublicationDate);
+        }
+        if (buildAndTestStudentSubmissionsAfterDueDate) {
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = asModelDate(buildAndTestStudentSubmissionsAfterDueDate);
+        }
+
+        if (scaMaxPenalty) {
+            exercise.staticCodeAnalysisEnabled = true;
+            exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
+        }
+
+        exercise.programmingLanguage = programmingLanguage;
+        exercise.mode = mode;
+        exercise.teamAssignmentConfig = teamAssignmentConfig;
+        if (buildPlanConfiguration) {
+            exercise.buildConfig ??= new ProgrammingExerciseBuildConfig();
+            exercise.buildConfig.buildPlanConfiguration = buildPlanConfiguration;
+        }
+
+        const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
+        // Asserted so a rejected setup throws loudly here, instead of cascading into an undefined exercise id and a
+        // test that waits three minutes for a page it was never going to reach
+        if (!response.ok()) {
+            throw new Error(`Failed to create programming exercise: ${response.status()} ${await response.text()}`);
+        }
+        return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
+    }
+
+    /**
+     * Deletes a programming exercise and waits until the server finished the deletion in the background.
+     * Cleanup stays best-effort like before: an exercise that is already gone or a refused request is not an error, but a deletion that
+     * the server accepted and then failed is reported, so a leaked exercise does not go unnoticed.
+     */
+    async deleteProgrammingExercise(exerciseId: number) {
+        const response = await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+            params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
+        });
+        await this.awaitAcceptedDeletion(response, exerciseId);
+    }
+
+    /**
+     * Follows a deletion the server accepted (202) until it finished. A conflict means another deletion of the same exercise is running,
+     * which is awaited the same way. Anything else (404, refused requests) is left to the caller's cleanup semantics.
+     */
+    private async awaitAcceptedDeletion(response: APIResponse, exerciseId: number) {
+        if (response.status() !== 202 && response.status() !== 409) {
+            return;
+        }
+        const outcome = await awaitDeletion(this.page.request, { entityType: 'EXERCISE', entityId: exerciseId });
+        if (outcome.failed) {
+            throw new Error(`Failed to delete exercise ${exerciseId}: ${outcome.errorMessage}`);
+        }
+    }
+
+    /**
+     * Retrieves the test cases for passed exercise and adjusts their visibility according.
+     * <br>
+     * Note: test cases are not available before the tests of the solution have completely run through
+     *       -> we need to do retries until the tests have been executed
+     *
+     * @param programmingExercise for which the test cases shall be set to {@link newVisibility}
+     * @param newVisibility that is applied for all found test cases
+     * @param retryNumber
+     */
+    async changeProgrammingExerciseTestVisibility(programmingExercise: ProgrammingExercise, newVisibility: Visibility, retryNumber: number) {
+        if (retryNumber >= MAX_RETRIES) {
+            throw new Error('Could not find test cases (tests for solution might not be finished yet)');
+        }
+
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${programmingExercise.id}/test-cases`);
+        const testCases = (await response.json()) as unknown as ProgrammingExerciseTestCase[];
+
+        if (testCases.length > 0) {
+            await this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
+        } else {
+            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
+            await this.page.waitForTimeout(RETRY_DELAY);
+            await this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
+        }
+    }
+
+    /**
+     * Submits the example submission to the participation's repository.
+     *
+     * @param participationId - The ID of the participation whose repository is written to.
+     * @param submission - The example submission to be submitted.
+     */
+    async makeProgrammingExerciseSubmission(participationId: number, submission: ProgrammingExerciseSubmission) {
+        const data = await Promise.all(
+            submission.files.map(async (file) => {
+                let fileName = file.name;
+                if (submission.packageName) {
+                    fileName = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
+                }
+                return {
+                    fileName,
+                    fileContent: await Fixtures.get(file.path),
+                };
+            }),
+        );
+        await this.page.request.put(`api/programming/participations/${participationId}/repository/files?commit=yes`, { data });
+    }
+
+    async createProgrammingExerciseFile(participationId: number, filename: string) {
+        return await this.page.request.post(`api/programming/participations/${participationId}/repository/file?file=${filename}`);
+    }
+
+    /**
+     * Adds a text exercise to an exercise group in an exam or to a course.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The template for the text exercise
+     * (optional, default: textExerciseTemplate - default template).
+     */
+    async createTextExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Text ' + generateUUID(),
+        exerciseTemplate: any = textExerciseTemplate,
+    ): Promise<TextExercise> {
+        // The endpoint consumes UpdateTextExerciseDTO, which expects a flat courseId XOR exerciseGroupId rather than a
+        // nested course/exerciseGroup entity; other template fields are ignored by Jackson.
+        const textExercise = {
+            ...exerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            ...this.toExerciseReference(body),
+        };
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Adds a text exercise to an exercise group in an exam or to a course.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param releaseDate
+     * @param dueDate
+     * @param assessmentDueDate
+     */
+    async createTextExerciseWithDates(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        releaseDate: dayjs.Dayjs,
+        dueDate: dayjs.Dayjs,
+        assessmentDueDate: dayjs.Dayjs,
+        title = 'Text ' + generateUUID(),
+    ): Promise<TextExercise> {
+        const textExercise = {
+            ...textExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            releaseDate: dayjsToString(releaseDate),
+            dueDate: dayjsToString(dueDate),
+            assessmentDueDate: dayjsToString(assessmentDueDate),
+            ...this.toExerciseReference(body),
+        };
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Builds the flat course/exercise-group reference expected by UpdateTextExerciseDTO (courseId XOR exerciseGroupId)
+     * from the nested body used by the test helpers.
+     */
+    private toExerciseReference(body: { course: Course } | { exerciseGroup: ExerciseGroup }): { courseId?: number; exerciseGroupId?: number } {
+        if ('course' in body) {
+            return { courseId: body.course.id };
+        }
+        return { exerciseGroupId: body.exerciseGroup.id };
+    }
+
+    /**
+     * Ensures a freshly-created exam exercise carries the caller-known exercise group (including its `title`).
+     *
+     * The exercise-creation endpoints only receive a flat `exerciseGroupId` and echo back a partial
+     * `exerciseGroup` whose `title` is intermittently absent under load. Exam E2E tests navigate to
+     * exercises by that title (see ExamNavigationBar.openOrSaveExerciseByTitle), so a missing echo used
+     * to surface as a cryptic `getByText(undefined)` -> "Cannot read properties of undefined (reading
+     * 'unicode')" TypeError and produced correlated, hard-to-diagnose failures across the exam suite.
+     * Since the caller already holds the fully-populated group it created (id + title), prefer that over
+     * the server echo. No-op for course-based exercises, which have no exercise group.
+     */
+    private withKnownExerciseGroup<T extends { exerciseGroup?: ExerciseGroup }>(exercise: T, exerciseGroup?: ExerciseGroup): T {
+        if (exerciseGroup) {
+            exercise.exerciseGroup = { ...exercise.exerciseGroup, ...exerciseGroup };
+        }
+        return exercise;
+    }
+
+    /**
+     * POSTs the given UpdateTextExerciseDTO payload to the text exercise creation endpoint and asserts success so a
+     * failed setup throws loudly instead of cascading into undefined exercise ids.
+     */
+    private async postTextExercise(textExercise: Record<string, unknown>): Promise<TextExercise> {
+        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        if (!response.ok()) {
+            throw new Error(`Failed to create text exercise: ${response.status()} ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Deletes a text exercise with the specified exercise ID.
+     *
+     * @param exerciseId - The ID of the text exercise to be deleted.
+     */
+    async deleteTextExercise(exerciseId: number) {
+        const response = await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete text exercise ${exerciseId}: ${response.status()}`);
+        }
+        await this.awaitAcceptedDeletion(response, exerciseId);
+    }
+
+    /**
+     * Makes a text exercise submission for the specified exercise ID with the given text content.
+     *
+     * @param exerciseId - The ID of the text exercise for which the submission is made.
+     * @param text - The text content of the submission.
+     * @param createNewSubmission - Whether to create a new submission or update an existing one (optional, default: true).
+     */
+    async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
+        const url = `api/text/exercises/${exerciseId}/text-submissions`;
+        const data = { submissionExerciseType: 'text', text };
+
+        if (createNewSubmission) {
+            await this.page.request.post(url, { data });
+        } else {
+            await this.page.request.put(url, { data });
+        }
+    }
+
+    /**
+     * Creates a file upload exercise.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the exercise (optional, default: auto-generated).
+     * @returns A Promise<FileUploadExercise> representing the file upload exercise created.
+     */
+    async createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()): Promise<FileUploadExercise> {
+        const uploadExercise = {
+            ...fileUploadExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            ...this.toExerciseReference(body),
+        };
+        const exerciseGroup = 'exerciseGroup' in body ? body.exerciseGroup : undefined;
+        const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
+        if (!response.ok()) {
+            throw new Error(`Failed to create file upload exercise: ${response.status()} ${await response.text()}`);
+        }
+        return this.withKnownExerciseGroup((await response.json()) as FileUploadExercise, exerciseGroup);
+    }
+
+    /**
+     * Deletes a file upload exercise with the specified exercise ID.
+     *
+     * @param exerciseID - The ID of the file upload exercise to be deleted.
+     */
+    async deleteFileUploadExercise(exerciseID: number) {
+        const response = await this.page.request.delete(`${UPLOAD_EXERCISE_BASE}/${exerciseID}`);
+        await this.awaitAcceptedDeletion(response, exerciseID);
+    }
+
+    /**
+     * Updates the assessment due date of a file upload exercise to be in the past,
+     * enabling complaints to be filed.
+     */
+    async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
+        if (exercise.id === undefined) {
+            throw new Error('Cannot update a file upload exercise without an ID');
+        }
+        if (exercise.title === undefined) {
+            throw new Error('Cannot update a file upload exercise without a title');
+        }
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            channelName: exercise.channelName,
+            shortName: exercise.shortName,
+            problemStatement: exercise.problemStatement,
+            categories: fileUploadCategoriesToStrings(exercise.categories),
+            difficulty: exercise.difficulty,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            includedInOverallScore: exercise.includedInOverallScore,
+            allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments ?? false,
+            presentationScoreEnabled: exercise.presentationScoreEnabled ?? false,
+            secondCorrectionEnabled: exercise.secondCorrectionEnabled ?? false,
+            gradingInstructions: exercise.gradingInstructions,
+            releaseDate: dayjsToString(due.subtract(2, 'hours')),
+            startDate: fileUploadDateToString(exercise.startDate),
+            dueDate: dayjsToString(due.subtract(2, 'minutes')),
+            assessmentDueDate: dayjsToString(due.subtract(1, 'minute')),
+            exampleSolutionPublicationDate: fileUploadDateToString(exercise.exampleSolutionPublicationDate),
+            exampleSolution: exercise.exampleSolution,
+            filePattern: exercise.filePattern,
+            courseId: exercise.course?.id,
+            exerciseGroupId: exercise.exerciseGroup?.id,
+            gradingCriteria: exercise.gradingCriteria ?? [],
+            competencyLinks: (exercise.competencyLinks ?? []).map((link) => ({
+                competency: { id: link.competency?.id },
+                weight: link.weight ?? 1,
+            })),
+        };
+        const response = await this.page.request.put(`${UPLOAD_EXERCISE_BASE}/${exercise.id}`, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update file upload exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
+    }
+
+    /**
+     * Makes a file upload exercise submission for the specified exercise ID with the given file.
+     *
+     * @param exerciseId - The ID of the file upload exercise for which the submission is made.
+     * @param file - The file content of the submission.
+     */
+    async makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
+        await this.page.request.post(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, {
+            data: { submissionExerciseType: 'file-upload', file },
+        });
+    }
+
+    /**
+     * Creates a modeling exercise.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the exercise (optional, default: auto-generated).
+     * @param releaseDate - The release date of the exercise (optional, default: current date).
+     * @param dueDate - The due date of the exercise (optional, default: current date + 1 day).
+     * @param assessmentDueDate - The assessment due date of the exercise (optional, default: current date + 2 days).
+     * @param options - Optional extra configuration:
+     *   - mode: INDIVIDUAL (default, backward compatible) or TEAM for team modeling exercises.
+     *   - teamAssignmentConfig: min/max team size; only relevant when mode is TEAM.
+     * @returns A Promise<ModelingExercise> representing the modeling exercise created.
+     */
+    async createModelingExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Modeling ' + generateUUID(),
+        releaseDate = dayjs(),
+        dueDate = dayjs().add(1, 'days'),
+        assessmentDueDate = dayjs().add(2, 'days'),
+        options: { mode?: ExerciseMode; teamAssignmentConfig?: TeamAssignmentConfig } = {},
+    ): Promise<ModelingExercise> {
+        const { mode = ExerciseMode.INDIVIDUAL, teamAssignmentConfig } = options;
+        // The create endpoint consumes the flat UpdateModelingExerciseDTO (courseId XOR exerciseGroupId), matching what
+        // the Angular client sends via toUpdateModelingExerciseDTO — not the nested entity shape.
+        const createDto: UpdateModelingExerciseDTO = {
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            problemStatement: modelingExerciseTemplate.problemStatement,
+            gradingInstructions: modelingExerciseTemplate.gradingInstructions,
+            categories: modelingExerciseTemplate.categories,
+            difficulty: modelingExerciseTemplate.difficulty as UpdateModelingExerciseDTO['difficulty'],
+            maxPoints: modelingExerciseTemplate.maxPoints,
+            bonusPoints: modelingExerciseTemplate.bonusPoints,
+            includedInOverallScore: modelingExerciseTemplate.includedInOverallScore as UpdateModelingExerciseDTO['includedInOverallScore'],
+            presentationScoreEnabled: modelingExerciseTemplate.presentationScoreEnabled,
+            secondCorrectionEnabled: modelingExerciseTemplate.secondCorrectionEnabled,
+            diagramType: modelingExerciseTemplate.diagramType as UpdateModelingExerciseDTO['diagramType'],
+            exampleSolutionModel: modelingExerciseTemplate.exampleSolutionModel,
+            exampleSolutionExplanation: modelingExerciseTemplate.exampleSolutionExplanation,
+            mode,
+            ...(teamAssignmentConfig ? { teamAssignmentConfig: { minTeamSize: teamAssignmentConfig.minTeamSize, maxTeamSize: teamAssignmentConfig.maxTeamSize } } : {}),
+        };
+        if (Object.hasOwn(body, 'course')) {
+            createDto.courseId = (body as { course: Course }).course.id;
+            createDto.releaseDate = dayjsToString(releaseDate);
+            createDto.dueDate = dayjsToString(dueDate);
+            createDto.assessmentDueDate = dayjsToString(assessmentDueDate);
+        } else {
+            createDto.exerciseGroupId = (body as { exerciseGroup: ExerciseGroup }).exerciseGroup.id;
+        }
+        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: createDto });
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Updates the assessment due date of a modeling exercise to end the assessment period.
+     * This method ensures all dates are properly ordered: releaseDate < startDate < dueDate < assessmentDueDate
+     * All dates are set in the past to ensure the assessment period has clearly ended.
+     *
+     * @param exercise - The modeling exercise to update.
+     * @param due - The reference time (optional, default: current date). Assessment due date will be set to this time.
+     */
+    async updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting assessmentDueDate, we need to ensure all dates are properly ordered
+        // The constraint is: releaseDate < startDate (if present) < dueDate < assessmentDueDate
+        // IMPORTANT: The submission must be considered "in time" (submissionDate < dueDate) for the
+        // result to be visible to students. We use a 1-hour window before 'due' to ensure any
+        // submission made during test execution is still within the due date window.
+        // The assessmentDueDate should be clearly in the past so the assessment period is over.
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure dueDate is before the new assessmentDueDate but after any submissions made during the test
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure startDate is before dueDate (use 1 hour buffer for test submissions)
+        const newStartDate = dayjsToString(due.subtract(1, 'hour'));
+        // Ensure releaseDate is before startDate
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: newReleaseDate,
+            startDate: newStartDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
+    }
+
+    /**
+     * Deletes a modeling exercise with the specified exercise ID.
+     *
+     * @param exerciseID - The ID of the modeling exercise to be deleted.
+     */
+    async deleteModelingExercise(exerciseID: number) {
+        const response = await this.page.request.delete(`${MODELING_EXERCISE_BASE}/${exerciseID}`);
+        await this.awaitAcceptedDeletion(response, exerciseID);
+        return response;
+    }
+
+    /**
+     * Makes a modeling exercise submission for the specified exercise ID and participation.
+     *
+     * @param exerciseID - The ID of the modeling exercise for which the submission is made.
+     * @param participation - The participation data for the submission.
+     */
+    /**
+     * @param overrides fields to layer onto the submission template, e.g. an `explanationText` for views that render
+     *                  the student's explanation, or a `model` carrying relationships.
+     */
+    async makeModelingExerciseSubmission(exerciseID: number, participation: Participation, overrides: Partial<ModelingSubmission> = {}) {
+        return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
+            data: {
+                ...modelingExerciseSubmissionTemplate,
+                id: participation.submissions![0].id,
+                participation,
+                ...overrides,
+            },
+        });
+    }
+
+    /**
+     * Updates the due date of a modeling exercise.
+     *
+     * @param exercise - The modeling exercise to update.
+     * @param due - The new due date (optional, default: current date).
+     */
+    async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting dueDate to the past, all dates must be adjusted to maintain: releaseDate < startDate < dueDate < assessmentDueDate
+        // Use 1 minute spacing to avoid timing edge cases in validation
+        const newDueDate = dayjsToString(due);
+        // Ensure startDate is before dueDate (1 minute before)
+        const newStartDate = dayjsToString(due.subtract(1, 'minute'));
+        // Ensure releaseDate is before startDate (2 minutes before dueDate)
+        const newReleaseDate = dayjsToString(due.subtract(2, 'minutes'));
+        // Ensure assessmentDueDate is after dueDate (1 minute after)
+        const newAssessmentDueDate = dayjsToString(due.add(1, 'minute'));
+
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: newReleaseDate,
+            startDate: newStartDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise due date: ${response.status()} ${await response.text()}`);
+        }
+    }
+
+    /**
+     * Creates a quiz exercise.
+     * @param options An object containing the options for creating the programming exercise
+     * - body - An object containing either the course or exercise group the exercise will be added to.
+     * - quizQuestions - A list of quiz question objects that make up the quiz (e.g., multiple choice, short answer, or drag and drop).
+     * - title - The title for the quiz exercise (optional, default: auto-generated).
+     * - releaseDate - The release date of the quiz exercise (optional, default: current date + 1 year).
+     * - startOfWorkingTime - The start of working time of the quiz exercise (optional, default: none).
+     * - duration - The duration in seconds that students get to complete the quiz (optional, default: 600 seconds).
+     * - quizMode - The mode of the quiz exercise (optional, default: synchronized).
+     * @returns Promise<QuizExercise> representing the quiz exercise created.
+     */
+    async createQuizExercise(options: {
+        body: { course: Course } | { exerciseGroup: ExerciseGroup };
+        quizQuestions: any[];
+        title?: string;
+        releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
+        startOfWorkingTime?: dayjs.Dayjs;
+        duration?: number;
+        quizMode?: QuizMode;
+        competencyLinks?: { competency: { id: number }; weight: number }[];
+        /** The background image of a drag and drop question; its name is the `backgroundFilePath` of the question. */
+        backgroundFile?: { name: string; mimeType: string; buffer: Buffer };
+    }): Promise<QuizExercise> {
+        const {
+            body,
+            quizQuestions,
+            title = 'Quiz ' + generateUUID(),
+            releaseDate = dayjs().add(1, 'year'),
+            dueDate,
+            startOfWorkingTime,
+            duration = 600,
+            quizMode = QuizMode.SYNCHRONIZED,
+            competencyLinks,
+            backgroundFile,
+        } = options;
+
+        const quizExercise: any = {
+            ...quizTemplate,
+            title,
+            quizQuestions,
+            duration,
+            quizMode,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+
+        let url: string;
+        let newQuizExercise: any;
+        let quizBatches: any[] = [];
+        if ('course' in body) {
+            url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
+            const dates: { releaseDate: string; dueDate?: string } = {
+                releaseDate: dayjsToString(releaseDate),
+            };
+            if (dueDate) {
+                // Allow tests to mark a quiz as already-ended (dueDate in the past) so the practice / training
+                // submission paths become reachable without driving the instructor-end-quiz UI flow.
+                dates.dueDate = dayjsToString(dueDate);
+            }
+            if (startOfWorkingTime) {
+                quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
+            }
+            newQuizExercise = { ...quizExercise, quizBatches, ...dates, ...body };
+        } else {
+            url = `api/quiz/exercise-groups/${body.exerciseGroup.id}/quiz-exercises`;
+            newQuizExercise = { ...quizExercise, ...body };
+        }
+
+        if (competencyLinks) {
+            newQuizExercise.competencyLinks = competencyLinks;
+        }
+        const quizExerciseDTO = toQuizExerciseCreate(newQuizExercise);
+        const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
+            exercise: {
+                name: 'exercise',
+                mimeType: 'application/json',
+                buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
+            },
+            ...(backgroundFile ? { files: backgroundFile } : {}),
+        };
+
+        const response = await this.page.request.post(url, {
+            multipart: multipartData,
+        });
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Reads the current user's file upload submission for a participation.
+     *
+     * Recovery path for a submission made through the UI: the upload is a file-backed multipart POST, so
+     * its response body cannot be held in Node and Chrome can drop it from its bounded network buffer
+     * before the test reads it (see readResponseJson). This GET re-derives the same submission without
+     * repeating the upload. It is the endpoint the file upload editor itself loads, so a student may call
+     * it for their own participation.
+     *
+     * @param participationId - The ID of the student's participation in the file upload exercise.
+     */
+    async getFileUploadSubmissionForParticipation(participationId: number): Promise<FileUploadSubmission> {
+        const response = await this.page.request.get(`api/fileupload/participations/${participationId}/file-upload-editor`);
+        return await response.json();
+    }
+
+    /**
+     * Looks a quiz exercise up by its title within a course.
+     *
+     * Recovery path for a quiz created through the UI: that POST carries a disk-backed background image,
+     * so its response body cannot be held in Node and Chrome discards it when the editor navigates away
+     * on save (see readResponseJson). This GET re-derives the created quiz without repeating the create.
+     *
+     * @param courseId - The ID of the course the quiz belongs to.
+     * @param title - The exact title the quiz was created with.
+     * @throws if no quiz with that title exists in the course, which would otherwise surface later as a
+     *         confusing "undefined id" failure.
+     */
+    async getQuizExerciseByTitle(courseId: number, title: string): Promise<QuizExercise> {
+        const response = await this.page.request.get(`api/quiz/courses/${courseId}/quiz-exercises`);
+        const quizzes: QuizExercise[] = await response.json();
+        const quiz = quizzes.find((candidate) => candidate.title === title);
+        if (!quiz) {
+            throw new Error(`No quiz titled "${title}" found in course ${courseId}. Available titles: ${quizzes.map((candidate) => candidate.title).join(', ') || '(none)'}`);
+        }
+        return quiz;
+    }
+
+    /**
+     * Deletes a quiz exercise with the specified exercise ID.
+     *
+     * @param exerciseId - The ID of the quiz exercise to be deleted.
+     */
+    async deleteQuizExercise(exerciseId: number) {
+        const response = await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete quiz exercise ${exerciseId}: ${response.status()}`);
+        }
+        await this.awaitAcceptedDeletion(response, exerciseId);
+    }
+
+    /**
+     * Sets a quiz exercise as visible.
+     *
+     * @param quizId - The ID of the quiz exercise to be set as visible.
+     */
+    async setQuizVisible(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/set-visible`);
+    }
+
+    /**
+     * Starts a quiz exercise immediately.
+     *
+     * @param quizId - The ID of the quiz exercise to be started immediately.
+     */
+    async startQuizNow(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/start-now`);
+    }
+
+    /**
+     * Ends a running quiz exercise immediately via API. Equivalent to the lifecycle
+     * `endQuiz` UI action but skips the course-management navigation chain so tests can
+     * advance to the result-check step without a 3rd instructor login.
+     *
+     * @param quizId - The ID of the quiz exercise to end.
+     */
+    async endQuizNow(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/end-now`);
+    }
+
+    /**
+     * Evaluates the quiz exercises in an exam.
+     *
+     * @param exam - The exam for which to evaluate the quiz exercises.
+     */
+    async evaluateExamQuizzes(exam: Exam) {
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        if (!response.ok()) {
+            throw new Error(`Failed to evaluate quiz exercises of exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
+    }
+
+    /**
+     * Creates a submission for a quiz with only one multiple-choice quiz question.
+     *
+     * @param quizExercise - The response body of a quiz exercise.
+     * @param tickOptions - A list describing which of the 0..n boxes are to be ticked in the submission.
+     */
+    async createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
+        const submittedAnswers = [
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions![0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+            },
+        ];
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
+        };
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
+    }
+
+    /**
+     * Creates a submission for a quiz with only one short-answer quiz question.
+     *
+     * @param quizExercise - The response body of the quiz exercise.
+     * @param textAnswers - A list containing the answers to be filled into the gaps. In numerical order.
+     */
+    async createShortAnswerSubmission(quizExercise: any, textAnswers: string[]) {
+        const submittedTexts = textAnswers.map((answer, index) => {
+            return {
+                text: answer,
+                spot: {
+                    id: quizExercise.quizQuestions[0].spots[index].id,
+                    spotNr: quizExercise.quizQuestions[0].spots[index].spotNr,
+                    width: quizExercise.quizQuestions[0].spots[index].width,
+                    invalid: quizExercise.quizQuestions[0].spots[index].invalid,
+                },
+            };
+        });
+        const submittedAnswers = [
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
+        };
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
+    }
+
+    /**
+     * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
+     * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
+     * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
+     * Must be called after the (individual) due date by a user with at least instructor rights.
+     */
+    async triggerInstructorBuildForAll(exerciseId: number) {
+        const response = await this.page.request.post(`api/programming/programming-exercises/${exerciseId}/trigger-instructor-build-all`);
+        if (!response.ok()) {
+            throw new Error(`Failed to trigger instructor build for exercise ${exerciseId}: ${response.status()}`);
+        }
+    }
+
+    /**
+     * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
+     * the number of submissions of each.
+     */
+    async getExerciseParticipations(
+        exerciseId: number,
+        kind: 'course' | 'exam' = 'course',
+    ): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+        const response = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!response.ok()) {
+            throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
+        }
+        return await response.json();
+    }
+
+    /**
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
+     *
+     * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
+     * @throws Error if no participations are found for the exercise.
+     */
+    async getProgrammingExerciseParticipation(exerciseId: number, kind: 'course' | 'exam' = 'course'): Promise<StudentParticipationDTO> {
+        const pageResponse = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!pageResponse.ok()) {
+            throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);
+        }
+        const participations = (await pageResponse.json()) as Array<{ participationId: number }>;
+        if (!Array.isArray(participations) || participations.length === 0) {
+            throw new Error(`No participations found for exercise ${exerciseId}`);
+        }
+        return this.getParticipationWithLatestResult(participations[0].participationId);
+    }
+
+    /**
+     * Gets a specific participation with its latest results. This endpoint is accessible by students
+     * who own the participation.
+     *
+     * @param participationId - The ID of the participation to retrieve.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest results.
+     */
+    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipationDTO> {
+        const response = await this.page.request.get(`api/exercise/participations/${participationId}/with-latest-result`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get participation ${participationId}: ${response.status()}`);
+        }
+        return (await response.json()) as StudentParticipationDTO;
+    }
+
+    /**
+     * Starts a participation for an exercise with the specified exercise ID.
+     *
+     * @param exerciseId - The ID of the exercise for which to start the participation.
+     * @returns APIResponse representing the API request response.
+     */
+    async startExerciseParticipation(exerciseId: number) {
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/participations`);
+    }
+
+    private async updateProgrammingExerciseTestCaseVisibility(
+        programmingExerciseId: number,
+        programmingExerciseTestCases: ProgrammingExerciseTestCase[],
+        newVisibility: Visibility,
+    ) {
+        const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
+
+        for (const testCase of programmingExerciseTestCases) {
+            updatedTestCaseSettings.push({
+                id: testCase.id!,
+                weight: testCase.weight!,
+                bonusPoints: testCase.bonusPoints!,
+                bonusMultiplier: testCase.bonusMultiplier!,
+                visibility: newVisibility,
+            });
+        }
+
+        return await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${programmingExerciseId}/update-test-cases`, { data: updatedTestCaseSettings });
+    }
+
+    /**
+     * Configures all SCA categories for a programming exercise to be GRADED via API.
+     * This is faster than configuring through the UI.
+     */
+    async configureScaCategoriesViaApi(exerciseId: number) {
+        const MAX_SCA_RETRIES = 20;
+        const SCA_RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_SCA_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`);
+            const categories = await response.json();
+
+            if (categories.length > 0) {
+                const updatedCategories = categories.map((cat: any) => ({
+                    ...cat,
+                    state: 'GRADED',
+                }));
+                await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`, { data: updatedCategories });
+                return;
+            }
+
+            await this.page.waitForTimeout(SCA_RETRY_DELAY);
+        }
+        throw new Error(`SCA categories not found after ${MAX_SCA_RETRIES} retries`);
+    }
+
+    /**
+     * Waits for the solution build to complete by polling test cases.
+     * Test cases are populated after the solution build finishes.
+     * This is necessary to avoid a race condition where the student build
+     * completes before the solution build, resulting in score=0.
+     */
+    async waitForSolutionBuild(exerciseId: number) {
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+            const testCases = await response.json();
+
+            if (Array.isArray(testCases) && testCases.length > 0) {
+                return;
+            }
+
+            await this.page.waitForTimeout(RETRY_DELAY);
+        }
+        throw new Error(`Test cases not found after ${MAX_RETRIES} retries — solution build may not have completed`);
+    }
+
+    /**
+     * Sets the weight of specific test cases to 0 so they don't affect scoring.
+     * Useful for tests that fail on certain architectures (e.g., LeakSanitizer on ARM64).
+     */
+    async deactivateTestCases(exerciseId: number, testCaseNames: string[]) {
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+        const testCases = await response.json();
+        const updates = testCases
+            .filter((tc: any) => testCaseNames.includes(tc.testName))
+            .map((tc: any) => ({ id: tc.id, weight: 0, bonusMultiplier: tc.bonusMultiplier, bonusPoints: tc.bonusPoints, visibility: tc.visibility }));
+        if (updates.length > 0) {
+            await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/update-test-cases`, { data: updates });
+        }
+    }
+
+    /**
+     * Creates a team for a team-based exercise.
+     *
+     * @param exerciseId - The ID of the exercise for which to create a team.
+     * @param students - A list of student users to be added to the team.
+     * @param tutor - The tutor user who is the owner of the team.
+     * @returns A Promise<Team> representing the team created.
+     */
+    async createTeam(exerciseId: number, students: any[], tutor: any) {
+        const teamId = generateUUID();
+        // The server expects TeamInputDTO with user IDs, not full User objects
+        const teamDTO = {
+            name: `Team ${teamId}`,
+            shortName: `team${teamId}`,
+            students: students.map((s: any) => s.id),
+            ownerId: tutor.id,
+        };
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: teamDTO });
+    }
+}

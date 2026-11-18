@@ -1,0 +1,381 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
+import org.apache.pdfbox.multipdf.Splitter;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@Service
+public class LectureUnitProcessingService {
+
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
+
+    private static final String ENTITY_NAME = "attachmentVideoUnit";
+
+    /** Everything a lecture unit name read off an outline slide may not contain. */
+    private static final Pattern UNSAFE_UNIT_NAME_CHARACTER = Pattern.compile("[^a-zA-Z0-9\\s()_-]");
+
+    /** Leading whitespace of a lecture unit name. */
+    private static final Pattern LEADING_WHITESPACE = Pattern.compile("^\\s*");
+
+    private final FileService fileService;
+
+    private final SlideSplitterService slideSplitterService;
+
+    private final LectureRepository lectureRepository;
+
+    private final AttachmentVideoUnitService attachmentVideoUnitService;
+
+    private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
+
+    // A pdf splitter that should be used to split a file into single pages
+    private final Splitter pdfSinglePageSplitter = new Splitter();
+
+    public LectureUnitProcessingService(FileService fileService, SlideSplitterService slideSplitterService, LectureRepository lectureRepository,
+            AttachmentVideoUnitService attachmentVideoUnitService) {
+        this.fileService = fileService;
+        this.slideSplitterService = slideSplitterService;
+        this.lectureRepository = lectureRepository;
+        this.attachmentVideoUnitService = attachmentVideoUnitService;
+    }
+
+    /**
+     * Split units from given file according to given split information and saves as AttachmentVideo unit with the split attachment to the database.
+     * Also stores the individual slides for each unit.
+     *
+     * @param lectureUnitSplitInformationDTO The split information
+     * @param fileBytes                      The byte content of the file (lecture slides) to be split
+     * @param lecture                        The lecture that the attachment video unit belongs to
+     * @return The prepared units to be saved
+     */
+    public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
+
+        // NOTE: there might be existing unis in the lecture already
+        int startIndex = lecture.getLectureUnits().size();
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument completePdfDocument = Loader.loadPDF(fileBytes)) {
+            List<AttachmentVideoUnit> units = new ArrayList<>();
+
+            // first create all attachment video units and add them to the lecture
+            for (LectureUnitSplitDTO lectureUnitSplitDto : lectureUnitSplitInformationDTO.units()) {
+                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setDescription("");
+                attachmentVideoUnit.setName(lectureUnitSplitDto.unitName());
+                attachmentVideoUnit.setReleaseDate(lectureUnitSplitDto.releaseDate());
+                lecture.addLectureUnit(attachmentVideoUnit);
+            }
+            // only save the lecture once with all units attached
+            // NOTE: when saving the lecture, attachment video units and attachments are typically saved as well, which could lead to issues when the Java objects are not
+            // fully in sync with the DB state. This is why the method splits the creation of attachment video units and attachments into two separate loops.
+            // (otherwise, it could happen that attachments get lost as orphans in the middle of th process)
+            lecture = lectureRepository.saveAndFlush(lecture);
+
+            // next split the document and save each unit with its attachment
+            for (int i = 0; i < lectureUnitSplitInformationDTO.units().size(); i++) {
+                var attachmentVideoUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(startIndex + i);
+                LectureUnitSplitDTO lectureUnitSplitDto = lectureUnitSplitInformationDTO.units().get(i);
+
+                // make sure output stream doesn't contain old data
+                outputStream.reset();
+
+                PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+                Splitter pdfSplitter = new Splitter();
+                pdfSplitter.setStartPage(lectureUnitSplitDto.startPage());
+                pdfSplitter.setEndPage(lectureUnitSplitDto.endPage());
+                // split only based on start and end page
+                pdfSplitter.setSplitAtPage(completePdfDocument.getNumberOfPages());
+
+                // the split should only return one valid PDF document
+                var splitPdfDocument = pdfSplitter.split(completePdfDocument).getFirst();
+                pdDocumentInformation.setTitle(lectureUnitSplitDto.unitName());
+                if (!StringUtils.isEmpty(lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
+                    removeSlidesContainingAnyKeyPhrases(splitPdfDocument, lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
+                }
+                splitPdfDocument.setDocumentInformation(pdDocumentInformation);
+                splitPdfDocument.save(outputStream);
+
+                Attachment attachment = new Attachment();
+                attachment.setName(lectureUnitSplitDto.unitName());
+                attachment.setAttachmentType(AttachmentType.FILE);
+                attachment.setReleaseDate(lectureUnitSplitDto.releaseDate());
+                attachment.setUploadDate(ZonedDateTime.now());
+
+                MultipartFile multipartFile = FileUtil.convertByteArrayToMultipart(lectureUnitSplitDto.unitName(), ".pdf", outputStream.toByteArray());
+                attachmentVideoUnit = attachmentVideoUnitService.saveAttachmentVideoUnit(attachmentVideoUnit, attachment, multipartFile, true);
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(splitPdfDocument, attachmentVideoUnit, multipartFile.getOriginalFilename());
+                splitPdfDocument.close(); // make sure to close the document
+                // store the saved object
+                units.add(attachmentVideoUnit);
+            }
+            completePdfDocument.close();
+            return units;
+        }
+    }
+
+    /**
+     * Gets the slides that should be removed by the given keyphrase
+     *
+     * @param fileBytes                The byte content of the file (lecture slides) to be split
+     * @param commaSeparatedKeyphrases key phrases that identify slides about to be removed
+     * @return list of the number of slides that will be removed
+     */
+    public List<Integer> getSlidesToRemoveByKeyphrase(byte[] fileBytes, String commaSeparatedKeyphrases) {
+        List<Integer> slidesToRemove = new ArrayList<>();
+        if (commaSeparatedKeyphrases.isEmpty()) {
+            return slidesToRemove;
+        }
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
+
+            for (int index = 0; index < pages.size(); index++) {
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
+
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        slidesToRemove.add(index);
+                    }
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error while retrieving slides to remove from document", e);
+            throw new InternalServerErrorException("Error while retrieving slides to remove from document");
+        }
+        return slidesToRemove;
+    }
+
+    /**
+     * Removes the slides containing any of the key phrases from the given document.
+     *
+     * @param document                 document to remove slides from
+     * @param commaSeparatedKeyphrases keyphrases that identify slides about to be removed
+     */
+    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String commaSeparatedKeyphrases) {
+        try {
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
+
+            // Uses a decrementing loop (starting from the last index) to ensure that the
+            // index values are adjusted correctly when removing pages.
+            for (int index = pages.size() - 1; index >= 0; index--) {
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
+
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        document.removePage(index);
+                    }
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error while removing break slides from document", e);
+            throw new InternalServerErrorException("Error while removing break slides from document");
+        }
+    }
+
+    private boolean slideContainsKeyphrase(String slideText, List<String> keyphrasesList) {
+        String lowerCaseSlideText = slideText.toLowerCase(Locale.ROOT);
+        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase(Locale.ROOT)));
+    }
+
+    /**
+     * Prepare information of split units for client
+     *
+     * @param fileBytes The byte content of the file (lecture slides) to be split
+     * @return The prepared information of split units LectureUnitInformationDTO
+     */
+    public LectureUnitSplitInformationDTO getSplitUnitData(byte[] fileBytes) {
+        try {
+            log.debug("Start preparing information of split units.");
+            Outline unitsInformation = separateIntoUnits(fileBytes);
+            Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
+            int numberOfPages = unitsInformation.totalPages;
+
+            List<LectureUnitSplitDTO> units = unitsDocumentMap.values().stream()
+                    .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
+                    .toList();
+            // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
+            return new LectureUnitSplitInformationDTO(units, numberOfPages, null);
+        }
+        catch (IOException e) {
+            log.error("Error while preparing the map with information", e);
+            throw new InternalServerErrorException("Could not prepare split information");
+        }
+    }
+
+    /**
+     * Checks that the given file can be parsed as a PDF, so that corrupted or non-PDF content is rejected as invalid input
+     * instead of failing with a server error when the file is processed later.
+     *
+     * @param file the uploaded file
+     * @throws BadRequestAlertException if the content is empty or not a readable PDF
+     */
+    public void validatePdfElseThrow(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream(); PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(inputStream))) {
+            // Loading is lenient about damaged page trees, which only surface when the pages are read.
+            document.getNumberOfPages();
+        }
+        catch (IOException e) {
+            log.warn("Rejected an unreadable PDF for lecture unit processing", e);
+            throw new BadRequestAlertException("The uploaded file is not a readable PDF", ENTITY_NAME, "invalidPdf");
+        }
+    }
+
+    /**
+     * Temporarily saves a file that will be processed into lecture units.
+     *
+     * @param lectureId            the id of the lecture the file belongs to
+     * @param file                 the file to be saved
+     * @param minutesUntilDeletion duration the file gets saved for
+     * @return the last part of the filename. Use {@link LectureUnitProcessingService#getPathForTempFilename(long, String) getPathForTempFilename}
+     *         to get the full file path again.
+     */
+    public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
+        String prefix = "Temp_" + lectureId + "_";
+        String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path filePath = FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), FileUtil.generateFilename(prefix, sanitisedFilename, false));
+        // The containment check above is lexical, so it cannot see a symlink planted at the destination. Creating the
+        // file exclusively is what keeps the write inside the temp directory.
+        try (InputStream inputStream = file.getInputStream()) {
+            FileUtil.writeNewFileElseThrow(inputStream, filePath);
+        }
+        fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
+        return filePath.getFileName().toString().substring(prefix.length());
+    }
+
+    /**
+     * Gets the path of the temporary file for a give lectureId and filename
+     *
+     * @param lectureId the id of the lecture the file belongs to
+     * @param filename  the last part of the filename (timestamp and extension)
+     * @return Path of the file
+     */
+    public Path getPathForTempFilename(long lectureId, String filename) {
+        String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
+        // The filename reaches this method straight from a path variable. Sanitising it already removes every path
+        // separator, but the containment check is what proves the result cannot leave the temp directory.
+        return FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), fullFilename);
+    }
+
+    /**
+     * This method prepares a map with information on how the slide
+     * is going to be split. The map looks like the following:
+     * Map<OutlineNumber, (UnitName, StartPage, EndPage)>
+     *
+     * @param fileBytes The byte content of the file (lecture pdf) to be split
+     * @return The prepared map
+     */
+    private Outline separateIntoUnits(byte[] fileBytes) throws IOException {
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
+            Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
+            // split the document into single pages
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            int numberOfPages = document.getNumberOfPages();
+            ListIterator<PDDocument> iterator = pages.listIterator();
+
+            int outlineCount = 0;
+            int index = 1;
+            while (iterator.hasNext()) {
+                PDDocument currentPage = iterator.next();
+                String slideText = pdfTextStripper.getText(currentPage);
+
+                if (isOutlineSlide(slideText)) {
+                    String[] lines = slideText.split("\r\n|\r|\n");
+                    int nextOutlineCount = outlineCount + 1;
+                    // The outline slide of the n-th unit names it after the n-th bullet point, which follows the footer and the heading. A slide that merely mentions the
+                    // word "Outline" lists fewer bullet points than that, so it is not the outline slide of another unit.
+                    int unitNameLine = nextOutlineCount + 1;
+                    if (unitNameLine < lines.length) {
+                        outlineCount = nextOutlineCount;
+                        String cleanedLine = UNSAFE_UNIT_NAME_CHARACTER.matcher(lines[unitNameLine]).replaceAll("");
+                        String unitName = LEADING_WHITESPACE.matcher(cleanedLine).replaceFirst("");
+                        outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
+
+                        updatePreviousUnitEndPage(outlineCount, outlineMap, index);
+                    }
+                }
+                currentPage.close(); // make sure to close the document
+                index++;
+            }
+            document.close(); // make sure to close the document
+            return new Outline(outlineMap, numberOfPages);
+        }
+    }
+
+    /**
+     * This method updates previous unit end page, and it's called if outline count is bigger then 1
+     *
+     * @param outlineCount Outline count is the number of slides that contain Outline
+     * @param outlineMap   Outline map with unit information
+     * @param index        index that shows current page
+     */
+    private void updatePreviousUnitEndPage(int outlineCount, @NonNull Map<Integer, LectureUnitSplit> outlineMap, int index) {
+        if (outlineCount > 1) {
+            int previousOutlineCount = outlineCount - 1;
+            int previousStart = outlineMap.get(previousOutlineCount).startPage;
+            String previousUnitName = outlineMap.get(previousOutlineCount).unitName;
+            outlineMap.put(previousOutlineCount, new LectureUnitSplit(previousUnitName, previousStart, index - 1));
+        }
+    }
+
+    private boolean isOutlineSlide(final String slideText) {
+        return slideText.contains("Outline") || slideText.contains("Gliederung");
+    }
+
+    private record LectureUnitSplit(String unitName, int startPage, int endPage) {
+    }
+
+    /**
+     * Map contains unit number as key and unit information as value
+     */
+    private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
+    }
+
+    /**
+     * parses a string containing comma-seperated keyphrases into a list of keyphrases.
+     */
+    private List<String> getKeyphrasesFromString(String commaSeparatedKeyphrases) {
+        return Arrays.stream(commaSeparatedKeyphrases.split(",")).filter(s -> !s.isBlank()).toList();
+    }
+}

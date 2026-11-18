@@ -1,0 +1,698 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { isEqual } from 'lodash-es';
+import { AccountService } from 'app/core/auth/account.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FormsModule } from '@angular/forms';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import {
+    IRIS_PIPELINE_VARIANTS,
+    IRIS_SUPPORT_LEVELS,
+    IrisCourseSettingsDTO,
+    IrisCourseSettingsWithRateLimitDTO,
+    IrisPipelineVariant,
+    IrisRateLimitConfiguration,
+    IrisSupportLevel,
+    SLIDER_VALUE_TO_SUPPORT_LEVEL,
+    SUPPORT_LEVEL_SLIDER_VALUES,
+    createDefaultCourseSettings,
+} from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTagComponent,
+    TumAetUiToggleSwitchComponent,
+} from '@tumaet/ui-angular';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+interface SaveSettingsOptions {
+    keepPersistedRateLimit?: boolean;
+}
+
+/**
+ * Component for editing Iris course-level settings.
+ * Extracts the courseId from the route and provides the settings form.
+ */
+@Component({
+    selector: 'jhi-iris-settings-update',
+    templateUrl: './iris-settings-update.component.html',
+    styleUrl: './iris-settings-update.component.scss',
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FaIconComponent,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiInputNumberComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiProgressSpinnerComponent,
+        IrisLogoComponent,
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
+    private irisSettingsService = inject(IrisSettingsService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private featureToggleService = inject(FeatureToggleService);
+    private translateService = inject(TranslateService);
+
+    public courseId?: number;
+
+    // Current settings being edited (signals)
+    readonly settings = signal<IrisCourseSettingsDTO | undefined>(undefined);
+    readonly effectiveRateLimit = signal<IrisRateLimitConfiguration | undefined>(undefined);
+    readonly applicationDefaults = signal<IrisRateLimitConfiguration | undefined>(undefined);
+
+    // Localized default values for the rate-limit placeholders. Uses nullish
+    // coalescing so a configured default of 0 is preserved (not treated as
+    // "unlimited"), and falls back to a translated string instead of a raw literal.
+    readonly rateLimitRequestsDefault = computed(() => this.applicationDefaults()?.requests ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
+    readonly rateLimitTimeframeDefault = computed(() => this.applicationDefaults()?.timeframeHours ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
+
+    // Original settings for dirty checking
+    private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
+
+    // Available variants for the admin pipeline-variant select
+    protected readonly pipelineVariantOptions = IRIS_PIPELINE_VARIANTS;
+
+    // Local form fields for rate limit (separate from settings to preserve null semantics)
+    // These are always safe to bind in the template, and we reconstruct rateLimit on save
+    readonly rateLimitRequests = signal<number | undefined>(undefined);
+    readonly rateLimitTimeframeHours = signal<number | undefined>(undefined);
+
+    // Original rate limit values for dirty checking
+    private readonly originalRateLimitRequests = signal<number | undefined>(undefined);
+    private readonly originalRateLimitTimeframeHours = signal<number | undefined>(undefined);
+
+    // Status flags (signals for OnPush change detection)
+    readonly isLoading = signal(false);
+    readonly isSaving = signal(false);
+    readonly isAdmin = signal(false);
+    private readonly isAutoSaving = signal(false);
+
+    // Validation state for rate limit (field-specific errors) - computed
+    readonly rateLimitRequestsError = computed(() => {
+        const hasRequests = this.hasValue(this.rateLimitRequests());
+        const hasTimeframe = this.hasValue(this.rateLimitTimeframeHours());
+
+        // Both empty = valid (use defaults)
+        if (!hasRequests && !hasTimeframe) {
+            return undefined;
+        }
+
+        // One filled, one empty = mark the empty field with error
+        if (!hasRequests && hasTimeframe) {
+            return 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
+        }
+
+        // Both filled - validate values
+        if (hasRequests && hasTimeframe && this.rateLimitRequests()! < 0) {
+            return 'artemisApp.iris.settings.rateLimitValidation.requestsNonNegative';
+        }
+
+        return undefined;
+    });
+
+    readonly rateLimitTimeframeError = computed(() => {
+        const hasRequests = this.hasValue(this.rateLimitRequests());
+        const hasTimeframe = this.hasValue(this.rateLimitTimeframeHours());
+
+        // Both empty = valid (use defaults)
+        if (!hasRequests && !hasTimeframe) {
+            return undefined;
+        }
+
+        // One filled, one empty = mark the empty field with error
+        if (hasRequests && !hasTimeframe) {
+            return 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
+        }
+
+        // Both filled - validate values
+        if (hasRequests && hasTimeframe && this.rateLimitTimeframeHours()! <= 0) {
+            return 'artemisApp.iris.settings.rateLimitValidation.timeframePositive';
+        }
+
+        return undefined;
+    });
+
+    // Dirty state computed from signal values
+    readonly isDirty = computed(() => {
+        if (this.isAutoSaving()) return false;
+        const normalizedSettings = this.normalizeSettingsForComparison(this.settings());
+        const normalizedOriginal = this.normalizeSettingsForComparison(this.originalSettings());
+        const settingsChanged = !isEqual(normalizedSettings, normalizedOriginal);
+        const rateLimitChanged =
+            this.normalizeEmpty(this.rateLimitRequests()) !== this.normalizeEmpty(this.originalRateLimitRequests()) ||
+            this.normalizeEmpty(this.rateLimitTimeframeHours()) !== this.normalizeEmpty(this.originalRateLimitTimeframeHours());
+        return settingsChanged || rateLimitChanged;
+    });
+
+    // Icons
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCog = faCog;
+    readonly faClock = faClock;
+    readonly faLightbulb = faLightbulb;
+    readonly faUser = faUser;
+
+    // Active settings tab
+    readonly activeTab = signal<string>('general');
+
+    /**
+     * Updates the active tab from the tabs valueChange event, which emits
+     * `string | number | undefined`. All tab values in this component are strings.
+     */
+    protected setActiveTab(value: string | number | undefined): void {
+        if (value !== undefined) {
+            this.activeTab.set(String(value));
+        }
+    }
+
+    // Character limit for custom instructions
+    readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
+    /**
+     * Current instructional support level, defaulting to MODERATE to mirror the server.
+     */
+    readonly currentSupportLevel = computed((): IrisSupportLevel => this.settings()?.supportLevel ?? 'moderate');
+
+    /**
+     * Discrete slider position (0 / 50 / 100) for the current support level.
+     */
+    readonly supportLevelSliderValue = computed(() => SUPPORT_LEVEL_SLIDER_VALUES[this.currentSupportLevel()] ?? 50);
+
+    /**
+     * Clickable tick marks for the support-level slider, one per support level.
+     * Derived from the shared support-level constants so the slider stays in sync.
+     */
+    readonly supportLevelTicks: ReadonlyArray<{ level: IrisSupportLevel; value: number }> = IRIS_SUPPORT_LEVELS.map((level) => ({
+        level,
+        value: SUPPORT_LEVEL_SLIDER_VALUES[level],
+    }));
+
+    /** Drives the slider handle's "pop" micro animation; see playHandlePop(). */
+    readonly handlePopping = signal(false);
+
+    /**
+     * The Additional Guidelines textarea, which grows with its content (up to its `max-h-56`, then it scrolls). The height
+     * comes from `scrollHeight`, which is `0` while the textarea is not rendered. The view query keeps the reference
+     * while the General tab is inactive, so the height is measured only while that tab is active: when it becomes
+     * active again, when the textarea appears (Iris is enabled), when the text changes from outside (reset to default,
+     * loading) and on every input event.
+     */
+    private readonly customInstructionsTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('customInstructionsTextarea');
+
+    constructor() {
+        this.isAdmin.set(this.accountService.isAdmin());
+
+        effect(() => {
+            // Reading the settings re-runs the effect when the text is replaced from outside, and reading the active tab when the
+            // textarea is shown again. A change on another tab, such as the pipeline variant on the Admin tab, must not measure it.
+            const settings = this.settings();
+            const generalTabActive = this.activeTab() === 'general';
+            if (settings && generalTabActive && this.customInstructionsTextarea()) {
+                this.fitCustomInstructionsToContent();
+            }
+        });
+    }
+
+    /**
+     * Sets the Additional Guidelines textarea to the height of its content. Deferred to the next animation frame so
+     * the textarea is laid out (and thus has a valid `scrollHeight`) by the time the height is measured.
+     */
+    protected fitCustomInstructionsToContent(): void {
+        requestAnimationFrame(() => {
+            const textarea = this.customInstructionsTextarea()?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+            const previousHeight = textarea.style.height;
+            textarea.style.height = 'auto';
+            const contentHeight = textarea.scrollHeight;
+            // A height of 0 means that the textarea is not rendered (its panel is not attached), so the previous height stays.
+            textarea.style.height = contentHeight > 0 ? `${contentHeight}px` : previousHeight;
+        });
+    }
+
+    ngOnInit(): void {
+        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.loadSettings();
+        });
+    }
+
+    /**
+     * Check if the form is valid for saving
+     */
+    isFormValid(): boolean {
+        return !this.rateLimitRequestsError() && !this.rateLimitTimeframeError();
+    }
+
+    /**
+     * Normalize empty values (empty string, null/undefined) to undefined for comparison
+     */
+    private normalizeEmpty<T>(value: T | null | undefined): T | undefined {
+        if (value === null || value === undefined || value === '') {
+            return undefined;
+        }
+        return value;
+    }
+
+    /**
+     * Checks if a form field has a value (not null, undefined, or empty string).
+     * Note: Angular's ngModel can set empty string on number inputs when cleared.
+     */
+    private hasValue(value: number | string | undefined): boolean {
+        return value != null && value !== '';
+    }
+
+    /**
+     * Create a normalized copy of settings for dirty comparison
+     */
+    private normalizeSettingsForComparison(settings?: IrisCourseSettingsDTO): IrisCourseSettingsDTO | undefined {
+        if (!settings) {
+            return undefined;
+        }
+        return cloneWith(settings, {
+            customInstructions: this.normalizeEmpty(settings.customInstructions),
+            // A never-opted-in course loads the flag as `false` (or absent, on a row predating the field). Coerce to
+            // a boolean so an unchanged off-course is not falsely flagged dirty against an explicit `false`.
+            proactiveStruggleEnabled: !!settings.proactiveStruggleEnabled,
+        });
+    }
+
+    canDeactivateWarning?: string;
+
+    canDeactivate(): boolean {
+        return !this.isDirty();
+    }
+
+    /**
+     * Load course settings from the server
+     */
+    loadSettings(): void {
+        if (!this.courseId) {
+            this.alertService.error('artemisApp.iris.settings.error.noCourseId');
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.irisSettingsService
+            .getCourseSettingsWithRateLimit(this.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.isLoading.set(false);
+                    if (!response) {
+                        this.alertService.error('artemisApp.iris.settings.error.noSettings');
+                        return;
+                    }
+                    this.settings.set(response.settings);
+                    // Extract rate limit fields for form binding
+                    this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                    this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                    // Store original values for dirty checking
+                    this.originalRateLimitRequests.set(this.rateLimitRequests());
+                    this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                    this.effectiveRateLimit.set(response.effectiveRateLimit);
+                    this.applicationDefaults.set(response.applicationRateLimitDefaults);
+                    this.originalSettings.set(deepClone(this.settings()));
+                },
+                error: (error) => {
+                    this.isLoading.set(false);
+                    captureException(new Error('Error loading Iris settings', { cause: error }));
+                    this.alertService.error('artemisApp.iris.settings.error.load');
+                },
+            });
+    }
+
+    /**
+     * Save the current settings to the server
+     */
+    saveSettings(options: SaveSettingsOptions = {}): void {
+        const currentSettings = this.settings();
+        if (!this.courseId || !currentSettings) {
+            return;
+        }
+
+        // Normalize empty strings to undefined before saving
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
+        });
+
+        const originalSettingsValue = this.originalSettings();
+        if (!this.isAdmin()) {
+            if (originalSettingsValue) {
+                this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
+            }
+        } else {
+            // Admin: reconstruct rateLimit from form fields unless a caller only saves
+            // General-tab changes while the admin rate-limit draft is invalid.
+            settingsToSave.rateLimit = options.keepPersistedRateLimit ? originalSettingsValue?.rateLimit : this.buildRateLimitForSave();
+        }
+
+        this.isSaving.set(true);
+        this.irisSettingsService
+            .updateCourseSettings(this.courseId, settingsToSave)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
+                    this.isSaving.set(false);
+                    if (response.body) {
+                        this.settings.set(response.body.settings);
+                        // Update local form fields from saved response
+                        this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                        this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                        // Reset original values for dirty checking
+                        this.originalRateLimitRequests.set(this.rateLimitRequests());
+                        this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                        this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                        this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
+                        this.originalSettings.set(deepClone(this.settings()));
+                    }
+                    this.alertService.success('artemisApp.iris.settings.success');
+                },
+                error: (error) => {
+                    this.isSaving.set(false);
+                    captureException(new Error('Error saving Iris settings', { cause: error }));
+                    if (error.status === 400 && error.error && error.error.message) {
+                        this.alertService.error(error.error.message);
+                    } else {
+                        this.alertService.error('artemisApp.iris.settings.error.save');
+                    }
+                },
+            });
+    }
+
+    /**
+     * Toggle the enabled state and auto-save
+     */
+    setEnabled(enabled: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings && currentSettings.enabled !== enabled) {
+            this.settings.set(cloneWith(currentSettings, { enabled }));
+            // Auto-save enabled/disabled changes immediately
+            this.saveEnabledOnly(enabled);
+        }
+    }
+
+    /**
+     * Save the enabled-state toggle without requiring a manual save.
+     *
+     * The payload is built from the current `settings()` signal — not from
+     * `originalSettings()` — so that any in-progress edits to `supportLevel` or
+     * `customInstructions` are preserved rather than silently discarded when the
+     * user flips the toggle. Admin-restricted fields (`variant`, `rateLimit`) are
+     * still restored from the original values for non-admins, matching the server's
+     * authorization rules in `saveSettings()`.
+     */
+    private saveEnabledOnly(enabled: boolean): void {
+        const currentSettings = this.settings();
+        const originalSettingsValue = this.originalSettings();
+        if (!this.courseId || !currentSettings || !originalSettingsValue) {
+            return;
+        }
+
+        // Prevent dirty flash during auto-save
+        this.isAutoSaving.set(true);
+
+        // Persist the current edits together with the new enabled state, normalizing
+        // empty custom instructions the same way saveSettings() does.
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
+            enabled,
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
+        });
+
+        if (!this.isAdmin()) {
+            this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
+        } else if (this.isFormValid()) {
+            // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
+            settingsToSave.rateLimit = this.buildRateLimitForSave();
+        } else {
+            // Admin with an invalid rate-limit form (e.g. one field filled, one empty):
+            // never auto-save a partial/invalid override. Keep the persisted rateLimit
+            // so flipping the enabled toggle does not corrupt the rate-limit configuration.
+            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+        }
+
+        this.irisSettingsService
+            .updateCourseSettings(this.courseId, settingsToSave)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
+                    if (response.body) {
+                        // Update original settings to reflect the new enabled state
+                        this.originalSettings.set(deepClone(response.body.settings));
+                        this.settings.set(deepClone(response.body.settings));
+                        // Reset rate limit tracking
+                        this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
+                        this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
+                        this.originalRateLimitRequests.set(this.rateLimitRequests());
+                        this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
+                        this.effectiveRateLimit.set(response.body.effectiveRateLimit);
+                        this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
+                    }
+                    this.isAutoSaving.set(false);
+                },
+                error: (error) => {
+                    this.isAutoSaving.set(false);
+                    captureException(new Error('Error saving Iris enabled state', { cause: error }));
+                    // Revert on error
+                    const currentSettings = this.settings();
+                    if (currentSettings) {
+                        this.settings.set(cloneWith(currentSettings, { enabled: !enabled }));
+                    }
+                },
+            });
+    }
+
+    /**
+     * Get the character count for custom instructions
+     */
+    getCustomInstructionsLength(): number {
+        return this.settings()?.customInstructions?.length || 0;
+    }
+
+    /**
+     * Reset the General-tab settings to their default values and persist immediately.
+     *
+     * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
+     * the change is written to the server right away (no separate "Save Changes" step).
+     * Only `supportLevel` and `customInstructions` are reset. The `enabled` toggle
+     * (auto-saved separately), the two proactive toggles and the admin-only
+     * `variant` / `rateLimit` fields are left as they are.
+     *
+     * No-ops if the General-tab fields already hold their default values, so an
+     * idempotent click does not trigger an unnecessary network request.
+     */
+    resetToDefault(): void {
+        const currentSettings = this.settings();
+        if (!currentSettings) {
+            return;
+        }
+        const defaults = createDefaultCourseSettings();
+        const sameSupportLevel = currentSettings.supportLevel === defaults.supportLevel;
+        const sameCustomInstructions = this.normalizeEmpty(currentSettings.customInstructions) === this.normalizeEmpty(defaults.customInstructions);
+        if (sameSupportLevel && sameCustomInstructions) {
+            return;
+        }
+        this.settings.set(cloneWith(currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
+        this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
+    }
+
+    /**
+     * Update custom instructions in the settings signal
+     */
+    updateCustomInstructions(value: string): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { customInstructions: value }));
+        }
+    }
+
+    /**
+     * Map a discrete slider position back to a support level and update the settings signal.
+     */
+    onSupportLevelSliderChange(value: number): void {
+        const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { supportLevel: level }));
+        }
+        this.playHandlePop();
+    }
+
+    /**
+     * Re-triggers the slider handle's "pop" micro animation. The CSS animation
+     * only plays once per element, so the driving class is toggled off and
+     * back on (via two animation frames) to restart it on every value change.
+     */
+    private playHandlePop(): void {
+        this.handlePopping.set(false);
+        requestAnimationFrame(() => requestAnimationFrame(() => this.handlePopping.set(true)));
+    }
+
+    /**
+     * Update variant in the settings signal
+     */
+    updateVariant(value: IrisPipelineVariant): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { variant: value }));
+        }
+    }
+
+    /**
+     * Put the admin-only fields back to what the server holds, for a save made by someone who may not change them.
+     * Both save paths go through here: keeping two lists in step failed once already, when an auto-save on the
+     * enabled toggle wrote back whatever the signal happened to hold for a flag this list had forgotten.
+     */
+    private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
+        target.variant = original.variant;
+        target.rateLimit = original.rateLimit;
+    }
+
+    /**
+     * Update the proactive-struggle flag in the settings signal (saved via the Save button).
+     */
+    updateProactiveStruggleEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
+        }
+    }
+
+    /**
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("nobody ever decided") exists so a
+     * save from a client that does not know the field leaves the stored value alone, and touching the toggle is
+     * exactly the moment that stops being true.
+     */
+    updateLegacyBuildTriggersEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { legacyBuildTriggersEnabled: value }));
+        }
+    }
+
+    /**
+     * Whether this installation serves struggle detection, from the runtime toggle an admin can flip without a
+     * restart. A signal, not a one-time read, so the switch greys out the moment that happens.
+     */
+    readonly struggleAvailable = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisProactiveStruggle), { initialValue: true });
+
+    /**
+     * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
+     * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
+     * has to stay observable, but the instructor should not discover it by reading a chat transcript.
+     */
+    readonly bothProactiveMechanismsActive = computed(() => {
+        const currentSettings = this.settings();
+        return this.struggleAvailable() && !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
+    });
+
+    /**
+     * Builds the rateLimit object for saving, preserving null semantics:
+     * - undefined means "use application defaults" (sent when both fields are empty)
+     * - {requests: X, timeframeHours: Y} means "explicit override with values"
+     */
+    private buildRateLimitForSave(): IrisRateLimitConfiguration | undefined {
+        const requests = this.rateLimitRequests();
+        const timeframe = this.rateLimitTimeframeHours();
+        const hasRequests = requests != null;
+        const hasTimeframe = timeframe != null;
+
+        // If both fields are empty, use application defaults (return undefined)
+        // This allows admins to revert a course back to defaults by clearing both fields
+        if (!hasRequests && !hasTimeframe) {
+            return undefined;
+        }
+
+        // If any field has a value, return explicit override
+        return {
+            requests,
+            timeframeHours: timeframe,
+        };
+    }
+
+    /**
+     * Returns the effective rate limit configuration based on current form state.
+     * Updates live as the user types to provide immediate feedback.
+     */
+    readonly effectiveRateLimitPreview = computed<IrisRateLimitConfiguration | undefined>(() => {
+        const requests = this.rateLimitRequests();
+        const timeframe = this.rateLimitTimeframeHours();
+        const hasRequests = this.hasValue(requests);
+        const hasTimeframe = this.hasValue(timeframe);
+        const defaults = this.applicationDefaults();
+
+        // If both fields are empty, show application defaults
+        if (!hasRequests && !hasTimeframe) {
+            return defaults;
+        }
+
+        // If form is incomplete/invalid, show what's entered so far merged with defaults
+        // This gives visual feedback while typing
+        return {
+            requests: hasRequests ? requests : defaults?.requests,
+            timeframeHours: hasTimeframe ? timeframe : defaults?.timeframeHours,
+        };
+    });
+
+    /**
+     * Checks if the effective rate limit is unlimited (both null/undefined)
+     */
+    readonly isEffectiveRateLimitUnlimited = computed(() => {
+        const preview = this.effectiveRateLimitPreview();
+        return !preview || (preview.requests == null && preview.timeframeHours == null);
+    });
+
+    /**
+     * Checks if the effective requests limit is set (not null/undefined)
+     */
+    readonly hasEffectiveRequestsLimit = computed(() => {
+        return this.effectiveRateLimitPreview()?.requests != null;
+    });
+
+    /**
+     * Checks if the effective timeframe is set (not null/undefined)
+     */
+    readonly hasEffectiveTimeframeLimit = computed(() => {
+        return this.effectiveRateLimitPreview()?.timeframeHours != null;
+    });
+}

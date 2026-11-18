@@ -1,0 +1,96 @@
+/**
+ * parent 'course-management/:courseId/tutorial-groups'
+ */
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Routes } from '@angular/router';
+
+export const tutorialGroupManagementRoutes: Routes = [
+    {
+        path: '',
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component').then((m) => m.TutorialGroupsManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_TUTOR,
+            pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'configuration',
+        children: [
+            {
+                path: ':tutorialGroupsConfigurationId',
+                children: [
+                    {
+                        path: 'edit',
+                        loadComponent: () =>
+                            import('app/tutorialgroup/manage/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component').then(
+                                (m) => m.EditTutorialGroupsConfigurationComponent,
+                            ),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.pages.editTutorialGroupsConfiguration.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'tutorial-free-days',
+                        loadComponent: () => import('app/tutorialgroup/manage/holidays/tutorial-group-holidays.component').then((m) => m.TutorialGroupHolidaysComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_EDITOR,
+                            pageTitle: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        path: 'create',
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component').then((m) => m.TutorialCreateContainerComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.create',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':tutorialGroupId',
+        children: [
+            {
+                path: '',
+                loadComponent: () =>
+                    import('app/tutorialgroup/manage/management-tutorial-group-detail-container/management-tutorial-group-detail-container.component').then(
+                        (m) => m.ManagementTutorialGroupDetailContainerComponent,
+                    ),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'edit',
+                loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component').then((m) => m.TutorialEditContainerComponent),
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.edit',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'registrations',
+                loadComponent: () =>
+                    import('app/tutorialgroup/manage/tutorial-registrations-container/tutorial-registrations-container.component').then(
+                        (m) => m.TutorialRegistrationsContainerComponent,
+                    ),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.pages.tutorialGroupRegistrations.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
+    },
+];

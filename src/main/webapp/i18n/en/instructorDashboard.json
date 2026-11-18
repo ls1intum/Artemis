@@ -1,0 +1,74 @@
+{
+    "artemisApp": {
+        "instructorDashboard": {
+            "exerciseResultSummery": "{{ exercisesLength }} released exercises, {{ studentsLength }} students with results",
+            "name": "Name",
+            "username": "Username",
+            "title": "Course Scores",
+            "exerciseDashboard": "Exercise Participations",
+            "participated": "Participated in Exercises (%)",
+            "successful": "Successful Exercises (%)",
+            "quizPoints": "Quiz Points (%)",
+            "programmingPoints": "Programming Points (%)",
+            "modelingPoints": "Modeling Points (%)",
+            "textPoints": "Text Points (%)",
+            "file-uploadPoints": "File Upload Points (%)",
+            "presentationPoints": "Presentation Points (%)",
+            "overallScore": "Overall Points (%)",
+            "uncappedPoints": "Uncapped Points",
+            "uncappedPointsTooltip": "The total points the student achieved, counting the full points of every exercise variant they solved, before the maximum points of a variant group are applied as an upper limit. Subtracting the excess variant points from this gives the overall points.",
+            "excessVariantPoints": "Excess Variant Points",
+            "excessVariantPointsTooltip": "Points the student earned across exercise variants that do not count towards the grade because the combined points of a variant group are capped at the group's maximum points. Shown as a negative deduction.",
+            "max": "Max",
+            "average": "Average",
+            "students": "Students",
+            "courseScoreChart": {
+                "gradingScaleExplanationNotBonus": "A student performance is considered to be insufficient if it does not lead to passing the course. A performance is considered to be sufficient otherwise.",
+                "noGradingScaleExplanation": "A student performance is considered to be critical if its corresponding score is below 40% and therefore in most cases would lead to failing the course. A performance is considered to be uncritical otherwise.",
+                "scoreDistribution": "Course score distribution"
+            },
+            "statisticsTable": {
+                "included": "Included in score",
+                "total": "Total",
+                "amountOfReleasedExercises": "# of released exercises",
+                "averagePoints": "Average points (score)",
+                "medianPoints": "Median points (score)",
+                "standardPointDeviation": "Standard point deviation",
+                "highlightInChart": "Highlight in distribution"
+            },
+            "cleanup": {
+                "title": "Cleanup",
+                "question": "Are you sure you want to delete ALL student build plans for the programming exercise <strong>{{ title }}</strong>? This action can NOT be undone!<br>Individual student build plans will be recreated automatically when students submit for the next time."
+            },
+            "archive": {
+                "title": "Archive",
+                "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
+            },
+            "exportRepos": {
+                "warning": "Confirm Export",
+                "title": "Download Repos",
+                "titleSingle": "Download Repo",
+                "questions": {
+                    "individual": "Enter all logins separated by ',' (e.g ga87fix,ga63dut) of students you want to download the repository from",
+                    "team": "Enter all short names separated by ',' (e.g team1,team2) of teams you want to download the repository from"
+                },
+                "timeWarning": "<b>Caution:</b> This action can take several minutes depending on number and size of repositories.",
+                "currentlySelected": "You are about to download <strong>all teams'/students'</strong> submissions of the following exercises:"
+            },
+            "exportCSV": "Export as CSV",
+            "exportSubmissions": {
+                "title": "Export Submissions",
+                "downloadAllStudents": "Or download the submissions of all students",
+                "question": "Enter all logins separated by ',' (e.g ga87fix,ga63dut) of students you want to download the submission from",
+                "filterLateSubmissions": "Filter late submissions",
+                "filterLateSubmissionsDate": {
+                    "title": "Date for filter late submissions",
+                    "tooltip": "Defaults to the due date of the exercise if not set"
+                },
+                "successMessage": "Export of submissions was successful. The exported zip file is currently being downloaded."
+            },
+            "loadingStudents": "Loading the results of all students...",
+            "courseScoresTooltip": "Students who have not received a score for an exercise are not included in the statistics."
+        }
+    }
+}

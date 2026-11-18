@@ -1,0 +1,80 @@
+<div class="rounded-md border border-border bg-surface-raised">
+    <div class="bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4! py-2.5">
+        <h5 class="mb-0" jhiTranslate="artemisApp.competency.import.search.title"></h5>
+    </div>
+    <div class="p-4! pb-1!">
+        <div class="mb-4!">
+            <label for="competency-title-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyTitle"></label>
+            <input
+                id="competency-title-input"
+                tumAetUiInput
+                class="block w-full"
+                [ngModel]="search().title"
+                (ngModelChange)="updateSearchField('title', $event)"
+                (keydown.enter)="performSearch()"
+            />
+        </div>
+        <div [hidden]="!advancedSearchEnabled()">
+            <div class="mb-4!">
+                <label for="competency-description-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyDescription"></label>
+                <textarea
+                    id="competency-description-input"
+                    tumAetUiInput
+                    rows="3"
+                    class="block w-full"
+                    [ngModel]="search().description"
+                    (ngModelChange)="updateSearchField('description', $event)"
+                    (keydown.enter)="performSearch()"
+                ></textarea>
+            </div>
+            <div class="flex gap-x-6">
+                <div class="mb-4! min-w-0 flex-1">
+                    <label for="course-title-input" jhiTranslate="artemisApp.competency.import.search.labelCourseTitle"></label>
+                    <input
+                        id="course-title-input"
+                        tumAetUiInput
+                        class="block w-full"
+                        [ngModel]="search().courseTitle"
+                        (ngModelChange)="updateSearchField('courseTitle', $event)"
+                        (keydown.enter)="performSearch()"
+                    />
+                </div>
+                <div class="mb-4! min-w-0 flex-1">
+                    <label for="course-semester-select" jhiTranslate="artemisApp.competency.import.search.labelCourseSemester"></label>
+                    <tumaet-ui-select
+                        class="flex! w-full!"
+                        inputId="course-semester-select"
+                        [options]="semesters"
+                        [ngModel]="search().semester"
+                        (ngModelChange)="updateSearchField('semester', $event)"
+                    />
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-wrap justify-end">
+            <jhi-button id="resetFilterButton" class="me-2" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.reset'" (click)="reset()" />
+            <jhi-button id="submitFilterButton" [btnType]="ButtonType.PRIMARY" [title]="'entity.action.search'" (click)="performSearch()" />
+        </div>
+        <div class="flex justify-center">
+            <div
+                id="toggleAdvancedSearch"
+                class="clickable"
+                (click)="toggleAdvancedSearch()"
+                [attr.aria-expanded]="advancedSearchEnabled()"
+                #keyboardAction60
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+            >
+                <fa-icon [icon]="advancedSearchEnabled() ? faChevronUp : faChevronDown" />
+                <span
+                    jhiTranslate="{{
+                        advancedSearchEnabled() ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch'
+                    }}"
+                ></span>
+            </div>
+        </div>
+    </div>
+</div>

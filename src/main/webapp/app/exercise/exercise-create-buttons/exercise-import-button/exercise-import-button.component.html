@@ -1,0 +1,10 @@
+<tumaet-ui-button
+    [id]="'import-' + exerciseType() + '-exercise'"
+    size="small"
+    severity="secondary"
+    (click)="openImportModal()"
+    [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined"
+>
+    <fa-icon [icon]="faFileImport" />
+    <span jhiTranslate="artemisApp.exercise.importAction"></span>
+</tumaet-ui-button>

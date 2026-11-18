@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "courseScoreCalculation": {
+            "scoreAggregation": "Score Aggregation",
+            "myScore": "My Points",
+            "myRelativeScore": "My Relative Score (%)",
+            "maxScore": "Max Points",
+            "forQuizzes": "Points for quizzes",
+            "forProgramming": "Points for programming exercises",
+            "forModeling": "Points for modeling exercises",
+            "total": "Total points for this course",
+            "eist": {
+                "forHomework": "Points for homework",
+                "forInClass": "Points for in-class exercises"
+            },
+            "gradingSystemGrade": "Grades",
+            "gradingSystemBonus": "Bonus Points"
+        }
+    }
+}

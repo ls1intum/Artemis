@@ -1,0 +1,222 @@
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { Course } from 'app/course/shared/entities/course.model';
+
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { Subject, filter, takeUntil } from 'rxjs';
+import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
+
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { EmojiComponent } from 'app/communication/emoji/emoji.component';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
+import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-conversation-header',
+    templateUrl: './conversation-header.component.html',
+    styleUrls: ['./conversation-header.component.scss'],
+    imports: [
+        FaIconComponent,
+        ChannelIconComponent,
+        ProfilePictureComponent,
+        TranslateDirective,
+        RouterLink,
+        EmojiComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+    ],
+})
+export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
+    courseConversationsService = inject(CourseConversationsService);
+    conversationService = inject(ConversationService);
+    private communicationService = inject(CommunicationService);
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
+    constructor() {
+        effect(() => {
+            // Track pinnedMessageCount signal input (replaces ngOnChanges)
+            const currentCount = this.pinnedMessageCount();
+            untracked(() => {
+                if (this.showPinnedMessages() && currentCount === 0) {
+                    this.showPinnedMessages.set(false);
+                }
+            });
+        });
+    }
+
+    pinnedMessageCount = input<number>(0);
+    togglePinnedMessage = output<void>();
+
+    private ngUnsubscribe = new Subject<void>();
+
+    onUpdateSidebar = output<void>();
+    onSearchClick = output<void>();
+
+    INFO = ConversationDetailTabs.INFO;
+    MEMBERS = ConversationDetailTabs.MEMBERS;
+
+    readonly course = signal<Course>(undefined!);
+    readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
+
+    readonly activeConversationAsChannel = signal<ChannelDTO | undefined>(undefined);
+    readonly channelSubTypeReferenceTranslationKey = signal<string | undefined>(undefined);
+    readonly channelSubTypeReferenceRouterLink = signal<string | undefined>(undefined);
+    readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
+
+    faUserPlus = faUserPlus;
+    faUserGroup = faUserGroup;
+    faSearch = faSearch;
+    faChevronLeft = faChevronLeft;
+    readonly faPeopleGroup = faPeopleGroup;
+    readonly showPinnedMessages = signal(false);
+
+    getAsGroupChat = getAsGroupChatDTO;
+    getAsOneToOneChat = getAsOneToOneChatDTO;
+
+    canAddUsers = canAddUsersToConversation;
+
+    ngOnInit(): void {
+        this.course.set(this.courseConversationsService.course!);
+        this.subscribeToActiveConversation();
+    }
+
+    /**
+     * Toggle the view of pinned messages in the conversation
+     */
+    togglePinnedMessages(): void {
+        this.togglePinnedMessage.emit();
+        this.showPinnedMessages.update((value) => !value);
+    }
+
+    /**
+     * Gets the other user in a one-to-one chat (not the current user)
+     */
+    getOtherUser() {
+        const conversation = getAsOneToOneChatDTO(this.activeConversation());
+        if (conversation) {
+            this.otherUser.set(conversation.members?.find((user) => !user.isRequestingUser));
+        }
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
+    openSidebar() {
+        this.courseSidebarService.openSidebar();
+    }
+
+    private subscribeToActiveConversation() {
+        this.courseConversationsService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
+            this.activeConversation.set(conversation);
+            const activeConversationAsChannel = getAsChannelDTO(conversation);
+            this.activeConversationAsChannel.set(activeConversationAsChannel);
+            this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(activeConversationAsChannel?.subType));
+            this.channelSubTypeReferenceRouterLink.set(this.communicationService.getLinkForChannelSubType(activeConversationAsChannel));
+            this.getOtherUser();
+        });
+    }
+
+    openAddUsersDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const ref = this.dialogService.open(
+            ConversationAddUsersDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.addUsers'),
+                autoFocus: 'first-tabbable',
+                data: {
+                    course: this.course(),
+                    activeConversation: this.activeConversation(),
+                },
+            }),
+        );
+        ref.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.courseConversationsService.forceRefresh().subscribe({
+                    complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
+                });
+            });
+    }
+
+    /**
+     * Opens a dialog showing detailed information about the active conversation,
+     * such as metadata or member list, depending on the selected tab.
+     * If the conversation is a one-to-one chat, it always defaults to the info tab.
+     */
+    openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
+        event.stopPropagation();
+        const activeConversation = this.activeConversation();
+        const selectedTab = this.getAsOneToOneChat(activeConversation) ? ConversationDetailTabs.INFO : tab;
+        const ref = this.dialogService.open(
+            ConversationDetailDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel:
+                    this.conversationService.getConversationName(activeConversation, true) || this.translateService.instant('artemisApp.dialogs.conversationDetail.tabs.info'),
+                data: {
+                    course: this.course(),
+                    activeConversation,
+                    selectedTab,
+                    onUserNameClicked: (userId: number) => {
+                        ref.close();
+                        this.courseConversationsService.createOneToOneChatWithId(userId).subscribe({
+                            // the chat is created before the conversations are reloaded, and a failed reload is already
+                            // reported by the service, so it must not surface as an unhandled error here
+                            error: () => {},
+                        });
+                    },
+                },
+            }),
+        );
+
+        ref.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.courseConversationsService.forceRefresh().subscribe({
+                    complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
+                });
+                this.onUpdateSidebar.emit();
+            });
+    }
+
+    toggleSearchBar() {
+        this.onSearchClick.emit();
+    }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+}

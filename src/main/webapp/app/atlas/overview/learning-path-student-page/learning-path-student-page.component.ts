@@ -1,0 +1,97 @@
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { map } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { LearningPathNavComponent } from 'app/atlas/overview/learning-path-student-nav/learning-path-student-nav.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ActivatedRoute } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
+import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-exercise/learning-path-exercise.component';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
+import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-learning-path-student-page',
+    templateUrl: './learning-path-student-page.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        LearningPathNavComponent,
+        LearningPathLectureUnitComponent,
+        LearningPathExerciseComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+    ],
+})
+export class LearningPathStudentPageComponent {
+    private readonly learningApiService = inject(LearningPathApiService);
+    private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly alertService = inject(AlertService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+    private readonly scienceService = inject(ScienceService);
+
+    protected readonly LearningObjectType = LearningObjectType;
+
+    readonly isLearningPathLoading = signal(false);
+    readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
+    readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
+
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => void this.loadLearningPath(courseId));
+        });
+
+        // Selecting this tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.activatedRoute)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => void this.loadLearningPath(this.courseId()));
+    }
+
+    private async loadLearningPath(courseId: number): Promise<void> {
+        try {
+            this.isLearningPathLoading.set(true);
+            const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
+            this.learningPath.set(learningPath);
+
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id, courseId);
+        } catch (error) {
+            // If learning path does not exist (404) ignore the error
+            if (!(error instanceof HttpErrorResponse) || error.status != 404) {
+                onError(this.alertService, error);
+            }
+        } finally {
+            this.isLearningPathLoading.set(false);
+        }
+    }
+
+    async startLearningPath(): Promise<void> {
+        try {
+            this.isLearningPathLoading.set(true);
+            if (!this.learningPath()) {
+                const learningPath = await this.learningApiService.generateLearningPathForCurrentUser(this.courseId());
+                this.learningPath.set(learningPath);
+            }
+            await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
+            this.learningPath.update((learningPath) => cloneWith(learningPath!, { startedByStudent: true }));
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLearningPathLoading.set(false);
+        }
+    }
+}

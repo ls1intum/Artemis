@@ -1,0 +1,34 @@
+{
+    "artemisApp": {
+        "importUsers": {
+            "buttonLabel": "Import Users",
+            "dialogTitle": "Import Users",
+            "introText": "This dialog can be used to import users.",
+            "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.<br>Values for last and first name are optional.",
+            "csvExampleText": "Example of a valid CSV file format:",
+            "csvFile": {
+                "label": "Select CSV file",
+                "tooltip": "Please select the CSV file containing the students for the import. Either 'LOGIN', 'REGISTRATION_NUMBER' or 'EMAIL' column values must be present per entry. Use the following format: login, matriculation number, email, firstname, lastname. You need to use the header in the top row"
+            },
+            "usersForImport": {
+                "label": "Users to import",
+                "tooltip": "These students will be imported when clicking on the \"Import\" button.",
+                "importFailed": "Please repair the file, it could not be read due to the following error:",
+                "failedRows": "The following rows are invalid and must contain a value in either login, matriculation number or email:",
+                "noUsersFound": "No users to import have been found"
+            },
+            "numberOfUsers": "Number of users:",
+            "numberOfUsersImported": "Imported:",
+            "numberOfUsersNotFound": "Not found:",
+            "numberOfStaffRejected": "Rejected staff:",
+            "genericErrorMessage": "Import of users failed!",
+            "firstName": "First name",
+            "lastName": "Last name",
+            "registrationNumber": "registration number",
+            "room": "Room",
+            "seat": "Seat",
+            "email": "Email",
+            "testUser": "Test user"
+        }
+    }
+}

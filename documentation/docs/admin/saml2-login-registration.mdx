@@ -1,0 +1,195 @@
+---
+id: saml2-login-registration
+title: 'Shibboleth / SAML2 Login & Registration'
+sidebar_label: Shibboleth / SAML2 Login
+last_reviewed: 2026-11-03
+---
+
+import Image, { ImageSize } from "../../src/components/Image/Image";
+
+import saml2LoginIdentifierImg from "./assets/saml2-login-registration/SAML2-Login-Identifier.png";
+import saml2LoginProviderImg from "./assets/saml2-login-registration/SAML2-Login-Provider.png";
+import saml2WorkflowImg from "./assets/saml2-login-registration/SAML2-Workflow.png";
+import saml2FilterchainImg from "./assets/saml2-login-registration/SAML2-Filterchain.png";
+
+Artemis supports user login and registration using SAML2 / Shibboleth.
+The SAML2 feature is intended for use with Artemis' internal user management and primarily serves as a registration mechanism.
+With the help of this feature it is possible to store not only the login, name and email, but also the **student's matriculation number** directly in the database.
+For each user who registers in the system for the first time, a "normal" artemis user is created and the data is taken from the attributes of the Shibboleth request.
+
+The configured username attribute must be stable and globally unique, and asserted email addresses must be unique across Artemis accounts. See
+[Resolving Duplicate User Email Addresses](./user-email-uniqueness.mdx) for identity-provider requirements and remediation steps.
+
+- The feature is activated by setting `artemis.user-management.saml2.enabled: true` in your active configuration.
+- If you use a **reverse proxy**, you have to redirect the following endpoints to the artemis server: **/login** and **/saml2**.
+- For testing you can use a <a href="https://github.com/kit-sdq/Artemis-SAML2-Test-Docker">preconfigured environment</a>.
+
+If you activate the SAML2 feature, the sign-in page offers the identity provider in place of a password field.
+Users enter their login or email address first:
+
+<Image
+  src={saml2LoginIdentifierImg}
+  alt={"The first step of the sign-in page, asking for a login or email address"}
+  size={ImageSize.medium}
+/>
+
+Artemis then shows a password field for an account it manages itself, and a button that starts the SAML2 login for every other account, including an identifier it has never seen.
+You can set the text of that button as you like, through `info.saml2.buttonLabel`.
+If OIDC is enabled as well, it takes precedence and the button starts the OIDC login instead, so this button appears only while `artemis.user-management.oidc.enabled` is false:
+
+<Image
+  src={saml2LoginProviderImg}
+  alt={"The second step of the sign-in page, offering the configured SAML2 identity provider"}
+  size={ImageSize.medium}
+/>
+
+Accounts that Artemis provisioned through SAML2 before version 9.9 are stored as accounts that Artemis manages itself, so they are offered the password form rather than the identity provider.
+See [Accounts provisioned through SAML2](./upgrade-guide.mdx#99-accounts-provisioned-through-saml2) for the one-time change that puts them back on the identity provider.
+
+The workflow of the SAML2 feature is shown in the following picture:
+
+<Image
+  src={saml2WorkflowImg}
+  alt={"SAML2 Workflow"}
+  size={ImageSize.large}
+/>
+
+The SAML2 library of Spring Boot is used to create a second security filter chain.
+The new (and old) security filter chain is presented in the following figure:
+
+<Image
+  src={saml2FilterchainImg}
+  alt={"SAML2 Filterchain"}
+  size={ImageSize.large}
+/>
+
+The feature is configured by the `application-saml2.yml` file.
+You can configure multiple identity providers.
+An account the identity provider manages is externally managed and holds no Artemis password: it authenticates against the identity provider, and uses a VCS access token or an SSH key for Git.
+
+You can see the structure of the saml2 configuration in the following:
+
+```yaml
+spring:
+    security:
+        saml2:
+            relyingparty:
+                registration:
+                    REGISTRATION_ID_HERE:
+                        entityId: artemis # optional: by default the entityId is https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
+                        signing.credentials: &my-metadata
+                            - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem
+                              certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt
+                        decryption.credentials: *my-metadata
+                        assertingparty:
+                            metadata-uri: URL_TO_METADATA_HERE
+
+saml2:
+    # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
+    # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
+    # This enables definition of alternative attribute keys when using multiple IdPs. E.g. username: '{uid}{user_id}'.
+    # User template pattern:
+    username-pattern: '{first_name}_{last_name}'
+    first-name-pattern: '{first_name}'
+    last-name-pattern: '{last_name}'
+    email-pattern: '{email}'
+    registration-number-pattern: '{uid}'
+    lang-key-pattern: 'en' # can be a pattern or fixed to en/de
+    # It is also possible to only extract parts of the attribute values.
+    # For each attribute key exactly one regular expression can optionally be defined that is used to extract only parts
+    # of the received value. The regular expression must match the whole value. It also has to contain a named capture
+    # group with the name 'value'.
+    # E.g. when receiving 'pre1234post' from the SAML2 service in the 'uid'-example below, only '1234' will be used when
+    # replacing '{uid}' in one of the user attributes defined above.
+    value-extraction-patterns:
+        #- key: 'registration_number'
+        #  value_pattern: 'somePrefix(?<value>.+)someSuffix'
+        #- key: 'uid'
+        #  value_pattern: 'pre(?<value>\d+)post'
+
+# String used for the SAML2 login button. E.g. 'Shibboleth Login'
+info:
+    saml2:
+        # Name of the button to login with SAML2
+        buttonLabel: 'SAML2 Login'
+        # If enabled, the user's first and last name will be synced to the internal artemis user on every login.
+        syncUserData: false
+```
+
+## Startup fails while decoding IdP certificates
+
+If startup fails while creating the SAML2 configuration or relying-party registration, check the deepest exception.
+`Unable to base64 decode data: Strict decoding: Invalid line separator or line length` can indicate an incompatibility
+between commons-codec 1.23.0 and the Base64 decoder used by OpenSAML/Shibboleth.
+Other symptoms include `Missing or incomplete final line separator` for valid certificates in IdP metadata.
+
+[commons-codec 1.23.0 changed strict decoding](https://commons.apache.org/proper/commons-codec/changes.html)
+to require the encoder's exact line layout. Shibboleth 9.2.3 uses a strict 76-column decoder for input that can have
+different line lengths or XML whitespace. Artemis therefore constrains commons-codec to 1.22.1 until a compatible
+upstream decoder is available. For affected installations, use an Artemis build containing this constraint;
+when rebuilding an affected version, constrain commons-codec to 1.22.1 as well.
+
+## Example configuration
+
+The SAML2 configuration of Artemis could look like this:
+
+```yaml
+saml2:
+    username-pattern: '{uid}'
+    first-name-pattern: '{urn:oid:W.X.Y.Z}'
+    last-name-pattern: '{urn:oid:W.X.Y.Z}'
+    email-pattern: '{mail}'
+    registration-number-pattern: '{matriculationNumber}'
+    lang-key-pattern: 'de'
+info:
+    saml2:
+        buttonLabel: 'Shibboleth Login'
+        syncUserData: false
+spring:
+    security:
+        saml2:
+            relyingparty:
+                registration:
+                    scc:
+                        # entityId: e.g., artemis ; default: https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
+                        signing.credentials: &scc-metadata
+                            - private-key-location: file:/config/shibboleth-sp-key.pem
+                              certificate-location: file:/config/shibboleth-sp-cert.crt
+                        decryption.credentials: *scc-metadata
+                        assertingparty:
+                            metadata-uri: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
+```
+
+The SAML2 configuration for Artemis at your IT department could look like the following.
+
+However, you can also download the metadata from
+`https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>`.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    entityID="https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>"
+    xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+  <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false"
+      protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>CERT_HERE</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:KeyDescriptor use="encryption">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>CERT_HERE</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:AssertionConsumerService
+        Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+        Location="https://<<ARTEMIS_URL_HERE>>/login/saml2/sso/<<REGISTRATION_ID_HERE>>"
+        index="1"/>
+  </md:SPSSODescriptor>
+</md:EntityDescriptor>
+```

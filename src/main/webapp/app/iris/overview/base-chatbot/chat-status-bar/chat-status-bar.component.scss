@@ -1,0 +1,19 @@
+.chat-status-bar {
+    width: min(800px, 100%);
+    margin-inline: auto;
+}
+
+.display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    padding: 3px 5px;
+    white-space: nowrap;
+
+    &.error {
+        color: var(--artemis-alert-danger-color);
+        background-color: var(--artemis-alert-danger-background);
+        border-radius: 0.25rem;
+    }
+}

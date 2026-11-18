@@ -1,0 +1,213 @@
+<?xml version="1.0"?>
+
+<ruleset name="Custom Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd
+http://pmd.sourceforge.net/ruleset/2.0.0 ">
+
+    <rule ref="category/java/codestyle.xml/MethodNamingConventions">
+        <description>
+            Allows underscores in JUnit 5 test methods
+            Template from https://pmd.github.io/pmd-6.40.0/pmd_userdocs_making_rulesets.html#creating-a-ruleset
+        </description>
+        <properties>
+            <property name="methodPattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="staticPattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="nativePattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="junit5TestPattern" value="[a-z][a-zA-Z0-9_]*"/>
+        </properties>
+    </rule>
+    // Allows testing methods to be named like getters or setters
+    <rule ref="category/java/codestyle.xml/LinguisticNaming">
+        <properties>
+            <property name="ignoredAnnotations" value="java.lang.Override|org.junit.jupiter.api.Test"/>
+            <property name="checkBooleanMethod" value="true"/>
+            <property name="checkGetters" value="true"/>
+            <property name="checkSetters" value="true"/>
+            <property name="checkPrefixedTransformMethods" value="true"/>
+            <property name="checkTransformMethods" value="false"/>
+            <property name="booleanMethodPrefixes" value="is|has|can|have|will|should"/>
+            <property name="transformMethodNames" value="to|as"/>
+            <property name="checkFields" value="true"/>
+            <property name="checkVariables" value="true"/>
+            <property name="booleanFieldPrefixes" value="is|has|can|have|will|should"/>
+        </properties>
+    </rule>
+
+    // Java
+    <rule ref="category/java/bestpractices.xml/AbstractClassWithoutAbstractMethod"/>
+    <rule ref="category/java/performance.xml/AddEmptyString"/>
+    <rule ref="category/java/errorprone.xml/AssignmentToNonFinalStatic"/>
+    <rule ref="category/java/errorprone.xml/AvoidAccessibilityAlteration"/>
+    <rule ref="category/java/performance.xml/AvoidArrayLoops"/>
+    <rule ref="category/java/errorprone.xml/AvoidBranchingStatementAsLastInLoop"/>
+    <rule ref="category/java/errorprone.xml/AvoidCallingFinalize"/>
+    <rule ref="category/java/design.xml/AvoidCatchingGenericException"/>
+    <rule ref="category/java/errorprone.xml/AvoidCatchingNPE"/>
+    <rule ref="category/java/errorprone.xml/AvoidCatchingThrowable"/>
+    <rule ref="category/java/errorprone.xml/AvoidDecimalLiteralsInBigDecimalConstructor"/>
+    <rule ref="category/java/errorprone.xml/AvoidInstanceofChecksInCatchClause"/>
+    <rule ref="category/java/errorprone.xml/AvoidMultipleUnaryOperators"/>
+    <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace"/>
+    <rule ref="category/java/bestpractices.xml/AvoidReassigningParameters"/>
+    <rule ref="category/java/multithreading.xml/AvoidThreadGroup"/>
+    <rule ref="category/java/design.xml/AvoidThrowingNewInstanceOfSameException"/>
+    <rule ref="category/java/design.xml/AvoidThrowingNullPointerException"/>
+    <rule ref="category/java/design.xml/AvoidThrowingRawExceptionTypes"/>
+    <rule ref="category/java/performance.xml/BooleanInstantiation"/>
+    <rule ref="category/java/errorprone.xml/BrokenNullCheck"/>
+    <rule ref="category/java/bestpractices.xml/CheckResultSet"/>
+    <rule ref="category/java/errorprone.xml/CheckSkipResult"/>
+    <rule ref="category/java/codestyle.xml/ClassNamingConventions"/>
+    <rule ref="category/java/design.xml/CollapsibleIfStatements"/>
+    <rule ref="category/java/errorprone.xml/CompareObjectsWithEquals"/>
+    <rule ref="category/java/codestyle.xml/ControlStatementBraces"/>
+    <rule ref="category/java/bestpractices.xml/DefaultLabelNotLastInSwitchStmt"/>
+    <rule ref="category/java/errorprone.xml/DetachedTestCase"/>
+    <rule ref="category/java/errorprone.xml/DoNotCallGarbageCollectionExplicitly"/>
+    <rule ref="category/java/errorprone.xml/DoNotHardCodeSDCard"/>
+    <rule ref="category/java/multithreading.xml/DontCallThreadRun"/>
+    <rule ref="category/java/codestyle.xml/DontImportJavaLang"/>
+    <rule ref="category/java/errorprone.xml/DontUseFloatTypeForLoopIndices"/>
+    <rule ref="category/java/bestpractices.xml/DoubleBraceInitialization"/>
+    <rule ref="category/java/multithreading.xml/DoubleCheckedLocking"/>
+    <rule ref="category/java/codestyle.xml/DuplicateImports"/>
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyFinalizer"/>
+    <rule ref="category/java/errorprone.xml/EmptyFinallyBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyIfStmt"/>
+    <rule ref="category/java/codestyle.xml/EmptyMethodInAbstractClassShouldBeAbstract"/>
+    <rule ref="category/java/errorprone.xml/EmptyInitializer"/>
+    <rule ref="category/java/errorprone.xml/EmptyStatementBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyStatementNotInLoop"/>
+    <rule ref="category/java/errorprone.xml/EmptySwitchStatements"/>
+    <rule ref="category/java/errorprone.xml/EmptySynchronizedBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyTryBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyWhileStmt"/>
+    <rule ref="category/java/errorprone.xml/EqualsNull"/>
+    <rule ref="category/java/design.xml/ExceptionAsFlowControl"/>
+    <rule ref="category/java/design.xml/ExcessiveClassLength"/>
+    <rule ref="category/java/design.xml/ExcessiveMethodLength"/>
+    <rule ref="category/java/design.xml/ExcessiveParameterList"/>
+    <rule ref="category/java/codestyle.xml/ExtendsObject"/>
+    <rule ref="category/java/codestyle.xml/FieldDeclarationsShouldBeAtStartOfClass"/>
+    <rule ref="category/java/codestyle.xml/FieldNamingConventions"/>
+    <rule ref="category/java/design.xml/FinalFieldCouldBeStatic"/>
+    <rule ref="category/java/codestyle.xml/ForLoopShouldBeWhileLoop"/>
+    <rule ref="category/java/bestpractices.xml/ForLoopCanBeForeach"/>
+    <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions"/>
+    <rule ref="category/java/codestyle.xml/GenericsNaming"/>
+    <rule ref="category/java/design.xml/GodClass"/>
+    <rule ref="category/java/security.xml/HardCodedCryptoKey"/>
+    <rule ref="category/java/security.xml/InsecureCryptoIv"/>
+    <rule ref="category/java/errorprone.xml/IdempotentOperations"/>
+    <rule ref="category/java/codestyle.xml/IdenticalCatchBranches"/>
+    <rule ref="category/java/errorprone.xml/ImportFromSamePackage"/>
+    <rule ref="category/java/performance.xml/InefficientEmptyStringCheck"/>
+    <rule ref="category/java/errorprone.xml/InstantiationToGetClass"/>
+    <rule ref="category/java/errorprone.xml/InvalidLogMessageFormat"/>
+    <rule ref="category/java/errorprone.xml/JUnitSpelling"/>
+    <rule ref="category/java/errorprone.xml/JUnitStaticSuite"/>
+    <rule ref="category/java/errorprone.xml/JumbledIncrementer"/>
+    <rule ref="category/java/bestpractices.xml/LiteralsFirstInComparisons"/>
+    <rule ref="category/java/codestyle.xml/LocalVariableNamingConventions"/>
+    <rule ref="category/java/design.xml/LogicInversion"/>
+    <rule ref="category/java/bestpractices.xml/LooseCoupling"/>
+    <rule ref="category/java/errorprone.xml/MethodWithSameNameAsEnclosingClass"/>
+    <rule ref="category/java/errorprone.xml/MisplacedNullCheck"/>
+    <rule ref="category/java/errorprone.xml/MissingBreakInSwitch"/>
+    <rule ref="category/java/errorprone.xml/MissingStaticMethodInNonInstantiatableClass"/>
+    <rule ref="category/java/errorprone.xml/MoreThanOneLogger"/>
+    <rule ref="category/java/design.xml/NPathComplexity"/>
+    <rule ref="category/java/codestyle.xml/NoPackage"/>
+    <rule ref="category/java/errorprone.xml/NonCaseLabelInSwitchStatement"/>
+    <rule ref="category/java/errorprone.xml/NonStaticInitializer"/>
+    <rule ref="category/java/errorprone.xml/NullAssignment"/>
+    <rule ref="category/java/bestpractices.xml/OneDeclarationPerLine"/>
+    <rule ref="category/java/codestyle.xml/PackageCase"/>
+    <rule ref="category/java/errorprone.xml/ProperLogger"/>
+    <rule ref="category/java/errorprone.xml/ReturnFromFinallyBlock"/>
+    <rule ref="category/java/codestyle.xml/ShortMethodName"/>
+    <rule ref="category/java/codestyle.xml/ShortVariable">
+        // It's okay to use short variable names in DTOs, e.g. "id" or "name"
+        <exclude-pattern>.*/de/tum/in/www1/artemis/web/rest/dto/.*</exclude-pattern>
+    </rule>
+    <rule ref="category/java/design.xml/SimplifiedTernary"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanAssertion"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanExpressions"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanReturns"/>
+    <rule ref="category/java/design.xml/SimplifyConditional"/>
+    <rule ref="category/java/design.xml/SingularField"/>
+    <rule ref="category/java/performance.xml/StringInstantiation"/>
+    <rule ref="category/java/performance.xml/StringToString"/>
+    <rule ref="category/java/design.xml/SwitchDensity"/>
+    <rule ref="category/java/bestpractices.xml/SystemPrintln"/>
+    <rule ref="category/java/errorprone.xml/TestClassWithoutTestCases"/>
+    <rule ref="category/java/documentation.xml/UncommentedEmptyConstructor"/>
+    <rule ref="category/java/documentation.xml/UncommentedEmptyMethodBody"/>
+    <rule ref="category/java/errorprone.xml/UnconditionalIfStatement"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryAnnotationValueElement"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryCast"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryConstructor"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryFullyQualifiedName"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryLocalBeforeReturn"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryModifier"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryReturn"/>
+    <rule ref="category/java/bestpractices.xml/UnusedFormalParameter"/>
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
+    <rule ref="category/java/performance.xml/UseArrayListInsteadOfVector"/>
+    <rule ref="category/java/performance.xml/UseArraysAsList"/>
+    <rule ref="category/java/bestpractices.xml/UseCollectionIsEmpty"/>
+    <rule ref="category/java/codestyle.xml/UseDiamondOperator"/>
+    <rule ref="category/java/errorprone.xml/UseEqualsToCompareStrings"/>
+    <rule ref="category/java/codestyle.xml/UseShortArrayInitializer"/>
+    <rule ref="category/java/performance.xml/UseStringBufferLength"/>
+    <rule ref="category/java/errorprone.xml/UselessOperationOnImmutable"/>
+    <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
+    <rule ref="category/java/bestpractices.xml/JUnit5TestShouldBePackagePrivate" />
+
+    // all JSP rules
+    <rule ref="category/jsp/bestpractices.xml"/>
+    <rule ref="category/jsp/codestyle.xml"/>
+    <rule ref="category/jsp/design.xml"/>
+    <rule ref="category/jsp/errorprone.xml"/>
+    <rule ref="category/jsp/security.xml"/>
+
+    // some JavaScript rules
+    <rule ref="category/ecmascript/codestyle.xml/AssignmentInOperand"/>
+    <rule ref="category/ecmascript/codestyle.xml/UnnecessaryParentheses"/>
+    <rule ref="category/ecmascript/bestpractices.xml/ConsistentReturn"/>
+    <rule ref="category/ecmascript/errorprone.xml/EqualComparison"/>
+    <rule ref="category/ecmascript/errorprone.xml/InnaccurateNumericLiteral"/>
+    <rule ref="category/ecmascript/bestpractices.xml/UseBaseWithParseInt"/>
+    <rule ref="category/ecmascript/bestpractices.xml/AvoidWithStatement"/>
+
+    <rule ref="category/vm/bestpractices.xml"/>
+    <rule ref="category/vm/design.xml"/>
+    <rule ref="category/vm/errorprone.xml"/>
+
+    // PLSQL
+    <rule ref="category/plsql/bestpractices.xml/TomKytesDespair"/>
+    <rule ref="category/plsql/codestyle.xml/AvoidTabCharacter"/>
+    <rule ref="category/plsql/codestyle.xml/MisplacedPragma"/>
+    <rule ref="category/plsql/design.xml">
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NcssMethodCount"/>
+        <exclude name="NcssObjectCount"/>
+        <exclude name="NPathComplexity"/>
+        <exclude name="TooManyFields"/>
+    </rule>
+    <rule ref="category/plsql/errorprone.xml"/>
+
+    // Visual Force
+    <rule ref="category/vf/security.xml"/>
+
+    // XML
+    <rule ref="category/xsl/performance.xml/AvoidAxisNavigation"/>
+    <rule ref="category/xsl/codestyle.xml/UseConcatOnce"/>
+    <rule ref="category/xml/errorprone.xml/MistypedCDATASection"/>
+    <rule ref="category/pom/errorprone.xml"/>
+</ruleset>

@@ -1,0 +1,56 @@
+<tumaet-ui-card class="lti-course-card">
+    <a class="lti-course-card-link" [routerLink]="['/lti/exercises', course().id]" [attr.aria-label]="course().title"></a>
+    <div
+        tumAetUiCardHeader
+        id="course-{{ course().id }}-header"
+        class="lti-course-card-header"
+        data-testid="lti-course-card-header"
+        [routerLink]="['/lti/exercises', course().id]"
+        [style.background-color]="courseColor()"
+        [style.color]="contentColor()"
+    >
+        <div class="lti-course-card-header-row">
+            <div class="lti-course-card-image">
+                @if (course().courseIconPath) {
+                    <jhi-image [src]="course().courseIconPath || ''" />
+                }
+            </div>
+            <h5 class="lti-course-card-title">
+                {{ course().title + ' (' + course().shortName + ')' }}
+            </h5>
+        </div>
+    </div>
+    <div class="lti-course-card-body" data-testid="lti-course-card-body">
+        <div class="grid grid-cols-2 gap-x-6!">
+            <!-- Left column -->
+            <div>
+                <p><strong>ID:</strong> {{ course().id }}</p>
+                <p>
+                    <strong><span jhiTranslate="artemisApp.course.delete.summary.numberOfStudents"></span>:</strong> {{ course().numberOfStudents ?? 0 }}
+                </p>
+            </div>
+
+            <!-- Right column -->
+            <div>
+                @if (course().startDate) {
+                    <p>
+                        <strong><span jhiTranslate="artemisApp.course.startDate"></span>:</strong> {{ course().startDate | artemisDate }}
+                    </p>
+                }
+                @if (course().endDate) {
+                    <p>
+                        <strong><span jhiTranslate="artemisApp.course.endDate"></span>:</strong> {{ course().endDate | artemisDate }}
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Description -->
+        @if (course().description) {
+            <p class="mt-4!">
+                <strong><span jhiTranslate="artemisApp.course.description"></span>:</strong>
+                <span class="text-muted-color" style="font-size: 0.95rem">{{ course().description }}</span>
+            </p>
+        }
+    </div>
+</tumaet-ui-card>

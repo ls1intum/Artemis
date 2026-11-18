@@ -1,0 +1,142 @@
+.search-bar {
+    position: relative;
+    z-index: 11;
+}
+
+// The search field: one bordered control that holds the selected filters, the text input and the clear button.
+.tag-input-container {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    min-width: 0;
+    border: 1px solid var(--tumaet-ui-control-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background-color: var(--tumaet-ui-control-background);
+    color: var(--tumaet-ui-text-color);
+
+    /*
+     * Sized to the shared top bar contract so this search sits in a 40px bar like the shell title bars: the content
+     * is `--title-bar-content-height` tall, with the bar itself adding the padding above and below.
+     */
+    padding: 0 0.5rem;
+
+    /* A minimum only: the filter tags wrap, and a fixed height would push the wrapped rows out of the bar. */
+    min-height: var(--title-bar-content-height);
+    cursor: text;
+    transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+
+    &:hover {
+        border-color: var(--tumaet-ui-control-border-hover-color);
+    }
+
+    &:focus-within {
+        border-color: var(--tumaet-ui-focus-color);
+        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--tumaet-ui-focus-color) 25%, transparent);
+    }
+}
+
+.tag-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 4rem;
+    color: var(--tumaet-ui-text-color);
+
+    &::placeholder {
+        color: var(--tumaet-ui-muted-color);
+    }
+}
+
+// The close icon of a filter tag and the clear button of the field.
+.tag-remove {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 1px;
+        border-radius: 50%;
+    }
+}
+
+.suggestion-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    overflow: hidden;
+}
+
+.suggestions-dropdown {
+    margin-bottom: 0.5rem;
+}
+
+.suggestion-item {
+    padding: 0.5rem 1rem;
+    background-color: var(--tumaet-ui-content-background);
+    color: var(--tumaet-ui-text-color);
+
+    & + & {
+        border-top: 1px solid var(--tumaet-ui-border-color);
+    }
+}
+
+.suggestion-option {
+    cursor: pointer;
+
+    &.active {
+        background-color: var(--tumaet-ui-highlight-background);
+        color: var(--tumaet-ui-highlight-color);
+    }
+}
+
+#search {
+    min-width: 0;
+    flex: 1;
+}
+
+.search-block {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    transition:
+        box-shadow 0.3s,
+        border-radius 0.3s;
+
+    &.active {
+        box-shadow: var(--tumaet-ui-shadow-lg);
+        border-radius: 0.25rem 0.25rem 0 0;
+        border: 1px solid var(--tumaet-ui-border-color);
+    }
+
+    .filter-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: -1px;
+        background-color: var(--module-bg);
+        box-shadow: var(--tumaet-ui-shadow-md);
+        padding: 20px 8px 8px;
+        border: 1px solid var(--tumaet-ui-border-color);
+        border-top: none;
+        margin-top: -4px;
+        z-index: 11;
+        border-radius: 0 0 0.25rem 0.25rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}

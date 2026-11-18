@@ -1,0 +1,109 @@
+package de.tum.cit.aet.artemis.fileupload.dto;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+
+/**
+ * Data Transfer Object for updating a {@link FileUploadExercise}.
+ * <p>
+ * <b>Why use a DTO instead of the entity directly?</b>
+ * <ul>
+ * <li><b>Security:</b> Prevents mass assignment vulnerabilities by explicitly defining which fields can be updated.
+ * The client cannot inject values for fields like {@code id}, {@code course}, or internal state.</li>
+ * <li><b>API contract:</b> Provides a clear, stable API contract that is decoupled from the internal entity structure.</li>
+ * <li><b>Validation:</b> Allows request-specific validation without polluting the entity with HTTP-layer concerns.</li>
+ * </ul>
+ * <p>
+ * <b>Usage pattern:</b>
+ * <ol>
+ * <li>Client sends this DTO to the update endpoint</li>
+ * <li>Server loads the existing entity from the database</li>
+ * <li>Server applies DTO values to the entity (see {@code FileUploadExerciseResource.update()})</li>
+ * <li>Server saves the modified entity</li>
+ * </ol>
+ * <p>
+ * <b>Field semantics:</b>
+ * <ul>
+ * <li>{@code courseId} / {@code exerciseGroupId}: Identifies whether this is a course exercise or exam exercise.
+ * These are validated but not used to change the exercise's course/exam association.</li>
+ * <li>{@code gradingCriteria}: A provided list replaces all existing criteria; an empty list removes all criteria, while omission leaves them unchanged.</li>
+ * <li>{@code competencyLinks}: A provided set replaces all existing links; an empty set removes all links, while omission leaves them unchanged.</li>
+ * </ul>
+ *
+ * @param id                                     the exercise ID (must match the path variable)
+ * @param title                                  the exercise title
+ * @param channelName                            the communication channel name
+ * @param shortName                              the short name used for identification
+ * @param problemStatement                       the problem description shown to students
+ * @param categories                             exercise categories as JSON-encoded strings
+ * @param difficulty                             the difficulty level
+ * @param maxPoints                              maximum achievable points
+ * @param bonusPoints                            additional bonus points
+ * @param includedInOverallScore                 how this exercise counts toward the course grade
+ * @param allowComplaintsForAutomaticAssessments whether complaints are allowed
+ * @param presentationScoreEnabled               whether presentation scores are tracked
+ * @param secondCorrectionEnabled                whether second correction round is enabled
+ * @param gradingInstructions                    free-text grading instructions for tutors
+ * @param releaseDate                            when the exercise becomes visible to students
+ * @param startDate                              when students can start working
+ * @param dueDate                                submission deadline
+ * @param assessmentDueDate                      deadline for tutors to complete assessments
+ * @param exampleSolutionPublicationDate         when the example solution becomes visible
+ * @param exampleSolution                        the example solution text
+ * @param filePattern                            allowed file extensions (e.g., "pdf, png")
+ * @param courseId                               the course ID (for course exercises)
+ * @param exerciseGroupId                        the exam exercise group ID (for exam exercises)
+ * @param gradingCriteria                        structured grading criteria with rubrics
+ * @param competencyLinks                        links to course competencies with weights
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
+        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
+        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean presentationScoreEnabled,
+        @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution,
+        @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria,
+        @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
+
+    /**
+     * Creates a DTO from a {@link FileUploadExercise} entity.
+     * <p>
+     * This is used when sending exercise data to the client for editing.
+     * Lazy-loaded collections (grading criteria, competency links) are only included
+     * if they have been initialized to avoid N+1 query issues.
+     *
+     * @param exercise the FileUploadExercise entity to convert
+     * @return a new DTO with data copied from the entity
+     * @throws BadRequestAlertException if exercise is null
+     */
+    public static UpdateFileUploadExerciseDTO of(@Nullable FileUploadExercise exercise) {
+        if (exercise == null) {
+            throw new BadRequestAlertException("No fileUpload exercise was provided.", "FileUploadExercise", "isNull");
+        }
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
+
+        List<GradingCriterionDTO> gradingCriterionDTOs = GradingCriterionDTO.ofAllIfInitialized(exercise.getGradingCriteria());
+        Set<CompetencyLinkDTO> competencyLinkDTOs = CompetencyLinkDTO.ofAllIfInitialized(exercise.getCompetencyLinks());
+        return new UpdateFileUploadExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
+                exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), exercise.getFilePattern(), courseId, exerciseGroupId, gradingCriterionDTOs,
+                competencyLinkDTOs);
+    }
+}

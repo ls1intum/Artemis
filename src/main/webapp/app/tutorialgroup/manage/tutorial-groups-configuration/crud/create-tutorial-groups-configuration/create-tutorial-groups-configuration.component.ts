@@ -1,0 +1,74 @@
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { onError } from 'app/foundation/util/global.utils';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Subject } from 'rxjs';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { tutorialGroupsConfigurationSaveObserver } from '../tutorial-groups-configuration-save.util';
+
+@Component({
+    selector: 'jhi-create-tutorial-groups-configuration',
+    templateUrl: './create-tutorial-groups-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupsConfigurationFormComponent],
+})
+export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+
+    ngUnsubscribe = new Subject<void>();
+
+    readonly isLoading = signal<boolean>(false);
+    readonly course = signal<Course>(undefined!);
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+        this.activatedRoute.paramMap
+            .pipe(
+                take(1),
+                switchMap((params) => {
+                    const courseId = Number(params.get('courseId'));
+                    return this.courseManagementService.findForInstructor(courseId);
+                }),
+                finalize(() => this.isLoading.set(false)),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (courseResult) => {
+                    if (courseResult.body) {
+                        this.course.set(courseResult.body);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationSettings) {
+        this.isLoading.set(true);
+        this.tutorialGroupsConfigurationService
+            .create(this.course().id!, formData)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(tutorialGroupsConfigurationSaveObserver(this.course, this.courseStorageService, this.router, this.alertService, 'tutorial-groups-checklist'));
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "dropLocation": {
+            "home": {
+                "title": "Drop Locations",
+                "createLabel": "Drop Location erstellen"
+            },
+            "created": "Drop Location erstellt mit ID {{ param }}",
+            "updated": "Drop Location aktualisiert mit ID {{ param }}",
+            "deleted": "Drop Location gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Drop Location {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Drop Location"
+            },
+            "posX": "Pos X",
+            "posY": "Pos Y",
+            "width": "Breite",
+            "height": "Höhe",
+            "invalid": "Ungültig",
+            "question": "Frage"
+        }
+    }
+}

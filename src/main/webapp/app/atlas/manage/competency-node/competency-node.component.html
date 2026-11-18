@@ -1,0 +1,16 @@
+<div class="competency-node inline-block">
+    <div class="progress-container inline-block" [class.green-competency]="isGreen()" [class.yellow-competency]="isYellow()" [class.gray-competency]="isGray()">
+        <small
+            ><strong>
+                @if (valueType() === CompetencyGraphNodeValueType.MASTERY_PROGRESS || valueType() === CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS) {
+                    {{ value() }} %
+                } @else {
+                    {{ value() }}
+                }
+            </strong></small
+        >
+    </div>
+    <span class="ms-1 inline-block"
+        ><strong>{{ competencyNode().label }}</strong></span
+    >
+</div>

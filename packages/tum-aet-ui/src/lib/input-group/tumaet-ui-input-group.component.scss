@@ -1,0 +1,14 @@
+:host {
+    display: flex;
+    align-items: stretch;
+
+    --_tumaet-ui-input-group-border-color: var(--tumaet-ui-control-border-color);
+}
+
+:host:has(:is(input, select, textarea):enabled:hover) {
+    --_tumaet-ui-input-group-border-color: var(--tumaet-ui-control-border-hover-color);
+}
+
+:host:has(:is(input, select, textarea):enabled:focus) {
+    --_tumaet-ui-input-group-border-color: var(--tumaet-ui-focus-color);
+}

@@ -1,0 +1,18 @@
+package de.tum.cit.aet.artemis.iris.architecture;
+
+import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
+
+class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+
+    @Override
+    public String getModulePackage() {
+        return ARTEMIS_PACKAGE + ".iris";
+    }
+
+    @Override
+    protected int dtoNameEndingThreshold() {
+        // Non-DTO-named classes that legitimately live in iris dto packages: a handful of nested enums.
+        // These follow an accepted pattern; the count is tracked here rather than 0.
+        return 6;
+    }
+}

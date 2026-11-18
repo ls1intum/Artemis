@@ -1,0 +1,781 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    AfterViewInit,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    OnDestroy,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EMPTY, Observable, Subject, Subscription, defer, of } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
+import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
+import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
+import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import {
+    EditorSelectionWithPosition,
+    INLINE_REFINEMENT_PROMPT_WIDTH_PX,
+    InlineRefinementEvent,
+    InstructionSelectionPosition,
+} from 'app/hyperion/problem-statement/problem-statement.utils';
+import { editor } from 'monaco-editor';
+import { MonacoBinding } from 'y-monaco';
+import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { InlineRefinementButtonComponent } from 'app/hyperion/editor/inline-refinement-button/inline-refinement-button.component';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+
+@Component({
+    selector: 'jhi-programming-exercise-editable-instructions',
+    templateUrl: './programming-exercise-editable-instruction.component.html',
+    styleUrls: ['./programming-exercise-editable-instruction.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        MarkdownEditorMonacoComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructionAnalysisComponent,
+        ArtemisTranslatePipe,
+        ProgrammingExerciseInstructionComponent,
+        InlineRefinementButtonComponent,
+    ],
+})
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
+    private readonly destroyRef = inject(DestroyRef);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private testCaseService = inject(ProgrammingExerciseGradingService);
+    private profileService = inject(ProfileService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+
+    /**
+     * Legacy manual diff state used inside the `effect()` below.
+     * This is intentionally mutable and not a signal; therefore it does not retrigger the effect.
+     * Caveat: if `exercise()` changes multiple times synchronously, intermediate states can be skipped.
+     * Keep this in mind when extending the effect logic.
+     */
+    private previousExercise?: ProgrammingExercise;
+
+    readonly unsavedChangesValue = signal(false);
+
+    readonly exerciseTestCases = signal<string[]>([]);
+
+    taskRegex = TaskAction.GLOBAL_TASK_REGEX;
+    testCaseAction = new TestCaseAction();
+    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
+
+    irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    artemisIntelligenceActions = computed(() => {
+        const actions = [];
+        const courseId = this.exercise().course?.id;
+        if (this.hyperionEnabled && !!courseId) {
+            actions.push(
+                new RewriteAction(
+                    this.artemisIntelligenceService,
+                    RewritingVariant.PROBLEM_STATEMENT,
+                    courseId, // courseId is required by Hyperion API.
+                    signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+                    () => !this.isGeneratingOrRefining(),
+                ),
+            );
+        }
+        return actions;
+    });
+    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
+
+    readonly savingInstructions = signal(false);
+
+    testCaseSubscription?: Subscription;
+    forceRenderSubscription?: Subscription;
+    private problemStatementStateReplacementSubscription?: Subscription;
+    private problemStatementInitialSyncFinalizedSubscription?: Subscription;
+    private problemStatementSyncState?: ProblemStatementSyncState;
+    private canonicalSaveSequence = 0;
+    private acknowledgedCanonicalSaveSequence = 0;
+    private problemStatementBinding?: MonacoBinding;
+    private problemStatementBindingDestroyed = false;
+    private problemStatementChangeToSuppress?: string;
+    private problemStatementRevision = 0;
+
+    readonly markdownEditorMonaco = viewChild(MarkdownEditorMonacoComponent);
+    private readonly markdownEditorHost = viewChild<MarkdownEditorMonacoComponent, ElementRef<HTMLElement>>(MarkdownEditorMonacoComponent, { read: ElementRef });
+
+    readonly showStatus = input<boolean>(true);
+    // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
+    readonly editMode = input<boolean>(true);
+    readonly canonicalBaseIsolation = input(false);
+    readonly awaitingCanonicalSync = signal(false);
+    readonly enableResize = input<boolean>(true);
+    readonly initialEditorHeight = input.required<MarkdownEditorHeight>();
+    /**
+     * If true, the editor height is managed externally by the parent container.
+     * Use this when embedding in a layout that controls height (e.g., code editor view).
+     */
+    readonly externalHeight = input<boolean>(false);
+    readonly showSaveButton = input<boolean>(false);
+    readonly beforeSave = input<(() => Observable<boolean>) | undefined>();
+    /**
+     * Whether to show the preview button and default preview in the markdown editor.
+     * Set to false when using an external preview component (e.g., in the code editor).
+     */
+    readonly showPreview = input<boolean>(true);
+    readonly forceRender = input<Observable<void> | undefined>();
+    readonly enableExerciseReviewComments = input<boolean>(false);
+
+    readonly isGeneratingOrRefining = input<boolean>(false);
+
+    readonly mode = input<MonacoEditorMode>('normal');
+
+    readonly renderSideBySide = input<boolean>(true);
+
+    readonly exercise = input.required<ProgrammingExercise>();
+    /**
+     * Optional participation to use for the preview. Falls back to exercise().templateParticipation.
+     * In the code editor view, this is the currently selected participation (template/solution/student).
+     */
+    readonly participation = input<Participation>();
+
+    readonly hasUnsavedChanges = output<boolean>();
+    readonly instructionChange = output<string>();
+    readonly onProblemStatementSaved = output<void>();
+    readonly canonicalProblemStatementSaved = output<string | undefined>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    generateHtmlSubject: Subject<void> = new Subject<void>();
+
+    inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
+    selectedTextForRefinement = signal('');
+    selectionPositionInfo = signal<InstructionSelectionPosition | undefined>(undefined);
+    readonly onInlineRefinement = output<InlineRefinementEvent>();
+
+    /** Emits diff line change information when in diff mode */
+    readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
+
+    set unsavedChanges(hasChanges: boolean) {
+        this.unsavedChangesValue.set(hasChanges);
+        // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
+        // This would unmount this component and clear the unsaved changes indicator.
+        if (hasChanges) {
+            this.hasUnsavedChanges.emit(hasChanges);
+        }
+    }
+
+    constructor() {
+        effect(() => {
+            if (!this.isGeneratingOrRefining()) {
+                return;
+            }
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement && this.markdownEditorHost()?.nativeElement.contains(activeElement)) {
+                activeElement.blur();
+            }
+        });
+
+        /**
+         * React to exercise changes.
+         * Note: this effect mutates `previousExercise` as an implementation detail for manual diffing.
+         * This is a known legacy pattern and can be fragile for bursty synchronous updates.
+         */
+        effect(() => {
+            const currentExercise = this.exercise();
+
+            if (this.previousExercise && currentExercise.problemStatement !== this.previousExercise.problemStatement) {
+                this.unsavedChanges = true;
+            }
+
+            const hasExerciseIdChanged = !this.previousExercise || this.previousExercise.id !== currentExercise.id;
+            if (hasExerciseIdChanged && currentExercise.id) {
+                this.setupTestCaseSubscription();
+            }
+
+            this.previousExercise = currentExercise;
+        });
+    }
+
+    // Icons
+    faSave = faSave;
+    faCheckCircle = faCheckCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faCircleNotch = faCircleNotch;
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
+    ngOnDestroy(): void {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+        if (this.forceRenderSubscription) {
+            this.forceRenderSubscription.unsubscribe();
+        }
+        this.teardownProblemStatementSync();
+    }
+
+    ngAfterViewInit() {
+        this.configureActionGuards();
+        // If forced to render, generate the instruction HTML.
+        const forceRender = this.forceRender();
+        if (forceRender) {
+            this.forceRenderSubscription = forceRender.subscribe(() => this.generateHtml());
+        }
+
+        // Trigger initial preview render after view initialization.
+        // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
+        if (this.showPreview()) {
+            // Small delay to allow the instruction component to initialize
+            setTimeout(() => this.generateHtmlSubject.next(), 0);
+        }
+
+        const exercise = this.exercise();
+        if (!exercise.id) {
+            return;
+        }
+        this.initializeProblemStatementSync(exercise.id, exercise.problemStatement ?? '');
+    }
+
+    /** Save the problem statement on the server.
+     * @param event
+     **/
+    saveInstructions(event: Event) {
+        event.stopPropagation();
+        this.persistProblemStatement().subscribe();
+    }
+
+    /** Capture the document at dispatch so a late Save response cannot acknowledge a replacement editor. */
+    createCanonicalSaveAcknowledgement(): (content: string | undefined) => void {
+        const exerciseId = this.exercise().id;
+        const doc = this.problemStatementSyncState?.doc;
+        const sequence = ++this.canonicalSaveSequence;
+        return (content) => {
+            if (sequence > this.acknowledgedCanonicalSaveSequence && this.canonicalBaseIsolation() && exerciseId !== undefined && doc) {
+                this.problemStatementSyncService.acknowledgeCanonicalSave(exerciseId, content, doc);
+                this.acknowledgedCanonicalSaveSequence = sequence;
+            }
+        };
+    }
+
+    private persistProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) return EMPTY;
+        const beforeSave = this.beforeSave();
+        if (!beforeSave) return this.persistRevalidatedProblemStatement();
+        if (this.savingInstructions()) return EMPTY;
+        this.savingInstructions.set(true);
+        return defer(beforeSave).pipe(
+            take(1),
+            takeUntilDestroyed(this.destroyRef),
+            switchMap((allowed) => (allowed ? this.persistRevalidatedProblemStatement() : EMPTY)),
+            finalize(() => this.savingInstructions.set(false)),
+            catchError(() => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatementCouldNotBeUpdated');
+                return EMPTY;
+            }),
+        );
+    }
+
+    private persistRevalidatedProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) {
+            return EMPTY;
+        }
+        this.savingInstructions.set(true);
+        const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
+        const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        const exerciseId = this.exercise().id;
+        const submittedRevision = this.problemStatementRevision;
+        const acknowledgeCanonicalSave = this.createCanonicalSaveAcknowledgement();
+        return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
+            tap((response) => {
+                if (response.body) {
+                    acknowledgeCanonicalSave(response.body.problemStatement);
+                    if (this.exercise().id === exerciseId) this.canonicalProblemStatementSaved.emit(response.body.problemStatement);
+                }
+                if (submittedRevision === this.problemStatementRevision && (this.getCurrentContent() ?? this.exercise().problemStatement) === currentProblemStatement) {
+                    this.unsavedChanges = false;
+                    this.onProblemStatementSaved.emit();
+                }
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.problemStatementCouldNotBeUpdated`);
+                return EMPTY;
+            }),
+            finalize(() => {
+                this.savingInstructions.set(false);
+            }),
+        );
+    }
+
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: Event) {
+        if (!navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
+    }
+
+    @HostListener('document:keydown.meta.s', ['$event'])
+    saveOnCommandAndS(event: Event) {
+        if (navigator.userAgent.includes('Mac')) {
+            event.preventDefault();
+            this.saveInstructions(event);
+        }
+    }
+
+    updateProblemStatement(problemStatement: string) {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
+        this.applyProblemStatement(problemStatement);
+    }
+
+    private applyProblemStatement(problemStatement: string): void {
+        if (this.exercise().problemStatement !== problemStatement) {
+            // Guard against the internal `model.setValue('')` that clears Monaco before the Yjs binding is created (see initializeProblemStatementSync). While the initial sync is
+            // still pending, a blank value is never a real user edit; propagating it to the parent would wipe the persisted problem statement if the exercise is saved before the sync
+            // finalizes (issue #13046). Non-blank content still propagates so the model is restored once the real statement arrives.
+            if (this.problemStatementSyncService.isAwaitingInitialSync() && problemStatement.trim().length === 0) {
+                return;
+            }
+            const suppressUnsaved = this.problemStatementChangeToSuppress === problemStatement;
+            this.problemStatementChangeToSuppress = undefined;
+            this.problemStatementRevision++;
+            if (!suppressUnsaved) {
+                this.unsavedChanges = true;
+            }
+            // parent component should update `problemStatement` in `exercise`
+            this.instructionChange.emit(problemStatement);
+            // Trigger preview update when showPreview is enabled
+            this.generateHtmlSubject.next();
+        }
+    }
+
+    /**
+     * Signal that the markdown should be rendered into html.
+     */
+    generateHtml() {
+        this.generateHtmlSubject.next();
+    }
+
+    private setupTestCaseSubscription() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+
+        // Only set up a subscription for test cases if the exercise already exists.
+        if (this.editMode()) {
+            this.testCaseSubscription = this.testCaseService
+                .subscribeForTestCases(this.exercise().id!)
+                .pipe(
+                    switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                        // If there are test cases, map them to their names, sort them and use them for the markdown editor.
+                        if (testCases) {
+                            const sortedTestCaseNames = testCases
+                                .filter((testCase) => testCase.active)
+                                .map((testCase) => testCase.testName!)
+                                .sort((a, b) => a.localeCompare(b));
+                            return of(sortedTestCaseNames);
+                        } else if (this.exercise().templateParticipation) {
+                            // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
+                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise().templateParticipation!.id!);
+                        }
+                        return of();
+                    }),
+                    tap((testCaseNames: string[]) => {
+                        this.exerciseTestCases.set(testCaseNames);
+                        const cases = this.exerciseTestCases().map((value) => ({ value, id: value }));
+                        this.testCaseAction.setValues(cases);
+                    }),
+                    catchError(() => of()),
+                )
+                .subscribe();
+        }
+    }
+
+    /**
+     * Generate test case names from the feedback of the exercise's templateParticipation.
+     * This is the fallback for older programming exercises without test cases in the database.
+     * @param templateParticipationId
+     */
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
+        // Fallback for exercises that don't have test cases yet.
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
+            map((result) => {
+                if (!result?.feedbacks) {
+                    throw new Error('no result available');
+                }
+                return result;
+            }),
+            // use the text (legacy case) or the name of the provided test case attribute
+            map(({ feedbacks }: Result) =>
+                feedbacks!
+                    .map((feedback) => feedback.text ?? feedback.testCase?.testName)
+                    .filter((name): name is string => name != undefined)
+                    .sort((a, b) => a.localeCompare(b)),
+            ),
+            catchError(() => of([])),
+        );
+    };
+
+    /**
+     * On every update of the problem statement analysis, update the appropriate line numbers of the editor with the results of the analysis.
+     * Will show warning symbols for every item.
+     *
+     * @param analysis that contains the resulting issues of the problem statement.
+     */
+    onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
+        const lineWarnings = this.mapAnalysisToWarnings(analysis);
+        this.markdownEditorMonaco()
+            ?.monacoEditor?.()
+            ?.setAnnotations(lineWarnings as Annotation[]);
+    };
+
+    /**
+     * Gets the current content from the editor.
+     * In diff mode, returns the modified (right) side content.
+     * In normal mode, returns the current editor content.
+     *
+     * @returns The current editor content, or undefined if editor is not available.
+     */
+    getCurrentContent(): string | undefined {
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
+        if (!monacoEditor) {
+            return undefined;
+        }
+        return monacoEditor.getText();
+    }
+
+    /**
+     * Applies the trusted response of the current AI request. The request's loading flag remains set
+     * until observable finalization, so it must lock user actions without discarding this response.
+     *
+     * @param text Generated draft to display and mark as an unsaved edit.
+     */
+    applyGeneratedText(text: string): void {
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
+        if (!monacoEditor) {
+            return;
+        }
+
+        monacoEditor.setText(text);
+        this.applyProblemStatement(text);
+    }
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.markdownEditorMonaco()?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.markdownEditorMonaco()?.clearReviewCommentDrafts();
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.markdownEditorMonaco()?.hasReviewCommentDrafts() ?? false;
+    }
+
+    /** Accepts content reloaded from the server as the editor's clean baseline. */
+    acceptServerBaseline(exercise: ProgrammingExercise): void {
+        this.previousExercise = exercise;
+        this.unsavedChanges = false;
+        if (exercise.id) {
+            this.testCaseService
+                .refreshTestCases(exercise.id)
+                .pipe(catchError(() => EMPTY))
+                .subscribe();
+        }
+    }
+
+    private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>
+            this.mapIssuesToAnnotations(lineNumber, invalidTestCases, repeatedTestCases),
+        );
+    };
+
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], repeatedTestCases?: string[]) => {
+        const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
+
+        const annotations = [];
+        if (invalidTestCases) {
+            annotations.push(mapIssues(invalidTestCases));
+        }
+
+        if (repeatedTestCases) {
+            annotations.push(mapIssues(repeatedTestCases));
+        }
+
+        return annotations;
+    };
+
+    /**
+     * Handles selection changes from the markdown editor.
+     * Shows floating refinement button when text is selected.
+     */
+    onEditorSelectionChange(selection: EditorSelectionWithPosition | undefined): void {
+        if (this.isGeneratingOrRefining()) {
+            this.hideInlineRefinementButton();
+            return;
+        }
+        // Show/hide inline refinement button based on selection
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const clampedLeft = Math.max(8, Math.min(selection.screenPosition.left, viewportWidth - INLINE_REFINEMENT_PROMPT_WIDTH_PX - 8));
+            const clampedTop = Math.max(8, Math.min(selection.screenPosition.top, viewportHeight - 60));
+            this.inlineRefinementPosition.set({
+                top: clampedTop,
+                left: clampedLeft,
+            });
+            this.selectedTextForRefinement.set(selection.selectedText);
+            this.selectionPositionInfo.set({
+                startLine: selection.startLine,
+                endLine: selection.endLine,
+                startColumn: selection.startColumn,
+                endColumn: selection.endColumn,
+            });
+        } else {
+            this.hideInlineRefinementButton();
+        }
+    }
+
+    /**
+     * Hides the floating inline refinement button.
+     */
+    hideInlineRefinementButton(): void {
+        this.inlineRefinementPosition.set(undefined);
+        this.selectedTextForRefinement.set('');
+        this.selectionPositionInfo.set(undefined);
+    }
+
+    /**
+     * Handles inline refinement submission.
+     * Emits the event for parent to process the refinement.
+     */
+    onInlineRefine(event: InlineRefinementEvent): void {
+        if (this.isGeneratingOrRefining()) {
+            this.hideInlineRefinementButton();
+            return;
+        }
+        this.onInlineRefinement.emit(event);
+        this.hideInlineRefinementButton();
+    }
+
+    /**
+     * Persists the current problem statement and marks the corresponding inline fix as applied.
+     *
+     * @param payload The thread id whose consistency inline fix was applied in the editor.
+     */
+    onApplyInlineFix(payload: { threadId: number }): void {
+        if (this.savingInstructions() || this.isGeneratingOrRefining()) {
+            return;
+        }
+
+        const thread = this.exerciseReviewCommentService.threads().find((candidate) => candidate.id === payload.threadId);
+        const firstComment = getFirstCommentByCreatedDateThenId(thread?.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return;
+        }
+
+        this.persistProblemStatement().subscribe(() => {
+            this.exerciseReviewCommentService.markInlineFixAppliedInContext(firstComment.id);
+        });
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
+        this.markdownEditorMonaco()?.applyRefinedContent(refined);
+        // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
+        // event propagates the change via textChanged → markdownChange → updateProblemStatement.
+    }
+
+    /**
+     * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
+        this.markdownEditorMonaco()?.revertAll();
+        const currentContent = this.markdownEditorMonaco()?.monacoEditor?.()?.getText();
+        if (currentContent !== undefined) {
+            this.updateProblemStatement(currentContent);
+        }
+    }
+
+    /**
+     * Set up collaborative Yjs synchronization for the markdown editor.
+     * Creates the Yjs document/binding and wires Monaco to the shared text.
+     *
+     * Note: This method is only called once during ngAfterViewInit(). The component is always
+     * destroyed and recreated when navigating to a different exercise, so there is no need to
+     * watch for exercise ID changes or reinitialize sync when the exercise input changes.
+     *
+     * @param exerciseId The exercise id to scope synchronization updates.
+     * @param initialText The initial problem statement content used for seeding.
+     */
+    private initializeProblemStatementSync(exerciseId: number, initialText: string) {
+        if (!this.editMode() || this.problemStatementBinding) {
+            return;
+        }
+        if (!this.markdownEditorMonaco()?.monacoEditor?.()) {
+            return;
+        }
+        const model = this.markdownEditorMonaco()!.monacoEditor()!.getModel();
+        const editorInstance = this.markdownEditorMonaco()!.monacoEditor()!.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+        this.teardownProblemStatementSync();
+        this.problemStatementChangeToSuppress = undefined;
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const normalizedText = this.normalizeLineEndings(initialText);
+        this.awaitingCanonicalSync.set(this.canonicalBaseIsolation());
+        this.problemStatementSyncState = this.canonicalBaseIsolation()
+            ? this.problemStatementSyncService.init(exerciseId, normalizedText, true)
+            : this.problemStatementSyncService.init(exerciseId, normalizedText);
+        model.setValue('');
+        this.enforceLfEol(model);
+        this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
+        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(({ contentDivergedFromFallback }) => {
+            this.awaitingCanonicalSync.set(false);
+            if (contentDivergedFromFallback) {
+                this.unsavedChanges = true;
+            }
+        });
+        this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
+            this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
+            // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(syncState.text.toJSON());
+            const contentChanged = model.getValue() !== replacedText;
+            this.problemStatementChangeToSuppress = contentChanged ? replacedText : undefined;
+            if (contentChanged) {
+                this.unsavedChanges = true;
+            }
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
+            this.createProblemStatementBinding(syncState, model, editorInstance);
+        });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    private configureActionGuards(): void {
+        const canMutate = () => !this.isGeneratingOrRefining() && !this.awaitingCanonicalSync();
+        const actions = this.markdownEditorMonaco()?.defaultActions?.();
+        actions?.find((action) => action instanceof AttachmentAction)?.setExecutionGuard(canMutate);
+        actions?.find((action) => action instanceof UrlAction)?.setExecutionGuard(canMutate);
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
+    }
+
+    /**
+     * Tear down Yjs synchronization and release Monaco binding resources.
+     */
+    private teardownProblemStatementSync() {
+        this.awaitingCanonicalSync.set(false);
+        this.problemStatementStateReplacementSubscription?.unsubscribe();
+        this.problemStatementStateReplacementSubscription = undefined;
+        this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();
+        this.problemStatementInitialSyncFinalizedSubscription = undefined;
+        this.problemStatementBinding?.destroy();
+        this.problemStatementBinding = undefined;
+        this.problemStatementBindingDestroyed = false;
+        this.problemStatementSyncState = undefined;
+        this.problemStatementChangeToSuppress = undefined;
+        this.problemStatementSyncService.reset();
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for the problem statement editor.
+     *
+     * This is called on initial setup and whenever the sync service replaces the Y.Doc
+     * after accepting a late winning full-content response. Recreating the binding keeps
+     * Monaco attached to the active Y.Text/Y.Awareness objects.
+     *
+     * @param syncState Current synchronized Yjs primitives.
+     * @param model Monaco text model backing the editor.
+     * @param editorInstance Monaco editor instance bound to the model.
+     */
+    private createProblemStatementBinding(syncState: ProblemStatementSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor) {
+        this.problemStatementBinding?.destroy();
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
+        // Monaco may or may not dispose its model and call destroy(); this is a guard against a second call from ngOnDestroy.
+        const originalDestroy = binding.destroy.bind(binding);
+        this.problemStatementBindingDestroyed = false;
+        binding.destroy = () => {
+            if (this.problemStatementBindingDestroyed) {
+                return;
+            }
+            this.problemStatementBindingDestroyed = true;
+            originalDestroy();
+        };
+        this.problemStatementBinding = binding;
+    }
+}

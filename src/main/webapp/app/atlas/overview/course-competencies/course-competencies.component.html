@@ -1,0 +1,53 @@
+<div class="-mx-2 flex flex-wrap">
+    <div class="w-full px-2 lg:w-2/3">
+        @if (countCompetencies > 0) {
+            <div class="relative mt-4!">
+                <div class="mb-4!">
+                    @for (competency of competencies(); track identify(i, competency); let i = $index) {
+                        <jhi-competency-card [competency]="competency" [courseId]="resolvedCourseId()" />
+                    }
+                </div>
+            </div>
+        }
+        @if (countPrerequisites > 0) {
+            <div class="relative mt-4!">
+                <div class="mb-4!">
+                    <div
+                        class="cursor-pointer"
+                        data-testid="prerequisites-toggle"
+                        (click)="isCollapsed = !isCollapsed"
+                        [attr.aria-expanded]="!isCollapsed"
+                        #keyboardAction15
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction15.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction15.click() : undefined"
+                    >
+                        <fa-icon class="pe-4!" [icon]="isCollapsed ? faAngleDown : faAngleUp" />
+                        <span>{{ 'artemisApp.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
+                    </div>
+                    @if (!isCollapsed) {
+                        <div>
+                            @for (prerequisite of prerequisites(); track identify(i, prerequisite); let i = $index) {
+                                <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linkedCourseCompetency?.course?.id" [isPrerequisite]="true" />
+                            }
+                        </div>
+                    }
+                    <div class="mt-4! border-b border-solid border-(--overview-light-border-color)"></div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="w-full px-2 lg:ml-[8.3333%] lg:w-1/4">
+        <h3 class="mt-4!" jhiTranslate="artemisApp.competency.table.panelHeader"></h3>
+        <tumaet-ui-tag severity="contrast" size="sm" data-testid="competencies-mastered-count">{{ countMasteredCompetencies }} / {{ countCompetencies }}</tumaet-ui-tag>
+        {{ 'artemisApp.competency.mastered' | artemisTranslate }}
+        <dl class="mt-4!">
+            <dt jhiTranslate="artemisApp.competency.progress"></dt>
+            <dd jhiTranslate="artemisApp.competency.progressDescription"></dd>
+            <dt jhiTranslate="artemisApp.competency.mastery"></dt>
+            <dd jhiTranslate="artemisApp.competency.masteryDescription"></dd>
+        </dl>
+    </div>
+</div>

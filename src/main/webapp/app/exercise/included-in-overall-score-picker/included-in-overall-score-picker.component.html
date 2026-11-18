@@ -1,0 +1,31 @@
+<div class="inline-flex flex-wrap items-center">
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY"
+        (click)="change(IncludedInOverallScore.INCLUDED_COMPLETELY)"
+        jhiTranslate="artemisApp.exercise.yes"
+    ></button>
+    <button
+        tumAetUiButton
+        type="button"
+        data-testid="picker-option"
+        [severity]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'primary' : 'secondary'"
+        [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS"
+        (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
+        jhiTranslate="artemisApp.exercise.bonus"
+    ></button>
+    @if (allowNotIncluded()) {
+        <button
+            tumAetUiButton
+            type="button"
+            data-testid="picker-option"
+            [severity]="includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED ? 'primary' : 'secondary'"
+            [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED"
+            (click)="change(IncludedInOverallScore.NOT_INCLUDED)"
+            jhiTranslate="artemisApp.exercise.no"
+        ></button>
+    }
+</div>

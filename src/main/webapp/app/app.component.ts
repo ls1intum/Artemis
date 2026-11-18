@@ -1,0 +1,204 @@
+import { Component, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { DOCUMENT, NgClass } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { LtiService } from 'app/foundation/service/lti.service';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { CourseNotificationPopupOverlayComponent } from 'app/notification/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { FooterComponent } from 'app/core/layouts/footer/footer.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
+import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
+import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
+import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
+import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundation/util/navbar.util';
+import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
+
+@Component({
+    selector: 'jhi-app',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    imports: [
+        AlertOverlayComponent,
+        CdkScrollable,
+        NgClass,
+        PageRibbonComponent,
+        RouterOutlet,
+        FooterComponent,
+        CourseNotificationPopupOverlayComponent,
+        LLMSelectionModalComponent,
+        GlobalSearchModalComponent,
+        SetupPasskeyModalComponent,
+    ],
+})
+export class AppComponent implements OnInit, OnDestroy {
+    private jhiLanguageHelper = inject(JhiLanguageHelper);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private examParticipationService = inject(ExamParticipationService);
+    private themeService = inject(ThemeService);
+    private document = inject<Document>(DOCUMENT);
+    private renderer = inject(Renderer2);
+    private ltiService = inject(LtiService);
+    private featureToggleService = inject(FeatureToggleService);
+    private embedPdfPreloadService = inject(EmbedPdfPreloadService);
+    private clientErrorHandler = inject(ClientErrorHandler);
+    private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
+
+    protected readonly FeatureToggle = FeatureToggle;
+
+    readonly globalSearchEnabled = signal(false);
+    private examStartedSubscription?: Subscription;
+    private testRunSubscription?: Subscription;
+    private ltiSubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private stopObservingShellMetrics?: () => void;
+    /**
+     * If the footer and header should be shown.
+     * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
+     * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
+     */
+    readonly showSkeleton = signal(true);
+    isProduction = true;
+    isTestServer = false;
+    readonly isExamStarted = signal(false);
+    readonly isTestRunExam = signal(false);
+    readonly isShownViaLti = signal(false);
+    readonly usesModuleBackground = signal(false);
+    readonly showPageRibbon = signal(true);
+
+    constructor() {
+        this.clientErrorHandler.reportIfPasskeyIsNotSupported();
+    }
+
+    private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
+        const title: string = routeSnapshot.data['pageTitle'] ?? 'artemisApp';
+        if (routeSnapshot.firstChild) {
+            return this.getPageTitle(routeSnapshot.firstChild) || title;
+        }
+        return title;
+    }
+
+    private getDeepestSnapshot(route: ActivatedRouteSnapshot): ActivatedRouteSnapshot {
+        return route.firstChild ? this.getDeepestSnapshot(route.firstChild) : route;
+    }
+
+    private getDeepestUsesModuleBackground(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['usesModuleBackground'] ?? false;
+    }
+
+    private getDeepestHidePageRibbon(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['hidePageRibbon'] ?? false;
+    }
+
+    ngOnInit() {
+        this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
+
+        // Warm the PDFium engine in the background once the browser is idle, so the first lecture-PDF open is instant.
+        this.embedPdfPreloadService.schedulePreload();
+
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationStart) {
+                /*
+                In the case where we do not want to show the skeleton, we also want to set the background to transparent
+                such that the mobile native applications can display their background in the web view.
+
+                However, as the default background attribute is defined in the body HTML tag, it is outside Angular's reach.
+                We set the background ourselves by adding the transparent-background CSS class on the body element, thus
+                overwriting the default background. We cannot do this in any other way, as Angular cannot modify the body
+                itself.
+                 */
+                const shouldShowSkeletonNow = this.shouldShowSkeleton(event.url);
+                if (!shouldShowSkeletonNow && this.showSkeleton()) {
+                    // If we already show the skeleton but do not want to show the skeleton anymore, we need to remove the background
+                    this.renderer.addClass(this.document.body, 'transparent-background');
+                } else if (shouldShowSkeletonNow && !this.showSkeleton()) {
+                    // If we want to show the skeleton but weren't showing it previously, we need to remove the class to show the skeleton again
+                    this.renderer.removeClass(this.document.body, 'transparent-background');
+                }
+                // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
+                this.showSkeleton.set(shouldShowSkeletonNow);
+            }
+            if (event instanceof NavigationEnd) {
+                // The navbar and footer are re-created with the skeleton, and their heights change with the
+                // breadcrumbs; the shells size their content region from both, so re-target the observer.
+                reattachShellMetricsObserver();
+                this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
+                this.usesModuleBackground.set(this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root));
+                this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
+                const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
+                if (showSkeletonFromRoute !== undefined) {
+                    if (!showSkeletonFromRoute && this.showSkeleton()) {
+                        this.showSkeleton.set(false);
+                        this.renderer.addClass(this.document.body, 'transparent-background');
+                    } else if (showSkeletonFromRoute && !this.showSkeleton()) {
+                        this.showSkeleton.set(true);
+                        this.renderer.removeClass(this.document.body, 'transparent-background');
+                    }
+                }
+            }
+            if (event instanceof NavigationError) {
+                // Optional access: the router types this as any, so a guard rejecting with null or undefined would
+                // otherwise throw here and take the recovery below down with it.
+                if (event.error?.status === 404) {
+                    // noinspection JSIgnoredPromiseFromCall
+                    void this.router.navigate(['/404']);
+                } else {
+                    // A route whose lazily loaded chunk could not be fetched fails here with no status, and callers
+                    // routinely discard the navigation promise, so without this the click silently does nothing.
+                    this.lazyRouteRecoveryService.handleNavigationError(event.error, event.url);
+                }
+            }
+        });
+
+        this.isTestServer = this.profileService.isTestServer();
+        this.isProduction = this.profileService.isProduction();
+
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted.set(isStarted);
+        });
+
+        this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
+            this.isTestRunExam.set(isStarted);
+        });
+
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti.set(isShownViaLti);
+        });
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled.set(isActive);
+        });
+        this.themeService.initialize();
+        this.stopObservingShellMetrics = observeShellMetrics();
+    }
+
+    /**
+     * The skeleton should not be shown for the problem statement component if it is directly accessed,
+     * nor for the standalone feedback component.
+     */
+    private shouldShowSkeleton(url: string): boolean {
+        const isLandingPage = url === '/' || url === '';
+        const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
+        const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback;
+    }
+
+    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {
+        return this.getDeepestSnapshot(root).data?.['showSkeleton'];
+    }
+
+    ngOnDestroy(): void {
+        this.examStartedSubscription?.unsubscribe();
+        this.testRunSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
+        this.globalSearchSubscription?.unsubscribe();
+        this.stopObservingShellMetrics?.();
+    }
+}

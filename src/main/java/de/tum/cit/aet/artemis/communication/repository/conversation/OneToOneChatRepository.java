@@ -1,0 +1,122 @@
+package de.tum.cit.aet.artemis.communication.repository.conversation;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneChat, Long> {
+
+    /**
+     * Find all active one-to-one chats of a given user in a given course.
+     * <p>
+     * We join the conversionParticipants twice, because the first time we use it for filtering the chats and binding it to the user ID. The second time, we fetch all participants;
+     * as it's a one-to-one chat, two.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userId   the ID of the user to search for
+     * @return a list of one-to-one chats
+     */
+    @Query("""
+            SELECT DISTINCT oneToOneChat
+            FROM OneToOneChat oneToOneChat
+                LEFT JOIN oneToOneChat.conversationParticipants matchingParticipant
+                LEFT JOIN FETCH oneToOneChat.conversationParticipants allParticipants
+                LEFT JOIN FETCH allParticipants.user user
+                LEFT JOIN FETCH user.courseRoles
+                LEFT JOIN FETCH oneToOneChat.course
+            WHERE oneToOneChat.course.id = :courseId
+                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                AND matchingParticipant.user.id = :userId
+            ORDER BY oneToOneChat.lastMessageDate DESC
+            """)
+    List<OneToOneChat> findAllWithParticipantsAndUserCourseRolesByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    /**
+     * Find a one-to-one chat between two users in a given course.
+     * <p>
+     * We join the conversationParticipants twice because we need two different participants to match the two users. If we would only join it once, we had only one participant and
+     * multiple results.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userIdA  the ID of the first user
+     * @param userIdB  the ID of the second user
+     * @return an optional one-to-one chat
+     */
+    @Query("""
+            SELECT DISTINCT o
+            FROM OneToOneChat o
+                LEFT JOIN FETCH o.conversationParticipants p
+                LEFT JOIN FETCH p.user u
+                LEFT JOIN FETCH u.courseRoles
+            WHERE o.course.id = :courseId
+                AND u.id = :userIdA
+                AND EXISTS (
+                    SELECT 1
+                    FROM ConversationParticipant cp
+                    WHERE cp.conversation = o
+                        AND cp.user.id = :userIdB
+                )
+            """)
+    // Exist checks required because we have a many-to-many relationship and hibernate doesn't allow multiple joins on the same table anymore.
+    // We only execute the exists check for the second user, because we can filter the chats by the first user. This reduces the amounts of existence checks to the number of
+    // one-to-one chats userA has in that specific course.
+    Optional<OneToOneChat> findWithParticipantsAndUserCourseRolesInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA,
+            @Param("userIdB") Long userIdB);
+
+    /**
+     * Find the one-to-one chat of a pair of users in a course by the key of the pair, whether or not its participants exist yet.
+     *
+     * @param courseId           the ID of the course to search in
+     * @param participantPairKey the key of the pair, see {@link OneToOneChat#pairKeyOf(long, long)}
+     * @return the chat of the pair, if there is one
+     */
+    Optional<OneToOneChat> findByCourseIdAndParticipantPairKey(Long courseId, String participantPairKey);
+
+    Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
+
+    @Query("""
+            SELECT chat.id
+            FROM OneToOneChat chat
+            WHERE chat.course.id = :courseId
+                  AND EXISTS (
+                        SELECT 1
+                        FROM ConversationParticipant participantA
+                        WHERE participantA.conversation = chat AND participantA.user.login = :loginA
+                  )
+                  AND EXISTS (
+                        SELECT 1
+                        FROM ConversationParticipant participantB
+                        WHERE participantB.conversation = chat AND participantB.user.login = :loginB
+                  )
+            ORDER BY chat.id
+            """)
+    List<Long> findIdsOfChatsInCourseBetweenUsers(@Param("courseId") long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
+
+    /**
+     * Find the id of the one-to-one chat between two users in a given course.
+     * <p>
+     * A pair of users normally has one chat per course. Should there be more than one, the oldest is returned rather than failing the caller, because a lookup that throws turns
+     * a page that merely links to the chat into a server error.
+     *
+     * @param courseId the ID of the course to search in
+     * @param loginA   the login of the first user
+     * @param loginB   the login of the second user
+     * @return the id of the oldest chat between the two users, or null if they have none
+     */
+    default Long findIdOfChatInCourseBetweenUsers(long courseId, String loginA, String loginB) {
+        return findIdsOfChatsInCourseBetweenUsers(courseId, loginA, loginB).stream().findFirst().orElse(null);
+    }
+}

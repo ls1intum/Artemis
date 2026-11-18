@@ -1,0 +1,115 @@
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getBackgroundColorHue, getColorBrightness, getContrastingTextColor, getReadableTextColor, isColorDark } from 'app/foundation/util/color.utils';
+import { deterministicRandomValueFromString } from 'app/foundation/util/text.utils';
+
+vi.mock('app/foundation/util/text.utils', () => ({
+    deterministicRandomValueFromString: vi.fn(),
+}));
+
+describe('color utils', () => {
+    describe('getBackgroundColorHue', () => {
+        const mockDeterministic = deterministicRandomValueFromString as Mock;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('returns correct HSL using deterministicRandomValueFromString', () => {
+            mockDeterministic.mockReturnValue(0.5);
+            const seed = 'seed-string';
+            const result = getBackgroundColorHue(seed);
+            expect(mockDeterministic).toHaveBeenCalledWith(seed);
+            expect(result).toBe('hsl(180, 50%, 50%)');
+        });
+
+        it('uses Math.random when seed undefined', () => {
+            mockDeterministic.mockReturnValue(0.25);
+            const randomValue = 0.123456;
+            const mathRandomSpy = vi.spyOn(Math, 'random').mockReturnValue(randomValue);
+
+            const result = getBackgroundColorHue(undefined);
+            expect(mathRandomSpy).toHaveBeenCalled();
+            expect(mockDeterministic).toHaveBeenCalledWith(randomValue.toString());
+            expect(result).toBe(`hsl(${0.25 * 360}, 50%, 50%)`);
+
+            mathRandomSpy.mockRestore();
+        });
+    });
+
+    describe('getColorBrightness', () => {
+        it('calculates brightness for black (#000000)', () => {
+            expect(getColorBrightness('#000000')).toBe(0);
+        });
+
+        it('calculates brightness for white without hash', () => {
+            expect(getColorBrightness('FFFFFF')).toBe(255);
+        });
+
+        it('is case-insensitive and handles mixed-case', () => {
+            const expected = (170 * 299 + 187 * 587 + 204 * 114) / 1000;
+            expect(getColorBrightness('#AaBbCc')).toBe(expected);
+        });
+    });
+
+    describe('isColorDark', () => {
+        it('returns true for dark colors', () => {
+            expect(isColorDark('#000000')).toBe(true);
+        });
+
+        it('returns false for light colors', () => {
+            expect(isColorDark('#FFFFFF')).toBe(false);
+        });
+
+        it('threshold at 128 returns false', () => {
+            expect(isColorDark('#808080')).toBe(false);
+        });
+    });
+
+    describe('getContrastingTextColor', () => {
+        it('returns white on dark backgrounds', () => {
+            expect(getContrastingTextColor('#000000')).toBe('white');
+        });
+
+        it('returns black on light backgrounds', () => {
+            expect(getContrastingTextColor('#FFFFFF')).toBe('black');
+        });
+    });
+
+    describe('edge cases for invalid color formats', () => {
+        it('getColorBrightness returns NaN for invalid hex', () => {
+            expect(isNaN(getColorBrightness('GGGGGG'))).toBe(true);
+        });
+
+        it('isColorDark returns false for NaN brightness', () => {
+            expect(isColorDark('GGGGGG')).toBe(false);
+        });
+
+        it('getContrastingTextColor returns black for NaN brightness', () => {
+            expect(getContrastingTextColor('GGGGGG')).toBe('black');
+        });
+    });
+
+    describe('getReadableTextColor', () => {
+        it('picks white on dark and black on light backgrounds', () => {
+            expect(getReadableTextColor('#8b0000')).toBe('white');
+            expect(getReadableTextColor('#000000')).toBe('white');
+            expect(getReadableTextColor('#FFFFFF')).toBe('black');
+            expect(getReadableTextColor('#ffe000')).toBe('black');
+        });
+
+        it('chooses by contrast ratio, not by brightness, for saturated colors', () => {
+            // Brightness alone would choose white here, but black has the higher contrast ratio
+            expect(getReadableTextColor('#ff0000')).toBe('black');
+            expect(getReadableTextColor('#1b97ca')).toBe('black');
+        });
+
+        it('returns undefined for anything but a plain #rrggbb color', () => {
+            expect(getReadableTextColor(undefined)).toBeUndefined();
+            expect(getReadableTextColor('')).toBeUndefined();
+            expect(getReadableTextColor('000000')).toBeUndefined();
+            expect(getReadableTextColor('#00000000')).toBeUndefined();
+            expect(getReadableTextColor('#fff')).toBeUndefined();
+            expect(getReadableTextColor('red')).toBeUndefined();
+        });
+    });
+});

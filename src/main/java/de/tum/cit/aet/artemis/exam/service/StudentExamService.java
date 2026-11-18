@@ -1,0 +1,958 @@
+package de.tum.cit.aet.artemis.exam.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+
+/**
+ * Service Implementation for managing StudentExam.
+ */
+@Conditional(ExamEnabled.class)
+@Lazy
+@Service
+public class StudentExamService {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
+
+    private final ParticipationService participationService;
+
+    private final ExamService examService;
+
+    private final UserRepository userRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private final SubmissionService submissionService;
+
+    private final ExamQuizService examQuizService;
+
+    private final SubmissionVersionService submissionVersionService;
+
+    private final StudentExamRepository studentExamRepository;
+
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
+    private final Optional<TextSubmissionApi> textSubmissionApi;
+
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExamRepository examRepository;
+
+    private final ExamUserRepository examUserRepository;
+
+    private final CacheManager cacheManager;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final TaskScheduler scheduler;
+
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
+            StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
+            CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
+            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.participationService = participationService;
+        this.studentExamRepository = studentExamRepository;
+        this.userRepository = userRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
+        this.textSubmissionApi = textSubmissionApi;
+        this.modelingSubmissionApi = modelingSubmissionApi;
+        this.submissionVersionService = submissionVersionService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.examQuizService = examQuizService;
+        this.submissionService = submissionService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingTriggerService = programmingTriggerService;
+        this.exerciseRepository = exerciseRepository;
+        this.examRepository = examRepository;
+        this.examUserRepository = examUserRepository;
+        this.cacheManager = cacheManager;
+        this.websocketMessagingService = websocketMessagingService;
+        this.scheduler = scheduler;
+        this.examService = examService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+    }
+
+    /**
+     * Reconstructs the transient submission graph from the slim client DTO onto the authoritative student exam and then
+     * submits it. This is the single service entry point for the hand-in endpoint, so the controller does not need to
+     * depend on the reconstruction mapper directly.
+     * <p>
+     * The per-exercise degrade semantics of the reconstruction are owned by {@link StudentExamSubmitMapper} and left
+     * unchanged: a broken exercise drops only its own last-second changes while the hand-in still succeeds.
+     *
+     * @param existingStudentExam  the student exam loaded from the database (with its exercises)
+     * @param submitStudentExamDTO the slim request body carrying the last-second submission changes
+     * @param currentUser          the current user
+     */
+    public void submitStudentExam(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, submitStudentExamDTO, currentUser);
+        submitStudentExam(existingStudentExam, currentUser);
+    }
+
+    /**
+     * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
+     * and if it was submitted after exam startDate and before individual endDate + gracePeriod
+     *
+     * @param studentExamFromClient the student exam object from the client which will be submitted (final submission)
+     * @param currentUser           the current user
+     */
+    public void submitStudentExam(StudentExam studentExamFromClient, User currentUser) {
+        log.debug("Submit student exam with id {}", studentExamFromClient.getId());
+
+        long start = System.nanoTime();
+        // most important aspect here: set studentExam to submitted and set submission date
+        // 3. DB Call: write
+        submitStudentExam(studentExamFromClient);
+        log.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
+
+        start = System.nanoTime();
+        try {
+            // in case there were last second changes, that have not been submitted yet.
+            saveSubmissions(studentExamFromClient, currentUser);
+        }
+        catch (Exception e) {
+            log.error("saveSubmissions threw an exception", e);
+        }
+        log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
+
+        // NOTE: from here on, we only handle test runs and test exams
+        if (!studentExamFromClient.isTestRun() && studentExamFromClient.getExamMode().isReal()) {
+            return;
+        }
+
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
+        // immediately evaluate quiz participations for test runs and test exams
+        examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExamFromClient);
+
+        // Trigger build for all programing participations
+        var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).flatMap(
+                exercise -> programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), currentUser.getId()).stream())
+                .toList();
+
+        if (!currentStudentParticipations.isEmpty()) {
+            // Delay to ensure that "Building and testing" is shown in the client
+            scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
+        }
+    }
+
+    private void submitStudentExam(StudentExam studentExam) {
+        var now = ZonedDateTime.now();
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(now);
+        studentExamRepository.submitStudentExam(studentExam.getId(), now);
+    }
+
+    private void saveSubmissions(StudentExam studentExam, User currentUser) {
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. A null passes an `instanceof` filter, so without the explicit null check the gap would reach
+        // the participation query below (which is not covered by the per-exercise catch) and cost every exercise its
+        // last-second changes.
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
+        // we only need to save submissions for modeling, text and quiz exercises;
+        var relevantExercises = exercises.stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        if (relevantExercises.isEmpty()) {
+            // nothing to save
+            return;
+        }
+        // 4. DB Call: read
+        List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
+
+        for (Exercise exercise : exercises) {
+            // we do not apply the following checks for programming exercises or file upload exercises
+            try {
+                saveSubmission(currentUser, existingRelevantParticipations, exercise);
+            }
+            catch (Exception e) {
+                log.error("saveSubmission threw an exception", e);
+            }
+        }
+    }
+
+    private void saveSubmission(User currentUser, List<StudentParticipation> existingRelevantParticipations, Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            // programming submissions are only saved during submit in their respective submission page or git push
+            return;
+        }
+        if (exercise instanceof FileUploadExercise) {
+            // file upload submissions are only saved during submit in their respective submission page
+            return;
+        }
+
+        // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
+        if (exercise.getStudentParticipations() == null || exercise.getStudentParticipations().size() != 1) {
+            return;
+        }
+
+        // this object comes from the client
+        StudentParticipation studentParticipationFromClient = exercise.getStudentParticipations().iterator().next();
+        // this object comes from the database
+        StudentParticipation existingParticipationInDatabase = existingRelevantParticipations.stream().filter(p -> p.getId().equals(studentParticipationFromClient.getId()))
+                .findFirst().orElseThrow();
+
+        // if exactly one submission exists we save the submission
+        if (studentParticipationFromClient.getSubmissions() == null || studentParticipationFromClient.getSubmissions().size() != 1) {
+            return;
+        }
+
+        // check that the current user owns the participation
+        if (!studentParticipationFromClient.isOwnedBy(currentUser) || !existingParticipationInDatabase.isOwnedBy(currentUser)) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " is not allowed to access the participation " + existingParticipationInDatabase.getId());
+        }
+        studentParticipationFromClient.setExercise(exercise);
+
+        Submission submissionFromClient = studentParticipationFromClient.getSubmissions().iterator().next();
+
+        // check that the submission belongs to the already saved participation
+        if (!existingParticipationInDatabase.getSubmissions().contains(submissionFromClient)) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot submit a different submission " + submissionFromClient + " for participation "
+                    + existingParticipationInDatabase.getId());
+        }
+        // check that no result has been injected
+        if (submissionFromClient.getLatestResult() != null) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot inject a result " + submissionFromClient.getLatestResult() + " for submission "
+                    + submissionFromClient + " and participation " + existingParticipationInDatabase.getId());
+        }
+        submissionFromClient.setParticipation(studentParticipationFromClient);
+        submissionFromClient.submissionDate(ZonedDateTime.now());
+        submissionFromClient.submitted(true);
+        switch (exercise) {
+            case QuizExercise ignored -> saveSubmissionQuizExercise(currentUser, existingParticipationInDatabase, submissionFromClient);
+            case TextExercise ignored -> saveSubmissionTextExercise(currentUser, existingParticipationInDatabase, submissionFromClient);
+            case ModelingExercise ignored -> saveSubmissionModelingExercise(currentUser, existingParticipationInDatabase, submissionFromClient);
+            default -> {
+            }
+        }
+    }
+
+    private void saveSubmissionModelingExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
+        ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
+            modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class)).save(modelingSubmissionFromClient);
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+    }
+
+    private void saveSubmissionTextExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
+        TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
+            textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).saveTextSubmission(textSubmissionFromClient);
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+    }
+
+    private void saveSubmissionQuizExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
+
+            // Drag-and-drop submitted mappings are stored id-based in the JSON selection and need no back-reference fixup.
+            if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
+            }
+        }
+
+        // load quiz submissions for existing participation to be able to compare them in saveSubmission
+        // 5. DB Call: read
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
+
+        QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+
+        if (!ExamSubmissionService.isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
+            // The answers of the hand-in come without ids, and the database allows one answer per question: they are written to the rows of the stored answers,
+            // which were loaded above for the comparison. Only the answers of the submission that is saved count, so that an answer can never be moved to another one.
+            Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+            if (existingSubmissionInDatabase != null && Objects.equals(existingSubmissionInDatabase.getId(), quizSubmissionFromClient.getId())) {
+                for (SubmittedAnswer storedAnswer : existingSubmissionInDatabase.getSubmittedAnswers()) {
+                    if (storedAnswer.getQuizQuestion() != null) {
+                        storedAnswerIdByQuestionId.merge(storedAnswer.getQuizQuestion().getId(), storedAnswer.getId(), Math::max);
+                    }
+                }
+            }
+            quizSubmissionRepository.saveUpdatingStoredAnswers(quizSubmissionFromClient, storedAnswerIdByQuestionId);
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+    }
+
+    private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
+        // Versioning of the submission, off the request thread. A version is a full copy of the submission content and
+        // nothing in this request reads it back, so making the student wait for that write buys nothing. It was the
+        // slowest statement in the submit path.
+        try {
+            submissionVersionService.saveVersionForIndividualAsync(submissionFromClient, currentUser);
+        }
+        catch (Exception ex) {
+            log.error("Submission version could not be saved", ex);
+        }
+    }
+
+    /**
+     * Assess all exercises, except quiz exercises, of student exams of an exam which are not submitted with 0 points.
+     *
+     * @param exam     the exam
+     * @param assessor the assessor should be the instructor making the call.
+     * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
+     */
+    public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
+        Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(unsubmittedStudentExams);
+        for (final var user : exercisesOfUser.keySet()) {
+            // fetch all studentParticipations of a user, with latest submission and results eagerly loaded
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(user.getId(),
+                    exercisesOfUser.get(user));
+
+            for (final var studentParticipation : studentParticipations) {
+                var latestSubmission = studentParticipation.findLatestSubmission();
+                latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
+                if (latestSubmission.isPresent()) {
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        latestSubmission.get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "You did not submit your exam", correctionRound);
+                    }
+                }
+            }
+        }
+        return unsubmittedStudentExams;
+    }
+
+    /**
+     * Get the StudentExamWithGradeDTO for the given studentExam.
+     *
+     * @param examId        the examId of the studentExam
+     * @param studentExamId the studentExamId for which the StudentExamWithGradeDTO should be calculated
+     * @return the StudentExamWithGradeDTO for the given studentExam
+     */
+    public StudentExamWithGradeDTO getStudentExamWithGradeDTO(long examId, long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
+        examService.loadQuizExercisesForStudentExam(studentExam);
+        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, true);
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+
+        // connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            if (exercise != null) {
+                examService.filterParticipationForExercise(studentExam, exercise, participations, ExamReadAudience.INSTRUCTOR);
+            }
+        }
+
+        studentExam.getUser().setVisibleRegistrationNumber();
+        // This response feeds the exam result summary, which offers the AI feedback request on a test run. The course's Athena
+        // configuration is lazy, so without reading it here the DTO reports the formative switch as off and the button stays hidden.
+        courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
+        Set<ExamGradeScoreDTO> examGrades;
+        if (studentExam.isTestRun()) {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
+        }
+        else {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
+        }
+        return examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
+    }
+
+    /**
+     * Assess the modeling-, file upload and text submissions of an exam which are empty.
+     * Also create automatic submissions and assessments for programming exercises without submissions.
+     * Also sets the state of all participations for all student exams which were submitted to FINISHED
+     *
+     * @param exam                the exam
+     * @param assessor            the assessor should be the instructor making the call
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see
+     *                                {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @return returns the set of StudentExams of which the empty submissions were assessed
+     */
+    public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
+        // remove student exams which should be excluded
+        studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(user.getId(),
+                    exercisesOfUser.get(user));
+            for (var studentParticipation : studentParticipations) {
+                // even if the student did not submit anything for a specific exercise (the InitializationState is therefore only INITIALIZED)
+                // we want to set it to FINISHED as the exam was handed in.
+                if (studentParticipation.getInitializationState().equals(InitializationState.INITIALIZED)) {
+                    studentParticipation.setInitializationState(InitializationState.FINISHED);
+                    studentParticipationRepository.save(studentParticipation);
+                }
+                Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
+                boolean wasEmptyProgrammingParticipation = false;
+                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
+                    wasEmptyProgrammingParticipation = true;
+                    latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
+                }
+                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || wasEmptyProgrammingParticipation)) {
+                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
+                        // required so that the submission is counted in the assessment dashboard
+                        latestSubmission.get().submitted(true);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "Empty submission", correctionRound);
+                    }
+                }
+            }
+        }
+        return studentExams;
+    }
+
+    /**
+     * Helper method to return a map for each user to their exercises. Filters out quiz exercises as they are assessed differently.
+     *
+     * @param studentExams the student exams of the users containing the exercises
+     * @return a map of the User as key, and a list of the users exercises as value
+     */
+    public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
+        return studentExams.stream().collect(
+                Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).toList()));
+    }
+
+    /**
+     * Prepares the submission for programming participations.
+     * When it is the participation of a programming exercise and the manual assessment is enabled, but there is no submission,
+     * a new submission for the programming participation needs to be created.
+     *
+     * @param latestSubmission     the optional latest submission of the participation
+     * @param studentParticipation the provided ProgrammingStudentParticipation
+     * @return the latestSubmission
+     */
+    public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
+            submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
+            return studentParticipation.findLatestSubmission();
+        }
+        return latestSubmission;
+    }
+
+    /**
+     * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
+     * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     *
+     * @param exam        the exam the test run belongs to
+     * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
+     * @return the created testRun studentExam
+     */
+    public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
+        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
+        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
+        return testRun;
+    }
+
+    /**
+     * Loads the given exercises with a single query and returns them in the order of the given ids
+     * (StudentExam.exercises is an @OrderColumn list, so the order must be preserved).
+     * A test run may only contain exercises of the exam it belongs to; any other exercise id is rejected.
+     *
+     * @param exam        the exam the exercises must belong to
+     * @param exerciseIds the ordered ids of the exercises to load
+     * @return the exercises in the order of the given ids
+     */
+    private List<Exercise> resolveExamExercises(Exam exam, List<Long> exerciseIds) {
+        Map<Long, Exercise> exercisesById = exerciseRepository.findAllById(exerciseIds).stream().collect(Collectors.toMap(Exercise::getId, Function.identity()));
+        List<Exercise> exercises = new ArrayList<>(exerciseIds.size());
+        for (Long exerciseId : exerciseIds) {
+            Exercise exercise = exercisesById.get(exerciseId);
+            if (exercise == null) {
+                throw new EntityNotFoundException("Exercise", exerciseId);
+            }
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(exam.getId())) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
+    }
+
+    /**
+     * Create TestRun student exam based on the configuration provided.
+     *
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
+     * @return The created test run
+     */
+    private StudentExam generateTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(exercises);
+        testRun.setExam(exam);
+        testRun.setWorkingTime(workingTime);
+        testRun.setUser(userRepository.getUser());
+        testRun.setTestRun(true);
+        testRun.setSubmitted(false);
+        testRun = studentExamRepository.save(testRun);
+        return testRun;
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the test run.
+     * Calls {@link StudentExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
+     */
+    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        // The participations are created as test run participations right away. Flagging them afterwards would relabel
+        // whatever the setup returned, and that is the graded participation whenever the instructor already has one.
+        setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations, false);
+    }
+
+    /**
+     * Method to set up new participations for a StudentExam of a test exam.
+     *
+     * @param studentExam the studentExam for which the new participations should be set up
+     */
+    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, false);
+        // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
+        // Since students can participate in the test exam multiple times, we need to associate their exercise participations with a specific student exam
+        if (!generatedParticipations.isEmpty()) {
+            var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+            freshStudentExam.getStudentParticipations().addAll(generatedParticipations);
+            this.studentExamRepository.save(freshStudentExam);
+            studentExam.setStudentParticipations(freshStudentExam.getStudentParticipations());
+        }
+        studentParticipationRepository.saveAll(generatedParticipations);
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the student exam.
+     *
+     * @param studentExam             The studentExam for which the participations and submissions should be created
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
+     */
+    private void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
+        User student = studentExam.getUser();
+        List<Exercise> exercises = studentExam.getExercises();
+        // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
+        // startExercises asks for a whole cohort at once instead.
+        boolean createNewParticipations = studentExam.getExam().isTestOrPractice(ZonedDateTime.now());
+        Set<Long> startedExerciseIds = createNewParticipations ? Set.of()
+                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student, studentExam.isTestRun())).map(Exercise::getId)
+                        .collect(Collectors.toSet());
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, createNewParticipations, studentExam.isTestRun(), startedExerciseIds,
+                generatedParticipations, failFast);
+    }
+
+    /**
+     * Whether the student already has a participation for the exercise that reached {@link InitializationState#INITIALIZED}.
+     * <p>
+     * Only participations on the same side of the test run divide count. A test run reads back exactly its own
+     * participations, so an instructor's graded participation must not make the test run skip creating one, and the
+     * other way round: the exercise would then be conducted without a participation to submit to.
+     *
+     * @param exerciseId the id of the exercise
+     * @param student    the student
+     * @param testRun    whether the participation is being set up for a test run
+     * @return true if such a participation exists
+     */
+    private boolean hasInitializedParticipation(long exerciseId, User student, boolean testRun) {
+        return studentParticipationRepository.existsByExerciseIdAndStudentIdAndTestRunAndInitializationStateIn(exerciseId, student.getId(), testRun,
+                InitializationState.statesThatCompleted(InitializationState.INITIALIZED));
+    }
+
+    /**
+     * Sets up the participations and submissions for the given exercises of one student exam.
+     * <p>
+     * Takes the few values it reads rather than the student exam entity, so that the bulk preparation in
+     * {@link #startExercises(Long)} can feed it from a projection instead of loading the whole exam graph.
+     *
+     * @param studentExamId           the id of the student exam the participations belong to, used for logging only
+     * @param student                 the student to create the participations for
+     * @param exercises               the exercises of that student exam
+     * @param testExam                whether the student exam belongs to a test exam, in which case a new participation is always created
+     * @param testRun                 whether the student exam is a test run, whose participations are kept apart from the graded ones
+     * @param startedExerciseIds      the ids of those exercises the student already has a fully initialized participation for
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
+     * @param failFast                whether to rethrow the first failure instead of continuing with the next exercise
+     */
+    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, boolean testRun,
+            Set<Long> startedExerciseIds, List<StudentParticipation> generatedParticipations, boolean failFast) {
+        for (Exercise exercise : exercises) {
+            // Stands in only if no caller context reached this thread; a real user's identity is kept.
+            SecurityUtils.setAuthorizationObject();
+            // we start the exercise if no participation was found that was already fully initialized
+            if (testExam || !startedExerciseIds.contains(exercise.getId())) {
+                try {
+                    // Load lazy property
+                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
+                    }
+                    // this will also create initial (empty) submissions for quiz, text, modeling and file upload
+                    StudentParticipation participation = participationService.startExercise(exercise, student, true, testRun);
+
+                    generatedParticipations.add(participation);
+
+                    if (!participation.isAtLeastInitialized()) {
+                        throw new IllegalStateException("Participation " + participation.getId() + " was not initialized after starting exercise " + exercise.getId()
+                                + " for student exam " + studentExamId + " and student " + student.getParticipantIdentifier());
+                    }
+
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExamId, exercise.getId(), student.getParticipantIdentifier());
+                }
+                catch (Exception ex) {
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExamId, exercise.getId(),
+                            student.getParticipantIdentifier(), ex.getMessage(), ex);
+                    if (failFast) {
+                        throw ex;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Starts all the exercises of all the student exams of an exam
+     *
+     * @param examId exam to which the student exams belong
+     * @return a future that will yield the number of generated participations
+     */
+    public CompletableFuture<Integer> startExercises(Long examId) {
+        return this.startExercises(examId, null);
+    }
+
+    private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
+        var examSchedule = examRepository.findScheduleById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        boolean testExam = !examSchedule.examMode().isReal();
+        boolean createNewParticipations = examSchedule.isTestOrPractice(ZonedDateTime.now());
+
+        // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
+        // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
+        // exam, which for a large exam transfers megabytes to convey a few kilobytes of distinct data.
+        var exerciseStartData = studentExamRepository.findExerciseStartDataByExamId(examId);
+        var exercisesById = loadExercisesForPreparation(exerciseStartData);
+        // Which students are already set up, asked once per exercise rather than once per student and exercise. Test runs
+        // are not prepared here, so only the graded participations count.
+        var startedStudentIdsByExerciseId = createNewParticipations ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
+        // LinkedHashMap so the student exams are prepared in the order the query returned them
+        var rowsByStudentExamId = exerciseStartData.stream()
+                .collect(Collectors.groupingBy(StudentExamExerciseStartDTO::studentExamId, LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
+        int studentExamCount = rowsByStudentExamId.size();
+
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+
+        this.invalidateExerciseStartStatus(examId);
+
+        var finishedExamsCounter = new AtomicInteger(0);
+        var failedExamsCounter = new AtomicInteger(0);
+        var startedAt = ZonedDateTime.now();
+        var lock = new ReentrantLock();
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
+
+        try (var threadPool = Executors.newFixedThreadPool(10)) {
+            var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
+                long studentExamId = entry.getKey();
+                var rows = entry.getValue();
+                var student = new User(rows.getFirst().userId());
+                student.setLogin(rows.getFirst().userLogin());
+                var exercises = rows.stream().map(row -> exercisesById.get(row.exerciseId())).filter(Objects::nonNull).toList();
+                var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
+                        .map(Exercise::getId).collect(Collectors.toSet());
+                return CompletableFuture.runAsync(() -> {
+                    List<StudentParticipation> localParticipations = new ArrayList<>();
+                    try {
+                        setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, createNewParticipations, false, startedExerciseIds, localParticipations, true);
+                    }
+                    finally {
+                        // Also link the participations that were set up before a later exercise failed. A retry skips those already initialized
+                        // exercises, so they would otherwise never be linked to the student exam and be missing during the conduction.
+                        if (testExam && !localParticipations.isEmpty()) {
+                            var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
+                            freshStudentExam.getStudentParticipations().addAll(localParticipations);
+                            studentExamRepository.save(freshStudentExam);
+                        }
+                        generatedParticipations.addAll(localParticipations);
+                    }
+                }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        generatedParticipations.size(), startedAt, lock)).exceptionally(throwable -> {
+                            log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
+                                    generatedParticipations.size(), startedAt, lock);
+                            return null;
+                        });
+            }).toArray(CompletableFuture[]::new);
+            return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
+                threadPool.shutdown();
+                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
+                        lock);
+                return generatedParticipations.size();
+            });
+        }
+    }
+
+    /**
+     * Loads every distinct exercise the given student exams reference, once, rather than once per student exam.
+     * <p>
+     * Programming exercises are loaded with their template participation right away: the preparation would otherwise
+     * fetch it lazily from inside the worker threads, which all share the same exercise instance.
+     *
+     * @param exerciseStartData the rows read for the exam
+     * @return the exercises by id
+     */
+    private Map<Long, Exercise> loadExercisesForPreparation(List<StudentExamExerciseStartDTO> exerciseStartData) {
+        var exerciseIds = exerciseStartData.stream().map(StudentExamExerciseStartDTO::exerciseId).collect(Collectors.toSet());
+        Map<Long, Exercise> exercisesById = new HashMap<>();
+        for (Exercise exercise : exerciseRepository.findAllById(exerciseIds)) {
+            var loadedExercise = exercise instanceof ProgrammingExercise ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId())
+                    : exercise;
+            exercisesById.put(loadedExercise.getId(), loadedExercise);
+        }
+        if (exercisesById.size() < exerciseIds.size()) {
+            // Cannot happen while the foreign key holds, but the student exams that reference a missing exercise would
+            // otherwise be prepared one exercise short without anything saying so.
+            exerciseIds.removeAll(exercisesById.keySet());
+            log.error("Exercises {} are referenced by student exams but no longer exist, their participations are not prepared", exerciseIds);
+        }
+        return exercisesById;
+    }
+
+    /**
+     * Reads which students already have a fully initialized participation, one query per exercise instead of one per
+     * student and exercise, and ids instead of whole participation rows.
+     *
+     * @param exerciseIds the ids of the exercises of the exam
+     * @return the ids of the students already set up, by exercise id
+     */
+    private Map<Long, Set<Long>> loadStartedStudentIds(Set<Long> exerciseIds) {
+        var startedStates = InitializationState.statesThatCompleted(InitializationState.INITIALIZED);
+        Map<Long, Set<Long>> startedStudentIdsByExerciseId = new HashMap<>();
+        for (Long exerciseId : exerciseIds) {
+            startedStudentIdsByExerciseId.put(exerciseId,
+                    studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseIdAndTestRun(exerciseId, false, startedStates));
+        }
+        return startedStudentIdsByExerciseId;
+    }
+
+    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        // Synchronizing and comparing to avoid race conditions here
+        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
+        try {
+            lock.lock();
+            ExamExerciseStartPreparationStatus status = null;
+            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+            if (cache != null) {
+                var oldValue = cache.get(examId);
+                if (oldValue != null) {
+                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                    if (oldStatus != null) {
+                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
+                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
+                    }
+                }
+                if (status == null) {
+                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
+                }
+                cache.put(examId, status);
+            }
+            else {
+                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
+            }
+            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
+        }
+        catch (Exception e) {
+            log.warn("Failed to send exercise preparation status", e);
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
+                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
+    }
+
+    public void invalidateExerciseStartStatus(Long examId) {
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+    }
+
+    /**
+     * Generates a new individual StudentExam for the specified student and stores it in the database.
+     * Called when a student starts a normal or test exam.
+     *
+     * @param exam    the exam to generate the student exam for
+     * @param student The student for whom the StudentExam should be created.
+     * @return The generated StudentExam.
+     */
+    public StudentExam generateIndividualStudentExam(Exam exam, User student) {
+        long start = System.nanoTime();
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        StudentExam studentExam;
+        var existing = examWithExercises.isTestOrPractice(ZonedDateTime.now()) ? Optional.<StudentExam>empty()
+                : studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), false);
+        if (existing.isPresent()) {
+            studentExam = existing.get();
+        }
+        else {
+            studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        }
+        // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
+        // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
+        // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
+        // flush can turn it into an update.
+        studentExam.setUser(student);
+        // we need to break a cycle for the serialization
+        studentExam.getExam().setExerciseGroups(null);
+        studentExam.getExam().setStudentExams(null);
+
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
+
+        return studentExam;
+    }
+
+    /**
+     * Generates the student exams randomly based on the exam configuration and the exercise groups.
+     *
+     * @param exam the exam to generate student exams for
+     * @return the list of student exams with their corresponding users
+     */
+    public List<StudentExam> generateStudentExams(final Exam exam) {
+        // The caller has already deleted the existing student exams and invalidated the exercise start status, and
+        // hands over an exam that carries its exercise groups. Re-reading the exam graph here loaded it a second time
+        // and re-ran a delete that had nothing left to remove. Only the registered students are still missing, and
+        // those are read as ids: ExamUser holds an eager association to User, so assembling them from the graph cost
+        // one select per student.
+        Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(exam, registeredUserIds);
+    }
+
+    /**
+     * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
+     * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
+     * <p>
+     * <b>Not serialised against a concurrent generation.</b> The exam-row lock this and the other generation paths used
+     * to take is gone with the transaction that held it, so two simultaneous calls can both read the same user as
+     * missing and both create a student exam for them; there is no unique constraint on {@code (exam_id, user_id)} to
+     * catch it, and a portable one cannot be added because a test run is a second student exam for the same pair. The
+     * same removal also means the exercise groups are no longer re-read under a lock, so a concurrent exercise-group
+     * move can desync the selection. Restoring both means a repository-owned boundary that locks the exam row, which is
+     * recorded as a follow-up rather than reintroduced here.
+     *
+     * @param exam the exam to generate student exams for
+     * @return the list of student exams with their corresponding users
+     */
+    public List<StudentExam> generateMissingStudentExams(Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+
+        // Both sides of this subtraction are only ever compared, so ids are enough. Reading them as users loaded one
+        // entity per registered student and one per student who already has an exam.
+        Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(examWithExercises.getId()));
+        missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(examWithExercises.getId()));
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
+    }
+}

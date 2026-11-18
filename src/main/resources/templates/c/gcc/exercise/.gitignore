@@ -1,0 +1,13 @@
+*
+
+!*.h
+!*.c
+!*.sh
+!Makefile
+!.gitignore
+!.gitattributes
+
+!*/
+
+!.vscode/launch.json
+!.vscode/tasks.json

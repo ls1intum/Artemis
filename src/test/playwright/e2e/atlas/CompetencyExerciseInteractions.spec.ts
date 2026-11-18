@@ -1,0 +1,96 @@
+import { test } from '../../support/fixtures';
+import { admin } from '../../support/users';
+import { expect } from '@playwright/test';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { SEED_COURSES } from '../../support/seedData';
+import { generateUUID } from '../../support/utils';
+
+const course = { id: SEED_COURSES.atlas1.id } as any;
+
+test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
+    let exercise: TextExercise;
+    let competenciesData: Array<{ title: string; description: string }>;
+
+    test.beforeEach('Setup competencies and exercise', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+        await login(admin);
+        const uid = generateUUID();
+        competenciesData = [
+            { title: 'Problem Solving ' + uid, description: 'Ability to solve complex problems' },
+            { title: 'Code Quality ' + uid, description: 'Writing clean and maintainable code' },
+        ];
+        for (const competency of competenciesData) {
+            await courseManagementAPIRequests.createCompetency(course, competency.title, competency.description);
+        }
+        exercise = await exerciseAPIRequests.createTextExercise({ course }, 'Text ' + uid);
+    });
+
+    // Seed courses are persistent — no cleanup needed
+
+    test('Links exercise to single competency', async ({ page, courseManagementExercises, competencyManagement }) => {
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
+
+        // Link competency
+        await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByText(competenciesData[0].title)).toBeVisible();
+
+        // Verify exercise is linked
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[0].title);
+        await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
+    });
+
+    test('Updates competency-exercise linking', async ({ page, courseManagementExercises, competencyManagement }) => {
+        // This test does 4 exercise-list page navigations + 2 competencyManagement.goto +
+        // multiple saves; under heavy multi-node load even test.slow()'s 180s budget can run
+        // tight (observed ~230s wallclock in CI run 26360071860). Use an explicit 6-minute
+        // timeout so the happy path has comfortable headroom without forcing a flake retry.
+        test.setTimeout(360_000);
+        // Link to first competency
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
+        await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByText(competenciesData[0].title)).toBeVisible();
+
+        // Link to second competency
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
+
+        // Remove first competency
+        await page.getByRole('checkbox', { name: competenciesData[0].title }).uncheck();
+        // Add second competency
+        await page.getByRole('checkbox', { name: competenciesData[1].title }).check();
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        // Verify first competency is unlinked and second is linked
+        await expect(page.getByText(competenciesData[0].title)).not.toBeVisible();
+        await expect(page.getByText(competenciesData[1].title)).toBeVisible();
+
+        // Verify first competency no longer shows exercise
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[0].title);
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByRole('button', { name: 'Start exercise' })).toHaveCount(0);
+
+        // Verify second competency shows the exercise
+        await competencyManagement.openCompetencyDetail(course.id!, competenciesData[1].title);
+        await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
+    });
+
+    test('Removes competency from exercise when unlinking', async ({ page, courseManagementExercises }) => {
+        // Link exercise first
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
+        await page.getByRole('checkbox', { name: competenciesData[0].title }).check();
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByText(competenciesData[0].title)).toBeVisible();
+
+        // Unlink exercise
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await courseManagementExercises.openExerciseEditForm(exercise.id!);
+        await page.getByRole('checkbox', { name: competenciesData[0].title }).uncheck();
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await expect(page.getByText(competenciesData[0].title)).not.toBeVisible();
+    });
+});

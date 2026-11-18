@@ -1,0 +1,348 @@
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import {
+    CompetencyRelationType,
+    CompetencyTaxonomy,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyProgress,
+    CourseCompetencyType,
+} from 'app/atlas/shared/entities/competency.model';
+import { of } from 'rxjs';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { Component as NgComponent, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
+
+@NgComponent({
+    template: `
+        <jhi-competency-management-table
+            [courseId]="1"
+            [courseCompetencies]="courseCompetencies()"
+            [competencyType]="competencyType()"
+            [standardizedCompetenciesEnabled]="true"
+            (competencyDeleted)="competencyDeleted($event)"
+            (competenciesAdded)="competenciesAdded($event)"
+        />
+    `,
+    imports: [CompetencyManagementTableComponent],
+})
+class WrappedComponent {
+    protected readonly CourseCompetencyType = CourseCompetencyType;
+    courseCompetencies = signal<CourseCompetency[]>([]);
+    allCompetencies: CourseCompetency[] = [];
+    competencyType = signal(CourseCompetencyType.COMPETENCY);
+
+    competencyDeleted(competencyId: number) {}
+    competenciesAdded(added: CourseCompetency[]) {
+        this.allCompetencies = this.allCompetencies.concat(added);
+    }
+}
+
+describe('CompetencyManagementTableComponent', () => {
+    let fixture: ComponentFixture<WrappedComponent>;
+    let component: WrappedComponent;
+    let competencyManagementTableComponent: CompetencyManagementTableComponent;
+
+    let competencyService: CompetencyService;
+    let prerequisiteService: PrerequisiteService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [WrappedComponent],
+            providers: [
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(WrappedComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+
+                const debugEl = fixture.debugElement.query(By.directive(CompetencyManagementTableComponent));
+                competencyManagementTableComponent = debugEl.componentInstance as CompetencyManagementTableComponent;
+
+                competencyService = TestBed.inject(CompetencyService);
+                prerequisiteService = TestBed.inject(PrerequisiteService);
+            });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize values', () => {
+        component.competencyType.set(CourseCompetencyType.COMPETENCY);
+        fixture.changeDetectorRef.detectChanges();
+        expect(competencyManagementTableComponent.service).toEqual(competencyService);
+
+        component.competencyType.set(CourseCompetencyType.PREREQUISITE);
+        fixture.changeDetectorRef.detectChanges();
+        expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
+    });
+
+    it('should handle import all data', () => {
+        const responseBody: CompetencyWithTailRelationDTO[] = [
+            { competency: { id: 1 }, tailRelations: [] },
+            { competency: { id: 2 }, tailRelations: [{ id: 3, tailCompetencyId: 2, headCompetencyId: 1, relationType: CompetencyRelationType.ASSUMES }] },
+        ];
+
+        competencyManagementTableComponent.updateDataAfterImportAll(responseBody);
+        expect(component.allCompetencies).toHaveLength(2);
+    });
+
+    it('should open the import-all dialog sized by the kit with the translated title', () => {
+        const dialogService = TestBed.inject(TumAetUiDialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+
+        competencyManagementTableComponent.openImportAllModal();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            ImportAllCompetenciesComponent,
+            expect.objectContaining({
+                header: 'artemisApp.competency.importAll.title',
+                size: 'large',
+                data: { disabledIds: [1] },
+            }),
+        );
+    });
+
+    describe('import all result handling', () => {
+        const dialogResult = { courseForImportDTO: { id: 7, title: 'Other course' }, importRelations: true };
+
+        function openWithResult(response: CompetencyWithTailRelationDTO[]) {
+            vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue({ onClose: of(dialogResult) } as any);
+            const importAllSpy = vi.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpResponse({ body: response })));
+            competencyManagementTableComponent.service = competencyService;
+            competencyManagementTableComponent.openImportAllModal();
+            return importAllSpy;
+        }
+
+        it('should import the competencies of the chosen course and report the imported ones', () => {
+            const alertService = TestBed.inject(AlertService);
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.courseCompetencies.set([{ id: 1 } as CourseCompetency]);
+            fixture.detectChanges();
+
+            const importAllSpy = openWithResult([
+                { competency: { id: 1 }, tailRelations: [] },
+                { competency: { id: 2 }, tailRelations: [] },
+            ]);
+
+            expect(importAllSpy).toHaveBeenCalledWith(1, 7, true);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.competency.importAll.success', { noOfCompetencies: 2, courseTitle: 'Other course' });
+            expect(component.allCompetencies.map((c) => c.id)).toEqual([2]);
+        });
+
+        it('should warn when nothing was imported', () => {
+            const alertService = TestBed.inject(AlertService);
+            const warningSpy = vi.spyOn(alertService, 'warning');
+
+            openWithResult([]);
+
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.competency.importAll.warning', { courseTitle: 'Other course' });
+            expect(component.allCompetencies).toHaveLength(0);
+        });
+    });
+
+    it('should handle delete competency', () => {
+        const deleteSpy = vi.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
+        const competencyDeletedSpy = vi.spyOn(component, 'competencyDeleted');
+        const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
+        const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
+        competencyManagementTableComponent.service = competencyService;
+        component.courseCompetencies.set([competency1, competency2]);
+        fixture.changeDetectorRef.detectChanges();
+
+        competencyManagementTableComponent.deleteCompetency(1);
+        expect(deleteSpy).toHaveBeenCalledOnce();
+        expect(competencyDeletedSpy).toHaveBeenCalledWith(1);
+    });
+
+    describe('empty state', () => {
+        const empty = () => fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+
+        it('should show the empty state with a create action when the course has no competencies', () => {
+            component.courseCompetencies.set([]);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).not.toBeNull();
+        });
+
+        it('should show the empty state without a create action when only the filter matches nothing', () => {
+            component.courseCompetencies.set([{ id: 1, title: 'Algebra' } as CourseCompetency]);
+            fixture.changeDetectorRef.detectChanges();
+            expect(empty()).toBeNull();
+
+            competencyManagementTableComponent.filterText.set('zzz');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).toBeNull();
+        });
+    });
+
+    describe('filtering', () => {
+        it('should filter competencies by title (case-insensitive)', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Analysis' } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('al');
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result).toHaveLength(2);
+            expect(result.map((c) => c.id)).toContain(1);
+            expect(result.map((c) => c.id)).toContain(3);
+        });
+
+        it('should return empty list when filter matches nothing', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            component.courseCompetencies.set([competency1]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('zzz');
+
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(0);
+        });
+
+        it('should show all competencies when filter is cleared', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('Algebra');
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(1);
+
+            competencyManagementTableComponent.filterText.set('');
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(2);
+        });
+    });
+
+    describe('sorting', () => {
+        it('should apply the sort event of the table header to predicate and direction', () => {
+            const competency1 = { id: 1, title: 'Zoology', taxonomy: CompetencyTaxonomy.REMEMBER } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra', taxonomy: CompetencyTaxonomy.ANALYZE } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2]);
+            fixture.detectChanges();
+
+            competencyManagementTableComponent.onSortChange({ field: 'taxonomy', order: 1 });
+
+            expect(competencyManagementTableComponent.sortPredicate).toBe('taxonomy');
+            expect(competencyManagementTableComponent.sortAscending).toBe(true);
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies().map((c) => c.id)).toEqual([2, 1]);
+
+            competencyManagementTableComponent.onSortChange({ field: 'title', order: -1 });
+
+            expect(competencyManagementTableComponent.sortPredicate).toBe('title');
+            expect(competencyManagementTableComponent.sortAscending).toBe(false);
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies().map((c) => c.id)).toEqual([1, 2]);
+        });
+
+        it('should sort by title ascending by default', () => {
+            const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.detectChanges();
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.title)).toEqual(['Algebra', 'Biology', 'Zoology']);
+        });
+
+        it('should sort by title descending', () => {
+            const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortAscending = false;
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.title)).toEqual(['Zoology', 'Biology', 'Algebra']);
+        });
+
+        it('should sort by taxonomy ascending', () => {
+            const competency1 = { id: 1, title: 'A', taxonomy: CompetencyTaxonomy.REMEMBER } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', taxonomy: CompetencyTaxonomy.ANALYZE } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', taxonomy: CompetencyTaxonomy.APPLY } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'taxonomy';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.taxonomy)).toEqual([CompetencyTaxonomy.ANALYZE, CompetencyTaxonomy.APPLY, CompetencyTaxonomy.REMEMBER]);
+        });
+
+        it('should sort by softDueDate ascending', () => {
+            const competency1 = { id: 1, title: 'A', softDueDate: dayjs('2025-06-01') } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', softDueDate: dayjs('2025-01-01') } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', softDueDate: dayjs('2025-03-15') } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'softDueDate';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 3, 1]);
+        });
+
+        it('should sort by masteredStudents ratio ascending', () => {
+            const progress1 = { numberOfStudents: 10, numberOfMasteredStudents: 8 } as CourseCompetencyProgress;
+            const progress2 = { numberOfStudents: 10, numberOfMasteredStudents: 2 } as CourseCompetencyProgress;
+            const progress3 = { numberOfStudents: 10, numberOfMasteredStudents: 5 } as CourseCompetencyProgress;
+            const competency1 = { id: 1, title: 'A', courseProgress: progress1 } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', courseProgress: progress2 } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', courseProgress: progress3 } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2, competency3]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'masteredStudents';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 3, 1]);
+        });
+
+        it('should treat competency without progress as 0% for masteredStudents sort', () => {
+            const progress = { numberOfStudents: 10, numberOfMasteredStudents: 3 } as CourseCompetencyProgress;
+            const competency1 = { id: 1, title: 'A', courseProgress: progress } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B' } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2]);
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'masteredStudents';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 1]);
+        });
+    });
+});

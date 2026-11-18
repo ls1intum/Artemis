@@ -1,0 +1,239 @@
+package de.tum.cit.aet.artemis.programming;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.sshd.server.SshServer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+import com.github.dockerjava.api.DockerClient;
+
+import tools.jackson.core.JacksonException;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
+import de.tum.cit.aet.artemis.localci.service.LocalCIMissingJobService;
+import de.tum.cit.aet.artemis.localci.service.LocalCIResultService;
+import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+
+/**
+ * This adds upon the {@link AbstractProgrammingIntegrationLocalCILocalVCTest} by providing additional
+ * <ul>
+ * <li>test data on test startup</li>
+ * <li>services and repositories that are needed for the tests.</li>
+ * </ul>
+ */
+public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    /**
+     * This is the mock(DockerClient.class).
+     * Subclasses can use this to dynamically mock methods of the DockerClient.
+     */
+    protected DockerClient dockerClient;
+
+    @BeforeAll
+    protected static void mockDockerClient() throws InterruptedException {
+        dockerClientMock = DockerClientTestService.mockDockerClient();
+    }
+
+    @BeforeEach
+    protected void mockBuildAgentServices() {
+        // The shared buildAgentConfiguration spy must not be stubbed here: scheduled and build threads call it while this runs, see BuildAgentConfigurationOverrides.
+        buildAgentConfigurationOverrides.useDockerClient(dockerClientMock);
+        this.dockerClient = dockerClientMock;
+    }
+
+    // Config
+    @Value("${artemis.version-control.user}")
+    protected String localVCBaseUsername;
+
+    @LocalServerPort
+    protected int port;
+
+    @Autowired
+    protected SshServer sshServer;
+
+    @Autowired
+    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    protected ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    // External Repositories
+    @Autowired
+    protected ExamTestRepository examRepository;
+
+    @Autowired
+    protected StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    protected TeamRepository teamRepository;
+
+    @Autowired
+    protected VcsAccessLogRepository vcsAccessLogRepository;
+
+    // Services
+    @Autowired
+    protected BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    protected LocalCIResultService localCIResultService;
+
+    @Autowired
+    protected LocalVCServletService localVCServletService;
+
+    @Autowired
+    protected LocalVCPushProcessingService localVCPushProcessingService;
+
+    @Autowired
+    protected LocalVCBuildAgentAuthenticationService localVCBuildAgentAuthenticationService;
+
+    @Autowired
+    protected LocalCITriggerService localCITriggerService;
+
+    @Autowired
+    protected LocalCIMissingJobService localCIMissingJobService;
+
+    @Autowired
+    protected ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    // External Services
+
+    // Util Services
+
+    // External Util services
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
+    protected static final String NOT_FOUND = "not found";
+
+    protected static final String NOT_AUTHORIZED = "not authorized";
+
+    protected static final String INTERNAL_SERVER_ERROR = "500";
+
+    protected static final String FORBIDDEN = "not permitted";
+
+    protected Course course;
+
+    protected ProgrammingExercise programmingExercise;
+
+    protected TemplateProgrammingExerciseParticipation templateParticipation;
+
+    protected SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    protected String student1Login;
+
+    protected User student1;
+
+    protected String student2Login;
+
+    protected String tutor1Login;
+
+    protected String instructor1Login;
+
+    protected User instructor1;
+
+    protected String instructor2Login;
+
+    protected User instructor2;
+
+    protected String projectKey1;
+
+    protected String assignmentRepositorySlug;
+
+    protected String templateRepositorySlug;
+
+    protected String solutionRepositorySlug;
+
+    protected String testsRepositorySlug;
+
+    protected abstract String getTestPrefix();
+
+    @BeforeEach
+    void initUsersAndExercise() throws JacksonException {
+        // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
+        // Thus, "inject" the port from here.
+        localVCLocalCITestService.setPort(port);
+
+        String testPrefix = getTestPrefix();
+        List<User> users = userUtilService.addUsers(testPrefix, 2, 1, 0, 2);
+        student1Login = testPrefix + "student1";
+        student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
+        student2Login = testPrefix + "student2";
+        tutor1Login = testPrefix + "tutor1";
+        instructor1Login = testPrefix + "instructor1";
+        instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
+        instructor2Login = testPrefix + "instructor2";
+        instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(testPrefix);
+        // Explicitly remove instructor2 (not in course by design)
+        userUtilService.unenrollUserFromCourse(instructor2, course);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        projectKey1 = programmingExercise.getProjectKey();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-tests.git");
+        // The configuration is a row of its own, so it is read before it is changed.
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        var defaultPhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig);
+        var defaultDockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
+        var buildPlanPhasesDTO = new BuildPlanPhasesDTO(defaultPhases, defaultDockerImage);
+        buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+        // Capture the managed entity returned by merge() to avoid stale detached entity issues
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
+        staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+
+        // Set the correct repository URIs for the template and the solution participation.
+        templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
+        templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "solution");
+        solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        assignmentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
+
+        testsRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "tests");
+
+        localVCLocalCITestService.addTestCases(programmingExercise);
+    }
+
+    @AfterEach
+    void tearDown() {
+        buildJobRepository.deleteAll();
+    }
+}

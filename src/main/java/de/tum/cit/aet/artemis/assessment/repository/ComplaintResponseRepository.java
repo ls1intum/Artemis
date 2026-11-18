@@ -1,0 +1,139 @@
+package de.tum.cit.aet.artemis.assessment.repository;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+
+/**
+ * Spring Data JPA repository for the ComplaintResponse entity.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface ComplaintResponseRepository extends ArtemisJpaRepository<ComplaintResponse, Long> {
+
+    /**
+     * This magic method counts the number of complaints responses by complaint type associated to a course id
+     * <p>
+     * Filters the denormalized complaint.exerciseId, so neither the result nor the exercise has to be joined.
+     *
+     * @param complaintType - complaint type we want to filter by
+     * @param exerciseIds   - of the exercises we want to filter by
+     * @return number of complaints response associated to the given exercise ids
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT cr)
+            FROM ComplaintResponse cr
+                JOIN cr.complaint c
+            WHERE c.exerciseId IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND c.complaintType = :complaintType
+            """)
+    long countComplaintResponsesForExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
+
+    /**
+     * This magic method counts the number of complaints responses by complaint type associated to an exercise id
+     *
+     * @param exerciseId    - the id of the exercise we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return number of complaints response associated to exercise exerciseId
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT cr)
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.exerciseId = :exerciseId
+                AND cr.complaint.complaintType = :complaintType
+                AND cr.submittedTime IS NOT NULL
+            """)
+    long countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
+
+    /**
+     * This method counts the number of complaints by complaint type associated to an exercise id
+     *
+     * @param exerciseIds   - the id of the course we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return List of exercise ids with their number of complaints
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
+                cr.complaint.exerciseId,
+                COUNT(DISTINCT cr)
+            )
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.exerciseId IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND cr.complaint.complaintType = :complaintType
+                AND cr.complaint.result.submission.participation.testRun = FALSE
+            GROUP BY cr.complaint.exerciseId
+            """)
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
+            @Param("complaintType") ComplaintType complaintType);
+
+    /**
+     * This method counts the number of complaints by complaint type associated to an exercise id
+     *
+     * @param exerciseIds   - the id of the course we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return list of exercise ids with their number of complaints based on the complaint type
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
+                cr.complaint.exerciseId,
+                COUNT(DISTINCT cr)
+            )
+            FROM ComplaintResponse cr
+            WHERE cr.complaint.exerciseId IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND cr.complaint.complaintType = :complaintType
+            GROUP BY cr.complaint.exerciseId
+            """)
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds,
+            @Param("complaintType") ComplaintType complaintType);
+
+    /**
+     * Delete all complaint responses that belong to the given result.
+     * <p>
+     * Implemented as a bulk JPQL delete (via a subquery on the complaint id) on purpose: a Spring Data derived
+     * {@code deleteBy...} method would first load each {@link ComplaintResponse} together with its eagerly-fetched
+     * {@link de.tum.cit.aet.artemis.assessment.domain.Complaint} into the (Open-Session-In-View) session. When the
+     * response is then removed, the still-managed complaint's inverse {@code complaintResponse} association would point
+     * at the just-deleted (now transient) response, making the flush fail with a {@code TransientPropertyValueException}
+     * while deleting an exercise that has a resolved complaint. The bulk delete loads nothing into the session.
+     *
+     * @param resultId the id of the result where the complaint response should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM ComplaintResponse cr WHERE cr.complaint.id IN (SELECT c.id FROM Complaint c WHERE c.result.id = :resultId)")
+    void deleteByComplaint_Result_Id(@Param("resultId") long resultId);
+
+    /**
+     * Delete the complaint response with the given id.
+     * <p>
+     * Implemented as a bulk JPQL delete for the same reason as {@link #deleteByComplaint_Result_Id(long)}: removing the
+     * entity through the persistence context would load the eagerly-fetched {@link Complaint} alongside it, and the
+     * still-managed complaint's inverse {@code complaintResponse} association would then point at the removed response,
+     * making the flush fail. The bulk delete loads nothing into the session.
+     *
+     * @param complaintResponseId the id of the complaint response to delete
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM ComplaintResponse cr WHERE cr.id = :complaintResponseId")
+    void deleteResponseById(@Param("complaintResponseId") long complaintResponseId);
+}

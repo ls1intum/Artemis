@@ -1,0 +1,74 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('GroupChatCreateDialogComponent', () => {
+    let component: GroupChatCreateDialogComponent;
+    let fixture: ComponentFixture<GroupChatCreateDialogComponent>;
+    const course = { id: 1 };
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                GroupChatCreateDialogComponent,
+                MockComponent(CourseUsersSelectorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(GroupChatCreateDialogComponent);
+        component = fixture.componentInstance;
+        initializeDialog(component, fixture, {
+            course,
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+        expect(component.isInitialized).toBe(true);
+    });
+
+    it('should close the dialog with the selected users', () => {
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const selectedUsers = [{ id: 1 }, { id: 2 }];
+        component.selectedUsersControl!.setValue(selectedUsers);
+        fixture.changeDetectorRef.detectChanges();
+        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith(selectedUsers);
+    });
+
+    it('should dismiss modal if cancel is selected', () => {
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
+        const dismissButton = fixture.debugElement.nativeElement.querySelector('[data-testid="dialog-close-button"]');
+        dismissButton.click();
+        expect(dismissSpy).toHaveBeenCalledOnce();
+    });
+});

@@ -1,0 +1,64 @@
+<h4 class="exercise-title">
+    {{ exercise().title }}
+    <span
+        >[{{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
+        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
+        }
+    </span>
+</h4>
+<jhi-commits-info
+    class="mb-2"
+    [currentSubmissionHash]="currentSubmission()?.commitHash"
+    [previousSubmissionHash]="previousSubmission()?.commitHash"
+    [participationId]="studentParticipation()?.id"
+    [submissions]="submissions()"
+    [exerciseProjectKey]="exercise()?.projectKey"
+/>
+<tumaet-ui-dialog [(visible)]="diffModalVisible" size="full" dismissableMask>
+    <ng-template #header>
+        <h3 class="my-0!" jhiTranslate="artemisApp.programmingExercise.diffReport.titleForSubmissions"></h3>
+    </ng-template>
+    @if (diffModalInformation()) {
+        <jhi-git-diff-report [repositoryDiffInformation]="diffModalInformation()!" [diffForTemplateAndSolution]="false" />
+    }
+</tumaet-ui-dialog>
+@if (diffInformation() && diffReady()) {
+    <dl class="mb-0">
+        <dt>
+            <span
+                jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
+                [translateValues]="{ currentCommitHash: currentSubmission()?.commitHash }"
+            ></span>
+            @if (previousSubmission()) {
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
+                    [translateValues]="{ previousCommitHash: previousSubmission()?.commitHash }"
+                ></span>
+            } @else {
+                <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>
+            }
+        </dt>
+        <dd>
+            <div class="font-bold">
+                <jhi-git-diff-line-stat
+                    [addedLineCount]="addedLineCount()"
+                    [removedLineCount]="removedLineCount()"
+                    [tumAetUiTooltip]="'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate"
+                />
+                @if (addedLineCount() > 0 || removedLineCount() > 0) {
+                    <jhi-button
+                        [featureToggle]="FeatureToggle.ProgrammingExercises"
+                        [isLoading]="isLoadingDiffReport()"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faCodeCompare"
+                        [title]="'artemisApp.programmingExercise.diffReport.button'"
+                        [tooltip]="'artemisApp.programmingExercise.diffReport.tooltipBetweenSubmissions'"
+                        (onClick)="showGitDiff()"
+                        class="ms-2"
+                    />
+                }
+            </div>
+        </dd>
+    </dl>
+}

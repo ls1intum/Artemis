@@ -1,0 +1,8 @@
+package de.tum.cit.aet.artemis.admin.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record OrphanCleanupCountDTO(int orphanStudentScore, int orphanTeamScore, int orphanFeedbackForOrphanResults, int orphanLongFeedbackTextForOrphanResults,
+        int orphanTextBlockForOrphanResults, int orphanRating, int orphanResultsWithoutParticipation, int orphanFeedbackMessage) {
+}

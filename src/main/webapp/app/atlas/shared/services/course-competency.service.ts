@@ -1,0 +1,297 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {
+    CompetencyContributionCardDTO,
+    CompetencyExerciseLink,
+    CompetencyProgress,
+    CompetencyRelation,
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyProgress,
+    CourseCompetencyType,
+} from 'app/atlas/shared/entities/competency.model';
+import { map, tap } from 'rxjs/operators';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CompetencyPageableSearch, SearchResult } from 'app/foundation/pagination/pageable-table';
+import { HttpParams } from '@angular/common/http';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import {
+    CompetencyProgressDTO,
+    CompetencyWithTailRelationResponseDTO,
+    CourseCompetencyResponseDTO,
+    toCompetency,
+    toPrerequisite,
+} from 'app/atlas/shared/dto/course-competency-response.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;
+type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
+type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
+type CompetencyProgressResponseDTOType = HttpResponse<CompetencyProgressDTO>;
+
+@Service()
+export class CourseCompetencyService {
+    protected httpClient = inject(HttpClient);
+    protected entityTitleService = inject(EntityTitleService);
+    protected lectureUnitService = inject(LectureUnitService);
+    protected accountService = inject(AccountService);
+
+    protected resourceURL = 'api/atlas';
+
+    getForImport(pageable: CompetencyPageableSearch) {
+        const params = this.createCompetencySearchHttpParams(pageable);
+        return this.httpClient.get<SearchResult<CourseCompetencyResponseDTO>>(`${this.resourceURL}/course-competencies/for-import`, { params, observe: 'response' }).pipe(
+            map((resp) => {
+                const body = resp.body;
+                if (!body) {
+                    const emptyResult: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
+                    return emptyResult;
+                }
+                return cloneWith(body, {
+                    resultsOnPage: body.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
+                });
+            }),
+        );
+    }
+
+    /**
+     * Creates HttpParams for each field of the given pageable element.
+     *
+     * @param pageable the CompetencyPageableSearch to create HttpParams for
+     * @return the HttpParams
+     */
+    private createCompetencySearchHttpParams(pageable: CompetencyPageableSearch) {
+        return new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('title', pageable.title)
+            .set('description', pageable.description)
+            .set('courseTitle', pageable.courseTitle)
+            .set('semester', pageable.semester);
+    }
+
+    getAllForCourse(courseId: number, filtered = false): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/course-competencies${filtered ? '?filter=true' : ''}`, { observe: 'response' })
+            .pipe(
+                map((res: EntityArrayResponseDTOType) => {
+                    const competencies = res.body?.map((dto) => this.toCourseCompetency(dto)) ?? [];
+                    competencies.forEach((competency) => {
+                        this.postProcessCompetency(competency);
+                    });
+                    return new HttpResponse({ body: competencies, headers: res.headers, status: res.status, url: res.url ?? undefined });
+                }),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    getProgress(competencyId: number, courseId: number, refresh = false) {
+        let params = new HttpParams();
+        params = params.set('refresh', refresh.toString());
+        return this.httpClient
+            .get<CompetencyProgressDTO>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/student-progress`, { params, observe: 'response' })
+            .pipe(
+                map((res: CompetencyProgressResponseDTOType) => {
+                    const body: CompetencyProgress | undefined = res.body
+                        ? {
+                              progress: res.body.progress,
+                              confidence: res.body.confidence,
+                              confidenceReason: res.body.confidenceReason,
+                          }
+                        : undefined;
+                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
+                }),
+            );
+    }
+
+    getCourseProgress(competencyId: number, courseId: number) {
+        return this.httpClient.get<CourseCompetencyProgress>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/course-progress`, {
+            observe: 'response',
+        });
+    }
+
+    findById(competencyId: number, courseId: number) {
+        return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseDTOType) => {
+                const competency = res.body ? this.toCourseCompetency(res.body) : undefined;
+                this.postProcessCompetency(competency);
+                this.sendTitlesToEntityTitleService(competency);
+                return new HttpResponse({ body: competency, headers: res.headers, status: res.status, url: res.url ?? undefined });
+            }),
+        );
+    }
+
+    // triggers the generation of competencies from the given course description
+    // the generated competencies are returned asynchronously over the websocket on the topic /topic/iris/competencies/{courseId}
+    generateCompetenciesFromCourseDescription(courseId: number, courseDescription: string, currentCompetencies: CompetencyRecommendation[]): Observable<HttpResponse<void>> {
+        const params = {
+            courseDescription: courseDescription,
+            currentCompetencies: currentCompetencies,
+        };
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/course-competencies/generate-from-description`, params, {
+            observe: 'response',
+        });
+    }
+
+    getCourseCompetencyTitles(courseId: number, excludeId?: number) {
+        let params = new HttpParams();
+        if (excludeId !== undefined) {
+            params = params.set('excludeId', excludeId.toString());
+        }
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/course-competencies/titles`, {
+            params,
+            observe: 'response',
+        });
+    }
+
+    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        return this.httpClient
+            .post<CompetencyWithTailRelationResponseDTO[]>(
+                `${this.resourceURL}/courses/${courseId}/course-competencies/import-all`,
+                {
+                    sourceCourseId: sourceCourseId,
+                    importRelations: importRelations,
+                    importExercises: false,
+                    importLectures: false,
+                },
+                { observe: 'response' },
+            )
+            .pipe(
+                map((res) => {
+                    const body: CompetencyWithTailRelationDTO[] | undefined = res.body?.map((entry) => {
+                        const competency = entry.competency ? this.postProcessCompetency(this.toCourseCompetency(entry.competency)) : undefined;
+                        return {
+                            competency: competency,
+                            tailRelations: entry.tailRelations,
+                        };
+                    });
+                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
+                }),
+            );
+    }
+
+    createCompetencyRelation(relation: CompetencyRelation, courseId: number) {
+        const relationDTO: CompetencyRelationDTO = { tailCompetencyId: relation.tailCompetency?.id, headCompetencyId: relation.headCompetency?.id, relationType: relation.type };
+        return this.httpClient.post<CompetencyRelationDTO>(`${this.resourceURL}/courses/${courseId}/course-competencies/relations`, relationDTO, {
+            observe: 'response',
+        });
+    }
+
+    getCompetencyRelations(courseId: number) {
+        return this.httpClient.get<CompetencyRelationDTO[]>(`${this.resourceURL}/courses/${courseId}/course-competencies/relations`, {
+            observe: 'response',
+        });
+    }
+
+    removeCompetencyRelation(competencyRelationId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/course-competencies/relations/${competencyRelationId}`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Retrieves the competency contributions for the given exercise.
+     *
+     * @param exerciseId the id of the exercise for which to get the contributions
+     * @return an Observable of HttpResponse containing the list of competency contributions
+     */
+    getCompetencyContributionsForExercise(exerciseId: number) {
+        return this.httpClient.get<CompetencyContributionCardDTO[]>(`${this.resourceURL}/exercises/${exerciseId}/contributions`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the competency contributions for the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit for which to get the contributions
+     * @return an Observable of HttpResponse containing the list of competency contributions
+     */
+    getCompetencyContributionsForLectureUnit(lectureUnitId: number) {
+        return this.httpClient.get<CompetencyContributionCardDTO[]>(`${this.resourceURL}/lecture-units/${lectureUnitId}/contributions`, { observe: 'response' });
+    }
+
+    protected postProcessCompetency(competency: CourseCompetency | undefined): CourseCompetency | undefined {
+        if (!competency) {
+            return competency;
+        }
+        if (competency.softDueDate) {
+            competency.softDueDate = convertDateFromServer(competency.softDueDate);
+        }
+        competency.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDateFromServer(lectureUnitLink.lectureUnit);
+            }
+        });
+        if (competency.course) {
+            this.accountService.setAccessRightsForCourse(competency.course);
+        }
+        this.convertExerciseLinksFromServer(competency.exerciseLinks, competency.course);
+
+        return competency;
+    }
+
+    private convertExerciseLinksFromServer(exerciseLinks: CompetencyExerciseLink[] | undefined, course?: Course) {
+        exerciseLinks?.forEach((exerciseLink) => {
+            exerciseLink.exercise = ExerciseService.convertExerciseDatesFromServer(exerciseLink.exercise);
+            ExerciseService.parseExerciseCategories(exerciseLink.exercise);
+            if (exerciseLink.exercise) {
+                if (course && !exerciseLink.exercise.course) {
+                    exerciseLink.exercise.course = course;
+                }
+                this.accountService.setAccessRightsForExercise(exerciseLink.exercise);
+            }
+        });
+    }
+
+    protected convertCompetencyFromClient(courseCompetency: CourseCompetency): CourseCompetency {
+        const copy = cloneWith(courseCompetency, {
+            softDueDate: convertDateFromClient(courseCompetency.softDueDate),
+        });
+
+        this.convertCompetencyLinksFromClient(copy);
+
+        return copy;
+    }
+
+    private convertCompetencyLinksFromClient(courseCompetency: CourseCompetency) {
+        courseCompetency.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDatesFromClient(lectureUnitLink.lectureUnit);
+            }
+        });
+        courseCompetency.exerciseLinks?.forEach((exerciseLink) => {
+            if (exerciseLink.exercise) {
+                exerciseLink.exercise = ExerciseService.convertExerciseFromClient(exerciseLink.exercise);
+            }
+        });
+    }
+
+    /**
+     * Helper methods for date conversion from server and client
+     */
+    protected convertArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((competency: CourseCompetency) => (competency.softDueDate = convertDateFromServer(competency.softDueDate)));
+        }
+        return res;
+    }
+
+    protected sendTitlesToEntityTitleService(competency: CourseCompetency | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.COMPETENCY, [competency?.id], competency?.title);
+    }
+
+    private toCourseCompetency(dto: CourseCompetencyResponseDTO): CourseCompetency {
+        if (dto.type === CourseCompetencyType.PREREQUISITE) {
+            return toPrerequisite(dto);
+        }
+        return toCompetency(dto);
+    }
+}

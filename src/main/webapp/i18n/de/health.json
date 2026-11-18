@@ -1,0 +1,54 @@
+{
+    "health": {
+        "title": "Gesundheit deiner Anwendung",
+        "refresh.button": "Aktualisieren",
+        "stacktrace": "Stacktrace",
+        "details": {
+            "details": "Details",
+            "properties": "Properties",
+            "name": "Name",
+            "value": "Wert",
+            "error": "Error",
+            "jobs": "Jobs:",
+            "running": "Laufend:",
+            "version": "Version:",
+            "started": "Gestartet:",
+            "noBuildAgents": "Keine Build Agents gemeldet."
+        },
+        "indicator": {
+            "clientConfigServer": "Client Config Server",
+            "discoveryComposite": "Discovery Composite",
+            "configServer": "Microservice Config Server",
+            "hystrix": "Hystrix",
+            "diskSpace": "Festplattenspeicher",
+            "mail": "E-Mail",
+            "db": "Datenbank",
+            "ping": "Ping",
+            "livenessState": "Lebendigkeit",
+            "readinessState": "Bereitschaft",
+            "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
+            "versionControlServer": "Versionskontrollserver",
+            "hazelcast": "Hazelcast",
+            "JHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
+            "websocketBroker": "Websocket Broker (Server -> Broker)",
+            "athena": "Athena",
+            "apollon": "Apollon Conversion Server",
+            "pyris": "Pyris",
+            "ssl": "SSL",
+            "hermes": "Hermes Push Notifications",
+            "sharing": "Sharing Plattform Connector",
+            "redis": "Redis",
+            "weaviate": "Weaviate",
+            "reactiveDiscoveryClients": "Reactive Discovery Clients"
+        },
+        "table": {
+            "service": "Dienst Name",
+            "status": "Status"
+        },
+        "status": {
+            "UNKNOWN": "UNKNOWN",
+            "UP": "UP",
+            "DOWN": "DOWN"
+        }
+    }
+}

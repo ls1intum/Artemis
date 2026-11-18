@@ -1,0 +1,88 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { Course, CourseForImportDTO } from 'app/course/shared/entities/course.model';
+import { Column, ImportComponent } from 'app/shared-ui/import/import.component';
+
+export interface ImportAllCompetenciesDialogData {
+    disabledIds?: number[];
+}
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
+import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FormsModule } from '@angular/forms';
+import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
+
+const tableColumns: Column<Course>[] = [
+    {
+        name: 'TITLE',
+        getProperty(entity: Course) {
+            return entity.title;
+        },
+    },
+    {
+        name: 'SHORT_NAME',
+        getProperty(entity: Course) {
+            return entity.shortName;
+        },
+    },
+    {
+        name: 'SEMESTER',
+        getProperty(entity: Course) {
+            return entity.semester;
+        },
+    },
+];
+
+export type ImportAllFromCourseResult = {
+    courseForImportDTO: CourseForImportDTO;
+    importRelations: boolean;
+};
+
+@Component({
+    selector: 'jhi-import-all-competencies',
+    templateUrl: './import-all-competencies.component.html',
+    imports: [
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiInputDirective,
+        ButtonComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        SearchHighlightComponent,
+    ],
+})
+export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
+    protected readonly ButtonType = ButtonType;
+
+    //import relations by default
+    protected importRelations = true;
+
+    constructor() {
+        const pagingService = inject(CourseForImportDTOPagingService);
+        super(pagingService);
+        this.columns = tableColumns;
+    }
+
+    override ngOnInit(): void {
+        const dialogData = this.dialogConfig?.data as ImportAllCompetenciesDialogData | undefined;
+        if (dialogData) {
+            if (dialogData.disabledIds) {
+                this.disabledIds = dialogData.disabledIds;
+            }
+        }
+        super.ngOnInit();
+    }
+
+    /**
+     * Closes the modal in which the import component is opened. Returns the selected item **and if relations should be imported**
+     *
+     * @param item The item which was selected by the user for the import.
+     */
+    override selectImport(item: CourseForImportDTO) {
+        this.dialogRef?.close({ courseForImportDTO: item, importRelations: this.importRelations });
+    }
+}

@@ -1,0 +1,230 @@
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiTableSortEvent } from '@tumaet/ui-angular';
+import { PagingService } from 'app/exercise/services/paging.service';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { Subject, debounceTime, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+
+/**
+ * An abstract component intended for cases where a resource needs to be imported from one course into another.
+ *
+ * @template T generic class parameter of the entity that gets imported
+ */
+
+export type Column<T extends BaseEntity> = {
+    name: string;
+    getProperty(entity: T): string | undefined;
+};
+
+@Component({
+    template: '',
+})
+export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
+    protected router = inject(Router);
+    private sortService = inject(SortService);
+    private readonly destroyRef = inject(DestroyRef);
+    protected dialogRef = inject(TumAetUiDialogRef, { optional: true });
+    protected dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
+
+    /** Emits the item the user selected for the import, for hosts that embed the component without a dialog reference. */
+    readonly selected = output<T>();
+
+    readonly loading = signal(false);
+    readonly content = signal<SearchResult<T>>({ resultsOnPage: [], numberOfPages: 0 });
+    readonly total = signal(0);
+    state: SearchTermPageableSearch = {
+        page: 1,
+        pageSize: 10,
+        searchTerm: '',
+        sortingOrder: SortingOrder.DESCENDING,
+        sortedColumn: 'ID',
+    };
+
+    // These two attributes should be set when using the common template (import.component.html)
+    entityName!: string; // set by concrete subclasses before the shared template reads it
+    columns!: Column<T>[]; // set by concrete subclasses before the shared template reads it
+
+    // Keep the inherited `[disabledIds]` binding while preserving the mutable compatibility field used by legacy subclasses.
+    // eslint-disable-next-line @angular-eslint/no-input-rename
+    protected readonly disabledIdsInput = input<number[]>([], { alias: 'disabledIds' });
+    disabledIds: number[] = [];
+
+    /**
+     * Returns true if the component is opened via the TUM AET UI dialog service.
+     * Used to conditionally hide the built-in modal header when the dialog provides its own.
+     */
+    get isOpenedAsDialog(): boolean {
+        return this.dialogRef !== null;
+    }
+
+    // Icons
+    readonly faCheck = faCheck;
+    protected readonly search = new Subject<void>();
+    protected readonly sort = new Subject<void>();
+
+    // eslint-disable-next-line @angular-eslint/prefer-inject
+    protected constructor(protected pagingService?: PagingService<T>) {
+        effect(() => {
+            // When opened via the dialog service the `disabledIds` input is never bound (data arrives through
+            // the dialog config and is applied imperatively in subclasses' ngOnInit). Only sync from the input on
+            // the template-binding path, otherwise this effect would run after ngOnInit and clobber the
+            // dialog-provided value back to the default [] (defeating e.g. same-course import exclusion).
+            if (!this.isOpenedAsDialog) {
+                this.disabledIds = this.disabledIdsInput();
+            }
+        });
+    }
+
+    get page(): number {
+        return this.state.page;
+    }
+
+    set page(page: number) {
+        this.setSearchParam({ page });
+    }
+
+    get listSorting(): boolean {
+        return this.state.sortingOrder === SortingOrder.ASCENDING;
+    }
+
+    /**
+     * Set the list sorting direction
+     *
+     * @param ascending {boolean} Ascending order set
+     */
+    set listSorting(ascending: boolean) {
+        const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
+        this.setSearchParam({ sortingOrder });
+    }
+
+    get sortedColumn(): string {
+        return this.state.sortedColumn;
+    }
+
+    set sortedColumn(sortedColumn: string) {
+        this.setSearchParam({ sortedColumn });
+    }
+
+    get searchTerm(): string {
+        return this.state.searchTerm;
+    }
+
+    set searchTerm(searchTerm: string) {
+        this.state.searchTerm = searchTerm;
+        this.search.next();
+    }
+
+    ngOnInit(): void {
+        this.content.set({ resultsOnPage: [], numberOfPages: 0 });
+
+        this.performSearch(this.sort, 0);
+        this.performSearch(this.search, 300);
+
+        // Trigger an initial load so the table is populated as soon as the dialog opens. The jhiSort
+        // directive used to emit its initial predicate/ascending on init (which triggered `sort.next()`),
+        // but after its migration to signal `model()` inputs it no longer emits on parent-set, which left
+        // the table empty by default. Kick off the first search explicitly via the immediate (0 ms) `sort`
+        // subject so opening any import dialog shows the available entities right away.
+        this.sort.next();
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.content().resultsOnPage, this.sortedColumn, this.listSorting);
+    }
+
+    /**
+     * Applies a sort request of a `tumAetUiSortableColumn` header and reloads the (server-sorted) page.
+     */
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.setSearchParam({ sortedColumn: event.field, sortingOrder: event.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING });
+    }
+
+    /**
+     *
+     * Gives the ID for any item in the table, so that it can be tracked/identified by ngFor
+     *
+     * @template T
+     * @param _index The index of the element in the ngFor
+     * @param {T} item The item itself
+     * @returns The ID of the item
+     */
+    trackId(_index: number, item: T): number {
+        return item.id!;
+    }
+
+    /**
+     * Closes the dialog in which the import component is opened. Gives the selected item as a result.
+     *
+     * @param item The item which was selected by the user for the import.
+     */
+    selectImport(item: T) {
+        this.selected.emit(item);
+        this.dialogRef?.close(item);
+    }
+
+    /**
+     * Closes the dialog in which the import component is opened by dismissing it
+     */
+    clear() {
+        this.dialogRef?.close();
+    }
+
+    /**
+     * Callback function when the user navigates through the page results
+     *
+     * @param pageNumber The current page number
+     */
+    onPageChange(pageNumber: number) {
+        if (pageNumber) {
+            this.page = pageNumber;
+        }
+    }
+
+    /**
+     * Method to perform the search based on a search subject
+     *
+     * @param searchSubject The search subject which we use to search.
+     * @param debounce The delay we apply to delay the feedback / wait for input
+     */
+    performSearch(searchSubject: Subject<void>, debounce: number) {
+        searchSubject
+            .pipe(
+                debounceTime(debounce),
+                tap(() => this.loading.set(true)),
+                switchMap(() => this.pagingService!.search(this.state, this.createOptions())),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((resp: SearchResult<T>) => {
+                this.content.set(resp);
+                this.loading.set(false);
+                this.total.set(resp.numberOfPages * this.state.pageSize);
+                this.onSearchResult();
+            });
+    }
+
+    /**
+     * This method is used to create additional options passed to the paging service.
+     */
+    protected createOptions(): object | undefined {
+        return undefined;
+    }
+
+    /**
+     * This method is called after retrieving a result from the paging service.
+     * Used to perform some special logic with the search result (e.g. calculating the submission size for the example submission import)
+     */
+    protected onSearchResult(): void {}
+
+    protected setSearchParam(patch: Partial<SearchTermPageableSearch>) {
+        hydrate(this.state, patch);
+        this.sort.next();
+    }
+}

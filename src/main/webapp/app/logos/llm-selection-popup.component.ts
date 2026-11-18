@@ -1,0 +1,104 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
+import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+
+@Component({
+    selector: 'jhi-llm-selection-modal',
+    templateUrl: './llm-selection-popup.component.html',
+    styleUrls: ['./llm-selection-popup.component.scss'],
+    imports: [TranslateDirective, AiModeSelectorComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
+})
+export class LLMSelectionModalComponent implements OnInit, OnDestroy {
+    private modalService = inject(LLMSelectionModalService);
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
+    readonly choice = output<LLMModalResult>();
+
+    readonly isVisible = signal(false);
+    readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
+    private modalSubscription?: Subscription;
+
+    readonly isOnPremiseEnabled = signal<boolean>(undefined!);
+
+    ngOnInit(): void {
+        this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
+            this.currentSelection.set(currentSelection);
+            this.open();
+        });
+        this.isOnPremiseEnabled.set(this.profileService.isLLMDeploymentEnabled());
+    }
+
+    ngOnDestroy(): void {
+        this.modalSubscription?.unsubscribe();
+    }
+
+    open(): void {
+        this.isVisible.set(true);
+    }
+
+    close(): void {
+        this.isVisible.set(false);
+    }
+
+    dismiss(): void {
+        this.choice.emit(LLM_MODAL_DISMISSED);
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
+        this.close();
+    }
+
+    selectMode(choice: LLMSelectionDecision): void {
+        switch (choice) {
+            case LLMSelectionDecision.CLOUD_AI:
+                this.selectCloud();
+                break;
+            case LLMSelectionDecision.LOCAL_AI:
+                this.selectLocal();
+                break;
+            case LLMSelectionDecision.NO_AI:
+                this.selectNone();
+                break;
+        }
+    }
+
+    selectCloud(): void {
+        this.choice.emit(LLMSelectionDecision.CLOUD_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.CLOUD_AI);
+        this.close();
+    }
+
+    selectLocal(): void {
+        this.choice.emit(LLMSelectionDecision.LOCAL_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.LOCAL_AI);
+        this.close();
+    }
+
+    selectNone(): void {
+        this.choice.emit(LLMSelectionDecision.NO_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.NO_AI);
+        this.close();
+    }
+
+    /** Escape and a click on the backdrop close the dialog itself; the popup answers that as a dismissal. */
+    onVisibleChange(visible: boolean): void {
+        if (!visible && this.isVisible()) {
+            this.dismiss();
+        }
+    }
+
+    onLearnMoreClick(event: MouseEvent): void {
+        event.preventDefault();
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
+        void this.router.navigate(['/ai-experience-info']);
+        this.close();
+    }
+
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
+}

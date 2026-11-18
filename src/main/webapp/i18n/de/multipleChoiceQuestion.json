@@ -1,0 +1,69 @@
+{
+    "artemisApp": {
+        "multipleChoiceQuestion": {
+            "home": {
+                "title": "Multiple-Choice Questions",
+                "createLabel": "Multiple-Choice Question erstellen"
+            },
+            "created": "Multiple-Choice Question erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice Question aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice Question gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Multiple-Choice Question {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Multiple-Choice Question"
+            },
+            "answerOptions": "Antwortmöglichkeiten",
+            "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",
+            "singleChoice": "Single Choice Modus",
+            "singleChoiceInfo": "Für Fragen bei denen die einzelne richtige Antwort ausgewählt werden soll.",
+            "scoringType": "Art der Bewertung",
+            "answer": "Antwort",
+            "solution": "Lösung",
+            "you": "Du",
+            "correct": "Richtig",
+            "wrong": "Falsch",
+            "invalid": "Ungültige Antworten werden als richtig bewertet",
+            "editor": {
+                "addCorrectAnswerOption": "[correct] Korrekte Antwortmöglichkeit",
+                "addInCorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",
+                "addHint": "[hint] Hinweis",
+                "addExplanation": "[exp] Erklärung",
+                "bold": "Fett",
+                "italic": "Kursiv",
+                "underline": "Unterstrichen",
+                "unorderedList": "Ungeordnete List",
+                "headingOne": "Überschrift Eins",
+                "headingTwo": "Überschrift Zwei",
+                "headingThree": "Überschrift Drei",
+                "heading": "Überschrift",
+                "quote": "Zitat",
+                "link": "Link",
+                "orderedList": "Geordnete List",
+                "imageUpload": "Anhang",
+                "style": "Überschriften",
+                "codeBlock": "Code Block",
+                "code": "Code",
+                "color": "Farbe",
+                "emoji": "Emoji",
+                "strikethrough": "Durchgestrichen",
+                "textFormat": "Format"
+            },
+            "visualEditor": {
+                "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quiz über den ?-Button)",
+                "explanationTooltip": "Füge hier eine Erklärung hinzu (nur sichtbar im Feedback nachdem das Quiz beendet ist)",
+                "hintPlaceholder": "Hinweis ...",
+                "explanationPlaceholder": "Erklärung ...",
+                "textPlaceholder": "Text ...",
+                "questionTitle": "Frage",
+                "answersTitle": "Antwortmöglichkeiten",
+                "newAnswerTitle": "Neue Antwortmöglichkeit hinzufügen",
+                "correctnessOfAnswer": "Richtigkeit von Antwortmöglichkeit {{ number }}",
+                "deleteAnswer": "Antwortmöglichkeit {{ number }} löschen",
+                "invalidateAnswer": "Antwortmöglichkeit {{ number }} als ungültig markieren",
+                "resetAnswer": "Antwortmöglichkeit {{ number }} zurücksetzen"
+            }
+        }
+    }
+}

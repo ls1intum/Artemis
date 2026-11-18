@@ -1,0 +1,81 @@
+.league-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+
+    app-league-bronze-icon,
+    app-league-silver-icon,
+    app-league-gold-icon,
+    app-league-diamond-icon,
+    app-league-master-icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+.league-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 150px;
+}
+
+.league-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.league-points {
+    display: flex;
+    justify-content: flex-start;
+    font-size: 0.9rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--progress-bar-background);
+    border-radius: 3px;
+    overflow: visible;
+    position: relative;
+    margin-top: 5px;
+}
+
+.progress-bar .small-icon {
+    position: absolute;
+    right: -30px;
+    top: -12px;
+    width: 30px;
+    height: 30px;
+}
+
+.progress {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.bronze .progress {
+    background-color: var(--league-badge-bronze-color);
+}
+
+.silver .progress {
+    background-color: var(--league-badge-silver-color);
+}
+
+.gold .progress {
+    background-color: var(--league-badge-gold-color);
+}
+
+.diamond .progress {
+    background-color: var(--league-badge-diamond-color);
+}
+
+.master .progress {
+    background-color: var(--league-badge-master-color);
+}
+
+.max-level {
+    color: var(--league-badge-star-color);
+    font-size: 16px;
+}

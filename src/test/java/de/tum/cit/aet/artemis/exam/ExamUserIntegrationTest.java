@@ -1,0 +1,1034 @@
+package de.tum.cit.aet.artemis.exam;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
+
+class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "examuser";
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
+
+    private Course course1;
+
+    private Exam exam1;
+
+    private Course course2;
+
+    private Exam exam2;
+
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
+
+    private static final int NUMBER_OF_STUDENTS = 4;
+
+    @BeforeEach
+    void initTestCase() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
+        // Add users that are not in the course
+
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var student4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+
+        // same registration number as in test pdf file
+        student1.setRegistrationNumber("03756882");
+        userTestRepository.save(student1);
+
+        student2.setRegistrationNumber("03756883");
+        userTestRepository.save(student2);
+
+        student3.setRegistrationNumber("03756884");
+        userTestRepository.save(student3);
+
+        student4.setRegistrationNumber("03756885");
+        userTestRepository.save(student4);
+
+        exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
+        exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+        exam1 = examRepository.save(exam1);
+
+        programmingExerciseTestService.setup(this, versionControlService);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
+        for (LocalVCTestRepository studentRepo : studentRepos) {
+            studentRepo.deleteWorkingCopy();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceUpdatesIdentityChecksAndPreservesSignature() throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setSigningImagePath("existing-signature.png");
+        examUserRepository.save(registered);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        String path = base + "/exam-users/" + registered.getId() + "/attendance";
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(false), HttpStatus.NO_CONTENT);
+        ExamUser updated = examUserRepository.findByIdElseThrow(registered.getId());
+        assertThat(updated.getDidCheckImage()).isFalse();
+        assertThat(updated.getDidCheckName()).isFalse();
+        assertThat(updated.getDidCheckLogin()).isFalse();
+        assertThat(updated.getDidCheckRegistrationNumber()).isFalse();
+        assertThat(updated.getSigningImagePath()).endsWith("existing-signature.png");
+        var attendance = request.getList(base + "/verify-exam-users?includeAll=true", HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
+        assertThat(attendance).anySatisfy(row -> {
+            assertThat(row.id()).isEqualTo(registered.getId());
+            assertThat(row.didCheckImage()).isFalse();
+            assertThat(row.didCheckName()).isFalse();
+            assertThat(row.didCheckLogin()).isFalse();
+            assertThat(row.didCheckRegistrationNumber()).isFalse();
+            assertThat(row.attendanceChecked()).isFalse();
+            assertThat(row.signingImagePath()).endsWith("existing-signature.png");
+        });
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(true), HttpStatus.NO_CONTENT);
+        updated = examUserRepository.findByIdElseThrow(registered.getId());
+        assertThat(updated.getDidCheckImage()).isTrue();
+        assertThat(updated.getDidCheckName()).isTrue();
+        assertThat(updated.getDidCheckLogin()).isTrue();
+        assertThat(updated.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(updated.getSigningImagePath()).endsWith("existing-signature.png");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "true,true,true,true", "true,false,true,true", "true,true,false,true", "true,false,false,false", "false,true,true,false", "false,false,true,false" })
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testAttendanceCheckRequiresSignatureOnlyDuringConduction(boolean checksComplete, boolean signed, boolean examEnded, boolean expected) throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setDidCheckImage(checksComplete);
+        registered.setDidCheckName(checksComplete);
+        registered.setDidCheckLogin(checksComplete);
+        registered.setDidCheckRegistrationNumber(checksComplete);
+        registered.setSigningImagePath(signed ? "signature.png" : null);
+        examUserRepository.save(registered);
+        exam1.setEndDate(examEnded ? ZonedDateTime.now().minusMinutes(1) : ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance";
+        assertThat(request.get(path, HttpStatus.OK, Boolean.class)).isEqualTo(expected);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceChecksAreReflectedInPagedAttendanceAndFilters() throws Exception {
+        Exam exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        for (var registration : examUserRepository.findAllByExamId(exam.getId())) {
+            String login = registration.getUser().getLogin();
+            if (login.equals(TEST_PREFIX + "student2") || login.equals(TEST_PREFIX + "student3")) {
+                request.putWithoutResponseBody(base + "/exam-users/" + registration.getId() + "/attendance", new ExamAttendanceUpdateDTO(login.equals(TEST_PREFIX + "student3")),
+                        HttpStatus.NO_CONTENT);
+            }
+        }
+        var rows = request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student2")).singleElement().satisfies(row -> {
+            assertThat(row.started()).isTrue();
+            assertThat(row.didExamUserAttendExam()).isFalse();
+        });
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student3")).singleElement().satisfies(row -> {
+            assertThat(Boolean.TRUE.equals(row.started())).isFalse();
+            assertThat(row.didExamUserAttendExam()).isTrue();
+        });
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("DidNotAttend"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student2", TEST_PREFIX + "student4");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceChecked"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student3");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceNotChecked"))).extracting(ExamStudentDTO::login)
+                .containsExactly(TEST_PREFIX + "student2");
+        assertThat(request.getList(base + "/verify-exam-users?includeAll=false", HttpStatus.OK, ExamUserAttendanceCheckDTO.class)).extracting(ExamUserAttendanceCheckDTO::login)
+                .containsExactly(TEST_PREFIX + "student2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceAuditsInstructorAndDoesNotRequireSignature(boolean attended) throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registration = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registration.setDidCheckImage(!attended);
+        registration.setDidCheckName(!attended);
+        registration.setDidCheckLogin(!attended);
+        registration.setDidCheckRegistrationNumber(!attended);
+        examUserRepository.save(registration);
+        Instant before = Instant.now().minusSeconds(1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registration.getId() + "/attendance";
+
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(attended), HttpStatus.NO_CONTENT);
+
+        ExamUser saved = examUserRepository.findByIdElseThrow(registration.getId());
+        assertThat(saved.getDidCheckImage()).isEqualTo(attended);
+        assertThat(saved.getDidCheckName()).isEqualTo(attended);
+        assertThat(saved.getDidCheckLogin()).isEqualTo(attended);
+        assertThat(saved.getDidCheckRegistrationNumber()).isEqualTo(attended);
+        assertThat(saved.getSigningImagePath()).isNull();
+        assertThat(examUserRepository.isAttendanceChecked(exam1.getId(), registration.getUser().getLogin())).isEqualTo(attended);
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).singleElement().satisfies(event -> {
+                    assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "instructor1");
+                    assertThat(event.getData()).containsEntry("courseId", course1.getId().toString()).containsEntry("examId", exam1.getId().toString())
+                            .containsEntry("studentLogin", registration.getUser().getLogin()).containsEntry("oldDidCheckImage", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckImage", Boolean.toString(attended)).containsEntry("oldDidCheckName", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckName", Boolean.toString(attended)).containsEntry("oldDidCheckLogin", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckLogin", Boolean.toString(attended)).containsEntry("oldDidCheckRegistrationNumber", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckRegistrationNumber", Boolean.toString(attended)).containsEntry("signatureChanged", "false");
+                });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceRejectsMissingDecision() throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registration = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registration.getId() + "/attendance";
+        Instant before = Instant.now().minusSeconds(1);
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(null), HttpStatus.BAD_REQUEST);
+        assertThat(examUserRepository.findByIdElseThrow(registration.getId()).getDidCheckImage()).isFalse();
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAttendanceRequiresInstructor() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                new ExamAttendanceUpdateDTO(true), Void.class, HttpStatus.FORBIDDEN);
+        assertThat(examUserRepository.findByIdElseThrow(registered.getId()).getDidCheckImage()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceRejectedBeforeEndAndForOtherExam() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/";
+        exam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        request.putWithResponseBody(base + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.BAD_REQUEST);
+        Exam otherExam = examUtilService.addExam(course1);
+        otherExam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(otherExam);
+        request.putWithResponseBody(base + otherExam.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testUpdateExamUser_DidCheckFields() throws Exception {
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, false, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamUserAuditsInstructorAndBeforeAfterValues(boolean hasSigned) throws Exception {
+        ExamUser registration = examUserRepository.findByExamIdAndUserId(exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId()).orElseThrow();
+        registration.setActualRoom("Room A");
+        registration.setActualSeat("1");
+        examUserRepository.save(registration);
+        Instant before = Instant.now().minusSeconds(1);
+        var update = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "Room B", "14", true, false, true, false, "", null, null, null, null, null, null, null);
+
+        request.performMvcRequest(buildUpdateExamUser(update, hasSigned, course1.getId(), exam1.getId())).andExpect(status().isOk());
+
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).singleElement().satisfies(event -> {
+                    assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "instructor1");
+                    assertThat(event.getAuditEventDate()).isBetween(before, Instant.now());
+                    assertThat(event.getData()).containsEntry("courseId", course1.getId().toString()).containsEntry("examId", exam1.getId().toString())
+                            .containsEntry("studentId", registration.getUser().getId().toString()).containsEntry("studentLogin", TEST_PREFIX + "student2")
+                            .containsEntry("oldDidCheckImage", "false").containsEntry("newDidCheckImage", "true").containsEntry("oldDidCheckName", "false")
+                            .containsEntry("newDidCheckName", "false").containsEntry("oldDidCheckLogin", "false").containsEntry("newDidCheckLogin", "false")
+                            .containsEntry("oldDidCheckRegistrationNumber", "false").containsEntry("newDidCheckRegistrationNumber", "true").containsEntry("oldRoom", "Room A")
+                            .containsEntry("newRoom", "Room B").containsEntry("oldSeat", "1").containsEntry("newSeat", "14")
+                            .containsEntry("signatureChanged", Boolean.toString(hasSigned));
+                });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void testRejectedAttendanceUpdateDoesNotCreateSuccessfulAuditEvent() throws Exception {
+        Instant before = Instant.now().minusSeconds(1);
+        var update = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        request.performMvcRequest(buildUpdateExamUser(update, false, course1.getId(), exam1.getId())).andExpect(status().isForbidden());
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "student3", before, "UPDATE_EXAM_ATTENDANCE")).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToExamWithSeatAndRoomFields() throws Exception {
+        List<ExamUserDTO> examUserDTOs = new ArrayList<>();
+        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO2 = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "03756883", "", "", "102", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        examUserDTOs.add(examUserDTO1);
+        examUserDTOs.add(examUserDTO2);
+
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
+                ExamRegistrationResultDTO.class, OK);
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
+        Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
+        var examUsers = exam.getExamUsers();
+        assertThat(examUsers).hasSize(2);
+
+        examUsers.forEach(eu -> {
+            assertThat(eu.getSigningImagePath()).isNullOrEmpty();
+            assertThat(eu.getStudentImagePath()).isNullOrEmpty();
+            assertThat(eu.getPlannedRoom()).isNotNull();
+            assertThat(eu.getPlannedSeat()).isNotNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUploadExamUserImages() throws Exception {
+        // registration number is important for the test, exam users should have same registration number as in the test pdf file
+        // student2 already exists in the exam and there is no need to add it again
+        final var examUserDTOs = getExamUserDTOS();
+
+        // add students to exam with respective registration numbers, same as in pdf test file
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
+                ExamRegistrationResultDTO.class, OK);
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
+
+        // upload exam user images
+        var imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        ExamUsersNotFoundDTO examUsersNotFoundDTO = objectMapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
+
+        // check if exam users have been updated with the images
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+        // 4 exam users, 3 new and 1 already existing
+        assertThat(exam.getExamUsers()).hasSize(4);
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
+        }
+
+        // re-upload the same file, should not change anything
+
+        // upload exam user images
+        imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        examUsersNotFoundDTO = objectMapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
+
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
+
+        // check if exam users have been updated with the images
+        exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+        // 4 exam users, 3 new and 1 already existing
+        assertThat(exam.getExamUsers()).hasSize(4);
+        for (ExamUser examUser : exam.getExamUsers()) {
+            assertThat(examUser.getStudentImagePath()).isNotNull();
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
+        }
+    }
+
+    private static List<ExamUserDTO> getExamUserDTOS() {
+        List<ExamUserDTO> examUserDTOs = new ArrayList<>();
+        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO4 = new ExamUserDTO(TEST_PREFIX + "student4", "", "", "03756885", "", "", "102", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        examUserDTOs.add(examUserDTO1);
+        examUserDTOs.add(examUserDTO3);
+        examUserDTOs.add(examUserDTO4);
+        return examUserDTOs;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testUpdateExamUserDidCheckFieldsAndSigningImage() throws Exception {
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+        assertThat(examUser.getSigningImagePath()).isNotNull();
+    }
+
+    // TODO enable again - figure out why for one exercise the participations are not created
+    @Disabled
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testVerifyExamUserAttendance() throws Exception {
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        long examId = studentExams.getFirst().getExam().getId();
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "foo");
+        headers.set("X-Artemis-Client-Fingerprint", "bar");
+
+        for (var studentExam : studentExams) {
+            var user = studentExam.getUser();
+            userUtilService.changeUser(user.getLogin());
+            var response = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
+                    StudentExam.class, headers);
+            assertThat(response).isEqualTo(studentExam);
+            assertThat(response.isStarted()).isTrue();
+            assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
+
+            assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
+        }
+
+        // change back to instructor user
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        // update exam user attendance
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+
+        // as instructor, verify the attendance of the students
+        List<ExamUserAttendanceCheckDTO> examUsersWhoDidNotSign = request.getList("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/verify-exam-users",
+                HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
+        // one student (student1) signed, the other 3 did not
+        assertThat(examUsersWhoDidNotSign).hasSize(3);
+        List<Long> unsignedExamUserIds = new ArrayList<>();
+        for (var examUserAttendanceCheckDTO : examUsersWhoDidNotSign) {
+            unsignedExamUserIds.add(examUserAttendanceCheckDTO.id());
+            assertThat(examUserAttendanceCheckDTO.started()).isTrue();
+            assertThat(examUserAttendanceCheckDTO.login()).isNotEqualTo(TEST_PREFIX + "student1");
+            assertThat(examUserAttendanceCheckDTO.signingImagePath()).isNull();
+        }
+
+        verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
+
+        // update exam user attendance to override signature
+        ExamUserDTO examUserUpdateDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        var examUserUpdateResponse = request.performMvcRequest(buildUpdateExamUser(examUserUpdateDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser updatedExamUser = objectMapper.readValue(examUserUpdateResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(updatedExamUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(updatedExamUser.getDidCheckImage()).isTrue();
+        assertThat(updatedExamUser.getDidCheckName()).isTrue();
+        assertThat(updatedExamUser.getDidCheckLogin()).isTrue();
+
+        verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testVerifyAttendance() throws Exception {
+        // User started an exam, but attendance wasn't checked yet
+        var attendanceCheckResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        assertThat(attendanceCheckResponse).isFalse();
+
+        // Verify attendance
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
+        ExamUser examUser = objectMapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
+        assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(examUser.getDidCheckImage()).isTrue();
+        assertThat(examUser.getDidCheckName()).isTrue();
+        assertThat(examUser.getDidCheckLogin()).isTrue();
+        assertThat(examUser.getSigningImagePath()).isNotEmpty();
+
+        // Switch back to student2
+        userUtilService.changeUser(TEST_PREFIX + "student2");
+
+        // Check attendance again
+        attendanceCheckResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        assertThat(attendanceCheckResponse).isTrue();
+    }
+
+    private void verifySignedExamUsersHaveSignature(long examId, List<Long> unsignedExamUserIds) throws Exception {
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        assertThat(exam.getExamUsers()).hasSize(4);
+        List<ExamUser> signedUsers = exam.getExamUsers().stream().filter(eu -> !unsignedExamUserIds.contains(eu.getId())).toList();
+        assertThat(signedUsers).hasSize(1);
+        for (var user : signedUsers) {
+            assertThat(user.getSigningImagePath()).isNotNull();
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, user.getSigningImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
+        }
+    }
+
+    private MockMultipartHttpServletRequestBuilder buildUpdateExamUser(@NonNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
+        var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(examUserDTO).getBytes());
+        if (hasSigned) {
+            var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");
+            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart).file(signingImage)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        }
+        else {
+            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        }
+    }
+
+    private MockMultipartHttpServletRequestBuilder buildUploadExamUserImages(long courseId, long examId) throws Exception {
+        var signingImage = loadFile("classpath:test-data/exam-users", "studentsWithImages.pdf");
+
+        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users-save-images").file(signingImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    private MockMultipartFile loadFile(String path, String fileName) throws Exception {
+        Path signingPath = ResourceUtils.getFile(path).toPath().resolve(fileName);
+        File signingImage = signingPath.toFile();
+        try (InputStream input = Files.newInputStream(signingPath)) {
+            return new MockMultipartFile("file", signingImage.getName(), "image/png", input.readAllBytes());
+        }
+    }
+
+    private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
+
+        ZonedDateTime visibleDate;
+        ZonedDateTime startDate;
+        ZonedDateTime endDate;
+        if (early) {
+            startDate = ZonedDateTime.now().plusHours(1);
+            endDate = ZonedDateTime.now().plusHours(3);
+        }
+        else {
+            // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
+            startDate = ZonedDateTime.now().plusMinutes(6);
+            endDate = ZonedDateTime.now().plusMinutes(8);
+        }
+
+        visibleDate = ZonedDateTime.now().minusMinutes(15);
+        // --> 2 min = 120s working time
+
+        // all registered students
+        Set<User> registeredStudents = new HashSet<>();
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
+        }
+
+        var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
+        Exam exam = examRepository.findByIdElseThrow(studentExams.getFirst().getExam().getId());
+        Course course = exam.getCourse();
+
+        if (!early) {
+            // simulate "wait" for exam to start
+            exam.setStartDate(ZonedDateTime.now());
+            exam.setEndDate(ZonedDateTime.now().plusMinutes(2));
+            examRepository.save(exam);
+        }
+
+        if (setFields) {
+            exam2 = exam;
+            course2 = course;
+        }
+        return studentExams;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_returnsAllRegisteredStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamStudentsPaged_forbiddenForTutor() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        request.getList(pagedUrl(paginationExam), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_doesNotContainEmailAddresses() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        List<Map> rows = request.getList(pagedUrl(paginationExam), HttpStatus.OK, Map.class, pageParams(""));
+        assertThat(rows).isNotEmpty().allSatisfy(row -> assertThat(row).doesNotContainKey("email").containsKey("login"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamStudentsPaged_forbiddenForStudent() throws Exception {
+        request.getList(pagedUrl(exam1), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterSubmitted_returnsOnlySubmittedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("Submitted");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_SUBMITTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterStarted_returnsOnlyStartedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("Started");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_STARTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterNotStarted_returnsOnlyNotStartedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("NotStarted");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student3");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_NOT_STARTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterExamMissing_returnsOnlyExamMissingStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("ExamMissing");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student4");
+        assertThat(result.getFirst().progress()).isEqualTo(ExamStudentDTO.PROGRESS_EXAM_MISSING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterDidNotAttend_returnsUnconfirmedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        // Starting an exam does not confirm the identity checks: students 2, 3 and 4 remain unconfirmed.
+        var params = pageParams("DidNotAttend");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(ExamStudentDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "student2", TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterAttendanceChecked_returnsFullyCheckedStudents() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("AttendanceChecked");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().didCheckImage()).isTrue();
+        assertThat(result.getFirst().didCheckLogin()).isTrue();
+        assertThat(result.getFirst().didCheckName()).isTrue();
+        assertThat(result.getFirst().didCheckRegistrationNumber()).isTrue();
+        assertThat(result.getFirst().signingImagePath()).isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_filterAttendanceNotChecked_returnsStartedWithIncompleteChecks() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        var params = pageParams("AttendanceNotChecked");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        // student2 started but attendance not fully checked
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_searchByLogin_returnsMatchingStudent() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "50");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "name");
+        params.add("searchTerm", TEST_PREFIX + "student1");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_secondPage_returnsCorrectSubset() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "2");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "login");
+        params.add("searchTerm", "");
+        List<ExamStudentDTO> page0 = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(page0).hasSize(2);
+
+        params.set("page", "1");
+        List<ExamStudentDTO> page1 = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(page1).hasSize(2);
+
+        // all logins across both pages are distinct
+        var allLogins = new ArrayList<>(page0.stream().map(ExamStudentDTO::login).toList());
+        allLogins.addAll(page1.stream().map(ExamStudentDTO::login).toList());
+        assertThat(allLogins).doesNotHaveDuplicates().hasSize(4);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "login|1 2 3 4|4 3 2 1", "visibleRegistrationNumber|2 3 4 1|1 4 3 2", "plannedRoom|2 3 1 4|4 1 2 3", "plannedSeat|2 3 1 4|4 1 2 3",
+            "actualRoom|3 4 1 2|2 1 3 4", "actualSeat|3 4 1 2|2 1 3 4", "workingTime|2 3 1 4|1 2 3 4", "numberOfExamSessions|4 2 3 1|1 2 3 4", "name|4 2 3 1|1 2 3 4",
+            "progress|4 3 2 1|1 2 3 4", "unsupported|1 2 3 4|1 2 3 4", "NULL|1 2 3 4|1 2 3 4" }, delimiter = '|', nullValues = "NULL")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPagedStudentSortPreservesAttendanceChecksAndStableTies(String column, String ascendingLogins, String descendingLogins) throws Exception {
+        var exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String[] firstNames = { "Beta", "alpha", "Alpha", null };
+        String[] lastNames = { "Zulu", "Able", "Able", null };
+        String[] registrationNumbers = { "30", "10", "11", "20" };
+        String[] plannedRooms = { "B", "A", "A", "C" };
+        String[] plannedSeats = { "2", "1", "1", "3" };
+        for (int index = 0; index < 4; index++) {
+            var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (index + 1));
+            user.setFirstName(firstNames[index]);
+            user.setLastName(lastNames[index]);
+            user.setRegistrationNumber("9" + exam.getId() + "0" + registrationNumbers[index]);
+            userTestRepository.save(user);
+            var registered = examUserRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+            registered.setPlannedRoom(plannedRooms[index]);
+            registered.setPlannedSeat(plannedSeats[index]);
+            registered.setActualRoom(index == 1 ? "D" : index == 3 ? "A" : null);
+            registered.setActualSeat(index == 1 ? "4" : index == 3 ? "1" : null);
+            examUserRepository.save(registered);
+            if (index == 0 || index == 2) {
+                request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                        new ExamAttendanceUpdateDTO(index == 2), HttpStatus.NO_CONTENT);
+            }
+            if (index < 3) {
+                var attempt = studentExamRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+                attempt.setWorkingTime(index == 0 ? 200 : 100);
+                studentExamRepository.save(attempt);
+                for (int sessionIndex = 0; sessionIndex < (index == 0 ? 2 : 1); sessionIndex++) {
+                    var session = new ExamSession();
+                    session.setStudentExam(attempt);
+                    examSessionRepository.save(session);
+                }
+            }
+        }
+        var testRun = buildStudentExam(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        testRun.setTestRun(true);
+        testRun.setWorkingTime(10000);
+        studentExamRepository.save(testRun);
+        var ignoredSession = new ExamSession();
+        ignoredSession.setStudentExam(testRun);
+        examSessionRepository.save(ignoredSession);
+
+        for (boolean descending : new boolean[] { false, true }) {
+            var params = pageParams("");
+            params.set("pageSize", "2");
+            if (column == null) {
+                params.remove("sortedColumn");
+                params.remove("sortingOrder");
+            }
+            else {
+                params.set("sortedColumn", column);
+            }
+            if (descending || column != null) {
+                params.set("sortingOrder", descending ? "DESCENDING" : "ASCENDING");
+            }
+            var rows = new ArrayList<>(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            params.set("page", "1");
+            rows.addAll(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            var expected = Arrays.stream((descending ? descendingLogins : ascendingLogins).split(" ")).map(number -> TEST_PREFIX + "student" + number).toList();
+            assertThat(rows).extracting(ExamStudentDTO::login).containsExactlyElementsOf(expected);
+            assertThat(rows).extracting(ExamStudentDTO::id).doesNotHaveDuplicates();
+            var submitted = rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
+            assertThat(submitted.didExamUserAttendExam()).isFalse();
+            assertThat(submitted.workingTime()).isEqualTo(200);
+            assertThat(submitted.numberOfExamSessions()).isEqualTo(2);
+            assertThat(rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student3")).findFirst().orElseThrow().didExamUserAttendExam()).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_byLogin_returnsMatchingUsers() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student", 0, 10));
+        assertThat(result).hasSize(4);
+        assertThat(result).allMatch(u -> u.login().startsWith(TEST_PREFIX + "student"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_marksAlreadyRegisteredUser() throws Exception {
+        // student2 is the only one registered for exam1 in @BeforeEach
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student2", 0, 10));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(result.getFirst().isRegistered()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_nonRegisteredUsersNotFlagged() throws Exception {
+        // student1 is not registered for exam1
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student1", 0, 10));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.getFirst().isRegistered()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_paginationRespectsPageSize() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams(TEST_PREFIX + "student", 0, 2));
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_paginationIsStableAcrossPages() throws Exception {
+        // Regression test for issue #13069: consecutive pages must form a stable, non-overlapping partition of the
+        // matches, so no student shuffles between pages or disappears and becomes impossible to add to the exam. The
+        // precise ordering guarantee lives in the repository and is unit-tested in UserRepositoryStableSearchSortUnitTest;
+        // here we verify it end-to-end through the registration endpoint.
+        List<UserForRegistrationDTO> combined = new ArrayList<>();
+        combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 2)));
+        combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 1, 2)));
+
+        assertThat(combined).extracting(UserForRegistrationDTO::login).doesNotHaveDuplicates().containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2",
+                TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+        // The pages are served in ascending id order, so concatenating page 0 and page 1 yields a globally sorted list.
+        assertThat(combined).extracting(UserForRegistrationDTO::id).isSorted();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSearchUsersForExamRegistration_noResultsForUnknownTerm() throws Exception {
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams("zzz_no_match_zzz", 0, 10));
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testSearchUsersForExamRegistration_forbiddenForTutor() throws Exception {
+        request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 10));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSearchUsersForExamRegistration_forbiddenForStudent() throws Exception {
+        request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 10));
+    }
+
+    private String searchUrl(long courseId, long examId) {
+        return "/api/exam/courses/" + courseId + "/exams/" + examId + "/students/search";
+    }
+
+    private MultiValueMap<String, String> searchParams(String searchTerm, int page, int size) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", searchTerm);
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        return params;
+    }
+
+    private String pagedUrl(Exam exam) {
+        return "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exam-students/paged";
+    }
+
+    private MultiValueMap<String, String> pageParams(String filterProp) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("pageSize", "50");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "name");
+        params.add("searchTerm", "");
+        if (!filterProp.isBlank()) {
+            params.add("filterProp", filterProp);
+        }
+        return params;
+    }
+
+    /**
+     * Creates a fresh exam on {@code course1} with 4 students in distinct states:
+     * <ul>
+     * <li>student1 – submitted, attendance fully checked</li>
+     * <li>student2 – started, attendance not checked</li>
+     * <li>student3 – not started (has StudentExam, started = false)</li>
+     * <li>student4 – exam missing (no StudentExam)</li>
+     * </ul>
+     */
+    private Exam createPaginationTestExam() {
+        var s1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var s2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var s3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var s4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+
+        Exam exam = new Exam();
+        exam.setCourse(course1);
+        exam.setTitle("Pagination Test Exam");
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+        exam.setExamMode(ExamMode.REAL);
+        exam = examRepository.save(exam);
+
+        // Register all 4 students
+        examUserRepository.save(buildExamUser(exam, s1, true, "signing/path/student1.png"));
+        examUserRepository.save(buildExamUser(exam, s2, false, null));
+        examUserRepository.save(buildExamUser(exam, s3, false, null));
+        examUserRepository.save(buildExamUser(exam, s4, false, null));
+
+        // student1: submitted
+        StudentExam se1 = buildStudentExam(exam, s1);
+        se1.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(30));
+        se1.setSubmitted(true);
+        se1.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(se1);
+
+        // student2: started only
+        StudentExam se2 = buildStudentExam(exam, s2);
+        se2.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(20));
+        studentExamRepository.save(se2);
+
+        // student3: has StudentExam but not started
+        studentExamRepository.save(buildStudentExam(exam, s3));
+
+        // student4: no StudentExam (ExamMissing)
+
+        return exam;
+    }
+
+    private ExamUser buildExamUser(Exam exam, User user, boolean attendanceChecked, String signingImagePath) {
+        ExamUser eu = new ExamUser();
+        eu.setUser(user);
+        eu.setExam(exam);
+        if (attendanceChecked) {
+            eu.setDidCheckImage(true);
+            eu.setDidCheckName(true);
+            eu.setDidCheckLogin(true);
+            eu.setDidCheckRegistrationNumber(true);
+            eu.setSigningImagePath(signingImagePath);
+        }
+        return eu;
+    }
+
+    private StudentExam buildStudentExam(Exam exam, User user) {
+        StudentExam se = new StudentExam();
+        se.setExam(exam);
+        se.setUser(user);
+        se.setTestRun(false);
+        se.setWorkingTime(exam.getDuration());
+        return se;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExportExamUsers() throws Exception {
+        List<ExamUserDTO> examUserDTOs = getExamUserDTOS();
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs, ExamRegistrationResultDTO.class, OK);
+
+        List<ExportExamUserDTO> exportedUsers = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/export-students", HttpStatus.OK,
+                ExportExamUserDTO.class);
+
+        assertThat(exportedUsers).hasSize(4);
+
+        ExportExamUserDTO user = exportedUsers.stream().filter(u -> (TEST_PREFIX + "student1").equals(u.login())).findFirst().orElseThrow();
+
+        assertThat(user.login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(user.matriculationNumber()).isEqualTo("03756882");
+        assertThat(user.name()).isNotBlank();
+        assertThat(user.email()).isNotBlank();
+
+        assertThat(user.room()).isNotNull();
+        assertThat(user.seat()).isNotNull();
+    }
+
+}

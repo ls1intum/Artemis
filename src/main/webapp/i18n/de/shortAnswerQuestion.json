@@ -1,0 +1,34 @@
+{
+    "artemisApp": {
+        "shortAnswerQuestion": {
+            "home": {
+                "title": "Kurzantwort-Fragen",
+                "createLabel": "Kurzantwort-Frage erstellen"
+            },
+            "created": "Kurzantwort-Frage erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Frage gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Kurzantwort-Frage {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Kurzantwort-Frage"
+            },
+            "spots": "Spots",
+            "solutions": "Lösungen",
+            "correctMappings": "Korrekte Zuordnung",
+
+            "editor": {
+                "addHint": "[hint] Hinweis",
+                "addExplanation": "[exp] Erklärung",
+                "addSpot": "[-spot #] Spot erzeugen",
+                "addOption": "[-option #] Antwortmöglichkeit hinzufügen",
+                "text": "Text",
+                "visual": "Visuell",
+                "visualModeHeadline": "Visueller Modus",
+                "visualModeExplanation": "Bitte markiere ein Wort und drücke anschließend auf Spot erzeugen um einen neuen Spot mit der zugehörigen Lösung zu erstellen"
+            },
+            "addShortAnswerSolution": "Short Answer Lösung hinzufügen"
+        }
+    }
+}

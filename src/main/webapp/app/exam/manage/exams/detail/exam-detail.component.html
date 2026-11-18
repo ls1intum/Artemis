@@ -1,0 +1,76 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0!" data-testid="exam-detail-title">
+        <span jhiTranslate="artemisApp.exam.details"></span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
+    @if (exam()?.course?.isAtLeastInstructor) {
+        @if (exam() && isExamOver() && exam()?.course) {
+            <jhi-course-exam-archive-button class="flex flex-wrap items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
+        }
+        <button type="button" [title]="'entity.action.reset' | artemisTranslate" tumAetUiButton severity="danger" size="small" (click)="resetDialogVisible.set(true)">
+            <fa-icon [icon]="faUndo" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
+        </button>
+        <button
+            type="button"
+            [title]="'entity.action.delete' | artemisTranslate"
+            data-testid="exam-delete"
+            tumAetUiButton
+            severity="danger"
+            size="small"
+            (click)="deleteDialogVisible.set(true)"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
+        </button>
+    }
+</ng-template>
+
+<div class="flex justify-center">
+    <div class="w-full max-w-[91.666667%]">
+        @if (exam()) {
+            <div>
+                @if (exam()?.course?.isAtLeastInstructor && canHaveBonus()) {
+                    <div class="flex flex-wrap gap-2">
+                        <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('bonus')">
+                            <fa-icon [icon]="faAward" />
+                            <span jhiTranslate="artemisApp.examManagement.bonus"></span>
+                        </a>
+                    </div>
+                }
+                <hr class="my-6! border-(--border-color)" />
+                @if (exam()?.course?.isAtLeastInstructor) {
+                    <div>
+                        <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam()" />
+                    </div>
+                }
+                @if (examDetailSections()) {
+                    <jhi-detail-overview-list [sections]="examDetailSections()" />
+                }
+            </div>
+            @if (exam()?.course?.isAtLeastInstructor) {
+                <jhi-exam-delete-dialog
+                    [(visible)]="resetDialogVisible"
+                    [actionType]="resetType"
+                    [entityTitle]="exam()?.title || ''"
+                    deleteQuestion="artemisApp.examManagement.reset.question"
+                    deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                    [dialogError]="dialogError$"
+                    (confirmed)="resetExam()"
+                />
+                <jhi-exam-delete-dialog
+                    [(visible)]="deleteDialogVisible"
+                    [entityTitle]="exam()?.title || ''"
+                    entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
+                    [fetchCategorizedEntitySummary]="examDeletionSummary()"
+                    deleteQuestion="artemisApp.examManagement.delete.question"
+                    deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+                    [dialogError]="dialogError$"
+                    (confirmed)="deleteExam(exam()!.id!)"
+                />
+            }
+        }
+    </div>
+</div>

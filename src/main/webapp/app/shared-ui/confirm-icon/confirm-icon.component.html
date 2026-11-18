@@ -1,0 +1,12 @@
+<button
+    type="button"
+    class="confirm-icon-button"
+    [class.confirm-icon-danger]="showConfirm()"
+    [attr.aria-label]="activeTooltip()"
+    [tumAetUiTooltip]="activeTooltip()"
+    (mouseleave)="revertIfConfirming()"
+    (blur)="revertIfConfirming()"
+    (click)="handleActivate()"
+>
+    <fa-icon [icon]="activeIcon()" [size]="showConfirm() ? iconSize() : undefined" />
+</button>

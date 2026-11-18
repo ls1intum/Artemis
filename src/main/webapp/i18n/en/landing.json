@@ -1,0 +1,288 @@
+{
+    "landing": {
+        "pageTitle": "Artemis: Interactive Learning with Individual Feedback",
+        "navbar": {
+            "logIn": "Log in",
+            "toggleMenu": "Toggle menu"
+        },
+        "hero": {
+            "tagline": "Open source, for universities and educational institutions",
+            "title": "Interactive learning with individual feedback.",
+            "subtitle": "Artemis is an open-source platform that enables universities to provide scalable, interactive learning experiences with individual feedback, authentic assessment, adaptive learning, and responsible AI support. Institutions run it on their own infrastructure.",
+            "actions": {
+                "getStarted": "Get started",
+                "documentation": "Documentation",
+                "about": "About the project",
+                "github": "GitHub"
+            }
+        },
+        "spotlight": {
+            "title": "AI that teaches, not just answers",
+            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure.",
+            "steps": {
+                "tutor": {
+                    "title": "AI that teaches, not just answers",
+                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure."
+                },
+                "feedback": {
+                    "title": "Instant feedback, every submission",
+                    "description": "Submit code, a quiz, or a modeling task and get structured, individual feedback within seconds. Artemis runs test cases, static analysis, and grading criteria automatically, so students always know exactly where they stand. Instructors can fine-tune feedback settings and test configurations for each exercise."
+                },
+                "transcribedLecture": {
+                    "title": "Lectures that keep working after class",
+                    "description": "Upload lecture videos and Artemis automatically generates searchable transcriptions. Students revisit specific moments, Iris draws on the content to answer questions, and instructors can link units directly to learning objectives."
+                },
+                "insights": {
+                    "title": "Learning paths that adapt to every student",
+                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress. Struggling students receive targeted support while advanced learners get room to move ahead."
+                }
+            },
+            "carousel": {
+                "previous": "Previous slide",
+                "next": "Next slide",
+                "slide": "Slide {{ n }}"
+            }
+        },
+        "skipToMain": "Skip to main content",
+        "socialProof": {
+            "title": "Adopted across leading educational institutions",
+            "universitiesAria": "Universities using Artemis",
+            "cta": "See where Artemis is used"
+        },
+        "features": {
+            "title": "Capabilities built into Artemis",
+            "cards": {
+                "assessment": {
+                    "category": "Assessment",
+                    "description": "From anonymous, rubric-based manual grading with AI-assisted correction suggestions to fully automatic evaluation of quizzes and programming submissions. Grading criteria are fully customizable per exercise.",
+                    "imageAlt": "Assessment dashboard"
+                },
+                "tutorials": {
+                    "category": "Tutorials",
+                    "description": "Structured small-group sessions with exercise assignments, attendance tracking, and tutor tooling designed to scale across large cohorts.",
+                    "imageAlt": "Tutorial groups"
+                },
+                "lectures": {
+                    "category": "Lectures",
+                    "description": "Upload slides, embed videos, and divide content into structured units, all linked directly to learning objectives.",
+                    "imageAlt": "Lecture content"
+                },
+                "examMode": {
+                    "category": "Exam Mode",
+                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria. Fully configurable to fit your institution's exam workflows.",
+                    "imageAlt": "Exam mode"
+                },
+                "communication": {
+                    "category": "Communication",
+                    "description": "Course-wide channels, exercise-specific discussion threads, and direct messaging keep everyone connected with a streamlined communication experience.",
+                    "imageAlt": "Communication tools"
+                },
+                "faq": {
+                    "category": "FAQ",
+                    "description": "Searchable, course-level FAQ library that reduces repetitive queries and feeds directly into Iris for smarter AI responses.",
+                    "imageAlt": "FAQ management"
+                },
+                "iris": {
+                    "category": "Iris - AI Tutor",
+                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers. It can be operated with self-hosted open-source models, so AI processing stays inside institutional infrastructure.",
+                    "imageAlt": "Iris AI Tutor"
+                },
+                "mobileApps": {
+                    "category": "Mobile Apps",
+                    "description": "Dedicated iOS and Android apps let students access courses, exercises, lectures, and discussions with a seamless mobile experience.",
+                    "imageAlt": "Mobile apps",
+                    "appStoreAlt": "Download on the App Store",
+                    "playStoreAlt": "Get it on Google Play"
+                }
+            }
+        },
+        "faq": {
+            "label": "FAQ",
+            "title": "Commonly asked questions",
+            "items": {
+                "free": {
+                    "question": "Is Artemis free to use?",
+                    "answer": "Yes. Artemis is fully open source under the MIT license. Most institutions run their own instance, which gives them full control over their data, their configuration, and which integrations they enable. For smaller deployments such as schools, and for institutions that want to try Artemis first, the Artemis team at the Technical University of Munich can host an instance."
+                },
+                "languages": {
+                    "question": "Which programming languages can I use with Artemis?",
+                    "answer": "Artemis is language-independent. Automated testing works with any programming language that can run in a CI pipeline. It ships with predefined templates for Java, Python, C, Haskell, Kotlin, Swift, and more, making it easy for instructors to set up exercises quickly."
+                },
+                "grading": {
+                    "question": "How does automated grading work?",
+                    "answer": "Programming submissions are built and tested automatically via CI pipelines, with results appearing within seconds. Quizzes are graded instantly on submission. Text and modeling exercises support both AI-assisted and manual assessment with structured rubrics."
+                },
+                "scale": {
+                    "question": "Can I run exams for 1000+ students?",
+                    "answer": "Yes. Artemis has been used for online exams with more than 2,000 students. Exam mode uses exercise pools to generate a unique exam variant per student, supports real-time monitoring, and scales horizontally across multiple nodes."
+                },
+                "iris": {
+                    "question": "How does Iris differ from ChatGPT?",
+                    "answer": "Iris is designed specifically for education. It guides students with hints and leading questions instead of giving direct answers, drawing on course-specific content within the learning workflow. Institutions can run Iris with open-source models on their own servers, which keeps AI processing inside their own infrastructure."
+                },
+                "docs": {
+                    "question": "Where can I find the full documentation?",
+                    "answer": "Full documentation is available at docs.artemis.tum.de, including guides for students, instructors, developers, and administrators, as well as project-level information on governance, releases, security, and privacy."
+                }
+            }
+        },
+        "footer": {
+            "tagline": "Built by educators, for education.",
+            "subtitle": "Open source, developed in public, and improved by a growing community of universities and developers.",
+            "getStarted": "Get Started",
+            "description": "An open-source platform for interactive learning with individual feedback.",
+            "links": {
+                "features": {
+                    "title": "Features",
+                    "exercises": "Exercises",
+                    "lectures": "Lectures",
+                    "communication": "Communication",
+                    "adaptiveLearning": "Adaptive Learning",
+                    "iris": "Iris - AI Tutor"
+                },
+                "instructors": {
+                    "title": "For Instructors",
+                    "examMode": "Exam Mode",
+                    "assessment": "Assessment",
+                    "tutorials": "Tutorials",
+                    "faq": "FAQ"
+                },
+                "resources": {
+                    "title": "Resources",
+                    "documentation": "Documentation",
+                    "publication": "Publication",
+                    "github": "GitHub",
+                    "security": "Security"
+                },
+                "project": {
+                    "title": "Project",
+                    "about": "About Artemis",
+                    "try": "Try Artemis",
+                    "trust": "Trust & Transparency",
+                    "governance": "Project Governance",
+                    "roadmap": "Roadmap",
+                    "adoption": "Adoption"
+                }
+            },
+            "website": "Website",
+            "linkedin": "LinkedIn",
+            "instagram": "Instagram",
+            "imprint": {
+                "about": "About",
+                "releases": "Releases",
+                "feedback": "Feedback",
+                "privacy": "Privacy",
+                "imprint": "Imprint"
+            },
+            "copyright": "© {{year}} Technical University of Munich. All rights reserved."
+        },
+        "opensInNewTab": "(opens in a new tab)",
+        "pillars": {
+            "label": "Core capabilities",
+            "title": "Four ideas instead of a feature catalog",
+            "subtitle": "Artemis is built around what makes interactive learning work at university scale, not around covering every use case of a general-purpose learning management system.",
+            "items": {
+                "feedback": {
+                    "title": "Individual feedback",
+                    "description": "Feedback is part of the learning loop. Programming submissions are built, tested, and analyzed automatically, quizzes are evaluated on submission, and text and modeling exercises combine manual assessment with feedback suggestions."
+                },
+                "assessment": {
+                    "title": "Authentic assessment",
+                    "description": "Coursework and examinations use the same exercise types students already worked with. Exam mode adds exercise variants per student, test runs for instructors, plagiarism checks, and a structured student review workflow."
+                },
+                "adaptive": {
+                    "title": "Adaptive and AI-supported learning",
+                    "description": "Competencies, learning paths, and learning analytics let courses adapt to individual progress. AI-assisted features are optional, and instructors and tutors stay responsible for assessment decisions."
+                },
+                "infrastructure": {
+                    "title": "Open digital infrastructure",
+                    "description": "Artemis is MIT-licensed, developed in public, and deployed by each institution on its own infrastructure. It scales horizontally and has been used for courses and online exams with more than 2,000 students."
+                }
+            }
+        },
+        "trust": {
+            "label": "For institutional decision makers",
+            "title": "Trust & Transparency",
+            "subtitle": "Artemis is used for learning, assessment, and examinations, and it processes educational data about identifiable people. Every topic below links to the documentation that is kept up to date.",
+            "note": "Artemis is software, not a service. Each institution deploys and operates its own instance and remains responsible for its configuration, its data, and its own compliance obligations.",
+            "items": {
+                "security": {
+                    "title": "Security",
+                    "description": "Authentication mechanisms, the role model, session handling, transport security, and how vulnerabilities are reported and handled."
+                },
+                "privacy": {
+                    "title": "Privacy & data protection",
+                    "description": "Designed to support GDPR-compliant deployments: self-hosting, configurable privacy statements, student data export, and data cleanup."
+                },
+                "ai": {
+                    "title": "AI transparency",
+                    "description": "A maintained map of every AI-enabled subsystem, which parts are native to Artemis, which are external services, and where the boundaries are."
+                },
+                "accessibility": {
+                    "title": "Accessibility",
+                    "description": "The WCAG 2.2 Level AA target Artemis works toward, the guidelines and tooling behind it, and an honest statement about what is not certified."
+                },
+                "performance": {
+                    "title": "Performance",
+                    "description": "A published reference run: 4,000 students sitting one exam at 0.09s average with zero failed requests, on eleven virtual machines. The load generator ships with Artemis, so you can re-run it yourself."
+                },
+                "releases": {
+                    "title": "Releases & support",
+                    "description": "Versioning, release cadence, which versions receive security fixes, and what an upgrade involves."
+                },
+                "governance": {
+                    "title": "Project governance",
+                    "description": "Who maintains Artemis, how changes are proposed and reviewed, and which quality gates every change has to pass."
+                }
+            }
+        },
+        "research": {
+            "label": "Research-driven development",
+            "title": "Research behind Artemis",
+            "description": "Artemis grew out of research on interactive learning and is still an education research platform. Capabilities are added because there is a teaching problem worth solving and evidence that the solution helps.",
+            "stepLabel": "Step {{ n }}",
+            "cta": "Explore the research and publications",
+            "steps": {
+                "research": {
+                    "title": "Research",
+                    "description": "A question about teaching, feedback, or assessment at scale is identified, usually while running large university courses."
+                },
+                "prototype": {
+                    "title": "Prototype",
+                    "description": "The idea is implemented in Artemis, frequently as part of a thesis or a university course project."
+                },
+                "evaluation": {
+                    "title": "Evaluation",
+                    "description": "The prototype is used in real courses and evaluated together with the students and instructors who work with it."
+                },
+                "product": {
+                    "title": "Open-source product",
+                    "description": "What holds up is hardened, reviewed, documented, and released as part of Artemis for every institution to use."
+                }
+            }
+        },
+        "community": {
+            "label": "Open source",
+            "title": "Developed in public, reviewed in the open",
+            "description": "Requirements, design, reviews, tests, and releases are public. Every change, from a student contribution to a platform-wide refactoring, goes through the same documented process: automated checks, peer review, approval by the responsible feature maintainer, and a final review by an Artemis maintainer.",
+            "items": {
+                "github": {
+                    "title": "GitHub repository",
+                    "description": "Source code, issues, pull requests, and the full review history."
+                },
+                "contributing": {
+                    "title": "Contribution guide",
+                    "description": "How to get from an idea or a bug report to a merged pull request."
+                },
+                "process": {
+                    "title": "Open-source development",
+                    "description": "The engineering process behind Artemis, from feature proposal to release, and the quality gates in between."
+                },
+                "community": {
+                    "title": "Community & support",
+                    "description": "Where to ask questions, report problems, and reach the people who maintain Artemis."
+                }
+            }
+        }
+    }
+}

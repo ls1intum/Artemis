@@ -1,0 +1,32 @@
+.chart-container {
+    flex-shrink: 0;
+}
+
+.stats-container {
+    flex: 1;
+}
+
+.stats-item {
+    display: flex;
+    gap: 0.25rem;
+    align-items: baseline;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+
+    .stats-label {
+        font-weight: 600;
+        color: var(--body-color);
+    }
+
+    .stats-value {
+        color: var(--body-color);
+    }
+
+    .stats-percentage {
+        color: var(--text-body-secondary);
+        font-size: 0.85em;
+    }
+}

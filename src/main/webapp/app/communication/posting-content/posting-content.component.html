@@ -1,0 +1,47 @@
+@if (isDeleted()) {
+    <span class="posting-content-undo-delete inline-flex items-center">
+        <span class="text-muted-color" jhiTranslate="artemisApp.communication.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds() }"></span>
+        <button type="button" tumAetUiButton severity="primary" variant="outlined" size="small" class="relative ms-2 overflow-hidden" (click)="onUndoDeleteEvent.emit()">
+            <span class="post-delete-button-label" jhiTranslate="artemisApp.communication.post.undoDelete"></span>
+            <span class="post-delete-button-background"></span>
+        </button>
+    </span>
+} @else {
+    <!-- in preview mode (showing similar posts during creation): content can be expanded and collapsed shown -->
+    @if (previewMode()) {
+        <div class="pb-1">
+            <span class="clickable p-0">
+                <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" class="text-muted-color" (click)="showContent = !showContent" />
+            </span>
+            <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.communication.post.collapseContent' : 'artemisApp.communication.post.showContent' }}"></span>
+            @if (showContent) {
+                <div>
+                    <jhi-posting-markdown
+                        [markdown]="postingMarkdown()"
+                        [references]="postingContentParts()"
+                        (userReferenceClicked)="userReferenceClicked.emit($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
+                    @if (isEdited()) {
+                        <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
+                    }
+                </div>
+            }
+        </div>
+    }
+    <!-- not in preview mode: content always shown -->
+    @if (!previewMode()) {
+        <div class="pb-1">
+            <jhi-posting-markdown
+                [markdown]="postingMarkdown()"
+                [references]="postingContentParts()"
+                (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+            />
+            @if (isEdited()) {
+                <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
+            }
+            <jhi-link-preview-container [data]="content()" [author]="author()" [posting]="posting()" [isEdited]="isEdited()" [isReply]="isReply()" />
+        </div>
+    }
+}

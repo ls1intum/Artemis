@@ -1,0 +1,1011 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import dayjs from 'dayjs/esm';
+import { Subscription, of, throwError } from 'rxjs';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import {
+    problemStatementBubbleSortNotExecutedHtml,
+    problemStatementEmptySecondTask,
+    problemStatementEmptySecondTaskNotExecutedHtml,
+    problemStatementPlantUMLWithTest,
+    problemStatementWithIds,
+} from 'test/helpers/sample/problemStatement.json';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockModule } from 'ng-mocks';
+import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+
+/**
+ * Typed view onto the private/internal fields of {@link ProgrammingExerciseInstructionComponent}
+ * the tests exercise. Centralising these reach-ins replaces dozens of `@ts-ignore` lines and
+ * gives editor autocomplete on the asserted shapes. If any field is renamed in the component,
+ * TypeScript surfaces the mismatch here rather than via runtime test failures.
+ */
+type InstructionInternals = Omit<
+    ProgrammingExerciseInstructionComponent,
+    | 'participationSubscription'
+    | 'generateHtmlSubscription'
+    | 'problemStatement'
+    | 'lastSeenProblemStatement'
+    | 'lastRenderedProblemStatement'
+    | 'isInitial'
+    | 'isLoading'
+    | 'tasks'
+    | 'setupMarkdownSubscriptions'
+> & {
+    participationSubscription?: Subscription;
+    generateHtmlSubscription?: Subscription;
+    problemStatement: string | undefined;
+    lastSeenProblemStatement: string | undefined;
+    lastRenderedProblemStatement: string | undefined;
+    isInitial: boolean;
+    isLoading: WritableSignal<boolean>;
+    tasks: WritableSignal<TaskArray>;
+    setupMarkdownSubscriptions: () => void;
+    taskComponentRefs: { destroy: () => void; hostView: { destroyed: boolean } }[];
+};
+
+const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
+
+/** The container IDs have the form plantUml-{exerciseId}-{instanceId}-{index}; the instance part differs per test run, so it is dropped for comparisons. */
+const withoutInstanceId = (containerId: string): string => containerId.replace(/^(plantUml-\d+)-\d+-(\d+)$/, '$1-$2');
+
+describe('ProgrammingExerciseInstructionComponent', () => {
+    let comp: ProgrammingExerciseInstructionComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
+    let debugElement: DebugElement;
+    let participationWebsocketService: ParticipationWebsocketService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let programmingExerciseGradingService: ProgrammingExerciseGradingService;
+    let dialogService: TumAetUiDialogService;
+    let themeService: ThemeService;
+
+    let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
+    let openModalStub: ReturnType<typeof vi.spyOn>;
+    let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
+
+    const dialogRef = {} as unknown as TumAetUiDialogRef;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
+            providers: [
+                ProgrammingExerciseTaskExtensionWrapper,
+                ProgrammingExercisePlantUmlExtensionWrapper,
+                ProgrammingExerciseInstructionService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
+                { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
+        themeService = TestBed.inject(ThemeService);
+
+        subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        openModalStub = vi.spyOn(dialogService, 'open');
+        getLatestResultWithFeedbacks = vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+
+        fixture.componentRef.setInput('personalParticipation', true);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('makes each scrolling table keyboard-focusable with a localized accessible name', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Tabelle in der Aufgabenstellung');
+        const rendered = comp.addStylesForTables('<table><tr><td>Wide content</td></tr></table>');
+        const table = new DOMParser().parseFromString(rendered!, 'text/html').querySelector('table')!;
+
+        expect(table.style.overflowX).toBe('scroll');
+        expect(table.tabIndex).toBe(0);
+        expect(table.getAttribute('aria-label')).toBe('Tabelle in der Aufgabenstellung');
+        expect(table.querySelector('td')?.textContent).toBe('Wide content');
+    });
+
+    it('keeps authored table names and supplies a localized fallback only for unnamed rendered tables', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            problemStatement: `
+<table><caption>Input constraints</caption><tr><td>Captioned content</td></tr></table>
+<table aria-label="Expected output"><tr><td>Named content</td></tr></table>
+<h3 id="complexity-heading">Complexity bounds</h3>
+<table aria-labelledby="complexity-heading"><tr><td>Referenced content</td></tr></table>
+<table title="Example runs"><tr><td>Titled content</td></tr></table>
+<table><tr><td>Unnamed content</td></tr></table>
+<table aria-label="  " aria-labelledby=" " title=" "><caption> </caption><tr><td>Empty names</td></tr></table>`,
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables).toHaveLength(6);
+        expect(tables[0].caption?.textContent).toBe('Input constraints');
+        expect(tables[0].hasAttribute('aria-label')).toBe(false);
+        expect(tables[1].getAttribute('aria-label')).toBe('Expected output');
+        expect(tables[2].getAttribute('aria-labelledby')).toBe('complexity-heading');
+        expect(content.querySelector('#complexity-heading')?.textContent).toBe('Complexity bounds');
+        expect(tables[2].hasAttribute('aria-label')).toBe(false);
+        expect(tables[3].title).toBe('Example runs');
+        expect(tables[3].hasAttribute('aria-label')).toBe(false);
+        expect(tables[4].getAttribute('aria-label')).toBe('Instruction table');
+        expect(tables[5].getAttribute('aria-label')).toBe('Instruction table');
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+    });
+
+    it('preserves accessible tables when a live exam update displays instruction differences', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            exerciseGroup: { id: 5 },
+            problemStatement: '<table><caption>Exercise requirements</caption><tr><td>Before update</td></tr></table>',
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        expect(content.textContent).toContain('Before update');
+        expect(content.textContent).not.toContain('After update');
+
+        TestBed.inject(ExamExerciseUpdateService).updateLiveExamExercise(3, '<table><caption>Exercise requirements</caption><tr><td>After update</td></tr></table>');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The live update must display both the removed and added text, rather than silently replacing the instructions.
+        expect(content.textContent).toContain('Before');
+        expect(content.textContent).toContain('After update');
+        expect(content.querySelector('del')?.textContent).toContain('Before');
+        expect(content.querySelector('ins')?.textContent).toContain('After');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables.length).toBeGreaterThan(0);
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.caption?.textContent).toBe('Exercise requirements');
+            expect(table.hasAttribute('aria-label')).toBe(false);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+        expect(fixture.nativeElement.querySelector('#highlightDiffButton')).not.toBeNull();
+    });
+
+    it('should on participation change clear old subscription for participation results set up new one', async () => {
+        // Enable fake timers BEFORE the debounced action is scheduled so we can advance the
+        // 150 ms problemStatementUpdateSubject debounce (instruction component) deterministically.
+        vi.useFakeTimers();
+        try {
+            const exercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                isAtLeastTutor: true,
+                problemStatement: 'lorem ipsum dolor sit amet',
+            };
+            const result: Result = { id: 1 };
+            const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+            const oldSubscription = new Subscription();
+            const getTestCasesSpy = vi.spyOn(programmingExerciseGradingService, 'getTestCases');
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            internals(comp).participationSubscription = oldSubscription;
+
+            // ngOnInit fires processInputChanges on the first detectChanges.
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(getTestCasesSpy).toHaveBeenCalledOnce();
+            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
+            expect(internals(comp).participationSubscription).not.toEqual(oldSubscription);
+            await vi.advanceTimersByTimeAsync(160);
+            expect(internals(comp).isInitial).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
+        // Enable fake timers BEFORE detectChanges so the 150 ms debounce can be advanced
+        // deterministically rather than relying on a real-time sleep.
+        vi.useFakeTimers();
+        try {
+            const exercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                isAtLeastTutor: true,
+                problemStatement: 'lorem ipsum dolor sit amet',
+            };
+            const result: Result = { id: 1 };
+            const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+            const oldSubscription = new Subscription();
+            const generateHtmlEvents = of(undefined);
+
+            subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('generateHtmlEvents', generateHtmlEvents);
+            internals(comp).generateHtmlSubscription = oldSubscription;
+
+            // ngOnInit handles the initial processInputChanges call.
+            fixture.changeDetectorRef.detectChanges();
+
+            // The generateHtmlSubscription should be reassigned, not left as the old one.
+            expect(internals(comp).generateHtmlSubscription).not.toEqual(oldSubscription);
+            // Verify it's actually a subscription.
+            expect(internals(comp).generateHtmlSubscription).toBeInstanceOf(Subscription);
+            await vi.advanceTimersByTimeAsync(160);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should process empty problem statement and show empty state', () => {
+        const result: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2 };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+        const loadInitialResultStub = vi.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        const noInstructionsAvailableSpy = vi.spyOn(comp.onNoInstructionsAvailable, 'emit');
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('exercise', exercise);
+        internals(comp).isInitial = true;
+        internals(comp).isLoading.set(false);
+
+        // ngOnInit fires processInputChanges automatically.
+        fixture.detectChanges();
+        expect(internals(comp).problemStatement).toBeUndefined();
+        // Component now processes empty problem statements to show empty state
+        expect(loadInitialResultStub).toHaveBeenCalledOnce();
+        expect(comp.latestResult).toBe(result);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        // No longer emits onNoInstructionsAvailable - shows empty state instead
+        expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
+        expect(internals(comp).isInitial).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
+    });
+
+    it('should NOT update markdown if the problemStatement is changed', async () => {
+        // Fake timers up front so the 150 ms debounce can be advanced deterministically.
+        vi.useFakeTimers();
+        try {
+            const participation: Participation = { id: 2 };
+            const exercise: ProgrammingExercise = {
+                id: 3,
+                course: { id: 4 },
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const oldProblemStatement = 'lorem ipsum';
+            const newProblemStatement = 'new lorem ipsum';
+            // Seed participation before any change detection so the effect's initial seed pass
+            // captures it — subsequent input-change effect runs see no participation change.
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+            const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
+            fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: oldProblemStatement });
+            internals(comp).isInitial = false;
+            // Prime the seen problem statement so the next change is detected as a real edit.
+            internals(comp).lastSeenProblemStatement = oldProblemStatement;
+            fixture.componentRef.setInput('exercise', { ...comp.exercise(), problemStatement: newProblemStatement });
+            fixture.detectChanges();
+            // Advance past the 150 ms debounce.
+            await vi.advanceTimersByTimeAsync(160);
+            expect(updateMarkdownStub).toHaveBeenCalledOnce();
+            expect(loadInitialResult).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should NOT update the markdown if there is no participation and the exercise has changed', async () => {
+        // Fake timers up front so the 150 ms debounce can be advanced deterministically.
+        vi.useFakeTimers();
+        try {
+            const participation: Participation = { id: 2 };
+            const exercise: ProgrammingExercise = {
+                id: 3,
+                course: { id: 4 },
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const newProblemStatement = 'new lorem ipsum';
+            // Seed participation before any change detection so the effect's initial seed pass
+            // captures it; the subsequent change exercises the "exercise changed, participation didn't" path.
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+            const loadInitialResult = vi.spyOn(comp, 'loadInitialResult');
+            internals(comp).isInitial = false;
+            internals(comp).lastSeenProblemStatement = undefined;
+            fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: newProblemStatement });
+            fixture.detectChanges();
+            // Advance past the 150 ms debounce.
+            await vi.advanceTimersByTimeAsync(160);
+            expect(comp.markdownExtensions).toHaveLength(2);
+            expect(updateMarkdownStub).toHaveBeenCalledOnce();
+            expect(loadInitialResult).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should still render the instructions if fetching the latest result fails', () => {
+        const participation: Participation = { id: 2 };
+        const problemstatement = 'lorem ipsum';
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemstatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('exercise', exercise);
+        internals(comp).isInitial = true;
+        internals(comp).isLoading.set(false);
+
+        // ngOnInit fires processInputChanges automatically.
+        fixture.detectChanges();
+
+        expect(comp.markdownExtensions).toHaveLength(2);
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
+        // result should have been fetched with the submission as this is required to show details for it
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(internals(comp).isInitial).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
+    });
+
+    // TODO check if this is an issue with the client itself here
+    it('should create the steps task icons for the tasks in problem statement markdown', async () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [{ testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true }],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemStatementWithIds,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+
+        internals(comp).problemStatement = exercise.problemStatement!;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.latestResult = result;
+        internals(comp).setupMarkdownSubscriptions();
+
+        comp.updateMarkdown();
+
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
+            id: 0,
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
+            taskName: 'Implement Bubble Sort',
+            testIds: [1],
+        });
+        expect(internals(comp).tasks()[1]).toEqual({
+            id: 1,
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
+            taskName: 'Implement Merge Sort',
+            testIds: [2],
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
+        // TODO: make sure to exclude random numbers here that change after updates of dependencies
+        const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
+
+        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
+        const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
+        expect(bubbleSortStep).not.toBeNull();
+        expect(mergeSortStep).not.toBeNull();
+
+        openModalStub.mockReturnValue(dialogRef);
+
+        bubbleSortStep.nativeElement.click();
+        verifyTask(1, {
+            exercise,
+            feedbackFilter: [1],
+            result,
+            taskName: 'Implement Bubble Sort',
+            numberOfNotExecutedTests: 1,
+        });
+
+        mergeSortStep.nativeElement.click();
+        verifyTask(2, {
+            exercise,
+            feedbackFilter: [2],
+            result,
+            taskName: 'Implement Merge Sort',
+            numberOfNotExecutedTests: 0,
+        });
+    });
+
+    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests', async () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: true }],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemStatementEmptySecondTask,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+
+        internals(comp).problemStatement = exercise.problemStatement!;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.latestResult = result;
+        internals(comp).setupMarkdownSubscriptions();
+
+        comp.updateMarkdown();
+
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
+            id: 0,
+            completeString: '[task][Bubble Sort](<testid>1</testid>)',
+            taskName: 'Bubble Sort',
+            testIds: [1],
+        });
+        expect(internals(comp).tasks()[1]).toEqual({
+            id: 1,
+            completeString: '[task][Merge Sort]()',
+            taskName: 'Merge Sort',
+            testIds: [],
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
+
+        const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
+        // TODO: make sure to exclude random numbers here that change after updates of dependencies
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
+
+        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--success'));
+        const mergeSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
+        expect(bubbleSortStep).not.toBeNull();
+        expect(mergeSortStep).not.toBeNull();
+
+        openModalStub.mockReturnValue(dialogRef);
+
+        bubbleSortStep.nativeElement.click();
+        verifyTask(1, {
+            exercise,
+            feedbackFilter: [1],
+            result,
+            taskName: 'Bubble Sort',
+            numberOfNotExecutedTests: 0,
+        });
+
+        mergeSortStep.nativeElement.click();
+        // Should not get called another time
+        expect(openModalStub).toHaveBeenCalledOnce();
+    });
+
+    it('should create the correct colors in problem statement plantuml diagram with inserted tests', async () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [
+                { testCase: { id: 1, testName: 'testMethods[Policy]' }, positive: true },
+                { testCase: { id: 2, testName: 'testPolicy()' }, positive: false },
+            ],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemStatementPlantUMLWithTest,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+
+        internals(comp).problemStatement = exercise.problemStatement!;
+        fixture.componentRef.setInput('exercise', exercise);
+        comp.latestResult = result;
+        internals(comp).setupMarkdownSubscriptions();
+
+        const plantUMLExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+        const injectSpy = vi.spyOn(plantUMLExtension as any, 'loadAndInjectPlantUml');
+
+        comp.updateMarkdown();
+
+        // Flush all pending timers (setTimeout in renderMarkdown)
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // first test should be green (successful), second red (failed)
+        const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
+        expect(injectSpy).toHaveBeenCalledWith(expectedUML, expect.stringMatching(new RegExp(`^plantUml-${exercise.id}-\\d+-0$`)));
+    });
+
+    it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
+        const problemStatement = 'lorem ipsum';
+        const updatedProblemStatement = 'new lorem ipsum';
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+        internals(comp).problemStatement = problemStatement;
+        fixture.componentRef.setInput('exercise', { problemStatement: updatedProblemStatement } as ProgrammingExercise);
+        comp.renderUpdatedProblemStatement();
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(comp.exercise()?.problemStatement).toEqual(updatedProblemStatement);
+    });
+
+    it('should update the markdown on a theme change', () => {
+        // Establish a starting theme and flush the constructor effect's initial run (skipped
+        // because isInitial=true). After flipping isInitial=false, the next theme change is the
+        // first run that should call updateMarkdown.
+        themeService.applyThemePreference(Theme.LIGHT);
+        fixture.changeDetectorRef.detectChanges();
+        const updateMarkdownStub = vi.spyOn(comp, 'updateMarkdown');
+
+        internals(comp).isInitial = false;
+        themeService.applyThemePreference(Theme.DARK);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+    });
+
+    const verifyTask = (expectedInvocations: number, expectedData: Record<string, unknown>) => {
+        expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
+        expect(openModalStub).toHaveBeenLastCalledWith(
+            FeedbackComponent,
+            expect.objectContaining({
+                header: 'artemisApp.result.detail.feedbackForTask',
+                size: 'large',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+                inputValues: expect.objectContaining(expectedData),
+            }),
+        );
+    };
+});
+
+/**
+ * CRITICAL REGRESSION TESTS: PlantUML diagram isolation in exam mode.
+ *
+ * Background:
+ * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist
+ * simultaneously in the DOM (hidden via [hidden], NOT destroyed). They all share
+ * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (a root @Service()).
+ *
+ * These tests simulate the exact exam scenario to prevent regressions of the
+ * per-exercise PlantUML container ID scoping fix.
+ */
+describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation', () => {
+    let plantUmlExtension: ProgrammingExercisePlantUmlExtensionWrapper;
+
+    // Problem statements with multiple PlantUML diagrams, simulating real exam exercises
+    const exerciseA_problemStatement = 'Exercise A:\n@startuml\nclass SortAlgorithm {\n+sort()\n}\n@enduml\nMore text\n@startuml\nclass BubbleSort {\n+sort()\n}\n@enduml';
+    const exerciseB_problemStatement = 'Exercise B:\n@startuml\nclass LinkedList {\n+add()\n+remove()\n}\n@enduml';
+    const exerciseC_problemStatement =
+        'Exercise C:\n@startuml\nclass Stack {\n+push()\n+pop()\n}\n@enduml\nMore\n@startuml\nclass Queue {\n+enqueue()\n+dequeue()\n}\n@enduml\nEven more\n@startuml\nclass PriorityQueue {\n+insert()\n}\n@enduml';
+
+    function createExercise(id: number, problemStatement: string): ProgrammingExercise {
+        return {
+            id,
+            course: { id: 1 },
+            problemStatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+    }
+
+    function createComponentInstance(): {
+        comp: ProgrammingExerciseInstructionComponent;
+        fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
+    } {
+        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
+        const comp = fixture.componentInstance;
+        fixture.componentRef.setInput('personalParticipation', true);
+        return { comp, fixture };
+    }
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
+            providers: [
+                ProgrammingExerciseTaskExtensionWrapper,
+                ProgrammingExercisePlantUmlExtensionWrapper,
+                ProgrammingExerciseInstructionService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
+                { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        plantUmlExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should produce globally unique PlantUML container IDs when multiple components render different exercises', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+        const instanceC = createComponentInstance();
+
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseB_problemStatement);
+        const exerciseC = createExercise(30, exerciseC_problemStatement);
+
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
+            { ...instanceC, exercise: exerciseC },
+        ]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        instanceA.comp.updateMarkdown();
+        instanceB.comp.updateMarkdown();
+        instanceC.comp.updateMarkdown();
+
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
+
+        const uniqueIds = new Set(targetedIds);
+        expect(uniqueIds.size).toBe(6);
+
+        expect(uniqueIds).toContain('plantUml-10-0');
+        expect(uniqueIds).toContain('plantUml-10-1');
+        expect(uniqueIds).toContain('plantUml-20-0');
+        expect(uniqueIds).toContain('plantUml-30-0');
+        expect(uniqueIds).toContain('plantUml-30-1');
+        expect(uniqueIds).toContain('plantUml-30-2');
+
+        for (const id of uniqueIds) {
+            expect(id).toMatch(/^plantUml-(10|20|30)-\d+$/);
+        }
+
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+        instanceC.comp.ngOnDestroy();
+    });
+
+    it('should NOT produce colliding IDs when two exercises have the same number of diagrams', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseA_problemStatement);
+
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
+        ]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        instanceA.comp.updateMarkdown();
+        instanceB.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
+        const uniqueIds = new Set(targetedIds);
+
+        expect(uniqueIds.size).toBe(4);
+
+        const exercise10Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-10-'));
+        const exercise20Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-20-'));
+        expect(exercise10Ids).toHaveLength(2);
+        expect(exercise20Ids).toHaveLength(2);
+
+        expect(exercise10Ids).toEqual(['plantUml-10-0', 'plantUml-10-1']);
+        expect(exercise20Ids).toEqual(['plantUml-20-0', 'plantUml-20-1']);
+
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+    });
+
+    it('should produce stable IDs when re-rendering an exercise after rendering others', async () => {
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseB_problemStatement);
+
+        for (const { fixture, comp, exercise } of [
+            { ...instanceA, exercise: exerciseA },
+            { ...instanceB, exercise: exerciseB },
+        ]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: exercise.id! + 100 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        instanceA.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
+        expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        injectSpy.mockClear();
+
+        instanceB.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        injectSpy.mockClear();
+
+        // Use the production re-render entry point (forceReRenderProblemStatement) rather than poking the private
+        // lastRenderedProblemStatement field: this is exactly the call onActivate() makes when an exam exercise becomes
+        // visible again, so the test guards the real navigation path.
+        instanceA.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
+
+        expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+    });
+
+    it('should re-inject PlantUML diagrams via forceReRenderProblemStatement even when the problem statement is unchanged', async () => {
+        // Regression test for the exam bug where switching between exercises removed already-rendered PlantUML diagrams.
+        // On return to an exercise the problem statement is unchanged, so plain updateMarkdown() skips the re-render and
+        // the diagrams (which may have been injected into stale/detached DOM while hidden) are never restored.
+        // forceReRenderProblemStatement() must bypass that optimization and re-inject the diagrams.
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instance = createComponentInstance();
+        const exercise = createExercise(10, exerciseA_problemStatement);
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Initial render injects both diagrams of exercise A.
+        instance.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        // Mark the component as past its initial render (as it is after the first processInputChanges in production),
+        // so the "unchanged problem statement" optimization in updateMarkdown is active.
+        internals(instance.comp).isInitial = false;
+
+        // A second updateMarkdown() with the SAME problem statement is a no-op (the "unchanged problem statement"
+        // optimization): nothing is re-injected. This is exactly what made the diagrams disappear on navigation.
+        injectSpy.mockClear();
+        instance.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(injectSpy).not.toHaveBeenCalled();
+
+        // forceReRenderProblemStatement() bypasses the optimization and re-injects the diagrams, restoring them.
+        injectSpy.mockClear();
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        instance.comp.ngOnDestroy();
+    });
+
+    it('should force a re-render via forceReRenderProblemStatement even when the problem statement is undefined', () => {
+        // Guards the undefined-problem-statement edge case: forceReRenderProblemStatement must NOT rely on resetting
+        // lastRenderedProblemStatement to undefined, because when the current problem statement is also undefined the
+        // optimization (undefined === undefined) would wrongly skip the re-render. It uses an explicit force flag instead.
+        const instance = createComponentInstance();
+        const exercise = {
+            id: 10,
+            course: { id: 1 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        } as ProgrammingExercise;
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Initial render records lastRenderedProblemStatement = undefined (the exercise has no problem statement).
+        instance.comp.updateMarkdown();
+        internals(instance.comp).isInitial = false;
+
+        const renderSpy = vi.spyOn(instance.comp as unknown as { renderMarkdown: () => void }, 'renderMarkdown');
+
+        // A plain updateMarkdown() early-returns (undefined === undefined, not initial), so it does NOT re-render.
+        instance.comp.updateMarkdown();
+        expect(renderSpy).not.toHaveBeenCalled();
+
+        // forceReRenderProblemStatement() bypasses the optimization and re-renders even with an undefined statement.
+        instance.comp.forceReRenderProblemStatement();
+        expect(renderSpy).toHaveBeenCalledOnce();
+
+        instance.comp.ngOnDestroy();
+    });
+
+    it('should not accumulate task components across repeated forceReRenderProblemStatement calls', async () => {
+        // Each render destroys the previously created task components before recreating them (destroyTaskComponents at
+        // the start of updateMarkdown). forceReRenderProblemStatement() goes through that same path, so repeatedly
+        // re-rendering an exam exercise on navigation must not leak/duplicate task components.
+        const instance = createComponentInstance();
+        const exercise = createExercise(10, exerciseA_problemStatement);
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Seed stale task component refs as if a previous render had created them. They report their host view as
+        // already destroyed so the cleanup path simply drops them (no real DOM detach needed in the unit test).
+        const destroySpy = vi.fn();
+        internals(instance.comp).taskComponentRefs = [
+            { destroy: destroySpy, hostView: { destroyed: true } },
+            { destroy: destroySpy, hostView: { destroyed: true } },
+        ];
+
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // The stale refs were cleared and, since exercise A has no tasks, none were recreated: the array did not grow.
+        expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
+
+        // A second force re-render still does not accumulate refs.
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
+
+        instance.comp.ngOnDestroy();
+    });
+
+    it('should inject the PlantUML diagram into its own component when two components show the same exercise', async () => {
+        // Regression test for #12439: the exercise details page and the online editor sidebar render the same exercise at the
+        // same time. Both used the container ID plantUml-<exerciseId>-<index>, so document.getElementById always found the
+        // container of the first component and the diagram never appeared in the other one.
+        vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg><title>diagram</title></svg>'));
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(undefined as unknown as Result));
+
+        const hiddenInstance = createComponentInstance();
+        const visibleInstance = createComponentInstance();
+        const exercise = createExercise(10, exerciseB_problemStatement);
+
+        // TestBed only keeps the root element of the most recently created fixture in the document, but in the application both components are in the DOM at the same time.
+        document.body.append(hiddenInstance.fixture.nativeElement, visibleInstance.fixture.nativeElement);
+
+        for (const { fixture, comp } of [hiddenInstance, visibleInstance]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: 110 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        // The first change detection runs ngOnInit, which loads the result and then renders the markdown and injects the diagrams.
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const hiddenContainers = hiddenInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        const visibleContainers = visibleInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        expect(hiddenContainers).toHaveLength(1);
+        expect(visibleContainers).toHaveLength(1);
+        expect(hiddenContainers[0].querySelector('svg')).not.toBeNull();
+        expect(visibleContainers[0].querySelector('svg')).not.toBeNull();
+        expect(hiddenContainers[0].id).not.toBe(visibleContainers[0].id);
+
+        hiddenInstance.comp.ngOnDestroy();
+        visibleInstance.comp.ngOnDestroy();
+    });
+
+    it('should call setExerciseId with the exercise ID before each render', async () => {
+        const setExerciseIdSpy = vi.spyOn(plantUmlExtension, 'setExerciseId');
+
+        const instance = createComponentInstance();
+        const exercise = createExercise(42, exerciseA_problemStatement);
+
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 142 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        instance.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        expect(setExerciseIdSpy).toHaveBeenCalledWith(42);
+
+        instance.comp.ngOnDestroy();
+    });
+});

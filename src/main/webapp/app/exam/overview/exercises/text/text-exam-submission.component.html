@@ -1,0 +1,53 @@
+@if (exercise()) {
+    <jhi-exam-exercise-header [exercise]="exercise()">
+        <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
+    </jhi-exam-exercise-header>
+    <!--resizable container-->
+    <jhi-resizeable-container [examTimeline]="examTimeline()">
+        <!--region Left Panel-->
+        <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
+        <div left-body class="w-full ps-2 pb-2">
+            <div>
+                <div class="mb-2 flex flex-wrap gap-1">
+                    <tumaet-ui-tag severity="info" data-testid="word-count">
+                        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                    </tumaet-ui-tag>
+                    <tumaet-ui-tag severity="info" data-testid="character-count">
+                        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
+                    </tumaet-ui-tag>
+                </div>
+                <ng-container>
+                    <textarea
+                        [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
+                        #textEditor
+                        id="text-editor"
+                        class="text-editor-textarea"
+                        [maxLength]="maxCharacterCount"
+                        [ngModel]="answer()"
+                        (ngModelChange)="answer.set($event)"
+                        [readOnly]="readonly() || !studentSubmission()"
+                        [disabled]="readonly() || !studentSubmission()"
+                        (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                        (input)="onTextEditorInput($event)"
+                    ></textarea>
+                </ng-container>
+            </div>
+        </div>
+        <!--endregion-->
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="faListAlt" />&nbsp;
+        <span right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
+        <!-- problem statement update & difference highlighter -->
+        <ng-container right-body>
+            @if (exercise()) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
+            }
+            @if (problemStatementHtml()) {
+                <p class="markdown-preview mb-4!">
+                    <span [innerHTML]="problemStatementHtml()"></span>
+                </p>
+            }
+        </ng-container>
+        <!--endregion-->
+    </jhi-resizeable-container>
+}

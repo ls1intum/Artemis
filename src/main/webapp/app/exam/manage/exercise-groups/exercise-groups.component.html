@@ -1,0 +1,162 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0!" data-testid="exercise-groups-title">
+        <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
+    @if (course()?.isAtLeastEditor) {
+        <!-- Importing exercise groups requires picking a source exam, which is instructor-only (see the exam
+             import endpoints); only instructors can complete this flow, so the button is instructor-gated. -->
+        @if (course()?.isAtLeastInstructor) {
+            <tumaet-ui-button
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                id="import-group"
+                (clicked)="openExerciseGroupImportModal()"
+                [title]="'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate"
+            >
+                <fa-icon [icon]="faFileImport" />
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
+            </tumaet-ui-button>
+        }
+        <tumaet-ui-button size="small" id="create-new-group" (clicked)="openCreateGroupModal()" [title]="'artemisApp.examManagement.exerciseGroup.create' | artemisTranslate">
+            <fa-icon [icon]="faPlus" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+        </tumaet-ui-button>
+    }
+</ng-template>
+
+<div class="flex flex-col gap-4!">
+    @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {
+        <div id="{{ 'group-' + exerciseGroup.id }}">
+            <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
+                <div tumAetUiPanelHeader class="flex items-center gap-2 w-full">
+                    <div class="flex flex-col">
+                        <button
+                            type="button"
+                            class="group-move border-0 p-0 bg-transparent leading-none"
+                            [disabled]="i === 0 || orderSavePending()"
+                            [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveUp' | artemisTranslate"
+                            (click)="moveUp(i)"
+                        >
+                            <fa-icon [icon]="faAngleUp" />
+                        </button>
+                        <button
+                            type="button"
+                            class="group-move border-0 p-0 bg-transparent leading-none"
+                            [disabled]="i >= exerciseGroupCount() - 1 || orderSavePending()"
+                            [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveDown' | artemisTranslate"
+                            (click)="moveDown(i)"
+                        >
+                            <fa-icon [icon]="faAngleDown" />
+                        </button>
+                    </div>
+                    <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
+                    <span class="font-semibold group-title" data-testid="exercise-group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
+                    <span
+                        class="rounded px-2 py-1 text-sm opt-badge"
+                        [jhiTranslate]="exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional'"
+                    ></span>
+                </div>
+
+                @if (courseId() !== undefined && course(); as courseValue) {
+                    @if (exam(); as examValue) {
+                        <jhi-exam-exercise-table
+                            [exercises]="exerciseGroup.exercises ?? []"
+                            [group]="exerciseGroup"
+                            [groups]="exerciseGroups() ?? []"
+                            [course]="courseValue"
+                            [exam]="examValue"
+                            [courseId]="courseId()"
+                            [examId]="examId()"
+                            [latestIndividualEndDate]="latestIndividualEndDate()"
+                            [localCIEnabled]="localCIEnabled()"
+                            [disabledExerciseTypes]="disabledExerciseTypes"
+                            [dropListId]="groupDropListId(exerciseGroup.id)"
+                            [connectedDropLists]="dropListIds()"
+                            (groupChange)="onTableGroupChange($event)"
+                            (exerciseDeleted)="removeExercise($event.id!, exerciseGroup.id!)"
+                            (exerciseDeletionOutcomeUnknown)="reloadExerciseGroups()"
+                        />
+                    }
+                }
+
+                <div class="flex items-center justify-between flex-wrap gap-2 mt-4!">
+                    <div class="flex items-center flex-wrap gap-2">
+                        @if (course()?.isAtLeastEditor) {
+                            <tumaet-ui-button size="small" [attr.data-testid]="'add-exercise-button'" (clicked)="openTypePicker(exerciseGroup.id!, 'create')">
+                                <fa-icon [icon]="faPlus" />
+                                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.addExercise"></span>
+                            </tumaet-ui-button>
+                        }
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        @if (course()?.isAtLeastEditor) {
+                            <tumaet-ui-button severity="warn" variant="outlined" size="small" class="edit-group" (clicked)="openGroupEditModal(exerciseGroup.id!)">
+                                <fa-icon [icon]="faPen" />
+                                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.editGroup"></span>
+                            </tumaet-ui-button>
+                        }
+                        @if (course()?.isAtLeastInstructor) {
+                            <tumaet-ui-button severity="danger" variant="outlined" size="small" class="delete-group" (clicked)="confirmDeleteGroup(exerciseGroup)">
+                                <fa-icon [icon]="faTrash" />
+                                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.deleteGroup"></span>
+                            </tumaet-ui-button>
+                        }
+                    </div>
+                </div>
+            </tumaet-ui-panel>
+        </div>
+    } @empty {
+        <div class="text-center py-12! text-muted-color">
+            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-4!" aria-hidden="true" />
+            <p class="mb-2!" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
+            @if (course()?.isAtLeastEditor) {
+                <tumaet-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+                </tumaet-ui-button>
+            }
+        </div>
+    }
+</div>
+
+@if (typePickerGroupId() !== undefined) {
+    <jhi-exam-exercise-type-picker
+        [(visible)]="typePickerVisible"
+        [mode]="typePickerMode()"
+        [courseId]="courseId()"
+        [examId]="examId()"
+        [groupId]="typePickerGroupId()!"
+        [disabledExerciseTypes]="disabledExerciseTypes"
+        (importRequested)="onTypePickerImport($event)"
+    />
+}
+
+@if (groupEditTarget(); as editTarget) {
+    <jhi-exam-exercise-group-edit-modal [(visible)]="groupEditVisible" [group]="editTarget" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
+}
+
+@if (groupImportVisible()) {
+    <tumaet-ui-dialog [(visible)]="groupImportVisible" [header]="'artemisApp.examManagement.importExam' | artemisTranslate" size="large">
+        <jhi-exam-import [subsequentExerciseGroupSelection]="true" [targetCourseId]="courseId()" [targetExamId]="examId()" (imported)="onExerciseGroupsImported($event)" />
+    </tumaet-ui-dialog>
+}
+
+@if (exerciseImportType(); as importType) {
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" [courseId]="courseId()" (imported)="onExerciseImported($event)" />
+}
+
+<jhi-exam-delete-dialog
+    [(visible)]="deleteGroupVisible"
+    [entityTitle]="groupToDelete()?.title || ''"
+    [deleteQuestion]="deleteGroupQuestion()"
+    entitySummaryTitle="artemisApp.examManagement.exerciseGroup.delete.summary.title"
+    [fetchCategorizedEntitySummary]="deleteGroupSummary()"
+    deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+    [additionalChecks]="deleteGroupChecks()"
+    [dialogError]="dialogError"
+    (confirmed)="deleteExerciseGroup(groupToDelete()!.id!, $event)"
+/>

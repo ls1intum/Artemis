@@ -1,0 +1,224 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { TranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
+import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
+import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
+import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
+
+describe('StudentsReseatingDialogComponent', () => {
+    let component: StudentsReseatingDialogComponent;
+    let fixture: ComponentFixture<StudentsReseatingDialogComponent>;
+    let service: StudentsRoomDistributionService;
+
+    const course: Course = { id: 1 };
+    const exam: Exam = { course, id: 2, title: 'Exam Title' };
+    const rooms: RoomForDistributionDTO[] = [
+        { id: 1, roomNumber: '1.0.1', name: 'one', building: 'AA' },
+        { id: 2, roomNumber: '2.0.1', alternativeRoomNumber: '002', name: 'two', building: 'AA' },
+        {
+            id: 3,
+            roomNumber: '3.0.1',
+            alternativeRoomNumber: '003',
+            name: 'three',
+            alternativeName: 'threeee',
+            building: 'AA',
+        },
+    ] as RoomForDistributionDTO[];
+    const examUser: ExamUser = {
+        id: 99,
+        plannedRoom: '2.0.1',
+        plannedSeat: '4, 4',
+        user: { firstName: 'Alice', lastName: 'Student' } as any,
+        didCheckImage: false,
+        didCheckLogin: false,
+        didCheckName: false,
+        didCheckRegistrationNumber: false,
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FaIconComponent, StudentsReseatingDialogComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(StudentsReseatingDialogComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', course.id);
+        fixture.componentRef.setInput('exam', exam);
+        service = TestBed.inject(StudentsRoomDistributionService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
+
+    it('should request used rooms on creation', () => {
+        const loadSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
+
+        expect(loadSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
+        expect(component['roomsUsedInExam']()).toEqual(rooms);
+    });
+
+    it('openDialog() should initialize fields correctly', () => {
+        component.openDialog(examUser);
+        fixture.detectChanges();
+
+        expect(component.examUser()).toEqual(examUser);
+        expect(component.selectedRoomNumber()).toBe('2.0.1');
+        expect(component.selectedSeat()).toBe('');
+        expect(component.dialogVisible()).toBe(true);
+    });
+
+    it('openDialog() should fallback to empty rooms list on error', () => {
+        vi.useFakeTimers();
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
+
+        component.openDialog(examUser);
+        fixture.detectChanges();
+
+        expect(component['roomsUsedInExam']()).toEqual([]);
+    });
+
+    it('closeDialog() should close the dialog', () => {
+        component.dialogVisible.set(true);
+
+        component.closeDialog();
+
+        expect(component.dialogVisible()).toBe(false);
+    });
+
+    it('calling openDialog() twice should update fields to the latest user and trigger a new seat load for persisted rooms', () => {
+        const userA = { ...examUser, id: 20, plannedRoom: rooms[0].roomNumber, plannedSeat: 'A1' };
+        const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
+
+        const loadUsedRoomsSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSeatsInSelectedRoomSpy = vi.spyOn(service, 'loadSeatsOfExamRoom');
+
+        component.openDialog(userA);
+        fixture.detectChanges();
+
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, rooms[0].id);
+
+        component.openDialog(userB);
+        fixture.detectChanges();
+
+        expect(component.examUser()).toEqual(userB);
+        expect(component.selectedRoomNumber()).toBe(rooms[1].roomNumber);
+        expect(component.selectedSeat()).toBe('');
+        expect(loadUsedRoomsSpy).toHaveBeenCalledOnce();
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledTimes(2);
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenLastCalledWith(course.id, exam.id, rooms[1].id);
+    });
+
+    it('should call reseatStudent with correct values', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
+
+        component.openDialog(examUser);
+        fixture.detectChanges();
+
+        component.selectedRoomNumber.set(rooms[0].roomNumber);
+        component.selectedSeat.set('20, 13');
+        component['attemptReseatAndCloseDialogOnSuccess']();
+
+        expect(reseatSpy).toHaveBeenCalledExactlyOnceWith(component.courseId(), component.exam().id!, examUser.id, rooms[0].roomNumber, '20, 13');
+    });
+
+    it('should show if location is known', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
+
+        component.openDialog(examUser);
+        fixture.detectChanges();
+
+        component.selectedRoomNumber.set(rooms[0].roomNumber);
+        fixture.detectChanges();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(false);
+
+        component.selectedSeat.set('A3');
+        fixture.detectChanges();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(true);
+    });
+
+    it('should format room name correctly', () => {
+        const formatted = component['roomFormatter']({
+            id: 1,
+            name: 'A',
+            alternativeName: 'Alt',
+            roomNumber: '101',
+            alternativeRoomNumber: '102',
+            building: 'B',
+        });
+        expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
+    });
+
+    it('should suggest the rooms matching the search text', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
+
+        component['searchRooms']('t');
+
+        expect(component['roomSuggestions']().map((suggestion) => suggestion.room)).toEqual([rooms[1], rooms[2]]);
+    });
+
+    it('should suggest all used rooms for an empty search text', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
+
+        component['searchRooms']('  ');
+
+        expect(component['roomSuggestions']()).toHaveLength(rooms.length);
+    });
+
+    it('should suggest the seats matching the search text', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
+
+        component.openDialog(examUser);
+        fixture.detectChanges();
+
+        component['searchSeats']('2');
+
+        expect(component['seatSuggestions']()).toEqual(['A2', 'B2', '1, 2']);
+    });
+
+    it('should take the room number of a picked room suggestion and keep typed text as it is', () => {
+        component['onRoomChange']({ label: 'one', room: rooms[0] });
+        expect(component.selectedRoomNumber()).toBe(rooms[0].roomNumber);
+
+        component['onRoomChange']('4.2');
+        expect(component.selectedRoomNumber()).toBe('4.2');
+
+        component['onRoomChange'](null);
+        expect(component.selectedRoomNumber()).toBe('');
+    });
+
+    it('should keep the seat the user picked or typed', () => {
+        component['onSeatChange']('A3');
+        expect(component.selectedSeat()).toBe('A3');
+
+        component['onSeatChange'](undefined);
+        expect(component.selectedSeat()).toBe('');
+    });
+
+    it('should close the dialog on pressing the close button', () => {
+        component.openDialog(examUser);
+        fixture.detectChanges();
+        const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
+        button.click();
+        expect(component.dialogVisible()).toBe(false);
+    });
+});

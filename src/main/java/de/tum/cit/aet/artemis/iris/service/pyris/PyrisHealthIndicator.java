@@ -1,0 +1,186 @@
+package de.tum.cit.aet.artemis.iris.service.pyris;
+
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
+
+@Component
+@Lazy
+@Conditional(IrisEnabled.class)
+public class PyrisHealthIndicator implements HealthIndicator {
+
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢
+
+    private static final String YELLOW_CIRCLE = "\uD83D\uDFE1"; // 🟡
+
+    private static final String ORANGE_CIRCLE = "\uD83D\uDFE0"; // 🟠
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // 🔴
+
+    @Value("${artemis.iris.health-ttl:30000}")
+    private int CACHE_TTL;
+
+    private final RestTemplate restTemplate;
+
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
+
+    private static final String IRIS_URL_KEY = "url";
+
+    @Value("${artemis.iris.url}")
+    private URI irisUrl;
+
+    /**
+     * Header on the outgoing health request announcing this Artemis installation's base URL to
+     * Pyris. Pyris's pull-based ingestion worker discovers its upstreams from these authenticated
+     * announcements instead of from static configuration: any Artemis that health-checks it is a
+     * queue to claim from, and an installation that stops announcing expires out of the registry.
+     * An older Pyris simply ignores the header.
+     */
+    public static final String ARTEMIS_BASE_URL_HEADER = "X-Artemis-Base-Url";
+
+    @Value("${server.url}")
+    private String artemisBaseUrl;
+
+    private long lastUpdated = 0;
+
+    private Health cachedHealth = null;
+
+    private final PyrisRestartWatchService restartWatchService;
+
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, PyrisRestartWatchService restartWatchService) {
+        this.restTemplate = restTemplate;
+        this.restartWatchService = restartWatchService;
+    }
+
+    /**
+     * Reports the current health of the Pyris connector.
+     * <p>
+     * Called by Spring Boot Actuator; delegates to {@link #health(boolean)} with caching disabled.
+     * </p>
+     *
+     * @return the connector health
+     */
+    @Override
+    public Health health() {
+        return health(false);
+    }
+
+    /**
+     * Computes or returns a cached health state.
+     *
+     * @param useCache if {@code true}, return a cached value when still within the TTL
+     * @return Actuator {@link Health} describing the Pyris connector status
+     */
+    public Health health(boolean useCache) {
+        if (useCache && cachedHealth != null && System.currentTimeMillis() - lastUpdated < CACHE_TTL) {
+            return cachedHealth;
+        }
+
+        ConnectorHealth connectorHealth;
+        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put(IRIS_URL_KEY, irisUrl);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(ARTEMIS_BASE_URL_HEADER, artemisBaseUrl);
+            ResponseEntity<String> response = restTemplate.exchange(healthUri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            String json = response.getBody();
+
+            if (json == null || json.isBlank() || "null".equalsIgnoreCase(json.trim())) {
+                connectorHealth = fail(additionalInfo, "Empty response from Pyris");
+            }
+            else {
+                try {
+                    PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
+                    flattenModulesInto(additionalInfo, body.modules());
+                    restartWatchService.observeBootId(body.bootId());
+                    connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
+                }
+                catch (JacksonException e) {
+                    connectorHealth = fail(additionalInfo, "Incorrect format from Pyris");
+                }
+            }
+        }
+        catch (ResourceAccessException e) {
+            connectorHealth = fail(additionalInfo, "Connection to Pyris timed out");
+        }
+        catch (RestClientException e) {
+            connectorHealth = fail(additionalInfo, "Connection to Pyris failed");
+        }
+
+        var newHealth = connectorHealth.asActuatorHealth();
+        cachedHealth = newHealth;
+        lastUpdated = System.currentTimeMillis();
+        return newHealth;
+    }
+
+    private static void flattenModulesInto(Map<String, Object> target, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) {
+        if (modules == null) {
+            return;
+        }
+        modules.forEach((name, m) -> {
+            if (m == null) {
+                target.put(name, iconFor(null) + " No data");
+            }
+            else {
+                target.put(name, summarizeModule(m));
+            }
+        });
+    }
+
+    private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO module) {
+        String icon = iconFor(module.status());
+
+        StringBuilder sb = new StringBuilder().append(icon).append(' ');
+        if (module.error() != null && !module.error().isBlank()) {
+            sb.append(module.error());
+            return sb.toString();
+        }
+        if (module.metaData() != null && !module.metaData().isBlank()) {
+            sb.append(module.metaData());
+        }
+        return sb.toString();
+    }
+
+    private static String iconFor(PyrisHealthStatusDTO.ServiceStatus status) {
+        if (status == null) {
+            return RED_CIRCLE;
+        }
+        return switch (status) {
+            case UP -> GREEN_CIRCLE;
+            case WARN -> YELLOW_CIRCLE;
+            case DEGRADED -> ORANGE_CIRCLE;
+            case DOWN -> RED_CIRCLE;
+        };
+    }
+
+    private static ConnectorHealth fail(Map<String, Object> info, String message) {
+        info.put("error", iconFor(PyrisHealthStatusDTO.ServiceStatus.DOWN) + " " + message);
+        return new ConnectorHealth(false, info, null);
+    }
+}

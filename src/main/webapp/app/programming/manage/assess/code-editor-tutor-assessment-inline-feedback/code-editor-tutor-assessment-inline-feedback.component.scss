@@ -1,0 +1,9 @@
+// The unified-feedback-detail-row (host layout, see unified-feedback.component.scss) is a flex row that renders
+// this projected content before the detail textarea. `order` moves it after the textarea, `align-self: flex-end`
+// pins it to the bottom of the row, together placing the actions in the lower-right corner of the feedback box.
+.inline-feedback-actions {
+    display: flex;
+    order: 1;
+    align-self: flex-end;
+    gap: 0.25rem;
+}

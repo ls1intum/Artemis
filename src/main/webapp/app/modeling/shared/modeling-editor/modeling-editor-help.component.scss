@@ -1,0 +1,213 @@
+.modeling-editor-help {
+    h2,
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    &__intro {
+        max-width: 48rem;
+        margin-bottom: 1rem;
+
+        h2 {
+            margin-bottom: 0.35rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--tumaet-ui-muted-color);
+            line-height: 1.5;
+        }
+    }
+
+    &__muted {
+        color: var(--tumaet-ui-muted-color);
+    }
+
+    &__walkthrough {
+        display: grid;
+        margin: 0;
+        padding: 0;
+        gap: 1rem;
+        list-style: none;
+    }
+
+    &__step {
+        display: grid;
+        overflow: clip;
+        grid-template-columns: minmax(20rem, 1.5fr) minmax(15rem, 1fr);
+        border: 1px solid var(--tumaet-ui-border-color);
+        border-radius: var(--tumaet-ui-radius-xl);
+        background: var(--tumaet-ui-content-background);
+
+        &-copy {
+            display: grid;
+            align-self: center;
+            padding: 1.25rem;
+            grid-template-columns: auto 1fr;
+            column-gap: 0.65rem;
+        }
+
+        h3 {
+            align-self: center;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            grid-column: 2;
+            margin: 0;
+            color: var(--tumaet-ui-text-color);
+            line-height: 1.5;
+        }
+    }
+
+    &__step-number {
+        display: inline-grid;
+        width: 1.75rem;
+        height: 1.75rem;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--tumaet-ui-hover-background);
+        color: var(--tumaet-ui-accent-color);
+        font-size: 0.8125rem;
+        font-weight: 700;
+    }
+
+    &__image {
+        display: grid;
+        min-width: 0;
+        place-items: center;
+        border-inline-end: 1px solid var(--tumaet-ui-border-color);
+        background: var(--tumaet-ui-hover-background);
+
+        img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+    }
+
+    &__shortcut-groups {
+        display: grid;
+        margin-top: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+        gap: 0.75rem;
+    }
+
+    &__shortcut-groups > section {
+        padding: 1rem;
+        border: 1px solid var(--tumaet-ui-border-color);
+        border-radius: var(--tumaet-ui-radius-xl);
+        background: var(--tumaet-ui-content-background);
+    }
+
+    &__refine {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--tumaet-ui-border-color);
+
+        dl {
+            display: grid;
+            margin: 0;
+        }
+    }
+
+    &__section-heading {
+        max-width: 48rem;
+        margin-bottom: 0.5rem;
+
+        h2 {
+            margin-bottom: 0.35rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--tumaet-ui-muted-color);
+        }
+    }
+
+    &__technique {
+        display: grid;
+        padding: 0.8rem 0;
+        grid-template-columns: minmax(10rem, 0.38fr) minmax(0, 1fr);
+        gap: 1rem;
+
+        & + & {
+            border-top: 1px solid var(--tumaet-ui-border-color);
+        }
+
+        dt {
+            font-weight: 600;
+        }
+
+        dd {
+            margin: 0;
+            color: var(--body-color);
+            line-height: 1.5;
+        }
+    }
+
+    &__shortcut-groups dl {
+        display: grid;
+        margin: 0;
+        gap: 0.25rem;
+    }
+
+    &__shortcut {
+        display: flex;
+        min-height: 2rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        dt {
+            font-weight: 500;
+        }
+
+        dd {
+            display: flex;
+            margin: 0;
+            align-items: center;
+            gap: 0.35rem;
+        }
+    }
+
+    &__key-combo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    &__or {
+        color: var(--tumaet-ui-muted-color);
+        font-size: 0.75rem;
+    }
+}
+
+kbd {
+    min-width: 1.7rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-sm);
+    background: var(--tumaet-ui-content-background);
+    box-shadow: 0 1px 0 var(--tumaet-ui-border-color);
+    color: var(--tumaet-ui-text-color);
+    font-family: inherit;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+@media screen and (max-width: 700px) {
+    .modeling-editor-help__step {
+        grid-template-columns: 1fr;
+
+        .modeling-editor-help__image {
+            border-inline-end: 0;
+            border-block-end: 1px solid var(--tumaet-ui-border-color);
+        }
+    }
+
+    .modeling-editor-help__technique {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+}

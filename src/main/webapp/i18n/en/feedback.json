@@ -1,0 +1,36 @@
+{
+    "artemisApp": {
+        "feedback": {
+            "home": {
+                "title": "Feedbacks",
+                "createLabel": "Create a new Feedback"
+            },
+            "created": "Created new Feedback with identifier {{ param }}",
+            "updated": "Updated Feedback with identifier {{ param }}",
+            "deleted": "Deleted Feedback with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete the feedback{{ text }}?"
+            },
+            "detail": {
+                "title": "Feedback"
+            },
+            "text": "Text",
+            "detailText": "Detail Text",
+            "type": "Type",
+            "result": "Result",
+            "truncatedInfo": "This feedback is long and was potentially truncated.",
+            "downloadTruncatedFeedback": "Download feedback",
+            "modal": {
+                "submitted": "Submitted",
+                "scoreChartAriaLabel": "Bar chart showing the achieved score of this submission",
+                "linkedToCommit": "linked to commit"
+            },
+            "group": {
+                "wrong": "Wrong",
+                "warning": "Warning",
+                "info": "Info",
+                "correct": "Correct"
+            }
+        }
+    }
+}

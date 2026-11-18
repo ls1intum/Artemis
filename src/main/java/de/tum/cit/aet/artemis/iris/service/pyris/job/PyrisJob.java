@@ -1,0 +1,48 @@
+package de.tum.cit.aet.artemis.iris.service.pyris.job;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+
+/**
+ * This interface represents a single job that is executed by the Pyris system.
+ * This is used to reference the details of a job when Pyris sends a status update.
+ * As it is stored within Hazelcast, it must be serializable.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public interface PyrisJob extends Serializable {
+
+    @Serial
+    long serialVersionUID = 1L;
+
+    boolean canAccess(Course course);
+
+    default boolean canAccess(Exercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course != null && this.canAccess(course);
+    }
+
+    default boolean canAccess(LectureUnit lectureUnit) {
+        return this.canAccess(lectureUnit.getLecture().getCourse());
+    }
+
+    String jobId();
+
+    /**
+     * Identifies one invocation of a run, for a run whose id the client chooses and can therefore use again: the callback token
+     * carries it, so a token of an earlier invocation never authenticates a later one with the same run id.
+     *
+     * @return the invocation id, or null for a run whose id Artemis generates and never reuses
+     */
+    @Nullable
+    default String invocationId() {
+        return null;
+    }
+}

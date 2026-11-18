@@ -1,0 +1,541 @@
+package de.tum.cit.aet.artemis.assessment.domain;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Size;
+
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+
+/**
+ * A Feedback.
+ */
+@Entity
+@Table(name = "feedback")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class Feedback extends DomainObject {
+
+    public static final int MAX_REFERENCE_LENGTH = 2000;
+
+    /**
+     * Upper bound for the absolute credits of a single manual feedback that is not linked to a grading instruction, matching the points input of the assessment editor.
+     */
+    public static final int MAX_MANUAL_CREDITS = 100;
+
+    public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
+
+    public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
+
+    private static final String DETAIL_TEXT_TRIMMED_MARKER = " [...]";
+
+    private static final String LONG_FEEDBACK_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
+
+    @Size(max = 500)
+    @Column(name = "text", length = 500)
+    private String text;
+
+    @Size(max = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)   // this ensures that the detail_text can be stored, even for long feedback
+    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)
+    private String detailText;
+
+    @Column(name = "has_long_feedback_text")
+    private boolean hasLongFeedbackText = false;
+
+    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore // important, data should only be requested explicitly
+    private Set<LongFeedbackText> longFeedbackText = new HashSet<>();
+
+    /**
+     * Reference to the assessed element (e.g. model element id or text element string)
+     */
+    @Size(max = MAX_REFERENCE_LENGTH)
+    @Column(name = "reference", length = MAX_REFERENCE_LENGTH)
+    private String reference;
+
+    /**
+     * Reference to the test case, TRANSIENT: persisted automatic test feedback lives in the
+     * {@link TestCaseFeedback} table (which owns the test_case_id column). This field only carries the
+     * test case on synthesized legacy views for serialization (see ProgrammingFeedbackSynthesizerService)
+     * and on in-memory feedback during grading-related computations.
+     */
+    // NOTE: Helper variable name must be different from the getter name, so that Jackson ignores the
+    // @Transient annotation (the test case must still be serialized on the synthesized feedback views;
+    // the client renders test names from it), but Hibernate still respects it
+    @Transient
+    @JsonIgnoreProperties({ "tasks", "exercise" })
+    private ProgrammingExerciseTestCase testCaseTransient;
+
+    /**
+     * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
+     */
+    @Column(name = "credits")
+    private Double credits;
+
+    @Column(name = "positive")
+    private Boolean positive;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "type")
+    private FeedbackType type;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "visibility")
+    private Visibility visibility;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "result_id", nullable = false)
+    @JsonIgnoreProperties("feedbacks")
+    @Parent
+    private Result result;
+
+    @ManyToOne
+    private GradingInstruction gradingInstruction;
+
+    public String getText() {
+        return text;
+    }
+
+    public Feedback text(String text) {
+        this.text = text;
+        return this;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getDetailText() {
+        return detailText;
+    }
+
+    public Feedback detailText(@Nullable String detailText) {
+        this.setDetailText(detailText);
+        return this;
+    }
+
+    /**
+     * Sets the detail text by cutting it off at the maximum length the database can store.
+     * <p>
+     * If you want to store longer feedback, use {@link #setDetailText(String)} instead.
+     *
+     * @param detailText The detail text for this feedback.
+     */
+    public void setDetailTextTruncated(@Nullable final String detailText) {
+        this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+        if (Hibernate.isInitialized(longFeedbackText)) {
+            longFeedbackText.clear();
+        }
+        this.hasLongFeedbackText = false;
+    }
+
+    /**
+     * Sets the detail text of the feedback.
+     * <p>
+     * Always stores the whole detail text.
+     * In case the feedback is shorter than {@link Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH},
+     * the feedback is stored directly in the detail text.
+     * Otherwise, an associated {@link LongFeedbackText} is attached that holds the full feedback.
+     * In this case the actual detail text stored in this feedback only contains a short preview.
+     * <p>
+     * If you do <emph>not</emph> want a long feedback to be created, use {@link #setDetailTextTruncated(String)} instead.
+     *
+     * @param detailText the new detail text for the feedback, can be null
+     */
+    public void setDetailText(@Nullable final String detailText) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
+            this.detailText = detailText;
+            setHasLongFeedbackText(false);
+            this.longFeedbackText.clear();
+        }
+        else {
+            final LongFeedbackText longFeedback = buildLongFeedback(detailText);
+
+            this.detailText = trimDetailText(detailText);
+            setHasLongFeedbackText(true);
+            setLongFeedback(longFeedback);
+        }
+    }
+
+    private String trimDetailText(final String detailText) {
+        final int maxLength = FEEDBACK_PREVIEW_TEXT_MAX_LENGTH - DETAIL_TEXT_TRIMMED_MARKER.length();
+        return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
+    }
+
+    /**
+     * Creates a {@link LongFeedbackText} entity for storing feedback produced by a single test case.
+     * <p>
+     * In normal operation, feedback text is short (typically well below 1&nbsp;000 characters).
+     * Very large feedback texts are almost always the result of faulty or misconfigured test cases
+     * (e.g. infinite loops, excessive logging, repeated stack traces) and do not provide additional
+     * educational value to students.
+     * <p>
+     * To protect the database from excessive storage usage, the feedback text is truncated to
+     * the configured maximum length (default: 20,000). If truncation occurs, a marker is appended to make this
+     * behavior explicit and observable.
+     *
+     * @param detailText the raw feedback text produced by a single test case; may be {@code null}
+     * @return a {@link LongFeedbackText} entity containing the (possibly truncated) feedback text
+     */
+    private LongFeedbackText buildLongFeedback(final String detailText) {
+        final LongFeedbackText longFeedback = new LongFeedbackText();
+
+        if (detailText == null) {
+            return longFeedback;
+        }
+
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+
+        if (detailText.length() <= maxFeedbackLength) {
+            longFeedback.setText(detailText);
+            return longFeedback;
+        }
+
+        final int maxTextLength = maxFeedbackLength - LONG_FEEDBACK_TRUNCATION_MARKER.length();
+
+        longFeedback.setText(detailText.substring(0, Math.max(0, maxTextLength)) + LONG_FEEDBACK_TRUNCATION_MARKER);
+
+        return longFeedback;
+    }
+
+    public boolean getHasLongFeedbackText() {
+        return hasLongFeedbackText;
+    }
+
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param hasLongFeedbackText True, if the feedback has a long feedback text.
+     */
+    public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
+        this.hasLongFeedbackText = hasLongFeedbackText;
+    }
+
+    @JsonIgnore
+    public Optional<LongFeedbackText> getLongFeedback() {
+        return getLongFeedbackText().stream().findAny();
+    }
+
+    private void setLongFeedback(final LongFeedbackText longFeedbackText) {
+        this.longFeedbackText.clear();
+        longFeedbackText.setFeedback(this);
+        this.longFeedbackText.add(longFeedbackText);
+    }
+
+    /**
+     * Only for JPA, do not use directly. Use {@link #getLongFeedback()} instead.
+     *
+     * @return The long feedback this feedback is attached to.
+     */
+    @JsonIgnore
+    public Set<LongFeedbackText> getLongFeedbackText() {
+        return longFeedbackText;
+    }
+
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param longFeedbackText The long feedback text this feedback is linked to.
+     */
+    @SuppressWarnings("unused")
+    public void setLongFeedbackText(final Set<LongFeedbackText> longFeedbackText) {
+        this.longFeedbackText = longFeedbackText;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public Feedback reference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
+    public boolean hasReference() {
+        return reference != null && !reference.isEmpty();
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public ProgrammingExerciseTestCase getTestCase() {
+        return testCaseTransient;
+    }
+
+    public void setTestCase(ProgrammingExerciseTestCase testCase) {
+        this.testCaseTransient = testCase;
+    }
+
+    public Feedback testCase(ProgrammingExerciseTestCase testCase) {
+        setTestCase(testCase);
+        return this;
+    }
+
+    public Double getCredits() {
+        return credits;
+    }
+
+    public Feedback credits(Double credits) {
+        this.credits = credits;
+        return this;
+    }
+
+    public void setCredits(Double credits) {
+        this.credits = credits;
+    }
+
+    /**
+     * Returns if this is a positive feedback.
+     * <p>
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g., when this is a
+     * feedback for a programming exercise test case that has not been executed for the submission.
+     *
+     * @return true, if this is a positive feedback.
+     */
+    public Boolean isPositive() {
+        return positive;
+    }
+
+    public Feedback positive(Boolean positive) {
+        this.positive = positive;
+        return this;
+    }
+
+    public void setPositive(Boolean positive) {
+        this.positive = positive;
+    }
+
+    public void setPositiveViaCredits() {
+        this.positive = credits != null && credits >= 0;
+    }
+
+    public FeedbackType getType() {
+        return type;
+    }
+
+    public Feedback type(FeedbackType type) {
+        this.type = type;
+        return this;
+    }
+
+    public void setType(FeedbackType type) {
+        this.type = type;
+    }
+
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    @JsonIgnore
+    public boolean isAfterDueDate() {
+        return this.visibility == Visibility.AFTER_DUE_DATE;
+    }
+
+    @JsonIgnore
+    public boolean isInvisible() {
+        return this.visibility == Visibility.NEVER;
+    }
+
+    public Feedback visibility(Visibility visibility) {
+        this.visibility = visibility;
+        return this;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public Feedback result(Result result) {
+        this.result = result;
+        return this;
+    }
+
+    /**
+     * be careful when using this method as it might result in org.hibernate.HibernateException: null index column for collection: de.tum.cit.aet.artemis.domain.Result.feedbacks
+     * when saving the result. The result object is the container that owns the feedback and uses CascadeType.ALL and orphanRemoval
+     *
+     * @param result the result container object that owns the feedback
+     */
+    public void setResult(Result result) {
+        this.result = result;
+    }
+
+    public GradingInstruction getGradingInstruction() {
+        return gradingInstruction;
+    }
+
+    public void setGradingInstruction(GradingInstruction gradingInstruction) {
+        this.gradingInstruction = gradingInstruction;
+    }
+
+    /**
+     * Checks whether the feedback was created by static code analysis
+     *
+     * @return true if it is static code analysis feedback else false
+     */
+    @JsonIgnore
+    public boolean isStaticCodeAnalysisFeedback() {
+        return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+    }
+
+    /**
+     * Checks whether the feedback was created by a submission policy
+     *
+     * @return true if it is submission policy feedback else false
+     */
+    @JsonIgnore
+    public boolean isSubmissionPolicyFeedback() {
+        return this.text != null && this.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+    }
+
+    /**
+     * Checks whether the feedback was created by an automatic test
+     *
+     * @return true if it is a test feedback else false
+     */
+    @JsonIgnore
+    public boolean isTestFeedback() {
+        return this.type == FeedbackType.AUTOMATIC && !isStaticCodeAnalysisFeedback() && !isSubmissionPolicyFeedback();
+    }
+
+    /**
+     * Checks whether the feedback was given manually by a tutor.
+     * (This includes feedback that is automatically created by Athena and approved by tutors.)
+     *
+     * @return true if it is a manual feedback else false
+     */
+    @JsonIgnore
+    public boolean isManualFeedback() {
+        return this.type == FeedbackType.MANUAL || this.type == FeedbackType.MANUAL_UNREFERENCED;
+    }
+
+    /**
+     * Whether this is a read-only view synthesized from a result's typed automatic feedback rather than a row of the
+     * feedback table. Such views exist only to keep the JSON shape the client expects; they carry a negative
+     * (synthetic) id encoding the typed row id and its table, which is what tells them apart from persisted feedback. They
+     * must never be persisted, and never counted next to the typed rows they were derived from.
+     *
+     * @return true if this feedback is a synthesized view of a typed automatic feedback row
+     * @see de.tum.cit.aet.artemis.core.config.Constants#SYNTHETIC_FEEDBACK_ID_STRIDE
+     */
+    @JsonIgnore
+    public boolean isSynthesizedView() {
+        return getId() != null && getId() < 0;
+    }
+
+    /**
+     * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
+     * String, if the feedback is not static code analysis feedback.
+     *
+     * @return The Artemis static code analysis category to which this feedback belongs
+     */
+    @JsonIgnore
+    public String getStaticCodeAnalysisCategory() {
+        if (isStaticCodeAnalysisFeedback()) {
+            return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+        }
+        return "";
+    }
+
+    /**
+     * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
+     *
+     * @param inputScore          totalScore which is summed up.
+     * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
+     * @return calculated total score from feedback elements set by SGI
+     */
+    @JsonIgnore
+    public double computeTotalScore(double inputScore, Map<Long, Integer> gradingInstructions) {
+        double totalScore = inputScore;
+        if (gradingInstructions.get(getGradingInstruction().getId()) != null) {
+            // We Encountered this grading instruction before
+            var maxCount = getGradingInstruction().getUsageCount();
+            var encounters = gradingInstructions.get(getGradingInstruction().getId());
+            if (maxCount > 0) {
+                if (encounters >= maxCount) {
+                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows, so we don't sum the feedback credit
+                    gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
+                }
+                else {
+                    // the usageCount limit was not exceeded yet, so we add the credit and increase the nrOfEncounters counter
+                    gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
+                    totalScore += getGradingInstruction().getCredits();
+                }
+            }
+            else {
+                totalScore += getCredits();
+            }
+        }
+        else {
+            // First time encountering the grading instruction
+            gradingInstructions.put(getGradingInstruction().getId(), 1);
+            totalScore += getCredits();
+        }
+        return totalScore;
+    }
+
+    @Override
+    public String toString() {
+        return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", reference='" + reference + '\''
+                + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility + '}';
+    }
+
+    /**
+     * Stable hash code that does not change across the unsaved → persisted transition.
+     *
+     * <p>
+     * {@link DomainObject#hashCode()} is id-based, which means an unsaved Feedback (id == null,
+     * hashCode() == 0) would land in a different bucket once Hibernate assigns an id during flush.
+     * That breaks {@link java.util.HashSet} semantics: a previously-added Feedback would no longer be
+     * found by {@code contains}/{@code remove}. Since {@link Result#getFeedbacks()} is now backed by a
+     * {@link java.util.Set}, we need a hash that is stable across that lifecycle. Returning a constant
+     * forces all Feedback instances into the same bucket; the (id-based) {@code equals} contract still
+     * distinguishes them. The performance impact is negligible — Result.feedbacks is small (per single
+     * submission), so the linear scan cost replaces what was already a linear scan elsewhere.
+     */
+    @Override
+    public int hashCode() {
+        return Feedback.class.hashCode();
+    }
+
+    /**
+     * Id-based equality as inherited from {@link DomainObject}; declared here so that it is visibly paired with the constant {@link #hashCode()}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+}

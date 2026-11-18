@@ -1,0 +1,56 @@
+<!-- Avoid reserving height for courses whose competency list resolves to empty. -->
+@if (competencyLinks()?.length) {
+    <fieldset class="min-w-0">
+        <legend class="mb-1! flex w-auto! float-none! items-center gap-2 p-0! text-base!">
+            @if (labelName()) {
+                <span>{{ labelName() }}</span>
+            }
+            @if (labelTooltip()) {
+                <fa-icon [icon]="faQuestionCircle" class="text-muted-color" role="img" tabindex="0" [attr.aria-label]="labelTooltip()" [tumAetUiTooltip]="labelTooltip()" />
+            }
+        </legend>
+        <div class="flex max-h-50 flex-col flex-wrap gap-x-6! overflow-x-auto rounded border border-(--border-color) p-2" id="competency-selector">
+            @for (competencyLink of competencyLinks(); track competencyLink) {
+                @if (competencyLink.competency; as competency) {
+                    @if (competency.id) {
+                        <div class="mb-1">
+                            <div class="flex items-center gap-2">
+                                <tumaet-ui-checkbox
+                                    [inputId]="'competency-' + competency.id"
+                                    [ngModel]="checkboxStates()[competency.id]"
+                                    (ngModelChange)="toggleCompetency(competencyLink)"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="disabled()"
+                                />
+                                <label for="competency-{{ competency.id }}" class="m-0 flex items-center gap-1">
+                                    <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
+                                    <span>{{ competency.title }}</span>
+                                </label>
+                            </div>
+                            @if (checkboxStates()[competency.id]) {
+                                <tumaet-ui-select
+                                    [ariaLabel]="'accessibility.competencyWeight' | artemisTranslate"
+                                    [options]="weightOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    size="small"
+                                    [disabled]="disabled()"
+                                    [ngModel]="
+                                        competencyLink.weight < LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF
+                                            ? LOW_COMPETENCY_LINK_WEIGHT
+                                            : competencyLink.weight < MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF
+                                              ? MEDIUM_COMPETENCY_LINK_WEIGHT
+                                              : HIGH_COMPETENCY_LINK_WEIGHT
+                                    "
+                                    [ngModelOptions]="{ standalone: true }"
+                                    (ngModelChange)="updateLinkWeight(competencyLink, $event)"
+                                    [tumAetUiTooltip]="'artemisApp.competency.link.weightTooltip' | artemisTranslate"
+                                />
+                            }
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </fieldset>
+}

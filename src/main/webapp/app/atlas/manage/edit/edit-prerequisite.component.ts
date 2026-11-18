@@ -1,0 +1,92 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { onError } from 'app/foundation/util/global.utils';
+import { finalize, switchMap, take } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { combineLatest, forkJoin } from 'rxjs';
+
+import { EditCourseCompetencyComponent } from 'app/atlas/manage/edit/edit-course-competency.component';
+import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
+import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-edit-prerequisite',
+    templateUrl: './edit-prerequisite.component.html',
+    imports: [PrerequisiteFormComponent, TranslateDirective, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
+})
+export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
+    private prerequisiteService = inject(PrerequisiteService);
+
+    readonly prerequisite = signal<Prerequisite>(undefined!);
+    readonly formData = signal<CourseCompetencyFormData>(undefined!);
+
+    override ngOnInit(): void {
+        super.ngOnInit();
+
+        this.isLoading.set(true);
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
+            .pipe(
+                take(1),
+                switchMap(([params, parentParams]) => {
+                    const prerequisiteId = Number(params.get('prerequisiteId'));
+                    this.courseId = Number(parentParams.get('courseId'));
+
+                    const prerequisiteObservable = this.prerequisiteService.findById(prerequisiteId, this.courseId);
+                    const prerequisiteCourseProgressObservable = this.prerequisiteService.getCourseProgress(prerequisiteId, this.courseId);
+                    return forkJoin([prerequisiteObservable, prerequisiteCourseProgressObservable]);
+                }),
+                finalize(() => this.isLoading.set(false)),
+            )
+            .subscribe({
+                next: ([prerequisiteResult, courseProgressResult]) => {
+                    if (prerequisiteResult.body) {
+                        this.prerequisite.set(prerequisiteResult.body);
+                        if (courseProgressResult.body) {
+                            this.prerequisite().courseProgress = courseProgressResult.body;
+                        }
+                    }
+
+                    this.formData.set({
+                        id: this.prerequisite().id,
+                        title: this.prerequisite().title,
+                        description: this.prerequisite().description,
+                        softDueDate: this.prerequisite().softDueDate,
+                        taxonomy: this.prerequisite().taxonomy,
+                        masteryThreshold: this.prerequisite().masteryThreshold,
+                        optional: this.prerequisite().optional,
+                    });
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    updateCompetency(formData: CourseCompetencyFormData) {
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
+
+        this.prerequisite().title = title;
+        this.prerequisite().description = description;
+        this.prerequisite().softDueDate = softDueDate;
+        this.prerequisite().taxonomy = taxonomy;
+        this.prerequisite().masteryThreshold = masteryThreshold;
+        this.prerequisite().optional = optional;
+
+        this.isLoading.set(true);
+
+        this.prerequisiteService
+            .update(this.prerequisite(), this.courseId)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                    // currently at /course-management/{courseId}/prerequisite-management/{competencyId}/edit, going to /course-management/{courseId}/competency-management/
+                    void this.router.navigate(['../../../competency-management/'], { relativeTo: this.activatedRoute });
+                }),
+            )
+            .subscribe({
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+}

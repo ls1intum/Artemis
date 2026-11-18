@@ -1,0 +1,1024 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
+import { TumAetUiConfirmationService, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
+describe('ExamStudentsComponent', () => {
+    const course = { id: 1 } as Course;
+
+    const examWithCourse: Exam = {
+        course,
+        id: 2,
+        title: 'Test Exam',
+        examUsers: [{ id: 10 } as any, { id: 11 } as any],
+    } as Exam;
+
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
+        url: new Observable<UrlSegment[]>(),
+        data: of({ exam: examWithCourse }),
+    } as any as ActivatedRoute;
+
+    const mockChecklist: ExamChecklist = {
+        numberOfExamsSubmitted: 0,
+        numberOfExamsStarted: 0,
+        numberOfTotalParticipationsForAssessment: 0,
+        existsUnassessedQuizzes: false,
+        existsUnsubmittedExercises: false,
+        allExamExercisesAllStudentsPrepared: true,
+        numberOfGeneratedStudentExams: 2,
+    };
+
+    const mockDto: ExamStudentDTO = {
+        id: 10,
+        userId: 1,
+        login: 'student1',
+        name: 'Student One',
+        studentExamId: 123,
+        workingTime: 3600,
+        started: true,
+        submitted: false,
+        progress: 'started',
+        numberOfExamSessions: 2,
+    };
+
+    const mockLazyEvent: TumAetUiTableQueryEvent = { pageIndex: 0, pageSize: 20 };
+
+    let component: ExamStudentsComponent;
+    let fixture: ComponentFixture<ExamStudentsComponent>;
+    let examManagementService: ExamManagementService;
+    let router: Router;
+    let alertService: AlertService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamStudentsComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                provideRouter([]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ExamChecklistService, {
+                    getExamStatistics: (_exam: Exam) => of(mockChecklist),
+                }),
+                MockProvider(AlertService, {
+                    success: vi.fn(),
+                    error: vi.fn(),
+                }),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideTemplate(ExamStudentsComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExamStudentsComponent);
+        component = fixture.componentInstance;
+        examManagementService = TestBed.inject(ExamManagementService);
+
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
+        vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+
+        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        fixture?.destroy();
+    });
+
+    it('should initialize with courseId and exam', () => {
+        fixture.detectChanges();
+
+        expect(component.courseId()).toBe(course.id);
+        expect(component.exam()).toEqual(examWithCourse);
+    });
+
+    it('should set studentExamCount and isAllExercisesPrepared from checklist', () => {
+        fixture.detectChanges();
+
+        expect(component.studentExamCount()).toBe(mockChecklist.numberOfGeneratedStudentExams);
+        expect(component.isAllExercisesPrepared()).toBe(true);
+    });
+
+    describe('computed properties', () => {
+        it('hasRegisteredUsers should be true when totalExamStudents > 0', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(2);
+            expect(component.hasRegisteredUsers()).toBe(true);
+        });
+
+        it('hasRegisteredUsers should be false when totalExamStudents is 0', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(0);
+            expect(component.hasRegisteredUsers()).toBe(false);
+        });
+
+        it('isMissingIndividualExams should be false when studentExamCount equals totalExamStudents', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(2);
+            component.studentExamCount.set(2);
+            expect(component.isMissingIndividualExams()).toBe(false);
+        });
+
+        it('isMissingIndividualExams should be true when studentExamCount < totalExamStudents', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(2);
+            component.studentExamCount.set(1);
+            expect(component.isMissingIndividualExams()).toBe(true);
+        });
+
+        it('isMissingIndividualExams should be false when totalExamStudents is 0', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(0);
+            component.studentExamCount.set(0);
+            expect(component.isMissingIndividualExams()).toBe(false);
+        });
+
+        it('examPreparationsComplete should be true when no missing exams and all exercises prepared', () => {
+            fixture.detectChanges();
+            expect(component.examPreparationsComplete()).toBe(true);
+        });
+
+        it('examPreparationsComplete should be false when individual exams are missing', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(2);
+            component.studentExamCount.set(1);
+            expect(component.examPreparationsComplete()).toBe(false);
+        });
+
+        it('isTestExam should be false for a regular exam', () => {
+            fixture.detectChanges();
+            expect(component.isTestExam()).toBe(false);
+        });
+
+        it('isTestExam should be true when examMode is TEST', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, examMode: ExamMode.TEST });
+            expect(component.isTestExam()).toBe(true);
+        });
+
+        it('examStudentFilterOptions should contain only the progress filters while the exam is running', () => {
+            fixture.detectChanges();
+            component.hasExamEnded.set(false);
+
+            expect(component.examStudentFilterOptions().map((option) => option.value)).toEqual(['ExamMissing', 'NotStarted', 'Started', 'Submitted']);
+        });
+
+        it('examStudentFilterOptions should include the attendance filters after the exam has ended', () => {
+            fixture.detectChanges();
+            component.hasExamEnded.set(true);
+
+            expect(component.examStudentFilterOptions().map((option) => option.value)).toEqual([
+                'ExamMissing',
+                'NotStarted',
+                'Started',
+                'Submitted',
+                'DidNotAttend',
+                'AttendanceNotChecked',
+                'AttendanceChecked',
+            ]);
+        });
+
+        it('selectedFilter should be undefined while all students are shown', () => {
+            fixture.detectChanges();
+            expect(component.selectedFilter()).toBeUndefined();
+
+            component.activeFilter.set('Started');
+            expect(component.selectedFilter()).toBe('Started');
+        });
+    });
+
+    describe('loadExamStudents', () => {
+        it('should update rows, totalRows, and totalExamStudents on a successful unfiltered load', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 42 }));
+
+            component.loadExamStudents(mockLazyEvent);
+
+            expect(component.rows()).toEqual([mockDto]);
+            expect(component.totalRows()).toBe(42);
+            expect(component.totalExamStudents()).toBe(42);
+            expect(component.isLoading()).toBe(false);
+        });
+
+        it('should NOT update totalExamStudents when a filter is active', () => {
+            fixture.detectChanges();
+            component.totalExamStudents.set(10);
+            component.activeFilter.set('Submitted');
+            vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [], totalElements: 3 }));
+
+            component.loadExamStudents(mockLazyEvent);
+
+            // totalExamStudents unchanged because filterProp is set
+            expect(component.totalExamStudents()).toBe(10);
+            expect(component.totalRows()).toBe(3);
+        });
+
+        it('should reset isLoading and show an error alert when the request fails', () => {
+            fixture.detectChanges();
+            const errorSpy = vi.spyOn(alertService, 'error');
+            vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(
+                // status 400 triggers alertService.error in onError (500 is intentionally silenced)
+                throwError(() => new HttpErrorResponse({ status: 400 })),
+            );
+
+            component.loadExamStudents(mockLazyEvent);
+
+            expect(component.isLoading()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        });
+
+        it('should not call findExamStudentsPaged when exam has no id', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined });
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged');
+
+            component.loadExamStudents(mockLazyEvent);
+
+            expect(findPagedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should re-run the recorded lazy load once the exam resolves (issue #13063)', () => {
+            // The paginated table fires its initial lazy load before the exam id is available: loadExamStudents
+            // early-returns but records the event, leaving isLoading=true and totalExamStudents=0.
+            component.exam.set({ ...examWithCourse, id: undefined });
+            component.loadExamStudents(mockLazyEvent);
+            expect(component.isLoading()).toBe(true);
+
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+
+            // When the exam resolves, the recorded load must be replayed so the "Generate student exams" button
+            // becomes enabled (isLoading=false, totalExamStudents>0) instead of staying greyed out.
+            component['examData$'].next(examWithCourse);
+
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+            expect(component.isLoading()).toBe(false);
+            expect(component.totalExamStudents()).toBe(1);
+            expect(component.hasRegisteredUsers()).toBe(true);
+        });
+
+        it('should replay the skipped lazy load only once, not on every exam emission (issue #13063)', () => {
+            component.exam.set({ ...examWithCourse, id: undefined });
+            component.loadExamStudents(mockLazyEvent); // records the event and marks the load as pending
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+
+            component['examData$'].next(examWithCourse); // exam resolves: the skipped load is replayed exactly once
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+
+            // A later exam re-emission (e.g. reloadStudentsView or a websocket-driven fetchExamData) must not replay
+            // the load again; reloadStudentsView repeats the last request itself.
+            component['examData$'].next(examWithCourse);
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('onFilterChange', () => {
+        it('should update activeFilter and re-trigger load with the last lazy event', () => {
+            fixture.detectChanges();
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.loadExamStudents(mockLazyEvent); // sets lastLazyEvent
+            findPagedSpy.mockClear();
+
+            component.onFilterChange('Submitted');
+
+            expect(component.activeFilter()).toBe('Submitted');
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update activeFilter but not call findExamStudentsPaged when no previous event exists', () => {
+            fixture.detectChanges();
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.onFilterChange('NotStarted');
+
+            expect(component.activeFilter()).toBe('NotStarted');
+            expect(findPagedSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onFilterChange reset and search', () => {
+        it('should fall back to all students when the filter is cleared', () => {
+            fixture.detectChanges();
+            component.activeFilter.set('Submitted');
+
+            component.onFilterChange(undefined);
+
+            expect(component.activeFilter()).toBe('All');
+        });
+
+        it('should map the select value to the active filter', () => {
+            fixture.detectChanges();
+
+            component.onFilterSelected('NotStarted');
+            expect(component.activeFilter()).toBe('NotStarted');
+
+            component.onFilterSelected(undefined);
+            expect(component.activeFilter()).toBe('All');
+        });
+
+        it('should send the filter and the debounced search term with the request', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [], totalElements: 0 }));
+                component.loadExamStudents(mockLazyEvent);
+                findPagedSpy.mockClear();
+
+                component.onSearchInput('stu');
+                component.onSearchInput(' student1 ');
+                expect(findPagedSpy).not.toHaveBeenCalled();
+
+                vi.advanceTimersByTime(300);
+                expect(findPagedSpy).toHaveBeenCalledOnce();
+                expect(findPagedSpy.mock.calls[0][2]).toMatchObject({ searchTerm: 'student1', page: 0, pageSize: 20 });
+
+                component.onFilterChange('Started');
+                expect(findPagedSpy.mock.calls[1][2]).toMatchObject({ searchTerm: 'student1', filterProp: 'Started' });
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should leave a later page through the table when the search changes', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [], totalElements: 0 }));
+                const resetPage = vi.fn();
+                vi.spyOn(component, 'table').mockReturnValue({ resetPage } as any);
+                component.loadExamStudents({ pageIndex: 2, pageSize: 20 });
+                findPagedSpy.mockClear();
+
+                component.onSearchInput('abc');
+                vi.advanceTimersByTime(300);
+
+                expect(resetPage).toHaveBeenCalledOnce();
+                expect(findPagedSpy).not.toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('reloadStudentsView', () => {
+        it('should repeat the last student request', () => {
+            fixture.detectChanges();
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+            component.loadExamStudents({ pageIndex: 1, pageSize: 20 });
+            findPagedSpy.mockClear();
+
+            component.reloadStudentsView();
+
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+            expect(findPagedSpy.mock.calls[0][2]).toMatchObject({ page: 1, pageSize: 20 });
+        });
+
+        it('should refresh exam stats without re-fetching the exam', () => {
+            fixture.detectChanges();
+            const examChecklistService = TestBed.inject(ExamChecklistService);
+            const statsSpy = vi.spyOn(examChecklistService, 'getExamStatistics');
+            const findSpy = vi.spyOn(examManagementService, 'find');
+
+            component.reloadStudentsView();
+
+            expect(findSpy).not.toHaveBeenCalled();
+            expect(statsSpy).toHaveBeenCalledWith(component.exam());
+        });
+
+        it('should do nothing when exam has no id', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined });
+            const examChecklistService = TestBed.inject(ExamChecklistService);
+            const statsSpy = vi.spyOn(examChecklistService, 'getExamStatistics');
+            const findSpy = vi.spyOn(examManagementService, 'find');
+
+            component.reloadStudentsView();
+
+            expect(findSpy).not.toHaveBeenCalled();
+            expect(statsSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('removeFromExam', () => {
+        it('should call removeStudentFromExam with login from DTO and trigger reload', () => {
+            fixture.detectChanges();
+            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+
+            component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: false });
+
+            expect(removeSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, mockDto.login, false);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('should pass deleteParticipationsAndSubmission=true when checked', () => {
+            fixture.detectChanges();
+            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+
+            component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: true });
+
+            expect(removeSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, mockDto.login, true);
+        });
+
+        it('should not call removeStudentFromExam when login is missing in DTO', () => {
+            fixture.detectChanges();
+            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam');
+
+            component.removeFromExam({ ...mockDto, login: undefined }, { deleteParticipationsAndSubmission: false });
+
+            expect(removeSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('removeAllStudents', () => {
+        it('should call removeAllStudentsFromExam and trigger reload on success', () => {
+            fixture.detectChanges();
+            const removeSpy = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+
+            component.removeAllStudents({ deleteParticipationsAndSubmission: false });
+
+            expect(removeSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('registerAllStudentsFromCourse', () => {
+        it('should report a failed bulk registration without refreshing the student list', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const refresh = vi.spyOn(component, 'reloadStudentsView');
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
+            component.registerAllStudentsFromCourse();
+            expect(alertService.error).toHaveBeenCalled();
+            expect(refresh).not.toHaveBeenCalled();
+        });
+
+        it('should call addAllStudentsOfCourseToExam and trigger reload on success', () => {
+            fixture.detectChanges();
+            const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
+
+            component.registerAllStudentsFromCourse();
+
+            expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('exam student registration', () => {
+        it('should prevent registration until statistics finish loading', () => {
+            const statistics = new Subject<ExamChecklist>();
+            vi.spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics').mockReturnValue(statistics);
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const importOpen = vi.fn();
+            vi.spyOn(component, 'usersImportDialog').mockReturnValue({ open: importOpen } as never);
+            const register = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam');
+            for (const index of [0, 1, 3]) {
+                component.manageStudentsMenuActions()[index].command();
+            }
+            expect(open).not.toHaveBeenCalled();
+            expect(importOpen).not.toHaveBeenCalled();
+            expect(register).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions().filter((item) => item.disabled).length).toBe(3);
+            statistics.next({ ...mockChecklist, numberOfGeneratedStudentExams: 0 });
+            statistics.complete();
+            component.openAddStudentsDialog();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
+        it('should keep failed statistics closed and allow a retry before registration', () => {
+            const statistics = vi
+                .spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(mockChecklist));
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            component.openAddStudentsDialog();
+            expect(open).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
+            expect(component.statisticsLoadingFailed()).toBe(true);
+            component.retryExamStatistics();
+            component.openAddStudentsDialog();
+            expect(statistics).toHaveBeenCalledTimes(2);
+            expect(component.statisticsLoadingFailed()).toBe(false);
+            expect(confirm).toHaveBeenCalledOnce();
+            confirm.mock.calls[0][0].accept();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
+        it('should confirm registration when student exams already exist', () => {
+            fixture.detectChanges();
+            component.studentExamCount.set(2);
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            confirmSpy.mock.calls[0][0].accept();
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should disable registration when the deadline arrives while the page is open', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                component.exam.update((exam) => ({ ...exam, endDate: dayjs().add(1, 'second') }));
+                component['scheduleRegistrationDeadline']();
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(false);
+                vi.advanceTimersByTime(1001);
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should reject registration and disable its menu actions after exam end', () => {
+            fixture.detectChanges();
+            component.exam.update((exam) => ({ ...exam, endDate: dayjs().subtract(1, 'minute') }));
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+        });
+
+        it('should search users through the exam management service', () => {
+            fixture.detectChanges();
+            const searchSpy = vi.spyOn(examManagementService, 'searchUsersForExamRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.searchUsersForExamFn('alice', 0, 10).subscribe();
+
+            expect(searchSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, 'alice', 0, 10);
+        });
+
+        it('should return empty search result when exam id is missing', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined } as Exam);
+
+            let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+            component.searchUsersForExamFn('alice', 0, 10).subscribe((searchResult) => {
+                result = searchResult;
+            });
+
+            expect(result).toEqual({ content: [], totalElements: 0 });
+        });
+
+        it('should register users and show alerts for not found and rejected staff users', () => {
+            fixture.detectChanges();
+            const addSpy = vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                            rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                        },
+                    }),
+                ),
+            );
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component
+                .registerUsersForExamFn([
+                    {
+                        id: 1,
+                        login: 'student1',
+                        name: 'Student',
+                        email: 's@t.de',
+                        registrationNumber: '123',
+                        isRegistered: false,
+                    },
+                ])
+                .subscribe();
+
+            expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, [
+                {
+                    login: 'student1',
+                    firstName: '',
+                    lastName: '',
+                    registrationNumber: '123',
+                    email: 's@t.de',
+                },
+            ]);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins: 'missing' });
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins: 'staff' });
+        });
+
+        it('should open the add students dialog', () => {
+            fixture.detectChanges();
+            component.studentExamCount.set(0);
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+
+            component.openAddStudentsDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('generateMissingStudentExams', () => {
+        it('should call generateMissingStudentExams, show success alert, and reload', () => {
+            fixture.detectChanges();
+            const generateSpy = vi
+                .spyOn(examManagementService, 'generateMissingStudentExams')
+                .mockReturnValue(of(new HttpResponse({ body: [{} as StudentExam, {} as StudentExam] })));
+            const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.generateMissingStudentExams();
+
+            expect(generateSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: 2 });
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('should show error alert and reset isLoading on failure', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ error: { message: 'generation failed' }, status: 500 })),
+            );
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.generateMissingStudentExams();
+
+            expect(component.isLoading()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationError', { message: 'generation failed' });
+        });
+    });
+
+    describe('startExercises', () => {
+        it('should call startExercises, show success alert, and reset isLoading', () => {
+            fixture.detectChanges();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                of(new HttpResponse({ body: { finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus })),
+            );
+            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse({ body: null })));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.startExercises();
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.startExerciseSuccess');
+            expect(component.isLoading()).toBe(false);
+        });
+
+        it('should show error alert and reset isLoading when starting exercises fails', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'start failed' }, status: 500 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.startExercises();
+
+            expect(component.isLoading()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.startExerciseFailure', { message: 'start failed' });
+        });
+    });
+
+    describe('openVerifyAttendance', () => {
+        it('should navigate to verify-attendance when exam has started', () => {
+            fixture.detectChanges();
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.hasExamStarted.set(true);
+            component.exam.set({ ...examWithCourse, id: 42 } as Exam);
+
+            component.openVerifyAttendance();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 42, 'students', 'verify-attendance']);
+        });
+
+        it('should not navigate when exam has not started', () => {
+            fixture.detectChanges();
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.hasExamStarted.set(false);
+            component.exam.set({ ...examWithCourse, id: 42 } as Exam);
+
+            component.openVerifyAttendance();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('handleGenerateStudentExams', () => {
+        it('should show a confirmation dialog when student exams already exist and call generateStudentExams on accept', () => {
+            fixture.detectChanges();
+            component.studentExamCount.set(2);
+            const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options) => options.accept());
+
+            component.handleGenerateStudentExams();
+
+            expect(confirmSpy).toHaveBeenCalled();
+            expect(generateSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
+        });
+
+        it('should call generateStudentExams directly when no student exams exist yet', () => {
+            fixture.detectChanges();
+            const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
+            component.studentExamCount.set(0);
+
+            component.handleGenerateStudentExams();
+
+            expect(generateSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
+        });
+    });
+
+    describe('studentExamsMenuActions', () => {
+        it('should trigger handleGenerateStudentExams when first item command is executed', () => {
+            fixture.detectChanges();
+            const handleSpy = vi.spyOn(component, 'handleGenerateStudentExams').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[0].command();
+
+            expect(handleSpy).toHaveBeenCalled();
+        });
+
+        it('should trigger generateMissingStudentExams when second item command is executed', () => {
+            fixture.detectChanges();
+            const generateMissingSpy = vi.spyOn(component, 'generateMissingStudentExams').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[1].command();
+
+            expect(generateMissingSpy).toHaveBeenCalled();
+        });
+
+        it('should trigger startExercises when third item command is executed', () => {
+            fixture.detectChanges();
+            const startExercisesSpy = vi.spyOn(component, 'startExercises').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[2].command();
+
+            expect(startExercisesSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('toStudentExam', () => {
+        it('should return undefined when studentExamId is not set', () => {
+            fixture.detectChanges();
+            expect(component.toStudentExam({ id: 1 })).toBeUndefined();
+        });
+
+        it('should return StudentExam object when studentExamId is set', () => {
+            fixture.detectChanges();
+            const studentExam = component.toStudentExam({ id: 1, studentExamId: 10, started: true, submitted: false, workingTime: 3600 });
+            expect(studentExam).toBeDefined();
+            expect(studentExam?.id).toBe(10);
+            expect(studentExam?.started).toBe(true);
+            expect(studentExam?.submitted).toBe(false);
+            expect(studentExam?.workingTime).toBe(3600);
+        });
+
+        it('should map DTO fields to a StudentExam and set the exam reference', () => {
+            fixture.detectChanges();
+            const se: StudentExam | undefined = component.toStudentExam(mockDto);
+
+            expect(se).toBeDefined();
+            expect(se!.id).toBe(mockDto.studentExamId);
+            expect(se!.workingTime).toBe(mockDto.workingTime);
+            expect(se!.started).toBe(mockDto.started);
+            expect(se!.submitted).toBe(mockDto.submitted);
+            expect(se!.testRun).toBe(false);
+            expect(se!.exam).toBe(component.exam());
+        });
+    });
+
+    describe('toExamUserForReseating', () => {
+        it('should map DTO to ExamUser with user.firstName set for getSelectedStudentName()', () => {
+            fixture.detectChanges();
+            const dto: ExamStudentDTO = {
+                id: 10,
+                userId: 1,
+                login: 'student1',
+                name: 'Student One',
+                plannedRoom: 'Room A',
+                actualRoom: 'Room B',
+                plannedSeat: 'Seat 1',
+                actualSeat: 'Seat 2',
+            };
+
+            const examUser = component.toExamUserForReseating(dto);
+
+            expect(examUser.id).toBe(dto.id);
+            expect(examUser.user?.id).toBe(dto.userId);
+            expect(examUser.user?.login).toBe(dto.login);
+            expect(examUser.user?.firstName).toBe(dto.name);
+            expect(examUser.plannedRoom).toBe(dto.plannedRoom);
+            expect(examUser.actualRoom).toBe(dto.actualRoom);
+            expect(examUser.plannedSeat).toBe(dto.plannedSeat);
+            expect(examUser.actualSeat).toBe(dto.actualSeat);
+        });
+    });
+
+    describe('attendance helpers', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+            component.hasExamEnded.set(true);
+        });
+
+        it('attendanceCheckPassed accepts all confirmed checks without a signature after the exam', () => {
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: true,
+                didCheckLogin: true,
+                didCheckImage: true,
+                didCheckName: true,
+                didCheckRegistrationNumber: true,
+            };
+            expect(component.attendanceCheckPassed(dto)).toBeTruthy();
+        });
+
+        it('attendanceCheckFailed warns for a started exam with partial checks', () => {
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: false,
+                started: true,
+                didCheckLogin: false,
+                didCheckImage: true,
+                didCheckName: true,
+                didCheckRegistrationNumber: true,
+                signingImagePath: '/path/to/image',
+            };
+            expect(component.attendanceCheckFailed(dto)).toBeTruthy();
+        });
+
+        it('does not label partial checks as absent or show a warning for an unstarted attempt', () => {
+            const dto: ExamStudentDTO = { id: 1, didExamUserAttendExam: false, didCheckLogin: true };
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+            expect(component.attendanceCheckFailed(dto)).toBeFalsy();
+            expect(component.attendanceCheckPassed(dto)).toBeFalsy();
+        });
+
+        it('didNotAttendExam should be true when student did not attend', () => {
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: false,
+                didCheckImage: false,
+                didCheckName: false,
+                didCheckLogin: false,
+                didCheckRegistrationNumber: false,
+                signingImagePath: '/retained-signature',
+            };
+            expect(component.didNotAttendExam(dto)).toBeTruthy();
+        });
+
+        it('didNotAttendExam should be false when attendance is undefined (not yet checked)', () => {
+            const dto: ExamStudentDTO = { id: 1 };
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+        });
+
+        it('all attendance helpers should be falsy when exam has not ended', () => {
+            component.hasExamEnded.set(false);
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: true,
+                didCheckLogin: false,
+            };
+            expect(component.attendanceCheckFailed(dto)).toBeFalsy();
+            expect(component.attendanceCheckPassed(dto)).toBeFalsy();
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+        });
+    });
+
+    it('should not refresh exam data for cached completed exercise preparation status', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.isAllExercisesPrepared.set(false);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).not.toHaveBeenCalled();
+        expect(component.isAllExercisesPrepared()).toBe(true);
+    });
+
+    it('should refresh exam data when exercise preparation changes from running to completed', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.exercisePreparationRunning.set(true);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).toHaveBeenCalledOnce();
+    });
+});
+
+describe('ExamStudentsComponent accessible names', () => {
+    const course = { id: 1 } as Course;
+    const exam = { course, id: 2, title: 'Test Exam', endDate: dayjs().subtract(1, 'hour'), examUsers: [{ id: 10 } as any] } as Exam;
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
+        url: new Observable<UrlSegment[]>(),
+        data: of({ exam }),
+    } as any as ActivatedRoute;
+
+    const baseDto: ExamStudentDTO = { id: 1, userId: 1, login: 'student1', name: 'Student One', studentExamId: 123, progress: 'submitted' };
+    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', started: true, didExamUserAttendExam: false, didCheckLogin: true, didCheckImage: false };
+    const passedDto: ExamStudentDTO = {
+        ...baseDto,
+        id: 2,
+        login: 'passed',
+        didExamUserAttendExam: true,
+        didCheckLogin: true,
+        didCheckImage: true,
+        didCheckName: true,
+        didCheckRegistrationNumber: true,
+        signingImagePath: '/path/to/image',
+    };
+    const absentDto: ExamStudentDTO = {
+        ...baseDto,
+        id: 3,
+        login: 'absent',
+        studentExamId: undefined,
+        didExamUserAttendExam: false,
+        didCheckImage: false,
+        didCheckName: false,
+        didCheckLogin: false,
+        didCheckRegistrationNumber: false,
+    };
+
+    let fixture: ComponentFixture<ExamStudentsComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamStudentsComponent],
+            providers: [
+                provideRouter([]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ExamChecklistService, { getExamStatistics: () => of({ numberOfGeneratedStudentExams: 3 } as ExamChecklist) }),
+                MockProvider(AlertService),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        const examManagementService = TestBed.inject(ExamManagementService);
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
+        vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [failedDto, passedDto, absentDto], totalElements: 3 }));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+
+        fixture = TestBed.createComponent(ExamStudentsComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        fixture?.destroy();
+    });
+
+    it('should name each attendance status icon for screen readers and hide the decorative icon', () => {
+        const cells = Array.from(fixture.nativeElement.querySelectorAll('[data-column="didExamUserAttendExam"]')) as HTMLElement[];
+        const labels = cells.map((cell) => cell.querySelector('.sr-only')?.textContent?.trim());
+
+        expect(labels).toEqual(['artemisApp.exam.examUsers.attendanceCheckFailed', 'artemisApp.exam.examUsers.attendanceCheckPassed', 'artemisApp.exam.examUsers.didNotAttend']);
+        cells.forEach((cell) => expect(cell.querySelector('fa-icon')?.getAttribute('aria-hidden')).toBe('true'));
+    });
+
+    it('should give the icon-only row action controls an accessible name', () => {
+        const reseatButtons = fixture.nativeElement.querySelectorAll('[data-testid="reseat-student-button"]') as NodeListOf<HTMLElement>;
+        const removeButtons = fixture.nativeElement.querySelectorAll('[data-testid="remove-student-button"]') as NodeListOf<HTMLElement>;
+        const viewControls = fixture.nativeElement.querySelectorAll('[aria-label="artemisApp.examManagement.examStudents.table.viewExam"]') as NodeListOf<HTMLElement>;
+
+        expect(reseatButtons).toHaveLength(3);
+        reseatButtons.forEach((button) => expect(button.getAttribute('aria-label')).toBe('artemisApp.exam.examUsers.changeLocationButton'));
+        removeButtons.forEach((button) => expect(button.getAttribute('aria-label')).toBe('artemisApp.examManagement.examStudents.table.remove'));
+        expect(viewControls).toHaveLength(3);
+        viewControls.forEach((control) => expect(control.getAttribute('aria-label')).toBe('artemisApp.examManagement.examStudents.table.viewExam'));
+    });
+});

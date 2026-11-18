@@ -1,0 +1,140 @@
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { TextEditorService } from 'app/text/overview/service/text-editor.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { onTextEditorTab } from 'app/foundation/util/text.utils';
+
+@Component({
+    selector: 'jhi-text-editor-exam',
+    templateUrl: './text-exam-submission.component.html',
+    providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
+    styleUrls: ['./text-exam-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        ExamExerciseHeaderComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FormsModule,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+        TumAetUiTagComponent,
+    ],
+})
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private textService = inject(TextEditorService);
+    private stringCountService = inject(StringCountService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private examParticipationService = inject(ExamParticipationService);
+
+    exerciseType = ExerciseType.TEXT;
+
+    // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
+    studentSubmission = input.required<TextSubmission>();
+    exercise = input.required<Exercise>();
+
+    saveCurrentExercise = output<void>();
+
+    readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
+
+    // answer represents the view state
+    readonly answer = signal('');
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
+
+    // Icons
+    protected readonly faListAlt = faListAlt;
+
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
+
+    ngOnInit(): void {
+        // show submission answers in UI
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
+        this.updateViewFromSubmission();
+    }
+
+    getExerciseId(): number | undefined {
+        return this.exercise().id;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise();
+    }
+
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
+        this.problemStatementHtml.set(newProblemStatementHtml);
+    }
+
+    getSubmission(): Submission {
+        return this.studentSubmission();
+    }
+
+    updateViewFromSubmission(): void {
+        this.answer.set(this.studentSubmission().text ?? '');
+    }
+
+    public hasUnsavedChanges(): boolean {
+        return !this.studentSubmission().isSynced!;
+    }
+
+    public updateSubmissionFromView(): void {
+        this.studentSubmission().text = this.answer();
+        this.studentSubmission().language = this.textService.predictLanguage(this.answer());
+    }
+
+    get wordCount(): number {
+        return this.stringCountService.countWords(this.answer());
+    }
+
+    get characterCount(): number {
+        return this.stringCountService.countCharacters(this.answer());
+    }
+
+    onTextEditorInput(event: Event) {
+        // Keep the shared submission current while a previous save may still be in flight. The parent also uses this
+        // object for autosave and hand-in, and an older response must not make it lose the text visible in the editor.
+        this.studentSubmission().text = (event.target as HTMLTextAreaElement).value;
+        this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
+    }
+
+    private updateViewFromSubmissionVersion() {
+        if (this.submissionVersion?.content) {
+            this.answer.set(this.submissionVersion.content);
+        } else {
+            // the content of the submission version can be undefined if an empty submission was saved
+            this.answer.set('');
+        }
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
+    }
+}

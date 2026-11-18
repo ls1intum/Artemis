@@ -1,0 +1,68 @@
+@if (participation().submissionCount) {
+    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
+        @if (
+            (correctionRound === 0 || resultForRound(correctionRound - 1)?.completionDate) &&
+            (newManualResultAllowed() ||
+                (resultForRound(correctionRound)?.assessmentType &&
+                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC &&
+                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
+        ) {
+            @let assessmentLabel =
+                (resultForRound(correctionRound)?.hasComplaint
+                    ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
+                    : 'artemisApp.assessment.dashboard.actions.' +
+                      (examMode ? 'examCorrectionRound.' : '') +
+                      (!resultForRound(correctionRound)?.assessmentType || resultForRound(correctionRound)?.assessmentType === AssessmentType.AUTOMATIC
+                          ? 'assess'
+                          : resultForRound(correctionRound)?.completionDate
+                            ? 'open'
+                            : 'continue')
+                ) | artemisTranslate: { correctionRound: correctionRound + 1 };
+            <div class="flex items-center gap-1">
+                <a
+                    size="small"
+                    tumAetUiButton
+                    [attr.aria-label]="assessmentLabel"
+                    [routerLink]="getAssessmentLink(correctionRound)"
+                    [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound) }"
+                    [severity]="
+                        resultForRound(correctionRound)?.completionDate || resultForRound(correctionRound)?.hasComplaint
+                            ? 'primary'
+                            : !resultForRound(correctionRound)?.assessmentType || resultForRound(correctionRound)?.assessmentType === AssessmentType.AUTOMATIC
+                              ? 'success'
+                              : 'warn'
+                    "
+                >
+                    <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
+                    <span class="hidden xl:inline ms-1">
+                        {{ assessmentLabel }}
+                    </span>
+                </a>
+                @if (
+                    newManualResultAllowed() &&
+                    resultForRound(correctionRound)?.assessmentType &&
+                    !resultForRound(correctionRound)?.completionDate &&
+                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC
+                ) {
+                    @let cancelLabel =
+                        'artemisApp.assessment.dashboard.actions.' + (examMode ? 'examCorrectionRound.' : '') + 'cancel'
+                            | artemisTranslate: { correctionRound: correctionRound + 1 };
+                    <button
+                        size="small"
+                        severity="danger"
+                        tumAetUiButton
+                        type="button"
+                        [attr.aria-label]="cancelLabel"
+                        (click)="cancelAssessment(resultForRound(correctionRound)!, participation())"
+                        [disabled]="isLoading()"
+                    >
+                        <fa-icon [fixedWidth]="true" [icon]="faBan" />
+                        <span class="hidden xl:inline ms-1">
+                            {{ cancelLabel }}
+                        </span>
+                    </button>
+                }
+            </div>
+        }
+    }
+}

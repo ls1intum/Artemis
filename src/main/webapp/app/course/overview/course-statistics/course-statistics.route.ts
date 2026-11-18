@@ -1,0 +1,24 @@
+import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Routes } from '@angular/router';
+
+export const routes: Routes = [
+    {
+        path: '',
+        loadComponent: () => import('app/course/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'overview.statistics',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'grading-key',
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.gradingSystem.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+];

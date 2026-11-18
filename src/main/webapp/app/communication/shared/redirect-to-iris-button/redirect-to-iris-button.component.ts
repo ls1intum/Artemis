@@ -1,0 +1,153 @@
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { Observable, Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Router } from '@angular/router';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-redirect-to-iris-button',
+    templateUrl: './redirect-to-iris-button.component.html',
+    imports: [IrisLogoComponent, NgClass, FaIconComponent, TumAetUiButtonDirective],
+})
+export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
+    courseConversationsService = inject(CourseConversationsService);
+    protected communicationService = inject(CommunicationService);
+    irisSettingsService = inject(IrisSettingsService);
+    profileService = inject(ProfileService);
+    router = inject(Router);
+
+    buttonLoading = input<boolean>(false);
+    disabled = input<boolean>(false);
+    question = input<string>();
+    course = input<Course>();
+    extraClass = input<string | string[] | Set<string> | { [klass: string]: boolean }>();
+
+    private conversationServiceSubscription?: Subscription;
+    private settingsSubscription: Subscription | undefined;
+    private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
+    channelSubTypeReferenceRouterLink = '';
+    irisEnabled = signal<boolean>(false);
+
+    // Icons and sizes
+    faCircleNotch = faCircleNotch;
+    TEXT = IrisLogoSize.TEXT;
+
+    ngOnInit(): void {
+        const isIrisActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        this.irisEnabled.set(isIrisActive);
+        if (!isIrisActive) {
+            return;
+        }
+        this.conversationServiceSubscription = this.courseConversationsService.activeConversation$
+            .pipe(
+                filter((conversation) => !!conversation),
+                distinctUntilKeyChanged('id'),
+            )
+            .subscribe((conversation) => {
+                this.checkIrisSettings(getAsChannelDTO(conversation));
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.conversationServiceSubscription?.unsubscribe();
+        this.settingsSubscription?.unsubscribe();
+    }
+
+    /**
+     * Helper method to reduce duplicate logic for checking and updating Iris status.
+     *
+     * @param cachedSettings Previously fetched settings, if available.
+     * @param fetchSettings Function to fetch settings if not cached.
+     * @param extractEnabled Function to extract the enabled flag from the settings.
+     * @param channelDTO The current channel DTO.
+     * @param cacheSetter Function to store fetched settings.
+     */
+    private updateIrisStatus<T>(
+        cachedSettings: T | undefined,
+        fetchSettings: () => Observable<T | undefined>,
+        extractEnabled: (settings: T) => boolean | undefined,
+        channelDTO: ChannelDTO,
+        cacheSetter: (settings: T) => void,
+    ): void {
+        if (cachedSettings) {
+            this.setIrisStatus(extractEnabled(cachedSettings), channelDTO);
+        } else {
+            this.settingsSubscription = fetchSettings()
+                .pipe(
+                    catchError(() => {
+                        this.setIrisStatus(false, channelDTO);
+                        return of(undefined);
+                    }),
+                )
+                .subscribe((newSettings: T | undefined) => {
+                    if (newSettings) {
+                        cacheSetter(newSettings);
+                        this.setIrisStatus(extractEnabled(newSettings), channelDTO);
+                    }
+                });
+        }
+    }
+
+    /**
+     * Checks if Iris is activated in the Iris Settings
+     * @param channelDTO channel DTO that contains the needed information to be checked
+     * @private
+     */
+    private checkIrisSettings(channelDTO?: ChannelDTO): void {
+        if (!channelDTO) {
+            return this.setIrisStatus();
+        }
+        switch (channelDTO.subType) {
+            case ChannelSubType.GENERAL:
+            case ChannelSubType.LECTURE:
+            case ChannelSubType.EXERCISE: {
+                const course = this.course();
+                if (course?.id) {
+                    this.updateIrisStatus<IrisCourseSettingsWithRateLimitDTO>(
+                        this.irisCourseSettings,
+                        () => this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!),
+                        (settings) => settings.settings?.enabled,
+                        channelDTO,
+                        (settings) => (this.irisCourseSettings = settings),
+                    );
+                } else {
+                    this.setIrisStatus();
+                }
+                break;
+            }
+            default:
+                this.setIrisStatus();
+                break;
+        }
+    }
+
+    /**
+     * Updates the Iris enabled status and sets the router link if enabled.
+     *
+     * @param enabled Whether Iris is enabled.
+     * @param channelDTO The channel data transfer object.
+     */
+    private setIrisStatus(enabled: boolean = false, channelDTO?: ChannelDTO): void {
+        this.irisEnabled.set(enabled);
+        this.channelSubTypeReferenceRouterLink = enabled ? (this.communicationService.getLinkForChannelSubType(channelDTO) ?? '') : '';
+    }
+
+    /**
+     * Redirects to Iris with the current question as a query parameter.
+     */
+    redirectToIris(): void {
+        const content = this.question();
+        void this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
+    }
+}

@@ -1,0 +1,278 @@
+package de.tum.cit.aet.artemis.exam.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import java.time.ZonedDateTime;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "esstest"; // only lower case is supported
+
+    @Autowired
+    private ExamSubmissionService examSubmissionService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private UserTestRepository userRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    private User student1;
+
+    private Exam exam;
+
+    private Exercise exercise;
+
+    private StudentExam studentExam;
+
+    @BeforeEach
+    void init() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        exam = examRepository.findByCourseId(course.getId()).getFirst();
+        studentExam = examUtilService.addStudentExam(exam);
+        studentExam.setWorkingTime(7200); // 2 hours
+        studentExam.setUser(student1);
+        studentExam.addExercise(exercise);
+        studentExam = studentExamRepository.save(studentExam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_passIfNonExamSubmission() {
+        Course tmpCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Exercise nonExamExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
+        // should not throw
+        examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, student1);
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(nonExamExercise, student1, false);
+        assertThat(result2).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_isSubmissionInTime() {
+        // Should fail when submission is made before start date
+        exam.setStartDate(ZonedDateTime.now().plusMinutes(5));
+        examRepository.save(exam);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
+        assertThat(result2).isFalse();
+        // Should fail when submission is made after (start date + working time)
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
+        examRepository.save(exam);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
+        assertThat(result2).isFalse();
+        // Should pass if submission is made in time
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
+        examRepository.save(exam);
+        // should not throw
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1);
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
+        assertThat(result2).isTrue();
+        // Should fail when submission is made after end date (if no working time is set)
+        studentExam.setWorkingTime(0);
+        studentExamRepository.save(studentExam);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(120));
+        examRepository.save(exam);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
+        assertThat(result2).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_testExamNotStartedIsRejected() {
+        exam.setExamMode(ExamMode.TEST);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
+        examRepository.save(exam);
+        // the service reads the exam through the exercise, so it has to be a test exam there as well
+        exercise.getExerciseGroup().getExam().setExamMode(ExamMode.TEST);
+        // the working time of a test exam counts from the moment the student started it, so there is no end date yet
+        assertThat(studentExam.getStartedDate()).isNull();
+
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isFalse();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, true)).isFalse();
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        // once the student has started the test exam, the submission is allowed again
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(studentExam);
+
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isTrue();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, true)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
+        // Should fail if there is no student exam for user
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
+        examRepository.save(exam);
+        studentExam.setUser(null);
+        studentExamRepository.save(studentExam);
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false));
+        // Should fail if the user's student exam does not have the exercise
+        studentExam.setUser(student1);
+        studentExam.removeExercise(exercise);
+        studentExamRepository.save(studentExam);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
+        assertThat(result2).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCheckSubmissionAllowance_testRun() {
+        final var instructor = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        studentExam.setTestRun(true);
+        studentExam.setUser(instructor);
+        studentExamRepository.save(studentExam);
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, instructor, false)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_submittedStudentExam() {
+        studentExam.setSubmitted(true);
+        studentExamRepository.save(studentExam);
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreventMultipleSubmissions() {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        Submission existingSubmission = ParticipationFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
+        existingSubmission = participationUtilService.addSubmission(participation, existingSubmission);
+        Submission receivedSubmission = ParticipationFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
+        // The submission is modified in place; what comes back is the participation the caller may reuse for its save.
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
+        assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).isNotNull();
+        assertThat(resolvedParticipation.id()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreventMultipleSubmissionsLeavesFileUploadToItsOwnLookup() {
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepository
+                .save(FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exercise.getExerciseGroup()));
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, TEST_PREFIX + "student1");
+        Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateFileUploadSubmission(true));
+        Submission receivedSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(fileUploadExercise, receivedSubmission, student1);
+
+        assertThat(receivedSubmission.getId()).as("the existing submission is still the one that gets overwritten").isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).as("FileUploadSubmissionService reads the previous file off participation.submissions, which the projection does not carry, "
+                + "so it has to run its own eager lookup").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreventMultipleSubmissionsForTeamWithoutOwner() {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepository.save(exercise);
+        // an instructor may create a team without an owner, and the gate still has to answer for its members
+        Team team = teamUtilService.addTeamForExercise(exercise, null, TEST_PREFIX + "teamstudent");
+        StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        Submission existingSubmission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("Team text", Language.ENGLISH, true));
+        Submission receivedSubmission = ParticipationFactory.generateTextSubmission("New team text", Language.ENGLISH, true);
+
+        StudentParticipationSubmitTargetDTO resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission,
+                team.getStudents().iterator().next());
+
+        assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).as("a team participation is owned by a Team, so the caller resolves it itself").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testWorkingPeriodIsReadFromTheOwnAttemptRatherThanATestRun() {
+        // an instructor can hold a test run next to their own attempt, and it is the newer of the two, so picking the
+        // greatest id alone would let the test run decide when their own attempt has to be handed in
+        StudentExam testRun = examUtilService.addStudentExam(exam);
+        testRun.setUser(student1);
+        testRun.setTestRun(true);
+        testRun.setSubmitted(true);
+        testRun.setWorkingTime(1);
+        studentExamRepository.save(testRun);
+
+        var workingPeriod = studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(exam.getId(), student1.getId());
+
+        assertThat(workingPeriod).isPresent();
+        assertThat(workingPeriod.get().testRun()).isNotEqualTo(Boolean.TRUE);
+        assertThat(workingPeriod.get().workingTime()).as("the student's own attempt decides the working period").isEqualTo(7200);
+    }
+
+}

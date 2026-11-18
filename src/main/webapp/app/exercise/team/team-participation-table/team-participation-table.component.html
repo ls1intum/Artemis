@@ -1,0 +1,77 @@
+@if (exercise() && exercise().isAtLeastInstructor) {
+    <jhi-assessment-warning [exercise]="exercise()" [submissions]="currentExerciseSubmissions()" />
+}
+
+<jhi-table-view [cols]="columns()" [vals]="exercises()" [loading]="isLoading()" [options]="tableOptions" [rowClass]="rowClass()" />
+
+<!-- Cell templates -->
+<ng-template #titleTemplate let-cell>
+    <a [routerLink]="exerciseLink(cell.data)">
+        {{ cell.data.title }}
+    </a>
+</ng-template>
+
+<ng-template #releaseDateTemplate let-cell>
+    {{ cell.value ? (cell.value | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
+</ng-template>
+
+<ng-template #dueDateTemplate let-cell>
+    {{ cell.value ? (cell.value | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
+</ng-template>
+
+<ng-template #viewTemplate let-cell>
+    @if (exercise().id !== cell.data.id) {
+        <a (click)="onActivate()" [routerLink]="teamLink(cell.data)" jhiTranslate="entity.action.view"></a>
+    } @else {
+        <span class="current-team" jhiTranslate="entity.action.view"></span>
+    }
+</ng-template>
+
+<ng-template #participationTemplate let-cell>
+    @if (cell.data.participation) {
+        @if (exercise().isAtLeastInstructor) {
+            <div>
+                <a [routerLink]="['/course-management', course().id, cell.data.type + '-exercises', cell.data.id, 'participations', cell.data.participation.id, 'submissions']">
+                    {{ cell.data.participation.id }}
+                </a>
+            </div>
+        } @else {
+            {{ cell.data.participation.id }}
+        }
+    } @else {
+        <div class="text-center">–</div>
+    }
+</ng-template>
+
+<ng-template #initDateTemplate let-cell>
+    @if (cell.data.participation) {
+        {{ cell.data.participation.initializationDate | artemisDate }}
+    } @else {
+        {{ 'artemisApp.participation.initializationNotYetStarted' | artemisTranslate }}
+    }
+</ng-template>
+
+<ng-template #assessmentTemplate let-cell>
+    <div class="flex justify-start items-center gap-2">
+        <button
+            tumAetUiButton
+            type="button"
+            severity="warn"
+            size="small"
+            [disabled]="isAssessmentButtonDisabled(cell.data, cell.data.submission)"
+            [tumAetUiTooltip]="
+                isAssessmentButtonDisabled(cell.data, cell.data.submission)
+                    ? ('artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate)
+                    : undefined
+            "
+            tumAetUiTooltipPosition="left"
+            (click)="openAssessmentEditor(cell.data, cell.data.participation!, cell.data.submission ?? 'new')"
+        >
+            <fa-icon [icon]="faFolderOpen" class="me-1" />
+            {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(cell.data.submission) + 'Assessment' | artemisTranslate }}
+        </button>
+        @if (cell.data.submission?.result?.hasComplaint) {
+            <fa-icon [icon]="faFlag" [tumAetUiTooltip]="'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate" />
+        }
+    </div>
+</ng-template>

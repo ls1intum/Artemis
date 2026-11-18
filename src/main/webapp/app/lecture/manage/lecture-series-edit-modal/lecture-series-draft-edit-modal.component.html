@@ -1,0 +1,22 @@
+<tumaet-ui-dialog [header]="headerTitle()" size="small" [closable]="false" [(visible)]="show" (hidden)="cancel()">
+    <div class="frame">
+        <div class="form-grid">
+            <div class="field">
+                <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
+                <input tumAetUiInput id="title" [value]="title()" (input)="onTitleInput($event)" [tumAetUiInputInvalid]="isTitleInvalid()" />
+            </div>
+            <tumaet-ui-date-picker inputId="startDate" labelName="artemisApp.lecture.startDate" [(value)]="startDate" (inputValidityChange)="isStartTextValid.set($event)" />
+            <tumaet-ui-date-picker
+                inputId="endDate"
+                labelName="artemisApp.lecture.endDate"
+                [(value)]="endDate"
+                [invalid]="isEndDateInvalid()"
+                (inputValidityChange)="isEndTextValid.set($event)"
+            />
+        </div>
+        <div class="controls-section">
+            <button type="button" tumAetUiButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button type="button" tumAetUiButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
+        </div>
+    </div>
+</tumaet-ui-dialog>

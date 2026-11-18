@@ -1,0 +1,11 @@
+In this exercise, you will use basic features of the OCaml programming language for arithmetic, list and string operations.
+
+1. [task][add](0:add:0,0:add:1)
+Implement the function `add` that takes two values of type `int` and returns their sum.
+
+2. [task][filter](2:filter:0,2:filter:1)
+Implement the generic and recursive function `filter` that that takes a predicate of type `'a -> bool` and a list of type `'a list`. The function should return the list of elements contained in the input list that fulfill the predicate. The elements in the returned list must appear in the same order as in the input list.
+
+3. [task][starts_with](4:starts_with:0,4:starts_with:1)
+Implement the function `starts_with` that takes two `string`s and returns `true` if, and only if, the second string is a prefix of the first.
+

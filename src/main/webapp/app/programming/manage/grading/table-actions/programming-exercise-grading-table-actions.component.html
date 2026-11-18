@@ -1,0 +1,30 @@
+@if (activeTab() === 'code-analysis') {
+    <button type="button" id="import-configuration-button" tumAetUiButton size="small" severity="secondary" class="ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving()">
+        <fa-icon [icon]="faCopy" />
+        <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.import"></span>
+    </button>
+}
+<button
+    type="button"
+    data-testid="save-table-button"
+    tumAetUiButton
+    size="small"
+    severity="primary"
+    class="ms-3 my-3"
+    jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
+    (click)="onSave.emit()"
+    [disabled]="isSaving() || !hasUnsavedChanges()"
+></button>
+<button
+    type="button"
+    id="reset-table-button"
+    data-button-intent="destructive"
+    data-button-intent-reason="Resets persisted grading configuration"
+    tumAetUiButton
+    size="small"
+    severity="danger"
+    class="ms-3 my-1"
+    (click)="onReset.emit()"
+    [disabled]="isSaving()"
+    jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
+></button>

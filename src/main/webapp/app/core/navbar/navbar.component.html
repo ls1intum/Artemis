@@ -1,0 +1,273 @@
+<ng-template #iconMenu>
+    <div id="navbar-icon-menu" [ngClass]="{ evenly: isIconMenuCompact(), 'in-menu': iconsMovedToMenu() }">
+        @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
+            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+        }
+        @if (perspectiveSwitchLinks(); as perspectiveSwitchLinks) {
+            <div id="perspective-switch" class="perspective-switch">
+                <a
+                    [routerLink]="perspectiveSwitchLinks.studentViewLink"
+                    [class.accented]="routeIsAtStudentCourseView()"
+                    (click)="collapseNavbar()"
+                    jhiTranslate="global.menu.student"
+                    >Student</a
+                >
+                <span class="perspective-switch-divider" aria-hidden="true">|</span>
+                <a
+                    [routerLink]="perspectiveSwitchLinks.managementViewLink"
+                    [class.accented]="routeIsAtCourseManagementView()"
+                    (click)="collapseNavbar()"
+                    jhiTranslate="global.menu.course"
+                    >Management</a
+                >
+            </div>
+        }
+        @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
+            <jhi-global-search-navbar />
+        }
+        @if (!currAccount() && languages && languages.length > 1) {
+            <div ngbDropdown class="dropdown pointer" display="dynamic">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
+                    <span>
+                        <fa-icon [icon]="faFlag" />
+                        <span jhiTranslate="global.menu.language"></span>
+                    </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu>
+                    @for (language of languages; track language) {
+                        <li>
+                            <a
+                                class="dropdown-item"
+                                [jhiActiveMenu]="language"
+                                (click)="changeLanguage(language); collapseNavbar()"
+                                #keyboardAction39
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                >{{ language | findLanguageFromKey }}</a
+                            >
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        @if (currentCourse(); as course) {
+            @if (course.id && !isExamActive() && !isExamStarted()) {
+                <div class="d-flex align-items-center">
+                    <jhi-course-notification-overview [courseId]="course.id" />
+                </div>
+            }
+        }
+        <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
+        @if (isAuthenticated()) {
+            <div
+                ngbDropdown
+                class="dropdown pointer"
+                display="dynamic"
+                [placement]="'bottom-right'"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                [autoClose]="true"
+            >
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
+                    @if (!getImageUrl()) {
+                        <span>
+                            <fa-icon [icon]="faUser" />
+                            @if (!currAccount()) {
+                                <span jhiTranslate="global.menu.account.main"></span>
+                            }
+                            @if (currAccount()) {
+                                <span>{{ currAccount()!.login }}</span>
+                            }
+                        </span>
+                    }
+                    @if (getImageUrl()) {
+                        <span>
+                            <img [ngSrc]="getImageUrl()!" width="30" height="30" class="profile-image img-circle rounded-3" alt="Avatar" />
+                        </span>
+                    }
+                </a>
+                <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faCog" [fixedWidth]="true" />
+                            <span jhiTranslate="global.menu.settings"></span>
+                        </a>
+                    </li>
+                    @if (!isExamActive() && !isExamStarted()) {
+                        <li class="mobile-course-enrollment">
+                            <a class="mobile-course-enrollment-link" data-testid="mobile-course-enrollment" [routerLink]="['/courses/enroll']" (click)="collapseNavbar()">
+                                <span jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></span>
+                            </a>
+                        </li>
+                        <li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
+                            <a class="dropdown-item" routerLink="/admin" routerLinkActive="active" (click)="collapseNavbar()" id="admin-menu">
+                                <fa-icon [icon]="faUserShield" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.main"></span>
+                            </a>
+                        </li>
+                    }
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language"></h6>
+                    </li>
+                    @if (languages && languages.length > 1) {
+                        <div>
+                            @for (language of languages; track language) {
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        [jhiActiveMenu]="language"
+                                        (click)="changeLanguage(language); collapseNavbar()"
+                                        #keyboardAction104
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
+                                        >{{ language | findLanguageFromKey }}</a
+                                    >
+                                </li>
+                            }
+                        </div>
+                    }
+                    <div class="dropdown-divider"></div>
+                    @if (passwordResetEnabled()) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faLock" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.account.password"></span>
+                            </a>
+                        </li>
+                    }
+                    <li>
+                        @if (currAccount()) {
+                            <a
+                                class="dropdown-item"
+                                (click)="logout()"
+                                data-testid="logout"
+                                #keyboardAction130
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
+                            >
+                                <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.account.logout"></span>
+                            </a>
+                        }
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
+</ng-template>
+<nav class="navbar jh-navbar" [class.expanded]="!isCollapsed()">
+    <div class="jh-logo-container">
+        <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
+            <img ngSrc="public/images/logo.svg" width="32" height="30" alt="" style="object-fit: contain" />
+            <div jhiTranslate="global.title" class="navbar-title"></div>
+            <ng-template #gitInfo>
+                <div>
+                    {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName() }} <br />
+                    {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId() }} <br />
+                    {{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp() }} <br />
+                    {{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitUsername() }}
+                </div>
+            </ng-template>
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction() && !testServer()">
+                {{ version() }}
+            </div>
+        </a>
+        <div class="indicators">
+            <jhi-connection-warning class="align-self-center" />
+            <jhi-loading-notification class="align-self-center" />
+        </div>
+        @if (navigationContextIndicatorData(); as context) {
+            <div>|</div>
+            <a class="navbar-course-link flex min-w-0 items-center gap-2" [routerLink]="context.routerLink" (click)="collapseNavbar()">
+                @switch (context.type) {
+                    @case ('course') {
+                        <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: context.imagePath, courseTitle: context.title }" />
+                        <div id="test-course-title" class="navbar-course-title text-sm font-medium">{{ context.title }}</div>
+                    }
+                    @default {
+                        <div id="test-navbar-context-title" class="navbar-course-title text-sm font-medium" [jhiTranslate]="context.translationKey"></div>
+                    }
+                }
+            </a>
+        }
+        @if (!iconsMovedToMenu() && isCollapsed()) {
+            <ng-container *ngTemplateOutlet="iconMenu" />
+        }
+        @if (iconsMovedToMenu()) {
+            <div class="toggler-wrapper">
+                <a
+                    class="toggler"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    [attr.aria-expanded]="!isNavbarCollapsed()"
+                    aria-label="Toggle navigation"
+                    (click)="toggleNavbar()"
+                    #keyboardAction174
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
+                >
+                    <fa-icon [icon]="faBars" />
+                </a>
+            </div>
+        }
+    </div>
+    <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
+        @if (!isCollapsed() || iconsMovedToMenu()) {
+            <ng-container *ngTemplateOutlet="iconMenu" />
+        }
+    </div>
+</nav>
+<ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
+    @if (courseImage) {
+        <div class="navbar-course-image d-flex align-items-center justify-content-center">
+            <jhi-image [src]="courseImage" />
+        </div>
+    } @else {
+        <div class="course-circle d-flex align-items-center justify-content-center">
+            <span>{{ courseTitle | slice: 0 : 1 }}</span>
+        </div>
+    }
+</ng-template>
+<jhi-system-notification />
+@if (!isExamStarted() && !isExamActive() && breadcrumbs().length > 0) {
+    <div class="breadcrumb-container">
+        <ol class="breadcrumb">
+            @for (breadcrumb of breadcrumbs(); track breadcrumb.label; let i = $index) {
+                @if (i !== 0) {
+                    <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+                }
+                <li class="breadcrumb-item">
+                    @if (breadcrumb && breadcrumb.translate) {
+                        <a class="breadcrumb-link" id="bread-crumb-{{ i }}" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{
+                            breadcrumb.label | artemisTranslate
+                        }}</a>
+                    }
+                    @if (breadcrumb && !breadcrumb.translate) {
+                        <a
+                            class="breadcrumb-link"
+                            id="bread-crumb-plain-{{ i }}"
+                            [routerLink]="breadcrumb.uri"
+                            routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }"
+                            >{{ breadcrumb.label }}</a
+                        >
+                    }
+                </li>
+            }
+        </ol>
+    </div>
+}

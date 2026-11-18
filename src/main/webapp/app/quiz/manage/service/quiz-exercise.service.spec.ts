@@ -1,0 +1,481 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import dayjs from 'dayjs/esm';
+import { firstValueFrom } from 'rxjs';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+
+// Mock ZipBuilder to prevent real zip creation (and the resulting browser download) during the export tests
+vi.mock('app/foundation/util/zip.util', () => {
+    class MockZipBuilder {
+        file = vi.fn();
+        generateBlob = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
+    }
+    return {
+        ZipBuilder: MockZipBuilder,
+    };
+});
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+
+/**
+ * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
+ */
+const makeQuiz = () => {
+    const quizEx = new QuizExercise(new Course(), undefined);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.studentParticipations = [];
+    delete quizEx.exerciseGroup;
+    return quizEx;
+};
+
+const makeDragAndDropQuestion = () => {
+    const question = new DragAndDropQuestion();
+    const dragItem = new DragItem();
+    const dropLocation = new DropLocation();
+    const mapping = new DragAndDropMapping(dragItem, dropLocation);
+    question.dragItems = [dragItem];
+    question.dropLocations = [dropLocation];
+    question.correctMappings = [mapping];
+    question.type = QuizQuestionType.DRAG_AND_DROP;
+    return question;
+};
+
+const makeShortAnswerQuestion = () => {
+    const question = new ShortAnswerQuestion();
+    const spot = new ShortAnswerSpot();
+    const solution = new ShortAnswerSolution();
+    const mapping = new ShortAnswerMapping(spot, solution);
+    question.type = QuizQuestionType.SHORT_ANSWER;
+    question.spots = [spot];
+    question.solutions = [solution];
+    question.correctMappings = [mapping];
+    return question;
+};
+
+const makeMultipleChoiceQuestion = () => {
+    const question = new MultipleChoiceQuestion();
+    question.type = QuizQuestionType.MULTIPLE_CHOICE;
+    const answerOption = new AnswerOption();
+    question.answerOptions = [answerOption];
+    return question;
+};
+
+const makeCourseQuiz = () => {
+    const quizEx = new QuizExercise(new Course(), undefined);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
+    delete quizEx.exerciseGroup;
+    return quizEx;
+};
+
+const makeExamQuiz = () => {
+    const quizEx = new QuizExercise(undefined, { id: 1 } as any);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
+    return quizEx;
+};
+
+describe('QuizExercise Service', () => {
+    const fileMap = new Map<string, Blob>();
+    fileMap.set('file.jpg', new Blob());
+
+    let service: QuizExerciseService;
+    let httpMock: HttpTestingController;
+    let elemDefault: QuizExercise;
+    const mockZipBuilder = {} as ZipBuilder;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                SessionStorageService,
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
+        });
+        service = TestBed.inject(QuizExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+        elemDefault = makeQuiz();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it.each([
+        ['COURSE', '/api/quiz/quiz-exercises/123'],
+        ['EXAM', '/api/quiz/quiz-exercises/123/for-exam'],
+    ])('should convert loaded %s details into the class graph the editor works on', async (scope, url) => {
+        const result = firstValueFrom(scope === 'EXAM' ? service.findForExam(123) : service.find(123));
+        httpMock.expectOne({ method: 'GET', url }).flush({
+            id: 123,
+            releaseDate: '2026-05-01T10:00:00Z',
+            categories: ['{"category":"Week 1","color":"#6ae8ac"}'],
+            quizQuestions: [{ id: 1, type: 'multiple-choice', answerOptions: [{ id: 2, isCorrect: true }] }],
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
+        expect(quizExercise.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+        expect(question).toBeInstanceOf(MultipleChoiceQuestion);
+        expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
+    });
+
+    it('should load the quiz exercises of a course as class instances with converted dates, batches and categories', async () => {
+        const result = firstValueFrom(service.findForCourse(5));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/courses/5/quiz-exercises' }).flush([
+            {
+                id: 11,
+                title: 'Quiz 1',
+                includedInOverallScore: 'INCLUDED_COMPLETELY',
+                quizMode: 'BATCHED',
+                releaseDate: '2026-05-01T10:00:00Z',
+                startDate: '2026-05-02T10:00:00Z',
+                dueDate: '2026-05-03T10:00:00Z',
+                categories: ['{"category":"Week 1","color":"#6ae8ac"}'],
+                quizBatches: [{ id: 21, started: true, startTime: '2026-05-02T10:05:00Z' }],
+            },
+            { id: 12, title: 'Quiz 2', includedInOverallScore: 'NOT_INCLUDED', quizMode: 'SYNCHRONIZED' },
+        ]);
+
+        const [first, second] = await result;
+        expect(first).toBeInstanceOf(QuizExercise);
+        expect(first.releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
+        expect(first.startDate!.toISOString()).toBe('2026-05-02T10:00:00.000Z');
+        expect(first.dueDate!.toISOString()).toBe('2026-05-03T10:00:00.000Z');
+        expect(first.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        expect(first.quizBatches![0]).toBeInstanceOf(QuizBatch);
+        expect(first.quizBatches![0].startTime!.toISOString()).toBe('2026-05-02T10:05:00.000Z');
+        expect(second).toBeInstanceOf(QuizExercise);
+        expect(second.releaseDate).toBeUndefined();
+        expect(second.quizBatches).toBeUndefined();
+    });
+
+    it('should load the quiz exercises of an exam from the quiz module', async () => {
+        const result = firstValueFrom(service.findAllForExam(7));
+        // The exam module has no mapping for this list; the request must go to the quiz module.
+        httpMock
+            .expectOne({ method: 'GET', url: '/api/quiz/exams/7/quiz-exercises' })
+            .flush([{ id: 13, title: 'Exam quiz', includedInOverallScore: 'INCLUDED_COMPLETELY', quizMode: 'SYNCHRONIZED', dueDate: '2026-06-01T09:00:00Z' }]);
+
+        const [quizExercise] = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.title).toBe('Exam quiz');
+        expect(quizExercise.dueDate!.toISOString()).toBe('2026-06-01T09:00:00.000Z');
+    });
+
+    it('should leave the questions of a student quiz unset while the server withholds them', async () => {
+        const result = firstValueFrom(service.findForStudent(14));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/quiz-exercises/14/for-student' }).flush({
+            id: 14,
+            title: 'Upcoming quiz',
+            includedInOverallScore: 'INCLUDED_COMPLETELY',
+            quizMode: 'SYNCHRONIZED',
+            startDate: '2026-05-02T10:00:00Z',
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.startDate!.toISOString()).toBe('2026-05-02T10:00:00.000Z');
+        expect(quizExercise.quizQuestions).toBeUndefined();
+    });
+
+    it('should convert the questions of a running student quiz into the class graph', async () => {
+        const result = firstValueFrom(service.findForStudent(15));
+        httpMock.expectOne({ method: 'GET', url: '/api/quiz/quiz-exercises/15/for-student' }).flush({
+            id: 15,
+            title: 'Running quiz',
+            includedInOverallScore: 'INCLUDED_COMPLETELY',
+            quizMode: 'BATCHED',
+            quizBatches: [{ id: 22, started: true, startTime: '2026-05-02T10:05:00Z' }],
+            quizQuestions: [{ id: 3, type: 'multiple-choice', answerOptions: [{ id: 4, text: 'A' }] }],
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise.quizBatches![0].startTime!.toISOString()).toBe('2026-05-02T10:05:00.000Z');
+        const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+        expect(question).toBeInstanceOf(MultipleChoiceQuestion);
+        expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
+    });
+
+    it('should create a QuizExercise for a course', async () => {
+        const course = makeCourseQuiz();
+        course.id = 1;
+        const quizExercise = new QuizExercise(course, undefined);
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/courses/1/quiz-exercises' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect(await result).toBeInstanceOf(QuizExercise);
+        expect((await result).id).toBe(expected.id);
+    });
+
+    it('should create a QuizExercise for an exam', async () => {
+        const quizExercise = makeExamQuiz();
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercise-groups/1/quiz-exercises' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect((await result).id).toBe(expected.id);
+    });
+
+    it('should throw an error if QuizExercise has neither course nor exerciseGroup', async () => {
+        const quizExercise = new QuizExercise(undefined, undefined);
+        expect(() => service.create(quizExercise, fileMap)).toThrow('Quiz exercise must belong to a course or an exercise group');
+    });
+
+    it('should update a QuizExercise', async () => {
+        const returnedFromService = Object.assign(
+            {
+                description: 'BBBBBB',
+                explanation: 'BBBBBB',
+                randomizeQuestionOrder: true,
+                allowedNumberOfAttempts: 1,
+                isVisibleBeforeStart: true,
+                isPlannedToStart: true,
+                duration: 1,
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.update(1, expected, fileMap, 'Changed the solution'));
+        const req = httpMock.expectOne({ method: 'PUT', url: '/api/quiz/quiz-exercises/1?notificationText=Changed+the+solution' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect((await result).duration).toBe(expected.duration);
+    });
+
+    it.each([
+        [QuizStatus.INVISIBLE, false, false, false],
+        [QuizStatus.VISIBLE, true, false, false],
+        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false],
+        [QuizStatus.ACTIVE, true, false, true],
+        // all other combinations are not valid
+    ])('should get status %p', (result, quizStarted, quizEnded, started) => {
+        elemDefault.quizStarted = quizStarted;
+        elemDefault.quizEnded = quizEnded;
+        elemDefault.dueDate = dayjs().add(1, 'day');
+        elemDefault.visibleToStudents = quizStarted;
+        if (started !== undefined) {
+            elemDefault.quizBatches = [{ started }];
+        }
+        expect(service.getStatus(elemDefault)).toBe(result);
+    });
+
+    const q = new MultipleChoiceQuestion();
+    it.each([
+        [[], false, undefined, 0],
+        [[], true, undefined, 0],
+        [[], false, 'test', 0],
+        [[], true, 'test', 0],
+        [
+            [
+                { ...q, exportQuiz: false },
+                { ...q, exportQuiz: true },
+            ],
+            false,
+            undefined,
+            1,
+        ],
+        [
+            [
+                { ...q, exportQuiz: false },
+                { ...q, exportQuiz: true },
+            ],
+            true,
+            undefined,
+            2,
+        ],
+        [
+            [
+                { ...q, exportQuiz: false },
+                { ...q, exportQuiz: true },
+            ],
+            false,
+            'test',
+            1,
+        ],
+        [
+            [
+                { ...q, exportQuiz: false },
+                { ...q, exportQuiz: true },
+            ],
+            true,
+            'test',
+            2,
+        ],
+    ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
+        const spy = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+        service.exportQuiz(questions, exportAll, filename);
+
+        if (count === 0) {
+            expect(spy).not.toHaveBeenCalled();
+        } else {
+            expect(spy).toHaveBeenCalledOnce();
+            const [blob, file] = spy.mock.calls[0];
+            const data = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsText(blob);
+                reader.onloadend = () => {
+                    resolve(JSON.parse(reader.result as string));
+                };
+            });
+            expect(blob.type).toBe('application/json');
+            expect(data).toHaveLength(count);
+            expect(file.endsWith('.json')).toBe(true);
+        }
+    });
+
+    it('should fetch correct image names and paths from drag and drop questions', async () => {
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.DRAG_AND_DROP,
+                text: '![image](path/to/image.png)',
+                backgroundFilePath: 'path/to/background.png',
+                dragItems: [{ pictureFilePath: 'path/to/dragItem1.png' }, { pictureFilePath: 'path/to/dragItem2.png' }],
+            } as DragAndDropQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(4);
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_background.png', expect.anything(), 'path/to/background.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_dragItem-0.png', expect.anything(), 'path/to/dragItem1.png');
+        expect(spy).toHaveBeenNthCalledWith(3, 'q0_dragItem-1.png', expect.anything(), 'path/to/dragItem2.png');
+        expect(spy).toHaveBeenNthCalledWith(4, 'q0_image', expect.anything(), 'path/to/image.png');
+    });
+
+    it('should handle markdown without images', async () => {
+        const description = 'No images here, just text';
+        const regexArray = service.findImagesInMarkdown(description);
+        expect(regexArray).toHaveLength(0);
+    });
+
+    it('should export images from multiple choice options', async () => {
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                answerOptions: [
+                    { text: ' text ![option1](path/to/option1.png)', invalid: false },
+                    { text: '![option2](path/to/option2.png)random', invalid: false },
+                ],
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as MultipleChoiceQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenNthCalledWith(1, 'q0_option1', expect.anything(), 'path/to/option1.png');
+        expect(spy).toHaveBeenNthCalledWith(2, 'q0_option2', expect.anything(), 'path/to/option2.png');
+    });
+
+    it('should export images from short answer questions', async () => {
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.SHORT_ANSWER,
+                text: 'This is some text, text ![image](path/to/image.png) image there , no image here [txt](link)',
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as ShortAnswerQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith('q0_image', expect.anything(), 'path/to/image.png');
+    });
+
+    it('should not try to fetch files if there are no images to export', async () => {
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spyDownload = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+
+        const questions: QuizQuestion[] = [
+            {
+                type: QuizQuestionType.SHORT_ANSWER,
+                text: 'This is some text image there , no image here [txt](link)',
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as ShortAnswerQuestion,
+            {
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                answerOptions: [
+                    { text: ' some option', invalid: false },
+                    { text: ' some other option ', invalid: false },
+                ],
+                randomizeOrder: true,
+                invalid: false,
+                exportQuiz: false,
+            } as MultipleChoiceQuestion,
+        ];
+        service.exportAssetsFromAllQuestions(questions, 'output.zip');
+        expect(spy).not.toHaveBeenCalled();
+        expect(spyDownload).toHaveBeenCalled();
+    });
+    it('should throw an error if file fails to fetch', async () => {
+        const fileName = 'mockFile.png';
+        const filePath = 'path/to/mockFile.png';
+        const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
+        vi.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
+
+        await expect(service.fetchFilePromise(fileName, mockZipBuilder, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
+    });
+
+    function validateFormData(req: TestRequest) {
+        expect(req.request.body).toBeInstanceOf(FormData);
+        expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
+        const fileArray = req.request.body.getAll('files');
+        expect(fileArray).toHaveLength(1);
+        // The server matches an upload to its question by the part's file name, so the part must carry the map key.
+        expect((fileArray[0] as File).name).toBe('file.jpg');
+    }
+});

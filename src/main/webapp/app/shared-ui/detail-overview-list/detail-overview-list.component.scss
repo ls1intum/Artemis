@@ -1,0 +1,68 @@
+$details-image-height: 3rem;
+
+.detail-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.section-headline {
+    margin: 0;
+    font-size: 1.25rem;
+    scroll-margin-top: 70px;
+}
+
+.section-detail-list {
+    min-width: 0;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+
+    > dt {
+        margin-top: 1rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    > dd {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.section-detail-list:not(:last-child) {
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
+}
+
+.details-default-profile-picture {
+    width: $details-image-height;
+    height: $details-image-height;
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--tumaet-ui-muted-color);
+    color: var(--tumaet-ui-primary-contrast-color);
+}
+
+.details-image {
+    width: $details-image-height;
+    height: $details-image-height;
+    object-fit: cover;
+}
+
+// Reserves vertical space for a detail row whose content sits behind a @defer block, so the list does
+// not jump once the deferred chunk arrives. Deliberately carries no id: keeping the real
+// `#detail-value-…` anchor out of the placeholder lets Playwright's auto-waiting locators wait for the
+// actual content to appear instead of resolving against an empty element.
+.detail-defer-placeholder {
+    min-height: 4rem;
+}
+
+// The read-only modeling editor is substantially taller than the other deferred rows.
+.detail-defer-placeholder-editor {
+    min-height: 25rem;
+}

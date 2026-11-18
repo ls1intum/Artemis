@@ -1,0 +1,520 @@
+package de.tum.cit.aet.artemis.course.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.domain.CourseRequest;
+import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestRequesterDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+
+@Service
+@Profile(PROFILE_CORE)
+@Lazy
+public class CourseRequestService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseRequestService.class);
+
+    /** Everything that is not a digit, removed to read the number out of a semester such as {@code WS24/25}. */
+    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
+
+    private static final int MAX_TITLE_LENGTH = 255;
+
+    /**
+     * The number of course requests of one user that can wait for a decision at the same time. Raise this value to allow more.
+     */
+    private static final int MAX_PENDING_REQUESTS_PER_USER = 5;
+
+    private final ResourceLoaderService resourceLoaderService;
+
+    @Value("${info.contact:}")
+    private String contactEmail;
+
+    private final CourseRequestRepository courseRequestRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    private final CourseAccessService courseAccessService;
+
+    private final ChannelService channelService;
+
+    private final MailSendingService mailSendingService;
+
+    public CourseRequestService(CourseRequestRepository courseRequestRepository, CourseRepository courseRepository, UserRepository userRepository,
+            CourseAccessService courseAccessService, ChannelService channelService, MailSendingService mailSendingService, ResourceLoaderService resourceLoaderService) {
+        this.courseRequestRepository = courseRequestRepository;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.courseAccessService = courseAccessService;
+        this.channelService = channelService;
+        this.mailSendingService = mailSendingService;
+        this.resourceLoaderService = resourceLoaderService;
+    }
+
+    /**
+     * Creates a new course request for the currently logged in user.
+     *
+     * @param createDTO the request data
+     * @return the persisted request as DTO
+     */
+    public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
+        var requester = userRepository.getUserWithAuthorities();
+        validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
+        boolean gradeRelevant = resolveGradeRelevant(createDTO);
+
+        if (createDTO.title().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
+        }
+
+        Course validationCourse = new Course();
+        validationCourse.setShortName(createDTO.shortName());
+        CourseValidator.validateShortName(validationCourse);
+        validationCourse.setStartDate(createDTO.startDate());
+        validationCourse.setEndDate(createDTO.endDate());
+        CourseValidator.validateStartAndEndDate(validationCourse);
+
+        CourseRequest courseRequest = new CourseRequest();
+        courseRequest.setTitle(createDTO.title());
+        courseRequest.setShortName(createDTO.shortName());
+        courseRequest.setSemester(createDTO.semester());
+        courseRequest.setStartDate(createDTO.startDate());
+        courseRequest.setEndDate(createDTO.endDate());
+        courseRequest.setTestCourse(createDTO.testCourse());
+        courseRequest.setGradeRelevant(gradeRelevant);
+        courseRequest.setReason(createDTO.reason());
+        courseRequest.setRequester(requester);
+        courseRequest.setCreatedDate(ZonedDateTime.now());
+        courseRequest.setStatus(CourseRequestStatus.PENDING);
+
+        courseRequest = courseRequestRepository.saveWithPendingLimit(courseRequest, MAX_PENDING_REQUESTS_PER_USER);
+        notifyContact(courseRequest);
+        sendReceivedEmail(requester, courseRequest);
+
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
+        return toDto(courseRequest);
+    }
+
+    /**
+     * Accepts the course request and creates a course.
+     *
+     * @param requestId the request id
+     * @return the updated course request DTO
+     */
+    public CourseRequestDTO acceptRequest(long requestId) {
+        CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
+        if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
+            throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
+        }
+
+        validateShortNameUniqueness(courseRequest.getShortName(), courseRequest.getTitle(), courseRequest.getSemester(), courseRequest.getId());
+
+        // Save eagerly loaded requester before save() which calls merge() and replaces the association with an uninitialized lazy proxy
+        User requester = courseRequest.getRequester();
+
+        Course createdCourse = createCourseFromRequest(courseRequest);
+        courseRequest.setCreatedCourseId(createdCourse.getId());
+        courseRequest.setStatus(CourseRequestStatus.ACCEPTED);
+        courseRequest.setDecisionReason(null);
+        courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
+        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest = courseRequestRepository.save(courseRequest);
+
+        sendAcceptedEmail(requester, courseRequest, createdCourse);
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
+        return toDto(courseRequest);
+    }
+
+    /**
+     * Rejects the course request.
+     *
+     * @param requestId      the request id
+     * @param decisionReason the rejection reason
+     * @return the updated course request DTO
+     */
+    public CourseRequestDTO rejectRequest(long requestId, String decisionReason) {
+        CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
+        if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
+            throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
+        }
+
+        // Save eagerly loaded requester before save() which calls merge() and replaces the association with an uninitialized lazy proxy
+        User requester = courseRequest.getRequester();
+
+        courseRequest.setStatus(CourseRequestStatus.REJECTED);
+        courseRequest.setDecisionReason(decisionReason != null ? decisionReason.trim() : null);
+        courseRequest.setProcessedDate(ZonedDateTime.now());
+        courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
+        courseRequest = courseRequestRepository.save(courseRequest);
+        sendRejectedEmail(requester, courseRequest);
+
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
+        return toDto(courseRequest);
+    }
+
+    /**
+     * Updates a pending course request. Only admins can update requests.
+     *
+     * @param requestId the request id
+     * @param updateDTO the updated course request data
+     * @return the updated course request DTO
+     */
+    public CourseRequestDTO updateCourseRequest(long requestId, CourseRequestCreateDTO updateDTO) {
+        CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
+        if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
+            throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
+        }
+
+        validateShortNameUniqueness(updateDTO.shortName(), updateDTO.title(), updateDTO.semester(), requestId);
+        boolean gradeRelevant = resolveGradeRelevant(updateDTO);
+
+        if (updateDTO.title().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
+        }
+
+        Course validationCourse = new Course();
+        validationCourse.setShortName(updateDTO.shortName());
+        CourseValidator.validateShortName(validationCourse);
+        validationCourse.setStartDate(updateDTO.startDate());
+        validationCourse.setEndDate(updateDTO.endDate());
+        CourseValidator.validateStartAndEndDate(validationCourse);
+
+        courseRequest.setTitle(updateDTO.title());
+        courseRequest.setShortName(updateDTO.shortName());
+        courseRequest.setSemester(updateDTO.semester());
+        courseRequest.setStartDate(updateDTO.startDate());
+        courseRequest.setEndDate(updateDTO.endDate());
+        courseRequest.setTestCourse(updateDTO.testCourse());
+        courseRequest.setGradeRelevant(gradeRelevant);
+        courseRequest.setReason(updateDTO.reason());
+
+        courseRequest = courseRequestRepository.save(courseRequest);
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
+        // The admin replaces the row of the pending table with this response, so it keeps the instructor courses the row showed.
+        return toDto(courseRequest, findInstructorCoursesOf(courseRequest.getRequester()));
+    }
+
+    /**
+     * Determines whether the requested course is grade relevant. An omitted value defaults to grade relevant for a regular course and to not grade relevant for a test course.
+     *
+     * @param requestData the request data to resolve the value for
+     * @return whether the course counts towards official grades
+     * @throws BadRequestAlertException if the request is for a test course that is marked as grade relevant, because a test course can never count towards official grades
+     */
+    private static boolean resolveGradeRelevant(CourseRequestCreateDTO requestData) {
+        boolean gradeRelevant = requestData.gradeRelevant() != null ? requestData.gradeRelevant() : !requestData.testCourse();
+        if (requestData.testCourse() && gradeRelevant) {
+            throw new BadRequestAlertException("A test course cannot be grade relevant", CourseRequest.ENTITY_NAME, "testCourseNotGradeRelevant");
+        }
+        return gradeRelevant;
+    }
+
+    private CourseRequest getRequestWithRequesterElseThrow(long requestId) {
+        return courseRequestRepository.findOneWithEagerRelationshipsById(requestId).orElseThrow(() -> new EntityNotFoundException(CourseRequest.ENTITY_NAME, requestId));
+    }
+
+    private void validateShortNameUniqueness(String shortName, String title, String semester, Long currentRequestId) {
+        boolean existsInCourse = courseRepository.existsByShortNameIgnoreCase(shortName);
+        var existingRequest = courseRequestRepository.findOneByShortNameIgnoreCase(shortName);
+        boolean existsInRequest = existingRequest.isPresent() && (currentRequestId == null || !existingRequest.get().getId().equals(currentRequestId));
+
+        if (existsInCourse || existsInRequest) {
+            String suggestedShortName = generateUniqueShortName(title, semester);
+            String errorKey = existsInCourse ? "courseShortNameExists" : "courseRequestShortNameExists";
+            throw new BadRequestAlertException("A course or request with the same short name already exists", CourseRequest.ENTITY_NAME, errorKey,
+                    Map.of("suggestedShortName", suggestedShortName));
+        }
+    }
+
+    /**
+     * Generates a unique short name based on the first letters of the title words and the semester number.
+     * If the generated short name already exists, appends an incrementing number until a unique one is found.
+     *
+     * @param title    the course title
+     * @param semester the semester (e.g., "WS25/26", "SS24")
+     * @return a unique short name suggestion
+     */
+    private String generateUniqueShortName(String title, String semester) {
+        // Extract first letters from title words (only alphanumeric characters)
+        StringBuilder baseShortName = new StringBuilder();
+        if (title != null && !title.isBlank()) {
+            String[] words = title.split("\\s+");
+            for (String word : words) {
+                if (!word.isEmpty()) {
+                    char firstChar = Character.toUpperCase(word.charAt(0));
+                    if (Character.isLetterOrDigit(firstChar)) {
+                        baseShortName.append(firstChar);
+                    }
+                }
+            }
+        }
+
+        // Extract semester number (digits only)
+        if (semester != null && !semester.isBlank()) {
+            String semesterDigits = NON_DIGIT.matcher(semester).replaceAll("");
+            if (!semesterDigits.isEmpty()) {
+                baseShortName.append(semesterDigits);
+            }
+        }
+
+        // Ensure minimum length of 3 characters by appending random uppercase letters
+        String base = baseShortName.toString();
+        if (base.length() < 3) {
+            base = base + generateRandomLetters(3 - base.length());
+        }
+
+        // Find a unique short name by appending a number if necessary
+        String candidate = base;
+        int counter = 1;
+        while (isShortNameTaken(candidate)) {
+            candidate = base + counter;
+            counter++;
+        }
+
+        return candidate;
+    }
+
+    private boolean isShortNameTaken(String shortName) {
+        return courseRepository.existsByShortNameIgnoreCase(shortName) || courseRequestRepository.findOneByShortNameIgnoreCase(shortName).isPresent();
+    }
+
+    private String generateRandomLetters(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append((char) ('A' + (int) (Math.random() * 26)));
+        }
+        return sb.toString();
+    }
+
+    private Course createCourseFromRequest(CourseRequest request) {
+        Course course = new Course();
+
+        course.setTitle(request.getTitle());
+        course.setShortName(request.getShortName());
+        course.setSemester(request.getSemester());
+        course.setStartDate(request.getStartDate());
+        course.setEndDate(request.getEndDate());
+        course.setTestCourse(request.isTestCourse());
+        // A test course is never asked for its grade relevance, so it keeps the safe default of the regular course creation (grade relevant, the longer
+        // retention period). Persisting the request's "not grade relevant" would shorten the retention if the course is later turned into a regular one.
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setGradeRelevant(request.isTestCourse() || request.isGradeRelevant());
+        configuration.setCourse(course);
+        course.setCourseConfiguration(configuration);
+        course.setOnlineCourse(Boolean.FALSE);
+        course.setEnrollmentEnabled(Boolean.FALSE);
+        course.setLearningPathsEnabled(false);
+        course.setAccuracyOfScores(1);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+
+        var templatePath = Path.of("templates", "codeofconduct", "README.md");
+
+        try {
+            log.debug("Loading template: {}", templatePath);
+            var resource = resourceLoaderService.getResource(templatePath);
+            try (var inputStream = resource.getInputStream()) {
+                var informationSharingMessageCodeOfConduct = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                course.setCourseInformationSharingMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
+            }
+        }
+        catch (IOException e) {
+            log.warn("Could not load code of conduct template from path: {}", templatePath, e);
+        }
+
+        CourseValidator.validateShortName(course);
+        CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
+        CourseValidator.validateEnrollmentStartAndEndDate(course);
+        CourseValidator.validateUnenrollmentEndDate(course);
+        CourseValidator.validateEnrollmentConfirmationMessage(course);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
+        CourseValidator.validateAccuracyOfScores(course);
+
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
+        channelService.createDefaultChannels(createdCourse);
+
+        if (request.getRequester() != null) {
+            User requester = userRepository.findByIdWithAuthoritiesElseThrow(request.getRequester().getId());
+            courseAccessService.addUserToCourse(requester, createdCourse, CourseRole.INSTRUCTOR);
+        }
+        return createdCourse;
+    }
+
+    private void notifyContact(CourseRequest request) {
+        if (!StringUtils.hasText(contactEmail)) {
+            log.warn("Contact email is not configured, skipping course request notification");
+            return;
+        }
+
+        // Extract scalar values from entity before async call to avoid LazyInitializationException
+        User requester = request.getRequester();
+        String requesterName = requester != null ? requester.getName() : null;
+        String requesterEmail = requester != null ? requester.getEmail() : null;
+        String requesterLangKey = requester != null && requester.getLangKey() != null ? requester.getLangKey() : "en";
+
+        var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
+                request.isTestCourse(), request.isGradeRelevant(), request.getReason(), requesterName, requesterEmail);
+
+        MailRecipientDTO recipient = MailRecipientDTO.forUnnamed(contactEmail, requesterLangKey, "course-request-contact");
+        mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
+                Map.of("courseRequest", emailData));
+    }
+
+    /**
+     * DTO for contact email template to avoid lazy loading issues in async context.
+     * Contains only scalar values needed by the email template.
+     */
+    private record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, boolean gradeRelevant,
+            String reason, String requesterName, String requesterEmail) {
+    }
+
+    /**
+     * DTO for course request email templates to avoid lazy loading issues in async context.
+     * The post-save entity returned by merge() may contain uninitialized lazy proxies, so we
+     * extract all scalar values needed by the templates before passing to the async email method.
+     */
+    private record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse,
+            boolean gradeRelevant, String reason, String decisionReason) {
+    }
+
+    private static CourseRequestEmailData toEmailData(CourseRequest request) {
+        return new CourseRequestEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(), request.isTestCourse(),
+                request.isGradeRelevant(), request.getReason(), request.getDecisionReason());
+    }
+
+    private void sendAcceptedEmail(User requester, CourseRequest request, Course course) {
+        if (requester == null) {
+            return;
+        }
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+                Map.of("course", course, "courseRequest", toEmailData(request)));
+    }
+
+    private void sendRejectedEmail(User requester, CourseRequest request) {
+        if (requester == null) {
+            return;
+        }
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
+                Map.of("courseRequest", toEmailData(request)));
+    }
+
+    private void sendReceivedEmail(User requester, CourseRequest request) {
+        if (requester == null) {
+            return;
+        }
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
+                Map.of("courseRequest", toEmailData(request)));
+    }
+
+    private CourseRequestDTO toDto(CourseRequest courseRequest) {
+        return toDto(courseRequest, null);
+    }
+
+    private CourseRequestDTO toDto(CourseRequest courseRequest, List<CourseRequestInstructorCourseDTO> instructorCourses) {
+        CourseRequestRequesterDTO requesterDto = courseRequest.getRequester() != null ? new CourseRequestRequesterDTO(courseRequest.getRequester()) : null;
+        Long createdCourseId = courseRequest.getCreatedCourseId();
+        return new CourseRequestDTO(courseRequest.getId(), courseRequest.getTitle(), courseRequest.getShortName(), courseRequest.getSemester(), courseRequest.getStartDate(),
+                courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.isGradeRelevant(), courseRequest.getReason(), courseRequest.getStatus(),
+                courseRequest.getCreatedDate(), courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId,
+                instructorCourses != null ? instructorCourses.size() : null, instructorCourses);
+    }
+
+    /**
+     * Retrieves the admin overview of course requests with pending requests (including the courses their requester instructs)
+     * and decided requests with pagination.
+     *
+     * @param decidedPage     the page number for decided requests (0-indexed)
+     * @param decidedPageSize the page size for decided requests
+     * @return the admin overview DTO containing pending and decided requests
+     */
+    public CourseRequestsAdminOverviewDTO getAdminOverview(int decidedPage, int decidedPageSize) {
+        // Get pending requests with the courses their requester instructs, for all requesters in one query
+        List<CourseRequest> pendingRequests = courseRequestRepository.findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus.PENDING);
+        Set<Long> requesterIds = pendingRequests.stream().map(CourseRequest::getRequester).filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+        Map<Long, List<CourseRequestInstructorCourseDTO>> instructorCourses = findInstructorCoursesByUserId(requesterIds);
+        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> toDto(request, instructorCoursesOf(request.getRequester(), instructorCourses))).toList();
+
+        // Get decided requests with pagination (without instructor courses)
+        var pageable = PageRequest.of(decidedPage, decidedPageSize);
+        var decidedPageResult = courseRequestRepository.findAllByStatusNotOrderByProcessedDateDesc(CourseRequestStatus.PENDING, pageable);
+        List<CourseRequestDTO> decidedDtos = decidedPageResult.getContent().stream().map(this::toDto).toList();
+
+        return new CourseRequestsAdminOverviewDTO(pendingDtos, decidedDtos, decidedPageResult.getTotalElements());
+    }
+
+    /**
+     * Groups the instructor courses of the given users by user id, in the order the query returns them.
+     * A user without instructor courses has no entry.
+     */
+    private Map<Long, List<CourseRequestInstructorCourseDTO>> findInstructorCoursesByUserId(Set<Long> userIds) {
+        Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId = new LinkedHashMap<>();
+        if (userIds.isEmpty()) {
+            return coursesByUserId;
+        }
+        for (CourseRequestInstructorCourseRowDTO row : courseRepository.findInstructorCoursesForUsers(userIds)) {
+            coursesByUserId.computeIfAbsent(row.userId(), userId -> new ArrayList<>()).add(row.toCourse());
+        }
+        return coursesByUserId;
+    }
+
+    private List<CourseRequestInstructorCourseDTO> findInstructorCoursesOf(User requester) {
+        Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId = requester != null ? findInstructorCoursesByUserId(Set.of(requester.getId())) : Map.of();
+        return instructorCoursesOf(requester, coursesByUserId);
+    }
+
+    /**
+     * The count shown next to the list is the size of this list, so the two cannot disagree.
+     */
+    private List<CourseRequestInstructorCourseDTO> instructorCoursesOf(User requester, Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId) {
+        if (requester == null) {
+            return null;
+        }
+        return coursesByUserId.getOrDefault(requester.getId(), List.of());
+    }
+}

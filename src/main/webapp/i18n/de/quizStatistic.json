@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "quizStatistic": {
+            "home": {
+                "title": "Statistiken",
+                "createLabel": "Statistik erstellen"
+            },
+            "created": "Statistik erstellt mit ID {{ param }}",
+            "updated": "Statistik aktualisiert mit ID {{ param }}",
+            "deleted": "Statistik gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Statistik"
+            },
+            "released": "Released",
+            "participantsRated": "Participants Rated",
+            "participantsUnrated": "Participants Unrated"
+        }
+    }
+}

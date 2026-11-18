@@ -1,0 +1,213 @@
+package de.tum.cit.aet.artemis.programming.util;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.stereotype.Service;
+
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+
+/**
+ * Test service for handling programming exercise imports
+ */
+@Lazy
+@Service
+@Profile(SPRING_PROFILE_TEST)
+public class ProgrammingExerciseImportTestService {
+
+    @Autowired
+    private RequestUtilService request;
+
+    @Autowired
+    private JsonMapper objectMapper;
+
+    /**
+     * Functional interface to modify the exercise before import
+     */
+    public interface ExerciseModifier<T> {
+
+        T modify(ProgrammingExercise exercise);
+    }
+
+    /**
+     * Result record holding data related to a programming exercise import.
+     * <p>
+     * {@code importedExercise} is the response record the endpoint returns, not an entity: the response omits the
+     * polymorphic type discriminator inside a nested competency, so reading it back as a {@code ProgrammingExercise}
+     * fails as soon as the imported exercise has a competency link.
+     */
+    public record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExerciseResponseDTO importedExercise, Object additionalData) {
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file
+     *
+     * @param resourcePath Path to the resource zip file
+     * @param modifier     Function to modify the exercise before import
+     * @param course       Course to import the exercise into
+     * @return ImportFileResult containing the resource, parsed exercise, imported exercise and any additional data
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course) throws Exception {
+        return prepareExerciseImport(resourcePath, modifier, course, Set.of());
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file, marking the given competencies as selected through Hyperion's checklist
+     *
+     * @param resourcePath          Path to the resource zip file
+     * @param modifier              Function to modify the exercise before import
+     * @param course                Course to import the exercise into
+     * @param hyperionCompetencyIds IDs of the submitted links inferred through Hyperion's checklist
+     * @return ImportFileResult containing the resource, parsed exercise, imported exercise and any additional data
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course, Set<Long> hyperionCompetencyIds) throws Exception {
+        return prepareExerciseImport(resourcePath, modifier, course, hyperionCompetencyIds, null);
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file, letting the caller change the JSON part of the request beyond what the request record can
+     * express, for example to send a field the server has to ignore.
+     *
+     * @param resourcePath      Path to the resource zip file
+     * @param course            Course to import the exercise into
+     * @param requestCustomizer Changes the JSON part of the request before it is sent
+     * @return ImportFileResult containing the resource, parsed exercise and imported exercise
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, Course course, UnaryOperator<ObjectNode> requestCustomizer) throws Exception {
+        return prepareExerciseImport(resourcePath, exercise -> null, course, Set.of(), requestCustomizer);
+    }
+
+    private ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course, Set<Long> hyperionCompetencyIds,
+            @Nullable UnaryOperator<ObjectNode> requestCustomizer) throws Exception {
+        var resource = new ClassPathResource(resourcePath);
+        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
+        String detailsJsonString = null;
+        ZipEntry entry;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+            if (entry.getName().endsWith(".json")) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                detailsJsonString = outputStream.toString(StandardCharsets.UTF_8);
+                break;
+            }
+        }
+        zipInputStream.close();
+        assertThat(detailsJsonString).isNotNull();
+
+        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
+        // The build configuration is a row of its own, so the exercise does not carry it: it is read off the archive separately.
+        var parsedBuildConfigDTO = objectMapper.readValue(detailsJsonString, ImportProgrammingExerciseRequestDTO.class).buildConfig();
+        var parsedBuildConfig = parsedBuildConfigDTO == null ? new ProgrammingExerciseBuildConfig() : parsedBuildConfigDTO.toEntity();
+
+        Object additionalData = modifier.modify(parsedExercise);
+
+        parsedExercise.setCourse(course);
+        parsedExercise.setId(null);
+        parsedExercise.setChannelName("testchannel-pe-imported");
+        parsedExercise.forceNewProjectKey();
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+
+        String query = hyperionCompetencyIds.stream().map(id -> "hyperionCompetencyId=" + id).collect(Collectors.joining("&", "?", ""));
+        String path = "/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file" + (hyperionCompetencyIds.isEmpty() ? "" : query);
+        var requestBody = ImportProgrammingExerciseRequestDTO.of(parsedExercise, parsedBuildConfig);
+        Object requestPart = requestCustomizer == null ? requestBody : requestCustomizer.apply(objectMapper.valueToTree(requestBody));
+        ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile(path, requestPart, "programmingExercise", file, ProgrammingExerciseResponseDTO.class,
+                HttpStatus.OK);
+
+        return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
+    }
+
+    /**
+     * Counts occurrences of a string in a zip file
+     *
+     * @param resource     Resource containing the zip file
+     * @param searchString String to search for
+     * @return Count of occurrences
+     * @throws Exception if the zip file cannot be read
+     */
+    public int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
+        int occurrenceCount = 0;
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(resource.getFile().toPath()))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    String content = outputStream.toString(StandardCharsets.UTF_8);
+                    int currentPosition = 0;
+                    while ((currentPosition = content.indexOf(searchString, currentPosition)) != -1) {
+                        occurrenceCount++;
+                        currentPosition += searchString.length();
+                    }
+                }
+            }
+        }
+        return occurrenceCount;
+    }
+
+    /**
+     * Counts occurrences of a string in files within a directory
+     *
+     * @param path         Directory path to search in
+     * @param searchString String to search for
+     * @return Count of occurrences
+     * @throws IOException if the directory cannot be read
+     */
+    public int countOccurrencesInDirectory(Path path, String searchString) throws IOException {
+        int occurrenceCount = 0;
+        if (!Files.exists(path)) {
+            throw new IOException("Directory does not exist");
+        }
+        List<Path> files = new ArrayList<>();
+        Files.walk(path).filter(Files::isRegularFile).forEach(files::add);
+        for (Path filePath : files) {
+            String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+            int currentPosition = 0;
+            while ((currentPosition = content.indexOf(searchString, currentPosition)) != -1) {
+                occurrenceCount++;
+                currentPosition += searchString.length();
+            }
+        }
+        return occurrenceCount;
+    }
+}

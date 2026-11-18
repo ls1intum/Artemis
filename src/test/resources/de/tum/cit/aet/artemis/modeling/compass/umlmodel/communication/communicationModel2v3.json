@@ -1,0 +1,345 @@
+{
+  "version": "3.0.0",
+  "type": "CommunicationDiagram",
+  "size": {
+    "width": 807.4290008544922,
+    "height": 645.2414169311523
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "619ddf50-f2a6-4004-9fb3-db64ee10cd6e": {
+      "id": "619ddf50-f2a6-4004-9fb3-db64ee10cd6e",
+      "name": ":Account",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 404.54542541503906,
+        "y": 6.363616943359375,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [
+        "38af1eea-2c19-48d2-8b60-dd74a897f1ee"
+      ],
+      "methods": []
+    },
+    "38af1eea-2c19-48d2-8b60-dd74a897f1ee": {
+      "id": "38af1eea-2c19-48d2-8b60-dd74a897f1ee",
+      "name": "+ attribute: Type",
+      "type": "ObjectAttribute",
+      "owner": "619ddf50-f2a6-4004-9fb3-db64ee10cd6e",
+      "bounds": {
+        "x": 404.54542541503906,
+        "y": 46.363616943359375,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "50f51829-2f04-4454-ae29-03f7935b2074": {
+      "id": "50f51829-2f04-4454-ae29-03f7935b2074",
+      "name": "Bob:Rider",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [
+        "20f29131-bd9a-4a69-9190-53c29432953f"
+      ],
+      "methods": []
+    },
+    "20f29131-bd9a-4a69-9190-53c29432953f": {
+      "id": "20f29131-bd9a-4a69-9190-53c29432953f",
+      "name": "+ attribute: Type",
+      "type": "ObjectAttribute",
+      "owner": "50f51829-2f04-4454-ae29-03f7935b2074",
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "bb0de015-373b-4860-b6ab-8273e0cefca1": {
+      "id": "bb0de015-373b-4860-b6ab-8273e0cefca1",
+      "name": ":PEVManager",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 261.8181915283203,
+        "y": 277.27272033691406,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [
+        "dab2246c-f090-447c-bfbb-e3e8c1272381"
+      ],
+      "methods": []
+    },
+    "dab2246c-f090-447c-bfbb-e3e8c1272381": {
+      "id": "dab2246c-f090-447c-bfbb-e3e8c1272381",
+      "name": "+ attribute: Type",
+      "type": "ObjectAttribute",
+      "owner": "bb0de015-373b-4860-b6ab-8273e0cefca1",
+      "bounds": {
+        "x": 261.8181915283203,
+        "y": 317.27272033691406,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "8a7a657c-f4c3-483d-a1d0-8974152c9b05": {
+      "id": "8a7a657c-f4c3-483d-a1d0-8974152c9b05",
+      "name": "Lemon:E-Kickscooter",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 121.81816101074219,
+        "y": 557.2727241516113,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [
+        "741e7d4c-e2d2-4f28-956f-494d9261763c"
+      ],
+      "methods": []
+    },
+    "741e7d4c-e2d2-4f28-956f-494d9261763c": {
+      "id": "741e7d4c-e2d2-4f28-956f-494d9261763c",
+      "name": "+ attribute: Type",
+      "type": "ObjectAttribute",
+      "owner": "8a7a657c-f4c3-483d-a1d0-8974152c9b05",
+      "bounds": {
+        "x": 121.81816101074219,
+        "y": 597.2727241516113,
+        "width": 200,
+        "height": 30
+      }
+    },
+    "7ba2a402-6948-43cb-9b2f-2341b2bf940f": {
+      "id": "7ba2a402-6948-43cb-9b2f-2341b2bf940f",
+      "name": "Argentina:E-Moped",
+      "type": "ObjectName",
+      "owner": null,
+      "bounds": {
+        "x": 333.63636779785156,
+        "y": 558.1817588806152,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [
+        "bc1cb9a8-dfc4-463b-a9ac-3ce9e253f8f6"
+      ],
+      "methods": []
+    },
+    "bc1cb9a8-dfc4-463b-a9ac-3ce9e253f8f6": {
+      "id": "bc1cb9a8-dfc4-463b-a9ac-3ce9e253f8f6",
+      "name": "+ attribute: Type",
+      "type": "ObjectAttribute",
+      "owner": "7ba2a402-6948-43cb-9b2f-2341b2bf940f",
+      "bounds": {
+        "x": 333.63636779785156,
+        "y": 598.1817588806152,
+        "width": 200,
+        "height": 30
+      }
+    }
+  },
+  "relationships": {
+    "64040203-6e35-4b42-8ab5-71b544a70fa6": {
+      "id": "64040203-6e35-4b42-8ab5-71b544a70fa6",
+      "name": "",
+      "type": "CommunicationLink",
+      "owner": null,
+      "bounds": {
+        "x": 200,
+        "y": 38.18180847167969,
+        "width": 204.54542541503906,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 204.54542541503906,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "50f51829-2f04-4454-ae29-03f7935b2074"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "619ddf50-f2a6-4004-9fb3-db64ee10cd6e"
+      },
+      "messages": {
+        "undefined": {
+          "name": "5. pay()",
+          "direction": "source"
+        }
+      }
+    },
+    "15491060-17d4-4b4e-9a89-689de95e80d8": {
+      "id": "15491060-17d4-4b4e-9a89-689de95e80d8",
+      "name": "",
+      "type": "CommunicationLink",
+      "owner": null,
+      "bounds": {
+        "x": 100,
+        "y": 70,
+        "width": 261.8181915283203,
+        "height": 207.27272033691406
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 103.63636016845703
+        },
+        {
+          "x": 261.8181915283203,
+          "y": 103.63636016845703
+        },
+        {
+          "x": 261.8181915283203,
+          "y": 207.27272033691406
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "50f51829-2f04-4454-ae29-03f7935b2074"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "bb0de015-373b-4860-b6ab-8273e0cefca1"
+      },
+      "messages": {
+        "undefined": {
+          "name": "2.1:locate(2)",
+          "direction": "source"
+        }
+      }
+    },
+    "ad1c9352-b10c-4c6e-8e2b-b52621b7f0fc": {
+      "id": "ad1c9352-b10c-4c6e-8e2b-b52621b7f0fc",
+      "name": "",
+      "type": "CommunicationLink",
+      "owner": null,
+      "bounds": {
+        "x": 291.81817626953125,
+        "y": 347.27272033691406,
+        "width": 1,
+        "height": 210.00000381469727
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 210.00000381469727
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "bb0de015-373b-4860-b6ab-8273e0cefca1"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "8a7a657c-f4c3-483d-a1d0-8974152c9b05"
+      },
+      "messages": {
+        "undefined": {
+          "name": "2.2 : find()",
+          "direction": "source"
+        }
+      }
+    },
+    "28a56de2-e3e9-4519-b38e-a9720ce4764d": {
+      "id": "28a56de2-e3e9-4519-b38e-a9720ce4764d",
+      "name": "",
+      "type": "CommunicationLink",
+      "owner": null,
+      "bounds": {
+        "x": 397.72727966308594,
+        "y": 347.27272033691406,
+        "width": 1,
+        "height": 210.90903854370117
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 210.90903854370117
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "bb0de015-373b-4860-b6ab-8273e0cefca1"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "7ba2a402-6948-43cb-9b2f-2341b2bf940f"
+      },
+      "messages": {
+        "undefined": {
+          "name": "2.3 :find()",
+          "direction": "source"
+        }
+      }
+    },
+    "487b42cb-1403-43b1-a763-15790e61e174": {
+      "id": "487b42cb-1403-43b1-a763-15790e61e174",
+      "name": "",
+      "type": "CommunicationLink",
+      "owner": null,
+      "bounds": {
+        "x": 160.9090805053711,
+        "y": 70,
+        "width": 1,
+        "height": 487.2727241516113
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 487.2727241516113
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "50f51829-2f04-4454-ae29-03f7935b2074"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "8a7a657c-f4c3-483d-a1d0-8974152c9b05"
+      },
+      "messages": {
+        "undefined": {
+          "name": "4. : return()",
+          "direction": "source"
+        }
+      }
+    }
+  },
+  "assessments": {}
+}

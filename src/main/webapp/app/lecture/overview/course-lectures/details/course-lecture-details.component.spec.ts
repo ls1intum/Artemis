@@ -1,0 +1,1064 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { DebugElement, ElementRef, type WritableSignal, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, Navigation, NavigationEnd, Params, Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
+import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import * as DownloadUtils from 'app/foundation/util/download.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { FileService } from 'app/foundation/service/file.service';
+import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+
+describe('CourseLectureDetailsComponent', () => {
+    let fixture: ComponentFixture<CourseLectureDetailsComponent>;
+    let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
+    let lecture: Lecture;
+    let course: Course;
+    let lectureUnit1: AttachmentVideoUnit;
+    let lectureUnit2: AttachmentVideoUnit;
+    let lectureUnit3: TextUnit;
+    let debugElement: DebugElement;
+    let lectureService: LectureService;
+    let routerEvents: Subject<NavigationEnd>;
+    let currentNavigation: WritableSignal<Navigation>;
+
+    MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
+    MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+    // @ts-ignore
+    MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
+
+    beforeEach(async () => {
+        const releaseDate = dayjs('18-03-2020 13:30', 'DD-MM-YYYY HH:mm');
+        const endDate = dayjs('18-03-2020 15:30', 'DD-MM-YYYY HH:mm');
+
+        course = new Course();
+        course.id = 456;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+
+        lecture = new Lecture();
+        lecture.id = 1;
+        lecture.startDate = releaseDate;
+        lecture.endDate = endDate;
+        lecture.description = 'Test description';
+        lecture.title = 'Test lecture';
+        lecture.course = course;
+
+        lectureUnit1 = getAttachmentVideoUnit(lecture, 1, releaseDate);
+        lectureUnit2 = getAttachmentVideoUnit(lecture, 2, releaseDate);
+
+        lectureUnit3 = new TextUnit();
+        lectureUnit3.id = 3;
+        lectureUnit3.name = 'Unit 3';
+        lectureUnit3.releaseDate = releaseDate;
+        lectureUnit3.lecture = lecture;
+        lectureUnit3.visibleToStudents = true;
+
+        lecture.lectureUnits = [lectureUnit1, lectureUnit2, lectureUnit3];
+
+        let headers = new HttpHeaders();
+        headers = headers.set('Content-Type', 'application/json; charset=utf-8');
+        const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
+
+        routerEvents = new Subject<NavigationEnd>();
+        currentNavigation = signal({ id: 1 } as Navigation);
+
+        await TestBed.configureTestingModule({
+            imports: [
+                FaIconComponent,
+                CourseLectureDetailsComponent,
+                MockComponent(AttachmentVideoUnitComponent),
+                MockComponent(ExerciseUnitComponent),
+                MockComponent(TextUnitComponent),
+                MockComponent(OnlineUnitComponent),
+                NotReleasedTagComponent,
+                DifficultyBadgeComponent,
+                IncludedInScoreBadgeComponent,
+                MockDirective(MarkdownDirective),
+                MockPipe(ArtemisTimeAgoPipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(CourseExerciseRowComponent),
+                MockComponent(ExerciseDetailsStudentActionsComponent),
+                MockComponent(SidePanelComponent),
+                MockDirective(TranslateDirective),
+                MockComponent(SubmissionResultStatusComponent),
+                MockComponent(DiscussionSectionComponent),
+                MockComponent(IrisLogoComponent),
+                MockComponent(InformationBoxComponent),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(LectureService, {
+                    find: () => {
+                        return response;
+                    },
+                    findWithDetails: () => {
+                        return response;
+                    },
+                }),
+                MockProvider(LectureUnitService, {
+                    setCompletion: (_lectureUnitId: number, _lectureId: number, _completed: boolean) => EMPTY,
+                    completeLectureUnit: vi.fn(),
+                }),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                /*
+                 * `DiscussionSectionComponent` declares `providers: [CommunicationService]`, and ng-mocks carries a mocked
+                 * component's providers over, so rendering it builds the real `CommunicationService`. Its constructor
+                 * subscribes to a notification topic as soon as it has a user, and the websocket service opens a
+                 * connection for the first subscriber — which in jsdom throws on the relative broker URL and fails the
+                 * run as an unhandled rejection, without failing a single test.
+                 */
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: IrisChatService, useValue: { openChat: vi.fn(), pointOut$: EMPTY } },
+                { provide: FileService, useClass: MockFileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ lectureId: '1' }),
+                        queryParams: of({}),
+                        snapshot: { params: { lectureId: '1' }, queryParams: {} },
+                        parent: {
+                            parent: {
+                                params: of({ courseId: '1' }),
+                                queryParams: of({}),
+                            },
+                        },
+                    },
+                },
+                MockProvider(Router, { events: routerEvents, currentNavigation }),
+                MockProvider(ScienceService),
+                MockProvider(IrisSettingsService),
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
+            ],
+        })
+            .overrideComponent(CourseLectureDetailsComponent, {
+                // The chat panel is a page-level detail here: the real chatbot drives the whole Iris chat service, so
+                // swap it for a mock and let the Iris specs cover the chat itself.
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [MockComponent(IrisBaseChatbotComponent)] },
+            })
+            .compileComponents();
+
+        lectureService = TestBed.inject(LectureService);
+        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
+        vi.spyOn(lectureService, 'find').mockReturnValue(response);
+
+        fixture = TestBed.createComponent(CourseLectureDetailsComponent);
+        courseLecturesDetailsComponent = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        fixture.changeDetectorRef.detectChanges();
+        expect(courseLecturesDetailsComponent).not.toBeNull();
+        courseLecturesDetailsComponent.ngOnDestroy();
+    });
+
+    it('should render information boxes for lecture start/end date', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const boxes = debugElement.queryAll(By.css('jhi-information-box'));
+        expect(boxes).toHaveLength(2);
+    });
+
+    it('should display all three lecture units: 2 attachment video units and 1 text unit', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));
+        const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
+        expect(attachmentVideoUnits).toHaveLength(2);
+        expect(textUnits).toHaveLength(1);
+    });
+
+    it('should display download PDF button', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton'));
+        expect(downloadButton).not.toBeNull();
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(true);
+    });
+
+    it('should space the download PDF button from the lecture units heading', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton')).nativeElement as HTMLElement;
+        expect(downloadButton.parentElement!.classList).toContain('gap-4!');
+    });
+
+    it('should not display download PDF button', async () => {
+        lecture.lectureUnits = [lectureUnit3];
+        courseLecturesDetailsComponent.lecture.set(lecture);
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton'));
+        expect(downloadButton).toBeNull();
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(false);
+    });
+
+    it('should check attachment release date', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(true);
+
+        attachment.releaseDate = dayjs().subtract(1, 'day');
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(false);
+
+        attachment.releaseDate = undefined;
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(false);
+    });
+
+    it('should get the attachment extension', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('pdf');
+
+        attachment.link = '/path/to/file/test.test.docx';
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('docx');
+
+        attachment.link = undefined;
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('N/A');
+    });
+
+    it('should show discussion section when communication is enabled', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    });
+
+    it('should show the iris panel and open the lecture chat once iris is enabled for the course', async () => {
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(true);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeTruthy();
+        expect(TestBed.inject(IrisChatService).openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, courseLecturesDetailsComponent.lecture()!.id);
+    });
+
+    /**
+     * `startsCollapsed` as the Iris panel itself received it, which is what the template binding decides. Read off the
+     * panels component's own content children: a `jhiPanel` sits on an `ng-template`, which is not an element and so
+     * never turns up in a `By.directive` query.
+     */
+    const irisPanelInput = (): boolean =>
+        (fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent)
+            .panels()
+            .find((panel) => panel.label() === 'artemisApp.courseOverview.exerciseDetails.iris')!
+            .startsCollapsed();
+
+    it('should open the iris panel collapsed for a user who declined AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        // Their chat says only that they declined, so an open panel would cost them lecture width on every visit.
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeTruthy();
+        // Asserted on the panel input rather than the rendered rail: jsdom reports no width, so the panels always
+        // render in their narrow single-tab mode and never show a collapsed rail to look for.
+        expect(irisPanelInput()).toBeTruthy();
+    });
+
+    it('should open the iris panel expanded for a user who accepted AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeFalsy();
+        expect(irisPanelInput()).toBeFalsy();
+    });
+
+    it('should not show the iris panel when iris is disabled for the course', async () => {
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: false } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(false);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeFalsy();
+        expect(TestBed.inject(IrisChatService).openChat).not.toHaveBeenCalled();
+    });
+
+    it('should not show the iris panel for a tutorial lecture, which has no session of its own', async () => {
+        // Let the component load its lecture first, otherwise loadData overwrites the flag set below.
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        courseLecturesDetailsComponent.lecture.set({ ...courseLecturesDetailsComponent.lecture()!, isTutorialLecture: true });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(false);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeFalsy();
+    });
+
+    it('should not show discussion section when communication is disabled', async () => {
+        const lecture = {
+            ...lectureUnit3.lecture,
+            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
+        vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
+
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
+    });
+
+    it('should download file for attachment', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
+
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name, attachment.version);
+
+        expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name, attachment.version);
+        expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
+    });
+
+    it('should download PDF file', async () => {
+        fixture.changeDetectorRef.detectChanges();
+
+        const downloadAttachmentStub = vi.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
+        const downloadStreamStub = vi.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
+        const downloadButton = debugElement.query(By.css('#downloadButton'));
+        expect(downloadButton).not.toBeNull();
+
+        downloadButton.nativeElement.click();
+        await fixture.whenStable();
+        expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
+        expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
+    });
+
+    it.each([404, 500])('should show a localized alert when the merged PDF download fails with %s', (status) => {
+        courseLecturesDetailsComponent.lectureId = 1;
+        const fileService = TestBed.inject(FileService);
+        vi.spyOn(fileService, 'downloadMergedFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const downloadSpy = vi.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
+        const reloadSpy = vi.spyOn(courseLecturesDetailsComponent, 'loadData');
+
+        courseLecturesDetailsComponent.downloadMergedFiles();
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.courseOverview.lectureDetails.downloadMergedPdfError');
+        expect(downloadSpy).not.toHaveBeenCalled();
+        expect(reloadSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set lecture unit as completed and publish a new unit reference so the card reacts', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        // Emulate a successful completion request by invoking the success callback synchronously.
+        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementation((_lecture, _event, onSuccess) => onSuccess?.());
+
+        lectureUnit3.completed = false;
+        courseLecturesDetailsComponent.lecture.set(lecture);
+        courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
+
+        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
+
+        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true }, expect.any(Function));
+        const updatedUnit = courseLecturesDetailsComponent.lectureUnits().find((unit) => unit.id === lectureUnit3.id);
+        expect(updatedUnit?.completed).toBe(true);
+        // A fresh object reference (not the original) is what makes the card's signal input update in a zoneless app.
+        expect(updatedUnit).not.toBe(lectureUnit3);
+    });
+
+    describe('Context Collection', () => {
+        it('collectVisibleContexts: returns empty array when no units', () => {
+            fixture.changeDetectorRef.detectChanges();
+
+            const contexts = courseLecturesDetailsComponent['collectVisibleContexts']();
+
+            expect(contexts).toEqual([]);
+        });
+
+        it('isElementVisible: returns false for null element', () => {
+            const result = courseLecturesDetailsComponent['isElementVisible'](null);
+
+            expect(result).toBe(false);
+        });
+
+        it('isElementVisible: returns true when element is in viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 100,
+                bottom: 200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 100,
+                x: 50,
+                y: 100,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(true);
+        });
+
+        it('isElementVisible: returns false when element is below viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 1000,
+                bottom: 1200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 200,
+                x: 50,
+                y: 1000,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(false);
+        });
+
+        it('contextProvider: returns a function that calls collectVisibleContexts', () => {
+            const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([]);
+
+            const provider = courseLecturesDetailsComponent.contextProvider();
+            expect(provider).toBeDefined();
+
+            const contexts = provider!();
+
+            expect(collectSpy).toHaveBeenCalledTimes(1);
+            expect(contexts).toEqual([]);
+        });
+    });
+
+    describe('loadData branches', () => {
+        it('should build information boxes only for the dates that are present', async () => {
+            const lectureStartOnly = cloneWith(lecture, { startDate: dayjs(), endDate: undefined, lectureUnits: [] });
+            const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            const boxes = courseLecturesDetailsComponent.informationBoxData();
+            expect(boxes).toHaveLength(1);
+            expect(boxes[0].title).toBe('artemisApp.courseOverview.lectureDetails.startDate');
+        });
+
+        it('should load iris settings when iris is enabled', async () => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_IRIS);
+
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const irisSettings = { rateLimit: 100 } as any;
+            const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(irisSettings));
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseLecturesDetailsComponent.irisEnabled).toBe(true);
+            expect(irisSpy).toHaveBeenCalledWith(course.id);
+            expect(courseLecturesDetailsComponent.irisSettings()).toBe(irisSettings);
+        });
+
+        it('should report an error via the alert service when loading fails', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const errorResponse = throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }));
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(errorResponse as any);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
+        });
+
+        it('should ignore out-of-order responses for overlapping requests of the same lecture', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.snapshot.queryParams = { unit: '7', page: '2' };
+
+            const firstResponse = new Subject<HttpResponse<Lecture>>();
+            const secondResponse = new Subject<HttpResponse<Lecture>>();
+            const staleLecture = cloneWith(lecture, { title: 'Stale lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 7, dayjs())] });
+            const currentLecture = cloneWith(lecture, { title: 'Current lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 8, dayjs())] });
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(firstResponse).mockReturnValueOnce(secondResponse);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            courseLecturesDetailsComponent.loadData();
+
+            firstResponse.next(new HttpResponse({ body: staleLecture, status: 200 }));
+            firstResponse.complete();
+
+            expect(courseLecturesDetailsComponent.lecture()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(true);
+
+            secondResponse.next(new HttpResponse({ body: currentLecture, status: 200 }));
+            secondResponse.complete();
+
+            expect(courseLecturesDetailsComponent.lecture()).toBe(currentLecture);
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
+        });
+    });
+
+    describe('deep-link query params', () => {
+        const videoSource = 'https://example.com/video.mp4';
+        let navigationId = 1;
+
+        const attachmentUnit = (id: number, link = '/path/to/slides.pdf', video = videoSource): AttachmentVideoUnit => {
+            const unit = new AttachmentVideoUnit();
+            unit.id = id;
+            unit.videoSource = video;
+            unit.lecture = lecture;
+            unit.attachment = new Attachment();
+            unit.attachment.link = link;
+            return unit;
+        };
+
+        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: cloneWith(lecture, { id, lectureUnits: units, attachments: [] }), status: 200 });
+
+        const respondWith = (units: AttachmentVideoUnit[], id = 1) => {
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureWith(units, id)));
+        };
+
+        const respondLater = (units: AttachmentVideoUnit[], id = 1) => {
+            const response = new Subject<HttpResponse<Lecture>>();
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
+            return () => response.next(lectureWith(units, id));
+        };
+
+        const reInit = (queryParams: Record<string, unknown> = {}, lectureId?: string) => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            if (lectureId) {
+                (activatedRoute as unknown as { params: unknown }).params = of({ lectureId });
+                activatedRoute.snapshot.params = { lectureId };
+            }
+            (activatedRoute as unknown as { queryParams: unknown }).queryParams = of(queryParams);
+            activatedRoute.snapshot.queryParams = queryParams as Params;
+            courseLecturesDetailsComponent.ngOnInit();
+        };
+
+        const emitNavigationWithQueryParams = (
+            queryParams: Record<string, unknown>,
+            lectureId = '1',
+            eventId = ++navigationId,
+            urlAfterRedirects = `/courses/1/lectures/${lectureId}`,
+            state?: unknown,
+            trigger: Navigation['trigger'] = 'imperative',
+        ) => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.snapshot.params = { lectureId };
+            activatedRoute.snapshot.queryParams = queryParams as Params;
+            currentNavigation.set({ id: eventId, extras: { state }, trigger } as Navigation);
+            routerEvents.next(new NavigationEnd(eventId, urlAfterRedirects, urlAfterRedirects));
+        };
+
+        it.each([{ unitIds: [] }, { unitIds: [7] }])('reports a missing target after a lecture with units $unitIds has loaded', ({ unitIds }) => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith(unitIds.map((id) => attachmentUnit(id)));
+            reInit();
+            expect(error).not.toHaveBeenCalled();
+
+            emitNavigationWithQueryParams({ unit: '999', page: '3', timestamp: '42', combined: 'true' });
+
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.lectureUnit.deepLink.unitGone');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('stays silent when an empty lecture is opened without requesting a unit', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith([]);
+
+            reInit();
+
+            expect(courseLecturesDetailsComponent.lecture()?.id).toBe(1);
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it('reports a missing cross-lecture target only after the requested lecture arrives', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            respondWith([attachmentUnit(7)]);
+            reInit();
+            const deliver = respondLater([], 2);
+
+            reInit({ unit: '999', page: '3' }, '2');
+
+            expect(error).not.toHaveBeenCalled();
+            deliver();
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.lectureUnit.deepLink.unitGone');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('retains a cross-lecture request when the router updates query parameters before route parameters', () => {
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const routeParams = new Subject<Params>();
+            const route = TestBed.inject(ActivatedRoute);
+            (route as unknown as { params: unknown }).params = routeParams;
+            respondWith([attachmentUnit(7)]);
+            reInit();
+            routeParams.next({ lectureId: '1' });
+            const deliver = respondLater([attachmentUnit(9)], 2);
+
+            route.snapshot.params = { lectureId: '2' };
+            route.snapshot.queryParams = { unit: '9', page: '3', timestamp: '42', combined: 'true' };
+            routeParams.next({ lectureId: '2' });
+            emitNavigationWithQueryParams(route.snapshot.queryParams, '2');
+
+            expect(error).not.toHaveBeenCalled();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            deliver();
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual({ unitId: 9, page: 3, timestamp: 42, combined: true });
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            { name: 'keeps every target', params: { unit: '7', timestamp: '30', page: '4' }, expected: { unitId: 7, timestamp: 30, page: 4 } },
+            {
+                name: 'keeps the combined-view request',
+                params: { unit: '7', timestamp: '30', page: '4', combined: 'true' },
+                expected: { unitId: 7, timestamp: 30, page: 4, combined: true },
+            },
+            {
+                name: 'drops a negative timestamp and a page below one',
+                params: { unit: '7', timestamp: '-5', page: '0' },
+                expected: { unitId: 7, timestamp: undefined, page: undefined },
+            },
+        ])('should read the deep link from the query params and $name', ({ params, expected }) => {
+            respondWith([attachmentUnit(7)]);
+
+            reInit(params);
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining(expected));
+        });
+
+        it('should drop targets the unit cannot honour', () => {
+            respondWith([attachmentUnit(7, '/path/to/slides.zip', '')]);
+
+            reInit({ unit: '7', timestamp: '30', page: '4' });
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: undefined, page: undefined }));
+        });
+
+        it('should keep a page target when the rendered student version is a PDF', () => {
+            const unit = attachmentUnit(7, '/path/to/slides.zip', '');
+            unit.attachment!.studentVersion = '/path/to/student/slides.pdf';
+            respondWith([unit]);
+
+            reInit({ unit: '7', page: '4' });
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
+        });
+
+        it('should clear the previous deep link when the unit param is not a positive integer', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit({ unit: '7', page: '4' });
+            expect(courseLecturesDetailsComponent.deepLink()).toBeDefined();
+
+            reInit({ unit: 'not-a-number' });
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('should give a repeated URL navigation a new identity, so it is executed again', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            const second = courseLecturesDetailsComponent.deepLink();
+
+            expect(first).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
+            expect(second).not.toBe(first);
+            expect(second).toEqual(first);
+        });
+
+        it('should ignore duplicate NavigationEnd events for a handled deep-link navigation id', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 11, '/courses/1/lectures/1?unit=7&page=4');
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 11, '/courses/1/lectures/1?unit=7&page=4');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should ignore unmarked discussion query changes but handle marked repeated deep-link navigations', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4', postId: '5' }, '1', 12, '/courses/1/lectures/1?unit=7&page=4&postId=5');
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 13, '/courses/1/lectures/1?unit=7&page=4');
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 14, '/courses/1/lectures/1?unit=7&page=4', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const second = courseLecturesDetailsComponent.deepLink();
+            expect(second).not.toBe(first);
+            expect(second).toEqual(first);
+        });
+
+        it('should not replay a marked deep link when Back restores it after an unrelated query change', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            // A citation, then the student opens a discussion post (the URL gains a postId), then presses Back.
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 20, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20', postId: '5' }, '1', 21, '/courses/1/lectures/1?unit=7&timestamp=20&postId=5');
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 22, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE, 'popstate');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should still follow Back to a different deep link, as the URL names another target', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 23, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '90' }, '1', 24, '/courses/1/lectures/1?unit=7&timestamp=90', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '20' }, '1', 25, '/courses/1/lectures/1?unit=7&timestamp=20', LECTURE_DEEP_LINK_NAVIGATION_STATE, 'popstate');
+
+            expect(courseLecturesDetailsComponent.deepLink()).not.toBe(first);
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(first);
+        });
+
+        it('should not publish the current activation NavigationEnd a second time', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit({ unit: '7', page: '4' });
+            const first = courseLecturesDetailsComponent.deepLink();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 1);
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should hold a jump back until the lecture it points at is loaded, across the switch to it', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit({ unit: '7', page: '4' });
+
+            const deliver = respondLater([attachmentUnit(9)], 2);
+            reInit({ unit: '9', page: '2' }, '2');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+
+            deliver();
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 9, page: 2 }));
+        });
+
+        it('should not execute a waiting jump against a lecture it did not arrive for', () => {
+            respondLater([attachmentUnit(7)], 2);
+            reInit({ unit: '7', page: '4' }, '2');
+
+            respondWith([attachmentUnit(7)], 3);
+            reInit({}, '3');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+
+        it('should forget an executed jump when another lecture is opened', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit({ unit: '7', page: '4' });
+            expect(courseLecturesDetailsComponent.deepLink()).toBeDefined();
+
+            reInit({}, '2');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+        });
+    });
+
+    describe('collectVisibleContexts deep paths', () => {
+        // Helper to fake an AttachmentVideoUnitComponent as exposed by the viewChildren signal.
+        const fakeUnitComponent = (config: {
+            unitId?: number;
+            isCollapsed?: boolean;
+            provider?:
+                | {
+                      getCurrentPdfPage?: () => number | undefined;
+                      getCurrentVideoTimestamp?: () => number | undefined;
+                      hasVideoBeenPlayed?: () => boolean;
+                  }
+                | undefined;
+        }) =>
+            ({
+                lectureUnit: () => (config.unitId != undefined ? ({ id: config.unitId } as any) : undefined),
+                isCollapsed: () => config.isCollapsed ?? false,
+                contextProvider: () => config.provider,
+            }) as unknown as AttachmentVideoUnitComponent;
+
+        // Overrides the private viewChildren signal with the provided fake unit components.
+        const setUnits = (units: AttachmentVideoUnitComponent[]) => {
+            (courseLecturesDetailsComponent as unknown as { attachmentVideoUnits: () => AttachmentVideoUnitComponent[] }).attachmentVideoUnits = () => units;
+        };
+
+        // Creates a visible DOM element with the given data-unit-id, optionally embedding a PDF/video child.
+        const createdElements: HTMLElement[] = [];
+        const visibleRect = { top: 10, bottom: 100, left: 10, right: 100, width: 90, height: 90, x: 10, y: 10, toJSON: () => {} } as DOMRect;
+        const createUnitElement = (unitId: number, children: { pdf?: boolean; video?: boolean; youtube?: boolean } = {}) => {
+            const element = document.createElement('div');
+            element.setAttribute('data-unit-id', String(unitId));
+            vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(visibleRect);
+            if (children.pdf) {
+                const pdf = document.createElement('jhi-pdf-viewer');
+                vi.spyOn(pdf, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(pdf);
+            }
+            if (children.video) {
+                const video = document.createElement('jhi-video-player');
+                vi.spyOn(video, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(video);
+            }
+            if (children.youtube) {
+                const youtube = document.createElement('jhi-youtube-player');
+                vi.spyOn(youtube, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(youtube);
+            }
+            document.body.appendChild(element);
+            createdElements.push(element);
+            return element;
+        };
+
+        beforeEach(() => {
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+        });
+
+        afterEach(() => {
+            createdElements.forEach((element) => element.remove());
+            createdElements.length = 0;
+        });
+
+        it('should skip units without an id or that are collapsed', () => {
+            setUnits([fakeUnitComponent({ unitId: undefined }), fakeUnitComponent({ unitId: 1, isCollapsed: true })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a unit whose DOM element is missing', () => {
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 3 } })]);
+            // No element with data-unit-id="1" exists in the DOM.
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a unit whose element is not visible', () => {
+            const element = document.createElement('div');
+            element.setAttribute('data-unit-id', '1');
+            vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+                top: 2000,
+                bottom: 2100,
+                left: 10,
+                right: 100,
+                width: 90,
+                height: 100,
+                x: 10,
+                y: 2000,
+                toJSON: () => {},
+            } as DOMRect);
+            document.body.appendChild(element);
+            createdElements.push(element);
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 3 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a visible unit that has no context provider', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: undefined })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect a slides context for a visible PDF viewer', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 5 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([{ type: 'slides', lectureUnitId: 1, page: 5 }]);
+        });
+
+        it('should not collect a slides context when the PDF page is null', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => undefined } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should not collect a slides context when the PDF viewer is not visible', () => {
+            const element = createUnitElement(1, {});
+            const pdf = document.createElement('jhi-pdf-viewer');
+            vi.spyOn(pdf, 'getBoundingClientRect').mockReturnValue({
+                top: 2000,
+                bottom: 2100,
+                left: 10,
+                right: 100,
+                width: 90,
+                height: 100,
+                x: 10,
+                y: 2000,
+                toJSON: () => {},
+            } as DOMRect);
+            element.appendChild(pdf);
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 5 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect a video context for a visible, played video', () => {
+            createUnitElement(1, { video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => 42 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([{ type: 'video', lectureUnitId: 1, timestamp: 42 }]);
+        });
+
+        it('should not collect a video context when the video has not been played', () => {
+            createUnitElement(1, { youtube: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => false, getCurrentVideoTimestamp: () => 42 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should not collect a video context when the timestamp is null', () => {
+            createUnitElement(1, { video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => undefined } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect both slides and video contexts for a unit exposing both', () => {
+            createUnitElement(1, { pdf: true, video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 2, hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => 15 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([
+                { type: 'slides', lectureUnitId: 1, page: 2 },
+                { type: 'video', lectureUnitId: 1, timestamp: 15 },
+            ]);
+        });
+    });
+
+    it('contextsProvider.getVisibleContexts should delegate to collectVisibleContexts', () => {
+        const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([{ type: 'slides', lectureUnitId: 1, page: 1 }]);
+
+        const result = courseLecturesDetailsComponent.contextsProvider.getVisibleContexts();
+
+        expect(collectSpy).toHaveBeenCalledTimes(1);
+        expect(result).toEqual([{ type: 'slides', lectureUnitId: 1, page: 1 }]);
+    });
+});
+
+const getAttachmentVideoUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
+    const attachment = new Attachment();
+    attachment.id = id;
+    attachment.version = 1;
+    attachment.attachmentType = AttachmentType.FILE;
+    attachment.releaseDate = releaseDate;
+    attachment.uploadDate = dayjs().year(2020).month(3).date(5);
+    attachment.name = 'test';
+    attachment.link = '/path/to/file/test.pdf';
+
+    const attachmentVideoUnit = new AttachmentVideoUnit();
+    attachmentVideoUnit.id = id;
+    attachmentVideoUnit.name = 'Unit 1';
+    attachmentVideoUnit.releaseDate = attachment.releaseDate;
+    attachmentVideoUnit.lecture = lecture;
+    attachmentVideoUnit.attachment = attachment;
+    attachment.attachmentVideoUnit = attachmentVideoUnit;
+    return attachmentVideoUnit;
+};

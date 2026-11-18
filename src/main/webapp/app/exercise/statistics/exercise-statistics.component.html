@@ -1,0 +1,36 @@
+@if (exercise(); as exercise) {
+    <div>
+        <h2 class="col-span-12 grid grid-cols-12 gap-6! mb-12! md:col-span-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
+        <div class="mb-4! flex justify-around">
+            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics()" [exerciseType]="exercise.type!" />
+        </div>
+        @if (exerciseStatistics(); as exerciseStatistics) {
+            <jhi-statistics-score-distribution-graph
+                [averageScoreOfExercise]="exerciseStatistics.averageScoreOfExercise"
+                [scoreDistribution]="exerciseStatistics.scoreDistribution"
+                [numberOfExerciseScores]="exerciseStatistics.numberOfExerciseScores"
+                [exerciseType]="exercise.type!"
+                [courseId]="course()?.id!"
+                [exerciseId]="exercise.id!"
+                [exerciseGroup]="exercise.exerciseGroup"
+            />
+        }
+        <div class="separator w-full mb-6!"></div>
+        <div class="grid grid-cols-12 gap-6! mb-12!">
+            <div
+                jhi-statistics-span-selector
+                [currentSpan]="currentSpan()"
+                (spanChange)="onTabChanged($event)"
+                class="col-span-12 md:col-start-3 md:col-span-9 inline-flex flex-wrap items-center"
+            ></div>
+        </div>
+        @for (graph of graphTypes; track graph; let i = $index) {
+            <div id="exercise-statistics-graph-{{ i }}" class="graph">
+                @if (i !== 0) {
+                    <hr />
+                }
+                <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan()" [statisticsView]="statisticsView" [entityId]="exercise.id!" />
+            </div>
+        }
+    </div>
+}

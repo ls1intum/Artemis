@@ -1,0 +1,97 @@
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, model, viewChild } from '@angular/core';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
+import { FormsModule, NgModel } from '@angular/forms';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
+import { Subject, Subscription } from 'rxjs';
+import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
+import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-programming-exercise-language',
+    templateUrl: './programming-exercise-language.component.html',
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ModePickerComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        ProgrammingExerciseTheiaComponent,
+        KeyValuePipe,
+        RemoveKeysPipe,
+        ArtemisTranslatePipe,
+    ],
+})
+export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
+    readonly ProgrammingLanguage = ProgrammingLanguage;
+    readonly ProjectType = ProjectType;
+
+    readonly programmingExercise = model.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    /**
+     * Whether the online IDE is allowed, passed separately from the exercise: the checkbox lives in the mode section and
+     * changes the exercise in place, which would not make this section render the online IDE settings.
+     */
+    readonly allowOnlineIde = input(false);
+
+    readonly selectLanguageField = viewChild<NgModel>('select');
+    readonly packageNameField = viewChild<NgModel>('packageName');
+    readonly programmingExerciseTheiaComponent = viewChild(ProgrammingExerciseTheiaComponent);
+
+    formValid!: boolean; // assigned in calculateFormValid() (run after view init / field changes); parent reads it via `?? false`
+    formValidChanges = new Subject<boolean>();
+
+    fieldSubscriptions: (Subscription | undefined)[] = [];
+
+    faExclamationTriangle = faExclamationTriangle;
+
+    readonly DOCKER_REGISTRY_LINKS = {
+        ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
+        dockerhubLink: 'https://hub.docker.com/',
+    };
+    readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise';
+
+    protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
+    protected readonly MAX_PACKAGE_NAME_LENGTH = MAX_PACKAGE_NAME_LENGTH;
+
+    ngAfterViewInit() {
+        this.fieldSubscriptions.push(this.selectLanguageField()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
+    }
+
+    ngAfterViewChecked() {
+        const packageNameField = this.packageNameField();
+        if (!(packageNameField?.valueChanges as EventEmitter<string>)?.observed) {
+            this.fieldSubscriptions.push(packageNameField?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
+        }
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.fieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
+    calculateFormValid() {
+        const selectLanguageField = this.selectLanguageField();
+        const isPackageNameValid = this.isPackageNameValid();
+        this.formValid = Boolean((selectLanguageField?.isDisabled || selectLanguageField?.valid) && isPackageNameValid);
+        this.formValidChanges.next(this.formValid);
+    }
+
+    isPackageNameValid(): boolean {
+        const packageNameField = this.packageNameField();
+        const languageOrPackageExempt = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().packageNameRequired;
+        const fieldValidOrExempt = this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || packageNameField?.valid;
+        return Boolean(languageOrPackageExempt || fieldValidOrExempt);
+    }
+}

@@ -1,0 +1,871 @@
+package de.tum.cit.aet.artemis.programming.domain;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
+import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.SecondaryTable;
+
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.TimeZoneStorage;
+import org.hibernate.annotations.TimeZoneStorageType;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+
+/**
+ * A ProgrammingExercise.
+ */
+@Entity
+@DiscriminatorValue(value = "P")
+@SecondaryTable(name = "programming_exercise_details")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ProgrammingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
+    public String getType() {
+        return "programming";
+    }
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
+    @Column(name = "test_repository_url")
+    private String testRepositoryUri;
+
+    /**
+     * The auxiliary repositories of this exercise, oldest first.
+     * <p>
+     * Ordered by id rather than by an index column: on an indexed collection Hibernate takes the row's foreign key for
+     * its own, so removing one repository first writes {@code exercise_id = NULL} and only then deletes the row -
+     * which a repository that must always name its exercise cannot allow. Nothing reorders auxiliary repositories,
+     * they are identified by name and checkout directory, so creation order is the order.
+     * <p>
+     * A Set rather than a List, for the reason {@code Lecture.lectureUnits} gives: a List without an index column is a
+     * Hibernate bag, {@link #tasks} is already one, and a single query cannot fetch two bags - which a query that
+     * loads the whole exercise has to.
+     */
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
+    @OrderBy("id ASC")
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new LinkedHashSet<>();
+
+    @Column(name = "allow_online_editor", table = "programming_exercise_details")
+    private Boolean allowOnlineEditor;
+
+    @Column(name = "allow_offline_ide", table = "programming_exercise_details")
+    private Boolean allowOfflineIde;
+
+    @Column(name = "allow_online_ide", table = "programming_exercise_details", nullable = false)
+    private boolean allowOnlineIde = false;
+
+    @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
+    private Boolean staticCodeAnalysisEnabled;
+
+    @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
+    private Integer maxStaticCodeAnalysisPenalty;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "programming_language")
+    private ProgrammingLanguage programmingLanguage;
+
+    @Column(name = "package_name")
+    private String packageName;
+
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
+    private boolean showTestNamesToStudents;
+
+    @Nullable
+    // Normalized on purpose. This is the only temporal column on the secondary table, and Hibernate writes a secondary
+    // table with a MERGE whose source casts every parameter, here to "timestamp with time zone". The column itself is
+    // "timestamp without time zone", so the database converted the value using the session time zone and the date moved
+    // by the server's UTC offset on every save. NORMALIZE makes Hibernate bind a plain timestamp in the JDBC time zone
+    // (UTC, see hibernate.jdbc.time_zone), which is what the columns of the main exercise table already receive.
+    @TimeZoneStorage(TimeZoneStorageType.NORMALIZE)
+    @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
+    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
+
+    @Nullable
+    @Column(name = "test_cases_changed", table = "programming_exercise_details")
+    private Boolean testCasesChanged = false;   // default value
+
+    @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
+    private String projectKey;
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "template_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private TemplateProgrammingExerciseParticipation templateParticipation;
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "solution_participation_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private List<ProgrammingExerciseTask> tasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "submission_policy_id")
+    @JsonIgnoreProperties("programmingExercise")
+    private SubmissionPolicy submissionPolicy;
+
+    @Nullable
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "project_type", table = "programming_exercise_details")
+    private ProjectType projectType;
+
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
+    private boolean releaseTestsWithExampleSolution = false;
+
+    /**
+     * Preserves the existing programming title validation on updates, matching creation and import.
+     */
+    @Override
+    public void validateTitle() {
+        super.validateTitle();
+        if (!TITLE_NAME_PATTERN.matcher(getTitle()).matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
+    }
+
+    /**
+     * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
+     *
+     * @return The URI of the template repository as a String
+     */
+    @JsonIgnore
+    public String getTemplateRepositoryUri() {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            return templateParticipation.getRepositoryUri();
+        }
+        return null;
+    }
+
+    public void setTemplateRepositoryUri(String templateRepositoryUri) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            this.templateParticipation.setRepositoryUri(templateRepositoryUri);
+        }
+    }
+
+    /**
+     * Convenience getter. The actual URI is stored in the {@link SolutionProgrammingExerciseParticipation}
+     *
+     * @return The URI of the solution repository as a String
+     */
+    @JsonIgnore
+    public String getSolutionRepositoryUri() {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            return solutionParticipation.getRepositoryUri();
+        }
+        return null;
+    }
+
+    public void setSolutionRepositoryUri(String solutionRepositoryUri) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            this.solutionParticipation.setRepositoryUri(solutionRepositoryUri);
+        }
+    }
+
+    public void setTestRepositoryUri(String testRepositoryUri) {
+        this.testRepositoryUri = testRepositoryUri;
+    }
+
+    public String getTestRepositoryUri() {
+        return testRepositoryUri;
+    }
+
+    @NonNull
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
+        return this.auxiliaryRepositories;
+    }
+
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        // Assigned rather than copied, so that a lazy collection stays the uninitialized one the caller passed in.
+        this.auxiliaryRepositories = auxiliaryRepositories;
+    }
+
+    /**
+     * @return an unmodifiable list of auxiliary repositories used in the build plan
+     */
+    @JsonIgnore
+    public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).toList();
+    }
+
+    public void addAuxiliaryRepository(AuxiliaryRepository repository) {
+        this.getAuxiliaryRepositories().add(repository);
+        repository.setExercise(this);
+    }
+
+    @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
+    public String getTemplateBuildPlanId() {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            return templateParticipation.getBuildPlanId();
+        }
+        return null;
+    }
+
+    private void setTemplateBuildPlanId(String templateBuildPlanId) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            this.templateParticipation.setBuildPlanId(templateBuildPlanId);
+        }
+    }
+
+    @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
+    public String getSolutionBuildPlanId() {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            return solutionParticipation.getBuildPlanId();
+        }
+        return null;
+    }
+
+    private void setSolutionBuildPlanId(String solutionBuildPlanId) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
+        }
+    }
+
+    public Boolean isAllowOnlineEditor() {
+        return allowOnlineEditor;
+    }
+
+    public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
+        this.allowOnlineEditor = allowOnlineEditor;
+    }
+
+    public Boolean isAllowOfflineIde() {
+        return allowOfflineIde;
+    }
+
+    public void setAllowOfflineIde(Boolean allowOfflineIde) {
+        this.allowOfflineIde = allowOfflineIde;
+    }
+
+    public boolean isAllowOnlineIde() {
+        return allowOnlineIde;
+    }
+
+    public void setAllowOnlineIde(boolean allowOnlineIde) {
+        this.allowOnlineIde = allowOnlineIde;
+    }
+
+    public String getProjectKey() {
+        return this.projectKey;
+    }
+
+    public Boolean isStaticCodeAnalysisEnabled() {
+        return this.staticCodeAnalysisEnabled;
+    }
+
+    public void setStaticCodeAnalysisEnabled(Boolean staticCodeAnalysisEnabled) {
+        this.staticCodeAnalysisEnabled = staticCodeAnalysisEnabled;
+    }
+
+    public Integer getMaxStaticCodeAnalysisPenalty() {
+        return maxStaticCodeAnalysisPenalty;
+    }
+
+    public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
+        this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
+    }
+
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
+    }
+
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
+    }
+
+    /**
+     * Generates the full repository name for a given repository type.
+     *
+     * @param repositoryType The repository type
+     * @return The repository name
+     */
+    public String generateRepositoryName(RepositoryType repositoryType) {
+        return generateRepositoryName(repositoryType.getName());
+    }
+
+    /**
+     * Generates the full repository name for a given repository name.
+     *
+     * @param repositoryName The simple name of the repository
+     * @return The full name of the repository
+     */
+    public String generateRepositoryName(String repositoryName) {
+        generateAndSetProjectKey();
+        return this.projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryName;
+    }
+
+    /**
+     * Generates the build plan id for a given build plan type.
+     *
+     * @param buildPlanType The build plan type
+     * @return The build plan id
+     */
+    public String generateBuildPlanId(BuildPlanType buildPlanType) {
+        generateAndSetProjectKey();
+        return this.projectKey + "-" + buildPlanType.getName();
+    }
+
+    /**
+     * Generates a unique project key based on the course short name and the exercise short name. This should only be used
+     * for instantiating a new exercise
+     * <p>
+     * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
+     * Course: <code>crs</code> <br>
+     * Exercise: <code>exc</code> <br>
+     * Project key: <code>CRSEXC</code>
+     */
+    public void generateAndSetProjectKey() {
+        // Don't set the project key, if it has already been set
+        if (this.projectKey != null) {
+            return;
+        }
+        // Get course over exerciseGroup for exam programming exercises
+        forceNewProjectKey();
+    }
+
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
+    public void forceNewProjectKey() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            // Reachable only on a masked exam graph: student-facing exam payloads clear exerciseGroup.exam before serialization, which leaves no course to take a short
+            // name from. There is nothing to fall back on, so name the exercise that cannot be keyed instead of dereferencing null for a NullPointerException that says
+            // nothing about which one it was.
+            throw new IllegalStateException("Cannot generate a project key for exercise " + getId() + ": no course is reachable from it.");
+        }
+        this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
+    }
+
+    /**
+     * Copies the settings that an import caller has to carry itself from the exercise being imported onto this skeleton.
+     * <p>
+     * The import form of the client submits these with its request, but a server-side caller (the import of course material, of an exam or of a variant) builds
+     * its skeleton from nothing, and the programming import service only copies the build configuration and the entities that hang off the exercise. A setting that is
+     * missing here fails the import, or silently falls back to a default.
+     * <p>
+     * Everything the callers decide differently stays with them: title, short name, points, dates, mode, the problem statement and the competency links. The
+     * {@code ProgrammingExerciseImportSettingsTest} lists every field this method does not copy, so a new field has to be copied here or excluded there with a reason.
+     *
+     * @param source the exercise being imported
+     */
+    public void copyImportSettingsFrom(ProgrammingExercise source) {
+        setProgrammingLanguage(source.getProgrammingLanguage());
+        setProjectType(source.getProjectType());
+        setPackageName(source.getPackageName());
+        setAllowOnlineEditor(source.isAllowOnlineEditor());
+        setAllowOfflineIde(source.isAllowOfflineIde());
+        setAllowOnlineIde(source.isAllowOnlineIde());
+        setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
+        setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
+        setShowTestNamesToStudents(source.getShowTestNamesToStudents());
+        setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
+        setAssessmentType(source.getAssessmentType());
+        setDifficulty(source.getDifficulty());
+        setGradingInstructions(source.getGradingInstructions());
+        setCategories(new HashSet<>(source.getCategories()));
+        setIncludedInOverallScore(source.getIncludedInOverallScore());
+        setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
+        setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
+    }
+
+    @Override
+    public ExerciseType getExerciseType() {
+        return PROGRAMMING;
+    }
+
+    public ProgrammingLanguage getProgrammingLanguage() {
+        return programmingLanguage;
+    }
+
+    public ProgrammingExercise programmingLanguage(ProgrammingLanguage programmingLanguage) {
+        this.programmingLanguage = programmingLanguage;
+        return this;
+    }
+
+    public void setProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+        this.programmingLanguage = programmingLanguage;
+    }
+
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
+    }
+
+    public TemplateProgrammingExerciseParticipation getTemplateParticipation() {
+        return templateParticipation;
+    }
+
+    public void setTemplateParticipation(TemplateProgrammingExerciseParticipation templateParticipation) {
+        this.templateParticipation = templateParticipation;
+        if (this.templateParticipation != null) {
+            this.templateParticipation.setProgrammingExercise(this);
+        }
+    }
+
+    public SolutionProgrammingExerciseParticipation getSolutionParticipation() {
+        return solutionParticipation;
+    }
+
+    public void setSolutionParticipation(SolutionProgrammingExerciseParticipation solutionParticipation) {
+        this.solutionParticipation = solutionParticipation;
+        if (this.solutionParticipation != null) {
+            this.solutionParticipation.setProgrammingExercise(this);
+        }
+    }
+
+    public SubmissionPolicy getSubmissionPolicy() {
+        return this.submissionPolicy;
+    }
+
+    public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        this.submissionPolicy = submissionPolicy;
+    }
+
+    /**
+     * Gets a URI of the templateRepositoryUri if there is one
+     *
+     * @return a LocalVCRepositoryUri object of the templateRepositoryUri or null if there is no templateRepositoryUri
+     */
+    @JsonIgnore
+    public LocalVCRepositoryUri getVcsTemplateRepositoryUri() {
+        var templateRepositoryUri = getTemplateRepositoryUri();
+        if (templateRepositoryUri == null || templateRepositoryUri.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new LocalVCRepositoryUri(templateRepositoryUri);
+        }
+        catch (LocalVCInternalException e) {
+            log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Gets a URI of the solutionRepositoryUri if there is one
+     *
+     * @return a LocalVCRepositoryUri object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
+     */
+    @JsonIgnore
+    public LocalVCRepositoryUri getVcsSolutionRepositoryUri() {
+        var solutionRepositoryUri = getSolutionRepositoryUri();
+        if (solutionRepositoryUri == null || solutionRepositoryUri.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new LocalVCRepositoryUri(solutionRepositoryUri);
+        }
+        catch (LocalVCInternalException e) {
+            log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Gets a URI of the testRepositoryURI if there is one
+     *
+     * @return a LocalVCRepository object of the testRepositoryUri or null if there is no testRepositoryUri
+     */
+    @JsonIgnore
+    public LocalVCRepositoryUri getVcsTestRepositoryUri() {
+        if (testRepositoryUri == null || testRepositoryUri.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new LocalVCRepositoryUri(testRepositoryUri);
+        }
+        catch (LocalVCInternalException e) {
+            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Returns the repository uri for the given repository type.
+     *
+     * @param repositoryType The repository type for which the uri should be returned
+     * @return The repository uri
+     */
+    @JsonIgnore
+    public LocalVCRepositoryUri getRepositoryURI(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> this.getVcsTemplateRepositoryUri();
+            case SOLUTION -> this.getVcsSolutionRepositoryUri();
+            case TESTS -> this.getVcsTestRepositoryUri();
+            default -> throw new UnsupportedOperationException("Cannot retrieve URI for repository type " + repositoryType);
+        };
+    }
+
+    /**
+     * Returns the project name by concatenating the course short name with the exercise title.
+     *
+     * @return project name of the programming exercise
+     */
+    @JsonIgnore
+    public String getProjectName() {
+        // this is the name used for VC service and CI service
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Cannot determine the project name of programming exercise " + getId() + " because its course cannot be resolved");
+        }
+        return course.getShortName() + " " + this.getTitle();
+    }
+
+    @JsonIgnore
+    public String getPackageFolderName() {
+        return getPackageName().replace(".", "/");
+    }
+
+    public Set<ProgrammingExerciseTestCase> getTestCases() {
+        return testCases;
+    }
+
+    public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
+        this.testCases = testCases;
+    }
+
+    public List<ProgrammingExerciseTask> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(List<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
+    }
+
+    public Set<StaticCodeAnalysisCategory> getStaticCodeAnalysisCategories() {
+        return staticCodeAnalysisCategories;
+    }
+
+    public void setStaticCodeAnalysisCategories(Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories) {
+        this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
+    }
+
+    public void addStaticCodeAnalysisCategory(final StaticCodeAnalysisCategory category) {
+        staticCodeAnalysisCategories.add(category);
+    }
+
+    public Boolean getShowTestNamesToStudents() {
+        return showTestNamesToStudents;
+    }
+
+    public void setShowTestNamesToStudents(Boolean showTestNamesToStudents) {
+        this.showTestNamesToStudents = showTestNamesToStudents;
+    }
+
+    @Nullable
+    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
+        return buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    public boolean getTestCasesChanged() {
+        return Objects.requireNonNullElse(testCasesChanged, false);
+    }
+
+    public void setTestCasesChanged(boolean testCasesChanged) {
+        this.testCasesChanged = testCasesChanged;
+    }
+
+    @Override
+    public AssessmentType getAssessmentType() {
+        if (super.getAssessmentType() == null) {
+            return AssessmentType.AUTOMATIC;
+        }
+        return super.getAssessmentType();
+    }
+
+    @Nullable
+    public ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(@Nullable ProjectType projectType) {
+        this.projectType = projectType;
+    }
+
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        setTemplateRepositoryUri(null);
+        setSolutionRepositoryUri(null);
+        setTestRepositoryUri(null);
+        setTemplateBuildPlanId(null);
+        setSolutionBuildPlanId(null);
+        super.filterSensitiveInformation();
+    }
+
+    /**
+     * Filters results in all submissions of a student participation, removing any that don't meet the criteria.
+     * <p>
+     * Results are kept only if they:
+     * - have a completed assessment, AND
+     * - are either automatic OR the assessment due date has passed.
+     *
+     * @param participation the participation containing submissions to filter
+     */
+    @Override
+    public void filterResultsForStudents(Participation participation) {
+        participation.getSubmissions().forEach(submission -> {
+            Set<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
+            }
+        });
+    }
+
+    /**
+     * Check if the exercise is configured for manual assessment at all, independently of any date.
+     *
+     * @return true if tutors are meant to assess this exercise manually, false if it is assessed purely automatically
+     */
+    @JsonIgnore
+    public boolean isManualAssessmentConfigured() {
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments();
+    }
+
+    /**
+     * Check if manual results are allowed for the exercise.
+     * <p>
+     * For exam exercises only the configuration is checked here. The point in time from which on assessment is possible
+     * depends on the individual student exams and is enforced by
+     * {@code SubmissionService#checkThatAssessmentIsPossibleElseThrow}, which additionally tells the tutor when they can
+     * start. Evaluating the build-and-test date here as well would also block instructor test runs, which happen before
+     * the exam starts and must stay assessable.
+     * <p>
+     * One caller is deliberately not behind that gate: {@code StudentExamService#prepareProgrammingSubmission}, used by
+     * "assess unsubmitted / empty student exams". It now also creates the empty submission in the window between the end
+     * of the exam and the build-and-test date, where it previously skipped programming participations. That endpoint
+     * already requires the exam and its grace period to be over, and creating the submission is what lets the
+     * participation be graded with 0 points at all, so this is intended.
+     *
+     * @return true if manual results are allowed, false otherwise
+     */
+    public boolean areManualResultsAllowed() {
+        // Only allow manual results for programming exercises if option was enabled and due dates have passed;
+        if (!isManualAssessmentConfigured()) {
+            return false;
+        }
+        if (isExamExercise()) {
+            return true;
+        }
+
+        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+        return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+    }
+
+    @Override
+    public String toString() {
+        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUri='" + getTemplateRepositoryUri() + "'" + ", solutionRepositoryUri='" + getSolutionRepositoryUri()
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", allowOnlineEditor='"
+                + isAllowOnlineEditor() + "'" + ", allowOnlineIde='" + isAllowOnlineIde() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'" + ", packageName='"
+                + getPackageName() + "'" + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+    }
+
+    /**
+     * Validates general programming exercise settings
+     * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
+     */
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
+
+        // Check if a participation mode was selected
+        if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", "Exercise",
+                    "noParticipationModeAllowed");
+        }
+
+        // Check if Xcode has no online code editor enabled
+        if (ProjectType.XCODE.equals(getProjectType()) && Boolean.TRUE.equals(isAllowOnlineEditor())) {
+            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
+        }
+
+        // Check if programming language is set
+        if (getProgrammingLanguage() == null) {
+            throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
+        }
+
+        // Check if theia image was selected if the online IDE is enabled
+        if (isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
+            throw new BadRequestAlertException("The Theia image must be selected if the online IDE is enabled", "Exercise", "theiaImageNotSet");
+        }
+    }
+
+    /**
+     * Validates the static code analysis and sequential test run settings of the programming exercise
+     * 1. The flag staticCodeAnalysisEnabled must not be null
+     * 2. Static code analysis and sequential test runs can't be active at the same time
+     * 3. Sequential test runs can only be enabled for supported programming languages, not for black-box exercises, and need a project type where the language has some
+     * 4. Static code analysis can only be enabled for supported programming languages
+     * 5. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 6. Static code analysis max penalty must be positive
+     *
+     * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
+     */
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
+        // Check if the static code analysis flag was set
+        if (isStaticCodeAnalysisEnabled() == null) {
+            throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
+        }
+
+        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
+            throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
+        }
+
+        // Sequential test runs need a build phase template, which only exists for the languages that enable them
+        if (buildConfig.hasSequentialTestRuns() && !programmingLanguageFeature.sequentialTestRuns()) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for this programming language", "Exercise", "sequentialTestRunsNotSupportedForLanguage");
+        }
+
+        // Black-box tests are written in a single DejaGnu suite and cannot be split into a structural and a behavior stage
+        if (buildConfig.hasSequentialTestRuns() && ProjectType.MAVEN_BLACKBOX.equals(getProjectType())) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for black-box exercises", "Exercise", "sequentialTestRunsNotSupportedForBlackbox");
+        }
+
+        // The sequential templates of languages with project types are named after the project type, so a missing type finds no template (Java falls back to Maven)
+        if (buildConfig.hasSequentialTestRuns() && getProjectType() == null && !programmingLanguageFeature.projectTypes().isEmpty()
+                && programmingLanguageFeature.programmingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("Sequential test runs require a project type for this programming language", "Exercise", "sequentialTestRunsRequireProjectType");
+        }
+
+        // Check if the programming language supports static code analysis
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.staticCodeAnalysis()) {
+            throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Check that FACT has no SCA enabled
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.FACT.equals(getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Static code analysis max penalty must only be set if static code analysis is enabled
+        if (Boolean.FALSE.equals(isStaticCodeAnalysisEnabled()) && getMaxStaticCodeAnalysisPenalty() != null) {
+            throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
+                    "staticCodeAnalysisDisabledButPenaltySet");
+        }
+
+        // Static code analysis max penalty must be positive
+        if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
+            throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
+        }
+    }
+
+    @Override
+    public void validateDates() {
+        super.validateDates();
+
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
+        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disconnectRelatedEntities() {
+        Stream.of(testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
+        super.disconnectRelatedEntities();
+    }
+
+    /**
+     * In course exercises students shall receive immediate feedback. {@link Visibility#ALWAYS}
+     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting. {@link Visibility#AFTER_DUE_DATE}
+     *
+     * @return default visibility {@link Visibility} set after the first execution of a test case
+     *         or when resetting the test case settings
+     */
+    public Visibility getDefaultTestCaseVisibility() {
+        return this.isExamExercise() ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
+    }
+}

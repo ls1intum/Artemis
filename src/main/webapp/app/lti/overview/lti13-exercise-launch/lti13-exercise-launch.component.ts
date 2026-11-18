@@ -1,0 +1,179 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { LtiService } from 'app/foundation/service/lti.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { LtiLoginContinuationService } from './lti-login-continuation.service';
+
+type LtiLaunchResponse = {
+    targetLinkUri: string;
+    ltiIdToken: string;
+    clientRegistrationId: string;
+};
+
+/** Body returned by the LTI auth-login endpoint on a 401 that requires an interactive login/redirect. */
+type LtiLaunchErrorBody = {
+    targetLinkUri: string;
+    ltiIdToken: string;
+    clientRegistrationId: string;
+};
+
+@Component({
+    selector: 'jhi-lti-exercise-launch',
+    templateUrl: './lti13-exercise-launch.component.html',
+    imports: [TranslateDirective],
+})
+export class Lti13ExerciseLaunchComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private sessionStorageService = inject(SessionStorageService);
+    private ltiService = inject(LtiService);
+    private themeService = inject(ThemeService);
+    private loginContinuation = inject(LtiLoginContinuationService);
+
+    readonly isLaunching = signal(true);
+
+    /**
+     * perform an LTI launch with state and id_token query parameters
+     */
+    ngOnInit(): void {
+        this.sendRequest();
+    }
+
+    sendRequest(): void {
+        const state = this.route.snapshot.queryParamMap.get('state');
+        const idToken = this.route.snapshot.queryParamMap.get('id_token');
+
+        if (!state || !idToken) {
+            captureException('Required parameter for LTI launch missing');
+            this.isLaunching.set(false);
+            return;
+        }
+
+        this.loginContinuation.clearPendingLaunch();
+
+        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
+
+        this.http
+            .post<LtiLaunchResponse>('api/lti/public/lti13/auth-login', requestBody.toString(), {
+                headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
+            })
+            .subscribe({
+                next: (data) => {
+                    this.handleLtiLaunchSuccess(data);
+                },
+                error: (error) => {
+                    if (error.status === 401) {
+                        this.authenticateUserThenRedirect(error);
+                    } else {
+                        this.handleLtiLaunchError();
+                    }
+                },
+            });
+    }
+
+    authenticateUserThenRedirect(error: HttpErrorResponse): void {
+        const loginName = error.headers.get('ltiSuccessLoginRequired');
+        void this.accountService.identity().then((user) => {
+            if (user) {
+                this.redirectUserToTargetLink(error);
+            } else {
+                if (loginName) {
+                    this.accountService.setPrefilledUsername(loginName);
+                }
+                this.redirectUserToLoginThenTargetLink(error);
+            }
+        });
+    }
+
+    redirectUserToTargetLink(data: HttpErrorResponse): void {
+        const errorBody = data.error as LtiLaunchErrorBody;
+        const ltiIdToken = errorBody['ltiIdToken'];
+        const clientRegistrationId = errorBody['clientRegistrationId'];
+
+        this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
+
+        // Redirect to target link since the user is already logged in
+        this.replaceWindowLocationWrapper(errorBody['targetLinkUri'].toString());
+    }
+
+    redirectUserToLoginThenTargetLink(error: HttpErrorResponse): void {
+        const body = error.error as LtiLaunchErrorBody;
+        if (!this.loginContinuation.prepare(body.targetLinkUri, body.ltiIdToken, body.clientRegistrationId)) {
+            this.handleLtiLaunchError();
+            return;
+        }
+        // Home owns the continuation after authentication, including a full-page identity-provider round trip.
+        void this.router.navigate(['/sign-in']);
+    }
+
+    handleLtiLaunchSuccess(data: LtiLaunchResponse): void {
+        const targetLinkUri = data.targetLinkUri;
+        const ltiIdToken = data.ltiIdToken;
+        const clientRegistrationId = data.clientRegistrationId;
+
+        this.sessionStorageService.remove('state');
+        this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
+
+        if (targetLinkUri) {
+            this.replaceWindowLocationWrapper(targetLinkUri);
+        } else {
+            this.isLaunching.set(false);
+            captureException('No LTI targetLinkUri received for a successful launch');
+        }
+    }
+
+    handleLtiLaunchError(): void {
+        this.sessionStorageService.remove('state');
+        this.isLaunching.set(false);
+    }
+
+    storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {
+        if (!ltiIdToken) {
+            captureException(new Error('LTI ID token required to store session data.'));
+            return;
+        }
+
+        if (!clientRegistrationId) {
+            captureException(new Error('LTI client registration ID required to store session data.'));
+            return;
+        }
+
+        try {
+            this.sessionStorageService.store<string>('ltiIdToken', ltiIdToken);
+            this.sessionStorageService.store<string>('clientRegistrationId', clientRegistrationId);
+        } catch (error) {
+            captureException('Failed to store session data: ' + String(error));
+        }
+    }
+
+    replaceWindowLocationWrapper(url: string): void {
+        this.ltiService.setShownViaLti(true);
+        this.themeService.applyThemePreference(Theme.LIGHT);
+
+        let path;
+        const queryParams: { [key: string]: string } = {};
+
+        if (url === '/lti/select-course') {
+            path = url;
+        } else {
+            const urlObj = new URL(url);
+            if (urlObj.searchParams.get('isMultiLaunch') === 'true') {
+                this.ltiService.setMultiLaunch(true);
+            }
+
+            path = urlObj.pathname;
+            urlObj.searchParams.forEach((value, key) => {
+                queryParams[key] = value;
+            });
+        }
+
+        void this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
+    }
+}

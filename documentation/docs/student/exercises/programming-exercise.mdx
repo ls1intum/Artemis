@@ -1,0 +1,243 @@
+---
+id: programming-exercise
+title: Programming Exercise
+sidebar_label: Programming Exercise
+last_reviewed: 2026-11-07
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
+import onlineEditor from './assets/programming/OnlineEditor.png';
+import buildNotificationsLight from './assets/programming/build-notifications-light.png';
+import buildNotificationsDark from './assets/programming/build-notifications-dark.png';
+import buildWindowNotice from './assets/programming/build-window-notice.png';
+import testClassSetupError from './assets/programming/test-class-setup-error.png';
+
+## Overview
+
+Programming exercises in Artemis allow you to write and test code directly in the platform or using your own IDE. The system automatically tests your code submissions and provides immediate feedback.
+
+### Exercise Workflow
+
+Participating in a programming exercise involves the following steps:
+
+1. **Start exercise:** Click on start exercise in Artemis, which automatically generates a personal copy of the exercise repository with the starter code
+2. **Clone repository (optional):** Clone your personal repository from the remote version control system to your local machine
+3. **Solve exercise:** Solve the exercise using the online code editor in Artemis or with an IDE of your choice on your local computer
+4. **Upload solution:** Submit your changes by committing and pushing them to the remote server (or by clicking submit in the online editor)
+5. **Receive feedback:** The continuous integration server automatically verifies your submission by executing test cases and provides feedback on which parts are correct or incorrect
+6. **Review result:** Review the build result and feedback in Artemis. If the build fails, you can reattempt to solve the exercise
+7. **Practice mode (after due date):** After the due date, you can continue working in practice mode to improve your solution
+
+<Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow" />
+
+<Callout variant={CalloutVariant.info}>
+
+  The results from practice mode submissions after the due date are not graded and do not affect your score.
+
+</Callout>
+
+### Exercises with a Build Window
+
+Some exercises only build your pushes during a limited period, for example because the tests are switched on a week after the exercise is released. The exercise page and the online editor then show a notice with the period in which builds run.
+
+<Image src={buildWindowNotice} alt="Exercise header with a notice that builds start on 22 November" size={ImageSize.large} caption="The notice on the exercise page before the build window starts" />
+
+A push outside this period is saved in your repository, but Artemis does not build it and does not grade it. The output of `git push` tells you so, and the online editor shows that your changes were committed but not built. The **Trigger build** button is not available outside the period either. Pushes inside the period are built as usual. The build window does not apply in practice mode, so you can still build practice submissions after the due date.
+
+## Online Code Editor
+
+Artemis has an editor in the browser, so you can work on an exercise without installing anything. It holds four
+things at once:
+
+- the **file browser** on the left, with the files of your own repository,
+- the **editor** in the middle, with syntax highlighting,
+- the **problem statement** on the right, whose tasks turn green as the tests behind them pass,
+- the **build output** underneath, with the compiler and test messages of your last submission.
+
+**Submit** commits what you have written and starts a build. Saving on its own does not hand anything in.
+
+<Image src={onlineEditor} alt="Online code editor with the file browser, the code and the tasks" size={ImageSize.large} caption="The online code editor" />
+
+### Task Indicators
+
+The online editor displays task indicators that are linked to test cases:
+
+- **Red**: Tests associated with this task are failing
+- **Green**: All tests associated with this task are passing
+
+This helps you identify which requirements you have already fulfilled and which still need work.
+
+<Callout variant={CalloutVariant.info}>
+
+  Tasks and UML diagram elements are referenced by test cases and update their color automatically after you submit a new version.
+
+</Callout>
+
+### Display of Hidden Files
+
+The online editor only displays visible files to avoid showing configuration files like `.git` and `.gitignore`. This means that certain config files (like SwiftLint's `.swiftlint.yml`) are not shown in the online editor and can only be accessed via your own IDE.
+
+## Working with Your Local IDE
+
+If you prefer to work on your local machine, you can clone your personal repository and use any IDE you like.
+
+In Visual Studio Code, the [Artemis extension](/student/tools-reference/vscode-extension) does the cloning,
+committing and pushing for you and shows the test results in the editor.
+
+### Cloning Your Repository
+
+1. Open the exercise in Artemis
+2. **Code**, in the exercise header, shows your personal repository address
+3. Clone the repository using your Git client:
+   ```bash
+   git clone <your-repository-url>
+   ```
+
+### Submitting Your Solution
+
+After making changes locally:
+
+1. Commit your changes:
+   ```bash
+   git add .
+   git commit -m "Your commit message"
+   ```
+
+2. Push to the remote repository:
+   ```bash
+   git push
+   ```
+
+The push will automatically trigger the test execution, and you will receive feedback in Artemis.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Make sure to push your changes before the due date. Commits made after the due date will not be graded.
+
+</Callout>
+
+## Repository Access
+
+Your access to the exercise repository depends on the current phase of the exercise:
+
+- **Before start date**: You cannot access your repository yet
+- **During exercise period**: You have full read and write access to submit your solutions
+- **After due date** (course exercises only): You have read-only access and can view your solution, but practice mode allows you to continue working
+
+<Callout variant={CalloutVariant.info}>
+
+  For exam exercises, you cannot access your repository after the exam ends.
+
+</Callout>
+
+## Practice Mode
+
+After the due date has passed, you can use practice mode to continue improving your solution without affecting your grade.
+
+### How to Access Practice Mode
+
+1. Navigate to the exercise after the due date
+2. Click on **Start practice** in the exercise header
+3. If you have a graded participation, choose whether the practice repository starts from the template repository or from your graded participation. Otherwise the popover offers a single **Practice** button, which starts from the template repository
+4. Work on the exercise just like during the regular exercise period and receive feedback from the automated tests
+5. Once you have both a graded and a practice participation, the header shows a **Graded** / **Practice** toggle you can use to switch back to your graded submission at any time
+
+<Callout variant={CalloutVariant.info}>
+
+  Practice mode is only available for course exercises, not for exam exercises. Results from practice mode are not graded.
+  Practice mode works the same way for quiz, text and modeling exercises — see <a href="/student/exercises/practice-mode">Practice Mode</a> for the full description.
+
+</Callout>
+
+## Understanding Test Results
+
+After submitting your solution, you will see test results that indicate which parts of your solution are correct:
+
+- **Passed tests**: Displayed in green, showing which requirements you have fulfilled
+- **Failed tests**: Displayed in red, with feedback messages explaining what went wrong
+- **Hidden tests**: Some tests may only be visible after the due date to prevent hardcoding solutions
+
+The test results also show your current score based on the weight of the passed tests.
+
+If the setup of a whole test class fails, for example because your code throws an exception while the tests are prepared, all tests of that class fail together. Their feedback then shows the error of the setup, so you can see what to fix.
+
+<Image src={testClassSetupError} alt="Feedback dialog of a task whose test class failed during its setup, showing the exception and its cause" size={ImageSize.large} caption="Feedback of a task whose test class failed during its setup" />
+
+### Build Notifications
+
+While you keep a programming exercise open, the browser tab icon shows a clock badge when your submission is queued or building.
+If a result arrives while you are in another tab or application, the icon shows an envelope badge.
+The envelope means a result is available, including when tests fail or your code does not compile.
+Returning to the tab restores the normal Artemis icon once the result has arrived; while a build is still running, the clock stays.
+
+To receive system notifications as well, select the bell button in the exercise header and allow notifications when your browser asks.
+Select the button again to turn them off. This preference applies to your account in this browser.
+If notifications are blocked, allow them in your browser's site settings.
+System notification availability and sound depend on your browser, operating system and notification settings.
+On iOS and iPadOS, system notifications require Artemis to be added to the Home Screen.
+
+<Image src={buildNotificationsLight} alt="Programming exercise header with browser build notifications enabled, in the light theme" size={ImageSize.large} />
+<Image src={buildNotificationsDark} alt="Programming exercise header with browser build notifications enabled, in the dark theme" size={ImageSize.large} />
+
+Build notifications stop when you leave the exercise or close its tab. You can read more about other notification types on the
+[Notifications](../communication-support/notifications.mdx) page.
+
+### Build Failures
+
+If your code doesn't compile or has syntax errors, you will see a build failure message. In this case:
+
+1. Review the build output for error messages
+2. Fix the compilation errors in your code
+3. Submit again
+
+<Callout variant={CalloutVariant.info}>
+
+  Build error messages can be cryptic. Make sure your code compiles locally before pushing.
+
+</Callout>
+
+### AI Feedback on a Draft
+
+Where the exercise is assessed semi-automatically — a person marks it as well as the tests — and your instructor has
+switched the feature on, **Request AI feedback** gives you preliminary comments on what you have pushed, beyond what
+the tests report. It is not your mark. See [AI Feedback on a Draft](/student/exercises/ai-feedback).
+
+## Submission Policies
+
+Some exercises may have submission policies that limit how often you can submit:
+
+### No Submission Policy
+
+You can submit as many times as you want until the due date.
+
+### Lock Repository Policy
+
+You can submit a fixed number of times. After reaching the limit, your repository will be locked and you cannot submit anymore.
+
+### Submission Penalty Policy
+
+You can submit as many times as you want, but each submission exceeding the limit will deduct points from your score.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Check the exercise details to see if a submission policy applies and plan your submissions accordingly.
+
+</Callout>
+
+## Tips for Success
+
+- **Start early**: Don't wait until the last minute to begin working on the exercise
+- **Test locally**: Before submitting, test your code on your local machine if possible
+- **Read feedback carefully**: The automated feedback often contains helpful hints about what's wrong
+- **Use version control**: Commit frequently with meaningful commit messages
+- **Ask for help**: If you're stuck, use the course communication features to ask questions
+
+<Callout variant={CalloutVariant.info}>
+
+  If you're using the online editor, remember to click the submit button to trigger the automated tests. Simply saving is not enough.
+
+</Callout>

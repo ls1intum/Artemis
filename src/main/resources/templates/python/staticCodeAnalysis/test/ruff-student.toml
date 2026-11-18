@@ -1,0 +1,35 @@
+[lint]
+select = [
+    # Pyflakes
+    "F",
+    # pycodestyle
+    "E", "W",
+    # isort
+    "I",
+    # flake8-async
+    "ASYNC",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-pie
+    "PIE",
+    # flake8-return
+    "RET",
+    # flake8-self
+    "SLF",
+    # flake8-simplify
+    "SIM",
+    # flake8-unused-arguments
+    "ARG",
+    # pandas-vet
+    "PD",
+    # Pylint
+    "PL",
+    # NumPy-specific rules
+    "NPY",
+    # refurb
+    "FURB",
+    # Ruff-specific rules
+    "RUF",
+]

@@ -1,0 +1,56 @@
+{
+    "artemisApp": {
+        "repository": {
+            "title": "Repository",
+            "source": "Quellcode",
+            "toggleInlineFeedback": {
+                "show": "Inline-Feedback anzeigen",
+                "hide": "Inline-Feedback verstecken"
+            },
+            "commitHistory": {
+                "title": "Commit Historie",
+                "openCommitHistory": "Commit Historie öffnen",
+                "commitDetails": {
+                    "title": "Commit Details",
+                    "commitMessage": "Commit Nachricht",
+                    "commitHash": "Commit Hash",
+                    "author": "Autor",
+                    "date": "Datum",
+                    "commit": "Commit",
+                    "empty": "Keine Änderungen",
+                    "fileUnchanged": "Keine Änderungen am Dateiinhalt",
+                    "fileTooLarge": "Änderungen sind zu groß für die Anzeige. Es wird eine ungefähre Zusammenfassung angezeigt."
+                }
+            },
+            "vcsAccessLog": {
+                "title": "VCS-Zugriffsprotokoll",
+                "openVcsAccessLog": "Zugriffsprotokoll öffnen",
+                "userId": "Benutzer Id",
+                "author": "Autor",
+                "actionType": "Aktionstyp",
+                "authMechanism": "Zugriffsart",
+                "commitHash": "Commit Hash",
+                "timeStamp": "Zeitstempel",
+                "includeBuildAgents": "Zugriffe von Build-Agenten einbeziehen",
+                "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden",
+                "searchPlaceholder": "Nach Benutzer, Autor, Aktion, Zugriffsart, Commit oder Datum suchen",
+                "empty": "Keine Zugriffsprotokolleinträge entsprechen der Suche."
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Lösungs-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Hilfs-Repository"
+            }
+        }
+    }
+}

@@ -1,0 +1,225 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-faq-update',
+    templateUrl: './faq-update.component.html',
+    imports: [
+        CategorySelectorComponent,
+        MarkdownEditorMonacoComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        FormsModule,
+        FaqConsistencyComponent,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+    ],
+})
+export class FaqUpdateComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private faqService = inject(FaqService);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+
+    // faq is deeply template-bound through [(ngModel)] and populated asynchronously from the route resolver, so it
+    // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
+    // synchronous reads/writes ([(ngModel)] bindings, this.faq = ... assignments) unchanged.
+    private readonly _faq = signal<Faq>(undefined!);
+    get faq(): Faq {
+        return this._faq();
+    }
+    set faq(value: Faq) {
+        this._faq.set(value);
+    }
+    readonly isSaving = signal(false);
+    readonly isAllowedToSave = signal(false);
+    readonly existingCategories = signal<FaqCategory[]>([]);
+    readonly faqCategories = signal<FaqCategory[]>([]);
+    courseId!: number; // set in ngOnInit() from the route paramMap
+    isAtLeastInstructor = false;
+    domainActionsDescription = [new FormulaAction()];
+
+    renderedConsistencyCheckResultMarkdown = signal<RewriteResult>({
+        result: undefined,
+        inconsistencies: undefined,
+        suggestions: undefined,
+        improvement: undefined,
+    });
+
+    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
+
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    artemisIntelligenceActions = computed(() => {
+        const actions = [];
+        if (this.hyperionEnabled) {
+            actions.push(new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown));
+        }
+        return actions;
+    });
+
+    // Icons
+    readonly faSave = faSave;
+    readonly faBan = faBan;
+
+    ngOnInit() {
+        this.isSaving.set(false);
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+        this.activatedRoute.parent?.data.subscribe((data) => {
+            // Create a new faq to use unless we fetch an existing faq
+            const faq = data['faq'];
+            this.faq = faq ?? new Faq();
+            const course = data['course'];
+            if (course) {
+                this.faq.course = course;
+                this.loadCourseFaqCategories(course.id);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+            }
+            this.faqCategories.set(faq?.categories ? faq.categories : []);
+        });
+        this.validate();
+    }
+
+    /**
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing faq
+     * Returns to the overview page if there is no previous state and we created a new faq
+     */
+
+    previousState() {
+        this.navigationUtilService.navigateBack(['course-management', this.courseId, 'faqs']);
+    }
+    /**
+     * Save the changes on a faq
+     * This function is called by pressing save after creating or editing a faq
+     */
+    save() {
+        this.isSaving.set(true);
+        this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
+        if (this.faq.id !== undefined) {
+            this.subscribeToSaveResponse(this.faqService.update(this.courseId, UpdateFaqDTO.toUpdateDto(this.faq)));
+        } else {
+            this.subscribeToSaveResponse(this.faqService.create(this.courseId, CreateFaqDTO.toCreateFaqDto(this.faq)));
+        }
+    }
+
+    /**
+     * @param result The Http response from the server
+     */
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<Faq>>) {
+        result.subscribe({
+            next: (response: HttpResponse<Faq>) => this.onSaveSuccess(response.body!),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
+    }
+
+    /**
+     * Action on successful faq creation or edit
+     */
+    protected onSaveSuccess(faq: Faq) {
+        if (!this.faq.id) {
+            this.faqService.findForManagement(this.courseId, faq.id!).subscribe({
+                next: (response: HttpResponse<Faq>) => {
+                    this.isSaving.set(false);
+                    const faqBody = response.body;
+                    if (faqBody) {
+                        this.faq = faqBody;
+                    }
+                    this.showSuccessAlert(faq, false);
+                    void this.router.navigate(['course-management', this.courseId, 'faqs']);
+                },
+            });
+        } else {
+            this.showSuccessAlert(faq, true);
+            void this.router.navigate(['course-management', this.courseId, 'faqs']);
+        }
+    }
+
+    private showSuccessAlert(faq: Faq, newlyCreated: boolean): void {
+        let messageKey: string;
+
+        if (this.isAtLeastInstructor) {
+            messageKey = newlyCreated ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
+        } else {
+            messageKey = newlyCreated ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
+        }
+        this.alertService.success(messageKey, { title: faq.questionTitle });
+    }
+
+    /**
+     * Action on unsuccessful faq creation or edit
+     * @param errorRes the errorRes handed to the alert service
+     */
+    protected onSaveError(errorRes: HttpErrorResponse) {
+        this.isSaving.set(false);
+        if (errorRes.error?.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
+    }
+
+    updateCategories(categories: FaqCategory[]) {
+        this.faq.categories = categories;
+        this.faqCategories.set(categories);
+    }
+
+    private loadCourseFaqCategories(courseId: number) {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, undefined, 'management').subscribe((existingCategories) => {
+            this.existingCategories.set(existingCategories);
+        });
+    }
+
+    validate() {
+        if (this.faq.questionTitle && this.faq.questionAnswer) {
+            this.isAllowedToSave.set(this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0);
+        } else {
+            this.isAllowedToSave.set(false);
+        }
+    }
+
+    handleMarkdownChange(markdown: string): void {
+        this.faq.questionAnswer = markdown;
+        this.validate();
+    }
+
+    dismissConsistencyCheck() {
+        this.renderedConsistencyCheckResultMarkdown.set({
+            result: '',
+            inconsistencies: [],
+            suggestions: [],
+            improvement: '',
+        });
+    }
+}

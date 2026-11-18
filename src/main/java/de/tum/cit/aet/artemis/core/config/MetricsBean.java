@@ -1,0 +1,813 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import jakarta.annotation.PostConstruct;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthContributor;
+import org.springframework.boot.health.contributor.HealthContributors;
+import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
+
+import com.zaxxer.hikari.HikariDataSource;
+
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
+import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseMetricsService;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MultiGauge;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
+@Profile(PROFILE_CORE)
+@Component
+@Lazy
+public class MetricsBean {
+
+    private static final Logger log = LoggerFactory.getLogger(MetricsBean.class);
+
+    private static final String ARTEMIS_HEALTH_NAME = "artemis.health";
+
+    private static final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
+
+    private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
+
+    private static final int WEBSOCKET_LOGGING_DELAY_SECONDS = 20;
+
+    /**
+     * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
+     * Each period/range is exposed as metrics with a according tag "range"
+     * NOTE: we reduced the intervals temporarily until more intervals are necessary
+     */
+    private static final int[] MINUTE_RANGES_LOOKAHEAD = { 15 };
+
+    private final MeterRegistry meterRegistry;
+
+    private final TaskScheduler scheduler;
+
+    private final WebSocketMessageBrokerStats webSocketStats;
+
+    private final SimpUserRegistry userRegistry;
+
+    private final WebSocketHandler webSocketHandler;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseMetricsService exerciseMetricsService;
+
+    private final Optional<ExamMetricsApi> examMetricsApi;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    private final StatisticsRepository statisticsRepository;
+
+    private final ProfileService profileService;
+
+    private final List<HealthContributor> healthContributors;
+
+    // the data source is optional as it is not used during testing
+    private final Optional<HikariDataSource> hikariDataSource;
+
+    private final Optional<DistributedDataAccessService> localCIDistributedDataAccessService;
+
+    private final BuildJobRepository buildJobRepository;
+
+    // Public metrics
+    private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
+
+    private final AtomicInteger coursesGauge = new AtomicInteger(0);
+
+    private final AtomicInteger activeExamsGauge = new AtomicInteger(0);
+
+    private final AtomicInteger examsGauge = new AtomicInteger(0);
+
+    // NOTE: only active on scheduling node
+    private MultiGauge activeUserMultiGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge studentsCourseGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge studentsExamGauge;
+
+    // Internal metrics: Exercises
+    // NOTE: only active on scheduling node
+    private MultiGauge exerciseGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge activeExerciseGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge dueExerciseGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge dueExerciseStudentMultiplierGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge dueExerciseStudentMultiplierActive14DaysGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge releaseExerciseGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge releaseExerciseStudentMultiplierGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge releaseExerciseStudentMultiplierActive14DaysGauge;
+
+    // Internal metrics: Exams
+    // NOTE: only active on scheduling node
+    private MultiGauge dueExamGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge dueExamStudentMultiplierGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge releaseExamGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge releaseExamStudentMultiplierGauge;
+
+    // NOTE: only active on scheduling node
+    private MultiGauge activeAdminsGauge;
+
+    // NOTE: only active on scheduling node
+    private final AtomicLong missingBuildResultsGauge = new AtomicLong(0);
+
+    // NOTE: only active on scheduling node
+    private final AtomicLong failedBuildsGauge = new AtomicLong(0);
+
+    @Value("${artemis.scheduled-metrics.enabled:true}")
+    private boolean scheduledMetricsEnabled = true;
+
+    @Value("${artemis.websocket-log.enabled:false}")
+    private boolean websocketLogEnabled = false;
+
+    public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
+            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
+            ExerciseMetricsService exerciseMetricsService, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService,
+            BuildJobRepository buildJobRepository) {
+        this.meterRegistry = meterRegistry;
+        this.scheduler = scheduler;
+        this.webSocketStats = webSocketStats;
+        this.userRegistry = userRegistry;
+        this.webSocketHandler = websocketHandler;
+        this.healthContributors = healthContributors;
+        this.hikariDataSource = hikariDataSource;
+        this.exerciseRepository = exerciseRepository;
+        this.exerciseMetricsService = exerciseMetricsService;
+        this.examMetricsApi = examMetricsApi;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.statisticsRepository = statisticsRepository;
+        this.profileService = profileService;
+        this.localCIDistributedDataAccessService = localCIBuildJobQueueService;
+        this.buildJobRepository = buildJobRepository;
+    }
+
+    /**
+     * PostConstruct that is invoked when the bean has been created. It registers various health and metric
+     * contributors, and conditionally enables metrics based on active profiles.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     *
+     * <p>
+     * Specifically, this method performs the following actions:
+     * <ul>
+     * <li>Registers health contributors.</li>
+     * <li>Registers websocket metrics.</li>
+     * <li>If the scheduling profile is active:
+     * <ul>
+     * <li>Enables scheduled metrics.</li>
+     * <li>Registers exercise and exam metrics.</li>
+     * <li>Registers public Artemis metrics.</li>
+     * </ul>
+     * </li>
+     * <li>If the local CI profile is active, registers local CI metrics.</li>
+     * <li>Registers datasource metrics if the Hikari datasource is present.</li>
+     * <li>If the websocket logging profile is active:
+     * <ul>
+     * <li>Sets the logging period for websocket statistics.</li>
+     * <li>Schedules periodic logging of connected users and active websocket subscriptions.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     */
+    @PostConstruct
+    public void applicationReady() {
+        registerHealthContributors(healthContributors);
+        registerWebsocketMetrics();
+
+        // Scheduled metrics are identical across instances, so they run only on the scheduling node. They can additionally be turned off via
+        // artemis.scheduled-metrics.enabled. Combine the injected configuration flag with the scheduling profile (instead of forcing it on) so
+        // the configured value is respected and the scheduled recalculation methods below correctly skip on non-scheduling nodes.
+        scheduledMetricsEnabled = scheduledMetricsEnabled && profileService.isSchedulingActive();
+
+        if (scheduledMetricsEnabled) {
+            registerActiveAdminMetrics();
+            registerExerciseAndExamMetrics();
+            registerStudentExerciseMetrics();
+            registerStudentExamMetrics();
+            registerPublicArtemisMetrics();
+
+            // Initial calculation to ensure gauges are populated before the first scheduled run
+            calculateActiveUserMetrics();
+
+            if (profileService.isLocalCIActive()) {
+                registerBuildJobResultMetrics();
+            }
+        }
+
+        if (profileService.isLocalCIActive()) {
+            registerLocalCIMetrics();
+        }
+
+        // the data source is optional as it is not used during testing
+        hikariDataSource.ifPresent(this::registerDatasourceMetrics);
+
+        // initialize the websocket logging
+        // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
+        // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
+        // Note: this mechanism prevents that this is logged during testing
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST) && websocketLogEnabled) {
+            webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
+            scheduler.scheduleAtFixedRate(() -> {
+                final var connectedUsers = userRegistry.getUsers();
+                final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
+                        .reduce(0, Integer::sum);
+                log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
+            }, Duration.of(WEBSOCKET_LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
+        }
+    }
+
+    // This is ALWAYS active on all nodes
+    private void registerHealthContributors(List<HealthContributor> healthContributors) {
+        // Publish the health status for each HealthContributor one Gauge with name ARTEMIS_HEALTH_NAME that has several values (one for each HealthIndicator),
+        // using different values for the ARTEMIS_HEALTH_TAG tag
+        for (HealthContributor healthContributor : healthContributors) {
+            // For most HealthContributors, there is only one HealthIndicator that can directly be published.
+            // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
+            if (healthContributor instanceof HealthIndicator healthIndicator) {
+                Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
+                        .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase(Locale.ROOT)).register(meterRegistry);
+            }
+
+            // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
+            if (healthContributor instanceof DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor) {
+                for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
+                    if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
+                        Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase(Locale.ROOT)).register(meterRegistry);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Register metrics for local CI information
+     */
+    private void registerLocalCIMetrics() {
+        // Publish the number of running builds
+        Gauge.builder("artemis.global.localci.running", localCIDistributedDataAccessService, MetricsBean::extractRunningBuilds).strongReference(true)
+                .description("Number of running builds").register(meterRegistry);
+
+        // Publish the number of queued builds
+        Gauge.builder("artemis.global.localci.queued", localCIDistributedDataAccessService, MetricsBean::extractQueuedBuilds).strongReference(true)
+                .description("Number of queued builds").register(meterRegistry);
+
+        // Publish the number of build agents
+        Gauge.builder("artemis.global.localci.agents", localCIDistributedDataAccessService, MetricsBean::extractBuildAgents).strongReference(true)
+                .description("Number of active build agents").register(meterRegistry);
+
+        // Publish the number of max concurrent builds
+        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIDistributedDataAccessService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
+                .description("Number of max concurrent builds").register(meterRegistry);
+
+        // Publish the number of results in the result queue
+        Gauge.builder("artemis.global.localci.resultsInQueue", localCIDistributedDataAccessService, MetricsBean::extractResultsInQueue).strongReference(true)
+                .description("Number of results waiting in the queue").register(meterRegistry);
+    }
+
+    private static int extractRunningBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getProcessingJobsSize).orElse(0);
+    }
+
+    private static int extractQueuedBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getQueuedJobsSize).orElse(0);
+    }
+
+    private static int extractBuildAgents(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getBuildAgentInformationSize).orElse(0);
+    }
+
+    private static int extractMaxConcurrentBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(dataManagementService -> dataManagementService.getBuildAgentInformation().stream()
+                .filter(agent -> agent.status() != BuildAgentStatus.PAUSED).map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
+    }
+
+    private static int extractResultsInQueue(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getResultQueueSize).orElse(0);
+    }
+
+    private BuildJobsStatisticsDTO extractBuildJobStatistics() {
+        // calculate build statistics in the last 24 hours for all courses by passing null as courseId
+        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1));
+        return BuildJobsStatisticsDTO.of(buildResultStatistics);
+    }
+
+    // This is ALWAYS active on all nodes
+    private void registerWebsocketMetrics() {
+        // Publish the number of currently (via WebSockets) connected sessions
+        Gauge.builder("artemis.instance.websocket.sessions", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
+
+        // Publish the number of currently (via WebSockets) connected users
+        Gauge.builder("artemis.global.websocket.users", userRegistry, MetricsBean::extractWebsocketUserCount).strongReference(true)
+                .description("Number of users connected to all Artemis instances").register(meterRegistry);
+
+        // Publish the number of existing WS subscriptions
+        Gauge.builder("artemis.global.websocket.subscriptions", userRegistry, MetricsBean::extractWebsocketSubscriptionCount).strongReference(true)
+                .description("Number of subscriptions created on all Artemis instances").register(meterRegistry);
+    }
+
+    private static double extractWebsocketUserCount(SimpUserRegistry userRegistry) {
+        return userRegistry.getUserCount();
+    }
+
+    private static double extractWebsocketSessionCount(WebSocketHandler webSocketHandler) {
+        if (webSocketHandler instanceof SubProtocolWebSocketHandler subProtocolWebSocketHandler) {
+            return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
+        }
+        return -1;
+    }
+
+    private static double extractWebsocketSubscriptionCount(SimpUserRegistry userRegistry) {
+        return userRegistry.getUsers().stream().flatMap(user -> user.getSessions().stream()).map(session -> session.getSubscriptions().size()).reduce(0, Integer::sum);
+    }
+
+    /**
+     * Register metrics for exercises and exams
+     * NOTE: only active on scheduling node
+     */
+    private void registerExerciseAndExamMetrics() {
+        dueExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.due.count").description("Number of exercises ending within the next minutes").register(meterRegistry);
+        releaseExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.release.count").description("Number of exercises starting within the next minutes")
+                .register(meterRegistry);
+
+        dueExamGauge = MultiGauge.builder("artemis.scheduled.exams.due.count").description("Number of exams ending within the next minutes").register(meterRegistry);
+        releaseExamGauge = MultiGauge.builder("artemis.scheduled.exams.release.count").description("Number of exams starting within the next minutes").register(meterRegistry);
+    }
+
+    /**
+     * Register metrics for exercises, multiplied with the student that are enrolled for the exercise
+     * NOTE: only active on scheduling node
+     */
+    private void registerStudentExerciseMetrics() {
+        dueExerciseStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exercises.due.student_multiplier")
+                .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
+        dueExerciseStudentMultiplierActive14DaysGauge = MultiGauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14")
+                .description("Number of exercises ending within the next minutes multiplied with students in the course that have been active in the past 14 days")
+                .register(meterRegistry);
+        releaseExerciseStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exercises.release.student_multiplier")
+                .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
+        releaseExerciseStudentMultiplierActive14DaysGauge = MultiGauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14")
+                .description("Number of exercises starting within the next minutes multiplied with students in the course that have been active in the past 14 days")
+                .register(meterRegistry);
+    }
+
+    /**
+     * Register metrics for exams, multiplied with the student that are enrolled for the exam
+     * NOTE: only active on scheduling node
+     */
+    private void registerStudentExamMetrics() {
+        dueExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.due.student_multiplier")
+                .description("Number of exams ending within the next minutes multiplied with students in the course").register(meterRegistry);
+        releaseExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.release.student_multiplier")
+                .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
+    }
+
+    // NOTE: only active on scheduling node
+    private void registerActiveAdminMetrics() {
+        activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
+    }
+
+    private void registerBuildJobResultMetrics() {
+        Gauge.builder("artemis.global.buildjobs.missing_results", missingBuildResultsGauge::get).description("Number of build jobs missing results in the last 24 hours")
+                .register(meterRegistry);
+        Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours").register(meterRegistry);
+    }
+
+    /**
+     * Refresh metrics that rely on user activity. Only executed if the "scheduling"-profile is present.
+     */
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
+    public void calculateActiveUserMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
+        var startDate = System.currentTimeMillis();
+
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
+
+        updateActiveAdminsMetrics();
+
+        log.debug("calculateActiveUserMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Update exams & exercise metrics.
+     * The update (and recalculation) is performed every 5 minutes.
+     * Only executed if the "scheduling"-profile is present.
+     */
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000) // Every 5 minutes with an initial delay of 30 seconds
+    public void recalculateMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
+        var startDate = System.currentTimeMillis();
+
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
+
+        var activeSince = ZonedDateTime.now().minusDays(14);
+
+        // Exercise metrics
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, activeSince,
+                (now, endDate, _) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeSince,
+                (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeSince,
+                exerciseMetricsService::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
+
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeSince,
+                (now, endDate, _) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeSince,
+                (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeSince,
+                exerciseMetricsService::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
+
+        // Exam metrics
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, api::countExamsWithEndDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, api::countExamUsersInExamsWithEndDateBetween);
+
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, api::countExamsWithStartDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, api::countExamUsersInExamsWithStartDateBetween);
+        }
+
+        log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
+     * Calculate the number of missing and failed build results and store them in Gauges.
+     * The calculation is performed every minute and should only be done on the scheduling node.
+     * Only executed if the "scheduling" and "localCI" profile is present.
+     */
+    @Scheduled(fixedRate = 60 * 1000, initialDelay = 30 * 1000) // Every minute with an initial delay of 30 seconds
+    public void calculateBuildJobResultMetrics() {
+        if (!scheduledMetricsEnabled || !profileService.isLocalCIActive()) {
+            return;
+        }
+        var buildJobStatistics = extractBuildJobStatistics();
+        missingBuildResultsGauge.set(buildJobStatistics.missingBuilds());
+        failedBuildsGauge.set(buildJobStatistics.failedBuilds());
+    }
+
+    /**
+     * Get all users that currently have the role ADMIN and update the activeAdminsGauge.
+     */
+    private void updateActiveAdminsMetrics() {
+        var activeAdmins = userRepository.findAllActiveAdminLogins();
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var activeAdmin : activeAdmins) {
+            results.add(MultiGauge.Row.of(Tags.of("admin", activeAdmin), 1));
+        }
+
+        activeAdminsGauge.register(results, true);
+    }
+
+    @FunctionalInterface
+    interface NowEndDateActiveSinceMetricsEntryFunction {
+
+        /**
+         * This interface is used to calculate and expose metrics that are based on
+         * - the current date
+         * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD), and
+         * - a timestamp that defines when a user is considered active.
+         * <p>
+         * The implementing method may decide to ignore certain arguments.
+         * The method returns a set of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
+         *
+         * @param now         the current time
+         * @param endDate     the end date that should be taken into consideration
+         * @param activeSince a timestamp that represents the start of the active window
+         * @return a set of ExerciseTypeMetricsEntry (one for each exercise type) - if for one exercise type no value is returned, 0 will be assumed
+         */
+        Set<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, ZonedDateTime activeSince);
+    }
+
+    @FunctionalInterface
+    interface NowEndDateActiveUserNamesIntegerFunction {
+
+        /**
+         * This interface is used to calculate and expose metrics that are based on
+         * - the current date, and
+         * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD).
+         * <p>
+         * The implementing method may decide to ignore certain arguments.
+         * The method returns an integer, representing the corresponding value.
+         *
+         * @param now     the current time
+         * @param endDate the end date that should be taken into consideration
+         * @return the corresponding value
+         */
+        Integer apply(ZonedDateTime now, ZonedDateTime endDate);
+    }
+
+    /**
+     * Update the given multiGauge for each of the values of MINUTE_RANGES_LOOKAHEAD and the given function
+     *
+     * @param multiGauge               the gauge that should be updated
+     * @param activeSince              timestamp indicating when a user is considered active
+     * @param databaseRetrieveFunction a function that returns a list of ExerciseTypeMetricsEntries, one for each exercise type (if one exercise type is missing, 0 will be assumed)
+     */
+    private void updateMultiGaugeMetricsEntryForMinuteRanges(MultiGauge multiGauge, ZonedDateTime activeSince, NowEndDateActiveSinceMetricsEntryFunction databaseRetrieveFunction) {
+        var now = ZonedDateTime.now();
+        var results = new HashSet<MultiGauge.Row<?>>();
+
+        for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = databaseRetrieveFunction.apply(now, endDate, activeSince);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
+        }
+
+        multiGauge.register(results, true);
+    }
+
+    /**
+     * Update the given multiGauge for each of the values of MINUTE_RANGES_LOOKAHEAD and the given function
+     *
+     * @param multiGauge               the gauge that should be updated
+     * @param databaseRetrieveFunction a function that returns an integer
+     */
+    private void updateMultiGaugeIntegerForMinuteRanges(MultiGauge multiGauge, NowEndDateActiveUserNamesIntegerFunction databaseRetrieveFunction) {
+        var now = ZonedDateTime.now();
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = databaseRetrieveFunction.apply(now, endDate);
+            results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
+        }
+
+        multiGauge.register(results, true);
+    }
+
+    /**
+     * Register publicly exposed metrics.
+     * NOTE: only active on scheduling node
+     */
+    private void registerPublicArtemisMetrics() {
+        SecurityUtils.setSystemAuthorizationObject();
+
+        activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
+                .register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_courses", activeCoursesGauge::get).description("Number of active courses").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.courses", coursesGauge::get).description("Number of courses").register(meterRegistry);
+
+        studentsCourseGauge = MultiGauge.builder("artemis.statistics.public.course_students").description("Number of registered students per course").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_exams", activeExamsGauge::get).description("Number of active exams").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.exams", examsGauge::get).description("Number of exams").register(meterRegistry);
+
+        studentsExamGauge = MultiGauge.builder("artemis.statistics.public.exam_students").description("Number of registered students per exam").register(meterRegistry);
+
+        activeExerciseGauge = MultiGauge.builder("artemis.statistics.public.active_exercises").description("Number of active exercises by type").register(meterRegistry);
+
+        exerciseGauge = MultiGauge.builder("artemis.statistics.public.exercises").description("Number of exercises by type").register(meterRegistry);
+    }
+
+    /**
+     * Update artemis public Artemis metrics that are exposed via Prometheus.
+     * The update (and recalculation) is performed every 5 hours.
+     * Only executed if the "scheduling"-profile is present.
+     */
+    @Scheduled(fixedRate = 5 * 60 * 60 * 1000, initialDelay = 5 * 60 * 1000) // Every 5 hours, starting 5 minutes after application start
+    public void updatePublicArtemisMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
+        log.info("start updatePublicArtemisMetrics");
+
+        final long startDate = System.currentTimeMillis();
+
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
+
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        final Set<ActiveCourseDTO> courses = courseRepository.findAllActiveWithoutTestCourses(now);
+
+        final List<Long> courseIds = courses.stream().mapToLong(ActiveCourseDTO::id).boxed().toList();
+
+        // Update multi gauges
+        updateStudentsCourseMultiGauge(courses);
+        updateActiveUserMultiGauge(now);
+        updateActiveExerciseMultiGauge();
+        updateExerciseMultiGauge();
+
+        // Update normal Gauges
+        activeCoursesGauge.set(courses.size());
+        coursesGauge.set((int) courseRepository.count());
+
+        // Exam metrics
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            final Set<ExamStudentCountDTO> examStudentCountDtos = api.findExamStudentCountsByCourseIds(courseIds);
+            updateStudentsExamMultiGauge(examStudentCountDtos, courses);
+            activeExamsGauge.set(api.countAllActiveExams(now));
+            examsGauge.set((int) api.count());
+        }
+
+        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    private void updateActiveUserMultiGauge(ZonedDateTime now) {
+        final Integer[] activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
+
+        // The database only reports the last submission per active user: aggregating the windows in SQL required a
+        // jhi_user join for the test user flag, which cost the selective submission_date range scan (see
+        // StatisticsRepository#findLastSubmissionPerActiveUser). Both the windows and the test user exclusion are
+        // therefore applied here.
+        final var lastSubmissions = statisticsRepository.findLastSubmissionPerActiveUser(now, now.minusDays(30));
+        final var counts = ActiveUserWindowCountsDTO.of(lastSubmissions, userRepository.findAllTestUserIds(), now);
+
+        // A mutable list is required here because otherwise the values can not be updated correctly
+        final List<MultiGauge.Row<?>> gauges = Stream.of(activeUserPeriodsInDays).map(periodInDays -> {
+            final Tags tags = Tags.of("period", periodInDays.toString());
+            final long activeUsers = switch (periodInDays) {
+                case 1 -> counts.activeUsers1Day();
+                case 7 -> counts.activeUsers7Days();
+                case 14 -> counts.activeUsers14Days();
+                case 30 -> counts.activeUsers30Days();
+                default -> 0L;
+            };
+            return MultiGauge.Row.of(tags, activeUsers);
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        activeUserMultiGauge.register(gauges, true);
+    }
+
+    private void updateStudentsCourseMultiGauge(Set<ActiveCourseDTO> activeCourses) {
+        // A mutable collection is required here because otherwise the values can not be updated correctly
+        final Set<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
+            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", course.semester());
+            final long studentCount = course.numberOfStudents();
+            return MultiGauge.Row.of(tags, studentCount);
+        }).collect(Collectors.toSet());
+
+        studentsCourseGauge.register(gauges, true);
+    }
+
+    private void updateStudentsExamMultiGauge(Set<ExamStudentCountDTO> examStudentCountDtos, Set<ActiveCourseDTO> courses) {
+        // A mutable list is required here because otherwise the values can not be updated correctly
+        final List<MultiGauge.Row<?>> gauges = examStudentCountDtos.stream().map(exam -> {
+            final Tags tags = getExamMetricTags(courses, exam);
+            return MultiGauge.Row.of(tags, exam.studentCount());
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        studentsExamGauge.register(gauges, true);
+    }
+
+    private Tags getExamMetricTags(final Set<ActiveCourseDTO> courses, final ExamStudentCountDTO exam) {
+        final Optional<ActiveCourseDTO> examCourse = courses.stream().filter(course -> Objects.equals(course.id(), exam.courseId())).findAny();
+
+        final List<Tag> tags = new ArrayList<>();
+        // If the exam's course is not in the active-courses set, none of its three tags are emitted. Tags.of sorts by
+        // key, so collecting the semester here rather than after the exam tags does not change the resulting series.
+        examCourse.ifPresent(course -> {
+            tags.add(Tag.of("courseId", Long.toString(course.id())));
+            tags.add(Tag.of("courseName", course.title()));
+            tags.add(Tag.of("semester", course.semester()));
+        });
+        tags.add(Tag.of("examId", Long.toString(exam.id())));
+        tags.add(Tag.of("examName", exam.title()));
+
+        return Tags.of(tags);
+    }
+
+    private void updateActiveExerciseMultiGauge() {
+        var results = new HashSet<MultiGauge.Row<?>>();
+        var result = exerciseRepository.countActiveExercisesGroupByExerciseType(ZonedDateTime.now());
+        extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
+
+        activeExerciseGauge.register(results, true);
+    }
+
+    private void updateExerciseMultiGauge() {
+        var results = new HashSet<MultiGauge.Row<?>>();
+        var result = exerciseRepository.countExercisesGroupByExerciseType();
+        extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
+
+        exerciseGauge.register(results, true);
+    }
+
+    private void extractExerciseTypeMetricsAndAddToMetricsResults(Set<ExerciseTypeMetricsEntry> resultFromDatabase, Set<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
+        for (var exerciseType : ExerciseType.values()) {
+            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType).findAny();
+            var value = 0L;
+            if (resultForExerciseType.isPresent()) {
+                value = resultForExerciseType.get().value();
+            }
+
+            resultForMetrics.add(MultiGauge.Row.of(existingTags.and("exerciseType", exerciseType.toString()), value));
+        }
+    }
+
+    private void registerDatasourceMetrics(HikariDataSource dataSource) {
+        // Only set the metric registry if no metrics tracker factory is already configured,
+        // as HikariCP does not allow both to be set simultaneously (Spring Boot may auto-configure one).
+        if (dataSource.getMetricsTrackerFactory() == null) {
+            dataSource.setMetricRegistry(meterRegistry);
+        }
+    }
+
+    /**
+     * Maps the health status to a double
+     *
+     * @param health the Health whose status should be mapped
+     * @return a double corresponding to the health status
+     */
+    private double mapHealthToDouble(@Nullable Health health) {
+        if (health == null) {
+            return -3;
+        }
+        return switch (health.getStatus().getCode()) {
+            case "UP" -> 1;
+            case "DOWN" -> 0;
+            case "OUT_OF_SERVICE" -> -1;
+            case "UNKNOWN" -> -2;
+            default -> -3;
+        };
+    }
+}

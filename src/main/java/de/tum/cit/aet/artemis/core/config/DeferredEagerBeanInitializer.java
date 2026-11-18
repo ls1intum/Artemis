@@ -1,0 +1,159 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.diagnostics.FailureAnalysis;
+import org.springframework.boot.diagnostics.FailureAnalyzer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.springframework.util.PlaceholderResolutionException;
+
+import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateAuthenticationFailureAnalyzer;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
+
+/**
+ * This component initializes all lazy singleton beans after the application is ready.
+ * This allows us to benefit from the lazy initialization of beans during startup, without compromising end user experience as beans are initialized before the first request is
+ * made.
+ * We currently do not initialize the beans in parallel as it leads to weird issues with the classloader
+ * The beans are initialized by accessing them, which triggers their initialization.
+ */
+@Component
+@Profile(PROFILE_CORE)
+@Lazy
+public class DeferredEagerBeanInitializer {
+
+    private static final Logger log = LoggerFactory.getLogger(DeferredEagerBeanInitializer.class);
+
+    private final ConfigurableApplicationContext context;
+
+    private final Environment env;
+
+    public DeferredEagerBeanInitializer(ConfigurableApplicationContext context, Environment env) {
+        this.context = context;
+        this.env = env;
+    }
+
+    /**
+     * Initializes all lazy singleton beans in the application context.
+     * This method should be called after the application is fully started to not block the startup process.
+     */
+    public void initializeDeferredEagerBeans() {
+        log.info("Start deferred eager initialization of all lazy singleton beans");
+        if (DistributedDataProviderResolver.isProvider(env, HAZELCAST)) {
+            try {
+                // Force eager initialization of HazelcastClusterManager first, so that connections are established as early as possible.
+                context.getBean(HazelcastClusterManager.class);
+                log.debug("Priority initialization of HazelcastClusterManager completed");
+            }
+            catch (Throwable ex) {
+                shutdownOnDeferredInitFailure("HazelcastClusterManager", ex);
+            }
+        }
+
+        DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
+        Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
+            BeanDefinition def = bf.getBeanDefinition(name);
+            return def.isSingleton() && def.isLazyInit();
+        }).forEach(name -> {
+            try {
+                // accessing the bean triggers initialization
+                context.getBean(name);
+                log.debug("Deferred eager initialization of bean {} completed", name);
+            }
+            catch (Throwable ex) {
+                shutdownOnDeferredInitFailure(name, ex);
+            }
+        });
+        context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
+        log.info("Deferred eager initialization of all beans completed");
+    }
+
+    private void shutdownOnDeferredInitFailure(String name, Throwable ex) {
+        // Try to use failure analyzers for known exception types
+        FailureAnalysis analysis = analyzeFailure(ex);
+        if (analysis != null) {
+            reportFailureAnalysis(analysis);
+        }
+        else {
+            // Fall back to default error handling if no analyzer handles the exception
+            Throwable root = ex;
+            while (root.getCause() != null && root.getCause() != root) {
+                root = root.getCause();
+            }
+            if (root instanceof PlaceholderResolutionException) {
+                log.error("Required configuration is missing while initializing bean {}: {}", name, root.getMessage());
+            }
+            else if (root instanceof NoSuchBeanDefinitionException) {
+                log.error("A required dependency for bean {} is missing: {}", name, root.getMessage());
+            }
+            log.error("Deferred eager initialization of bean {} failed. Shutting down the application.", name, ex);
+        }
+        System.exit(SpringApplication.exit(context, () -> 2));
+    }
+
+    /**
+     * Attempts to analyze the failure using registered failure analyzers.
+     * Each analyzer is tried in order and the first non-null result is returned.
+     * <p>
+     * To add support for a new exception type, add its corresponding failure analyzer to the list.
+     *
+     * @param failure the exception that occurred
+     * @return a FailureAnalysis if an analyzer can handle the exception, null otherwise
+     */
+    private FailureAnalysis analyzeFailure(Throwable failure) {
+        List<FailureAnalyzer> analyzersToTryOut = List.of(new WeaviateAuthenticationFailureAnalyzer(), new WeaviateConnectionFailureAnalyzer()
+        // Add more failure analyzers here, e.g.:
+        // new SomeOtherFailureAnalyzer()
+        );
+
+        for (FailureAnalyzer analyzer : analyzersToTryOut) {
+            try {
+                FailureAnalysis analysis = analyzer.analyze(failure);
+                if (analysis != null) {
+                    return analysis;
+                }
+            }
+            catch (Exception e) {
+                log.debug("Failure analyzer {} failed to analyze exception", analyzer.getClass().getName(), e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Reports the failure analysis in a format similar to Spring Boot's default failure reporting.
+     *
+     * @param analysis the failure analysis to report
+     */
+    private void reportFailureAnalysis(FailureAnalysis analysis) {
+        log.error("""
+
+                ***************************
+                APPLICATION FAILED TO START
+                ***************************
+
+                Description:
+
+                {}
+
+                Action:
+
+                {}
+                """, analysis.getDescription(), analysis.getAction());
+    }
+}

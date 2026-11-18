@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "dragAndDropAssignment": {
+            "home": {
+                "title": "Drag And Drop Assignments",
+                "createLabel": "Create a new Drag And Drop Assignment"
+            },
+            "created": "Created new Drag And Drop Assignment with identifier {{ param }}",
+            "updated": "Updated Drag And Drop Assignment with identifier {{ param }}",
+            "deleted": "Deleted Drag And Drop Assignment with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag And Drop Assignment {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag And Drop Assignment"
+            },
+            "item": "Item",
+            "location": "Location",
+            "submittedAnswer": "Submitted Answer"
+        }
+    }
+}

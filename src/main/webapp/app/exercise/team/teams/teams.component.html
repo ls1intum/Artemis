@@ -1,0 +1,77 @@
+<div>
+    <div class="mb-4! flex items-center justify-between">
+        <h2 class="mb-0">
+            <span>{{ exercise()?.title }} - </span>{{ filteredTeamsSize() ?? teams().length }} <span jhiTranslate="artemisApp.team.home.title"></span>
+        </h2>
+        <div class="flex items-center gap-2">
+            @if (exercise()?.isAtLeastEditor && teams().length > 0) {
+                <jhi-teams-export-button [teams]="teams()" />
+            }
+            @if (exercise()?.isAtLeastEditor) {
+                <jhi-teams-import-button [exercise]="exercise()!" [teams]="teams()" (save)="onTeamsImport($event)" />
+            }
+            <jhi-team-update-button [exercise]="exercise()!" (save)="onTeamUpdate($event)" />
+        </div>
+    </div>
+
+    <jhi-table-view
+        [cols]="columns()"
+        [vals]="teamsForTable()"
+        [loading]="isLoading()"
+        [rowActions]="rowActionsRef"
+        [tableActions]="tableActionsRef"
+        [options]="tableOptions"
+        (filteredRowsChange)="onFilteredTeamsSizeChange($event)"
+    />
+
+    <!-- Filter in the table caption bar (rendered next to the search box) -->
+    <ng-template #tableActionsRef>
+        <tumaet-ui-select-button
+            size="small"
+            [options]="filterOptions"
+            [ngModel]="teamCriteria.filterProp"
+            (ngModelChange)="updateTeamFilter($event)"
+            [allowEmpty]="false"
+            [itemTemplate]="filterItem"
+            optionValue="value"
+        />
+        <ng-template #filterItem let-item>{{ item.labelKey | artemisTranslate }}</ng-template>
+    </ng-template>
+
+    <!-- Cell templates -->
+    <ng-template #idTemplate let-cell>
+        <a [routerLink]="['/course-management', exercise()?.course?.id, 'exercises', exercise()?.id, 'teams', cell.value]">
+            {{ cell.value }}
+        </a>
+    </ng-template>
+
+    <ng-template #shortNameTemplate let-cell>
+        <a [routerLink]="['/course-management', exercise()?.course?.id, 'exercises', exercise()?.id, 'teams', cell.data.id]">
+            {{ cell.value }}
+        </a>
+    </ng-template>
+
+    <ng-template #ownerTemplate let-cell>
+        @if (isAdmin()) {
+            <a [routerLink]="['/admin', 'user-management', cell.data.owner?.login]">{{ cell.data.owner?.name }}</a>
+        } @else if (cell.data.owner) {
+            <a [href]="'mailto:' + cell.data.owner?.email">{{ cell.data.owner?.name }}</a>
+        } @else {
+            <span class="font-bold" jhiTranslate="artemisApp.team.detail.noOwner"></span>
+        }
+    </ng-template>
+
+    <ng-template #studentsTemplate let-cell>
+        <jhi-team-students-list [students]="cell.value" [renderLinks]="isAdmin()" />
+    </ng-template>
+
+    <!-- Per-row actions: edit and delete -->
+    <ng-template #rowActionsRef let-team>
+        @if (exercise()?.isAtLeastInstructor || team.owner?.id === currentUser()?.id) {
+            <jhi-team-update-button [exercise]="exercise()!" [team]="team" (save)="onTeamUpdate($event)" />
+        }
+        @if (exercise()?.isAtLeastInstructor) {
+            <jhi-team-delete-button class="ms-1" [exercise]="exercise()!" [team]="team" (delete)="onTeamDelete($event)" />
+        }
+    </ng-template>
+</div>

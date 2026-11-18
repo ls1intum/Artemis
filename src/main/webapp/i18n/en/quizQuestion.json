@@ -1,0 +1,40 @@
+{
+    "artemisApp": {
+        "quizQuestion": {
+            "home": {
+                "title": "Questions",
+                "createLabel": "Create a new Question"
+            },
+            "created": "Created new Question with identifier {{ param }}",
+            "updated": "Updated Question with identifier {{ param }}",
+            "deleted": "Deleted Question with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Question {{ id }}?"
+            },
+            "detail": {
+                "title": "Question"
+            },
+            "title": "Title",
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "score": "Points",
+            "scoringType": "Scoring Type",
+            "randomizeOrder": "Randomize Order",
+            "questionStatistic": "Question Statistic",
+            "exercise": "Exercise",
+            "yourScore": "Your Score",
+            "invalid": "Invalid",
+            "invalidText": "This question is invalid and will therefore be assessed as completely correct",
+            "retry": " Retry",
+            "loading": "Please wait until the picture is loaded",
+            "failed": "Sorry, the image could not be loaded. Please try again",
+            "showSampleSolution": "Show Sample Solution",
+            "hideSampleSolution": "Hide Sample Solution",
+            "allOptions": "Please choose all correct answer options",
+            "singleOption": "Please choose the correct answer option",
+            "unratedConfirmation": "There are no questions due. Do you still want to train in the unrated mode?",
+            "unratedConfirmationTitle": "No questions due"
+        }
+    }
+}

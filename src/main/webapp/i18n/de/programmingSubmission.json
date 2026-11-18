@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "programmingSubmission": {
+            "home": {
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen"
+            },
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Einreichung"
+            },
+            "commitHash": "Commit-Hash",
+            "view": "Bewertung ansehen"
+        }
+    }
+}

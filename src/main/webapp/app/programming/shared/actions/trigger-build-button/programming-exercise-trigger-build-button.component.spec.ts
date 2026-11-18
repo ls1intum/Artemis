@@ -1,0 +1,326 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import dayjs from 'dayjs/esm';
+import { provideTranslateService } from '@ngx-translate/core';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+describe('TriggerBuildButtonSpec', () => {
+    let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
+    let debugElement: DebugElement;
+    let submissionService: ProgrammingSubmissionService;
+
+    let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
+
+    let triggerBuildSpy: ReturnType<typeof vi.spyOn>;
+    let triggerFailedBuildSpy: ReturnType<typeof vi.spyOn>;
+
+    const exercise = { id: 20 } as Exercise;
+    const student = { id: 99 };
+    const gradedResult1 = { id: 10, rated: true, completionDate: dayjs('2019-06-06T22:15:29.203+02:00') } as Result;
+    const gradedResult2 = { id: 11, rated: true, completionDate: dayjs('2019-06-06T22:17:29.203+02:00') } as Result;
+    const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
+    const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
+    const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
+    const participation = { id: 1, exercise, submissions: [{ results }], student } as any;
+
+    const submission = { id: 1 } as any;
+
+    beforeEach(() => {
+        return TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                JhiLanguageHelper,
+                ChangeDetectorRef,
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+
+                submissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+                vi.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+
+                triggerBuildSpy = vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
+                triggerFailedBuildSpy = vi.spyOn(submissionService, 'triggerFailedBuild').mockReturnValue(of());
+            });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    const getTriggerButton = () => {
+        const triggerButton = debugElement.query(By.css('button'));
+        return triggerButton ? triggerButton.nativeElement : null;
+    };
+
+    it('should not crash or enable triggering when no participation is provided (e.g. auxiliary repository)', () => {
+        fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
+        // participation deliberately unset: the effect must not dereference the missing participation.
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(comp.participationBuildCanBeTriggered()).toBe(false);
+        expect(getTriggerButton()).toBeNull();
+    });
+
+    it('should not show the trigger button if there is no pending submission and no build is running', () => {
+        const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 4 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
+
+        fixture.detectChanges();
+
+        // Button should not show if there is no failed submission.
+        let triggerButton = getTriggerButton();
+        expect(triggerButton).toBeNull();
+
+        // After a failed submission is sent, the button should be displayed.
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+            submission: undefined,
+            participationId: newParticipation.id!,
+        });
+
+        fixture.detectChanges();
+        triggerButton = getTriggerButton();
+        expect(triggerButton).toBeDefined();
+    });
+
+    it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
+        const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 5 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
+
+        fixture.detectChanges();
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+            submission: undefined,
+            participationId: newParticipation.id!,
+        });
+        fixture.detectChanges();
+
+        let triggerButton = getTriggerButton();
+        expect(triggerButton.disabled).toBe(false);
+
+        // Click the button to start a build.
+        triggerButton.click();
+        expect(triggerFailedBuildSpy).toHaveBeenCalledOnce();
+        expect(triggerBuildSpy).not.toHaveBeenCalled();
+
+        // After some time the created submission comes through the websocket, button is disabled until the build is done.
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission,
+            participationId: newParticipation.id!,
+        });
+        expect(comp.isBuilding()).toBe(true);
+        fixture.detectChanges();
+        expect(triggerButton.disabled).toBe(true);
+
+        // Now the server signals that the build is done, the button should now be removed.
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            submission: undefined,
+            participationId: newParticipation.id!,
+        });
+        expect(comp.isBuilding()).toBe(false);
+        fixture.detectChanges();
+        triggerButton = getTriggerButton();
+        expect(triggerButton).toBeNull();
+    });
+
+    describe('refused triggers', () => {
+        const triggerFailedWithError = (error: HttpErrorResponse) => {
+            const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+            fixture.componentRef.setInput('exercise', { id: 6 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participation', newParticipation);
+            fixture.detectChanges();
+            getLatestPendingSubmissionSubject.next({
+                submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+                submission: undefined,
+                participationId: newParticipation.id!,
+            });
+            fixture.detectChanges();
+            triggerFailedBuildSpy.mockReturnValue(throwError(() => error));
+            getTriggerButton().click();
+        };
+
+        it('should not add a generic alert when the server refused because of the build time window, as it explains the reason itself', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.buildOutsideTimeWindow' }) }));
+
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still show the generic alert for other errors', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 500 }));
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.resubmitUnsuccessful');
+        });
+    });
+
+    describe('build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const setUp = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean; testRun?: boolean; individualDueDateExtension?: number } = {}) => {
+            vi.useFakeTimers();
+            vi.setSystemTime(now.toDate());
+            const exerciseWithWindow = new ProgrammingExercise(undefined, undefined);
+            exerciseWithWindow.id = 21;
+            exerciseWithWindow.isAtLeastEditor = options.isAtLeastEditor ?? false;
+            exerciseWithWindow.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            const studentParticipation = new ProgrammingExerciseStudentParticipation();
+            studentParticipation.id = 2;
+            studentParticipation.testRun = options.testRun;
+            studentParticipation.initializationState = InitializationState.INITIALIZED;
+            if (options.individualDueDateExtension) {
+                exerciseWithWindow.dueDate = windowEnd;
+                studentParticipation.individualDueDate = windowEnd.add(options.individualDueDateExtension, 'hour');
+            }
+            fixture.componentRef.setInput('exercise', exerciseWithWindow);
+            fixture.componentRef.setInput('participation', studentParticipation);
+            comp.showForSuccessfulSubmissions.set(true);
+            fixture.detectChanges();
+        };
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it.each([
+            ['before', windowStart.subtract(1, 'minute')],
+            ['after', windowEnd.add(1, 'minute')],
+        ])('should disable the button %s the window and explain why', (_, now) => {
+            setUp(now);
+
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+            expect(getTriggerButton().disabled).toBe(true);
+            expect(debugElement.query(By.css('jhi-button')).componentInstance.tooltip()).toBe('artemisApp.programmingExercise.buildTimeWindow.triggerDisabled');
+        });
+
+        it('should keep the button enabled inside the window', () => {
+            setUp(windowStart.add(1, 'minute'));
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+            expect(debugElement.query(By.css('jhi-button')).componentInstance.tooltip()).toBe('artemisApp.programmingExercise.resubmit');
+        });
+
+        it('should keep the button enabled while the individual due date extension keeps the window open', () => {
+            setUp(windowEnd.add(1, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+
+        it('should disable the button after the window extended by the individual due date', () => {
+            setUp(windowEnd.add(4, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+        });
+
+        it.each([
+            ['editors and instructors', { isAtLeastEditor: true }],
+            ['the practice mode', { testRun: true }],
+        ])('should not block %s', (_, options) => {
+            setUp(windowEnd.add(1, 'day'), options);
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+
+        it('should also block triggering a failed build outside the window', () => {
+            setUp(windowEnd.add(1, 'day'));
+
+            getLatestPendingSubmissionSubject.next({
+                submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+                submission: undefined,
+                participationId: 2,
+            });
+            fixture.detectChanges();
+
+            // the retry builds the latest commit, which may have been pushed outside the window
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+            expect(getTriggerButton().disabled).toBe(true);
+        });
+
+        it('should enable the button when the window starts', () => {
+            setUp(windowStart.subtract(1, 'minute'));
+            expect(getTriggerButton().disabled).toBe(true);
+
+            vi.advanceTimersByTime(60 * 1000);
+            fixture.detectChanges();
+
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+    });
+
+    it('should set the latest result correctly to manual', () => {
+        gradedResult1.assessmentType = AssessmentType.AUTOMATIC;
+        gradedResult2.assessmentType = AssessmentType.MANUAL;
+
+        const newParticipation = { ...participation, results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
+
+        fixture.detectChanges();
+
+        expect(comp.lastResultIsManual()).toBe(true);
+    });
+    it('replaces result subscriptions when the participation changes and clears them when absent', () => {
+        fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 8, initializationState: InitializationState.INITIALIZED });
+        const results = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(results);
+        fixture.detectChanges();
+        results.next({ id: 9, assessmentType: AssessmentType.MANUAL });
+        expect(comp.lastResultIsManual()).toBe(true);
+        comp.setupResultSubscription();
+        results.next({ id: 10, assessmentType: AssessmentType.AUTOMATIC });
+        expect(comp.lastResultIsManual()).toBe(false);
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+        expect(results.observed).toBe(false);
+        comp.setupSubmissionSubscription();
+        comp.setupResultSubscription();
+        expect(comp.participationBuildCanBeTriggered()).toBe(false);
+    });
+});

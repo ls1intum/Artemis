@@ -1,0 +1,68 @@
+package de.tum.cit.aet.artemis.exercise.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics.TEAM_ASSIGNMENTS;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayloadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamParticipationDTO;
+
+@Profile(PROFILE_CORE)
+@Controller
+@Lazy
+public class TeamWebsocketService {
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    public TeamWebsocketService(WebsocketMessagingService websocketMessagingService) {
+        this.websocketMessagingService = websocketMessagingService;
+    }
+
+    /**
+     * Sends out team assignment information for an exercise to students of a created/updated/deleted team
+     * <p>
+     * Cases:
+     * 1. Team was created: sendTeamAssignmentUpdate(exercise, null, createdTeam);
+     * 2. Team was updated: sendTeamAssignmentUpdate(exercise, existingTeam, updatedTeam);
+     * 3. Team was deleted: sendTeamAssignmentUpdate(exercise, deletedTeam, null);
+     *
+     * @param exercise                    Exercise for which the team assignment has been made
+     * @param existingTeam                Team before the update (null when a team was created)
+     * @param updatedTeam                 Team after the update (null when a team was deleted)
+     * @param participationsOfUpdatedTeam Student participations of the updated team (with submissions and visible results)
+     */
+    public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, List<StudentParticipation> participationsOfUpdatedTeam) {
+        // Users in the existing team that are no longer in the updated team were unassigned => inform them
+        if (existingTeam != null) {
+            TeamAssignmentPayloadDTO payload = new TeamAssignmentPayloadDTO(exercise.getId(), null, List.of());
+            Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());
+            unassignedUsers.removeAll(Optional.ofNullable(updatedTeam).map(Team::getStudents).orElse(Set.of()));
+            unassignedUsers.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), TEAM_ASSIGNMENTS.at(), payload));
+        }
+
+        // All current members need the updated team and participation, including when only the team name changes.
+        if (updatedTeam != null) {
+            TeamAssignmentPayloadDTO payload = new TeamAssignmentPayloadDTO(exercise.getId(), updatedTeam.getId(),
+                    participationsOfUpdatedTeam.stream().map(TeamParticipationDTO::of).toList());
+            updatedTeam.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), TEAM_ASSIGNMENTS.at(), payload));
+        }
+    }
+
+    public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam) {
+        sendTeamAssignmentUpdate(exercise, existingTeam, updatedTeam, List.of());
+    }
+}

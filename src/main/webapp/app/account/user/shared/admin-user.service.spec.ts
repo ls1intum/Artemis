@@ -1,0 +1,314 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { User } from 'app/account/user/user.model';
+import { CourseForRoleAssignment, UserCourseRole } from 'app/account/user/shared/user-course-role.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
+import { provideHttpClient } from '@angular/common/http';
+import { AuthorityFilter, OriginFilter, RegistrationNumberFilter, StatusFilter, UserFilter } from 'app/admin/user-management/user-management.component';
+
+describe('AdminUserService', () => {
+    let adminService: AdminUserService;
+    let httpMock: HttpTestingController;
+    const resourceUrl = 'api/account/admin/users';
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting()],
+        });
+
+        adminService = TestBed.inject(AdminUserService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    describe('findUser', () => {
+        it('should call correct URL', () => {
+            adminService.findUser('user').subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            expect(req.request.url).toBe(`${resourceUrl}/user`);
+        });
+
+        it('should return User', () => {
+            adminService.findUser('user').subscribe((received) => {
+                expect(received!.login).toBe('user');
+            });
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(new User(1, 'user'));
+        });
+
+        it('should propagate not found response', () => {
+            adminService.findUser('user').subscribe({
+                error: (_error: any) => {
+                    expect(_error.status).toBe(404);
+                },
+            });
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush('Invalid request parameters', {
+                status: 404,
+                statusText: 'Bad Request',
+            });
+        });
+    });
+
+    describe('getCourseRoles', () => {
+        it('should request the course roles of the user and return them', () => {
+            const courseRoles: UserCourseRole[] = [{ courseId: 1, courseTitle: 'Algorithms', courseShortName: 'ALGO', role: 'STUDENT' }];
+            let received: UserCourseRole[] | undefined;
+
+            adminService.getCourseRoles('user').subscribe((roles) => (received = roles));
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            expect(req.request.url).toBe(`${resourceUrl}/user/course-roles`);
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            req.flush(courseRoles);
+            expect(received).toEqual(courseRoles);
+        });
+    });
+
+    describe('course role editing', () => {
+        it('should search the courses by the given term and size', () => {
+            let received: CourseForRoleAssignment[] | undefined;
+
+            adminService.searchCoursesForRoleAssignment('algo', 5).subscribe((courses) => (received = courses));
+
+            const req = httpMock.expectOne((request) => request.url === 'api/admin/courses/for-role-assignment');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.params.get('searchTerm')).toBe('algo');
+            expect(req.request.params.get('size')).toBe('5');
+            req.flush([{ id: 1, title: 'Algorithms' }]);
+            expect(received).toEqual([{ id: 1, title: 'Algorithms' }]);
+        });
+
+        it.each([
+            ['INSTRUCTOR', 'instructors'],
+            ['EDITOR', 'editors'],
+            ['TEACHING_ASSISTANT', 'tutors'],
+            ['STUDENT', 'students'],
+        ] as const)('should add the %s role through the %s membership endpoint', (role, slug) => {
+            adminService.addCourseRole('user', 7, role).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `api/course/courses/7/${slug}/user` });
+            req.flush(null);
+        });
+
+        it.each([
+            ['INSTRUCTOR', 'instructors'],
+            ['EDITOR', 'editors'],
+            ['TEACHING_ASSISTANT', 'tutors'],
+            ['STUDENT', 'students'],
+        ] as const)('should remove the %s role through the %s membership endpoint', (role, slug) => {
+            adminService.removeCourseRole('user', 7, role).subscribe();
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: `api/course/courses/7/${slug}/user` });
+            req.flush(null);
+        });
+    });
+
+    describe('create', () => {
+        it('should create a new user', () => {
+            const user = new User(undefined, 'newuser', 'First', 'Last', 'email@test.com');
+
+            adminService.create(user).subscribe((response) => {
+                expect(response.body?.login).toBe('newuser');
+            });
+
+            const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+            expect(req.request.body).toEqual(user);
+            req.flush(new User(1, 'newuser'));
+        });
+    });
+
+    describe('update', () => {
+        it('should update a user', () => {
+            const user = new User(1, 'existinguser', 'Updated', 'Name');
+
+            adminService.update(user).subscribe((response) => {
+                expect(response.body?.firstName).toBe('Updated');
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: resourceUrl });
+            expect(req.request.body).toEqual(user);
+            req.flush(new User(1, 'existinguser', 'Updated', 'Name'));
+        });
+    });
+
+    describe('importAll', () => {
+        it('should import users from ldap', () => {
+            const users: Partial<User>[] = [{ login: 'user1' }, { login: 'user2' }];
+
+            adminService.importAll(users).subscribe((response) => {
+                expect(response.body?.length).toBe(0);
+            });
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import` });
+            expect(req.request.body).toEqual(users);
+            req.flush([]);
+        });
+    });
+
+    describe('activate', () => {
+        it('should activate a user', () => {
+            const userId = 123;
+
+            adminService.activate(userId).subscribe((response) => {
+                expect(response.body?.activated).toBe(true);
+            });
+
+            const req = httpMock.expectOne({ method: 'PATCH', url: `${resourceUrl}/${userId}/activate` });
+            expect(req.request.body).toBeNull();
+            req.flush(new User(userId, 'user', undefined, undefined, undefined, true));
+        });
+    });
+
+    describe('deactivate', () => {
+        it('should deactivate a user', () => {
+            const userId = 123;
+
+            adminService.deactivate(userId).subscribe((response) => {
+                expect(response.body?.activated).toBe(false);
+            });
+
+            const req = httpMock.expectOne({ method: 'PATCH', url: `${resourceUrl}/${userId}/deactivate` });
+            expect(req.request.body).toBeNull();
+            req.flush(new User(userId, 'user', undefined, undefined, undefined, false));
+        });
+    });
+
+    describe('query', () => {
+        it('should query users without filter', () => {
+            adminService.query({ page: 0, size: 10 }).subscribe((response) => {
+                expect(response.body?.length).toBe(2);
+            });
+
+            const req = httpMock.expectOne((r) => r.url === resourceUrl && r.method === 'GET');
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('size')).toBe('10');
+            req.flush([new User(1, 'user1'), new User(2, 'user2')]);
+        });
+
+        it('should query users with filter', () => {
+            const filter = new UserFilter();
+            filter.authorityFilter.add(AuthorityFilter.ADMIN);
+            filter.originFilter.add(OriginFilter.INTERNAL);
+            filter.statusFilter.add(StatusFilter.ACTIVATED);
+            filter.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+
+            adminService.query({ page: 0 }, filter).subscribe((response) => {
+                expect(response.body?.length).toBeGreaterThanOrEqual(0);
+            });
+
+            const req = httpMock.expectOne((r) => r.url === resourceUrl && r.method === 'GET');
+            expect(req.request.params.get('authorities')).toBe('ADMIN');
+            expect(req.request.params.get('origins')).toBe('INTERNAL');
+            expect(req.request.params.get('status')).toBe('ACTIVATED');
+            expect(req.request.params.get('registrationNumbers')).toBe('WITH_REG_NO');
+            req.flush([]);
+        });
+
+        it('should query users with noAuthority filter', () => {
+            const filter = new UserFilter();
+            filter.noAuthority = true;
+
+            adminService.query({}, filter).subscribe(() => {});
+
+            const req = httpMock.expectOne((r) => r.url === resourceUrl && r.method === 'GET');
+            expect(req.request.params.get('authorities')).toBe('NO_AUTHORITY');
+            req.flush([]);
+        });
+    });
+
+    describe('queryNotEnrolledUsers', () => {
+        it('should query not enrolled users', () => {
+            adminService.queryNotEnrolledUsers().subscribe((response) => {
+                expect(response.body?.length).toBe(2);
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/not-enrolled` });
+            req.flush(['user1', 'user2']);
+        });
+    });
+
+    describe('syncLdap', () => {
+        it('should sync user from LDAP', () => {
+            const userId = 123;
+
+            adminService.syncLdap(userId).subscribe((user) => {
+                expect(user.id).toBe(userId);
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${userId}/sync-ldap` });
+            req.flush(new User(userId, 'synceduser'));
+        });
+    });
+
+    describe('deleteUser', () => {
+        it('should delete a user by login', () => {
+            const login = 'userToDelete';
+
+            adminService.deleteUser(login, 'current-impact').subscribe((response) => {
+                expect(response.status).toBe(200);
+            });
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${login}` });
+            expect(req.request.body).toEqual({ impactFingerprint: 'current-impact' });
+            req.flush(null, { status: 200, statusText: 'OK' });
+        });
+    });
+
+    describe('deleteUsers', () => {
+        it('should delete multiple users by logins', () => {
+            const deletionRequest = {
+                users: [
+                    { login: 'user1', impactFingerprint: 'impact-1' },
+                    { login: 'user2', impactFingerprint: 'impact-2' },
+                ],
+            };
+
+            adminService.deleteUsers(deletionRequest).subscribe((response) => {
+                expect(response.status).toBe(200);
+            });
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: resourceUrl });
+            expect(req.request.body).toEqual(deletionRequest);
+            req.flush(null, { status: 200, statusText: 'OK' });
+        });
+    });
+
+    describe('deletion impact', () => {
+        it('should load the impact for one user', () => {
+            adminService.getDeletionImpact('user1').subscribe();
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/user1/deletion-impact` });
+            req.flush({ login: 'user1', impactFingerprint: 'impact-1', categories: [] });
+        });
+
+        it('should load a combined impact for multiple users', () => {
+            adminService.getBulkDeletionImpact(['user1', 'user2']).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/deletion-impact` });
+            expect(req.request.body).toEqual({ logins: ['user1', 'user2'] });
+            req.flush({ users: [], categories: [], totalAffectedObjects: 0 });
+        });
+    });
+
+    describe('authorities', () => {
+        it('should get all authorities', () => {
+            adminService.authorities().subscribe((authorities) => {
+                expect(authorities).toContain('ROLE_ADMIN');
+                expect(authorities).toContain('ROLE_USER');
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/authorities` });
+            req.flush(['ROLE_ADMIN', 'ROLE_USER', 'ROLE_INSTRUCTOR']);
+        });
+    });
+});

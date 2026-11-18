@@ -1,0 +1,201 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { SubmissionExportOptions, SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as DownloadUtil from 'app/foundation/util/download.util';
+import { Subject, of, throwError } from 'rxjs';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
+
+describe('Submission Export Dialog Component', () => {
+    let fixture: ComponentFixture<SubmissionExportDialogComponent>;
+    let component: SubmissionExportDialogComponent;
+
+    let alertService: AlertService;
+    let submissionExportService: SubmissionExportService;
+    let exerciseService: ExerciseService;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+
+    const exerciseId = 1;
+    const validExerciseType = ExerciseType.TEXT;
+    const invalidExerciseType = ExerciseType.PROGRAMMING;
+    const submissionExportOptions = {
+        exportAllParticipants: false,
+        filterLateSubmissions: false,
+        filterLateSubmissionsDate: null,
+        participantIdentifierList: '',
+    };
+
+    beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        alertService = {
+            success: vi.fn(),
+            error: vi.fn(),
+        } as unknown as AlertService;
+        submissionExportService = {
+            exportSubmissions: vi.fn(),
+        } as unknown as SubmissionExportService;
+
+        await TestBed.configureTestingModule({
+            imports: [SubmissionExportDialogComponent],
+            providers: [
+                { provide: SubmissionExportService, useValue: submissionExportService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: AlertService, useValue: alertService },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy, dismiss: dialogRefCloseSpy, onClose: new Subject<unknown>() } as unknown as TumAetUiDialogRef },
+            ],
+        })
+            .overrideTemplate(SubmissionExportDialogComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(SubmissionExportDialogComponent);
+        component = fixture.componentInstance;
+
+        exerciseService = TestBed.inject(ExerciseService);
+        fixture.componentRef.setInput('exerciseId', exerciseId);
+        fixture.componentRef.setInput('exerciseType', validExerciseType);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        const findSpy = vi.spyOn(exerciseService, 'findForStaff');
+        component.ngOnInit();
+
+        expect(component.isLoading()).toBe(false);
+        expect(component.exportInProgress()).toBe(false);
+        expect(component.submissionExportOptions()).toEqual(submissionExportOptions);
+        expect(component.exercise()).toEqual({ id: exerciseId } as Exercise);
+        expect(findSpy).toHaveBeenCalledOnce();
+        expect(findSpy).toHaveBeenCalledWith(exerciseId);
+    });
+
+    it('should select exam management before loading the export exercise', () => {
+        fixture.componentRef.setInput('examExercise', true);
+        const exam = vi.spyOn(exerciseService, 'findForExamManagement');
+        const course = vi.spyOn(exerciseService, 'findForStaff');
+        component.ngOnInit();
+        expect(exam).toHaveBeenCalledExactlyOnceWith(exerciseId);
+        expect(course).not.toHaveBeenCalled();
+        expect(component.exercise()?.id).toBe(exerciseId);
+    });
+
+    it('should handle export response', () => {
+        const response: HttpResponse<Blob> = new HttpResponse();
+        const alertSpy = vi.spyOn(alertService, 'success');
+        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadZipFileFromResponse');
+
+        component.handleExportResponse(response);
+
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith(true);
+        expect(component.exportInProgress()).toBe(false);
+        expect(downloadSpy).toHaveBeenCalledOnce();
+        expect(downloadSpy).toHaveBeenCalledWith(response);
+    });
+
+    describe('late submissions date', () => {
+        it('should take over the date of the picker and map no date to null', () => {
+            const date = dayjs('2030-06-01T12:00:00');
+
+            component.onFilterLateSubmissionsDateChange(date);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBe(date);
+
+            component.onFilterLateSubmissionsDateChange(undefined);
+            expect(component.submissionExportOptions().filterLateSubmissionsDate).toBeNull();
+        });
+
+        it('should only block the export for text that is not a date while the late submissions filter is on', () => {
+            component.isFilterDateTextValid.set(false);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+
+            component.filterLateSubmissions.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(true);
+
+            component.isFilterDateTextValid.set(true);
+            expect(component.hasInvalidFilterDate()).toBe(false);
+        });
+    });
+
+    it('should clear dialog', () => {
+        component.clear();
+
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
+    });
+
+    describe('Exporting Submission', () => {
+        let exportSubmissionServiceMock: (
+            exerciseId: number,
+            exerciseType: ExerciseType,
+            repositoryExportOptions: SubmissionExportOptions,
+        ) => ReturnType<SubmissionExportService['exportSubmissions']>;
+        let handleExportResponseMock: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            handleExportResponseMock = vi.fn().mockReturnValue(of());
+            component.handleExportResponse = handleExportResponseMock as unknown as (response: HttpResponse<Blob>) => void;
+        });
+
+        it('should export submission', () => {
+            exportSubmissionServiceMock = vi
+                .fn<
+                    (exerciseId: number, exerciseType: ExerciseType, repositoryExportOptions: SubmissionExportOptions) => ReturnType<SubmissionExportService['exportSubmissions']>
+                >()
+                .mockReturnValue(of({ body: {} } as HttpResponse<Blob>));
+            vi.spyOn(submissionExportService, 'exportSubmissions').mockImplementation(exportSubmissionServiceMock);
+
+            component.exportSubmissions(exerciseId);
+
+            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
+            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, validExerciseType, submissionExportOptions);
+            expect(component.exportInProgress()).toBe(true);
+            expect(handleExportResponseMock).toHaveBeenCalledOnce();
+            expect(handleExportResponseMock).toHaveBeenCalledWith({ body: {} });
+        });
+
+        it('should handle error exporting submission for unsupported exercise types', () => {
+            exportSubmissionServiceMock = vi.fn<
+                (exerciseId: number, exerciseType: ExerciseType, repositoryExportOptions: SubmissionExportOptions) => ReturnType<SubmissionExportService['exportSubmissions']>
+            >(() => {
+                throw new Error('Export not implemented for exercise type ' + invalidExerciseType);
+            });
+            vi.spyOn(submissionExportService, 'exportSubmissions').mockImplementation(exportSubmissionServiceMock);
+            fixture.componentRef.setInput('exerciseType', invalidExerciseType);
+
+            expect(() => {
+                component.exportSubmissions(exerciseId);
+            }).toThrow('Export not implemented for exercise type ' + invalidExerciseType);
+
+            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
+            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
+            expect(handleExportResponseMock).not.toHaveBeenCalled();
+        });
+    });
+    it('closes a failed exercise load and clears the loading state', () => {
+        const error = new Error('Exercise unavailable');
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(throwError(() => error));
+        component.ngOnInit();
+        expect(alertService.error).toHaveBeenCalledExactlyOnceWith(error);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith('cancel');
+        expect(component.isLoading()).toBe(false);
+        expect(component.exercise()).toBeUndefined();
+    });
+
+    it('allows another export after the export request fails', () => {
+        vi.spyOn(submissionExportService, 'exportSubmissions').mockReturnValue(throwError(() => new Error('Export failed')));
+        component.exportSubmissions(exerciseId);
+        expect(component.exportInProgress()).toBe(false);
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+        expect(alertService.success).not.toHaveBeenCalled();
+    });
+});

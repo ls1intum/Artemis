@@ -1,0 +1,121 @@
+package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
+
+/**
+ * DTO for drag and drop questions in the editor context.
+ * Supports both creating new questions (id is null) and updating existing questions (id is non-null).
+ *
+ * @param id                 the ID of the question, null for new questions
+ * @param title              the title of the question
+ * @param text               the question text
+ * @param hint               the hint for the question
+ * @param explanation        the explanation for the question
+ * @param points             the points for the question
+ * @param scoringType        the scoring type
+ * @param randomizeOrder     whether to randomize drag item order
+ * @param backgroundFilePath the path the background image is served under, relative to {@code api/core/files/}, or the bare filename while the question has no id yet
+ * @param dropLocations      the list of drop locations
+ * @param dragItems          the list of drag items
+ * @param correctMappings    the list of correct mappings
+ */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
+        @NotNull ScoringType scoringType, Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationFromEditorDTO> dropLocations,
+        @NotEmpty List<@Valid DragItemFromEditorDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingFromEditorDTO> correctMappings) implements QuizQuestionFromEditorDTO {
+
+    /**
+     * Creates a DragAndDropQuestionFromEditorDTO from the given DragAndDropQuestion domain object.
+     * <p>
+     * The background is taken from {@link DragAndDropQuestion#servedBackgroundFilePath()} rather than from the stored filename, so the editor receives the same value the
+     * question serves everywhere else. The client appends what it receives to {@code api/core/files/}, so handing it the bare filename would ask for the image at the root of
+     * the file endpoint and the background of an existing question would not render while it is being edited.
+     *
+     * @param question the question to convert
+     * @return the corresponding DTO
+     */
+    public static DragAndDropQuestionFromEditorDTO of(DragAndDropQuestion question) {
+        List<DropLocationFromEditorDTO> locationDTOs = question.getDropLocations().stream().map(DropLocationFromEditorDTO::of).toList();
+        List<DragItemFromEditorDTO> itemDTOs = question.getDragItems().stream().map(DragItemFromEditorDTO::of).toList();
+        List<DragAndDropMappingFromEditorDTO> mappingDTOs = question.getCorrectMappings().stream().map(DragAndDropMappingFromEditorDTO::of).toList();
+        return new DragAndDropQuestionFromEditorDTO(question.getId(), question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
+                question.getScoringType(), question.isRandomizeOrder(), question.servedBackgroundFilePath(), locationDTOs, itemDTOs, mappingDTOs);
+    }
+
+    /**
+     * Creates a new DragAndDropQuestion domain object from this DTO.
+     * <p>
+     * The background goes back through {@link DragAndDropQuestion#setBackgroundFilePath}, which reduces a served URL to the filename again, so the round trip through the editor
+     * stores what was already stored.
+     *
+     * @return a new DragAndDropQuestion domain object
+     */
+    @Override
+    public DragAndDropQuestion toDomainObject() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        question.setId(id);
+        question.setTitle(title);
+        question.setText(text);
+        question.setHint(hint);
+        question.setExplanation(explanation);
+        question.setPoints(points);
+        question.setScoringType(scoringType);
+        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
+        question.setBackgroundFilePath(backgroundFilePath);
+
+        List<DropLocation> locations = new ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());
+        List<DragItem> items = new ArrayList<>(dragItems.stream().map(DragItemFromEditorDTO::toDomainObject).toList());
+        question.setDropLocations(locations);
+        question.setDragItems(items);
+
+        // Resolve mappings using DTO effectiveId (tempID for new items, id for existing).
+        // tempID stays in the DTO — entity objects don't have tempID set.
+        Map<Long, DragItem> effectiveIdToDragItem = new HashMap<>();
+        for (int i = 0; i < dragItems.size(); i++) {
+            effectiveIdToDragItem.put(dragItems.get(i).effectiveId(), items.get(i));
+        }
+        Map<Long, DropLocation> effectiveIdToDropLocation = new HashMap<>();
+        for (int i = 0; i < dropLocations.size(); i++) {
+            effectiveIdToDropLocation.put(dropLocations.get(i).effectiveId(), locations.get(i));
+        }
+
+        Set<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
+            DragItem dragItem = effectiveIdToDragItem.get(m.dragItemTempId());
+            DropLocation dropLocation = effectiveIdToDropLocation.get(m.dropLocationTempId());
+            if (dragItem == null || dropLocation == null) {
+                throw new BadRequestAlertException("Could not resolve drag and drop mappings", "quizExercise", "invalidMappings");
+            }
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            mapping.setDragItem(dragItem);
+            mapping.setDropLocation(dropLocation);
+            return mapping;
+        }).collect(Collectors.toSet());
+        question.setCorrectMappings(mappings);
+        return question;
+    }
+}

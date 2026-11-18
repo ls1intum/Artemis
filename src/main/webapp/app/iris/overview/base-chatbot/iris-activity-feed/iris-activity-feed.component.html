@@ -1,0 +1,27 @@
+@if (viewItems().length) {
+    <details class="iris-activity-group activity-trail mode-{{ mode() }}" [attr.aria-live]="mode() === 'live' ? 'polite' : null" [attr.aria-label]="feedAriaLabel()">
+        <summary class="iris-activity-summary">
+            @if (runningItem(); as running) {
+                <fa-icon class="iris-activity-summary-spinner" [icon]="faCircleNotch" animation="spin" />
+                <span class="iris-activity-summary-text">{{ running.label }}</span>
+            } @else {
+                <span class="iris-activity-summary-text">{{ summary() }}</span>
+            }
+            <fa-icon class="iris-activity-summary-caret" [icon]="faCaretRight" aria-hidden="true" />
+        </summary>
+        <ul class="iris-activity-list">
+            @for (activity of viewItems(); track activity.id) {
+                <li class="iris-activity-row" [class]="activity.stateClass" [attr.aria-label]="activity.tooltip" [attr.data-activity-id]="activity.id">
+                    <fa-icon class="iris-activity-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" aria-hidden="true" />
+                    <span class="iris-activity-name">{{ activity.label }}</span>
+                    @if (activity.detail) {
+                        <span class="iris-activity-detail">{{ activity.detail }}</span>
+                    }
+                    @if (activity.durationLabel) {
+                        <span class="iris-activity-duration">{{ activity.durationLabel }}</span>
+                    }
+                </li>
+            }
+        </ul>
+    </details>
+}

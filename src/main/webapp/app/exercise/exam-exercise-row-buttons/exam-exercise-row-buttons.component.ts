@@ -1,0 +1,398 @@
+import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, Subject } from 'rxjs';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
+import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import dayjs from 'dayjs/esm';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { TranslateService } from '@ngx-translate/core';
+import {
+    faBook,
+    faCode,
+    faExclamationTriangle,
+    faEye,
+    faFileSignature,
+    faLightbulb,
+    faPencilAlt,
+    faRedo,
+    faRobot,
+    faSignal,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+
+/** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
+/**
+ * Builds the exam-exercise `ActionItem[]` (exam-scoped routes, exam-specific role/lifecycle gates, delete wiring) and
+ * renders it through the shared {@link ExerciseActionBarComponent} — the same collapsible-row/ellipsis-menu bar the
+ * course-exercise table uses, so both look and behave identically, including collapsing on small screens. The
+ * test-run-participations warning is the only always-visible content, projected into the bar's reserved-content slot.
+ */
+@Component({
+    selector: 'jhi-exam-exercise-row-buttons',
+    templateUrl: './exam-exercise-row-buttons.component.html',
+    imports: [ExerciseActionBarComponent, FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
+})
+export class ExamExerciseRowButtonsComponent {
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
+    private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
+    private eventManager = inject(EventManager);
+    private profileService = inject(ProfileService);
+    private translateService = inject(TranslateService);
+
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly exam = input.required<Exam>();
+    readonly exerciseGroupId = input.required<number>();
+    readonly latestIndividualEndDate = input<dayjs.Dayjs>();
+    readonly onDeleteExercise = output<void>();
+    /** Emitted when it is not known how a deletion ended; the table is reloaded from the server instead of removing the exercise. */
+    readonly deletionOutcomeUnknown = output<void>();
+    /**
+     * Width (px) the actions column must reserve to keep the always-visible test-run warning plus the ellipsis
+     * trigger on screen; 0 when there is none. Mirrors `ExerciseActionsComponent.quizActionsMinWidth` so a shared
+     * table column can floor its width the same way.
+     */
+    readonly actionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
+
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
+
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+
+    /** Controls the AI variant generation wizard opened via the "Create Variant with AI" action. */
+    readonly aiVariantModalVisible = signal(false);
+
+    private readonly generationCapabilities = injectGenerationCapabilities(
+        this.exercise,
+        computed(() => this.course().isAtLeastEditor ?? false),
+    );
+
+    private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
+
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    /**
+     * The wall clock as a signal. The action set depends on the exam's start and end having passed, and nothing
+     * tracks the clock, so a page left open across either boundary would keep serving a stale set of actions.
+     */
+    private readonly now = signal(dayjs());
+
+    /**
+     * Whether the exam is over (using the latest individual end date), gating the quiz re-evaluate action and
+     * whether the quiz edit action is shown at all.
+     */
+    isExamOver(): boolean {
+        const latestIndividualEndDate = this.latestIndividualEndDate();
+        return latestIndividualEndDate ? latestIndividualEndDate.isBefore(this.now()) : false;
+    }
+
+    /** Whether the exam has started, disabling the quiz edit action (students may already be working on it). */
+    hasExamStarted(): boolean {
+        const exam = this.exam();
+        return exam.startDate ? exam.startDate.isBefore(this.now()) : false;
+    }
+
+    constructor() {
+        // Advance `now` exactly when the next boundary passes, so the actions recompute once instead of polling.
+        effect((onCleanup) => {
+            const next = [this.exam().startDate, this.latestIndividualEndDate()]
+                .filter((date): date is dayjs.Dayjs => date !== undefined)
+                .map((date) => date.valueOf())
+                .filter((time) => time > this.now().valueOf())
+                .sort((a, b) => a - b)
+                .at(0);
+            if (next === undefined) {
+                return;
+            }
+            // setTimeout caps at a 32-bit delay; a boundary further out re-schedules when that intermediate tick fires.
+            const handle = setTimeout(() => this.now.set(dayjs()), Math.min(Math.max(next - Date.now(), 0) + 1, MAX_TIMEOUT_MS));
+            onCleanup(() => clearTimeout(handle));
+        });
+    }
+
+    /** The always-visible test-run warning shown next to the quiz edit action, before the exam ends. */
+    protected readonly showTestRunWarning = computed(() => this.exercise().type === ExerciseType.QUIZ && !!this.exercise().testRunParticipationsExist && !this.isExamOver());
+
+    private readonly deletionSummary = computed(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    private readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled()) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
+
+    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
+    private readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
+        const course = this.course();
+        return {
+            courseTitle: course.title,
+            // The dialog interpolates these verbatim, so the course type must already be translated here.
+            courseType: this.translateService.instant(course.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
+        };
+    });
+
+    readonly mainActions = computed<ActionItem[]>(() => {
+        const ex = this.exercise();
+        const course = this.course();
+        const cid = course.id!;
+        const exam = this.exam();
+        const groupId = this.exerciseGroupId();
+        const groupSeg = ['/course-management', cid, 'exams', exam.id!, 'exercise-groups', groupId] as (string | number)[];
+        const typeSeg = [...groupSeg, `${ex.type}-exercises`, ex.id!];
+        const items: ActionItem[] = [];
+
+        if (course.isAtLeastInstructor) {
+            items.push({
+                id: 'participations',
+                labelKey: 'artemisApp.exercise.participations',
+                icon: faListAlt,
+                severity: 'primary',
+                kind: 'link',
+                link: [...typeSeg, 'participations'],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {
+            items.push({
+                id: 'grading',
+                labelKey: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+                icon: faFileSignature,
+                severity: 'secondary',
+                kind: 'link',
+                link: [...groupSeg, 'programming-exercises', ex.id!, 'grading', 'test-cases'],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type !== ExerciseType.QUIZ && ex.type !== ExerciseType.PROGRAMMING && ex.type !== ExerciseType.FILE_UPLOAD) {
+            items.push({
+                id: 'examples',
+                labelKey: 'entity.action.exampleSubmissions',
+                icon: faBook,
+                severity: 'secondary',
+                kind: 'link',
+                link: [...typeSeg, 'example-submissions'],
+            });
+        }
+        if (course.isAtLeastInstructor && ex.type === ExerciseType.QUIZ) {
+            items.push({
+                id: 'statistics',
+                labelKey: 'artemisApp.quizExercise.statistics',
+                icon: faSignal,
+                severity: 'secondary',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'quiz-point-statistic'],
+            });
+        }
+        if (course.isAtLeastInstructor && ex.teamMode) {
+            items.push({
+                id: 'teams',
+                labelKey: 'artemisApp.exercise.teams',
+                icon: faUsers,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
+            });
+        }
+        // Sits between the info/success-colored actions above and the warning-colored edit actions below, matching its
+        // own warning color. Programming exercises also require the server's generation capability.
+        if (
+            this.hyperionEnabled &&
+            course.isAtLeastEditor &&
+            supportsAiVariantGeneration(ex) &&
+            (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)
+        ) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                severity: 'secondary',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {
+            items.push({
+                id: 'edit-in-editor',
+                labelKey: 'entity.action.editInEditor',
+                icon: faCode,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.QUIZ) {
+            items.push({
+                id: 'preview',
+                labelKey: 'artemisApp.quizExercise.preview',
+                icon: faEye,
+                severity: 'secondary',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'preview'],
+            });
+            items.push({
+                id: 'solution',
+                labelKey: 'artemisApp.quizExercise.solution',
+                icon: faLightbulb,
+                severity: 'secondary',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'solution'],
+            });
+            if (this.isExamOver() && course.isAtLeastInstructor) {
+                items.push({
+                    id: 're-evaluate',
+                    labelKey: 'entity.action.re-evaluate',
+                    icon: faRedo,
+                    severity: 'secondary',
+                    kind: 'link',
+                    link: [...groupSeg, 'quiz-exercises', ex.id!, 're-evaluate'],
+                });
+            }
+            if (!this.isExamOver()) {
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faPencilAlt,
+                    severity: 'warn',
+                    kind: 'link',
+                    link: [...typeSeg, 'edit'],
+                    disabled: this.hasExamStarted(),
+                    disabledTooltip: this.hasExamStarted() ? 'artemisApp.examManagement.exerciseGroup.editNotPossibleExamStarted' : undefined,
+                });
+            }
+        } else if (course.isAtLeastEditor) {
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faPencilAlt, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+        }
+        if (course.isAtLeastInstructor) {
+            items.push({
+                id: 'delete',
+                labelKey: 'entity.action.delete',
+                icon: faTrash,
+                severity: 'danger',
+                kind: 'delete',
+                delete: {
+                    entityTitle: ex.title ?? '',
+                    entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
+                    deleteQuestion: ex.type === ExerciseType.PROGRAMMING ? 'artemisApp.programmingExercise.delete.question' : 'artemisApp.exercise.delete.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    translateValues: this.deleteTranslateValues(),
+                    additionalChecks: this.deleteAdditionalChecks(),
+                    dialogError: this.dialogError$,
+                    onDelete: (event) => (ex.type === ExerciseType.PROGRAMMING ? this.deleteProgrammingExercise(event) : this.deleteExercise()),
+                },
+            });
+        }
+        return items;
+    });
+
+    /**
+     * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
+     */
+    deleteExercise() {
+        switch (this.exercise().type) {
+            case ExerciseType.TEXT:
+                this.deleteTextExercise();
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                this.deleteFileUploadExercise();
+                break;
+            case ExerciseType.QUIZ:
+                this.deleteQuizExercise();
+                break;
+            case ExerciseType.MODELING:
+                this.deleteModelingExercise();
+                break;
+        }
+    }
+
+    private deleteTextExercise() {
+        this.runDeletion(this.textExerciseService.delete(this.exercise().id!), 'textExerciseListModification', 'Deleted a textExercise');
+    }
+
+    private deleteModelingExercise() {
+        this.runDeletion(this.modelingExerciseService.delete(this.exercise().id!), 'modelingExerciseListModification', 'Deleted a modelingExercise');
+    }
+
+    private deleteFileUploadExercise() {
+        this.runDeletion(this.fileUploadExerciseService.delete(this.exercise().id!), 'fileUploadExerciseListModification', 'Deleted a fileUploadExercise');
+    }
+
+    private deleteQuizExercise() {
+        this.runDeletion(this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!), 'quizExerciseListModification', 'Deleted a quiz');
+    }
+
+    public deleteProgrammingExercise(event: { [key: string]: boolean }) {
+        this.runDeletion(
+            this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+            'programmingExerciseListModification',
+            'Deleted a programming exercise',
+        );
+    }
+
+    /**
+     * Starts the background deletion, shows its progress and refreshes the list once the exercise is gone.
+     */
+    private runDeletion(request$: Observable<unknown>, eventName: string, eventContent: string) {
+        this.entityDeletionService.delete(exerciseDeletionTarget(this.exercise()), request$).subscribe({
+            next: (progress) => {
+                if (isDeletionCompleted(progress)) {
+                    this.eventManager.broadcast({ name: eventName, content: eventContent });
+                    this.onDeleteExercise.emit();
+                } else if (isDeletionOutcomeUnknown(progress)) {
+                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                    this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
+                    this.deletionOutcomeUnknown.emit();
+                }
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Exports questions for the given quiz exercise in json file
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    exportQuizById(exportAll: boolean) {
+        this.quizExerciseService.findForExam(this.exercise().id!).subscribe((exercise) => {
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
+        });
+    }
+}

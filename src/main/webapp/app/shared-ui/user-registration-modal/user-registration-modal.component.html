@@ -1,0 +1,118 @@
+<tumaet-ui-dialog [(visible)]="isOpen" [dismissableMask]="true">
+    <ng-template #header>
+        <span class="flex items-center gap-2">
+            <fa-icon class="text-2xl" [icon]="faUsers" />
+            <span>{{ titleKey() | artemisTranslate }}</span>
+        </span>
+    </ng-template>
+
+    <!-- The dialog is as wide as the original 50rem dialog including its padding, and as high as 45rem including header and footer. -->
+    <div class="flex h-[min(37.5rem,calc(90dvh-7.5rem))] w-[min(48rem,calc(90dvw-2rem))] flex-col gap-4! text-[0.9rem] leading-normal" data-testid="user-registration-modal">
+        <p class="mb-0 text-text-secondary" jhiTranslate="userRegistrationModal.description"></p>
+
+        <!-- Search bar row -->
+        <div class="flex items-center gap-2">
+            <jhi-search-filter class="grow" [placeholderKey]="searchPlaceholderKey()" [disabled]="isViewingSelected()" (newSearchEvent)="onSearch($event)" />
+            @if (selectedCount() > 0) {
+                @if (isViewingSelected()) {
+                    <button tumAetUiButton type="button" size="small" variant="outlined" severity="secondary" class="shrink-0" (click)="toggleViewSelected()">
+                        <fa-icon [icon]="faSearch" />
+                        <span jhiTranslate="userRegistrationModal.backToSearch"></span>
+                    </button>
+                } @else {
+                    <button tumAetUiButton type="button" size="small" variant="outlined" severity="info" class="shrink-0" (click)="toggleViewSelected()">
+                        <fa-icon [icon]="faEye" />
+                        <span>{{ 'userRegistrationModal.viewSelected' | artemisTranslate: { count: selectedCount() } }}</span>
+                    </button>
+                }
+            }
+        </div>
+
+        <!-- Selection info row. The kit message keeps its text in a shrink-wrapped span, so it has to grow for the button to sit at the far end. -->
+        @if (selectedCount() > 0) {
+            <tumaet-ui-message severity="info" class="w-full [&_.tumaet-ui-message-text]:flex-1" data-testid="user-registration-selection-info">
+                <span class="flex w-full items-center justify-between gap-2">
+                    <span>{{ 'userRegistrationModal.selectedCount' | artemisTranslate: { count: selectedCount() } }}</span>
+                    <button tumAetUiButton type="button" variant="text" severity="secondary" size="small" class="py-0" (click)="clearSelection()">
+                        <span jhiTranslate="userRegistrationModal.clearSelection"></span>
+                    </button>
+                </span>
+            </tumaet-ui-message>
+        }
+
+        <!-- Table area -->
+        <div class="flex min-h-0 grow flex-col">
+            @if (showTable()) {
+                <div class="min-h-0 flex-1">
+                    <jhi-table-view
+                        [cols]="columns()"
+                        [vals]="tableValues()"
+                        [totalRows]="tableTotalRows()"
+                        [loading]="isLoading()"
+                        [options]="tableOptions()"
+                        [isRowDisabled]="isRowDisabledFn"
+                        [selectionSource]="selectedInCurrentResults()"
+                        [disabledRowTooltip]="'userRegistrationModal.alreadyRegisteredTooltip' | artemisTranslate"
+                        (onLazyLoad)="onTableLazyLoad($event)"
+                        (onRowSelect)="handleSelectionChange($event)"
+                    />
+                </div>
+            } @else if (noResults()) {
+                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-text-secondary">
+                    <fa-icon class="mb-4! text-[2.5rem] opacity-40" [icon]="faUsers" />
+                    <p class="mb-1 font-semibold">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
+                    <p class="text-sm text-text-secondary" jhiTranslate="userRegistrationModal.noResultsHint"></p>
+                </div>
+            } @else {
+                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-text-secondary">
+                    <fa-icon class="mb-4! text-[2.5rem] opacity-40" [icon]="faSearch" />
+                    <p class="mb-1 font-semibold" jhiTranslate="userRegistrationModal.initialTitle"></p>
+                    <p class="text-sm text-text-secondary" jhiTranslate="userRegistrationModal.initialHint"></p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" size="small" (click)="close()" jhiTranslate="entity.action.cancel"></button>
+        <button tumAetUiButton type="button" data-testid="user-registration-confirm-button" severity="primary" size="small" [disabled]="isRegisterDisabled()" (click)="register()">
+            <span>{{ 'userRegistrationModal.registerButton' | artemisTranslate: { count: selectedCount() } }}</span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>
+
+<!-- Cell templates -->
+<ng-template #profilePicTemplate let-cell>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.75"
+        [isBoxShadow]="true"
+        [authorName]="cell.data.name"
+        [authorId]="cell.data.id"
+        [imageUrl]="addPublicFilePrefix(cell.data?.profilePictureUrl)"
+    />
+</ng-template>
+
+<ng-template #nameLoginTemplate let-cell>
+    <div class="flex flex-col gap-[0.1rem] overflow-hidden">
+        <div class="flex items-center gap-1">
+            <span class="truncate" [innerHTML]="cell.data.name | highlightMatch: searchTerm()"></span>
+            @if (cell.data.isRegistered) {
+                <fa-icon [icon]="faCircleCheck" class="shrink-0 text-state-success" />
+            }
+        </div>
+        <span
+            class="truncate text-[0.8rem] text-text-secondary"
+            [attr.data-testid]="'user-registration-login-' + cell.data.login"
+            [innerHTML]="cell.data.login | highlightMatch: searchTerm()"
+        ></span>
+    </div>
+</ng-template>
+
+<ng-template #matriculationTemplate let-cell>
+    <span [innerHTML]="cell.data.registrationNumber | highlightMatch: searchTerm()"></span>
+</ng-template>
+
+<ng-template #emailTemplate let-cell>
+    <span [innerHTML]="cell.data.email | highlightMatch: searchTerm()"></span>
+</ng-template>

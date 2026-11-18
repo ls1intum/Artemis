@@ -1,0 +1,35 @@
+sort> help
+add:   adds the given Dates to the list (format: YYYY-MM-DD)
+clear: empties the list
+help:  prints this text
+print: prints the list
+sort:  sorts the list
+quit:  quits the program
+sort>
+Unknown command. Use 'help' to show available commands.
+sort> help
+add:   adds the given Dates to the list (format: YYYY-MM-DD)
+clear: empties the list
+help:  prints this text
+print: prints the list
+sort:  sorts the list
+quit:  quits the program
+sort> 2015-04-01
+Unknown command. Use 'help' to show available commands.
+sort> add 2015-04-01
+sort> print
+[Wed Apr 01 02:00:00 CEST 2015]
+sort> add 2016-04-01
+sort> add 2014-04-01
+sort> add 2015-05-01  2015-04-30
+sort> prinr
+Unknown command. Use 'help' to show available commands.
+sort> print
+[Wed Apr 01 02:00:00 CEST 2015, Fri Apr 01 02:00:00 CEST 2016, Tue Apr 01 02:00:00 CEST 2014, Fri May 01 02:00:00 CEST 2015, Thu Apr 30 02:00:00 CEST 2015]
+sort> sort
+sort> print
+[Tue Apr 01 02:00:00 CEST 2014, Wed Apr 01 02:00:00 CEST 2015, Thu Apr 30 02:00:00 CEST 2015, Fri May 01 02:00:00 CEST 2015, Fri Apr 01 02:00:00 CEST 2016]
+sort> clear
+sort> print
+[]
+sort> quit

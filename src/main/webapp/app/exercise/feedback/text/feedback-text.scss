@@ -1,0 +1,9 @@
+.feedback-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+    p {
+        display: inline;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+    }
+}

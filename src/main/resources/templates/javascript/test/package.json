@@ -1,0 +1,15 @@
+{
+    "name": "artemis-test",
+    "private": true,
+    "scripts": {
+        "test": "vitest run",
+        "test:ci": "vitest run --reporter=default --reporter=./artemis-junit-reporter.mjs"
+    },
+    "workspaces": [
+        "${studentParentWorkingDirectoryName}"
+    ],
+    "devDependencies": {
+        "vite": "^8.3.5",
+        "vitest": "^5.0.5"
+    }
+}

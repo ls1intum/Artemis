@@ -1,0 +1,20 @@
+<div class="panel-wrapper">
+    @if (panelDescriptionHeader() !== undefined) {
+        <div class="flex panel-header">
+            <div class="w-7/12 shrink-0">
+                {{ panelHeader() }}
+            </div>
+            <div class="w-5/12 shrink-0" style="margin-left: -3px">
+                {{ panelDescriptionHeader()! }}
+            </div>
+        </div>
+    } @else {
+        <div class="panel-header">
+            {{ panelHeader() }}
+        </div>
+    }
+    <div class="vertLine"></div>
+    <div class="panel-body">
+        <ng-content />
+    </div>
+</div>

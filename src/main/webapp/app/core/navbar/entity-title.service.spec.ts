@@ -1,0 +1,323 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import 'app/foundation/util/map.extension';
+
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => {
+    const originalModule = await importOriginal<typeof import('app/core/error-reporting/capture-exception')>();
+    return {
+        ...originalModule,
+        captureException: vi.fn(),
+    };
+});
+
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TestBed } from '@angular/core/testing';
+import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { User } from 'app/account/user/user.model';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+
+describe('EntityTitleService', () => {
+    let service: EntityTitleService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                // Override the service to get a fresh instance for each test
+                { provide: EntityTitleService, useClass: EntityTitleService },
+            ],
+        });
+        service = TestBed.inject(EntityTitleService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('returns a title that was set immediately', async () => {
+        service.setTitle(EntityType.COURSE, [1], 'Test Course');
+
+        const result = await firstValueFrom(service.getTitle(EntityType.COURSE, [1]));
+
+        expect(result).toBe('Test Course');
+    });
+
+    it.each([
+        { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
+        { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
+        { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
+        { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
+        { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
+        { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },
+    ])('fires a request to fetch the title after 3 seconds', async ({ type, ids, url }: { type: EntityType; ids: number[]; url: string }) => {
+        // Use real timers with actual delay
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Test Entity' })));
+
+        let result: string | undefined = undefined;
+        const subscription = service.getTitle(type, ids).subscribe((title) => (result = title));
+
+        // Check that nothing happens initially
+        expect(result).toBeUndefined();
+        expect(httpSpy).not.toHaveBeenCalled();
+
+        // Wait for the 3 second fallback timeout plus a small buffer
+        await new Promise((resolve) => setTimeout(resolve, 3100));
+
+        expect(httpSpy).toHaveBeenCalledOnce();
+        expect(httpSpy).toHaveBeenCalledWith(`api/${url}/title`, { observe: 'response', responseType: 'text' });
+        expect(result).toBe('Test Entity');
+
+        subscription.unsubscribe();
+    });
+
+    it('fetches a tutorial group title as plain text through the generated API', () => {
+        vi.useFakeTimers();
+        try {
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+
+            const http = TestBed.inject(HttpTestingController);
+            const request = http.expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+            expect(request.request.method).toBe('GET');
+            expect(request.request.responseType).toBe('text');
+            request.flush('Tutorial title');
+            expect(titles).toEqual(['Tutorial title']);
+            http.verify();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('does not overwrite a renamed tutorial group with an older fallback response', () => {
+        vi.useFakeTimers();
+        try {
+            const response = new Subject<string>();
+            vi.spyOn(TestBed.inject(TutorialGroupApi), 'getTitle').mockReturnValue(response);
+            const titles: string[] = [];
+            service.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+            service.setTitle(EntityType.TUTORIAL_GROUP, [17], 'Renamed group');
+            response.next('Previous group title');
+            expect(titles).toEqual(['Renamed group']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('waits for a title to be set if not present and does not fire the request if it arrives within 3 seconds', async () => {
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Test Hint' })));
+
+        let result: string | undefined = undefined;
+        const subscription = service.getTitle(EntityType.COURSE, [1]).subscribe((title) => (result = title));
+
+        // Initially no result
+        expect(result).toBeUndefined();
+
+        // Wait a bit but less than 3 seconds
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        expect(result).toBeUndefined();
+
+        // Set title before the 3 second timeout
+        service.setTitle(EntityType.COURSE, [1], 'Test Course');
+
+        // The result should be set immediately after setTitle
+        expect(result).toBe('Test Course');
+
+        // Wait past 3 seconds total
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        // HTTP should not have been called since we set the title before the timeout
+        expect(httpSpy).not.toHaveBeenCalled();
+
+        subscription.unsubscribe();
+    });
+
+    it.each([
+        { type: EntityType.COURSE, ids: [] },
+        { type: EntityType.COURSE, ids: [undefined] },
+        { type: undefined, ids: [undefined] },
+        { type: undefined, ids: [] },
+    ])('captures an exception if invalid parameters are supplied to getTitle', async ({ type, ids }) => {
+        // Re-mock to get reference because direct import doesn't work here
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
+        captureSpy.mockClear();
+
+        // @ts-ignore we want to test invalid params
+        const observable = service.getTitle(type, ids);
+        let result: string | undefined = undefined;
+        observable.subscribe((title) => (result = title));
+
+        // Since EMPTY observable completes immediately, the spy should have been called synchronously
+        expect(captureSpy).toHaveBeenCalled();
+        expect(result).toBeUndefined();
+    });
+
+    it.each([
+        { type: EntityType.COURSE, ids: [], title: 'Test' },
+        { type: EntityType.COURSE, ids: [undefined], title: 'Test' },
+        { type: undefined, ids: [undefined], title: 'Test' },
+        { type: undefined, ids: [], title: 'Test' },
+        { type: EntityType.COURSE, ids: [], title: undefined },
+        { type: EntityType.COURSE, ids: [undefined], title: undefined },
+        { type: undefined, ids: [undefined], title: undefined },
+        { type: undefined, ids: [], title: undefined },
+    ])('captures an exception if invalid parameters are supplied to setTitle', ({ type, ids, title }) => {
+        // Re-mock to get reference because direct import doesn't work here
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
+        captureSpy.mockClear();
+
+        // @ts-ignore we want to test invalid params
+        service.setTitle(type, ids, title);
+        expect(captureSpy).toHaveBeenCalled();
+    });
+
+    it('sets the exercise group title for students during an exam', async () => {
+        const exercise = { id: 1, exerciseGroup: { title: 'Group Title' }, isAtLeastTutor: false } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        const result = await firstValueFrom(service.getTitle(EntityType.EXERCISE, [1]));
+
+        expect(result).toBe('Group Title');
+    });
+
+    it('sets the exercise title for tutors and more privileged users', async () => {
+        const exercise = { id: 1, exerciseGroup: { title: 'Group Title' }, isAtLeastTutor: true, title: 'Exercise Title' } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        const result = await firstValueFrom(service.getTitle(EntityType.EXERCISE, [1]));
+
+        expect(result).toBe('Exercise Title');
+    });
+
+    it('sets the exercise title for course exercises', async () => {
+        const exercise = { id: 1, isAtLeastTutor: false, title: 'Exercise Title' } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        const result = await firstValueFrom(service.getTitle(EntityType.EXERCISE, [1]));
+
+        expect(result).toBe('Exercise Title');
+    });
+});
+
+describe('EntityTitleService - authentication state changes', () => {
+    let authState: BehaviorSubject<User | undefined>;
+    let scoped: EntityTitleService;
+
+    beforeEach(() => {
+        authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+        const customAccountService = new MockAccountService();
+        customAccountService.userIdentity.set({ id: 99 } as User);
+        customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useValue: customAccountService },
+                { provide: EntityTitleService, useClass: EntityTitleService },
+            ],
+        });
+        scoped = TestBed.inject(EntityTitleService);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should cancel pending title fetches when the injector is destroyed', () => {
+        vi.useFakeTimers();
+        const http = TestBed.inject(HttpClient);
+        const httpSpy = vi.spyOn(http, 'get').mockReturnValue(of(new HttpResponse<string>({ body: 'Late Title' })));
+
+        scoped.getTitle(EntityType.COURSE, [1]).subscribe();
+
+        // Destroys the injector, like the TestBed teardown after each test
+        TestBed.resetTestingModule();
+        vi.advanceTimersByTime(3000);
+
+        expect(httpSpy).not.toHaveBeenCalled();
+    });
+
+    it('should clear cached titles on logout', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+        const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(before).toBe('Course Title');
+
+        authState.next(undefined);
+
+        // After reset, getTitle returns a fresh subject that hasn't been populated.
+        const observable = scoped.getTitle(EntityType.COURSE, [1]);
+        let received: string | undefined;
+        const sub = observable.subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should clear cached titles when a different user logs in', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 42 } as User);
+
+        let received: string | undefined;
+        const sub = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should not clear titles when the same user re-emits', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 99 } as User);
+
+        const result = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(result).toBe('Course Title');
+    });
+
+    it('ignores a tutorial group title response after logout', () => {
+        vi.useFakeTimers();
+        scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe();
+        vi.advanceTimersByTime(3000);
+        const request = TestBed.inject(HttpTestingController).expectOne('/api/tutorialgroup/tutorial-groups/17/title');
+
+        authState.next(undefined);
+        request.flush('Previous user title');
+
+        const titles: string[] = [];
+        const subscription = scoped.getTitle(EntityType.TUTORIAL_GROUP, [17]).subscribe((title) => titles.push(title));
+        expect(titles).toEqual([]);
+        subscription.unsubscribe();
+        TestBed.inject(HttpTestingController).verify();
+    });
+
+    it('should ignore in-flight title fetches that resolve after a logout', () => {
+        const http = TestBed.inject(HttpClient);
+        const inFlight = new Subject<HttpResponse<string>>();
+        vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
+
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test synchronous.
+        (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
+
+        authState.next(undefined);
+
+        // The HTTP response arrives after logout. The fetch handler must short-circuit so it does
+        // not seed a fresh subject (via setTitle's computeIfAbsent) with the previous user's title.
+        inFlight.next(new HttpResponse<string>({ body: 'Stale Title' }));
+        inFlight.complete();
+
+        let received: string | undefined;
+        const after = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        after.unsubscribe();
+    });
+});

@@ -1,0 +1,133 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { LectureSearchService } from './lecture-search.service';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+
+describe('LectureSearchService', () => {
+    let service: LectureSearchService;
+    let httpTesting: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [LectureSearchService, provideHttpClient(), provideHttpClientTesting()],
+        });
+        service = TestBed.inject(LectureSearchService);
+        httpTesting = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpTesting.verify();
+    });
+
+    it('should be created', () => {
+        expect(service).toBeTruthy();
+    });
+
+    it('should POST to api/iris/lecture-search with query and default limit of 10', () => {
+        service.search('angular signals').subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({ query: 'angular signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('suppresses the global error alert only for a silent search', () => {
+        service.search('signals').subscribe();
+        service.search('signals', 10, undefined, undefined, true).subscribe();
+
+        const [loud, silent] = httpTesting.match('api/iris/lecture-search');
+        expect(loud.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(false);
+        expect(silent.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+
+        loud.flush([]);
+        silent.flush([]);
+    });
+
+    it('should accept a custom limit', () => {
+        service.search('spring boot', 25).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'spring boot', limit: 25 });
+
+        req.flush([]);
+    });
+
+    it('should include courseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, [3, 7]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, courseIds: [3, 7] });
+
+        req.flush([]);
+    });
+
+    it('should include excludeCourseIds in the body when a non-empty array is passed', () => {
+        service.search('signals', 10, undefined, [5]).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10, excludeCourseIds: [5] });
+
+        req.flush([]);
+    });
+
+    it('should omit excludeCourseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, undefined, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when an empty array is passed', () => {
+        service.search('signals', 10, []).subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
+        expect(req.request.body).toEqual({ query: 'signals', limit: 10 });
+
+        req.flush([]);
+    });
+
+    it('should omit courseIds from the body when the argument is omitted', () => {
+        service.search('signals').subscribe();
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        expect(req.request.body).not.toHaveProperty('courseIds');
+
+        req.flush([]);
+    });
+
+    it('should return the results from the server', () => {
+        const mockResults: LectureSearchResult[] = [
+            {
+                course: { id: 1, name: 'Advanced Web Development' },
+                lecture: { id: 1, name: 'Angular Basics' },
+                lectureUnit: {
+                    id: 1,
+                    name: 'Introduction to Signals',
+                    link: '/courses/1/lectures/1/units/1',
+                    pageNumber: 3,
+                    sourceType: 'lecture_unit_slide',
+                    queryParams: { unit: 1, page: 3 },
+                },
+                snippet: 'Signals are a reactive primitive...',
+            },
+        ];
+
+        let actualResults: LectureSearchResult[] | undefined;
+        service.search('signals').subscribe((results) => {
+            actualResults = results;
+        });
+
+        const req = httpTesting.expectOne('api/iris/lecture-search');
+        req.flush(mockResults);
+
+        expect(actualResults).toEqual(mockResults);
+    });
+});

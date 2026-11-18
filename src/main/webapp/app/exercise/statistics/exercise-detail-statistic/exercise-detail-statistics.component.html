@@ -1,0 +1,36 @@
+<div class="grid grid-cols-12 gap-6! justify-between" data-testid="exercise-statistics-summary">
+    <jhi-doughnut-chart
+        class="col-span-12 md:col-span-4"
+        [course]="course()"
+        [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+        [exerciseGroup]="exercise().exerciseGroup"
+        [exerciseId]="exercise().id!"
+        [exerciseType]="exerciseType()"
+        [currentPercentage]="doughnutStats()?.averageScoreOfExercise"
+        [currentAbsolute]="doughnutStats()?.absoluteAveragePoints"
+        [currentMax]="doughnutStats()?.maxPointsOfExercise"
+    />
+    <jhi-doughnut-chart
+        class="col-span-12 md:col-span-4"
+        [course]="course()"
+        [contentType]="DoughnutChartType.PARTICIPATIONS"
+        [exerciseGroup]="exercise().exerciseGroup"
+        [exerciseId]="exercise().id!"
+        [exerciseType]="exerciseType()"
+        [currentPercentage]="doughnutStats()?.participationsInPercent"
+        [currentAbsolute]="doughnutStats()?.numberOfParticipations"
+        [currentMax]="doughnutStats()?.numberOfStudentsOrTeamsInCourse"
+    />
+    @if (isCommunicationEnabled(course())) {
+        <jhi-doughnut-chart
+            class="col-span-12 md:col-span-4"
+            [course]="course()"
+            [contentType]="DoughnutChartType.QUESTIONS"
+            [exerciseId]="exercise().id!"
+            [exerciseType]="exerciseType()"
+            [currentPercentage]="doughnutStats()?.resolvedPostsInPercent"
+            [currentAbsolute]="doughnutStats()?.numberOfResolvedPosts"
+            [currentMax]="doughnutStats()?.numberOfPosts"
+        />
+    }
+</div>

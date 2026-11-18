@@ -1,0 +1,36 @@
+{
+    "artemisApp": {
+        "feedback": {
+            "home": {
+                "title": "Feedbacks",
+                "createLabel": "Feedback erstellen"
+            },
+            "created": "Feedback erstellt mit ID {{ param }}",
+            "updated": "Feedback aktualisiert mit ID {{ param }}",
+            "deleted": "Feedback gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll das Feedback{{ text }} wirklich gelöscht werden?"
+            },
+            "detail": {
+                "title": "Feedback"
+            },
+            "text": "Text",
+            "detailText": "Detailtext",
+            "type": "Type",
+            "result": "Ergebnis",
+            "truncatedInfo": "Das Feedback ist lang und wurde eventuell gekürzt.",
+            "downloadTruncatedFeedback": "Feedback herunterladen",
+            "modal": {
+                "submitted": "Abgegeben",
+                "scoreChartAriaLabel": "Balkendiagramm der erreichten Punktzahl dieser Abgabe",
+                "linkedToCommit": "verknüpft mit Commit"
+            },
+            "group": {
+                "wrong": "Falsch",
+                "warning": "Warnung",
+                "info": "Info",
+                "correct": "Korrekt"
+            }
+        }
+    }
+}

@@ -1,0 +1,127 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
+import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { DragAndDropQuestionStatisticComponent } from 'app/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-drop-question-statistic.model';
+import { DropLocationCounter } from 'app/quiz/shared/entities/drop-location-counter.model';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+
+const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
+const dropLocation1 = { id: 1, posX: 5, invalid: false, tempID: 1 } as DropLocation;
+const dropLocation2 = { id: 2, posX: 0, invalid: false, tempID: 2 } as DropLocation;
+const dropLocationCounter1 = { dropLocationId: 1, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
+const dropLocationCounter2 = { dropLocationId: 2, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
+const questionStatistic = { dropLocationCounters: [dropLocationCounter1, dropLocationCounter2] } as DragAndDropQuestionStatistic;
+const question = { id: 1, dropLocations: [dropLocation1, dropLocation2] } as DragAndDropQuestion;
+const course = { id: 2 } as Course;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
+
+describe('QuizExercise Drag And Drop Question Statistic Component', () => {
+    let comp: DragAndDropQuestionStatisticComponent;
+    let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
+    let quizService: QuizExerciseService;
+    let accountService: MockAccountService;
+    let quizServiceFindSpy: any;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(ChangeDetectorRef),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideTemplate(DragAndDropQuestionStatisticComponent, '')
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(DragAndDropQuestionStatisticComponent);
+                comp = fixture.componentInstance;
+                quizService = TestBed.inject(QuizExerciseService);
+                accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(quizExercise));
+            });
+    });
+
+    afterEach(() => {
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
+    });
+
+    describe('onInit', () => {
+        it('should call functions on Init', () => {
+            accountService.isAtLeastTutor.set(true);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
+            comp.websocketChannelForData = '';
+
+            comp.ngOnInit();
+
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(42, 1);
+            expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
+        });
+
+        it('should not load Quiz if not authorised', () => {
+            accountService.isAtLeastTutor.set(false);
+            const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
+
+            comp.ngOnInit();
+
+            expect(quizServiceFindSpy).not.toHaveBeenCalled();
+            expect(loadQuizSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('loadLayout', () => {
+        it('should call functions from loadLayout', () => {
+            accountService.isAtLeastTutor.set(true);
+            const orderDropLocationSpy = vi.spyOn(comp, 'orderDropLocationByPos');
+            const resetLabelsSpy = vi.spyOn(comp, 'resetLabelsColors');
+            const addLastBarSpy = vi.spyOn(comp, 'addLastBarLayout');
+            const loadInvalidLayoutSpy = vi.spyOn(comp, 'loadInvalidLayout');
+
+            comp.ngOnInit();
+            comp.loadLayout();
+
+            expect(orderDropLocationSpy).toHaveBeenCalledTimes(2);
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('loadData', () => {
+        it('should call functions from loadData', () => {
+            accountService.isAtLeastTutor.set(true);
+            const resetDataSpy = vi.spyOn(comp, 'resetData');
+            const updateDataSpy = vi.spyOn(comp, 'updateData');
+
+            comp.ngOnInit();
+            comp.loadData();
+
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
+        });
+    });
+});

@@ -1,0 +1,117 @@
+package de.tum.cit.aet.artemis.assessment.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
+import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
+import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+
+/**
+ * REST controller for managing TutorParticipation.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.TUTOR_TRAINING)
+@RestController
+@RequestMapping("api/assessment/")
+public class TutorParticipationResource {
+
+    private static final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
+
+    private static final String ENTITY_NAME = "tutorParticipation";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final TutorParticipationService tutorParticipationService;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final UserRepository userRepository;
+
+    public TutorParticipationResource(TutorParticipationService tutorParticipationService, TutorParticipationRepository tutorParticipationRepository,
+            ExerciseRepository exerciseRepository, UserRepository userRepository) {
+        this.tutorParticipationService = tutorParticipationService;
+        this.tutorParticipationRepository = tutorParticipationRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * POST /exercises/:exerciseId/tutor-participations : start the "id" exercise for the current tutor. A tutor participation will be created and returned for the exercise given
+     * by the exercise id. The tutor participation status will be assigned based on which features are available for the exercise (e.g. grading instructions) The method is valid
+     * only for tutors, since it inits the tutor participation to the exercise, which is different from a standard participation
+     *
+     * @param exerciseId the id of the exercise for which to init a tutorParticipations
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @throws URISyntaxException if URI path can't be created
+     */
+    @PostMapping("exercises/{exerciseId}/tutor-participations")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<TutorParticipationDTO> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+        log.debug("REST request to start tutor participation : {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+
+        if (tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
+            // tutorParticipation already exists
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "tutorParticipationAlreadyExists",
+                    "There is already a tutorParticipations for the given exercise and user.")).body(null);
+        }
+
+        TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
+        TutorParticipationDTO dto = TutorParticipationDTO.of(tutorParticipation);
+        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "/tutor-participations/" + tutorParticipation.getId())).body(dto);
+    }
+
+    /**
+     * POST /exercises/:exerciseId/assess-example-submission: Add an example submission to the tutor participation of the given exercise.
+     * If it is just for review (not used for tutorial), the method just records that the tutor has read it.
+     * If it is a tutorial, the method checks if the assessment given by the tutor matches the instructor one.
+     * If yes, then it returns the participation, if not, it returns an error.
+     *
+     * @param exerciseId        the id of the exercise of the tutorParticipation
+     * @param exampleSubmission the example submission that will be added, carrying the tutor's assessment as the feedback of its latest result
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @PostMapping("exercises/{exerciseId}/assess-example-submission")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId,
+            @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
+        log.debug("REST request to add example submission to exercise id : {}", exerciseId);
+        Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+
+        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
+
+        TutorParticipationDTO dto = TutorParticipationDTO.of(resultTutorParticipation);
+        return ResponseEntity.ok().body(dto);
+    }
+}

@@ -1,0 +1,46 @@
+<button
+    type="button"
+    tumAetUiButton
+    [severity]="severity()"
+    [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
+    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+    [forceDisabled]="disabled()"
+    [size]="size()"
+    [tumAetUiPopoverTrigger]="popoverContent"
+    data-testid="code-button"
+>
+    <fa-icon [icon]="faCode" />
+    @if (displayLabel()) {
+        {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+    }
+</button>
+
+<tumaet-ui-popover
+    #popoverContent
+    [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate"
+    placement="bottom"
+    padding="none"
+    (openChange)="handleOpenChange($event)"
+>
+    <div class="w-130 max-w-[calc(100vw-2rem)]">
+        @let state = loadingState();
+        @if (state.status === 'idle' || state.status === 'loading') {
+            <div class="flex h-40 w-full items-center justify-center">
+                <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
+            </div>
+        } @else if (state.status === 'complete') {
+            <jhi-code-button-popover-content
+                [repositoryViewLink]="repositoryViewLink()"
+                [authenticationMethodData]="state.authenticationMethodData"
+                [preferredIde]="state.preferredIde"
+                [theiaLinkData]="state.theiaLinkData"
+                [(showAlternatives)]="showAlternatives"
+            />
+        } @else {
+            <div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-center">
+                <fa-icon class="text-state-danger" [icon]="faCircleExclamation" size="2x" aria-hidden="true" />
+                <span class="max-w-70">{{ 'artemisApp.exerciseActions.codePopoverError' | artemisTranslate }}</span>
+            </div>
+        }
+    </div>
+</tumaet-ui-popover>

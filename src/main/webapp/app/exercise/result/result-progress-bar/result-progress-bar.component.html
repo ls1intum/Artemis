@@ -1,0 +1,40 @@
+<div
+    class="max-w-fit min-w-[14.4rem] max-h-[2.22rem] overflow-hidden whitespace-nowrap"
+    [class]="showBorder() ? 'rounded-lg p-1 border bg-module font-semibold' : ''"
+    [tumAetUiTooltip]="'artemisApp.editor.toolTip' | artemisTranslate"
+>
+    <div class="mb-1 text-[0.82rem]">
+        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
+        @if (isQueued()) {
+            <span jhiTranslate="artemisApp.editor.queued"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.editor.building"></span>
+        }
+        @if (estimatedRemaining() && estimatedRemaining() > 0) {
+            <span> {{ estimatedRemaining() | artemisDurationFromSeconds }}</span>
+        }
+    </div>
+    <div class="flex justify-center items-center gap-2 w-full">
+        <tumaet-ui-progress-bar
+            class="w-1/4"
+            [class.transition-opacity]="!isQueueProgressBarAnimated()"
+            [class.duration-500]="!isQueueProgressBarAnimated()"
+            [style.opacity]="queueProgressBarOpacity()"
+            [value]="queueProgressBarValue()"
+            [showValue]="false"
+            severity="warn"
+            size="small"
+            ariaLabel="queue progress"
+        />
+        <tumaet-ui-progress-bar
+            class="w-3/4"
+            [class.transition-opacity]="!isBuildProgressBarAnimated()"
+            [class.duration-500]="!isBuildProgressBarAnimated()"
+            [style.opacity]="buildProgressBarOpacity()"
+            [value]="buildProgressBarValue()"
+            [showValue]="false"
+            size="small"
+            ariaLabel="build progress"
+        />
+    </div>
+</div>

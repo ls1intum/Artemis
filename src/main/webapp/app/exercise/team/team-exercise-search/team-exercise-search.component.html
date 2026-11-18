@@ -1,0 +1,19 @@
+<tumaet-ui-autocomplete
+    [ariaLabel]="'artemisApp.team.selectExerciseForImport' | artemisTranslate"
+    #autocomplete
+    data-testid="exercise-search-input"
+    inputId="exercise-search-input"
+    name="exercise-search"
+    class="block w-full"
+    [ngModel]="inputDisplayValue"
+    [ngModelOptions]="{ standalone: true }"
+    [suggestions]="suggestions()"
+    optionLabel="label"
+    optionDisabled="disabled"
+    [minLength]="0"
+    [debounceMs]="0"
+    [completeOnFocus]="true"
+    [placeholder]="'artemisApp.team.selectExerciseForImport' | artemisTranslate"
+    (searchRequested)="requestSearch($event.query)"
+    (optionSelected)="selectOption($event)"
+/>

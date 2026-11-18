@@ -1,0 +1,6 @@
+- name: build
+  script: 'dotnet build "${testWorkingDirectory}"'
+- name: test
+  script: 'dotnet test --logger=junit "${testWorkingDirectory}"'
+  resultPaths:
+    - '${testWorkingDirectory}/TestResults/TestResults.xml'

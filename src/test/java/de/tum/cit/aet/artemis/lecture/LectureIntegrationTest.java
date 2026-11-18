@@ -1,0 +1,895 @@
+package de.tum.cit.aet.artemis.lecture;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+
+class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    private static final String TEST_PREFIX = "lectureintegrationtest";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private SlideTestRepository slideRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    private Attachment attachmentOfAttachmentVideoUnit;
+
+    private TextExercise textExercise;
+
+    private Course course1;
+
+    private Lecture lecture1;
+
+    private Lecture lecture2;
+
+    private AttachmentVideoUnit attachmentVideoUnit;
+
+    private Competency competency;
+
+    private final String lectureTitle = "Lecture 7349";
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void learningStatisticsCountsOnlyReleasedNonExerciseUnitsAndOwnCompletions() throws Exception {
+        attachmentVideoUnit.setReleaseDate(null);
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        var text = lecture1.getLectureUnits().stream().filter(unit -> unit instanceof TextUnit).findFirst().orElseThrow();
+        text.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        lectureUnitRepository.save(text);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=true", null, HttpStatus.OK, null);
+
+        var statistics = request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.OK, LectureLearningStatisticsDTO.class);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=false", null, HttpStatus.OK, null);
+        assertThat(statistics).noneMatch(row -> row.type().equals("exercise") || row.type().equals("attachment"));
+        assertThat(statistics.stream().filter(row -> row.type().equals("text")).mapToLong(row -> row.completed()).sum()).isEqualTo(1);
+        assertThat(statistics.stream().mapToLong(row -> row.total()).sum()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void learningStatisticsRejectsStudentsOutsideTheCourse() throws Exception {
+        request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.FORBIDDEN, LectureLearningStatisticsDTO.class);
+    }
+
+    @BeforeEach
+    void initTestCase() throws Exception {
+        // Remove all existing lectures with the same title to avoid unique constraint violations
+        lectureRepository.deleteAttachmentsByLectureTitle(lectureTitle);
+        lectureRepository.deleteLectureUnitsByLectureTitle(lectureTitle);
+        lectureRepository.deleteLecturesByTitle(lectureTitle);
+
+        int numberOfTutors = 2;
+        userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, numberOfTutors);
+        this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
+
+        var lectures = this.course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        createChannelsForLectures(lectures);
+
+        lecture2.setIsTutorialLecture(true);
+        lectureRepository.save(lecture2);
+
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+
+        // Add users that are not in the course
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
+
+        // Setting up a lecture with various kinds of content
+        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture1);
+        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
+        TextUnit textUnit = lectureUtilService.createTextUnit(lecture1);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
+
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, textUnit, onlineUnit));
+
+        competency = competencyUtilService.createCompetency(course1);
+        competencyUtilService.linkExerciseToCompetency(competency, textExercise);
+    }
+
+    private void testAllPreAuthorize() throws Exception {
+        // creating and updating a lecture carry the course in the request body, so the role is checked against that course
+        var courseDto = LectureResource.SimpleLectureDTO.CourseDTO.from(course1);
+        var newLecture = new LectureResource.SimpleLectureDTO(null, "Forbidden", null, ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false, null, courseDto);
+        var existingLecture = new LectureResource.SimpleLectureDTO(lecture1.getId(), "Forbidden", null, ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false, null,
+                courseDto);
+        request.postWithResponseBody("/api/lecture/lectures", newLecture, Lecture.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/lecture/lectures", existingLecture, Lecture.class, HttpStatus.FORBIDDEN);
+        request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
+        request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    private void createChannelsForLectures(List<Lecture> lectures) {
+        Lecture firstLecture = lectures.getFirst();
+        firstLecture.setTitle(lectureTitle);
+        Channel firstChannel = new Channel();
+        firstChannel.setCourse(course1);
+        firstChannel.setIsAnnouncementChannel(false);
+        firstChannel.setIsPublic(true);
+        firstChannel.setIsArchived(false);
+        firstChannel.setName("lecture-lecture-1");
+        this.lecture1 = lectureRepository.save(firstLecture);
+        firstChannel.setLecture(this.lecture1);
+        channelRepository.save(firstChannel);
+
+        Lecture lastLecture = lectures.getLast();
+        lastLecture.setTitle("Lecture 2");
+        Channel secondChannel = new Channel();
+        secondChannel.setCourse(course1);
+        secondChannel.setIsAnnouncementChannel(false);
+        secondChannel.setIsPublic(true);
+        secondChannel.setIsArchived(false);
+        secondChannel.setName("lecture-lecture-2");
+        this.lecture2 = lectureRepository.save(lastLecture);
+        secondChannel.setLecture(this.lecture2);
+        channelRepository.save(secondChannel);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAll_asTutor() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAll_asStudent() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "lecture-loremipsum", "" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLecture_correctRequestBody_shouldCreateLecture(String channelName) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        courseUtilService.enableMessagingForCourse(course);
+
+        conversationUtilService.createCourseWideChannel(course, "loremipsum");
+
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(),
+                ZonedDateTime.now().plusWeeks(1), false, channelName, LectureResource.SimpleLectureDTO.CourseDTO.from(course));
+        Lecture returnedLecture = request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.CREATED);
+
+        Channel channel = channelRepository.findChannelByLectureId(returnedLecture.getId());
+
+        assertThat(returnedLecture).isNotNull();
+        assertThat(returnedLecture.getId()).isNotNull();
+        assertThat(returnedLecture.getTitle()).isEqualTo(lecture.title());
+        assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.course().id());
+        assertThat(returnedLecture.getDescription()).isEqualTo(lecture.description());
+        assertThat(returnedLecture.getStartDate()).isEqualTo(lecture.startDate());
+        assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.endDate());
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "Invalid dates", null, startDate, startDate.plusHours(endDateOffsetHours), false,
+                null, LectureResource.SimpleLectureDTO.CourseDTO.from(course));
+
+        request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
+        Lecture lecture = new Lecture();
+        lecture.setId(1L);
+        request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
+        Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
+        String editedChannelName = "edited-lecture-channel";
+        var updatedStartDate = ZonedDateTime.now().plusMonths(3);
+        var updatedEndDate = updatedStartDate.plusHours(1);
+        conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedStartDate, updatedEndDate, false,
+                editedChannelName, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
+
+        // create channel with same name
+
+        // lecture channel should be updated despite another channel with the same name
+        LectureResource.SimpleLectureDTO updatedLecture = request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.OK);
+
+        Channel channel = channelRepository.findChannelByLectureId(updatedLecture.id());
+
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo(editedChannelName);
+        assertThat(updatedLecture.title()).isEqualTo("Updated");
+        assertThat(updatedLecture.description()).isEqualTo("Updated");
+        assertThat(updatedLecture.startDate()).isEqualTo(updatedStartDate);
+        assertThat(updatedLecture.endDate()).isEqualTo(updatedEndDate);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now().plusMonths(3);
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Invalid dates", null, startDate,
+                startDate.plusHours(endDateOffsetHours), false, null, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
+        String originalDescription = otherLecture.getDescription();
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(otherLecture.getId(), "Malicious Update", "Updated from another course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "attacker-renamed-channel", LectureResource.SimpleLectureDTO.CourseDTO.from(course1));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.FORBIDDEN);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(otherLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalDescription);
+        assertThat(unchangedLecture.getTitle()).isEqualTo(otherLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
+        Course otherAuthorizedCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Mismatched Update", "Updated with mismatched course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "mismatched-channel",
+                LectureResource.SimpleLectureDTO.CourseDTO.from(otherAuthorizedCourse));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(originalLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalLecture.getDescription());
+        assertThat(unchangedLecture.getTitle()).isEqualTo(originalLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_nullCourseInBody_shouldReturnBadRequest() throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Null Course Update", "Updated with null course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "null-course-channel", null);
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(originalLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalLecture.getDescription());
+        assertThat(unchangedLecture.getTitle()).isEqualTo(originalLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
+        originalLecture.setId(null);
+
+        request.putWithResponseBody("/api/lecture/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
+        assertThat(returnedLectures).hasSize(2);
+        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
+        assertThat(lecture.getLectureUnits()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getLectureForCourse_WithLectureUnitsWithSlides_shouldGetLecturesWithLectureUnitsWithSlides() throws Exception {
+        int numberOfSlides = 2;
+        Lecture lectureWithSlides = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
+        lectureWithSlides = lectureRepository.save(lectureWithSlides);
+        AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlides(lectureWithSlides, numberOfSlides);
+        lectureWithSlides = lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithSlides));
+
+        AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lectureWithSlides);
+        lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithoutSlides));
+
+        List<LectureResource.GetLecturesDTO> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK,
+                LectureResource.GetLecturesDTO.class);
+
+        final Lecture finalLectureWithSlides = lectureWithSlides;
+        LectureResource.GetLecturesDTO filteredLecture = returnedLectures.stream().filter(lecture -> lecture.id().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
+
+        assertThat(filteredLecture.lectureUnits()).hasSize(2);
+        assertThat(filteredLecture.lectureUnits().stream().map(LectureResource.AttachmentVideoUnitDTO::id).toList()).contains(attachmentVideoUnitWithSlides.getId());
+        LectureResource.AttachmentVideoUnitDTO attachmentVideoUnitDTO = filteredLecture.lectureUnits().stream()
+                .filter(unit -> unit.id().equals(attachmentVideoUnitWithSlides.getId())).findFirst().orElseThrow();
+        assertThat(attachmentVideoUnitDTO.slides()).hasSize(numberOfSlides);
+        assertThat(attachmentVideoUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentVideoUnitDTO.attachment().displayPageNumbers()).isEqualTo(attachmentVideoUnitWithSlides.getAttachment().getDisplayPageNumbers());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void getLecture_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
+        request.get("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN, Lecture.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.FORBIDDEN, LectureDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLecture_ExerciseAndAttachmentReleased_shouldGetLectureWithAllLectureUnits() throws Exception {
+        attachmentOfAttachmentVideoUnit.setDisplayPageNumbers(List.of(75, 76, 77));
+        attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(4);
+        LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
+        assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
+        // the exercise is projected as on the course overview; the lecture page renders it with the same exercise row
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(textExercise.getExerciseType());
+        assertThat(exerciseUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
+
+        testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_athenaFormativeFeedbackEnabled_shouldReportItEnabled() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(lecture1.getCourse().getId());
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        // the discussion section reads this switch; the configuration is lazy, so an unfetched one would report false here
+        assertThat(receivedLectureWithDetails.course().athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentWithHiddenSlides_shouldDropHiddenSlideDisplayPageNumbers() throws Exception {
+        Lecture lecture = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
+        lecture = lectureRepository.save(lecture);
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlides(lecture, 4);
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit));
+
+        // Full-deck display page numbers, indexed by slide number (index 0 = slide 1).
+        unit.getAttachment().setDisplayPageNumbers(List.of(10, 5, 12, 7));
+        attachmentRepository.save(unit.getAttachment());
+
+        // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(unit.getId(), 2);
+        hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(hiddenSlide);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream().filter(LectureDetailsDTO.AttachmentUnitDTO.class::isInstance)
+                .map(LectureDetailsDTO.AttachmentUnitDTO.class::cast).filter(candidate -> candidate.id().equals(unit.getId())).findFirst().orElseThrow();
+        // The entry for the hidden slide (display page 5) is removed and the rest compacted to stay aligned with the student PDF.
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(10, 12, 7);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentDisplayPageNumbersStoredAsComparableJson_shouldLoadOnPostgres() throws Exception {
+        attachmentOfAttachmentVideoUnit.setDisplayPageNumbers(List.of(1, 3, 5));
+        attachmentRepository.saveAndFlush(attachmentOfAttachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow().getDisplayPageNumbers()).containsExactly(1, 3, 5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        attachmentVideoUnitRepository.saveWithVideoSource(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.videosource.domain.VideoSourceType.YOUTUBE);
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_nonYoutubeUnit_bothFieldsNull() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://live.rbg.tum.de/w/foo/123");
+        attachmentVideoUnitRepository.saveWithVideoSource(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isNull();
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isNull();
+    }
+
+    private void testGetLecture(Long lectureId) throws Exception {
+        Lecture originalLecture = request.get("/api/lecture/lectures/" + lectureId, HttpStatus.OK, Lecture.class);
+        assertThat(originalLecture.getId()).isEqualTo(lectureId);
+        // should not fetch lecture units or posts
+        assertThat(originalLecture.getLectureUnits()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLecture_ExerciseNotReleased_shouldGetLectureWithoutExerciseUnit() throws Exception {
+        TextExercise exercise = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(10));
+        textExerciseRepository.saveAndFlush(exercise);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(3);
+        assertThat(receivedLectureWithDetails.lectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList()).isEmpty();
+
+        // now we test that it is included when the user is at least a teaching assistant
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(4);
+        assertThat(receivedLectureWithDetails.lectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList()).isNotEmpty();
+
+        testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLecture_AttachmentVideoUnitNotReleased_shouldGetLectureWithoutAttachmentVideoUnit() throws Exception {
+        var newReleaseDate = ZonedDateTime.now().plusDays(10);
+
+        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow();
+        attachmentVideoUnit.setReleaseDate(newReleaseDate);
+        unitAttachment.setReleaseDate(newReleaseDate);
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentRepository.save(unitAttachment);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(3);
+        assertThat(receivedLectureWithDetails.lectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.AttachmentUnitDTO).toList()).isEmpty();
+
+        // now we test that it is included when the user is at least a teaching assistant
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(4).anyMatch(lectureUnit -> lectureUnit instanceof LectureDetailsDTO.AttachmentUnitDTO);
+        testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
+        attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
+        lectureUnitRepository.save(attachmentVideoUnit);
+
+        request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.OK);
+        Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
+        assertThat(lectureOptional).isEmpty();
+
+        // ExerciseUnits do not have competencies, their exercises do
+        verify(competencyProgressApi, timeout(1000).times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLectureWithChannel() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+
+        request.delete("/api/lecture/lectures/" + lecture.getId(), HttpStatus.OK);
+
+        Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
+        assertThat(lectureChannelAfterDelete).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLecture_lectureDoesNot_shouldReturnForbidden() throws Exception {
+        // the role is checked against the course of the lecture, which a non-existing lecture does not have
+        request.delete("/api/lecture/lectures/" + 0, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLectureTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetLectureTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    private void testGetLectureTitle() throws Exception {
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        // A lecture belongs to a course, which the database now requires.
+        lecture.setCourse(course1);
+        lectureRepository.save(lecture);
+
+        final var title = request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(lecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getLecture_lectureDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the lecture, so the lecture itself is looked up.
+        request.get("/api/lecture/lectures/123124123123", HttpStatus.NOT_FOUND, LectureResource.SimpleLectureDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetLectureTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        lecture.setCourse(course1);
+        lectureRepository.save(lecture);
+
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetLectureTitleForNonExistingLecture() throws Exception {
+        request.get("/api/lecture/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
+    void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+        final var search = pageableSearchUtilService.configureSearch("");
+        final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        final var search = pageableSearchUtilService.configureSearch(lecture1.getTitle());
+        final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminGetsResultsFromAllCourses() throws Exception {
+        final var search = pageableSearchUtilService.configureSearch(lecture1.getTitle());
+        final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testImport_asTutor_forbiddenBeforeTheLectureIsLoaded() throws Exception {
+        // a missing source lecture would answer 404, so the 403 shows that the role in the target course is checked before anything is loaded
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=-1&courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImport() throws Exception {
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        courseUtilService.enableMessagingForCourse(course2);
+
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
+                LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
+
+        // load new lecture with its lecture units and attachments
+        var newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
+
+        // Assert that all lecture units (except exercise units) were copied
+        assertThat(newlyImportedLecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+                this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
+
+        Channel channel = channelRepository.findChannelByLectureId(importedLectureDto.id());
+        assertThat(channel).isNotNull();
+        assertThat(importedLectureDto.description()).isEqualTo(this.lecture1.getDescription());
+        assertThat(importedLectureDto.startDate()).isEqualTo(this.lecture1.getStartDate());
+        assertThat(importedLectureDto.endDate()).isEqualTo(this.lecture1.getEndDate());
+        assertThat(importedLectureDto.id()).isNotEqualTo(this.lecture1.getId());
+        // default name of imported lecture channel
+        assertThat(channel.getName()).isEqualTo("lecture-" + importedLectureDto.title().toLowerCase(Locale.ROOT).replaceAll("[-\\s]+", "-"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
+        // An attachment video unit created for an attachment that used to hang off a lecture directly still has its file
+        // under the lecture attachment directory. Nothing on the row says so any more, so Attachment.fileLocation finds
+        // it by looking. Importing must copy that file into the directory of the new unit all the same: writing it under
+        // the lecture directory would name the new unit's id where a lecture id belongs, and the route that serves those
+        // files reads it as a lecture id, so the student download would look for the attachment under a lecture that
+        // does not have it.
+        AttachmentVideoUnit migratedUnit = new AttachmentVideoUnit();
+        migratedUnit.setDescription("Lorem Ipsum");
+        migratedUnit.setLecture(lecture1);
+        migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
+        Attachment migratedAttachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now().minusDays(5), lecture1.getId(), false);
+        migratedAttachment.setName("Migrated lecture attachment");
+        migratedAttachment.setAttachmentVideoUnit(migratedUnit);
+        migratedAttachment = attachmentRepository.save(migratedAttachment);
+        migratedUnit.setAttachment(migratedAttachment);
+        migratedUnit.setName(migratedAttachment.getName());
+        migratedUnit.setReleaseDate(migratedAttachment.getReleaseDate());
+        migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
+        assertThat(migratedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.LectureAttachment.class);
+        assertThat(migratedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.LectureAttachment(lecture1.getId(), migratedAttachment.getLink()).path()).exists();
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(migratedUnit));
+
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        courseUtilService.enableMessagingForCourse(course2);
+
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
+                LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
+        Lecture importedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
+
+        // Both source shapes have to end up under the directory of their own unit: the one that was already there, and
+        // the migrated one, for which the import is what finishes the move.
+        assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
+        AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
+        Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        String filename = FileSystemLocation.filenameOf(importedMigratedAttachment.getLink());
+        request.get("/api/core/files/attachments/attachment-video-units/" + importedMigratedUnit.getId() + "/student/" + filename, HttpStatus.OK, byte[].class);
+    }
+
+    private AttachmentVideoUnit findImportedUnit(Lecture importedLecture, String name) {
+        return importedLecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(unit -> name.equals(unit.getName())).findFirst().orElseThrow();
+    }
+
+    private Attachment assertThatAttachmentLiesUnderItsOwnUnitDirectory(AttachmentVideoUnit importedUnit) {
+        Attachment importedAttachment = attachmentVideoUnitRepository.findByIdElseThrow(importedUnit.getId()).getAttachment();
+        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-video-units/" + importedUnit.getId() + "/");
+        assertThat(importedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.AttachmentVideoUnitFile.class);
+        assertThat(importedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(importedUnit.getId(), importedAttachment.getLink()).path()).exists();
+        return importedAttachment;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateLectureSeriesShouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/-1/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLectureSeries_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureSeriesCreateLectureDTO lecture = new LectureSeriesCreateLectureDTO("Invalid dates", startDate, startDate.plusHours(endDateOffsetHours));
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(lecture), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateLectureSeriesShouldReturnForbiddenIfUserNotAtLeastEditor() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateLectureSeriesAndCorrectLectureAndChannelNames() throws Exception {
+        ZonedDateTime startNewLecture1 = lecture1.getStartDate().minusDays(3);
+        ZonedDateTime endNewLecture1 = startNewLecture1.plusHours(1);
+        String titleNewLecture1 = "Requirements";
+        ZonedDateTime startNewLecture2 = startNewLecture1.plusWeeks(1);
+        ZonedDateTime endNewLecture2 = startNewLecture2.plusHours(1);
+        String titleNewLecture2 = "Modeling";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleNewLecture1, startNewLecture1, endNewLecture1);
+        LectureSeriesCreateLectureDTO dto2 = new LectureSeriesCreateLectureDTO(titleNewLecture2, startNewLecture2, endNewLecture2);
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
+
+        List<Lecture> lecturesAfter = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        assertThat(lecturesAfter).hasSize(4);
+        Lecture firstLecture = lecturesAfter.getFirst();
+        Lecture secondLecture = lecturesAfter.get(1);
+        Lecture thirdLecture = lecturesAfter.get(2);
+        Lecture fourthLecture = lecturesAfter.get(3);
+
+        assertThat(firstLecture.getTitle()).isEqualTo(titleNewLecture1);
+        assertThat(firstLecture.getStartDate().toInstant()).isEqualTo(startNewLecture1.toInstant());
+        assertThat(firstLecture.getEndDate().toInstant()).isEqualTo(endNewLecture1.toInstant());
+        assertThat(secondLecture.getId()).isEqualTo(lecture1.getId());
+        assertThat(secondLecture.getTitle()).isEqualTo("Lecture 2");
+        assertThat(thirdLecture.getTitle()).isEqualTo(titleNewLecture2);
+        assertThat(thirdLecture.getStartDate().toInstant()).isEqualTo(startNewLecture2.toInstant());
+        assertThat(thirdLecture.getEndDate().toInstant()).isEqualTo(endNewLecture2.toInstant());
+        assertThat(fourthLecture.getId()).isEqualTo(lecture2.getId());
+        assertThat(fourthLecture.getTitle()).isEqualTo("Lecture 4");
+
+        Set<Channel> channels = channelRepository.findLectureChannelsByCourseId(course1.getId());
+
+        assertThat(channels.stream().map(Channel::getLecture).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(lecturesAfter);
+
+        Map<Long, Channel> lectureIdToChannelMap = channels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Channel firstLectureChannel = lectureIdToChannelMap.get(firstLecture.getId());
+        Channel secondLectureChannel = lectureIdToChannelMap.get(secondLecture.getId());
+        Channel thirdLectureChannel = lectureIdToChannelMap.get(thirdLecture.getId());
+        Channel fourthLectureChannel = lectureIdToChannelMap.get(fourthLecture.getId());
+
+        assertThat(firstLectureChannel.getName()).isEqualTo("lecture-requirements");
+        assertThat(secondLectureChannel.getName()).isEqualTo("lecture-lecture-2");
+        assertThat(thirdLectureChannel.getName()).isEqualTo("lecture-modeling");
+        assertThat(fourthLectureChannel.getName()).isEqualTo("lecture-lecture-4");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
+        var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.SimpleLectureDTO.class);
+        assertThat(returnedLectures).hasSize(1);
+        var lecture = returnedLectures.getFirst();
+        assertThat(lecture.id()).isEqualTo(lecture2.getId());
+        assertThat(lecture.isTutorialLecture()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLectureRequiresCourseId(boolean includeCourse) throws Exception {
+        long lecturesBefore = lectureRepository.count();
+        long channelsBefore = channelRepository.count();
+        var start = ZonedDateTime.now();
+        var course = includeCourse ? new LectureResource.SimpleLectureDTO.CourseDTO(null, null, null, null) : null;
+        var lecture = new LectureResource.SimpleLectureDTO(null, "Missing course", null, start, start.plusHours(1), false, "missing-course", course);
+        request.postAndExpectError("/api/lecture/lectures", lecture, HttpStatus.BAD_REQUEST, "courseMissing");
+        assertThat(lectureRepository.count()).isEqualTo(lecturesBefore);
+        assertThat(channelRepository.count()).isEqualTo(channelsBefore);
+    }
+
+}

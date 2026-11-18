@@ -1,0 +1,634 @@
+package de.tum.cit.aet.artemis.iris.service.session;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqOptionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+
+public abstract class AbstractIrisChatSessionService<S extends IrisSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractIrisChatSessionService.class);
+
+    private static final int MAX_SESSION_TITLE_LENGTH = 255;
+
+    protected final IrisSessionRepository irisSessionRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    protected final IrisMessageService irisMessageService;
+
+    private final IrisMessageRepository irisMessageRepository;
+
+    private final IrisChatWebsocketService irisChatWebsocketService;
+
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final JsonMapper objectMapper;
+
+    private final Optional<IrisCitationService> irisCitationService;
+
+    private final PyrisJobService pyrisJobService;
+
+    /**
+     * Constructor with citation service support.
+     * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
+     */
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            Optional<IrisCitationService> irisCitationService, PyrisJobService pyrisJobService) {
+        this.irisSessionRepository = irisSessionRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.objectMapper = objectMapper;
+        this.irisMessageService = irisMessageService;
+        this.irisMessageRepository = irisMessageRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = irisCitationService;
+        this.pyrisJobService = pyrisJobService;
+    }
+
+    /**
+     * Constructor without citation service support.
+     * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
+     */
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            PyrisJobService pyrisJobService) {
+        this.irisSessionRepository = irisSessionRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.objectMapper = objectMapper;
+        this.irisMessageService = irisMessageService;
+        this.irisMessageRepository = irisMessageRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = Optional.empty();
+        this.pyrisJobService = pyrisJobService;
+    }
+
+    /**
+     * Updates the latest suggestions of the session.
+     * Converts the list of latest suggestions to a JSON string.
+     * The updated suggestions are then saved to the session in the database.
+     *
+     * @param session           The session to update
+     * @param latestSuggestions The latest suggestions to set
+     */
+    protected void updateLatestSuggestions(S session, List<String> latestSuggestions) {
+        if (latestSuggestions == null || latestSuggestions.isEmpty()) {
+            return;
+        }
+        try {
+            var suggestions = objectMapper.writeValueAsString(latestSuggestions);
+            session.setLatestSuggestions(suggestions);
+            // Scalar update, never save(session): this session was loaded with its messages, and there is no reason to
+            // drag that collection through an aggregate merge to write one column. See updateLatestSuggestions.
+            irisSessionRepository.updateLatestSuggestions(session.getId(), suggestions);
+        }
+        catch (JacksonException e) {
+            throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
+        }
+    }
+
+    /**
+     * Sets and saves the session title if provided.
+     * Truncates the title to 255 characters if necessary.
+     * This is a utility method that can be used by services that don't extend this class.
+     *
+     * @param <T>               The type of session (must extend IrisSession)
+     * @param session           The session to update
+     * @param sessionTitle      The title to set (can be null or blank)
+     * @param sessionRepository The repository to save the session
+     * @return The truncated session title if it was set, null otherwise
+     */
+    public static <T extends IrisSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
+        if (sessionTitle != null && !sessionTitle.isBlank()) {
+            String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
+            session.setTitle(truncatedTitle);
+            // Scalar update, never save(session): the status handler passes a session loaded with its messages, and
+            // there is no reason to drag that collection through an aggregate merge to write one column.
+            sessionRepository.updateTitle(session.getId(), truncatedTitle);
+            return truncatedTitle;
+        }
+        return null;
+    }
+
+    /**
+     * Return a localized "New chat" title based on the user's language key.
+     *
+     * @param langKey       The language key of the user
+     * @param messageSource The message source to resolve titles from
+     * @return the localized title
+     */
+    public static String getLocalizedNewChatTitle(String langKey, MessageSource messageSource) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.session.newChatTitle", null, "New Chat", locale);
+    }
+
+    /**
+     * Handles the status update of an ExerciseChatJob by sending the result to the student via the Websocket.
+     *
+     * @param job          The job that was executed
+     * @param statusUpdate The status update of the job
+     * @return the same job record or a new job record with the same job id if changes were made, or {@code null} if the session no longer exists
+     */
+    @Nullable
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        long handlingStart = System.nanoTime();
+        // Only the result branch (saving the assistant message) needs the messages and contents;
+        // the frequent intermediate status updates get away with a plain session load. Pyris blocks
+        // its pipeline thread on each callback, so this reload is on the chat latency critical path.
+        // noinspection unchecked
+        var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
+                : (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
+
+        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+
+        boolean finalResultUpdate = statusUpdate.result() != null && !Boolean.FALSE.equals(statusUpdate.finalResult());
+        if (statusUpdate.suggestedContext() != null && !finalResultUpdate) {
+            // Pyris attaches a suggested context to the final result callback only. Switching on a status-only
+            // or intermediate update would move the context for an answer that may never arrive, so drop it.
+            log.debug("Ignoring suggested context on a status update without a final result for Iris job {}", job.jobId());
+        }
+
+        TrackedSessionBasedPyrisJob updatedJob;
+        if (statusUpdate.result() != null) {
+            updatedJob = finalResultUpdate ? handleResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+                    : handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle);
+        }
+        else {
+            applyNonResultSideEffects(session, job, statusUpdate, sessionTitle);
+            updatedJob = recordTokenUsage(session, job, statusUpdate, null);
+        }
+        saveCompaction(session, statusUpdate.compaction());
+
+        updateLatestSuggestions(session, statusUpdate.suggestions());
+
+        log.debug("Iris status update handled in {} ms (result present: {})", (System.nanoTime() - handlingStart) / 1_000_000, statusUpdate.result() != null);
+
+        return updatedJob;
+    }
+
+    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
+            String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The run snapshot pins citations before they are persisted; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
+        var message = new IrisMessage();
+        for (var content : parseResultContents(result)) {
+            message.addContent(content);
+        }
+        message.setIntermediate(true);
+        // The steps that ran since the previous message of the run, so the chat shows them right before this message.
+        message.setToolActivity(emptyToNull(statusUpdate.messageActivities()));
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false);
+        return recordTokenUsage(session, job, statusUpdate, null);
+    }
+
+    private TrackedSessionBasedPyrisJob handleResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session, String sessionTitle) {
+        return pyrisJobService.runWithJobLock(job.jobId(), () -> {
+            var reloadedJob = pyrisJobService.getJob(job.jobId());
+            if (!(reloadedJob instanceof TrackedSessionBasedPyrisJob trackedJob)) {
+                log.debug("Skipping already processed result status update for Iris job {} because the job is no longer tracked", job.jobId());
+                applyNonResultSideEffects(session, job, statusUpdate, sessionTitle);
+                return job;
+            }
+            if (trackedJob.assistantMessageId() != null) {
+                applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle);
+                return trackedJob;
+            }
+
+            if (statusUpdate.suggestedContext() != null) {
+                handleSuggestedContextChange(session, statusUpdate.suggestedContext());
+            }
+
+            // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
+            // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
+            var message = new IrisMessage();
+            for (var content : parseResultContents(result)) {
+                message.addContent(content);
+            }
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
+            // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.
+            message.setToolActivity(emptyToNull(statusUpdate.messageActivities() != null ? statusUpdate.messageActivities() : statusUpdate.activities()));
+            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
+            pyrisJobService.updateJob(updatedJob);
+            irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, citationInfo, job.jobId(),
+                    statusUpdate.activities(), statusUpdate.activitySeq(), null);
+            ArtemisApp clientOrigin = job.userMessageId() == null ? null : irisMessageRepository.findById(job.userMessageId()).map(IrisMessage::getSenderOrigin).orElse(null);
+            notifyUserOfIrisResponse(session, savedMessage, clientOrigin);
+            updatedJob = recordTokenUsage(session, updatedJob, statusUpdate, savedMessage);
+            pyrisJobService.updateJob(updatedJob);
+            return updatedJob;
+        });
+    }
+
+    @Nullable
+    private static List<PyrisActivityDTO> emptyToNull(@Nullable List<PyrisActivityDTO> activities) {
+        return activities == null || activities.isEmpty() ? null : activities;
+    }
+
+    private void applyNonResultSideEffects(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String sessionTitle) {
+        irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), sessionTitle, statusUpdate.suggestions(),
+                statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
+    }
+
+    /**
+     * Stores a summary Iris wrote of the earlier conversation. Iris sends it in place of the messages it covers on later turns.
+     * The client hides it, so it is not pushed over the websocket.
+     */
+    private void saveCompaction(S session, @Nullable PyrisCompactionDTO compaction) {
+        if (compaction == null || compaction.summary() == null || compaction.summary().isBlank()) {
+            return;
+        }
+        var message = new IrisMessage();
+        message.addContent(IrisJsonMessageContent.of(compaction));
+        irisMessageService.saveMessage(message, session, IrisMessageSender.SUMMARY);
+    }
+
+    private TrackedSessionBasedPyrisJob recordTokenUsage(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, IrisMessage savedMessage) {
+        if (statusUpdate.tokens() == null || statusUpdate.tokens().isEmpty()) {
+            return job;
+        }
+        if (savedMessage != null) {
+            // generated message is first sent and generated trace is saved
+            var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+                builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUserId());
+                this.setLLMTokenUsageParameters(builder, session);
+                return builder;
+            });
+
+            return job.withTraceId(llmTokenUsageTrace.getId());
+        }
+
+        // interaction suggestion is sent and appended to the generated trace if it exists
+        var existingTrace = Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById);
+        if (existingTrace.isPresent()) {
+            llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), existingTrace.get());
+            return job;
+        }
+        var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+            builder.withUser(session.getUserId());
+            this.setLLMTokenUsageParameters(builder, session);
+            return builder;
+        });
+        return job.withTraceId(llmTokenUsage.getId());
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * The default implementation is a no-op; only session types that support context switching
+     * override it. Implementations must not throw — a rejected switch must not fail the status update.
+     *
+     * @param session          The session the status update belongs to
+     * @param suggestedContext The context suggested by the pipeline
+     */
+    protected void handleSuggestedContextChange(S session, PyrisSuggestedContextDTO suggestedContext) {
+    }
+
+    /**
+     * Handles a partial chat status update by relaying the partial response over the websocket.
+     * The partial response is ephemeral and is not persisted.
+     *
+     * @param job          The job that is currently executed
+     * @param statusUpdate The partial status update of the job
+     * @return {@code false} if the session no longer exists and the update was dropped, {@code true} otherwise
+     */
+    public boolean handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        // noinspection unchecked
+        var session = (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping partial status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return false;
+        }
+        irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
+        return true;
+    }
+
+    /**
+     * Hook invoked after an assistant (LLM) message has been persisted and pushed over the websocket.
+     * Subclasses with course and user context may override this to react to a finished answer (e.g. to
+     * notify the user when the chat is not open anywhere). Default: no-op.
+     *
+     * @param session      the chat session the message belongs to
+     * @param message      the assistant message that was sent
+     * @param clientOrigin the Artemis app the triggering user message came from, or {@code null} if it came from a web
+     *                         browser / unrecognized client or the response was event-triggered (no user message)
+     */
+    protected void notifyUserOfIrisResponse(S session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
+        // no-op by default
+    }
+
+    private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";
+
+    private static final Set<String> MCQ_CONTENT_TYPES = Set.of("mcq", "mcq-set");
+
+    /**
+     * Pattern to find embedded MCQ JSON blocks within mixed text+JSON responses.
+     */
+    private static final Pattern MCQ_JSON_PATTERN = Pattern.compile("\\{\\s*\"type\"\\s*:\\s*\"mcq(?:-set)?\"\\s*,");
+
+    /**
+     * Parses the result string from the LLM into a list of IrisMessageContent.
+     * Handles three cases:
+     * 1. Entire string is valid MCQ JSON -> single IrisJsonMessageContent
+     * 2. Mixed text + embedded JSON -> list of text and JSON content segments
+     * 3. Plain text -> single IrisTextMessageContent
+     *
+     * @param result The result string from the LLM
+     * @return A list of IrisMessageContent (text and/or JSON)
+     */
+    private List<IrisMessageContent> parseResultContents(String result) {
+        String trimmed = result.strip();
+
+        // Case 1: entire string is valid MCQ JSON
+        if (trimmed.startsWith("{")) {
+            // Anything that is not an MCQ, including JSON that is invalid as a whole, falls through to the mixed content scan below
+            McqCheck check = checkMcq(trimmed);
+            if (check == McqCheck.VALID) {
+                return List.of(IrisJsonMessageContent.ofJson(trimmed));
+            }
+            if (check == McqCheck.MALFORMED) {
+                return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
+            }
+        }
+
+        // Case 2: scan for embedded MCQ JSON blocks
+        Matcher matcher = MCQ_JSON_PATTERN.matcher(trimmed);
+        List<IrisMessageContent> contents = new ArrayList<>();
+        int lastEnd = 0;
+        boolean foundMcq = false;
+
+        while (matcher.find()) {
+            int jsonStart = matcher.start();
+            // Skip matches that fall inside an already-extracted JSON block
+            // (e.g. inner {"type":"mcq",...} objects inside an mcq-set)
+            if (jsonStart < lastEnd) {
+                continue;
+            }
+            String jsonCandidate = extractJsonObject(trimmed, jsonStart);
+            if (jsonCandidate == null) {
+                continue;
+            }
+
+            // A candidate that is invalid JSON or no MCQ is skipped
+            McqCheck check = checkMcq(jsonCandidate);
+            if (check == McqCheck.NOT_MCQ) {
+                continue;
+            }
+            if (check == McqCheck.MALFORMED) {
+                return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
+            }
+
+            // Add text before this JSON block
+            if (jsonStart > lastEnd) {
+                String textBefore = trimmed.substring(lastEnd, jsonStart).strip();
+                if (!textBefore.isEmpty()) {
+                    contents.add(new IrisTextMessageContent(textBefore));
+                }
+            }
+
+            contents.add(IrisJsonMessageContent.ofJson(jsonCandidate));
+            lastEnd = jsonStart + jsonCandidate.length();
+            foundMcq = true;
+        }
+
+        if (foundMcq) {
+            // Add any remaining text after the last JSON block
+            if (lastEnd < trimmed.length()) {
+                String textAfter = trimmed.substring(lastEnd).strip();
+                if (!textAfter.isEmpty()) {
+                    contents.add(new IrisTextMessageContent(textAfter));
+                }
+            }
+            return contents;
+        }
+
+        // Case 3: plain text
+        return List.of(new IrisTextMessageContent(trimmed));
+    }
+
+    /**
+     * Extracts a complete JSON object from a string starting at the given position by counting matching braces.
+     *
+     * @param text  The text containing the JSON object
+     * @param start The position of the opening brace
+     * @return The extracted JSON string, or null if no valid object could be extracted
+     */
+    private static String extractJsonObject(String text, int start) {
+        if (start >= text.length() || text.charAt(start) != '{') {
+            return null;
+        }
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = start; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (c == '\\' && inString) {
+                escaped = true;
+                continue;
+            }
+            if (c == '"') {
+                inString = !inString;
+                continue;
+            }
+            if (!inString) {
+                if (c == '{') {
+                    depth++;
+                }
+                else if (c == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        return text.substring(start, i + 1);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Classifies a JSON text as a valid MCQ, a malformed MCQ or not an MCQ.
+     * <p>
+     * Text that is not valid JSON, is not a JSON object or whose type is not an MCQ type is not an MCQ. Of a JSON object with an MCQ type, the content must have the shape
+     * the client expects, otherwise it is malformed.
+     *
+     * @param json the JSON text to classify
+     * @return the classification of the text
+     */
+    private McqCheck checkMcq(String json) {
+        String type;
+        try {
+            type = objectMapper.readValue(json, McqTypeProbe.class).type();
+        }
+        catch (JacksonException e) {
+            return McqCheck.NOT_MCQ;
+        }
+        if (type == null || !MCQ_CONTENT_TYPES.contains(type)) {
+            return McqCheck.NOT_MCQ;
+        }
+        try {
+            return isValidMcq(objectMapper.readValue(json, IrisMcqContentDTO.class)) ? McqCheck.VALID : McqCheck.MALFORMED;
+        }
+        catch (JacksonException e) {
+            // a value of the wrong JSON type, e.g. a number as the question or a string as the correct flag
+            return McqCheck.MALFORMED;
+        }
+    }
+
+    /**
+     * Validates that MCQ content has the required MCQ shape expected by the client:
+     * a non-empty "question" string, an "options" array with at least two entries
+     * (each having a "text" string and a "correct" boolean) where exactly one option
+     * is marked correct, and an "explanation" string.
+     *
+     * @param content the MCQ content to validate
+     * @return true if the content represents a valid MCQ
+     */
+    private static boolean isValidMcq(IrisMcqContentDTO content) {
+        if ("mcq-set".equals(content.type())) {
+            List<IrisMcqQuestionDTO> questions = content.questions();
+            if (questions == null || questions.isEmpty()) {
+                return false;
+            }
+            return questions.stream().allMatch(question -> question != null && isValidSingleMcq(question.question(), question.options(), question.explanation()));
+        }
+
+        // Single MCQ ("mcq" type or fallback)
+        return isValidSingleMcq(content.question(), content.options(), content.explanation());
+    }
+
+    /**
+     * Validates that the parts of a single MCQ question have the required shape: a non-empty "question" string,
+     * an "options" array with at least two entries (each having a "text" string and a "correct" boolean)
+     * where exactly one option is marked correct, and an "explanation" string.
+     *
+     * @param question    the question text
+     * @param options     the answer options
+     * @param explanation the explanation text
+     * @return true if the parts represent a valid single MCQ question
+     */
+    private static boolean isValidSingleMcq(@Nullable String question, @Nullable List<IrisMcqOptionDTO> options, @Nullable String explanation) {
+        if (question == null || question.isBlank()) {
+            return false;
+        }
+
+        if (options == null || options.size() < 2) {
+            return false;
+        }
+        int correctCount = 0;
+        for (IrisMcqOptionDTO option : options) {
+            if (option == null || option.text() == null || option.text().isBlank() || option.correct() == null) {
+                return false;
+            }
+            if (option.correct()) {
+                correctCount++;
+            }
+        }
+        if (correctCount != 1) {
+            return false;
+        }
+
+        return explanation != null && !explanation.isBlank();
+    }
+
+    /**
+     * The outcome of checking a JSON text for being an MCQ.
+     */
+    private enum McqCheck {
+        NOT_MCQ, MALFORMED, VALID
+    }
+
+    /**
+     * Reads only the type of a JSON object, to tell MCQ content from any other JSON.
+     *
+     * @param type the type of the object
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record McqTypeProbe(@Nullable String type) {
+    }
+
+    Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
+        List<ProgrammingExerciseStudentParticipation> participations;
+        if (exercise.isTeamMode()) {
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentIdInTeam(exercise.getId(), user.getId());
+        }
+        else {
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), user.getId());
+        }
+
+        if (participations.isEmpty()) {
+            return Optional.empty();
+        }
+        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
+                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
+    }
+
+    protected abstract void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, S session);
+}

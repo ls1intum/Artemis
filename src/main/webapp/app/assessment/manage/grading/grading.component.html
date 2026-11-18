@@ -1,0 +1,452 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        {{ isExam() ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+    </h5>
+    <jhi-documentation-button [type]="documentationType" />
+</div>
+
+<ng-template titleBarActions>
+    <button
+        tumAetUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="generateDefaultGradingScale()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.defaultButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faMagic" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.defaultButton"></span>
+    </button>
+    <jhi-system-info-modal />
+    <button
+        tumAetUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="fileInput.click()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.importButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faFileImport" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.importButton"></span>
+    </button>
+    <input
+        [attr.aria-label]="'artemisApp.gradingSystem.csv.importButton' | artemisTranslate"
+        #fileInput
+        type="file"
+        accept=".json,.csv"
+        style="display: none"
+        (change)="onCSVFileSelect($event)"
+    />
+    <button
+        tumAetUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        (click)="exportGradingStepsToCsv()"
+        type="button"
+        [title]="'artemisApp.gradingSystem.csv.exportButton' | artemisTranslate"
+    >
+        <fa-icon [icon]="faDownload" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.csv.exportButton"></span>
+    </button>
+    <button
+        [title]="'artemisApp.gradingSystem.save' | artemisTranslate"
+        tumAetUiButton
+        severity="primary"
+        size="small"
+        (click)="save()"
+        [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig() || maxPointsErrorMessage() !== undefined"
+        type="button"
+    >
+        <fa-icon [icon]="faSave" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.gradingSystem.save"></span>
+    </button>
+    @if (existingGradingScale()) {
+        <button
+            type="button"
+            [title]="'entity.action.delete' | artemisTranslate"
+            jhiDeleteButton
+            tumAetUiButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
+            [entityTitle]="''"
+            [buttonSize]="ButtonSize.MEDIUM"
+            deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
+            (delete)="delete()"
+            [dialogError]="dialogError$"
+            [disabled]="isLoading()"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
+        </button>
+    }
+</ng-template>
+
+<div class="course-body-container">
+    <div class="selection-container">
+        <div class="field-group">
+            <div class="field-label">
+                <span class="colon-suffix" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
+                @if (!isExam()) {
+                    <jhi-help-icon text="artemisApp.course.maxPoints.info" />
+                }
+                @if (isExam()) {
+                    <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
+                }
+            </div>
+            <jhi-points-input
+                fluid
+                [ariaLabel]="'artemisApp.gradingSystem.info.maxPoints.title' | artemisTranslate"
+                [ngModel]="maxPoints()"
+                (ngModelChange)="maxPoints.set($event); onChangeMaxPoints($event)"
+                [min]="1"
+                pattern="\d*"
+                [max]="MAX_GRADING_POINTS"
+            />
+        </div>
+        <div class="field-group">
+            <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.gradeType.title"></span></div>
+            <tumaet-ui-select
+                [options]="[
+                    { value: GradeType.GRADE, label: ('artemisApp.gradingSystem.gradeType.grade' | artemisTranslate) },
+                    { value: GradeType.BONUS, label: ('artemisApp.gradingSystem.gradeType.bonus' | artemisTranslate) },
+                ]"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="gradingForm.gradeType().value()"
+                (ngModelChange)="gradingForm.gradeType().value.set($event); deleteGradeNames()"
+                [ariaLabel]="'artemisApp.gradingSystem.gradeType.title' | artemisTranslate"
+            />
+        </div>
+        <div class="field-group">
+            <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.inclusivity.title"></span></div>
+            <tumaet-ui-select
+                [options]="[
+                    { value: true, label: ('artemisApp.gradingSystem.inclusivity.lower' | artemisTranslate) },
+                    { value: false, label: ('artemisApp.gradingSystem.inclusivity.upper' | artemisTranslate) },
+                ]"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="lowerBoundInclusivity"
+                (ngModelChange)="setInclusivity()"
+                [ariaLabel]="'artemisApp.gradingSystem.inclusivity.title' | artemisTranslate"
+            />
+        </div>
+        <div class="field-group">
+            @if (gradingScale.gradeType === GradeType.GRADE) {
+                <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span></div>
+                <tumaet-ui-select
+                    data-testid="grading-first-passing-grade"
+                    [options]="gradeStepsWithNonemptyNames()"
+                    optionLabel="gradeName"
+                    optionValue="gradeName"
+                    [ngModel]="firstPassingGrade()"
+                    (ngModelChange)="firstPassingGrade.set($event)"
+                    [ariaLabel]="'artemisApp.gradingSystem.firstPassingGrade' | artemisTranslate"
+                />
+            }
+        </div>
+    </div>
+    <jhi-grading-presentations
+        class="mt-6 block"
+        [gradingScale]="presentationGradingScale()"
+        [presentationsConfig]="presentationsConfig()"
+        (presentationsConfigChange)="onPresentationsConfigChange($event)"
+    />
+</div>
+<div class="mt-6 mb-6! flex flex-wrap items-end justify-between gap-6!">
+    <tumaet-ui-select-button
+        id="tab-bar"
+        data-testid="grading-view-mode"
+        [options]="[
+            { value: GradingViewMode.INTERVAL, label: ('artemisApp.gradingSystem.intervalTab.title' | artemisTranslate) },
+            { value: GradingViewMode.DETAILED, label: ('artemisApp.gradingSystem.detailedTab.title' | artemisTranslate) },
+        ]"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="viewMode()"
+        (ngModelChange)="setViewMode($event)"
+        [allowEmpty]="false"
+    />
+    @if (viewMode() === GradingViewMode.INTERVAL) {
+        <div class="flex items-center gap-2">
+            <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.intervalTab.mode"></span>
+            <jhi-mode-picker [options]="intervalModePickerOptions" [(value)]="gradeEditMode" />
+        </div>
+    }
+</div>
+<div class="course-body-container">
+    <!-- Interval View -->
+    @if (viewMode() === GradingViewMode.INTERVAL) {
+        <div>
+            <div>
+                <table class="w-full text-left align-middle" tumAetUiTable [striped]="true">
+                    <thead>
+                        <tr>
+                            <th>
+                                <span jhiTranslate="artemisApp.gradingSystem.intervalTab.title"></span>
+                            </th>
+                            <th>
+                                <span>
+                                    {{ 'artemisApp.gradingSystem.min' | artemisTranslate }}
+                                    - {{ 'artemisApp.gradingSystem.max' | artemisTranslate }}
+                                </span>
+                            </th>
+                            <th>
+                                <span>
+                                    {{ 'artemisApp.gradingSystem.minPoints' | artemisTranslate }}
+                                    - {{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}
+                                </span>
+                            </th>
+                            <th [colSpan]="2">
+                                <span
+                                    [jhiTranslate]="this.gradingScale.gradeType === GradeType.GRADE ? 'artemisApp.gradingSystem.gradeName' : 'artemisApp.gradingSystem.bonusPoints'"
+                                ></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ng-container [ngTemplateOutlet]="specialGradeRows" />
+                        @for (gradeStep of gradeStepsModel().gradeSteps; track $index; let i = $index; let last = $last) {
+                            <tr class="grading-scale-table-row">
+                                @if (last) {
+                                    <td>
+                                        <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep" />
+                                    </td>
+                                } @else {
+                                    @if (gradeEditMode === GradeEditMode.PERCENTAGE) {
+                                        <td>
+                                            <input
+                                                [attr.aria-label]="'accessibility.percentageInterval' | artemisTranslate"
+                                                [ngModel]="getPercentageInterval(gradeStep)"
+                                                type="number"
+                                                step="0.5"
+                                                min="0.5"
+                                                (ngModelChange)="setPercentageInterval(i, $event)"
+                                                required
+                                                tumAetUiInput
+                                            />
+                                        </td>
+                                    }
+                                    @if (gradeEditMode === GradeEditMode.POINTS) {
+                                        <td>
+                                            <jhi-points-input
+                                                fluid
+                                                #pointsInput="ngModel"
+                                                [ariaLabel]="'accessibility.pointsInterval' | artemisTranslate"
+                                                [ngModel]="getPointsInterval(gradeStep)"
+                                                [step]="0.5"
+                                                [min]="0.5"
+                                                (focusout)="onPointsIntervalInput(i, pointsInput.value)"
+                                                (keydown.enter)="onPointsIntervalInput(i, pointsInput.value)"
+                                                [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                                [disabled]="maxPoints() === undefined || maxPoints()! <= 0"
+                                            />
+                                        </td>
+                                    }
+                                }
+                                <td>
+                                    <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
+                                </td>
+                                <td>
+                                    <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
+                                </td>
+                                <ng-container [ngTemplateOutlet]="gradeNameAndDeleteCells" [ngTemplateOutletContext]="{ $implicit: i }" />
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <ng-container [ngTemplateOutlet]="gradeStepFooter" />
+        </div>
+    }
+
+    <!-- Detailed View -->
+    @if (viewMode() === GradingViewMode.DETAILED) {
+        <div>
+            <div>
+                <table class="w-full text-left align-middle" tumAetUiTable [striped]="true">
+                    <thead>
+                        <tr>
+                            <th>
+                                <span jhiTranslate="artemisApp.gradingSystem.min"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.gradingSystem.minPoints"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.gradingSystem.max"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.gradingSystem.maxPoints"></span>
+                            </th>
+                            <th [colSpan]="2">
+                                <span
+                                    [jhiTranslate]="this.gradingScale.gradeType === GradeType.GRADE ? 'artemisApp.gradingSystem.gradeName' : 'artemisApp.gradingSystem.bonusPoints'"
+                                ></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ng-container [ngTemplateOutlet]="specialGradeRows" />
+                        @for (gradeStep of gradeStepsModel().gradeSteps; track $index; let i = $index) {
+                            <tr class="grading-scale-table-row">
+                                <td>
+                                    <input
+                                        [attr.aria-label]="'artemisApp.gradingSystem.min' | artemisTranslate"
+                                        [formField]="gradingForm.gradeSteps[i].lowerBoundPercentage"
+                                        type="number"
+                                        step="0.5"
+                                        (change)="onDetailedPercentageChanged(i, true)"
+                                        tumAetUiInput
+                                    />
+                                </td>
+                                <td>
+                                    <jhi-points-input
+                                        fluid
+                                        #lowerPointsInput="ngModel"
+                                        [ariaLabel]="'artemisApp.gradingSystem.minPoints' | artemisTranslate"
+                                        [ngModel]="gradeStep.lowerBoundPoints"
+                                        [step]="0.5"
+                                        [min]="0"
+                                        [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                        [disabled]="!maxPointsValid()"
+                                        (focusout)="onDetailedPointsInput(i, true, lowerPointsInput.value)"
+                                        (keydown.enter)="onDetailedPointsInput(i, true, lowerPointsInput.value)"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        [attr.aria-label]="'artemisApp.gradingSystem.max' | artemisTranslate"
+                                        [formField]="gradingForm.gradeSteps[i].upperBoundPercentage"
+                                        type="number"
+                                        step="0.5"
+                                        (change)="onDetailedPercentageChanged(i, false)"
+                                        tumAetUiInput
+                                    />
+                                </td>
+                                <td>
+                                    <jhi-points-input
+                                        fluid
+                                        #upperPointsInput="ngModel"
+                                        [ariaLabel]="'artemisApp.gradingSystem.maxPoints' | artemisTranslate"
+                                        [ngModel]="gradeStep.upperBoundPoints"
+                                        [step]="0.5"
+                                        [min]="0"
+                                        [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                        [disabled]="!maxPointsValid()"
+                                        (focusout)="onDetailedPointsInput(i, false, upperPointsInput.value)"
+                                        (keydown.enter)="onDetailedPointsInput(i, false, upperPointsInput.value)"
+                                    />
+                                </td>
+                                <ng-container [ngTemplateOutlet]="gradeNameAndDeleteCells" [ngTemplateOutletContext]="{ $implicit: i }" />
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <ng-container [ngTemplateOutlet]="gradeStepFooter" />
+        </div>
+    }
+</div>
+
+<ng-template #gradeNameAndDeleteCells let-i>
+    @if (gradingScale.gradeType !== GradeType.BONUS) {
+        <td>
+            <input [attr.aria-label]="'artemisApp.gradingSystem.gradeName' | artemisTranslate" [formField]="gradingForm.gradeSteps[i].gradeName" type="text" tumAetUiInput />
+        </td>
+    }
+    @if (gradingScale.gradeType === GradeType.BONUS) {
+        <td>
+            <input
+                [attr.aria-label]="'artemisApp.gradingSystem.bonusPoints' | artemisTranslate"
+                [formField]="gradingForm.gradeSteps[i].gradeName"
+                type="text"
+                inputmode="numeric"
+                placeholder="0"
+                tumAetUiInput
+            />
+        </td>
+    }
+    <td class="text-end">
+        <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
+            <fa-icon [icon]="faTimes" />
+            <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
+        </button>
+    </td>
+</ng-template>
+
+<ng-template #specialGradeRows>
+    <tr class="grading-scale-table-row">
+        <td>
+            {{ 'artemisApp.gradingScale.plagiarismGrade' | artemisTranslate }}
+            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp" />
+        </td>
+        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        @if (viewMode() === GradingViewMode.DETAILED) {
+            <td>&mdash;</td>
+        }
+        <td>
+            <input
+                [attr.aria-label]="'accessibility.plagiarismGrade' | artemisTranslate"
+                [formField]="gradingForm.plagiarismGrade"
+                type="text"
+                [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_PLAGIARISM_GRADE }"
+                tumAetUiInput
+            />
+        </td>
+        <td></td>
+    </tr>
+    <tr class="grading-scale-table-row">
+        <td>
+            {{ 'artemisApp.gradingScale.noParticipationGrade' | artemisTranslate }}
+            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp" />
+        </td>
+        <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+        @if (viewMode() === GradingViewMode.DETAILED) {
+            <td>&mdash;</td>
+        }
+        <td>
+            <input
+                [attr.aria-label]="'accessibility.noParticipationGrade' | artemisTranslate"
+                [formField]="gradingForm.noParticipationGrade"
+                type="text"
+                [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE }"
+                tumAetUiInput
+            />
+        </td>
+        <td></td>
+    </tr>
+</ng-template>
+
+<ng-template #gradeStepFooter>
+    <div style="margin-bottom: 1em">
+        <button (click)="createGradeStep()" class="me-1 mb-1" type="button" tumAetUiButton severity="success">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.gradingSystem.add"></span>
+        </button>
+    </div>
+    <div>
+        @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
+            <tumaet-ui-message class="mb-4!" severity="info">
+                <fa-icon [icon]="faInfo" />
+                <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
+            </tumaet-ui-message>
+        }
+        @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
+            <tumaet-ui-message class="mb-4!" severity="warn">
+                <fa-icon [icon]="faExclamationTriangle" />
+                <span>
+                    {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
+                </span>
+            </tumaet-ui-message>
+        }
+    </div>
+</ng-template>

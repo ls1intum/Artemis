@@ -1,0 +1,6 @@
+@if (comparison()) {
+    <div class="plagiarism-details">
+        <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [exercise]="exercise()" [comparison]="comparison()" />
+        <jhi-plagiarism-split-view [comparison]="comparison()" [exercise]="exercise()" [splitControlSubject]="splitControlSubject" />
+    </div>
+}

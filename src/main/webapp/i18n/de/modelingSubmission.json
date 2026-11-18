@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "modelingSubmission": {
+            "home": {
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen"
+            },
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Einreichung"
+            },
+            "view": "Bewertung ansehen",
+            "model": "Modell",
+            "explanationText": "Erklärung",
+            "resizeExplanation": "Erklärung in der Größe ändern",
+            "explanationPlaceholder": "Füge Kontext hinzu, der dein Modell erklärt …",
+            "problemStatement": "Problemstellung",
+            "resizePanel": "Größe von {{ panel }} ändern",
+            "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
+            "assessment": {
+                "title": "Deine Bewertung",
+                "noAssessment": "Es liegt noch keine Bewertung vor.",
+                "onDiagram": "Feedback zu deinem Diagramm",
+                "general": "Allgemeines Feedback"
+            }
+        }
+    }
+}

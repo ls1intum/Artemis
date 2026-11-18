@@ -1,0 +1,140 @@
+import { Locator, expect } from '@playwright/test';
+import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
+import { Dayjs } from 'dayjs';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
+
+// Date format expected by ExerciseTimelineComponent#handleManualInput (strict parse against /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/).
+const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
+
+export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
+    async changeEditMode() {
+        await this.page.locator('[data-testid="switch-edit-mode-button"]').click();
+        // Switching from simple to detailed mode adds the difficulty/mode section, so the form status bar grows from
+        // four to five section circles. Wait for the fifth circle before continuing: the status-bar section circles
+        // bind their scroll target (and indexing) at render time, so acting before the detailed-mode bar has rendered
+        // would click a circle still bound to the simple-mode section at that index (e.g. Grading instead of Problem).
+        await this.page.locator('#status-bar-section-item-4').waitFor({ state: 'visible' });
+    }
+
+    async setShortName(shortName: string) {
+        const shortNameField = this.page.locator('#field_shortName');
+        await shortNameField.clear();
+        await shortNameField.fill(shortName);
+    }
+
+    async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
+        await this.page.locator('#field_programmingLanguage').selectOption(programmingLanguage);
+    }
+
+    async setPackageName(packageName: string) {
+        const packageNameField = this.page.locator('#field_packageName');
+        await packageNameField.clear();
+        await packageNameField.fill(packageName);
+    }
+
+    async setPoints(points: number) {
+        const pointsField = this.page.locator('#field_points');
+        await pointsField.clear();
+        await pointsField.fill(points.toString());
+    }
+
+    async checkAllowOnlineEditor() {
+        await this.page.locator('#field_allowOnlineEditor').check();
+    }
+
+    async generate() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/setup`));
+        await this.page.locator('#save-entity').click();
+        return await responsePromise;
+    }
+
+    async import() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/import?sourceExerciseId=`));
+        await this.page.locator('#save-entity').click();
+        return await responsePromise;
+    }
+
+    /**
+     * Sets the Due Date field on the unified exercise timeline (a date picker rendered inside
+     * <jhi-timeline>). The timeline assigns the inputId per visible item dynamically
+     * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
+     * and then fill it in the format expected by the component
+     *
+     * @param date the due date to set
+     */
+    override async setDueDate(date: Dayjs) {
+        const dueDateInput = this.page.getByLabel('Due Date', { exact: true });
+        await expect(dueDateInput).toBeEnabled();
+        await dueDateInput.fill(date.format(TIMELINE_DATE_FORMAT));
+        // Tab out so the picker commits the typed date to the timeline's date model before the form is submitted.
+        await dueDateInput.press('Tab');
+    }
+
+    /**
+     * Uses an element that is affected by the scrolling of the page as reference to determine if the page is still scrolling
+     *
+     * Here we are using the headline of the page as reference
+     */
+    async waitForPageToFinishScrolling(maxTimeout: number = 5000) {
+        const elementOnPageAffectedByScroll = this.page.locator('h2');
+        let isScrolling = true;
+        const startTime = Date.now();
+
+        while (isScrolling) {
+            const initialPosition = await elementOnPageAffectedByScroll.boundingBox();
+            await this.page.waitForTimeout(100); // give the page a short time to scroll
+            const newPosition = await elementOnPageAffectedByScroll.boundingBox();
+
+            isScrolling = initialPosition?.y !== newPosition?.y;
+
+            const isWaitingForScrollExceedingTimeout = Date.now() - startTime > maxTimeout;
+            if (isWaitingForScrollExceedingTimeout) {
+                throw new Error(`Aborting waiting for scroll end - page is still scrolling after ${maxTimeout}ms`);
+            }
+        }
+    }
+
+    async clickFormStatusBarSection(sectionId: number) {
+        const searchedSectionId = `#status-bar-section-item-${sectionId}`;
+        const sectionStatusBarLocator: Locator = this.page.locator(searchedSectionId);
+        expect(await sectionStatusBarLocator.isVisible()).toBeTruthy();
+        await sectionStatusBarLocator.click();
+        await this.waitForPageToFinishScrolling();
+    }
+
+    /**
+     * Verifies that the locator is visible in the viewport and not hidden by another element
+     * (e.g. could be hidden by StatusBar / Navbar)
+     *
+     * {@link toBeHidden} and {@link toBeVisible} do not solve this problem
+     * @param locator
+     */
+    private async verifyLocatorIsVisible(locator: Locator) {
+        const initialPosition = await locator.boundingBox();
+        await locator.click(); // scrolls to the locator if needed (e.g. if hidden by another element)
+        const newPosition = await locator.boundingBox();
+        // The purpose of this check is that the headline is not hidden behind the (vertical) StatusBar / Navbar: if it
+        // were, clicking it would scroll it down and its vertical position would change. We therefore assert the
+        // VERTICAL position is stable. The horizontal position is intentionally not compared: clicking can trigger a
+        // benign sub-8px horizontal reflow (e.g. a focused editor/scrollbar-gutter in the section) that is irrelevant
+        // to vertical occlusion and would otherwise make this exact-boundingBox comparison flaky.
+        expect(newPosition?.y).toBeCloseTo(initialPosition?.y ?? Number.NaN, 0);
+        expect(newPosition?.height).toBeCloseTo(initialPosition?.height ?? Number.NaN, 0);
+    }
+
+    async checkIsHeadlineVisibleToUser(searchedHeadlineDisplayText: string, expected: boolean) {
+        const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
+
+        if (expected) {
+            // ratio 0.99 (not 1): a headline whose rendered box has fractional CSS-pixel edges (e.g. a 30.234px-tall
+            // <h3>) is reported by Playwright's IntersectionObserver-based toBeInViewport at ~0.995 even when it is
+            // fully on screen — a sub-pixel rounding artifact, not a real clipping. The stricter verifyLocatorIsVisible
+            // below still guarantees the headline is fully visible and not hidden behind the sticky status bar.
+            await expect(headlineLocator).toBeInViewport({ ratio: 0.99 });
+            /** additional check because {@link toBeInViewport} is too inaccurate */
+            await this.verifyLocatorIsVisible(headlineLocator);
+        } else {
+            await expect(headlineLocator).not.toBeInViewport();
+        }
+    }
+}

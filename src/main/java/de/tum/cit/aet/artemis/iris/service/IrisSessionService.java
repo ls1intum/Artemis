@@ -1,0 +1,224 @@
+package de.tum.cit.aet.artemis.iris.service;
+
+import java.util.List;
+import java.util.Map;
+
+import jakarta.ws.rs.BadRequestException;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
+import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
+import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+
+/**
+ * Service for managing Iris sessions.
+ */
+@Lazy
+@Service
+@Conditional(IrisEnabled.class)
+public class IrisSessionService {
+
+    private final UserRepository userRepository;
+
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    private final IrisChatSessionService irisChatSessionService;
+
+    private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
+
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final IrisSettingsService irisSettingsService;
+
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
+            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService, UserAiPreferenceService userAiPreferenceService) {
+        this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
+        this.irisChatSessionService = irisChatSessionService;
+        this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.irisSettingsService = irisSettingsService;
+    }
+
+    /**
+     * Checks if the exercise connected to the session has Iris activated
+     *
+     * @param session the session to check for
+     */
+    public void checkIsIrisActivated(IrisSession session) {
+        var wrapper = getIrisSessionSubService(session);
+        wrapper.irisSubFeatureInterface.checkIrisEnabledFor(wrapper.irisSession);
+    }
+
+    /**
+     * Checks if the user has access to the Iris session.
+     * If the user is null, the user is fetched from the database.
+     *
+     * @param session The session to check
+     * @param user    The user to check
+     * @throws AccessForbiddenException If the user has not accepted the Iris privacy policy yet
+     */
+    public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, true);
+    }
+
+    /**
+     * The same access check, minus the LLM opt-in gate.
+     *
+     * <p>
+     * For the paths that record what a student did with a message Iris has ALREADY sent them. Refusing those on a
+     * lapsed opt-in leaves the record wrong rather than protecting anything: the hint was delivered under the
+     * opt-in that was live at the time, no new model work is authorised by writing down that the student dismissed
+     * it, and a client that must eventually write a terminal outcome would retry forever against a 403. Activation,
+     * ownership and the course/exercise role are all still checked.
+     *
+     * @param session The session to check
+     * @param user    The user to check; loaded from the database when null
+     */
+    public void checkHasAccessToIrisSessionWithoutLlmOptIn(IrisSession session, @Nullable User user) {
+        checkHasAccessToIrisSession(session, user, false);
+    }
+
+    private void checkHasAccessToIrisSession(IrisSession session, @Nullable User user, boolean requireLlmOptIn) {
+        if (user == null) {
+            user = userRepository.getUserWithAuthorities();
+        }
+        var wrapper = getIrisSessionSubService(session);
+        if (requireLlmOptIn && session.shouldSelectLLMUsage()) {
+            userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        }
+        wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
+    }
+
+    /**
+     * @param session The session to get a message for
+     * @param <S>     The type of the session
+     * @see #requestMessageFromIris(IrisSession, Map, List, String)
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session) {
+        requestMessageFromIris(session, Map.of(), List.of(), null);
+    }
+
+    /**
+     * Sends a request to Iris to get a message for the given session.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param session          The session to get a message for
+     * @param uncommittedFiles The uncommitted files from the client
+     * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
+     * @param clientId         Identifies the browser tab the message was sent from, so a command Iris issues mid-pipeline is addressed back to it; null if the client sent none
+     * @param <S>              The type of the session
+     * @throws BadRequestException If the session type is invalid
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
+            if (session instanceof IrisChatSession chatSession) {
+                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context, clientId);
+            }
+            else {
+                chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            }
+        }
+        else {
+            throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Sends a message over the websocket to a specific user.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param message The message to send
+     * @param session The session to send the message for
+     * @param <S>     The type of the session
+     * @throws BadRequestException If the session type is invalid
+     */
+    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session) {
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
+            chatWrapper.sendOverWebsocket(session, message);
+        }
+        else {
+            throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Checks the rate limit for the given user.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param session The session to check the rate limit for
+     * @param user    The user to check the rate limit for
+     */
+    public void checkRateLimit(IrisSession session, User user) {
+        var wrapper = getIrisSessionSubService(session);
+        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface<?> rateLimitedWrapper) {
+            invokeRateLimitCheck(rateLimitedWrapper, wrapper.irisSession, user);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> void invokeRateLimitCheck(IrisRateLimitedFeatureInterface<S> rateLimitedWrapper, IrisSession session, User user) {
+        rateLimitedWrapper.checkRateLimit(user, (S) session);
+    }
+
+    /**
+     * Gets the Iris subsystem for the given session.
+     * Uses generic casts that are safe because the Iris subsystems are only used for the correct session type.
+     *
+     * @param session The session to get the subsystem for
+     * @param <S>     The type of the session
+     * @throws BadRequestException If the session type is unknown
+     * @return The Iris subsystem for the session
+     */
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
+        return switch (session) {
+            case IrisChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
+            case IrisTutorSuggestionSession tutorSuggestionSession ->
+                (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorSuggestionSessionService, tutorSuggestionSession);
+            case null, default -> throw new BadRequestException("Unknown Iris session type: " + (session != null ? session.getClass().getSimpleName() : "null"));
+        };
+    }
+
+    private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {
+    }
+
+    /**
+     * Get all IrisChatSessions for a course and map the IrisChatSessionDAO to IrisChatSessionDTO
+     *
+     * @param course The course
+     * @param userId The id of the user
+     * @return A list of all IrisChatSessionsDTOs for a course
+     */
+    public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
+            return List.of();
+        }
+
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
+                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.lastActivityDate(), dao.session().getMode())).toList();
+    }
+}

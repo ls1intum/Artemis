@@ -1,0 +1,264 @@
+<div #fullElement class="h-full flex flex-col">
+    @if (showMarkdownInfoText()) {
+        <div class="pb-1 text-muted-color text-sm shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+    }
+    <div
+        #wrapper
+        class="markdown-editor-wrapper grow flex flex-col"
+        [style.overflow]="inEditMode() ? 'visible' : 'auto'"
+        [style.height]="inEditMode() && targetWrapperHeight() ? targetWrapperHeight() + 'px' : 'auto'"
+        [style.cursor]="isResizing() ? 'ns-resize' : undefined"
+        [style.min-height.px]="minWrapperHeight()"
+    >
+        <!-- Tab header row: tabs and (in edit mode) the action toolbar share one wrapping flex row. -->
+        <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
+            <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="shrink-0 w-auto!">
+                <tumaet-ui-tab-list class="border-b-0!">
+                    @if (showEditButton()) {
+                        <tumaet-ui-tab [value]="TAB_EDIT" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
+                            ><span jhiTranslate="entity.action.edit"></span
+                        ></tumaet-ui-tab>
+                    }
+                    @if (showVisualButton()) {
+                        <tumaet-ui-tab [value]="TAB_VISUAL" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
+                            ><span jhiTranslate="entity.action.visual"></span
+                        ></tumaet-ui-tab>
+                    }
+                    @if (showPreviewButton()) {
+                        <tumaet-ui-tab [value]="TAB_PREVIEW" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
+                            ><span jhiTranslate="entity.action.preview"></span
+                        ></tumaet-ui-tab>
+                    }
+                </tumaet-ui-tab-list>
+            </tumaet-ui-tabs>
+
+            @if (inEditMode()) {
+                <div class="flex items-center flex-wrap">
+                    <!-- Standard -->
+                    @for (action of displayedActions().style; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    @for (action of displayedActions().standard; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Headers -->
+                    @if (displayedActions().header.length) {
+                        <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                            <button class="md-toolbar-btn" type="button" [tumAetUiPopoverTrigger]="headerPopover">
+                                <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
+                            </button>
+                            <tumaet-ui-popover #headerPopover padding="none" [ariaLabel]="headerActions()?.translationKey ?? '' | artemisTranslate">
+                                <div class="md-action-popover">
+                                    @for (action of displayedActions().header; track action.id) {
+                                        <button type="button" class="md-dropdown-item" (click)="runFromPopover(headerPopover, () => action.executeInCurrentEditor())">
+                                            <span [jhiTranslate]="action.translationKey"></span>
+                                        </button>
+                                    }
+                                </div>
+                            </tumaet-ui-popover>
+                        </div>
+                    }
+                    @if (displayedActions().color; as color) {
+                        <div class="flex">
+                            <button type="button" class="color-preview md-toolbar-btn" [tumAetUiPopoverTrigger]="colorPopover">
+                                <span [jhiTranslate]="color.translationKey"></span>
+                            </button>
+                            <tumaet-ui-popover #colorPopover [ariaLabel]="color.translationKey | artemisTranslate">
+                                <div class="flex flex-wrap gap-1 w-[13.75rem]">
+                                    @for (tagColor of colors; track tagColor) {
+                                        <button
+                                            type="button"
+                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                            [style.background-color]="tagColor"
+                                            (click)="runFromPopover(colorPopover, () => onSelectColor(tagColor))"
+                                        ></button>
+                                    }
+                                </div>
+                            </tumaet-ui-popover>
+                        </div>
+                    }
+                    <!-- Domain (without options) -->
+                    @for (action of displayedActions().domain.withoutOptions; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                    <!-- Domain (with options) -->
+                    @for (action of displayedActions().domain.withOptions; track action.id) {
+                        <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                            <button class="md-toolbar-btn" type="button" [tumAetUiPopoverTrigger]="domainPopover">
+                                <span [jhiTranslate]="action.translationKey"></span>
+                            </button>
+                            <tumaet-ui-popover #domainPopover padding="none" [ariaLabel]="action.translationKey | artemisTranslate">
+                                <div class="md-action-popover">
+                                    @if (action.values.length) {
+                                        @for (value of action.values; track value.id) {
+                                            <button
+                                                type="button"
+                                                class="md-dropdown-item"
+                                                (click)="runFromPopover(domainPopover, () => action.executeInCurrentEditor({ selectedItem: value }))"
+                                            >
+                                                <span>{{ value.value }}</span>
+                                            </button>
+                                        }
+                                    } @else {
+                                        <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                                    }
+                                </div>
+                            </tumaet-ui-popover>
+                        </div>
+                    }
+                    <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
+                    <!-- AI Assistance -->
+                    @if (displayedActions().artemisIntelligence.length > 0) {
+                        @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        } @else {
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                                <button
+                                    class="md-toolbar-btn"
+                                    type="button"
+                                    [tumAetUiPopoverTrigger]="aiPopover"
+                                    [tumAetUiTooltip]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="facArtemisIntelligence" />
+                                </button>
+                                <tumaet-ui-popover #aiPopover padding="none" [ariaLabel]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate">
+                                    <div class="md-action-popover">
+                                        @for (action of displayedActions().artemisIntelligence; track action.id) {
+                                            <button type="button" class="md-dropdown-item" (click)="runFromPopover(aiPopover, () => action.executeInCurrentEditor())">
+                                                <span [jhiTranslate]="action.translationKey"></span>
+                                            </button>
+                                        }
+                                    </div>
+                                </tumaet-ui-popover>
+                            </div>
+                        }
+                    }
+                    <!-- Meta -->
+                    @for (action of displayedActions().meta; track action.id) {
+                        <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
+        <div
+            class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]"
+            data-testid="markdown-editor"
+            [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }"
+            (dragover)="enableFileUpload() ? $event.preventDefault() : undefined"
+            (drop)="onFileDrop($event)"
+        >
+            @if (mode() === 'diff') {
+                @if (renderSideBySide()) {
+                    <!-- Split-view column headers so users know which side is which -->
+                    <div #diffHeader class="flex border-b">
+                        <div class="flex items-center shrink-0 px-2 py-1 bg-surface-raised" [style.width.px]="diffOriginalPaneWidth()">
+                            <tumaet-ui-tag severity="danger" [value]="diffOriginalLabel()" />
+                        </div>
+                        <div class="flex items-center shrink-0 flex-1 border-l px-2 py-1 bg-surface-raised">
+                            <tumaet-ui-tag severity="success" [value]="diffSuggestionLabel()" />
+                        </div>
+                    </div>
+                } @else {
+                    <!-- Inline/unified diff: single explanatory row -->
+                    <div #diffHeader class="flex items-center gap-2 px-2 py-1 border-b bg-surface-raised">
+                        <tumaet-ui-tag severity="danger" [value]="diffOriginalLabel()" />
+                        <span class="text-[0.78rem] text-muted-color">{{ diffUnifiedHint() }}</span>
+                        <tumaet-ui-tag severity="success" [value]="diffSuggestionLabel()" />
+                    </div>
+                }
+            }
+            <jhi-monaco-editor
+                class="h-full"
+                [mode]="mode()"
+                [shrinkToFit]="false"
+                [stickyScroll]="false"
+                [readOnly]="isReadOnly()"
+                [renderSideBySide]="renderSideBySide()"
+                [textChangedEmitDelay]="200"
+                (textChanged)="onTextChanged($event)"
+                (contentHeightChanged)="onContentHeightChanged($event)"
+                (diffChanged)="onDiffChanged($event)"
+                (diffOriginalPaneLayoutChanged)="onDiffOriginalPaneLayoutChanged($event)"
+                (onBlurEditor)="onBlurEditor.emit()"
+            />
+            @if (enableFileUpload()) {
+                <div class="flex items-center border-t" #fileUploadFooter>
+                    <!-- Visually hidden: a file input cannot use display:none (some browsers then block uploads), so it is shrunk and pushed out of view instead. -->
+                    <input
+                        #fileUploadInput
+                        [id]="'file-upload ' + uniqueMarkdownEditorId()"
+                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0 overflow-hidden"
+                        type="file"
+                        [accept]="allowedFileExtensions()"
+                        [multiple]="true"
+                        (change)="onFileUpload($event)"
+                    />
+                    <label
+                        [for]="'file-upload ' + uniqueMarkdownEditorId()"
+                        class="inline w-full cursor-pointer rounded-r-[0.15em]"
+                        [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
+                    >
+                        <div class="flex mx-0 items-baseline">
+                            <span
+                                class="grow text-xs text-muted-color"
+                                [jhiTranslate]="wrapper.getBoundingClientRect().width < 500 ? 'artemisApp.markdownEditor.fileUploadShort' : 'artemisApp.markdownEditor.fileUpload'"
+                            ></span>
+                        </div>
+                    </label>
+                    @if (!showMarkdownInfoText()) {
+                        <a class="shrink-0 mx-1" href="https://markdown-it.github.io/">
+                            <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Visual content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
+        @if (visualTabActivated()) {
+            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inVisualMode() }">
+                <ng-content select="[#visual]" />
+            </div>
+        }
+
+        <!--
+            Preview content: always attached to the document and toggled via visibility. The projected content is created with the
+            editor either way, and content that renders itself into the document (task test statuses, PlantUML diagrams) finds its
+            anchors with a document query, which only sees attached nodes.
+        -->
+        <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
+            <ng-content class="overflow-auto p-1" select="#previewMonaco">
+                @if (showDefaultPreview()) {
+                    <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
+                }
+            </ng-content>
+        </div>
+    </div>
+    @if (enableResize() && inEditMode()) {
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">
+            <fa-icon
+                cdkDrag
+                cdkDragLockAxis="y"
+                [cdkDragConstrainPosition]="constrainDragPosition"
+                (cdkDragStarted)="isResizing.set(true)"
+                (cdkDragMoved)="onResizeMoved($event)"
+                (cdkDragEnded)="isResizing.set(false)"
+                [icon]="faGripLines"
+                [style.cursor]="'ns-resize'"
+                class="rg-bottom md-resize-icon"
+            />
+        </div>
+    }
+</div>
+
+<ng-template #simpleActionButton let-action="action">
+    <button type="button" class="md-toolbar-btn" [tumAetUiTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
+        @if (action.icon) {
+            <fa-icon [icon]="action.icon" />
+        } @else {
+            <span [jhiTranslate]="action.translationKey"></span>
+        }
+    </button>
+</ng-template>

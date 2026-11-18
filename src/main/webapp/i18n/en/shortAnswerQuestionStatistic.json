@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "shortAnswerQuestionStatistic": {
+            "home": {
+                "title": "Short Answer Question Statistics",
+                "createLabel": "Create a new Short Answer Question Statistic"
+            },
+            "created": "Created new Short Answer Question Statistic with identifier {{ param }}",
+            "updated": "Updated Short Answer Question Statistic with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Question Statistic with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Question Statistic {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Question Statistic"
+            },
+            "shortAnswerSpotCounters": "Short Answer Spot Counters"
+        }
+    }
+}

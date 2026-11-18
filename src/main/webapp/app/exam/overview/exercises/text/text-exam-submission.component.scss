@@ -1,0 +1,17 @@
+.text-editor-textarea {
+    width: 100%;
+    max-width: 750px;
+    height: 50vh;
+    padding: 10px 12px;
+    border: 1px solid var(--text-editor-border-color);
+    border-radius: 2px;
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
+
+    &:focus {
+        outline: none;
+        border: 1px solid var(--artemis-dark);
+        background-color: var(--text-editor-focus-background);
+        box-shadow: var(--tumaet-ui-shadow-sm);
+    }
+}

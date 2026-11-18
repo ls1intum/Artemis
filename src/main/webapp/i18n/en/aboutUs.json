@@ -1,0 +1,119 @@
+{
+    "artemisApp": {
+        "aboutUsOverview": {
+            "title": "About Artemis",
+            "subtitle": "Interactive learning with individual feedback",
+            "portraitAlt": "Portrait of {{ name }}",
+            "courseRequests": "Request a new course",
+            "installation": {
+                "title": "Responsible organization",
+                "operator": "Operated by",
+                "testServer": "Test server"
+            },
+            "help": {
+                "title": "Get in touch",
+                "courseQuestions": "Questions about a course, an exercise or a grade? Ask the instructors of that course. For access or account problems, contact the administrator.",
+                "contactAdministrator": "Contact the administrator"
+            },
+            "highlights": {
+                "title": "Selected features",
+                "examFeatures": "Exam mode in detail:",
+                "features": {
+                    "onlineEditor": {
+                        "name": "Online code editor",
+                        "description": "Start coding right away: write, commit and submit your solution in the browser, with nothing to install."
+                    },
+                    "testFeedback": {
+                        "name": "Automatic test feedback",
+                        "description": "Learn from every attempt: see which tests your submission passes, which it fails and why."
+                    },
+                    "exam": {
+                        "name": "Take an exam",
+                        "description": "Show what you have learned in online exams, with the same editors you practice with."
+                    },
+                    "liveQuiz": {
+                        "name": "Live quiz",
+                        "description": "Check your understanding in live quizzes, together in the lecture or at your own pace."
+                    },
+                    "learningPaths": {
+                        "name": "Learning paths",
+                        "description": "Follow a learning path that adapts to your progress, from one competency to the next."
+                    },
+                    "messaging": {
+                        "name": "Messages and threads",
+                        "description": "Ask questions, discuss exercises and learn together with your course in channels and threads."
+                    },
+                    "iris": {
+                        "name": "Iris AI tutor",
+                        "description": "Ask Iris whenever you are stuck. Iris already knows your exercise and your latest submission, and guides you to the solution instead of giving it away."
+                    },
+                    "aiFeedback": {
+                        "name": "Personalized AI feedback",
+                        "description": "Request individual AI feedback on your draft before the due date, improve it and submit again."
+                    },
+                    "exerciseGeneration": {
+                        "name": "AI-supported exercise generation",
+                        "description": "Generate and refine problem statements, code and quiz questions, and give your students more exercises to learn from."
+                    },
+                    "lectures": {
+                        "name": "Lectures",
+                        "description": "Work through slides, videos and lecture units at your own pace, alongside the exercises that go with them."
+                    }
+                }
+            },
+            "modules": {
+                "title": "Enabled modules",
+                "description": "Beyond its core features, Artemis offers modules that can be switched on as needed. These are available here:",
+                "exam": "Exam mode",
+                "text": "Text exercises",
+                "modeling": "Modeling exercises",
+                "fileUpload": "File upload exercises",
+                "lecture": "Lectures",
+                "tutorialGroup": "Tutorial groups",
+                "atlas": "Competencies and learning paths",
+                "iris": "Iris AI tutor",
+                "athena": "AI-assisted assessment",
+                "hyperion": "AI-assisted exercise creation",
+                "plagiarism": "Plagiarism checks",
+                "deimos": "Suspicious participation analysis",
+                "theia": "Online IDE",
+                "sharing": "Exercise sharing platform",
+                "lti": "Learning management system integration (LTI)",
+                "saml2": "Single sign-on (SAML)",
+                "passkey": "Passkey sign-in"
+            },
+            "project": {
+                "title": "Powered by Artemis",
+                "description": "Artemis is an open-source learning platform, developed by the research group Applied Education Technologies at the Technical University of Munich, and used by universities and schools in several countries.",
+                "operatedBy": "Artemis is run by {{ operator }}.",
+                "links": {
+                    "documentation": "Documentation",
+                    "sourceCode": "Source code",
+                    "securityPolicy": "Security policy",
+                    "publications": "Publications",
+                    "comparison": "Comparison with other LMS"
+                }
+            },
+            "maintainers": {
+                "title": "Core maintainers",
+                "contributors": "Built with hundreds of contributors"
+            },
+            "citation": {
+                "title": "Cite Artemis",
+                "description": "If you use Artemis in your research, please cite:",
+                "copy": "Copy",
+                "copied": "Copied"
+            },
+            "release": {
+                "title": "Release",
+                "version": "Version",
+                "license": "License"
+            },
+            "roles": {
+                "projectManager": "Project Manager",
+                "administrator": "System Administrator",
+                "exerciseManagement": "Exercise Management"
+            }
+        }
+    }
+}

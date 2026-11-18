@@ -1,0 +1,87 @@
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { onError } from 'app/foundation/util/global.utils';
+import { Subject, combineLatest } from 'rxjs';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { tutorialGroupsConfigurationSaveObserver } from '../tutorial-groups-configuration-save.util';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
+import dayjs from 'dayjs/esm';
+
+@Component({
+    selector: 'jhi-edit-tutorial-groups-configuration',
+    templateUrl: './edit-tutorial-groups-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupsConfigurationFormComponent],
+})
+export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private courseStorageService = inject(CourseStorageService);
+    private alertService = inject(AlertService);
+
+    ngUnsubscribe = new Subject<void>();
+
+    readonly isLoading = signal(false);
+    tutorialGroupsConfiguration!: TutorialGroupConfiguration; // set from the server response in ngOnInit before any user-triggered read
+    readonly formData = signal<TutorialGroupsConfigurationFormData>(undefined!);
+    readonly course = signal<Course>(undefined!);
+    tutorialGroupConfigurationId!: number; // set from the route param in ngOnInit before any user-triggered read
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
+            .pipe(
+                take(1),
+                switchMap(([params, { course }]) => {
+                    this.tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
+                    this.course.set(course);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
+                }),
+                finalize(() => this.isLoading.set(false)),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (configuration) => {
+                    if (configuration) {
+                        this.tutorialGroupsConfiguration = configuration;
+                        this.formData.set({
+                            period: [
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive).toDate(),
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive).toDate(),
+                            ],
+                            useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
+                            usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
+                        });
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
+    updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationSettings) {
+        this.isLoading.set(true);
+        this.tutorialGroupsConfigurationService
+            .update(this.course().id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration.tutorialGroupFreePeriods ?? [], formData)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(tutorialGroupsConfigurationSaveObserver(this.course, this.courseStorageService, this.router, this.alertService, 'tutorial-groups'));
+    }
+}

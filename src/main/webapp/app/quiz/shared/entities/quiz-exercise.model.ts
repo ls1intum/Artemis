@@ -1,0 +1,93 @@
+import dayjs from 'dayjs/esm';
+import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizQuestion, resetQuizQuestionForImport } from 'app/quiz/shared/entities/quiz-question.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
+import { QuizParticipation } from 'app/quiz/shared/entities/quiz-participation.model';
+
+export enum QuizStatus {
+    OPEN_FOR_PRACTICE,
+    ACTIVE,
+    VISIBLE,
+    INVISIBLE,
+}
+
+export enum QuizMode {
+    SYNCHRONIZED = 'SYNCHRONIZED',
+    BATCHED = 'BATCHED',
+    INDIVIDUAL = 'INDIVIDUAL',
+}
+
+export enum LiveQuizParticipationStatus {
+    NOT_STARTED = 'NOT_STARTED',
+    PARTICIPATING = 'PARTICIPATING',
+    SUBMITTED = 'SUBMITTED',
+    MISSED = 'MISSED',
+}
+
+export class QuizBatch {
+    id?: number;
+    startTime?: dayjs.Dayjs;
+    started?: boolean;
+    ended?: boolean;
+    submissionAllowed?: boolean;
+    password?: string;
+
+    // local helpers
+    startTimeError?: boolean;
+}
+
+export class QuizExercise extends Exercise implements QuizConfiguration, QuizParticipation {
+    public visibleToStudents?: boolean; // (computed by server)
+    public allowedNumberOfAttempts?: number;
+    public remainingNumberOfAttempts?: number;
+    public randomizeQuestionOrder?: boolean;
+    public duration?: number;
+    public quizQuestions?: QuizQuestion[];
+    public status?: QuizStatus;
+    public quizMode?: QuizMode = QuizMode.INDIVIDUAL; // default value
+    public quizBatches?: QuizBatch[];
+    /**
+     * Set by the exercise-list endpoints, which do not ship the question graph. Lets a list view tell whether the
+     * quiz has drag-and-drop questions (they rule out AI variant generation) without loading every question.
+     */
+    public hasDragAndDropQuestions?: boolean;
+
+    // helper attributes
+    public quizEnded?: boolean;
+    public quizStarted?: boolean;
+
+    public isActiveQuiz?: boolean;
+    public isPracticeModeAvailable?: boolean;
+    public isEditable?: boolean;
+    /** Set by the server on the instructor detail view: whether the evaluate action is accepted right now. */
+    public canBeEvaluated?: boolean;
+
+    constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
+        super(ExerciseType.QUIZ);
+        this.course = course;
+        this.exerciseGroup = exerciseGroup;
+        this.randomizeQuestionOrder = true; // default value (set by server)
+        this.isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
+        this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
+        this.isEditable = false; // default value (set by client, might need to be computed before evaluated)
+    }
+}
+
+export function resetQuizForExam(exercise: QuizExercise) {
+    resetForImport(exercise);
+
+    exercise.quizBatches = [];
+    exercise.isEditable = true;
+}
+
+export function resetQuizForImport(exercise: QuizExercise) {
+    resetQuizForExam(exercise);
+    exercise.course = undefined;
+    exercise.exerciseGroup = undefined;
+    exercise.id = undefined;
+    for (const question of exercise.quizQuestions || []) {
+        resetQuizQuestionForImport(question);
+    }
+}

@@ -1,0 +1,19 @@
+@if (plagiarismCase()) {
+    @if (!plagiarismCase().verdict) {
+        <tumaet-ui-tag severity="secondary" data-testid="plagiarism-case-verdict-badge">
+            {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}
+            : {{ 'artemisApp.plagiarism.plagiarismCases.verdict.none' | artemisTranslate }}
+        </tumaet-ui-tag>
+    } @else {
+        <tumaet-ui-tag
+            [severity]="plagiarismCase().verdict === plagiarismVerdict.NO_PLAGIARISM ? 'success' : 'danger'"
+            data-testid="plagiarism-case-verdict-badge"
+            [tumAetUiTooltip]="
+                'artemisApp.plagiarism.plagiarismCases.verdict.description'
+                    | artemisTranslate: { date: plagiarismCase().verdictDate | artemisDate, user: plagiarismCase().verdictBy?.name }
+            "
+        >
+            {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }} : {{ verdictTranslationString | artemisTranslate }}
+        </tumaet-ui-tag>
+    }
+}

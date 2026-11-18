@@ -1,0 +1,5 @@
+(library
+ (name assignment)
+ (libraries overrides)
+ (flags
+  (:standard -warn-error -A -open Overrides -nopervasives)))

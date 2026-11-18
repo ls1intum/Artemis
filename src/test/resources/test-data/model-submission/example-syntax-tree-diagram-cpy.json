@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "type": "SyntaxTree",
+    "size": { "width": 640, "height": 1080 },
+    "interactive": { "elements": [], "relationships": [] },
+    "elements": [
+        {
+            "id": "99c3538a-cc7c-4d79-9eec-8368aa7be6d5",
+            "name": "Nonterminal",
+            "type": "SyntaxTreeNonterminal",
+            "owner": null,
+            "bounds": { "x": 0, "y": 0, "width": 140, "height": 70 }
+        },
+        {
+            "id": "c441d34a-2202-458c-b8b0-3ac7c67ae775",
+            "name": "Terminal",
+            "type": "SyntaxTreeTerminal",
+            "owner": null,
+            "bounds": { "x": 210, "y": 370, "width": 80, "height": 30 }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "0756d15f-c038-4224-b278-3997554edab5",
+            "name": "",
+            "type": "SyntaxTreeLink",
+            "owner": null,
+            "bounds": { "x": 70, "y": 70, "width": 180, "height": 300 },
+            "path": [
+                { "x": 0, "y": 0 },
+                { "x": 180, "y": 300 }
+            ],
+            "source": { "direction": "Down", "element": "99c3538a-cc7c-4d79-9eec-8368aa7be6d5" },
+            "target": { "direction": "Up", "element": "c441d34a-2202-458c-b8b0-3ac7c67ae775" }
+        }
+    ]
+}

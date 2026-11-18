@@ -1,0 +1,55 @@
+<tumaet-ui-table-layout [empty]="content().resultsOnPage.length === 0">
+    <table
+        tumAetUiTable
+        size="small"
+        striped
+        [sortField]="search().sortedColumn"
+        [sortOrder]="search().sortingOrder === SortingOrder.ASCENDING ? 1 : -1"
+        (sortChange)="onSortChange($event)"
+    >
+        <thead>
+            <tr>
+                <th tumAetUiSortableColumn="ID" class="w-16"><span>#</span></th>
+                <th tumAetUiSortableColumn="TITLE">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.TITLE'"></span>
+                </th>
+                <!-- do not allow sorting by description -->
+                <th>
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.DESCRIPTION'"></span>
+                </th>
+                <th tumAetUiSortableColumn="COURSE_TITLE">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.COURSE_TITLE'"></span>
+                </th>
+                <th tumAetUiSortableColumn="SEMESTER">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.SEMESTER'"></span>
+                </th>
+                <!-- column for buttons -->
+                <th class="w-24"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (competency of content().resultsOnPage; track competency.id) {
+                <tr>
+                    <td>{{ competency.id }}</td>
+                    <td>{{ competency.title }}</td>
+                    <td class="markdown-preview" [jhiMarkdown]="competency.description"></td>
+                    <td>{{ competency.course?.title }}</td>
+                    <td>{{ competency.course?.semester }}</td>
+                    <td>
+                        <ng-container *ngTemplateOutlet="buttonsTemplate(); context: { competency: competency }" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <tumaet-ui-paginator
+        tumAetUiTableFooter
+        [hidden]="!displayPagination()"
+        [page]="search().page - 1"
+        [pageSize]="search().pageSize"
+        [totalRecords]="search().pageSize * content().numberOfPages"
+        [showRowsPerPage]="false"
+        [showCurrentPageReport]="false"
+        (pageChange)="onPageChange($event + 1)"
+    />
+</tumaet-ui-table-layout>

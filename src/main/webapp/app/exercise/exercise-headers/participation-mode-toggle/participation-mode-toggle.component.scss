@@ -1,0 +1,11 @@
+.participation-mode,
+.participation-mode__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.participation-mode__item {
+    white-space: nowrap;
+    font-size: 0.75rem;
+}

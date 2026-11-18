@@ -1,0 +1,159 @@
+{
+    "artemisApp": {
+        "result": {
+            "home": {
+                "title": "Results",
+                "createLabel": "Create a new result"
+            },
+            "created": "Created new result with identifier {{ param }}",
+            "updated": "Updated result with identifier {{ param }}",
+            "deleted": "Deleted result with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete the result with id {{ id }}?",
+                "question2": "Are you sure you want to delete this result? It cannot be undone!",
+                "buttonText": "Delete",
+                "error": {
+                    "hasComplaint": "A result cannot be deleted if it has a complaint!"
+                }
+            },
+            "detail": {
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback for task: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Code Issue",
+                    "title": "{{ scaCategory }} Issue in File {{ location }}",
+                    "line": "at line {{ line }}",
+                    "lines": "at lines {{ from }}-{{ to }}",
+                    "column": "column {{ column }}",
+                    "columns": "columns {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Test Case",
+                    "noInfo": "No result information for {{ name }}",
+                    "passed": "{{ name }} passed",
+                    "failed": "{{ name }} failed"
+                }
+            },
+            "noResult": "No result",
+            "noGradedResult": "Not graded",
+            "resultString": {
+                "resultString": "Result Text",
+                "buildFailed": "Build failed",
+                "buildSuccessfulNoTests": "Build successful, no tests executed",
+                "buildSuccessfulTests": "{{ numberOfTestsPassed }} of {{ numberOfTestsTotal }} passed",
+                "nonProgramming": "{{ relativeScore }}%, {{ points }} points",
+                "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} points",
+                "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} issues, {{ points }} points",
+                "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
+                "short": "{{ relativeScore }}%",
+                "automaticAIFeedbackSuccessful": "Feedback",
+                "automaticAIFeedbackFailed": "Feedback",
+                "automaticAIFeedbackInProgress": "AI Feedback request is being processed",
+                "automaticAIFeedbackTimedOut": "Feedback timed out.",
+                "automaticAIFeedbackSuccessfulTooltip": "AI-based feedback can include mistakes. Consider checking important information.",
+                "automaticAIFeedbackFailedTooltip": "AI Feedback Request failed due to an internal error. Please try again shortly or contact the Artemis administrators if the issue persists.",
+                "automaticAIFeedbackInProgressTooltip": "AI Feedback is being generated.",
+                "automaticAIFeedbackTimedOutTooltip": "Time for generating AI Feedback has expired. Please try again shortly or contact Artemis administrators if the issue persists."
+            },
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildError": "Build Error:",
+            "score": "Your overall score is {{score}}%",
+            "scorePercentage": "Score (in %)",
+            "scoreWithPoints": "Your score is {{score}}%, {{points}} points",
+            "currentScore": "Current Score",
+            "rated": "Graded",
+            "assessmentType": "Assessment Type",
+            "assessor": "Reviewer",
+            "feedbacks": "Feedback",
+            "submission": "Submission",
+            "participation": "Participation",
+            "createManual": "Create manual result",
+            "updateManual": "Update manual result",
+            "viewManual": "View manual result",
+            "manualResult": "Manual result",
+            "invalidScore": "Score is required and should be a number between 0 and 100.",
+            "resultStringRequired": "Result text is required.",
+            "studentLogin": "Student",
+            "studentLoginRequired": "Select a student.",
+            "exerciseStillOpen": "Exercise is still open for submissions!",
+            "studentOverride": "The due date of this exercise has not been reached yet. The student might override this manual assessment by committing a new solution.",
+            "addFeedback": "Add new Feedback",
+            "deleteFeedback": "Delete last Feedback",
+            "feedbackTextRequired": "Feedback text is required.",
+            "positive": "Positive",
+            "graded": "Graded",
+            "gradedTooltip": "This result is part of your graded participation.",
+            "notGraded": "Not graded",
+            "notGradedTooltip": "This result is not part of your assessment.",
+            "practice": "Practice",
+            "practiceTooltip": "This result is part of your practice participation and will not have an influence on your assessment.",
+            "preliminary": "preliminary",
+            "preliminaryTooltip": "Your result is not final yet, because more tests will be executed after the due date",
+            "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
+            "preliminaryTooltipAthena": "This is an AI grading. The actual result may differ",
+            "codeIssuesTooltip": "The automatic code analysis generated some warnings for your code.",
+            "detailsLoadingFailed": "Feedback details could not be loaded.",
+            "buildLogsLoading": "Loading build logs…",
+            "buildLogsLoadingFailed": "Build logs could not be loaded.",
+            "noResultDetails": "No result details available.",
+            "onlyCompilationTested": "Your code compiled successfully. There are currently no tests visible.",
+            "chart": {
+                "points": "Points",
+                "deductions": "Deductions",
+                "tooltip": "Your deductions are limited in order to soften the effect of repeating issues. Be aware that you might have to solve multiple code issues to increase your score.",
+                "filterApplied": "A filter is applied to your feedback.",
+                "reset": "Reset"
+            },
+            "linkedCommit": "This result is linked to the following commit:",
+            "missing": {
+                "viewPrevious": "View Last Result",
+                "programmingFailedSubmission": {
+                    "message": "No corresponding result available.",
+                    "tooltipOfflineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually in your IDE, e.g. check that your code compiles locally and works correctly.",
+                    "tooltipOnlineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually as far as possible."
+                }
+            },
+            "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
+            "seeMore": "See more",
+            "noFeedback": "No feedback available",
+            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}.",
+            "testCount": "You passed {{passed}} of {{total}} tests.",
+            "notExecutedTests": "{{numberOfNotExecutedTests}} tests were not executed.",
+            "notExecutedTestsTooltip": "The tests might only get executed after the due date or there was an issue during the execution of the tests.",
+            "scaIssueCount": "You have {{issues}} code issues.",
+            "manualFeedbackCount": "You received {{feedbacks}} manual feedbacks.",
+            "buildLogs": {
+                "viewLogs": "View logs"
+            },
+            "progressString": {
+                "title": "Result history",
+                "resultsCount": {
+                    "one": "{{ count }} result",
+                    "other": "{{ count }} results"
+                },
+                "feedbackButton": "Feedback",
+                "clickToSeeAllResults": "Click to see all your results",
+                "buildFailed": "Your build failed!",
+                "goalReached": "Goal reached! Excellent work.",
+                "niceProgress": "Nice progress! You're getting closer.",
+                "scoreDrop": "Oops, your score dropped. Try a different path!",
+                "stuck": "Stuck? Try a new approach."
+            }
+        },
+        "externalSubmission": {
+            "searchPlaceholder": "Search by login, name, email or registration number",
+            "searchTooShort": "Type at least {{ min }} characters to search.",
+            "noResults": "No matching students.",
+            "moreResults": "Showing the first {{ shown }} of {{ total }} matching students. Type more to narrow the search.",
+            "searchFailed": "The search failed. Try again.",
+            "clearSelection": "Clear the selected student",
+            "ineligible": {
+                "notInCourse": "not a student of this course",
+                "noStudentExam": "has no student exam",
+                "exerciseNotInStudentExam": "exercise not in their student exam",
+                "resultAlreadyExists": "already has a result"
+            }
+        }
+    }
+}

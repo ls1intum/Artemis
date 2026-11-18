@@ -1,0 +1,133 @@
+<!-- Pointer clicks on the preview open the post; the native header/author button provides keyboard access.
+     The container stays non-interactive so rich-content links and saved-post buttons retain their own semantics. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
+    @if (post() !== undefined) {
+        @if (isShowSummary()) {
+            <button
+                type="button"
+                data-testid="posting-summary-open"
+                (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
+                [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
+                class="posting-summary-conversation fs-x-small text-muted-color mb-1 flex items-center border-0 bg-transparent p-0 text-start focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+                <span class="inline-block">
+                    <fa-icon [icon]="post()!.conversation!.type! === ConversationType.CHANNEL ? faHashtag : faLock" />
+                </span>
+                <span class="ms-1 inline-block">
+                    {{ post()!.conversation!.title! }}
+                    @if (isAnswerPost()) {
+                        > <span jhiTranslate="artemisApp.communication.post.thread"></span>
+                    }
+                </span>
+            </button>
+        }
+        @if (isShowContent()) {
+            <div class="posting-summary-wrap">
+                @if (isAnswerPost()) {
+                    <div class="text-muted-color">
+                        <fa-icon [icon]="faEllipsis" />
+                    </div>
+                }
+                <div class="posting-summary-content inline-flex items-start gap-2" [ngClass]="{ 'is-answer-post': isAnswerPost() }">
+                    <jhi-profile-picture
+                        imageSizeInRem="2.25"
+                        fontSizeInRem="0.9"
+                        imageId="post-profile-picture"
+                        defaultPictureId="post-default-profile-picture"
+                        [authorId]="post()!.author!.id!"
+                        [authorName]="post()!.author!.name!"
+                        [imageUrl]="addPublicFilePrefix(post()!.author!.imageUrl!)"
+                    />
+                    <div class="posting-summary-author-content fs-small">
+                        <div>
+                            @if (isShowSummary()) {
+                                <span class="me-1 inline-block font-semibold">{{ post()!.author!.name! }}</span>
+                            } @else {
+                                <button
+                                    type="button"
+                                    data-testid="posting-summary-open"
+                                    (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
+                                    [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.author!.name! }"
+                                    class="me-1 inline-block border-0 bg-transparent p-0 font-semibold text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                                >
+                                    {{ post()!.author!.name! }}
+                                </button>
+                            }
+                            @if (post()!.creationDate !== undefined) {
+                                <span class="fs-small text-muted-color" [tumAetUiTooltip]="postingIsOfToday() ? '' : (post()!.creationDate! | artemisDate: 'time')">
+                                    {{ postingIsOfToday() ? (post()!.creationDate! | artemisDate: 'time') : (post()!.creationDate! | artemisDate: 'short-date') }}
+                                </span>
+                            }
+                        </div>
+                        <div>
+                            <jhi-posting-content
+                                [previewMode]="false"
+                                [content]="post()!.content!"
+                                [author]="post()!.author!"
+                                [isEdited]="!!post()!.updatedDate"
+                                [posting]="post()!"
+                                [isReply]="false"
+                                [subscribesToPosts]="false"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (isShowSavedPostOptions()) {
+            <div class="posting-summary-saved-post-options">
+                <tumaet-ui-button-group aria-label="Saved options">
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [tumAetUiTooltip]="'artemisApp.communication.post.removeBookmarkPost' | artemisTranslate"
+                        (click)="onRemoveBookmarkClick($event)"
+                    >
+                        <fa-icon [icon]="faBookmark" />
+                    </button>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.IN_PROGRESS"
+                        [tumAetUiTooltip]="'artemisApp.communication.post.bookmarkPostProgress' | artemisTranslate"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.IN_PROGRESS)"
+                    >
+                        <fa-icon [icon]="faBarsProgress" />
+                    </button>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.COMPLETED"
+                        [tumAetUiTooltip]="'artemisApp.communication.post.bookmarkPostComplete' | artemisTranslate"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.COMPLETED)"
+                    >
+                        <fa-icon [icon]="faCheckSquare" />
+                    </button>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.ARCHIVED"
+                        [tumAetUiTooltip]="'artemisApp.communication.post.bookmarkPostArchived' | artemisTranslate"
+                        (click)="onStatusChangeClick($event, SavedPostStatus.ARCHIVED)"
+                    >
+                        <fa-icon [icon]="faBoxArchive" />
+                    </button>
+                </tumaet-ui-button-group>
+            </div>
+        }
+    }
+</div>

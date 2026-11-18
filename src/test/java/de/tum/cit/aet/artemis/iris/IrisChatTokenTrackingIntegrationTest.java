@@ -1,0 +1,232 @@
+package de.tum.cit.aet.artemis.iris;
+
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FAILED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
+import static de.tum.cit.aet.artemis.iris.util.IrisLLMMock.getMockLLMCosts;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.awaitility.Awaitility.await;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.assertj.core.data.Offset;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+
+class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
+
+    private static final String TEST_PREFIX = "irischattokentrackingintegration";
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Autowired
+    private LLMTokenUsageTraceTestRepository irisLLMTokenUsageTraceRepository;
+
+    @Autowired
+    private LLMTokenUsageRequestTestRepository irisLLMTokenUsageRequestRepository;
+
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private IrisChatSessionUtilService irisChatSessionUtilService;
+
+    private ProgrammingExercise exercise;
+
+    private Course course;
+
+    private AtomicBoolean pipelineDone;
+
+    @BeforeEach
+    void initTestCase() throws GitAPIException, IOException, URISyntaxException {
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        for (User user : users) {
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        String projectKey = exercise.getProjectKey();
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
+        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
+        // Set the correct repository URIs for the template and the solution participation.
+        String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        String solutionRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+        SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        String assignmentRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
+        // Add a participation for student1.
+        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentRepositorySlug));
+        studentParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+        // Prepare the repositories.
+        localVCLocalCITestService.createRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+        localVCLocalCITestService.createRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createRepository(projectKey, assignmentRepositorySlug);
+        // Check that the repository folders were created in the file system for all base repositories.
+        localVCLocalCITestService.verifyRepositoryFoldersExist(exercise, localVCBasePath);
+        activateIrisGlobally();
+        activateIrisFor(course);
+        activateIrisFor(exercise);
+        // Clean up the database
+        irisLLMTokenUsageRequestRepository.deleteAll();
+        irisLLMTokenUsageTraceRepository.deleteAll();
+        pipelineDone = new AtomicBoolean(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTokenTrackingHandledExerciseChat() throws Exception {
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, tokens));
+            pipelineDone.set(true);
+        });
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        List<LLMTokenUsageTrace> savedTokenUsageTraces = irisLLMTokenUsageTraceRepository.findAll();
+        List<LLMTokenUsageRequest> savedTokenUsageRequests = irisLLMTokenUsageRequestRepository.findAll();
+        assertThat(savedTokenUsageTraces).hasSize(1);
+        assertThat(savedTokenUsageTraces.getFirst().getServiceType()).isEqualTo(LLMServiceType.IRIS);
+        assertThat(savedTokenUsageTraces.getFirst().getExerciseId()).isEqualTo(exercise.getId());
+        assertThat(savedTokenUsageTraces.getFirst().getCourseId()).isEqualTo(course.getId());
+        assertThat(savedTokenUsageRequests).hasSize(5);
+        for (int i = 0; i < savedTokenUsageRequests.size(); i++) {
+            LLMTokenUsageRequest usage = savedTokenUsageRequests.get(i);
+            LLMRequest expectedCost = tokens.get(i);
+            assertThat(usage.getModel()).isEqualTo(expectedCost.model());
+            assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
+            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
+            assertThat(usage.getNumCachedInputTokens()).isEqualTo(Math.toIntExact(expectedCost.numCachedInputTokens()));
+            assertThat(usage.getCostPerMillionCachedInputTokens()).isCloseTo(expectedCost.costPerMillionCachedInputToken(), Offset.offset(0.001f));
+            assertThat(usage.getNumCacheWriteInputTokens()).isEqualTo(expectedCost.numCacheWriteInputTokens());
+            assertThat(usage.getCostPerMillionCacheWriteInputTokens()).isCloseTo(expectedCost.costPerMillionCacheWriteInputToken(), Offset.offset(0.001f));
+            assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCourseLlmCostBillsCachedAndCacheWriteTokensAtTheirOwnRates() {
+        // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
+        var request = new LLMRequest("gpt-6-luna", 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
+
+        // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
+        assertThat(irisLLMTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId())).isCloseTo(1.6, Offset.offset(0.001));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTokenTrackingSavedExerciseChat() {
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage irisMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        irisMessageRepository.save(irisMessage);
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
+        LLMTokenUsageTrace tokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(tokens, LLMServiceType.IRIS,
+                builder -> builder.withIrisMessageID(irisMessage.getId()).withExercise(exercise.getId()).withUser(irisSession.getUserId()).withCourse(course.getId()));
+        assertThat(tokenUsageTrace.getServiceType()).isEqualTo(LLMServiceType.IRIS);
+        assertThat(tokenUsageTrace.getIrisMessageId()).isEqualTo(irisMessage.getId());
+        assertThat(tokenUsageTrace.getExerciseId()).isEqualTo(exercise.getId());
+        assertThat(tokenUsageTrace.getUserId()).isEqualTo(irisSession.getUserId());
+        assertThat(tokenUsageTrace.getCourseId()).isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, FAILED, tokens));
+            pipelineDone.set(true);
+        });
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        List<LLMTokenUsageTrace> savedTokenUsageTraces = irisLLMTokenUsageTraceRepository.findAll();
+        List<LLMTokenUsageRequest> savedTokenUsageRequests = irisLLMTokenUsageRequestRepository.findAll();
+        assertThat(savedTokenUsageTraces).hasSize(1);
+        assertThat(savedTokenUsageTraces.getFirst().getServiceType()).isEqualTo(LLMServiceType.IRIS);
+        assertThat(savedTokenUsageTraces.getFirst().getExerciseId()).isEqualTo(exercise.getId());
+        assertThat(savedTokenUsageTraces.getFirst().getIrisMessageId()).isEqualTo(messageToSend.getId());
+        assertThat(savedTokenUsageTraces.getFirst().getCourseId()).isEqualTo(course.getId());
+        assertThat(savedTokenUsageRequests).hasSize(5);
+        for (int i = 0; i < savedTokenUsageRequests.size(); i++) {
+            LLMTokenUsageRequest usage = savedTokenUsageRequests.get(i);
+            LLMRequest expectedCost = tokens.get(i);
+            assertThat(usage.getModel()).isEqualTo(expectedCost.model());
+            assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.getCostPerMillionInputTokens()).isCloseTo(expectedCost.costPerMillionInputToken(), Offset.offset(0.01f));
+            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
+            assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
+        }
+    }
+
+    private void sendStatus(String jobId, String result, PyrisRunState runState, List<LLMRequest> tokens) throws Exception {
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens), HttpStatus.OK, callback.headers());
+    }
+}

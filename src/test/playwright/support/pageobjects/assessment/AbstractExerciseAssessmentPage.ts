@@ -1,0 +1,145 @@
+import { BASE_API, ExerciseType } from '../../constants';
+import { Locator, Page, expect } from '@playwright/test';
+
+/**
+ * Parent class for all exercise assessment pages.
+ */
+export abstract class AbstractExerciseAssessmentPage {
+    protected readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    async addNewFeedback(points: number, feedback?: string) {
+        await this.page.locator('.add-unreferenced-feedback').click();
+        await this.fillFeedback(points, feedback);
+    }
+
+    async fillFeedback(points: number, feedback?: string) {
+        // Scoped to the newest card: with multiple unreferenced feedback entries present, an unscoped locator
+        // matches every card's stepper/points input and Playwright strict mode rejects the ambiguous match.
+        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
+        await this.setPoints(unreferencedFeedback, points);
+        if (feedback) {
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').clear();
+            await unreferencedFeedback.locator('.unified-feedback-detail-input').fill(feedback);
+        }
+    }
+
+    /**
+     * Types the points into the unified feedback card's points input (a TUM AET UI number input, see
+     * UnifiedFeedbackComponent) and leaves the field, which snaps the value onto the half-point grid.
+     */
+    protected async setPoints(scope: Locator, points: number) {
+        const input = scope.getByTestId('unified-feedback-points-input').locator('input');
+        await input.waitFor({ state: 'visible' });
+        await input.fill(String(points));
+        await input.blur();
+        await expect(input).toHaveValue(String(points));
+    }
+
+    async submitWithoutInterception() {
+        const submitButton = this.page.locator('#submit');
+        // Wait for the submit button to be visible and enabled
+        await submitButton.waitFor({ state: 'visible' });
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        // Use keyboard shortcut (Ctrl+Enter) which is more reliable than clicking
+        await this.page.keyboard.press('Control+Enter');
+    }
+
+    /**
+     * Submits the assessment and handles any confirmation dialogs that might appear.
+     * Sets up the dialog handler before submitting.
+     */
+    async submitWithDialogHandler() {
+        const submitButton = this.page.locator('#submit');
+        await submitButton.waitFor({ state: 'visible' });
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+
+        // Set up dialog handler BEFORE triggering the action
+        const dialogPromise = new Promise<void>((resolve) => {
+            const handler = async (dialog: import('@playwright/test').Dialog) => {
+                await dialog.accept();
+                this.page.off('dialog', handler);
+                resolve();
+            };
+            this.page.on('dialog', handler);
+            // Resolve after a timeout if no dialog appears (dialog might not always appear)
+            setTimeout(() => resolve(), 2000);
+        });
+
+        await this.page.keyboard.press('Control+Enter');
+        await dialogPromise;
+    }
+
+    async submit() {
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/manual-results?submit=true`);
+        await this.submitWithoutInterception();
+        return await responsePromise;
+    }
+
+    async rejectComplaint(response: string, examMode: boolean, exerciseType: ExerciseType, complaintExerciseTitle?: string) {
+        return await this.handleComplaint(response, false, exerciseType, examMode, complaintExerciseTitle);
+    }
+
+    async acceptComplaint(response: string, examMode: boolean, exerciseType: ExerciseType, complaintExerciseTitle?: string) {
+        return await this.handleComplaint(response, true, exerciseType, examMode, complaintExerciseTitle);
+    }
+
+    async checkComplaintMessage(message: string) {
+        await this.page.locator('.message', { hasText: message }).waitFor({ state: 'attached' });
+    }
+
+    async nextAssessment() {
+        await this.page.locator('[data-testid="assessNextButton"]').click();
+        await this.page.locator('[data-testid="assessNextButton"]').waitFor({ state: 'hidden' });
+    }
+
+    private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean, complaintExerciseTitle?: string) {
+        if (exerciseType !== ExerciseType.MODELING && !examMode) {
+            // The course-wide complaints list intermingles complaints from every assessment test that shares the seed
+            // course (e.g. file-upload and modeling both use the exerciseAssessment course). Clicking the first
+            // [data-testid="show-complaint"] therefore races those other tests and can open an unrelated — possibly different-type —
+            // complaint whose response editor never enables for this flow (the observed flake). When the caller knows
+            // the exercise title, open that exercise's own complaint row instead of the first one.
+            const showComplaintButton = complaintExerciseTitle
+                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('[data-testid="show-complaint"]')
+                : this.page.locator('[data-testid="show-complaint"]').first();
+            await showComplaintButton.click();
+        }
+        // The response textarea starts as readonly/disabled while the complaint data loads.
+        // Wait for it to become editable before filling.
+        const responseTextArea = this.page.locator('#responseTextArea');
+        await expect(responseTextArea).toBeEnabled({ timeout: 15000 });
+        await responseTextArea.fill(response);
+
+        let responsePromise;
+        switch (exerciseType) {
+            case ExerciseType.PROGRAMMING:
+                responsePromise = this.page.waitForResponse(`${BASE_API}/programming/programming-submissions/*/assessment-after-complaint`);
+                break;
+            case ExerciseType.TEXT:
+                if (accept) {
+                    responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/submissions/*/text-assessment-after-complaint`);
+                } else {
+                    responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/complaints/*/response`);
+                }
+                break;
+            case ExerciseType.MODELING:
+                responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/complaints/*/response`);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/file-upload-submissions/*/assessment-after-complaint`);
+                break;
+            default:
+                throw new Error(`Exercise type '${exerciseType}' is not supported yet!`);
+        }
+        if (accept) {
+            await this.page.locator('#acceptComplaintButton').click();
+        } else {
+            await this.page.locator('#rejectComplaintButton').click();
+        }
+        return await responsePromise;
+    }
+}

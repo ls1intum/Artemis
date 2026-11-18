@@ -1,0 +1,15 @@
+{
+    "deleteFiles": ["helloWorld.c"],
+    "createFilesInRootFolder": true,
+    "files": [
+        {
+            "name": "helloWorld.c",
+            "path": "exercise/programming/c/static_code_analysis/exercise.txt"
+        },
+        {
+            "name": "sca_issues.c",
+            "path": "exercise/programming/c/static_code_analysis/sca_issues.txt"
+        }
+    ],
+    "expectedResult": "96%"
+}

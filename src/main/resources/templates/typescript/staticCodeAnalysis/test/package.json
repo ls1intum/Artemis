@@ -1,0 +1,30 @@
+{
+    "name": "artemis-test",
+    "private": true,
+    "scripts": {
+        "build": "tsc -b",
+        "test": "vitest run",
+        "test:ci": "vitest run --reporter=default --reporter=./artemis-junit-reporter.mjs",
+        "lint": "eslint ${studentParentWorkingDirectoryName}",
+        "lint:ci": "eslint --format @microsoft/eslint-formatter-sarif --output-file eslint.sarif ${studentParentWorkingDirectoryName}"
+    },
+    "workspaces": [
+        "${studentParentWorkingDirectoryName}"
+    ],
+    "devDependencies": {
+        "@eslint/js": "^9.20.0",
+        "@microsoft/eslint-formatter-sarif": "^3.1.0",
+        "@tsconfig/node20": "^20.1.4",
+        "eslint": "^9.20.1",
+        "globals": "^15.15.0",
+        "typescript": "^5.6.2",
+        "typescript-eslint": "^8.24.1",
+        "vite": "^8.3.5",
+        "vitest": "^5.0.5"
+    },
+    "overrides": {
+        "@typescript-eslint/typescript-estree": {
+            "minimatch": "11.0.5"
+        }
+    }
+}

@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>${packageName}</groupId>
+        <artifactId>${exerciseNamePomXml}-Tests</artifactId>
+        <version>1.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>${exerciseNamePomXml}-Tests</artifactId>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <!-- Ares requires the student code to be located within its working directory. The test repository
+                         (containing the security policy) is the parent of the build stage directories. -->
+                    <workingDirectory>${project.basedir}/..</workingDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+        <sourceDirectory>${project.basedir}/..${studentWorkingDirectory}</sourceDirectory>
+        <!-- Ares looks for the compiled student code in the target directory of its working directory, which is the test repository
+             root (see the surefire configuration above). Without this, it does not recognize the student classes and enforces nothing. -->
+        <outputDirectory>${project.basedir}/../target/classes</outputDirectory>
+        <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/test</directory>
+            </testResource>
+        </testResources>
+    </build>
+</project>

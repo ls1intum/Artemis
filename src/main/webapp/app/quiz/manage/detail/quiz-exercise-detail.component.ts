@@ -1,0 +1,127 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import dayjs from 'dayjs/esm';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { getExerciseGeneralDetailsSection, getExerciseGradingDefaultDetails, getExerciseModeDetailSection } from 'app/exercise/util/utils';
+import { getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
+import { firstValueFrom } from 'rxjs';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import { TranslateService } from '@ngx-translate/core';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
+import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
+import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+
+@Component({
+    selector: 'jhi-quiz-exercise-detail',
+    templateUrl: './quiz-exercise-detail.component.html',
+    imports: [
+        ExerciseDetailHeaderComponent,
+        QuizExerciseManageButtonsComponent,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
+})
+export class QuizExerciseDetailComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizExerciseService = inject(QuizExerciseService);
+    private statisticsService = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+
+    readonly documentationType: DocumentationType = 'Quiz';
+    readonly dayjs = dayjs;
+
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
+    quizId!: number; // set in ngOnInit() from route params
+    readonly isExamMode = signal<boolean>(false);
+    readonly showStatistics = signal<boolean>(false);
+
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly statistics = signal<ExerciseManagementStatisticsDto>(undefined!);
+
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
+
+    /**
+     * Load the quizzes of the course for export on init.
+     */
+    ngOnInit() {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.examId && groupId) {
+            this.isExamMode.set(true);
+        }
+        this.load();
+    }
+
+    load() {
+        (this.isExamMode() ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe(async (quizExercise) => {
+            this.quizExercise.set(quizExercise);
+            this.quizExercise().quizBatches = this.quizExercise().quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+            this.quizExercise().isEditable = (this.quizExercise().isEditable ?? true) && isQuizEditable(this.quizExercise());
+            this.quizExercise().status = this.quizExerciseService.getStatus(this.quizExercise());
+            this.quizExercise().startDate = this.quizExercise().dueDate && dayjs(this.quizExercise().dueDate).subtract(this.quizExercise().duration ?? 0, 'second');
+            this.showStatistics.set(!this.quizExercise().releaseDate || dayjs(this.quizExercise().releaseDate).isBefore(dayjs()));
+            if (this.showStatistics()) {
+                this.statistics.set(await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId)));
+            }
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
+        });
+    }
+
+    getExerciseDetailSections(): DetailOverviewSection[] {
+        const exercise = this.quizExercise();
+        const mcCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
+        const dndCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
+        const shortCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        generalSection.details = generalSection.details.filter((detail) => !detail || detail.type !== DetailType.Link || !!detail.data.text);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
+
+        const competencies = getExerciseCompetencies(exercise);
+        if (competencies.length > 0) {
+            modeSection.details.push({
+                title: 'artemisApp.competency.link.title',
+                type: DetailType.Text,
+                data: { text: competencies.map((competency) => competency.title).join(', ') },
+            });
+        }
+        return [
+            generalSection,
+            cloneWith(modeSection, {
+                details: [
+                    ...modeSection.details,
+                    { type: DetailType.Boolean, title: 'artemisApp.quizExercise.randomizeQuestionOrder', data: { boolean: exercise.randomizeQuestionOrder } },
+                    {
+                        type: DetailType.Text,
+                        title: 'artemisApp.quizExercise.quizMode.title',
+                        data: { text: this.translateService.instant('artemisApp.quizExercise.quizMode.' + exercise.quizMode?.toLowerCase()).toUpperCase() },
+                    },
+                    {
+                        type: DetailType.Text,
+                        title: 'artemisApp.quizExercise.detail.questionCount.title',
+                        data: { text: this.translateService.instant('artemisApp.quizExercise.detail.questionCount.value', { mcCount, dndCount, shortCount }) },
+                    },
+                ],
+            }),
+            {
+                headline: 'artemisApp.exercise.sections.grading',
+                details: defaultGradingDetails,
+            },
+        ];
+    }
+}

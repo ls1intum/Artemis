@@ -1,0 +1,521 @@
+package de.tum.cit.aet.artemis.assessment.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class AssessmentService {
+
+    private final ComplaintResponseService complaintResponseService;
+
+    private final ComplaintRepository complaintRepository;
+
+    protected final FeedbackRepository feedbackRepository;
+
+    protected final ResultRepository resultRepository;
+
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    protected final ResultService resultService;
+
+    private final Optional<ExamDateApi> examDateApi;
+
+    protected final SubmissionRepository submissionRepository;
+
+    protected final UserRepository userRepository;
+
+    private final SubmissionService submissionService;
+
+    protected final Optional<LtiApi> ltiApi;
+
+    protected final SingleUserNotificationService singleUserNotificationService;
+
+    protected final ResultWebsocketService resultWebsocketService;
+
+    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
+            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
+        this.complaintResponseService = complaintResponseService;
+        this.complaintRepository = complaintRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.resultRepository = resultRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.resultService = resultService;
+        this.submissionService = submissionService;
+        this.submissionRepository = submissionRepository;
+        this.examDateApi = examDateApi;
+        this.userRepository = userRepository;
+        this.ltiApi = ltiApi;
+        this.singleUserNotificationService = singleUserNotificationService;
+        this.resultWebsocketService = resultWebsocketService;
+    }
+
+    /**
+     * Derives the points per test case for programming score calculations. Test-case feedback does not
+     * store credits, so the programming subclass ({@code ProgrammingAssessmentService}) overrides this with
+     * the real derivation; the base implementation is only reached for non-programming exercises (the
+     * programming complaint flow always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise
+     * @param result   the result being scored
+     * @return derived points per test-case id
+     */
+    protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return Map.of();
+    }
+
+    /**
+     * Attaches the synthesized legacy views of a programming result's typed automatic feedback, so that a
+     * response serializing the result still carries the test-case and static code analysis feedback. The
+     * typed collections themselves are JSON-ignored, so without this the automatic feedback is dropped. The
+     * programming subclass ({@code ProgrammingAssessmentService}) overrides this with the real synthesis;
+     * the base implementation is only reached for non-programming exercises (the programming complaint flow
+     * always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise the result belongs to
+     * @param result   the result about to be serialized
+     */
+    protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
+        // no-op, see the programming subclass
+    }
+
+    /**
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
+     *
+     * @param originalResult   the original assessment that was complained about
+     * @param exercise         the exercise to which the result belongs
+     * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
+     * @return the updated Result
+     */
+    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        if (originalResult == null) {
+            throw new BadRequestAlertException("The result you are referring to does not exist", "AssessmentUpdate", "resultnotfound");
+        }
+        // a complaint update may retain the existing feedback, in which case there is nothing new to validate
+        if (assessmentUpdate.feedbacks() != null) {
+            resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        }
+        if (assessmentUpdate.complaintResponse() == null) {
+            throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
+        }
+        checkManualFeedbackCreditsWithinBoundsElseThrow(assessmentUpdate.feedbacks());
+        // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
+        checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
+        complaintResponseService.checkComplaintResponseBelongsToResultElseThrow(assessmentUpdate.complaintResponse().getId(), originalResult.getId());
+        // Save the complaint response
+        ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.complaintResponse());
+
+        // Create a new result which is a copy of the original result.
+        Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.feedbacks(),
+                assessmentUpdate.assessmentNote());
+
+        newResult.setAssessor(complaintResponse.getReviewer());
+        newResult.setAssessmentType(originalResult.getAssessmentType());
+
+        resultRepository.save(newResult);
+
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            newResult.calculateScoreForProgrammingExercise(programmingExercise, calculateTestCasePoints(programmingExercise, newResult));
+            newResult.setCompletionDate(ZonedDateTime.now());
+            newResult.setRated(true);
+            newResult.copyProgrammingExerciseCounters(originalResult);
+
+            Result savedResult = resultRepository.save(newResult);
+            // eagerly load the assessor and the manual feedback the response serializes
+            Result reloadedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(savedResult.getId()).orElseThrow();
+            // the copied automatic test-case and SCA feedback lives in JSON-ignored typed collections - attach
+            // the synthesized legacy views (after all persistence) so the complaint response keeps it
+            attachSynthesizedAutomaticFeedback(programmingExercise, reloadedResult);
+            return reloadedResult;
+        }
+        else {
+            return resultRepository.submitResult(newResult, exercise);
+        }
+    }
+
+    /**
+     * Checks if the user can create or override a submitted result.
+     * If the result does not yet exist or is not yet submitted, this tutors can create or override results.
+     * Overriding is only possible if the same tutor overrides before the assessment due date.
+     * Instructors can always create and override results also after the assessment due date.
+     *
+     * @param existingResult      the existing result in case the result is updated (submitted or overridden)
+     * @param exercise            the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user                the user who initiates a request
+     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @param participation       the participation to which the submission and result belong to
+     * @return true if the given user can override a potentially existing result
+     */
+    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
+        final boolean isExamMode = exercise.isExamExercise();
+        ZonedDateTime assessmentDueDate;
+        // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
+        if (isExamMode) {
+            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
+        }
+        else {
+            assessmentDueDate = exercise.getAssessmentDueDate();
+        }
+
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, participation, user);
+        // TODO make sure that tutors cannot assess the first assessment after the assessmentDueDate/publish result date (post). This is currently just used in the put request.
+        // Check if no result is available (first assessment)
+        if (existingResult == null) {
+            // Tutors can assess exam exercises only after the last student has finished the exam and before the publishing result date
+            if (isExamMode && !isAtLeastInstructor) {
+                final Exam exam = exercise.getExerciseGroup().getExam();
+                ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+                ZonedDateTime latestExamDueDate = api.getLatestIndividualExamEndDate(exam.getId());
+                if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
+                    return false;
+                }
+            }
+            return isAllowedToBeAssessor || isAtLeastInstructor;
+        }
+
+        // If the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+        if (existingResult.getCompletionDate() == null) {
+            return isAllowedToBeAssessor || isAtLeastInstructor;
+        }
+
+        // If the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+    }
+
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     * <p>
+     * The result being canceled is a non-submitted draft assessment (the tutor started grading but did not submit).
+     * Because it was never submitted, participant scores were never updated to reference this result.
+     * Therefore, no explicit {@code sendParticipantScoreSchedule()} call is needed here, even though
+     * {@link ResultService#deleteResult} may take the JPQL path that skips the {@code @PreRemove} callback.
+     *
+     * @param submission     the submission for which the current assessment should be canceled
+     * @param resultToCancel the manual result to release, as resolved and authorized by the caller
+     */
+    public void cancelAssessmentOfSubmission(Submission submission, Result resultToCancel) {
+        studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
+                .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
+        // The caller resolves and authorizes the result, so that the authorization check and the deletion cannot act on
+        // two different results. Automatic and Athena results are not correction rounds and are never cancellable.
+        if (resultToCancel == null || resultToCancel.isAutomatic() || resultToCancel.isAthenaBased()) {
+            return;
+        }
+        resultService.deleteResult(resultToCancel, true);
+    }
+
+    /**
+     * Returns whether a user is allowed to be the assessor of an existing result
+     *
+     * @param result   Result for which to check if the user can be the assessor
+     * @param exercise Exercise to which the result belongs to
+     * @param user     User for whom to check if they can be the assessor of the given result
+     * @return true if the user is allowed to be the assessor, false otherwise
+     */
+    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
+        if (exercise.isTeamMode() && participation.getTeam().isPresent()) {
+            // for team exercises only the team tutor is allowed to be the assessor (a practice participation belongs to a student and has no team tutor)
+            return participation.getTeam().get().isOwner(user);
+        }
+        else if (result != null) {
+            // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
+            return result.getAssessor() == null || user.equals(result.getAssessor());
+        }
+        else {
+            return true;
+        }
+    }
+
+    /**
+     * Gets an example submission with the given submissionId and returns the result of the submission.
+     *
+     * @param submissionId the id of the example modeling submission
+     * @return the result of the submission
+     * @throws EntityNotFoundException when no submission can be found for the given id
+     */
+    public Result getExampleAssessment(long submissionId) {
+        Optional<Submission> optionalSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        Submission submission = optionalSubmission.orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+        return submission.getLatestResult();
+    }
+
+    /**
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
+     * to MANUAL and sets the assessor attribute. Afterward, it saves the update result in the database again.
+     * <p>
+     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
+     *
+     * @param resultId the id of the result that should be submitted
+     * @param exercise the exercise the assessment belongs to
+     * @return the saved result
+     */
+    private Result submitManualAssessment(long resultId, Exercise exercise) {
+        Result result = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(resultId);
+        result.setRatedIfNotAfterDueDate();
+        result.setCompletionDate(ZonedDateTime.now());
+        result = resultRepository.submitResult(result, exercise);
+
+        if (ltiApi.isPresent()) {
+            // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
+            // Otherwise, it might never become visible in the external system
+            ltiApi.get().onNewResult((StudentParticipation) result.getSubmission().getParticipation());
+        }
+        return result;
+    }
+
+    /**
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
+     * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
+     * <p>
+     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result, User)}.
+     *
+     * @param submission         the submission to which the feedback belongs to
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           id of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note of the result
+     * @param exerciseId         the id of the exercise the assessment belongs to
+     * @return the saved result
+     */
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText, long exerciseId) {
+        Result result = null;
+        if (resultId != null) {
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
+        }
+
+        if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
+            throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
+        }
+        // an assessment may be saved without any feedback, in which case there is nothing to validate
+        if (feedbackList != null) {
+            resultService.validateGradingInstructions(feedbackList, exerciseId);
+        }
+        checkManualFeedbackCreditsWithinBoundsElseThrow(feedbackList);
+
+        // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
+        checkFeedbackBelongsToResultElseThrow(feedbackList, result);
+
+        if (result == null) {
+            result = submissionService.saveNewEmptyResult(submission, exerciseId);
+        }
+
+        // important to not lose complaint information when overriding an assessment
+        if (result.getHasComplaint().isEmpty()) {
+            result.setHasComplaint(false);
+        }
+
+        result.setExampleResult(submission.isExampleSubmission());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userRepository.getUser();
+        result.setAssessor(user);
+
+        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+        resultService.deleteLongFeedback(feedbackList, result);
+
+        result.updateAllFeedbackItems(feedbackList, false);
+        result.determineAssessmentType();
+
+        if (assessmentNoteText != null) {
+            AssessmentNote assessmentNote = new AssessmentNote();
+            assessmentNote.setNote(assessmentNoteText);
+            assessmentNote.setCreator(user);
+            result.setAssessmentNote(assessmentNote);
+        }
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(submission);
+            submission.addResult(result);
+            submissionRepository.save(submission);
+        }
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = resultRepository.save(result);
+        result.setAssessor(assessor);
+        return result;
+    }
+
+    /**
+     * Checks that every feedback given by the assessor has finite credits within {@link Feedback#MAX_MANUAL_CREDITS} in either direction. The client sends type, id, text
+     * and credits, so none of them proves where a feedback comes from. A feedback above the bound is only accepted when the database confirms its credits: a stored automatic
+     * feedback sent as automatic with the same credits, or a feedback linked to a grading instruction whose stored credits are the same.
+     *
+     * @param feedbackList the feedback list sent by the client
+     */
+    protected void checkManualFeedbackCreditsWithinBoundsElseThrow(final Collection<Feedback> feedbackList) {
+        if (feedbackList == null) {
+            return;
+        }
+        List<Feedback> outOfBounds = feedbackList.stream().filter(feedback -> feedback.getCredits() != null
+                && (!Double.isFinite(feedback.getCredits()) || Math.abs(feedback.getCredits()) > Feedback.MAX_MANUAL_CREDITS) && !isScoredByServer(feedback)).toList();
+        if (outOfBounds.isEmpty()) {
+            return;
+        }
+        // only read when a feedback exceeds the bounds, which a regular assessment never does
+        Map<Long, Double> instructionCredits = resultService.getGradingInstructionCredits(outOfBounds);
+        Set<Long> feedbackIds = outOfBounds.stream().map(Feedback::getId).filter(id -> id != null && id > 0).collect(Collectors.toSet());
+        Map<Long, Feedback> storedFeedback = feedbackIds.isEmpty() ? Map.of()
+                : feedbackRepository.findAllById(feedbackIds).stream().collect(Collectors.toMap(Feedback::getId, Function.identity()));
+        if (outOfBounds.stream().anyMatch(feedback -> !hasStoredInstructionCredits(feedback, instructionCredits) && !hasStoredAutomaticCredits(feedback, storedFeedback))) {
+            throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
+                    "feedbackCreditsOutOfBounds", true); // every assessment editor shows this error itself, so the global alert would repeat it
+        }
+    }
+
+    /**
+     * Whether the server computes the points of this feedback itself, so that the credits the client sends for it are not counted. No feedback of a non-programming exercise
+     * is, see the programming subclass.
+     *
+     * @param feedback a feedback sent by the client
+     * @return true if its credits do not count towards the score
+     */
+    protected boolean isScoredByServer(Feedback feedback) {
+        return false;
+    }
+
+    private static boolean hasStoredInstructionCredits(Feedback feedback, Map<Long, Double> instructionCredits) {
+        return feedback.getGradingInstruction() != null && Objects.equals(instructionCredits.get(feedback.getGradingInstruction().getId()), feedback.getCredits());
+    }
+
+    private static boolean hasStoredAutomaticCredits(Feedback feedback, Map<Long, Feedback> storedFeedback) {
+        Feedback stored = feedback.getId() != null ? storedFeedback.get(feedback.getId()) : null;
+        // the request must keep the row automatic, otherwise the save would turn it into a manual feedback with these credits
+        return stored != null && stored.getType() == FeedbackType.AUTOMATIC && feedback.getType() == FeedbackType.AUTOMATIC
+                && Objects.equals(stored.getCredits(), feedback.getCredits());
+    }
+
+    /**
+     * Checks that an assessment only contains feedback of the result it is saved to. A feedback id is the id of a stored row, so an id of another result would be written to this
+     * result instead of being added to it.
+     *
+     * @param feedbackList the feedback list sent by the client
+     * @param result       the result the assessment is saved to, or {@code null} if it does not exist yet
+     */
+    protected void checkFeedbackBelongsToResultElseThrow(final Collection<Feedback> feedbackList, final Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+        // a result that does not exist yet owns no feedback, so any stored feedback id is foreign
+        final Set<Long> ownFeedbackIds = result == null ? Set.of() : result.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // a negative id belongs to a synthesized view of the typed automatic feedback of a programming exercise and not to a stored row
+        if (feedbackList.stream().map(Feedback::getId).anyMatch(id -> id != null && id > 0 && !ownFeedbackIds.contains(id))) {
+            throw new BadRequestAlertException("The assessment contains feedback of another result", "Feedback", "feedbackIdMismatch");
+        }
+    }
+
+    /**
+     * Saves a new manual assessment. Submits the result if the submit-parameter is set to true.
+     * Also notifies the student about the assessment if it is visible (after the assessment due date).
+     *
+     * @param exercise           the exercise this assessment belongs to
+     * @param submission         the assessed submission
+     * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId           if of the result we want to save the feedbackList to, null if no result exists
+     * @param assessmentNoteText the text of the assessment note for from result
+     * @param submit             true if the result should also be submitted
+     * @return the saved result
+     */
+    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,
+            boolean submit) {
+        // Guard the write side as well, not just the endpoints that open an assessment: without this, assessment data
+        // could still be persisted for an exam exercise whose submissions can change, either by calling this endpoint
+        // directly or because isAllowedToCreateOrOverrideResult ignores the grace period and exempts instructors.
+        submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, submission.getParticipation());
+
+        Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText, exercise.getId());
+        if (!submit) {
+            return result;
+        }
+
+        result = submitManualAssessment(result.getId(), exercise);
+        Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+        if (optionalStudent.isPresent()) {
+            singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
+        }
+
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+            resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
+        }
+        return result;
+    }
+
+    /**
+     * Deletes the result of a submission. Called from {@code AssessmentResource.deleteAssessment} when an instructor
+     * manually deletes a single assessment result.
+     * <p>
+     * This method uses a different deletion strategy than {@link ResultService#deleteResult}: instead of explicitly
+     * deleting the result, it removes the result from the submission's results list and saves the submission, relying
+     * on JPA orphan removal ({@code @OneToMany(orphanRemoval = true)} on {@code Submission.results}) to cascade-delete
+     * the result entity. This approach works safely here because:
+     * <ul>
+     * <li>The caller ({@code AssessmentResource.deleteAssessment}) loads the result via
+     * {@code findByIdWithEagerFeedbacksElseThrow}, so feedbacks are eagerly initialized.</li>
+     * <li>{@link ResultService#deleteResultReferences} bulk-deletes feedbacks, but since the feedbacks collection
+     * is initialized, Hibernate can reconcile the in-memory state during the orphan removal cascade.</li>
+     * <li>The JPA delete triggered by orphan removal fires the {@code @PreRemove} callback in {@link ResultListener},
+     * ensuring participant score recalculation is scheduled automatically.</li>
+     * </ul>
+     * <b>DO NOT CHANGE</b> the caller to load the result without eager feedbacks, as this would cause the same
+     * {@code EntityNotFoundException} that is documented in {@link ResultService#deleteResult}.
+     *
+     * @param submission the submission which the result belongs to (must have results loaded)
+     * @param result     the result that should get deleted (must have feedbacks eagerly loaded)
+     */
+    public void deleteAssessment(Submission submission, Result result) {
+
+        if (complaintRepository.findByResultId(result.getId()).isPresent()) {
+            throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
+        }
+        submission.getResults().remove(result);
+        resultService.deleteResultReferences(result.getId(), true);
+        // This saves the submission with the result removed from its list. JPA orphan removal
+        // will cascade-delete the result entity, firing @PreRemove in ResultListener.
+        submissionRepository.save(submission);
+    }
+}

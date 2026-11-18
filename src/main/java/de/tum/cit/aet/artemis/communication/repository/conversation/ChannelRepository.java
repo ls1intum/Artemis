@@ -1,0 +1,155 @@
+package de.tum.cit.aet.artemis.communication.repository.conversation;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            WHERE channel.course.id = :courseId
+            ORDER BY channel.name
+            """)
+    List<Channel> findChannelsByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT channel
+            FROM Channel channel
+            WHERE channel.course.id = :courseId AND channel.lecture IS NOT NULL
+            """)
+    Set<Channel> findLectureChannelsByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT channel.name
+            FROM Channel channel
+            WHERE channel.lecture.id = :lectureId
+            """)
+    String findChannelNameByLectureId(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT channel
+            FROM Channel channel
+            WHERE channel.lecture.id = :lectureId
+            """)
+    Channel findChannelByLectureId(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            WHERE channel.exam.id = :examId
+            """)
+    Channel findChannelByExamId(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT channel.id
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    Long findChannelIdByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Reads the name of the channel of an exercise.
+     * <p>
+     * A projection, because the channel points back at its exercise and its course with eager associations: loading the channel as an entity to read its name reads
+     * the exercise with all its columns, and the course, as well.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name of the channel, or null if the exercise has none
+     */
+    @Query("""
+            SELECT DISTINCT channel.name
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    String findChannelNameByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT channel.id
+            FROM Channel channel
+            WHERE channel.exam.id = :examId
+            """)
+    Long findChannelIdByExamId(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+                LEFT JOIN channel.conversationParticipants conversationParticipant
+                LEFT JOIN FETCH channel.course
+                LEFT JOIN FETCH channel.creator
+            WHERE channel.course.id = :courseId
+                AND (channel.isCourseWide OR (channel.id = conversationParticipant.conversation.id AND conversationParticipant.user.id = :userId))
+            ORDER BY channel.name
+            """)
+    List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            WHERE channel.course.id = :courseId
+                AND channel.name = :name
+            ORDER BY channel.name
+            """)
+    Set<Channel> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
+
+    boolean existsChannelByNameAndCourseId(String name, Long courseId);
+
+    boolean existsByCourseIdAndNameIn(Long courseId, Collection<String> names);
+
+    @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            WHERE channel.course.id = :courseId
+                AND channel.name = :name
+                AND channel.id <> :channelId
+            ORDER BY channel.name
+            """)
+    Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
+
+    /**
+     * Projects the dates of the exercise, lecture or exam the given channels belong to.
+     * <p>
+     * The conversation sidebar marks a channel as current when its referenced item is happening around now. Taking the
+     * dates off {@code channel.getExercise()} and friends would resolve one lazy proxy per channel; this answers for all
+     * of them in a single query and reads three columns rather than three entity graphs.
+     *
+     * @param channelIds the channels to look up
+     * @return the reference dates, one entry per channel that references an exercise, lecture or exam
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO(
+                channel.id,
+                COALESCE(exercise.releaseDate, lecture.startDate, exam.startDate),
+                COALESCE(exercise.dueDate, lecture.endDate, exam.endDate))
+            FROM Channel channel
+                LEFT JOIN channel.exercise exercise
+                LEFT JOIN channel.lecture lecture
+                LEFT JOIN channel.exam exam
+            WHERE channel.id IN :channelIds
+                AND (channel.exercise IS NOT NULL OR channel.lecture IS NOT NULL OR channel.exam IS NOT NULL)
+            """)
+    Set<ChannelSubTypeReferenceDatesDTO> findSubTypeReferenceDates(@Param("channelIds") Collection<Long> channelIds);
+}

@@ -1,0 +1,27 @@
+name: CodeQL (Scheduled)
+
+# Weekly full-repository CodeQL scan. The PR/push CodeQL signal lives in ci.yml (advisory
+# `codeql` job → ci-codeql.yml); this file exists ONLY for the `schedule:` cron, which cannot
+# be expressed inside a `workflow_call` reusable — only a top-level workflow's `on:` registers
+# cron. It reuses ci-codeql.yml so the scan steps are defined in exactly one place.
+
+on:
+  schedule:
+    - cron: '0 16 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-scheduled-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  codeql:
+    uses: ./.github/workflows/ci-codeql.yml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    with:
+      commit_sha: ${{ github.sha }}

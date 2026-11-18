@@ -1,0 +1,59 @@
+package de.tum.cit.aet.artemis.programming.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+
+/**
+ * A ParticipationVcsAccessToken.
+ */
+@Entity
+@Table(name = "participation_vcs_access_token", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "participation_id" }) })
+
+public class ParticipationVCSAccessToken extends DomainObject {
+
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
+    private Participation participation;
+
+    @Column(name = "vcs_access_token", length = 50)
+    private String vcsAccessToken;
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
+    }
+
+    public void setVcsAccessToken(String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
+    }
+}

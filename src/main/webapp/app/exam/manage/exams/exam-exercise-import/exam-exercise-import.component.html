@@ -1,0 +1,167 @@
+@if (containsProgrammingExercises.size !== 0) {
+    <tumaet-ui-message severity="info" class="mb-6! block">
+        <span jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.infoProgrammingExercises"></span>
+    </tumaet-ui-message>
+}
+<table tumAetUiTable striped>
+    <thead>
+        <tr>
+            <th class="w-1/4">
+                <label jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></label>
+                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseGroupTooltip" />
+            </th>
+            <th class="w-3/4" jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Exercise Group as rows -->
+        @for (exerciseGroup of exam().exerciseGroups; track exerciseGroup.id ?? exerciseGroup; let groupIndex = $index) {
+            <tr [class]="exerciseGroupContainsExercises(exerciseGroup) ? '' : 'bg-(--hover-slightly-darker-body-bg)'">
+                <td>
+                    <!-- Display general exercise group settings (name, mandatory) to the left -->
+                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-6! gap-y-2">
+                        <label [for]="'exerciseGroup-' + groupIndex + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title">Title</label>
+                        <div>
+                            <input
+                                tumAetUiInput
+                                class="w-full"
+                                type="text"
+                                [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate"
+                                [tumAetUiInputInvalid]="!!getExerciseGroupTitleError(exerciseGroup)"
+                                [tumAetUiInputId]="'exerciseGroup-' + groupIndex + '-title'"
+                                name="exerciseGroup-{{ groupIndex }}-title"
+                                [(ngModel)]="exerciseGroup.title"
+                            />
+                            @if (getExerciseGroupTitleError(exerciseGroup); as groupTitleError) {
+                                <small
+                                    class="block text-start text-state-danger"
+                                    [attr.data-testid]="'exercise-group-' + groupIndex + '-title-error'"
+                                    [jhiTranslate]="groupTitleError"
+                                ></small>
+                            }
+                        </div>
+                        <label [for]="'exerciseGroup-' + groupIndex + '-mandatory'" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
+                        <div>
+                            <tumaet-ui-checkbox
+                                [inputId]="'exerciseGroup-' + groupIndex + '-mandatory'"
+                                [name]="'exerciseGroup-' + groupIndex + '-mandatory'"
+                                [(ngModel)]="exerciseGroup.isMandatory"
+                            />
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <!-- Display a List of all Exercises to the right -->
+                    <table tumAetUiTable rowHover striped class="text-center">
+                        <thead>
+                            <tr>
+                                <th class="w-12.5" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.selected"></th>
+                                <th class="w-12.5">#</th>
+                                <th class="w-12.5" jhiTranslate="artemisApp.exercise.type"></th>
+                                <th [class]="exerciseGroupContainsProgrammingExercises(exerciseGroup) ? 'w-[12.5rem]' : 'w-[25rem]'">
+                                    <label jhiTranslate="artemisApp.exercise.title"></label>
+                                    <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseTitleTooltip" />
+                                </th>
+                                @if (exerciseGroupContainsProgrammingExercises(exerciseGroup)) {
+                                    <th class="w-[12.5rem]">
+                                        <label jhiTranslate="artemisApp.exercise.shortName"></label>
+                                        <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.shortNameTooltip" />
+                                    </th>
+                                }
+                                <th class="w-12.5" jhiTranslate="artemisApp.exercise.difficulty"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (exercise of exerciseGroup.exercises; track exercise.id) {
+                                <tr [id]="'exercise-' + exercise.id">
+                                    <td>
+                                        <div class="flex justify-center">
+                                            <tumaet-ui-checkbox
+                                                [ariaLabel]="exercise.title ?? ''"
+                                                [disabled]="!isExerciseTypeEnabled(exercise.type)"
+                                                [checked]="exerciseIsSelected(exercise, exerciseGroup)"
+                                                (changed)="onSelectExercise(exercise, exerciseGroup)"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td>{{ exercise.id }}</td>
+                                    <td>
+                                        <fa-icon size="2x" [icon]="getExerciseIcon(exercise.type)" />
+                                    </td>
+                                    <td>
+                                        @if (exercise.type !== exerciseType.PROGRAMMING) {
+                                            <input
+                                                tumAetUiInput
+                                                class="w-full"
+                                                type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.title' | artemisTranslate"
+                                                [tumAetUiInputInvalid]="!!getNonProgrammingExerciseTitleError(exercise)"
+                                                [tumAetUiInputId]="'exercise-' + exercise.id + '-title'"
+                                                [name]="'exercise-' + exercise.id + '-title'"
+                                                [(ngModel)]="exercise.title"
+                                            />
+                                            @if (getNonProgrammingExerciseTitleError(exercise); as titleError) {
+                                                <small
+                                                    class="block text-start text-state-danger"
+                                                    [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
+                                                    [jhiTranslate]="titleError"
+                                                ></small>
+                                            }
+                                        }
+                                        @if (exercise.type === exerciseType.PROGRAMMING) {
+                                            <input
+                                                tumAetUiInput
+                                                class="w-full"
+                                                type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.title' | artemisTranslate"
+                                                [tumAetUiInputInvalid]="!validateTitleOfProgrammingExercise(exercise)"
+                                                [tumAetUiInputId]="'exercise-' + exercise.id + '-title'"
+                                                [name]="'exercise-' + exercise.id + '-title'"
+                                                [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
+                                                [(ngModel)]="exercise.title"
+                                                (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true)"
+                                            />
+                                            @if (getProgrammingExerciseTitleError(exercise); as titleError) {
+                                                <small
+                                                    class="block text-start text-state-danger"
+                                                    [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
+                                                    [jhiTranslate]="titleError"
+                                                ></small>
+                                            }
+                                        }
+                                    </td>
+                                    @if (exercise.type! === exerciseType.PROGRAMMING) {
+                                        <td>
+                                            <input
+                                                tumAetUiInput
+                                                class="w-full"
+                                                type="text"
+                                                [attr.aria-label]="'artemisApp.exercise.shortName' | artemisTranslate"
+                                                [tumAetUiInputInvalid]="!validateShortNameOfProgrammingExercise(exercise)"
+                                                [tumAetUiInputId]="'programming-exercise-' + exercise.id + '-shortName'"
+                                                [name]="'programming-exercise-' + exercise.id + '-shortName'"
+                                                [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
+                                                [(ngModel)]="exercise.shortName"
+                                                (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false)"
+                                            />
+                                            @if (getProgrammingExerciseShortNameError(exercise); as shortNameError) {
+                                                <small
+                                                    class="block text-start text-state-danger"
+                                                    [attr.data-testid]="'programming-exercise-' + exercise.id + '-shortName-error'"
+                                                    [jhiTranslate]="shortNameError"
+                                                ></small>
+                                            }
+                                        </td>
+                                    }
+                                    <td>
+                                        <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

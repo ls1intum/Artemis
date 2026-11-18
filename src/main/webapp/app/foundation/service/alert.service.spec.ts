@@ -1,0 +1,568 @@
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { TestBed, inject } from '@angular/core/testing';
+import { MissingTranslationHandler, TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { missingTranslationHandler } from 'app/core/config/translation.config';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json';
+import germanUserManagement from 'src/main/webapp/i18n/de/user-management.json';
+import englishErrors from 'src/main/webapp/i18n/en/error.json';
+import germanErrors from 'src/main/webapp/i18n/de/error.json';
+import enQuizSubmission from 'src/main/webapp/i18n/en/quizSubmission.json';
+import deQuizSubmission from 'src/main/webapp/i18n/de/quizSubmission.json';
+
+vi.mock('app/core/error-reporting/capture-exception', () => ({ captureException: vi.fn() }));
+
+describe('Alert Service Test', () => {
+    const alertSample = {
+        type: AlertType.SUCCESS,
+        message: 'Hello Jhipster',
+        timeout: 3000,
+    };
+    const alertSampleWithId = {
+        type: AlertType.SUCCESS,
+        message: 'Hello Jhipster',
+        timeout: 3000,
+    };
+    let service: AlertService;
+    let eventManager: EventManager;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                provideTranslateService({
+                    missingTranslationHandler: {
+                        provide: MissingTranslationHandler,
+                        useFactory: missingTranslationHandler,
+                    },
+                }),
+            ],
+        });
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setFallbackLang('en');
+        translateService.setTranslation('en', {
+            'Hello Jhipster': 'Hello Jhipster',
+            'Hello Jhipster success': 'Hello Jhipster success',
+            'Hello Jhipster info': 'Hello Jhipster info',
+            'Error Message': 'Error Message',
+            'Second Error Message': 'Second Error Message',
+            'Bad Request': 'Bad Request',
+            'artemisApp.foo.minField': 'artemisApp.foo.minField',
+        });
+        service = TestBed.inject(AlertService);
+        eventManager = TestBed.inject(EventManager);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('should produce a proper alert object and fetch it', () => {
+        expect(service.addAlert(alertSample)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0]).toEqual(expect.objectContaining(alertSampleWithId as Alert));
+    });
+
+    it('should close an alert correctly', () => {
+        const alert0 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info', onClose: vi.fn() });
+        const alert1 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info 2', onClose: vi.fn() });
+        const alert2 = service.addAlert({ type: AlertType.SUCCESS, message: 'Hello Jhipster success', onClose: vi.fn() });
+        expect(alert2).toEqual(
+            expect.objectContaining({
+                type: AlertType.SUCCESS,
+                message: 'Hello Jhipster success',
+            } as Alert),
+        );
+
+        expect(service.get()).toHaveLength(3);
+        alert1.close?.();
+        expect(service.get()).toHaveLength(2);
+        expect(service.get()[0]).toEqual(
+            expect.objectContaining({
+                type: AlertType.SUCCESS,
+                message: 'Hello Jhipster success',
+            } as Alert),
+        );
+        expect(alert1.onClose).toHaveBeenCalledOnce();
+        alert2.close?.();
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0]).toEqual(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'Hello Jhipster info',
+            } as Alert),
+        );
+        expect(alert2.onClose).toHaveBeenCalledOnce();
+
+        alert0.close?.();
+        expect(service.get()).toHaveLength(0);
+        expect(alert0.onClose).toHaveBeenCalledOnce();
+    });
+
+    it('should close an alert on timeout correctly', () => {
+        vi.useFakeTimers();
+
+        const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: vi.fn() } as AlertCreationProperties;
+        service.addAlert(alert);
+
+        expect(service.get()).toHaveLength(1);
+
+        vi.advanceTimersByTime(16000);
+
+        expect(service.get()).toHaveLength(0);
+        expect(alert.onClose).toHaveBeenCalledOnce();
+    });
+
+    it('should clear alerts', () => {
+        const alerts = [
+            { type: AlertType.INFO, message: 'Hello Jhipster info1', onClose: vi.fn() },
+            { type: AlertType.DANGER, message: 'Hello Jhipster info2', onClose: vi.fn() },
+            { type: AlertType.SUCCESS, message: 'Hello Jhipster info3', onClose: vi.fn() },
+        ] as AlertCreationProperties[];
+        alerts.forEach((alert) => service.addAlert(alert));
+        expect(service.get()).toHaveLength(3);
+        service.closeAll();
+        expect(service.get()).toHaveLength(0);
+        alerts.forEach((alert) => expect(alert.onClose).toHaveBeenCalledOnce());
+    });
+
+    it('should produce a success message', () => {
+        expect(service.addAlert({ type: AlertType.SUCCESS, message: 'Hello Jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.SUCCESS,
+                message: 'Hello Jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should produce a error message', () => {
+        expect(service.addAlert({ type: AlertType.DANGER, message: 'Hello Jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.DANGER,
+                message: 'Hello Jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should produce a warning message', () => {
+        expect(service.addAlert({ type: AlertType.WARNING, message: 'Hello Jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.WARNING,
+                message: 'Hello Jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should produce a info message', () => {
+        expect(service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'Hello Jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should produce a info message with translated message if key exists', inject([TranslateService], (translateService: TranslateService) => {
+        translateService.setTranslation('en', {
+            'hello.jhipster': 'Translated message',
+        });
+        expect(service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster', translationKey: 'hello.jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'Translated message',
+            } as Alert),
+        );
+    }));
+
+    it('should produce a info message with provided message if key does not exists', () => {
+        expect(service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster', translationKey: 'hello.jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'Hello Jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should produce a info message with provided key if translation key does not exist in translations and message is not provided', () => {
+        expect(service.addAlert({ type: AlertType.INFO, translationKey: 'hello.jhipster' })).toEqual(
+            expect.objectContaining({
+                type: AlertType.INFO,
+                message: 'hello.jhipster',
+            } as Alert),
+        );
+    });
+
+    it('should display an alert on status 0', () => {
+        // GIVEN
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+        // THEN
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe('Server not reachable');
+    });
+
+    it('should show the translation of the server not being reachable once the translations are loaded', () => {
+        TestBed.inject(TranslateService).setTranslation('en', { 'global.generic.serverNotReachable': 'Der Server ist nicht erreichbar' }, true);
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Der Server ist nicht erreichbar');
+    });
+
+    it('should not report a missing translation if the server is not reachable, because the translations may not be loadable either', () => {
+        vi.mocked(captureException).mockClear();
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Server not reachable');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('should not display an alert on status 404', () => {
+        // GIVEN
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
+        // THEN
+        expect(service.get()).toHaveLength(0);
+    });
+
+    it('should tell the user how long to wait on status 429 with a Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '12' }) }) });
+
+        expect(addAlert).toHaveBeenCalledWith(expect.objectContaining({ translationKey: 'error.http.429Wait', translationParams: { seconds: 12 } }));
+        expect(service.get()).toHaveLength(1);
+    });
+
+    it('should show a general message on status 429 without a usable Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': 'soon' }) }) });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429 }) });
+
+        expect(addAlert).toHaveBeenCalledTimes(2);
+        expect(addAlert).toHaveBeenNthCalledWith(1, expect.objectContaining({ translationKey: 'error.http.429' }));
+        expect(addAlert).toHaveBeenNthCalledWith(2, expect.objectContaining({ translationKey: 'error.http.429' }));
+    });
+
+    describe('showsHttpErrorAlert', () => {
+        const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
+
+        // Each case is also sent through the real listener, so the decision cannot drift away from what the alert handling really does.
+        it.each([
+            { description: 'the server is not reachable', error: rejection(0), alerted: true },
+            {
+                description: 'a bad request has an error header with a known translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'Error Message' }),
+                alerted: true,
+            },
+            {
+                description: 'a bad request has an error header without a translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'error.unknown.key' }),
+                alerted: false,
+            },
+            { description: 'a bad request has field errors', error: rejection(400, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }), alerted: true },
+            { description: 'a bad request has an empty list of field errors', error: rejection(400, { fieldErrors: [], title: 'Bad Request' }), alerted: false },
+            { description: 'a bad request has only a title', error: rejection(400, { title: 'Bad Request', message: 'Bad Request' }), alerted: true },
+            { description: 'a bad request has a title whose key is skipped', error: rejection(400, { title: 'Bad Request', errorKey: 'courseShortNameExists' }), alerted: false },
+            { description: 'a bad request has nothing to show', error: rejection(400, {}), alerted: false },
+            { description: 'access is denied', error: rejection(403), alerted: true },
+            { description: 'access is denied with a key whose alert is skipped', error: rejection(403, { errorKey: 'cannotRegisterStaff' }), alerted: false },
+            { description: 'the resource was not found', error: rejection(404, { title: 'Not Found' }), alerted: false },
+            { description: 'a server error has a title', error: rejection(500, { title: 'Error Message', message: 'Error Message' }), alerted: true },
+            { description: 'a server error has an error header but no title', error: rejection(500, undefined, { 'x-artemisapp-error': 'Error Message' }), alerted: false },
+            {
+                description: 'a gateway error has field errors but no title',
+                error: rejection(502, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }),
+                alerted: false,
+            },
+            { description: 'a gateway error is the plain page of a proxy', error: rejection(502, '<html>Bad Gateway</html>'), alerted: false },
+            { description: 'the server asked for no alert', error: rejection(500, { skipAlert: true, title: 'Error Message' }), alerted: false },
+        ])('is $alerted when $description', ({ error, alerted }) => {
+            expect(service.showsHttpErrorAlert(error)).toBe(alerted);
+
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: error });
+
+            expect(service.get().length > 0).toBe(alerted);
+        });
+    });
+
+    it.each([
+        {
+            language: 'en',
+            errors: englishErrors,
+            expected: 'You do not have permission to access this content or perform this action. Contact your course team if you need access.',
+        },
+        {
+            language: 'de',
+            errors: germanErrors,
+            expected: 'Du hast keine Berechtigung, auf diesen Inhalt zuzugreifen oder diese Aktion auszuführen. Wende dich an dein Kursteam, wenn du Zugriff benötigst.',
+        },
+    ])('explains a 403 without a problem body in $language', ({ language, errors, expected }) => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation(language, errors, true);
+        translations.use(language);
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 403 }) });
+        expect(service.get()).toHaveLength(1);
+        const rendered = document.createElement('div');
+        rendered.innerHTML = service.get()[0].message!;
+        expect(rendered.textContent).toBe(expected);
+    });
+
+    it('preserves a specific translated 403 reason and its parameters', () => {
+        const translations = TestBed.inject(TranslateService);
+        translations.setTranslation('en', { error: { restricted: 'Only {{role}} can do this.' } }, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.restricted', params: { role: 'instructors' } },
+            }),
+        });
+        expect(service.get()[0].message).toBe('Only instructors can do this.');
+    });
+
+    it('falls back to permission guidance for an untranslated 403 reason', () => {
+        TestBed.inject(TranslateService).setTranslation('en', englishErrors, true);
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.untranslatedReason' },
+            }),
+        });
+        expect(service.get()[0].message).toBe('You do not have permission to access this content or perform this action. Contact your course team if you need access.');
+    });
+
+    it('does not duplicate a locally handled cannotRegisterStaff error', () => {
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 403,
+                error: { title: 'Forbidden', message: 'error.cannotRegisterStaff', errorKey: 'cannotRegisterStaff' },
+            }),
+        });
+        expect(service.get()).toHaveLength(0);
+    });
+
+    it('should display an alert on status 400 for generic error and use the error title', () => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders(),
+            status: 400,
+            statusText: 'Bad Request',
+            error: {
+                type: 'https://www.jhipster.tech/problem/constraint-violation',
+                title: 'Bad Request: This is a default text from the server exception',
+                status: 400,
+                path: '/api/foos',
+                message: 'error.validation',
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe('Bad Request: This is a default text from the server exception');
+    });
+
+    it('should not display an alert on status 400 for errors without message', () => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders(),
+            status: 400,
+            statusText: 'Bad request',
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toHaveLength(0);
+    });
+
+    it('should display an alert on status 400 for invalid parameters', () => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders(),
+            status: 400,
+            statusText: 'Bad Request',
+            error: {
+                type: 'https://www.jhipster.tech/problem/constraint-violation',
+                title: 'Method argument not valid',
+                status: 400,
+                path: '/api/foos',
+                message: 'error.validation',
+                fieldErrors: [{ objectName: 'foo', field: 'minField', message: 'Min' }],
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe('Error on field &#34;artemisApp.foo.minField&#34;');
+    });
+
+    it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, fieldName: 'Password' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, fieldName: 'Passwort' },
+    ])('should translate a managed user password validation error in $language', ({ language, users, errors, fieldName }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'password', message: 'Size' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toContain(fieldName);
+        expect(service.get()[0].message).not.toContain('translation-not-found');
+    });
+
+    it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, expected: 'Field Email must be a valid email address!' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, expected: 'Feld E-Mail muss eine gültige E-Mail-Adresse sein!' },
+    ])('should translate a managed user email validation error in $language', ({ language, users, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'email', message: 'Email' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(expected);
+    });
+
+    it.each([
+        { language: 'en', quizTranslations: enQuizSubmission, errors: englishErrors, expected: 'Field Short answer cannot be blank!' },
+        { language: 'de', quizTranslations: deQuizSubmission, errors: germanErrors, expected: 'Feld Kurzantwort darf nicht leer sein!' },
+    ])('should translate short-answer validation errors in $language', ({ language, quizTranslations, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, quizTranslations, true);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: {
+                    fieldErrors: [{ objectName: 'quizSubmissionFromStudent', field: 'submittedAnswers[0].submittedTexts[1].text', message: 'NotBlank' }],
+                },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe(expected);
+    });
+
+    it.each([
+        { language: 'en', errors: englishErrors },
+        { language: 'de', errors: germanErrors },
+    ])('should translate branch-pattern errors in $language', ({ language, errors }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(errors.error.branchRegexNotSupported);
+        expect(renderedMessage.textContent).not.toBe('English server fallback');
+    });
+
+    it('should display an alert on status 400 for error headers', () => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
+            status: 400,
+            statusText: 'Bad Request',
+            error: {
+                status: 400,
+                message: 'error.validation',
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toHaveLength(1);
+        expect(service.get()[0].message).toBe('Error Message');
+    });
+
+    it('should not show two alerts with the same content if spawned within 50ms', () => {
+        vi.useFakeTimers();
+        try {
+            const initialAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
+            expect(service.get()).toEqual([initialAlert]);
+
+            vi.advanceTimersByTime(25);
+
+            const secondAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
+
+            // Check that it is actually the same object by reference
+            expect(secondAlert).toBe(initialAlert);
+            expect(service.get()).toEqual([initialAlert]);
+
+            // After at least 50ms, the new alert should actually be added again
+            vi.advanceTimersByTime(30);
+
+            const thirdAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
+
+            expect(thirdAlert).not.toBe(initialAlert);
+            expect(service.get()).toEqual([thirdAlert, initialAlert]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([400, 403, 405, 412])('should not show alerts with skipAlert=true', (statusCode) => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
+            status: statusCode,
+            statusText: 'Some Error',
+            error: {
+                status: statusCode,
+                message: 'error.validation',
+                skipAlert: true,
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toHaveLength(0);
+    });
+});

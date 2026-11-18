@@ -1,0 +1,55 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { take } from 'rxjs/operators';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
+import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
+describe('Exam Import Paging Service', () => {
+    let service: ExamImportPagingService;
+    let httpMock: HttpTestingController;
+
+    const exam = {
+        id: 1,
+        title: 'RealExam For Testing',
+        course: undefined,
+        examMode: ExamMode.REAL,
+    } as Exam;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }, SessionStorageService, LocalStorageService],
+        });
+        service = TestBed.inject(ExamImportPagingService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('should find an exam', async () => {
+        const searchResult = { resultsOnPage: [exam], numberOfPages: 5 };
+        const pageable = { pageSize: 2, page: 4, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'ExamSearch', sortedColumn: 'testSortedColumn' };
+        service
+            .search(pageable, { withExercises: false })
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual(searchResult));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.params.get('pageSize')).toBe('2');
+        expect(req.request.params.get('page')).toBe('4');
+        expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.DESCENDING);
+        expect(req.request.params.get('searchTerm')).toBe('ExamSearch');
+        expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
+        req.flush(searchResult);
+        await Promise.resolve();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+});

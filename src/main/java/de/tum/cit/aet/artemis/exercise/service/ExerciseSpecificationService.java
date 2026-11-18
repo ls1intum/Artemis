@@ -1,0 +1,157 @@
+package de.tum.cit.aet.artemis.exercise.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course_;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam_;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup_;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ExerciseSpecificationService {
+
+    /** A search term that consists of digits only, and can therefore be compared against an id. */
+    private static final Pattern NUMERIC_SEARCH_TERM = Pattern.compile("\\d+");
+
+    private final AuthorizationCheckService authCheckService;
+
+    public ExerciseSpecificationService(AuthorizationCheckService authCheckService) {
+        this.authCheckService = authCheckService;
+    }
+
+    /**
+     * Creates a {@link Specification} to find exercises with the matching searchTerm.
+     * Allows to filter course for only course or exam exercises.
+     * Results are paged to reduce database load.
+     *
+     * @param searchTerm     Searches for an exercise id, exercise name or course name matching this input
+     * @param isCourseFilter Whether to search in courses for exercises
+     * @param isExamFilter   Whether to search in exams for exercises
+     * @param user           The user for whom to fetch all available exercises
+     * @param pageable       Defining how to sort the result and on which
+     * @param <T>            The generic exercise type
+     * @return A specification that can get passed to the exercise repository.
+     * @see org.springframework.data.jpa.repository.JpaSpecificationExecutor#findAll(Specification, Pageable)
+     */
+    public <T extends Exercise> Specification<T> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, User user, Pageable pageable) {
+        return (root, query, criteriaBuilder) -> {
+            Join<T, Course> joinCourse = root.join(Exercise_.COURSE, JoinType.LEFT);
+            Join<T, ExerciseGroup> joinExerciseGroup = root.join(Exercise_.EXERCISE_GROUP, JoinType.LEFT);
+            Join<ExerciseGroup, Exam> joinExam = joinExerciseGroup.join(ExerciseGroup_.EXAM, JoinType.LEFT);
+            Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
+
+            Predicate idMatchesSearch;
+            if (NUMERIC_SEARCH_TERM.matcher(searchTerm).matches()) {
+                // Ensure the search term is numeric to avoid SQL issues
+                idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID), Long.valueOf(searchTerm));
+            }
+            else {
+                // Avoid incorrect type comparison which could lead to an exception "Data Conversion Error (CHARACTER VARYING to DECFLOAT)"
+                idMatchesSearch = criteriaBuilder.disjunction();
+            }
+            // Lower case on both sides: PostgreSQL compares case sensitively, so a term the user typed in any other case would match nothing.
+            String titlePattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+            Predicate exerciseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), titlePattern);
+            Predicate courseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinCourse.get(Course_.TITLE)), titlePattern);
+            Predicate examCourseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinExamCourse.get(Course_.TITLE)), titlePattern);
+
+            Predicate matchingCourseExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, courseTitleMatches);
+            Predicate matchingExamExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, examCourseTitleMatches);
+
+            Predicate filter;
+
+            if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
+                Subquery<CourseRole> ucrSubqueryCourse = query.subquery(CourseRole.class);
+                var ucrRootCourse = ucrSubqueryCourse.from(UserCourseRole.class);
+                ucrSubqueryCourse.select(ucrRootCourse.get(UserCourseRole_.ROLE))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootCourse.get(UserCourseRole_.USER).get(DomainObject_.ID), user.getId()),
+                                criteriaBuilder.equal(ucrRootCourse.get(UserCourseRole_.COURSE).get(DomainObject_.ID), joinCourse.get(DomainObject_.ID)),
+                                ucrRootCourse.get(UserCourseRole_.ROLE).in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                Predicate atLeastEditorInCourse = criteriaBuilder.exists(ucrSubqueryCourse);
+
+                Subquery<CourseRole> ucrSubqueryExam = query.subquery(CourseRole.class);
+                var ucrRootExam = ucrSubqueryExam.from(UserCourseRole.class);
+                ucrSubqueryExam.select(ucrRootExam.get(UserCourseRole_.ROLE))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootExam.get(UserCourseRole_.USER).get(DomainObject_.ID), user.getId()),
+                                criteriaBuilder.equal(ucrRootExam.get(UserCourseRole_.COURSE).get(DomainObject_.ID), joinExamCourse.get(DomainObject_.ID)),
+                                ucrRootExam.get(UserCourseRole_.ROLE).in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                Predicate atLeastEditorInExam = criteriaBuilder.exists(ucrSubqueryExam);
+
+                Predicate availableCourseExercise = criteriaBuilder.and(matchingCourseExercise, atLeastEditorInCourse);
+                Predicate availableExamExercise = criteriaBuilder.and(matchingExamExercise, atLeastEditorInExam);
+
+                if (isCourseFilter && isExamFilter) {
+                    filter = criteriaBuilder.or(availableCourseExercise, availableExamExercise);
+                }
+                else if (isCourseFilter) {
+                    filter = availableCourseExercise;
+                }
+                else {
+                    filter = availableExamExercise;
+                }
+            }
+            else {
+                Predicate isCourseExercise = joinCourse.isNotNull();
+                Predicate isExamExercise = joinExerciseGroup.isNotNull();
+                if (isCourseFilter && isExamFilter) {
+                    filter = criteriaBuilder.or(matchingCourseExercise, matchingExamExercise);
+                }
+                else if (isCourseFilter) {
+                    filter = criteriaBuilder.and(matchingCourseExercise, isCourseExercise);
+                }
+                else {
+                    filter = criteriaBuilder.and(matchingExamExercise, isExamExercise);
+                }
+            }
+            return filter;
+        };
+    }
+
+    /**
+     * Creates a {@link Specification} to filter for programming exercises with the given programming language and SCA enabled.
+     *
+     * @param programmingLanguage the language to filter for
+     * @return a Specification that can get passed to the @{@link ProgrammingExerciseRepository}
+     * @see ProgrammingExerciseService#getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO, boolean, boolean, ProgrammingLanguage,
+     *      User)
+     */
+    public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED));
+            Predicate sameLanguage = criteriaBuilder.equal(root.get(ProgrammingExercise_.PROGRAMMING_LANGUAGE), programmingLanguage);
+            return criteriaBuilder.and(scaActive, sameLanguage);
+        };
+    }
+}

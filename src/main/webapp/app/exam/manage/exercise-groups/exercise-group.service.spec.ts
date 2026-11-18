@@ -1,0 +1,65 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+
+describe('Exercise Group Service', () => {
+    let httpClient: any;
+    let httpClientDeleteSpy: any;
+    let service: ExerciseGroupService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient()],
+        });
+
+        service = TestBed.inject(ExerciseGroupService);
+        httpClient = TestBed.inject(HttpClient);
+        httpClientDeleteSpy = vi.spyOn(httpClient, 'delete').mockImplementation(() => {
+            return {} as any;
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should set additional parameters correctly in delete', () => {
+        service.delete(1, 2, 3, true, false);
+        expect(httpClientDeleteSpy).toHaveBeenCalledOnce();
+        expect(httpClientDeleteSpy.mock.calls[0]).toHaveLength(2);
+        const updates = httpClientDeleteSpy.mock.calls[0][1].params.updates;
+        expect(updates).toEqual(
+            expect.arrayContaining([
+                { op: 's', param: 'deleteStudentReposBuildPlans', value: 'true' },
+                { op: 's', param: 'deleteBaseReposBuildPlans', value: 'false' },
+            ]),
+        );
+    });
+
+    it('should PUT the target group id when moving an exercise to a different group', () => {
+        const httpClientPutSpy = vi.spyOn(httpClient, 'put').mockImplementation(() => {
+            return {} as any;
+        });
+
+        service.moveExerciseToGroup(1, 2, 3, 4);
+
+        expect(httpClientPutSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercises/3/exercise-group', { exerciseGroupId: 4 }, { observe: 'response' });
+    });
+
+    it('should group the deletion summary of an exercise group into categories', () => {
+        const httpClientGetSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of({ numberOfTextExercises: 2, numberOfStudentParticipations: 600, numberOfStudentExams: 30 }));
+        let categories: EntitySummaryCategory[] | undefined;
+
+        service.getDeletionSummary(1, 2, 3).subscribe((value) => (categories = value));
+
+        expect(httpClientGetSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercise-groups/3/deletion-summary');
+        expect(categories!.map((category) => category.titleKey)).toEqual([
+            'artemisApp.examManagement.delete.summary.category.structure',
+            'artemisApp.examManagement.delete.summary.category.studentWork',
+        ]);
+        expect(categories![1].items.find((item) => item.value === 600)?.highlight).toBe(true);
+    });
+});

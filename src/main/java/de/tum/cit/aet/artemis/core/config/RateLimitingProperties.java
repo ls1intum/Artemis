@@ -1,0 +1,315 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+
+/**
+ * Configuration properties for rate limiting functionality.
+ *
+ * <p>
+ * This class binds the artemis.rate-limiting.* properties from application configuration
+ * and provides type-safe access to rate limiting settings.
+ * </p>
+ */
+@Profile(PROFILE_CORE)
+@Configuration
+@Lazy
+@ConfigurationProperties(prefix = "artemis.rate-limiting")
+public class RateLimitingProperties {
+
+    /**
+     * Whether rate limiting is enabled globally. The limit for client error reports is not affected: it cannot be disabled.
+     * Default: true (enabled)
+     */
+    private boolean enabled = true;
+
+    /**
+     * Addresses exempt from every rate limit, as literal IPv4 or IPv6 addresses or CIDR blocks.
+     * <p>
+     * The limits are per client address, which is the right shape for protecting against one abusive
+     * client but the wrong shape for a load generator: a benchmark drives thousands of logins from a
+     * single address and would be throttled almost immediately, so a run would measure the limiter
+     * rather than the system. Listing that address here is the same exemption the reverse proxy
+     * already supports for its own limits.
+     * <p>
+     * Empty by default. Only add an address that is under your control.
+     */
+    private List<String> exemptAddresses = new ArrayList<>();
+
+    /**
+     * Requests per minute for public endpoints.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ACCOUNT_MANAGEMENT}.
+     */
+    private Integer accountManagementRequestsPerMinute;
+
+    /**
+     * Requests per minute for login-related endpoints.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AUTHENTICATION}.
+     */
+    private Integer authenticationRequestsPerMinute;
+
+    /**
+     * Requests per minute for the authentication of git operations over HTTP and SSH.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#GIT_AUTHENTICATION}.
+     */
+    private Integer gitAuthenticationRequestsPerMinute;
+
+    /**
+     * Requests per minute for the unauthenticated login-options lookup.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#LOGIN_OPTIONS}.
+     */
+    private Integer loginOptionsRequestsPerMinute;
+
+    /**
+     * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
+     */
+    private Integer failedLoginRequestsPerMinute;
+
+    /**
+     * Requests per minute for the problem-statement rendering endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
+     */
+    private Integer problemStatementRenderingRequestsPerMinute;
+
+    /**
+     * Requests per minute for the AI search pipeline endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AI_SEARCH_PIPELINE}.
+     */
+    private Integer aiSearchPipelineRequestsPerMinute;
+
+    /**
+     * Requests per minute for the proactive struggle-intervention trigger endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#STRUGGLE_INTERVENTION}.
+     */
+    private Integer struggleInterventionRequestsPerMinute;
+
+    /**
+     * Requests per minute for the slides-and-videos search endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CONTENT_SEARCH}.
+     */
+    private Integer contentSearchRequestsPerMinute;
+
+    /**
+     * Requests per minute for the check whether an email address is allowed by the configured restriction.
+     * If not specified, uses the default from {@link RateLimitType#EMAIL_ADDRESS_CHECK}.
+     */
+    private Integer emailAddressCheckRequestsPerMinute;
+
+    /**
+     * Requests per minute for the build agent clone-token check on the git https path.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
+     */
+    private Integer buildAgentCloneTokenRequestsPerMinute;
+
+    /**
+     * Requests per minute for the editor-facing online-resource metadata fetch.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ONLINE_RESOURCE_FETCH}.
+     */
+    private Integer onlineResourceFetchRequestsPerMinute;
+
+    /**
+     * Requests per minute for client error reports of unauthenticated clients.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
+     */
+    private Integer clientErrorReportRequestsPerMinute;
+
+    /**
+     * Failed shared-secret checks per minute for the endpoints called by external services.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#SERVICE_CREDENTIAL_FAILURE}.
+     */
+    private Integer serviceCredentialFailureRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for the conversion of a modeling diagram to a PDF document.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#APOLLON_CONVERSION}.
+     */
+    private Integer apollonConversionRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for joining a quiz batch with its password.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#QUIZ_BATCH_JOIN}.
+     */
+    private Integer quizBatchJoinRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for the manual build of a programming exercise participation.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROGRAMMING_BUILD_TRIGGER}.
+     */
+    private Integer programmingBuildTriggerRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for sending a course request.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#COURSE_REQUEST}.
+     */
+    private Integer courseRequestRequestsPerMinute;
+
+    public List<String> getExemptAddresses() {
+        return exemptAddresses;
+    }
+
+    public void setExemptAddresses(List<String> exemptAddresses) {
+        this.exemptAddresses = exemptAddresses;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Integer getAccountManagementRequestsPerMinute() {
+        return accountManagementRequestsPerMinute;
+    }
+
+    public void setAccountManagementRequestsPerMinute(Integer accountManagementRequestsPerMinute) {
+        this.accountManagementRequestsPerMinute = accountManagementRequestsPerMinute;
+    }
+
+    public Integer getAuthenticationRequestsPerMinute() {
+        return authenticationRequestsPerMinute;
+    }
+
+    public void setAuthenticationRequestsPerMinute(Integer authenticationRequestsPerMinute) {
+        this.authenticationRequestsPerMinute = authenticationRequestsPerMinute;
+    }
+
+    public Integer getLoginOptionsRequestsPerMinute() {
+        return loginOptionsRequestsPerMinute;
+    }
+
+    public void setLoginOptionsRequestsPerMinute(Integer loginOptionsRequestsPerMinute) {
+        this.loginOptionsRequestsPerMinute = loginOptionsRequestsPerMinute;
+    }
+
+    public Integer getProblemStatementRenderingRequestsPerMinute() {
+        return problemStatementRenderingRequestsPerMinute;
+    }
+
+    public void setProblemStatementRenderingRequestsPerMinute(Integer problemStatementRenderingRequestsPerMinute) {
+        this.problemStatementRenderingRequestsPerMinute = problemStatementRenderingRequestsPerMinute;
+    }
+
+    public Integer getAiSearchPipelineRequestsPerMinute() {
+        return aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getGitAuthenticationRequestsPerMinute() {
+        return gitAuthenticationRequestsPerMinute;
+    }
+
+    public void setGitAuthenticationRequestsPerMinute(Integer gitAuthenticationRequestsPerMinute) {
+        this.gitAuthenticationRequestsPerMinute = gitAuthenticationRequestsPerMinute;
+    }
+
+    public Integer getBuildAgentCloneTokenRequestsPerMinute() {
+        return buildAgentCloneTokenRequestsPerMinute;
+    }
+
+    public void setBuildAgentCloneTokenRequestsPerMinute(Integer buildAgentCloneTokenRequestsPerMinute) {
+        this.buildAgentCloneTokenRequestsPerMinute = buildAgentCloneTokenRequestsPerMinute;
+    }
+
+    public void setAiSearchPipelineRequestsPerMinute(Integer aiSearchPipelineRequestsPerMinute) {
+        this.aiSearchPipelineRequestsPerMinute = aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getStruggleInterventionRequestsPerMinute() {
+        return struggleInterventionRequestsPerMinute;
+    }
+
+    public void setStruggleInterventionRequestsPerMinute(Integer struggleInterventionRequestsPerMinute) {
+        this.struggleInterventionRequestsPerMinute = struggleInterventionRequestsPerMinute;
+    }
+
+    public Integer getContentSearchRequestsPerMinute() {
+        return contentSearchRequestsPerMinute;
+    }
+
+    public void setContentSearchRequestsPerMinute(Integer contentSearchRequestsPerMinute) {
+        this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
+    }
+
+    public Integer getEmailAddressCheckRequestsPerMinute() {
+        return emailAddressCheckRequestsPerMinute;
+    }
+
+    public void setEmailAddressCheckRequestsPerMinute(Integer emailAddressCheckRequestsPerMinute) {
+        this.emailAddressCheckRequestsPerMinute = emailAddressCheckRequestsPerMinute;
+    }
+
+    public Integer getOnlineResourceFetchRequestsPerMinute() {
+        return onlineResourceFetchRequestsPerMinute;
+    }
+
+    public void setOnlineResourceFetchRequestsPerMinute(Integer onlineResourceFetchRequestsPerMinute) {
+        this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
+    }
+
+    public Integer getServiceCredentialFailureRequestsPerMinute() {
+        return serviceCredentialFailureRequestsPerMinute;
+    }
+
+    public void setServiceCredentialFailureRequestsPerMinute(Integer serviceCredentialFailureRequestsPerMinute) {
+        this.serviceCredentialFailureRequestsPerMinute = serviceCredentialFailureRequestsPerMinute;
+    }
+
+    public Integer getClientErrorReportRequestsPerMinute() {
+        return clientErrorReportRequestsPerMinute;
+    }
+
+    public void setClientErrorReportRequestsPerMinute(Integer clientErrorReportRequestsPerMinute) {
+        this.clientErrorReportRequestsPerMinute = clientErrorReportRequestsPerMinute;
+    }
+
+    public Integer getFailedLoginRequestsPerMinute() {
+        return failedLoginRequestsPerMinute;
+    }
+
+    public void setFailedLoginRequestsPerMinute(Integer failedLoginRequestsPerMinute) {
+        this.failedLoginRequestsPerMinute = failedLoginRequestsPerMinute;
+    }
+
+    public Integer getApollonConversionRequestsPerMinute() {
+        return apollonConversionRequestsPerMinute;
+    }
+
+    public void setApollonConversionRequestsPerMinute(Integer apollonConversionRequestsPerMinute) {
+        this.apollonConversionRequestsPerMinute = apollonConversionRequestsPerMinute;
+    }
+
+    public Integer getQuizBatchJoinRequestsPerMinute() {
+        return quizBatchJoinRequestsPerMinute;
+    }
+
+    public void setQuizBatchJoinRequestsPerMinute(Integer quizBatchJoinRequestsPerMinute) {
+        this.quizBatchJoinRequestsPerMinute = quizBatchJoinRequestsPerMinute;
+    }
+
+    public Integer getProgrammingBuildTriggerRequestsPerMinute() {
+        return programmingBuildTriggerRequestsPerMinute;
+    }
+
+    public void setProgrammingBuildTriggerRequestsPerMinute(Integer programmingBuildTriggerRequestsPerMinute) {
+        this.programmingBuildTriggerRequestsPerMinute = programmingBuildTriggerRequestsPerMinute;
+    }
+
+    public Integer getCourseRequestRequestsPerMinute() {
+        return courseRequestRequestsPerMinute;
+    }
+
+    public void setCourseRequestRequestsPerMinute(Integer courseRequestRequestsPerMinute) {
+        this.courseRequestRequestsPerMinute = courseRequestRequestsPerMinute;
+    }
+}

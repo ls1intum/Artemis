@@ -1,0 +1,210 @@
+<form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
+    <tumaet-ui-confirm-dialog key="modeling-diagram-type-change" />
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="modelingExercise" (exerciseChange)="modelingExercise = $event" />
+    <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
+    <div class="flex items-center gap-2">
+        @if (!modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
+        } @else if (!isImport() && modelingExercise.id) {
+            <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel"></h2>
+        } @else if (isImport()) {
+            <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h2>
+        }
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <jhi-form-status-bar [formStatusSections]="formSectionStatus()" />
+    <div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
+        <jhi-exercise-title-channel-name
+            [(exercise)]="modelingExercise"
+            [course]="modelingExercise.course"
+            [courseId]="modelingExercise.course?.id"
+            [minTitleLength]="3"
+            [isExamMode]="isExamMode()"
+            [isImport]="isImport()"
+        />
+        @if (!isExamMode()) {
+            <div class="relative mb-4!">
+                <label jhiTranslate="artemisApp.exercise.categories"></label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+                <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
+            </div>
+        }
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.difficulty"></label>
+            <div>
+                <jhi-difficulty-picker [exercise]="modelingExercise" data-testid="modeling-difficulty-picker" />
+            </div>
+        </div>
+        <jhi-team-config-form-group class="form-element" [(exercise)]="modelingExercise" [isImport]="isImport()" />
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
+        <div class="mb-4!" name="problemStatement" id="field_problemStatement">
+            <label jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
+            <jhi-markdown-editor-monaco
+                class="markdown-editor background-editor-color"
+                [domainActions]="domainActionsProblemStatement"
+                [markdown]="modelingExercise.problemStatement"
+                (markdownChange)="exerciseState.patch('problemStatement', $event)"
+            />
+        </div>
+        @if (!isExamMode()) {
+            <div class="mb-4!">
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [ngModel]="modelingExercise.competencyLinks"
+                    (ngModelChange)="exerciseState.patch('competencyLinks', $event)"
+                    name="competencyLinks"
+                />
+            </div>
+        }
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
+        <div class="mb-4! modeling-exercise-editor-snap-target">
+            <label jhiTranslate="artemisApp.modelingExercise.exampleSolution"></label>
+            <jhi-modeling-editor
+                [diagramType]="modelingExercise.diagramType"
+                [umlModel]="exampleSolution()"
+                [problemStatement]="modelingExercise.problemStatement"
+                (onModelChanged)="onModelChanged($event)"
+                [scrollLock]="true"
+                [showProjectedBottomCenter]="!isImport()"
+            >
+                <div modelingEditorTopLeft class="modeling-exercise-diagram-type">
+                    <label jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
+                    <tumaet-ui-select
+                        [disabled]="isImport()"
+                        name="diagramType"
+                        [options]="diagramTypeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        size="small"
+                        [ngModel]="selectedDiagramType()"
+                        (ngModelChange)="requestDiagramTypeChange($event)"
+                        inputId="field_diagramType"
+                        [ariaLabel]="'artemisApp.modelingExercise.diagramType' | artemisTranslate"
+                    />
+                </div>
+                <jhi-modeling-markdown-explanation-editor
+                    modelingEditorBottomCenter
+                    class="modeling-exercise-example-explanation"
+                    [hidden]="isImport()"
+                    [markdown]="modelingExercise.exampleSolutionExplanation"
+                    (markdownChange)="exerciseState.patch('exampleSolutionExplanation', $event)"
+                    [domainActions]="domainActionsExampleSolution"
+                />
+            </jhi-modeling-editor>
+        </div>
+        <hr class="mb-12!" />
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
+        <div class="mb-4! flex flex-wrap gap-x-6! gap-y-4!">
+            @if (!isExamMode()) {
+                <div class="w-auto shrink-0">
+                    <jhi-exercise-timeline
+                        [releaseDate]="modelingExercise.releaseDate"
+                        (releaseDateChange)="exerciseState.patch('releaseDate', $event)"
+                        [startDate]="modelingExercise.startDate"
+                        (startDateChange)="exerciseState.patch('startDate', $event)"
+                        [dueDate]="modelingExercise.dueDate"
+                        (dueDateChange)="exerciseState.patch('dueDate', $event)"
+                        [assessmentDueDate]="modelingExercise.assessmentDueDate"
+                        (assessmentDueDateChange)="exerciseState.patch('assessmentDueDate', $event)"
+                        [exampleSolutionPublicationDate]="modelingExercise.exampleSolutionPublicationDate"
+                        (exampleSolutionPublicationDateChange)="exerciseState.patch('exampleSolutionPublicationDate', $event)"
+                        [exampleSolutionPublicationDateErrorStringKey]="
+                            modelingExercise.exampleSolutionPublicationDate && !hasExampleSolution()
+                                ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
+                                : undefined
+                        "
+                        [exercisePartOfExerciseGroup]="variantLock.locked()"
+                        [isImport]="isImport()"
+                        (timelineStatus)="timelineStatus.set($event)"
+                    />
+                </div>
+            }
+            <div class="w-full md:w-auto md:shrink-0 md:grow md:basis-0" data-testid="modeling-grading-options">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-4!" (editGroupDates)="variantLock.openModal()" />
+                }
+                <div class="mb-4!">
+                    <label jhiTranslate="artemisApp.exercise.includedInOverallScore{{ modelingExercise.course ? 'Course' : 'Exam' }}Label"></label>
+                    <div>
+                        <jhi-included-in-overall-score-picker
+                            [includedInOverallScore]="modelingExercise.includedInOverallScore"
+                            (includedInOverallScoreChange)="exerciseState.patch('includedInOverallScore', $event)"
+                            [allowNotIncluded]="!isExamMode()"
+                            data-testid="modeling-includeInScore-picker"
+                        />
+                    </div>
+                </div>
+                <div class="mb-4! flex gap-6!">
+                    <div class="min-w-0 flex-1">
+                        <label jhiTranslate="artemisApp.exercise.points" for="field_points"></label><span class="text-state-danger" aria-hidden="true">*</span>
+                        <jhi-points-input
+                            required
+                            fluid
+                            [min]="1"
+                            [max]="9999"
+                            name="points"
+                            inputId="field_points"
+                            [ngModel]="modelingExercise.maxPoints"
+                            (ngModelChange)="exerciseState.patch('maxPoints', $event)"
+                            #points="ngModel"
+                        />
+                        @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
+                            <tumaet-ui-message class="mt-2" severity="error"><span jhiTranslate="artemisApp.exercise.pointsError"></span></tumaet-ui-message>
+                        }
+                    </div>
+                    @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <div class="min-w-0 flex-1">
+                            <label jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                            @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <span class="text-state-danger" aria-hidden="true">*</span>
+                            }
+                            <jhi-points-input
+                                [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
+                                fluid
+                                [min]="0"
+                                [max]="9999"
+                                name="bonusPoints"
+                                inputId="field_bonusPoints"
+                                [ngModel]="modelingExercise.bonusPoints"
+                                (ngModelChange)="exerciseState.patch('bonusPoints', $event)"
+                                #bonusPoints="ngModel"
+                            />
+                            @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
+                                <tumaet-ui-message class="mt-2" severity="error"><span jhiTranslate="artemisApp.exercise.bonusPointsError"></span></tumaet-ui-message>
+                            }
+                        </div>
+                    }
+                </div>
+                <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
+            </div>
+        </div>
+        <div class="mb-4!">
+            <label jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="modelingExercise"
+                [editable]="!isSaving()"
+                [synchronizeExercise]="synchronizeForAssessmentCriteriaGeneration"
+                [additionalGenerationContext]="assessmentCriteriaAdditionalContext"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
+        </div>
+    </div>
+    <jhi-form-footer
+        [isImport]="isImport()"
+        [isCreation]="!modelingExercise.id"
+        [isSaving]="isSaving()"
+        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
+        [invalidReasons]="invalidReasons()"
+        (onCancel)="previousState()"
+        (save)="save()"
+        [(notificationText)]="notificationText"
+    />
+</form>

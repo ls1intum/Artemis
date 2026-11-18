@@ -1,0 +1,105 @@
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Course } from 'app/course/shared/entities/course.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+/**
+ * Simple toggle component for enabling/disabling Iris at the course level.
+ * Replaces the complex feature-specific toggle with a unified course-level control.
+ */
+@Component({
+    selector: 'jhi-iris-enabled',
+    templateUrl: './iris-enabled.component.html',
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, TumAetUiButtonDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    styles: [
+        `
+            :host {
+                display: block;
+                width: 100%;
+            }
+
+            .iris-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+        `,
+    ],
+})
+export class IrisEnabledComponent implements OnInit {
+    private irisSettingsService = inject(IrisSettingsService);
+    private alertService = inject(AlertService);
+
+    protected readonly faArrowRight = faArrowRight;
+
+    course = input.required<Course>();
+
+    settings = signal<IrisCourseSettingsDTO | undefined>(undefined);
+
+    readonly isEnabled = computed(() => this.settings()?.enabled ?? false);
+    readonly isDisabled = computed(() => !this.isEnabled());
+
+    ngOnInit(): void {
+        const courseId = this.course()?.id;
+        if (courseId) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
+                next: (response) => {
+                    if (response) {
+                        this.settings.set(response.settings);
+                    }
+                },
+                error: () => {
+                    // Silently fail - the component will show as disabled
+                },
+            });
+        }
+    }
+
+    /**
+     * Toggle the enabled state and save to server
+     */
+    setEnabled(enabled: boolean) {
+        const courseId = this.course()?.id;
+        const currentSettings = this.settings();
+
+        if (!courseId || !currentSettings) {
+            return;
+        }
+
+        // Optimistic UI update — clone to avoid mutating the signal value in place
+        const newSettings = deepClone(currentSettings);
+        newSettings.enabled = enabled;
+        this.settings.set(newSettings);
+
+        // Save to server
+        this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    this.settings.set(response.body.settings);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.settings.set(currentSettings);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    /**
+     * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated
+     * on every change-detection pass and a fresh array each pass makes RouterLink re-process the link every time.
+     */
+    readonly settingsRoute = computed(() => ['/course-management', String(this.course()?.id), 'iris-settings']);
+}

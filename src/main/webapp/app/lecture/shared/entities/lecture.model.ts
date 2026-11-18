@@ -1,0 +1,44 @@
+import { Dayjs } from 'dayjs/esm';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+
+export class Lecture implements BaseEntity {
+    id?: number;
+    title?: string;
+    description?: string;
+    startDate?: Dayjs;
+    endDate?: Dayjs;
+    posts?: Post[];
+    lectureUnits?: LectureUnit[];
+    course?: Course;
+    isTutorialLecture?: boolean;
+
+    // helper attribute
+    channelName?: string;
+    isAtLeastEditor?: boolean;
+    isAtLeastInstructor?: boolean;
+}
+
+export class LectureSeriesCreateLectureDTO {
+    constructor(
+        public title: string,
+        public startDate?: Dayjs,
+        public endDate?: Dayjs,
+    ) {}
+}
+
+/**
+ * DTO for creating and updating lectures. Matches the server-side SimpleLectureDTO.
+ */
+export interface SimpleLectureDTO {
+    id?: number;
+    title?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    isTutorialLecture?: boolean;
+    channelName?: string;
+    course?: { id?: number };
+}

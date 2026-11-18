@@ -1,0 +1,207 @@
+package de.tum.cit.aet.artemis.lecture.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
+@RestController
+@RequestMapping("api/lecture/")
+public class TextUnitResource {
+
+    private static final Logger log = LoggerFactory.getLogger(TextUnitResource.class);
+
+    private static final String ENTITY_NAME = "textUnit";
+
+    private final LectureUnitService lectureUnitService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final LectureRepository lectureRepository;
+
+    private final TextUnitRepository textUnitRepository;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+        this.lectureRepository = lectureRepository;
+        this.textUnitRepository = textUnitRepository;
+        this.competencyProgressApi = competencyProgressApi;
+        this.lectureUnitService = lectureUnitService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+    }
+
+    /**
+     * GET lectures/:lectureId/text-units/:textUnitId : gets the text unit with the specified id
+     *
+     * @param textUnitId the id of the textUnit to retrieve
+     * @param lectureId  the id of the lecture to which the unit belongs
+     * @return the ResponseEntity with status 200 (OK) and with body the text unit, or with status 404 (Not Found)
+     */
+    @GetMapping("lectures/{lectureId}/text-units/{textUnitId}")
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "textUnitId")
+    public ResponseEntity<TextUnitDTO> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
+        log.debug("REST request to get TextUnit : {}", textUnitId);
+        Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitId);
+        if (optionalTextUnit.isEmpty()) {
+            throw new EntityNotFoundException("TextUnit");
+        }
+        TextUnit textUnit = optionalTextUnit.get();
+        if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+        return ResponseEntity.ok(TextUnitDTO.of(textUnit));
+    }
+
+    /**
+     * PUT /lectures/:lectureId/text-units : Updates an existing text unit
+     *
+     * @param lectureId   the id of the lecture to which the text unit belongs to update
+     * @param textUnitDto the text unit to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit, or with status 404 (Not Found) if the text unit does not exist
+     */
+    @PutMapping("lectures/{lectureId}/text-units")
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<TextUnitDTO> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnitDTO textUnitDto) {
+        log.debug("REST request to update an text unit : {}", textUnitDto);
+        if (textUnitDto.id() == null) {
+            throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
+        }
+
+        var existingTextUnit = textUnitRepository.getValueElseThrow(textUnitRepository.findByIdWithCompetencies(textUnitDto.id()), textUnitDto.id());
+
+        if (existingTextUnit.getLecture() == null || existingTextUnit.getLecture().getCourse() == null || !existingTextUnit.getLecture().getId().equals(lectureId)) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+
+        // Precompute original competency IDs for progress update below
+        Set<Long> originalCompetencyIds = existingTextUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
+
+        // Snapshot the content-bearing field before the update so the Atlas content-changed event only fires on a real edit.
+        String previousContent = existingTextUnit.getContent();
+
+        // copy all attributes
+        existingTextUnit.setContent(textUnitDto.content());
+        existingTextUnit.setName(textUnitDto.name());
+        existingTextUnit.setReleaseDate(textUnitDto.releaseDate());
+
+        // This method computes the relevant changes for competency links and applies them to the existingTextUnit
+        lectureUnitService.updateCompetencyLinks(textUnitDto, existingTextUnit, existingTextUnit.getLecture().getCourse().getId());
+
+        // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
+        existingTextUnit = textUnitRepository.save(existingTextUnit);
+        TextUnit savedTextUnit = existingTextUnit;
+
+        if (competencyProgressApi.isPresent()) {
+            // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
+        }
+
+        // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content actually changed.
+        if (!Objects.equals(previousContent, savedTextUnit.getContent())) {
+            lectureUnitService.publishContentChangedEvent(savedTextUnit);
+        }
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedTextUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedTextUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedTextUnit.getId());
+            }
+        });
+
+        return ResponseEntity.ok(TextUnitDTO.of(existingTextUnit));
+    }
+
+    /**
+     * POST /lectures/:lectureId/text-units : creates a new text unit.
+     *
+     * @param lectureId   the id of the lecture to which the text unit should be added
+     * @param textUnitDto the text unit that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new text unit
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("lectures/{lectureId}/text-units")
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<TextUnitDTO> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnitDTO textUnitDto) throws URISyntaxException {
+        log.debug("REST request to create TextUnit : {}", textUnitDto);
+        if (textUnitDto.id() != null) {
+            throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idExists");
+        }
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+
+        TextUnit textUnit = new TextUnit();
+        textUnit.setName(textUnitDto.name());
+        textUnit.setReleaseDate(textUnitDto.releaseDate());
+        textUnit.setContent(textUnitDto.content());
+        lectureUnitService.updateCompetencyLinks(textUnitDto, textUnit, lecture.getCourse().getId());
+
+        lecture.addLectureUnit(textUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+        TextUnit persistedUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
+        // From now on, only use persistedUnit
+        textUnitRepository.save(persistedUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        // A newly created unit with non-blank content introduces learning-relevant content; notify the pipeline.
+        if (persistedUnit.getContent() != null && !persistedUnit.getContent().isBlank()) {
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
+        }
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
+        });
+
+        return ResponseEntity.created(new URI("/api/text-units/" + persistedUnit.getId())).body(TextUnitDTO.of(persistedUnit));
+    }
+}

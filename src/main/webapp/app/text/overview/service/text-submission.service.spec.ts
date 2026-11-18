@@ -1,0 +1,169 @@
+/**
+ * Test suite for TextSubmissionService.
+ * Tests CRUD operations and HTTP interactions for text submissions.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { take } from 'rxjs/operators';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { provideHttpClient } from '@angular/common/http';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
+
+describe('TextSubmission Service', () => {
+    let service: TextSubmissionService;
+    let httpMock: HttpTestingController;
+    let elemDefault: TextSubmission;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+        }).compileComponents();
+        service = TestBed.inject(TextSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = new TextSubmission();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    it('should create a TextSubmission', () => {
+        const returnedFromService = {
+            id: 1,
+            ...elemDefault,
+        };
+
+        const expected = { ...returnedFromService };
+        service
+            .create(new TextSubmission(), 1)
+            .pipe(take(1))
+            .subscribe((resp: any) => {
+                expect(resp.body).toEqual(expected);
+            });
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+    });
+
+    it('should update a TextSubmission', () => {
+        const returnedFromService = {
+            text: 'BBBBBB',
+            ...elemDefault,
+        };
+
+        const expected = { ...returnedFromService };
+        service
+            .update(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp: any) => expect(resp.body).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+    });
+
+    it('should get textSubmission for exercise', () => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        elemDefault.latestResult = undefined;
+        elemDefault.participation = undefined;
+        const returnedFromService = [elemDefault];
+        const expected = returnedFromService;
+        let response: any;
+        service
+            .getSubmissions(exerciseId, {})
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should get textSubmission', () => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        const returnedFromService = { body: elemDefault };
+        const expected = returnedFromService.body;
+        let response: any;
+        service
+            .getTextSubmission(exerciseId)
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should get submission without assessment', () => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        elemDefault.participation = new StudentParticipation();
+        const returnedFromService = elemDefault;
+        const expected = returnedFromService;
+
+        service
+            .getSubmissionWithoutAssessment(exerciseId)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp).toEqual(expected);
+            });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('keeps the locked result and text blocks (nested in participation.submissions) on the new-assessment response', () => {
+        // Regression guard: the response no longer carries results/blocks on the top-level submission; they live in
+        // participation.submissions[*]. The mapping must hoist them so the assessment editor receives the locked result id
+        // it needs to save/submit, instead of overwriting participation.submissions with a result-less submission.
+        const lockedResult = { id: 99 } as Result;
+        const block = { id: 'block-1', text: 'segment' } as TextBlock;
+        const nestedSubmission = { id: 5, results: [lockedResult], blocks: [block] } as TextSubmission;
+        const participation = new StudentParticipation();
+        participation.submissions = [nestedSubmission];
+        const topLevel = { id: 5, participation } as TextSubmission; // no top-level results/blocks, mirroring the DTO
+
+        let received: TextSubmission | undefined;
+        service
+            .getSubmissionWithoutAssessment(1, 'lock')
+            .pipe(take(1))
+            .subscribe((resp) => (received = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(topLevel);
+
+        expect(received).toBeDefined();
+        expect(received!.results).toEqual([lockedResult]);
+        expect(received!.blocks).toEqual([block]);
+        // the participation the editor reads (participation.submissions.last()) must still carry the locked result
+        expect(received!.participation!.submissions![0].results).toEqual([lockedResult]);
+    });
+
+    it.each([0, 2])('loads my assessed submissions through the tutor route for round %s', (correctionRound) => {
+        service.getMyAssessedSubmissions(123, correctionRound).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne((request) => request.url === 'api/text/exercises/123/text-submissions/assessed-by-me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('correction-round')).toBe(correctionRound === 0 ? null : '2');
+        expect(req.request.params.has('assessedByTutor')).toBe(false);
+        req.flush([]);
+    });
+
+    it('keeps the instructor self filter on the instructor route', () => {
+        service.getSubmissions(123, { submittedOnly: true, assessedByMe: true }, 2).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/text/exercises/123/text-submissions');
+        expect(req.request.params.get('submittedOnly')).toBe('true');
+        expect(req.request.params.get('assessedByMe')).toBe('true');
+        expect(req.request.params.get('correction-round')).toBe('2');
+        req.flush([]);
+    });
+    it.each(['owner', 'staff-preview'] as const)('selects plagiarism text URL from explicit %s purpose', (purpose) => {
+        service.getTextSubmission(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/text/text-submissions/123${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        req.flush({ id: 123 });
+    });
+});

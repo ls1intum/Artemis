@@ -1,0 +1,10 @@
+<div class="flex justify-evenly text-center">
+    <div class="text-state-danger">
+        <div class="font-bold" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.old"></div>
+        <div class="text-3xl" data-testid="old-time">{{ oldWorkingTime() | artemisDurationFromSeconds }}</div>
+    </div>
+    <div class="text-state-success">
+        <div class="font-bold" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.new"></div>
+        <div class="text-3xl" data-testid="new-time">{{ newWorkingTime() | artemisDurationFromSeconds }}</div>
+    </div>
+</div>

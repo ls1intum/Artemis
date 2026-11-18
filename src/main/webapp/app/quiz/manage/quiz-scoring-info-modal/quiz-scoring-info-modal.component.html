@@ -1,0 +1,34 @@
+<tumaet-ui-dialog [(visible)]="isVisible" [dismissableMask]="true" size="medium" [header]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate">
+    <table tumAetUiTable>
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></th>
+            <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.all_or_nothing"></td>
+        </tr>
+
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></th>
+            <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.proportional_with_penalty"></td>
+        </tr>
+
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></th>
+            <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.proportional_without_penalty"></td>
+        </tr>
+    </table>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+    </ng-template>
+</tumaet-ui-dialog>
+<div>
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        (click)="open()"
+        [attr.aria-label]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
+        [attr.title]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
+    >
+        <fa-icon [icon]="farQuestionCircle" />
+    </button>
+</div>

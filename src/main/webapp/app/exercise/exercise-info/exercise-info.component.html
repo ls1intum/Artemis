@@ -1,0 +1,54 @@
+@let currentExercise = exercise();
+<div class="panel-wrapper">
+    <div class="panel-header" jhiTranslate="artemisApp.exercise.details"></div>
+    <div class="vertLine"></div>
+    <div class="panel-body">
+        <div class="label-column">
+            @if (currentExercise.releaseDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.releaseDate"></div>
+            }
+            @if (currentExercise.startDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.startDate"></div>
+            }
+            <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.submissionDue"></div>
+            @if (currentExercise.exampleSolutionPublicationDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate"></div>
+            }
+            @if (currentExercise.assessmentDueDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.assessmentDue"></div>
+            }
+            @if (individualComplaintDueDate()) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintDue"></div>
+            }
+            @if (dueDate() && !individualComplaintDueDate()) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintPossible"></div>
+            }
+        </div>
+
+        <div class="value-column">
+            @if (currentExercise.releaseDate) {
+                <div>{{ currentExercise.releaseDate | artemisDate }}</div>
+            }
+            @if (currentExercise.startDate) {
+                <div>{{ currentExercise.startDate | artemisDate }}</div>
+            }
+            @if (dueDate()) {
+                <div>{{ dueDate() | artemisDate }}</div>
+            } @else {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
+            }
+            @if (currentExercise.exampleSolutionPublicationDate) {
+                <div>{{ currentExercise.exampleSolutionPublicationDate | artemisDate }}</div>
+            }
+            @if (currentExercise.assessmentDueDate) {
+                <div>{{ currentExercise.assessmentDueDate | artemisDate }}</div>
+            }
+            @if (individualComplaintDueDate()) {
+                <div>{{ individualComplaintDueDate() | artemisDate }}</div>
+            }
+            @if (dueDate() && !individualComplaintDueDate()) {
+                <div>{{ (canComplainLaterOn() ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
+            }
+        </div>
+    </div>
+</div>

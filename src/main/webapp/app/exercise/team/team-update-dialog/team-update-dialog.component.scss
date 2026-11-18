@@ -1,0 +1,78 @@
+.control-error {
+    margin-top: 0.35rem;
+
+    & + & {
+        margin-top: 0;
+    }
+}
+
+.search-searching {
+    position: relative;
+    top: -2px;
+}
+
+.label-inline-message {
+    position: relative;
+    top: -4.5px;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.team-list--students {
+    max-width: 450px;
+
+    .team-list-item-container {
+        position: relative;
+
+        &:not(:last-child) {
+            margin-bottom: 0.15rem;
+        }
+    }
+
+    .team-list-item-index {
+        font-size: 1.1rem;
+        margin-left: 1.5rem;
+        margin-right: 1rem;
+        font-weight: 500;
+    }
+
+    .team-list-item {
+        flex-grow: 1;
+
+        &.has-error {
+            background-color: var(--artemis-alert-danger-background);
+        }
+    }
+
+    .team-list-item-error {
+        width: 280px;
+        position: absolute;
+        left: 100%;
+        margin-left: 2rem;
+        color: var(--tumaet-ui-state-danger);
+    }
+
+    .student-name {
+        flex-grow: 1;
+        width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .student-remove-link {
+        background-color: transparent;
+        border: none;
+        -webkit-appearance: none;
+        color: var(--tumaet-ui-text-color);
+    }
+}
+
+.hidden-md-down {
+    display: none !important;
+
+    @media (min-width: 992px) {
+        display: block !important;
+    }
+}

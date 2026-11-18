@@ -1,0 +1,253 @@
+package de.tum.cit.aet.artemis.programming.web.repository;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalLong;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+
+/**
+ * Executes requested actions on the auxiliary repository of a programming exercise. Only available to TAs, Instructors and Admins.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_EDITING)
+@RestController
+@RequestMapping("api/programming/auxiliary-repositories/")
+public class AuxiliaryRepositoryResource extends RepositoryResource {
+
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCPushProcessingService,
+                programmingExerciseMutationGuard);
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+    }
+
+    @Override
+    Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
+        final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        User user = userRepository.getUserWithAuthorities();
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType != RepositoryActionType.READ, auxiliaryRepository.getExercise(), user, "auxiliary");
+        final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
+        return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
+    }
+
+    @Override
+    LocalVCRepositoryUri getRepositoryUri(Long auxiliaryRepositoryId) {
+        var auxRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        return auxRepo.getVcsRepositoryUri();
+    }
+
+    @Override
+    boolean canAccessRepository(Long auxiliaryRepositoryId) {
+        try {
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId).getExercise(),
+                    userRepository.getUserWithAuthorities(), "auxiliary");
+        }
+        catch (AccessForbiddenException e) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
+        return auxiliaryRepositoryRepository.findBranchByRepoId(auxiliaryRepositoryId);
+    }
+
+    @Override
+    OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId, RepositoryActionType repositoryAction) {
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryAction != RepositoryActionType.READ, auxiliaryRepository.getExercise(),
+                userRepository.getUserWithAuthorities(), "auxiliary");
+        return OptionalLong.of(auxiliaryRepository.getExercise().getId());
+    }
+
+    @Override
+    @GetMapping(value = "{auxiliaryRepositoryId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long auxiliaryRepositoryId) {
+        return super.getFiles(auxiliaryRepositoryId);
+    }
+
+    @Override
+    @GetMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<byte[]> getFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
+        return super.getFile(auxiliaryRepositoryId, filename);
+    }
+
+    @Override
+    @PostMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.createFile(auxiliaryRepositoryId, filePath, request);
+    }
+
+    @Override
+    @PostMapping(value = "{auxiliaryRepositoryId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
+        return super.createFolder(auxiliaryRepositoryId, folderPath, request);
+    }
+
+    @Override
+    @PostMapping(value = "{auxiliaryRepositoryId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
+        return super.renameFile(auxiliaryRepositoryId, fileMove);
+    }
+
+    @Override
+    @DeleteMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
+        return super.deleteFile(auxiliaryRepositoryId, filename);
+    }
+
+    @Override
+    // POST rather than GET, even though nothing is submitted: a pull mutates the server-side working copy, and
+    // SameSite=Lax - the only thing standing in for CSRF tokens here - still sends the auth cookie on a cross-site
+    // top-level GET navigation. See the comment on csrf(...) in SecurityConfiguration.
+    @PostMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> pullChanges(@PathVariable Long auxiliaryRepositoryId) {
+        return super.pullChanges(auxiliaryRepositoryId);
+    }
+
+    @Override
+    @PostMapping(value = "{auxiliaryRepositoryId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> commitChanges(@PathVariable Long auxiliaryRepositoryId) {
+        return super.commitChanges(auxiliaryRepositoryId);
+    }
+
+    @Override
+    @PostMapping(value = "{auxiliaryRepositoryId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
+        return super.resetToLastCommit(auxiliaryRepositoryId);
+    }
+
+    @Override
+    @GetMapping(value = "{auxiliaryRepositoryId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long auxiliaryRepositoryId) throws GitAPIException {
+        return super.getStatus(auxiliaryRepositoryId);
+    }
+
+    /**
+     * Update a list of files in an auxiliary repository based on the submission's content.
+     *
+     * @param auxiliaryRepositoryId of exercise to which the files belong
+     * @param submissions           information about the file updates
+     * @param commit                whether to commit after updating the files
+     * @param principal             used to check if the user can update the files
+     * @return {@code Map<String, String>} file submissions or the appropriate http error
+     */
+    @PutMapping("{auxiliaryRepositoryId}/files")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Map<String, String>> updateAuxiliaryFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId,
+            @RequestBody List<FileSubmission> submissions, @RequestParam Boolean commit, Principal principal) {
+
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        ProgrammingExercise exercise = auxiliaryRepository.getExercise();
+
+        try {
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithAuthorities(principal.getName()), "test");
+        }
+        catch (AccessForbiddenException e) {
+            FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        }
+        return saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, () -> {
+            try {
+                AuxiliaryRepository currentRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+                if (!Objects.equals(currentRepository.getExercise().getId(), exercise.getId())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "The auxiliary repository changed while the update was starting.");
+                }
+                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, currentRepository.getExercise(), userRepository.getUserWithAuthorities(principal.getName()),
+                        "test");
+                return gitService.getOrCheckoutRepository(currentRepository.getVcsRepositoryUri(), true, true);
+            }
+            catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+                FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutConflict");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
+            }
+            catch (GitAPIException ex) {
+                FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+            }
+        });
+    }
+}

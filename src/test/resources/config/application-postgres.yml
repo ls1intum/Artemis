@@ -1,0 +1,11 @@
+# This file overwrites some parameters of the test-configuration (src/test/application.yml) so that a PostgreSQL-database is used
+# It can be activated e.g. by setting the environment variable SPRING_PROFILES_INCLUDE=postgres
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database: POSTGRESQL
+
+zonky:
+    test:
+        database:
+            type: POSTGRES

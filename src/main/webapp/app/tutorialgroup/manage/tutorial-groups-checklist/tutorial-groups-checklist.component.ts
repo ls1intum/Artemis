@@ -1,0 +1,78 @@
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { faCog, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'jhi-tutorial-groups-checklist',
+    templateUrl: './tutorial-groups-checklist.component.html',
+    styleUrl: './tutorial-groups-checklist.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TumAetUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
+})
+export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+
+    readonly isLoading = signal(false);
+    readonly course = signal<Course>(undefined!);
+    readonly isTimeZoneConfigured = signal(false);
+    readonly isTutorialGroupConfigurationCreated = signal(false);
+
+    protected readonly faCog = faCog;
+    protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
+
+    ngUnsubscribe = new Subject<void>();
+
+    get isFullyConfigured(): boolean {
+        return this.isTimeZoneConfigured() && this.isTutorialGroupConfigurationCreated();
+    }
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+        this.activatedRoute.paramMap
+            .pipe(
+                take(1),
+                switchMap((params) => {
+                    const courseId = Number(params.get('courseId'));
+                    return combineLatest([this.courseManagementService.findForInstructor(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
+                }),
+                finalize(() => this.isLoading.set(false)),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: ([courseResult, configuration]) => {
+                    if (courseResult.body) {
+                        this.course.set(courseResult.body);
+                        this.isTimeZoneConfigured.set(!!this.course().timeZone);
+                    }
+                    if (configuration) {
+                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
+                        this.isTutorialGroupConfigurationCreated.set(!!this.course().tutorialGroupsConfiguration);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+}

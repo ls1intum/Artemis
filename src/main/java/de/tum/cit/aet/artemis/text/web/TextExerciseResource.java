@@ -1,0 +1,393 @@
+package de.tum.cit.aet.artemis.text.web;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseListItemDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.service.TextExerciseService;
+import io.swagger.v3.oas.annotations.Operation;
+
+/**
+ * REST controller for managing TextExercise.
+ */
+@Conditional(TextEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.TEXT_AUTHORING)
+@RestController
+@RequestMapping("api/text/")
+public class TextExerciseResource {
+
+    private static final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
+
+    private static final String ENTITY_NAME = "textExercise";
+
+    private final TextExerciseService textExerciseService;
+
+    private final ExerciseService exerciseService;
+
+    private final ExerciseDeletionService exerciseDeletionService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final Optional<ExamAccessApi> examAccessApi;
+
+    private final FeedbackRepository feedbackRepository;
+
+    private final TextBlockRepository textBlockRepository;
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final UserRepository userRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final ChannelRepository channelRepository;
+
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
+            ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, ChannelRepository channelRepository,
+            Optional<ExamAccessApi> examAccessApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.exerciseDeletionService = exerciseDeletionService;
+        this.textBlockRepository = textBlockRepository;
+        this.textExerciseService = textExerciseService;
+        this.textExerciseRepository = textExerciseRepository;
+        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exerciseService = exerciseService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.channelRepository = channelRepository;
+        this.examAccessApi = examAccessApi;
+    }
+
+    /**
+     * GET /courses/:courseId/exercises : get all the exercises.
+     *
+     * @param courseId id of the course of which all the exercises should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
+     */
+    @GetMapping("courses/{courseId}/text-exercises")
+    @EnforceAtLeastTutorInCourse
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "List the text exercises of a course", description = "Returns a summary of every text exercise of the course, with its id, title, dates and points. Get one exercise for all its fields.")
+    public ResponseEntity<List<TextExerciseListItemDTO>> getTextExercisesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
+        List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
+        for (TextExercise exercise : exercises) {
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            exercise.setGradingCriteria(gradingCriteria);
+        }
+        List<TextExerciseListItemDTO> dtos = exercises.stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok().body(dtos);
+    }
+
+    /**
+     * GET /text-exercises/:id : get the "id" textExercise.
+     *
+     * @param exerciseId                    the id of the textExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
+     *         status 404 (Not Found)
+     */
+    @GetMapping("text-exercises/{exerciseId}")
+    @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Get a text exercise", description = "Returns all fields of a text exercise. Exercises of exams cannot be read with a personal access token.")
+    public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
+    }
+
+    /**
+     * Retrieves management details of an exam text exercise.
+     *
+     * @param exerciseId                    the id of the exam exercise to retrieve
+     * @param withPlagiarismDetectionConfig whether to include the plagiarism detection configuration
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("text-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<TextExerciseResponseDTO> getTextExerciseForExam(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadTextExerciseDetails(exerciseId, withPlagiarismDetectionConfig, true);
+    }
+
+    private ResponseEntity<TextExerciseResponseDTO> loadTextExerciseDetails(Long exerciseId, boolean withPlagiarismDetectionConfig, boolean forExam) {
+        log.debug("REST request to get TextExercise : {}", exerciseId);
+        var textExercise = textExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        if (forExam ? !textExercise.isExamExercise() : !textExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
+        }
+        if (withPlagiarismDetectionConfig) {
+            plagiarismDetectionConfigRepository.attachTo(textExercise);
+        }
+
+        if (textExercise.isCourseExercise()) {
+            String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
+            if (channelName != null) {
+                textExercise.setChannelName(channelName);
+            }
+        }
+
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(textExercise);
+
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        textExercise.setGradingCriteria(gradingCriteria);
+        textExercise.setExampleSubmissions(exampleSubmissions);
+
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
+        return ResponseEntity.ok().body(TextExerciseResponseDTO.of(textExercise));
+    }
+
+    /**
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise in the background. The progress is sent over the websocket topic of the exercise.
+     *
+     * @param exerciseId the id of the textExercise to delete
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
+     */
+    @DeleteMapping("text-exercises/{exerciseId}")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
+        log.info("REST request to delete TextExercise : {}", exerciseId);
+        var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithAuthorities();
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+
+        // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
+        // Audit only once the deletion is accepted, so a refused duplicate request is not audited.
+        exerciseDeletionService.startAsyncDeletion(textExercise, false, () -> {
+            exerciseService.logDeletion(textExercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * Returns the data needed for the text editor, which includes the participation, textSubmission
+     * with answer if existing and the assessments if the submission was already submitted.
+     *
+     * @param participationId the participationId for which to find the data for the text editor
+     * @param resultId        optional id of a specific result to retrieve; if not provided, returns the latest assessment and Athena request history
+     * @return the ResponseEntity with the participation as body
+     */
+    // TODO: fix the URL scheme
+    @FeatureUsage(UserFeature.TEXT_EXERCISES)
+    @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
+    @EnforceAtLeastStudent
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, false);
+    }
+
+    /**
+     * Returns the text editor payload for staff in the participation's exercise.
+     *
+     * @param participationId the participation to view
+     * @param resultId        optional result selection
+     * @return the staff editor projection
+     */
+    @FeatureUsage(UserFeature.TEXT_EXERCISES)
+    @GetMapping("participations/{participationId}/text-editor/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditorForStaff(@PathVariable Long participationId,
+            @RequestParam(value = "resultId", required = false) Long resultId) {
+        return getDataForTextEditor(participationId, resultId, true);
+    }
+
+    private ResponseEntity<TextParticipationDTO> getDataForTextEditor(Long participationId, Long resultId, boolean staffView) {
+        User user = userRepository.getUserWithAuthorities();
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        if (staffView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        }
+        if (!(participation.getExercise() instanceof TextExercise textExercise)) {
+            throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
+        }
+
+        if (!staffView && !authCheckService.isOwnerOfParticipation(participation, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (textExercise.isExamExercise()) {
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            if (staffView) {
+                api.checkIfAllowedToGetExamResult(textExercise, participation, user);
+            }
+            else {
+                api.checkIfOwnerAllowedToGetExamResult(textExercise, participation);
+            }
+        }
+
+        Set<Submission> submissions = participation.getSubmissions();
+        participation.setSubmissions(new HashSet<>());
+
+        boolean resultFound = false;
+        for (Submission submission : submissions) {
+            if (submission != null) {
+                TextSubmission textSubmission = (TextSubmission) submission;
+
+                // set reference to participation to null, since we are already inside a participation
+                textSubmission.setParticipation(null);
+
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !staffView) {
+                    // We want to have the preliminary feedback before the assessment due date too
+                    List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    textSubmission.setResults(new LinkedHashSet<>(athenaResults));
+                }
+
+                // Athena requests remain in the response for pending-request guards and quota calculations, but an
+                // unfinished or failed request must not displace the latest assessment.
+                Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElse(null)
+                        : textSubmission.getLatestGradingResult();
+                Set<Result> resultsToReturn = resultId != null ? new LinkedHashSet<>()
+                        : new LinkedHashSet<>(textSubmission.getResults().stream().filter(Result::isAthenaBased).toList());
+                if (result != null) {
+                    resultFound = true;
+                    resultsToReturn.add(result);
+                }
+                if (!resultsToReturn.isEmpty()) {
+                    // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                    final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                    textSubmission.setBlocks(textBlocks);
+
+                    for (Result returnedResult : resultsToReturn) {
+                        if (textSubmission.isSubmitted() && returnedResult.getCompletionDate() != null
+                                && (!returnedResult.isAthenaBased() || Boolean.TRUE.equals(returnedResult.isSuccessful()))) {
+                            List<Feedback> assessments = feedbackRepository.findByResult(returnedResult);
+                            returnedResult.setFeedbacks(assessments);
+                        }
+
+                        if (!staffView) {
+                            returnedResult.filterSensitiveInformation();
+                        }
+                        else if (returnedResult.getAssessor() != null) {
+                            returnedResult.setAssessor(userRepository.findByIdElseThrow(returnedResult.getAssessor().getId()));
+                        }
+                    }
+                }
+                textSubmission.setResults(resultsToReturn);
+                participation.addSubmission(textSubmission);
+            }
+        }
+
+        if (resultId != null && !resultFound) {
+            throw new EntityNotFoundException("Result", resultId);
+        }
+
+        // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission
+        if (submissions.isEmpty()) {
+            TextSubmission textSubmission = new TextSubmission();
+            textSubmission.setParticipation(participation);
+            textSubmission.setSubmitted(false);
+            participation.addSubmission(textSubmission);
+        }
+
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user);
+        if (!includeStudent) {
+            participation.filterSensitiveInformation();
+        }
+
+        textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExam().setCourse(null);
+        }
+
+        // wire the (already filtered) exercise graph onto the participation DTO
+        TextParticipationDTO dto = TextParticipationDTO.of(participation, includeStudent).withExercise(TextExerciseResponseDTO.of(textExercise));
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Search for all text exercises by id, title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
+     *
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("text-exercises")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<TextExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+        final var user = userRepository.getUserWithAuthorities();
+        SearchResultPageDTO<TextExercise> page = textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
+        List<TextExerciseListItemDTO> content = page.getResultsOnPage().stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(content, page.getNumberOfPages()));
+    }
+}

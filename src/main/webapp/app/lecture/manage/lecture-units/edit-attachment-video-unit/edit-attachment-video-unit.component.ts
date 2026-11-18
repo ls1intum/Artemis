@@ -1,0 +1,193 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { onError } from 'app/foundation/util/global.utils';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, finalize, switchMap, take } from 'rxjs/operators';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { combineLatest } from 'rxjs';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
+
+@Component({
+    selector: 'jhi-edit-attachment-video-unit',
+    templateUrl: './edit-attachment-video-unit.component.html',
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TumLiveUploadComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EditAttachmentVideoUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
+
+    readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
+
+    readonly isLoading = signal(false);
+    readonly attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    readonly attachment = signal<Attachment | undefined>(undefined);
+    readonly formData = signal<AttachmentVideoUnitFormData | undefined>(undefined);
+    readonly lectureId = signal<number | undefined>(undefined);
+    readonly notificationText = signal<string | undefined>(undefined);
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+        const lectureRoute = this.activatedRoute.parent?.parent;
+        if (!lectureRoute) {
+            this.isLoading.set(false);
+            return;
+        }
+        combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
+            .pipe(
+                take(1),
+                filter(([params, parentParams]) => {
+                    const hasUnitId = params.get('attachmentVideoUnitId') !== null;
+                    const hasLectureId = parentParams.get('lectureId') !== null;
+                    return hasUnitId && hasLectureId;
+                }),
+                switchMap(([params, parentParams]) => {
+                    const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
+                    const lectureId = Number(parentParams.get('lectureId'));
+                    this.lectureId.set(lectureId);
+                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId);
+                }),
+                finalize(() => this.isLoading.set(false)),
+            )
+            .subscribe({
+                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
+                    const unit = attachmentVideoUnitResponse.body;
+                    if (!unit) {
+                        return;
+                    }
+                    const attach = unit.attachment || {};
+                    // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
+                    unit.attachment = undefined;
+                    attach.attachmentVideoUnit = undefined;
+
+                    this.attachmentVideoUnit.set(unit);
+                    this.attachment.set(attach);
+                    this.formData.set({
+                        formProperties: {
+                            name: unit.name,
+                            description: unit.description,
+                            releaseDate: unit.releaseDate,
+                            version: attach.version,
+                            competencyLinks: unit.competencyLinks,
+                            videoSource: unit.videoSource,
+                        },
+                        fileProperties: {
+                            fileName: attach.link,
+                        },
+                    });
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    /**
+     * Shows the video link of a video uploaded to TUM.Live, which Artemis set on the unit, so saving the form keeps it.
+     * @param unitId the unit
+     */
+    onTumLiveVideoAttached(unitId: number): void {
+        const lectureId = this.lectureId();
+        if (lectureId === undefined) {
+            return;
+        }
+        this.attachmentVideoUnitService
+            .findById(unitId, lectureId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const videoSource = response.body?.videoSource;
+                    const unit = this.attachmentVideoUnit();
+                    if (unit) {
+                        this.attachmentVideoUnit.set(cloneWith(unit, { videoSource }));
+                    }
+                    this.attachmentVideoUnitForm()?.applyServerVideoSource(videoSource);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
+        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+
+        // optional update notification text for students
+        if (updateNotificationText) {
+            this.notificationText.set(updateNotificationText);
+        }
+
+        const currentAttachment = this.attachment();
+        const currentUnit = this.attachmentVideoUnit();
+        const lectureId = this.lectureId();
+
+        if (!currentAttachment || !currentUnit || lectureId === undefined || currentUnit.id === undefined) {
+            return;
+        }
+
+        // Create new objects to avoid mutating signal-stored objects
+        const updatedAttachment = hydrate(new Attachment(), currentAttachment, {
+            name,
+            releaseDate,
+            attachmentType: AttachmentType.FILE,
+        });
+
+        const hasUpload = !!file && file.size > 0;
+        const updatedUnit = hydrate(new AttachmentVideoUnit(), currentUnit, {
+            name,
+            description,
+            releaseDate,
+            competencyLinks,
+            videoSource,
+            // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
+            loadedVideoSource: currentUnit.videoSource ?? '',
+            attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+
+        this.isLoading.set(true);
+
+        const formData = new FormData();
+        if (hasUpload) {
+            formData.append('file', file, fileName);
+        }
+        // A video-only unit has no attachment to update until a file is uploaded.
+        if (currentAttachment.id !== undefined || hasUpload) {
+            formData.append('attachment', objectToJsonBlob(updatedAttachment));
+        }
+        formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
+
+        this.attachmentVideoUnitService
+            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isLoading.set(false)),
+            )
+            .subscribe({
+                next: (response) => {
+                    const savedVideoSource = response.body?.videoSource || undefined;
+                    const sentVideoSource = videoSource || undefined;
+                    if (response.body && sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                        // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
+                        // be saved again; the rest of the change is saved.
+                        this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));
+                        if (response.body.attachment) {
+                            this.attachment.set(cloneWith(response.body.attachment, { attachmentVideoUnit: undefined }));
+                        }
+                        this.attachmentVideoUnitForm()?.applyServerVideoSource(savedVideoSource);
+                        this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+                        return;
+                    }
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+}

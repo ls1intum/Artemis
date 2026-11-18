@@ -1,0 +1,27 @@
+# Artemis configuration profile with the default variables for the docker setups
+artemis:
+    course-archives-path: /opt/artemis/data/course-archives
+    repo-clone-path: /opt/artemis/data/repos
+    repo-download-clone-path: /opt/artemis/data/repos-download
+    file-upload-path: /opt/artemis/data/uploads
+    submission-export-path: /opt/artemis/data/exports
+    legal-path: /opt/artemis/data/legal
+    build-logs-path: /opt/artemis/data/build-logs
+    failed-build-logs-path: /opt/artemis/data/failed-build-logs
+    data-export-path: /opt/artemis/data/data-exports
+
+    version-control:
+        local-vcs-repo-path: /opt/artemis/data/local-vcs-repos
+
+    continuous-integration:
+        # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use unix:///var/run/docker.sock for Linux and tcp://host.docker.internal:2375 for Windows.
+        docker-connection-uri: unix:///var/run/docker.sock
+
+spring:
+    datasource:
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the docker datasource to PostgreSQL before MySQL support is removed
+        url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+
+server:
+    # see application.yml for further comments
+    url: http://artemis-app:8080

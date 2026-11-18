@@ -1,0 +1,20 @@
+.competency-node {
+    white-space: nowrap;
+    background-color: var(--body-bg);
+    border-radius: calc(0.5rem + 6px);
+    padding: 10px 12px;
+
+    .progress-container {
+        color: var(--white);
+        padding: 2px 8px;
+        border-radius: 0.5rem;
+    }
+
+    .competency-container {
+        background-color: var(--success);
+    }
+
+    .prerequisite-container {
+        background-color: var(--warning);
+    }
+}

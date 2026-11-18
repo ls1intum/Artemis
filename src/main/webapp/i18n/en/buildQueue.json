@@ -1,0 +1,118 @@
+{
+    "artemisApp": {
+        "buildQueue": {
+            "title": "Build Overview",
+            "pageTitle": "Build Job Information",
+            "queuedBuildJobs": "Queued Build Jobs",
+            "runningBuildJobs": "Running Build Jobs",
+            "finishedBuildJobs": "Finished Build Jobs",
+            "noRunningBuilds": "No builds running",
+            "noQueuedBuilds": "No builds queued",
+            "noFinishedBuilds": "No finished builds",
+            "buildCapacity": "Build Capacity",
+            "buildCapacityInfo": "{{ running }} of {{ capacity }} builds running on {{ agents }} agents",
+            "jumpTo": "Jump to",
+            "running": "Running",
+            "queued": "Queued",
+            "finished": "Finished",
+            "buildJob": {
+                "id": "ID",
+                "buildAgent": "Build Agent",
+                "name": "Name",
+                "participationId": "Participation ID",
+                "repositoryName": "Repository Name",
+                "repositoryType": "Repository Type",
+                "commitHash": "Commit Hash",
+                "submissionDate": "Submission Date",
+                "buildStartDate": "Build Start Date",
+                "courseId": "Course ID",
+                "priority": "Priority",
+                "buildCompletionDate": "Build Completion Date",
+                "buildDuration": "Build Duration",
+                "completion": "Completion",
+                "start": "Start",
+                "duration": "Duration",
+                "status": "Status",
+                "buildLogs": "Build Logs",
+                "waitingTime": "Waiting",
+                "submitted": "Submitted",
+                "priorityTooltip": "Lower values = higher priority. 1 = Exam in progress, 2 = Normal, 3 = Practice/Optional, 4 = Trigger all builds. Test courses add +5 penalty."
+            },
+            "actions": "Actions",
+            "cancel": "Cancel",
+            "cancelAll": "Cancel All",
+            "filter": {
+                "title": "Build Jobs Filter",
+                "buildStatus": {
+                    "title": "Build Status",
+                    "cancelled": "Cancelled",
+                    "failed": "Failed",
+                    "error": "Error",
+                    "successful": "Successful",
+                    "building": "Building",
+                    "queued": "Queued",
+                    "missing": "Missing",
+                    "timeout": "Timed out"
+                },
+                "buildAgentAddress": "Build Agent Address",
+                "buildSubmissionDate": {
+                    "title": "Build Submission Date",
+                    "from": "From",
+                    "to": "To",
+                    "invalidDate": "From date must be before to date"
+                },
+                "buildDuration": {
+                    "title": "Build Duration (in seconds)",
+                    "lowerBound": "Lower Bound",
+                    "upperBound": "Upper Bound",
+                    "invalidState": "Lower bound must be less than upper bound"
+                },
+                "search": {
+                    "title": "Search",
+                    "placeholder": "Search for build job",
+                    "loading": "Loading...",
+                    "tooltip": "Search will be performed on user login, course title, and course short name"
+                },
+                "none": "None",
+                "close": "Close",
+                "apply": "Apply",
+                "open": "Filter ({{ num }})"
+            },
+            "statistics": {
+                "title": "Build Statistics",
+                "titleTooltip": "Data for the specified time span is fetched.",
+                "totalBuilds": "Total:",
+                "successfulBuildsWithColon": "Successful:",
+                "successfulBuilds": "Successful",
+                "successfulBuildsPercentage": "Successful %:",
+                "failedBuilds": "Failed:",
+                "failedBuildsPercentage": "Failed %:",
+                "cancelledBuilds": "Canceled:",
+                "cancelledBuildsPercentage": "Canceled %:",
+                "missingBuilds": "Missing:",
+                "missingBuildsPercentage": "Missing %:",
+                "timeoutBuilds": "Timed Out:",
+                "timeoutBuildsPercentage": "Timed Out %:",
+                "daySpan": "1 day",
+                "weekSpan": "7 days",
+                "monthSpan": "30 days"
+            },
+            "detail": {
+                "title": "Build Job Details",
+                "notFound": "Build job not found.",
+                "infoSection": "Information",
+                "timingSection": "Timing",
+                "logsSection": "Build Logs",
+                "queueWaitTime": "Queue Wait Time",
+                "retryCount": "Retry Count"
+            },
+            "logs": {
+                "title": "Build Logs for Job",
+                "download": "Download",
+                "noLogs": "No logs available",
+                "errorFetchingLogs": "Failed to get build log entries for build job",
+                "downloadError": "Failed to download the build log of the build job"
+            }
+        }
+    }
+}

@@ -1,0 +1,58 @@
+package de.tum.cit.aet.artemis.communication.dto;
+
+import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+
+/**
+ * Data Transfer Object for ForwardedMessage.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType, Long destinationPostId, Long destinationAnswerPostId) {
+
+    /**
+     * Constructs a ForwardedMessageDTO from a ForwardedMessage entity.
+     *
+     * @param message the ForwardedMessage entity
+     */
+    public ForwardedMessageDTO(ForwardedMessage message) {
+        this(message.getId(), message.getSourceId(), message.getSourceType(), Optional.ofNullable(message.getDestinationPost()).map(Post::getId).orElse(null),
+                Optional.ofNullable(message.getDestinationAnswerPost()).map(AnswerPost::getId).orElse(null));
+    }
+
+    /**
+     * Converts this DTO to a ForwardedMessage entity.
+     *
+     * @return the ForwardedMessage entity
+     */
+    public ForwardedMessage toEntity() {
+        // A forwarded message points at exactly one destination, which is stated twice below this layer: the setters of
+        // ForwardedMessage reject a second destination with an IllegalStateException, and the database holds
+        // CHECK_DESTINATION_POST_OR_ANSWER. So two ids set trips the setter and neither id set trips the constraint,
+        // and both answer 500 for what is the client naming the wrong number of destinations. Both are rejected here
+        // instead.
+        if ((this.destinationPostId == null) == (this.destinationAnswerPostId == null)) {
+            throw new BadRequestAlertException("A forwarded message must have exactly one destination, either a destination post or a destination answer post", "forwardedMessage",
+                    "forwardedMessageNeedsExactlyOneDestination");
+        }
+        Post post = null;
+        AnswerPost answerPost = null;
+        if (this.destinationPostId != null) {
+            post = new Post();
+            post.setId(this.destinationPostId);
+        }
+        else {
+            answerPost = new AnswerPost();
+            answerPost.setId(this.destinationAnswerPostId);
+        }
+        ForwardedMessage message = new ForwardedMessage(this.sourceId, this.sourceType, post, answerPost);
+        message.setId(this.id);
+        return message;
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "answerOption": {
+            "home": {
+                "title": "Antwortmöglichkeiten",
+                "createLabel": "Antwortmöglichkeit erstellen"
+            },
+            "created": "Antwortmöglichkeit erstellt mit ID {{ param }}",
+            "updated": "Antwortmöglichkeit aktualisiert mit ID {{ param }}",
+            "deleted": "Antwortmöglichkeit gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Antwortmöglichkeit {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Antwortmöglichkeit"
+            },
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Erklärung",
+            "isCorrect": "Ist korrekt",
+            "invalid": "Ungültig",
+            "question": "Frage"
+        }
+    }
+}

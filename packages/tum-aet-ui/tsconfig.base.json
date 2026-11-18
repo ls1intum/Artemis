@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "es2024",
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "lib": ["es2024", "dom"],
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "importHelpers": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true
+    },
+    "angularCompilerOptions": {
+        "strictInjectionParameters": true,
+        "strictInputAccessModifiers": true,
+        "strictTemplates": true,
+        // Same as the Artemis tsconfig: a camelCase event binding that no directive emits and that is not a native DOM
+        // event (a misspelled output) fails the build.
+        "strictUnclaimedEventNames": true
+    }
+}

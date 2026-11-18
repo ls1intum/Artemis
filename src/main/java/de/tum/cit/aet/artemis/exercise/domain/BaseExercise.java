@@ -1,0 +1,183 @@
+package de.tum.cit.aet.artemis.exercise.domain;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_DISPLAY_TITLE_PATTERN;
+
+import java.time.ZonedDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
+
+@MappedSuperclass
+public abstract class BaseExercise extends ExerciseTimeline {
+
+    /** A run of whitespace inside a title, collapsed into a single space. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "short_name")
+    private String shortName;
+
+    @Column(name = "max_points", nullable = false)
+    private Double maxPoints = 1.0;
+
+    @Column(name = "bonus_points", nullable = false)
+    private Double bonusPoints = 0.0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assessment_type")
+    private AssessmentType assessmentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "difficulty")
+    private DifficultyLevel difficulty;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", columnDefinition = "varchar(255) default 'INDIVIDUAL'", nullable = false)
+    private ExerciseMode mode = ExerciseMode.INDIVIDUAL;
+
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Sets the title of the exercise
+     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
+     *
+     * @param title the new (non-sanitized) title to be set
+     */
+    public void setTitle(String title) {
+        this.title = title != null ? WHITESPACE_RUN.matcher(title.strip()).replaceAll(" ") : null;
+    }
+
+    /**
+     * Validate the exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     */
+    public void validateTitle() {
+        // Check if exercise title is set
+        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = EXERCISE_DISPLAY_TITLE_PATTERN.matcher(getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
+    }
+
+    public Double getMaxPoints() {
+        return maxPoints;
+    }
+
+    public void setMaxPoints(Double maxPoints) {
+        this.maxPoints = maxPoints;
+    }
+
+    public Double getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public void setBonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
+    }
+
+    public AssessmentType getAssessmentType() {
+        return assessmentType;
+    }
+
+    public void setAssessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
+    }
+
+    public DifficultyLevel getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(DifficultyLevel difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public ExerciseMode getMode() {
+        return mode;
+    }
+
+    public void setMode(ExerciseMode mode) {
+        this.mode = mode;
+    }
+
+    public boolean isTeamMode() {
+        return mode == ExerciseMode.TEAM;
+    }
+
+    /**
+     * Check if students are allowed to see this course exercise
+     * IMPORTANT: this method won't work for exam exercises: they have a different visibility logic! We return false for exam exercises to avoid confusion!
+     * For exam exercises, instead use ExamAccessService and/or ExamDateService
+     *
+     * @return true, if students are allowed to see this exercise, otherwise false
+     */
+    public boolean isVisibleToStudents() {
+        if (isExamExercise()) {
+            return false;
+        }
+        ZonedDateTime releaseDate = getReleaseDate();
+        if (releaseDate == null) {  // no release date means the exercise is visible to students for course exercises
+            return true;
+        }
+        return releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    public abstract boolean isExamExercise();
+
+    /**
+     * a helper method to get the exercise title in a sanitized form (i.e. usable in file names)
+     * exercise abc?+# -> exercise_abc
+     *
+     * @return the sanitized exercise title
+     **/
+    @JsonIgnore
+    public String getSanitizedExerciseTitle() {
+        String sanitizedTitle = title == null ? "" : StringUtil.sanitizeStringForFileName(title);
+        if (sanitizedTitle.isBlank()) {
+            // The title may sanitize to an empty string when it consists only of non-ASCII letters (e.g. "テスト"),
+            // because sanitizeStringForFileName reduces the input to ASCII. Fall back to a stable, unique name so that
+            // exercise export directories derived from the title cannot collide.
+            return getId() != null ? "exercise_" + getId() : "exercise";
+        }
+        return sanitizedTitle;
+    }
+
+    /**
+     * helper method to get an exercise title for use in notifications, i.e. not null or empty
+     *
+     * @return a non-empty title for the exercise
+     **/
+    @JsonIgnore
+    public String getExerciseNotificationTitle() {
+        if (title == null || title.isBlank()) {
+            return "unnamed exercise";
+        }
+        return title;
+    }
+}

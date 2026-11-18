@@ -1,0 +1,44 @@
+<div class="mx-auto w-full max-w-7xl -mt-2 px-0!">
+    <div class="min-w-0">
+        @if (modelingExercise()) {
+            <div>
+                <jhi-exercise-detail-header [exercise]="modelingExercise()" [documentationType]="documentationType" />
+                @if (course(); as courseValue) {
+                    <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="modelingExercise()" />
+                }
+                @if (!modelingExercise().releaseDate || dayjs(modelingExercise().releaseDate).isBefore(dayjs())) {
+                    <div class="mt-6!">
+                        <jhi-exercise-detail-statistics
+                            [exercise]="modelingExercise()"
+                            [doughnutStats]="doughnutStats()"
+                            [exerciseType]="ExerciseType.MODELING"
+                            class="flex justify-around"
+                        />
+                    </div>
+                }
+                <ng-template #competencyActions>
+                    @if (modelingExercise().isAtLeastInstructor && !isExamExercise()) {
+                        <jhi-atlas-orchestration-trigger [exercise]="modelingExercise()" [showLabel]="true" />
+                    }
+                </ng-template>
+                <jhi-detail-overview-list
+                    [footerSection]="
+                        course() && modelingExercise().isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined
+                    "
+                    [sections]="detailOverviewSections()"
+                    [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }"
+                />
+                <ng-template #administrationActions>
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="administration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="modelingExercise()"
+                        />
+                    }
+                </ng-template>
+            </div>
+        }
+    </div>
+</div>

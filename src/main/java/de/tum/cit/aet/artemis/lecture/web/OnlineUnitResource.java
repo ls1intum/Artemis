@@ -1,0 +1,371 @@
+package de.tum.cit.aet.artemis.lecture.web;
+
+import java.io.IOException;
+import java.net.IDN;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
+
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.dto.OnlineResourceDTO;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
+@RestController
+@RequestMapping("api/lecture/")
+public class OnlineUnitResource {
+
+    private static final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
+
+    private static final String ENTITY_NAME = "onlineUnit";
+
+    private final OnlineUnitRepository onlineUnitRepository;
+
+    private final LectureRepository lectureRepository;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final LectureUnitService lectureUnitService;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+        this.lectureRepository = lectureRepository;
+        this.onlineUnitRepository = onlineUnitRepository;
+        this.competencyProgressApi = competencyProgressApi;
+        this.lectureUnitService = lectureUnitService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+    }
+
+    /**
+     * GET lectures/:lectureId/online-units/:onlineUnitId: gets the online unit with the specified id
+     *
+     * @param onlineUnitId the id of the onlineUnit to retrieve
+     * @param lectureId    the id of the lecture to which the unit belongs
+     * @return the ResponseEntity with status 200 (OK) and with body the online unit, or with status 404 (Not Found)
+     */
+    @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "onlineUnitId")
+    public ResponseEntity<OnlineUnitDTO> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
+        log.debug("REST request to get onlineUnit : {}", onlineUnitId);
+        var onlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitId);
+        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
+        return ResponseEntity.ok(OnlineUnitDTO.of(onlineUnit));
+    }
+
+    /**
+     * PUT /lectures/:lectureId/online-units : Updates an existing online unit .
+     *
+     * @param lectureId     the id of the lecture to which the online unit belongs to update
+     * @param onlineUnitDto the online unit to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
+     */
+    @PutMapping("lectures/{lectureId}/online-units")
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody OnlineUnitDTO onlineUnitDto) {
+        log.debug("REST request to update an online unit : {}", onlineUnitDto);
+        if (onlineUnitDto.id() == null) {
+            throw new BadRequestException();
+        }
+
+        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitDto.id());
+
+        // Validation
+        checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
+        validateOnlineUnitSource(onlineUnitDto.source());
+
+        // Precompute original competency IDs for progress update below
+        Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
+
+        // Snapshot the content-bearing fields before the update so the Atlas content-changed event only fires on a real edit.
+        String previousDescription = existingOnlineUnit.getDescription();
+        String previousSource = existingOnlineUnit.getSource();
+
+        // copy all attributes
+        existingOnlineUnit.setDescription(onlineUnitDto.description());
+        existingOnlineUnit.setSource(onlineUnitDto.source());
+        existingOnlineUnit.setName(onlineUnitDto.name());
+        existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
+
+        // This method computes the relevant changes for competency links and applies them to the existingTextUnit
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit, existingOnlineUnit.getLecture().getCourse().getId());
+
+        // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
+        existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+        OnlineUnit savedOnlineUnit = existingOnlineUnit;
+
+        if (competencyProgressApi.isPresent()) {
+            // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
+        }
+
+        // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content (description or source) actually changed.
+        if (!Objects.equals(previousDescription, savedOnlineUnit.getDescription()) || !Objects.equals(previousSource, savedOnlineUnit.getSource())) {
+            lectureUnitService.publishContentChangedEvent(savedOnlineUnit);
+        }
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedOnlineUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedOnlineUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedOnlineUnit.getId());
+            }
+        });
+
+        return ResponseEntity.ok(OnlineUnitDTO.of(existingOnlineUnit));
+    }
+
+    /**
+     * POST /lectures/:lectureId/online-units : creates a new online unit.
+     *
+     * @param lectureId     the id of the lecture to which the online unit should be added
+     * @param onlineUnitDto the online unit that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new online unit
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("lectures/{lectureId}/online-units")
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
+        log.debug("REST request to create onlineUnit : {}", onlineUnitDto);
+        if (onlineUnitDto.id() != null) {
+            throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
+        }
+
+        validateOnlineUnitSource(onlineUnitDto.source());
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription(onlineUnitDto.description());
+        onlineUnit.setSource(onlineUnitDto.source());
+        onlineUnit.setName(onlineUnitDto.name());
+        onlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit, lecture.getCourse().getId());
+
+        lecture.addLectureUnit(onlineUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+
+        OnlineUnit persistedUnit = (OnlineUnit) updatedLecture.getLectureUnits().getLast();
+        // From now on, only use persistedUnit
+        onlineUnitRepository.save(persistedUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        // A newly created online unit carries learning-relevant content (a required source, optionally a description); notify the pipeline.
+        lectureUnitService.publishContentChangedEvent(persistedUnit);
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
+        });
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(OnlineUnitDTO.of(persistedUnit));
+    }
+
+    private static final int MAX_DOMAIN_LENGTH = 253;
+
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("[\\r\\n]");
+
+    /** A single DNS label: 1 to 63 letters, digits or hyphens, neither starting nor ending with a hyphen. */
+    private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?");
+
+    private static final Pattern TOP_LEVEL_DOMAIN_PATTERN = Pattern.compile("[A-Za-z]{2,}");
+
+    private static boolean isValidDomain(String host) {
+        if (host == null || host.isBlank()) {
+            return false;
+        }
+
+        // Reject localhost explicitly
+        if ("localhost".equalsIgnoreCase(host)) {
+            return false;
+        }
+
+        // Convert to ASCII (punycode) for IDN safety
+        String asciiHost;
+        try {
+            asciiHost = IDN.toASCII(host);
+        }
+        catch (IllegalArgumentException e) {
+            // an empty label ("example..com") or a label longer than 63 characters cannot be converted
+            return false;
+        }
+
+        if (asciiHost.length() > MAX_DOMAIN_LENGTH) {
+            return false;
+        }
+
+        String[] labels = asciiHost.split("\\.", -1);
+        if (labels.length < 2 || !TOP_LEVEL_DOMAIN_PATTERN.matcher(labels[labels.length - 1]).matches()) {
+            return false;
+        }
+        for (String label : labels) {
+            if (!DOMAIN_LABEL_PATTERN.matcher(label).matches()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * GET /lectures/online-units/fetch-online-resource : Fetch the website's metadata from the specified link to an online resource.
+     *
+     * @param link     The link (as request parameter) to the website to fetch the metadata from
+     * @param courseId The id of the course in which the user wants to create or edit the online unit (the user needs at least the editor role there)
+     * @return the ResponseEntity with status 200 (OK) and with body a DTO with link, meta title, and meta description
+     */
+    @GetMapping("lectures/online-units/fetch-online-resource")
+    @EnforceAtLeastEditorInCourse
+    @LimitRequestsPerMinute(type = RateLimitType.ONLINE_RESOURCE_FETCH)
+    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link, @RequestParam("courseId") Long courseId) {
+        // Ensure that the link is a correctly formed URL
+        URL url = validateUrlStringAndReturnUrl(link);
+
+        if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new BadRequestException("The specified link uses an unsupported protocol");
+        }
+
+        if (!isValidDomain(url.getHost())) {
+            throw new BadRequestException("The specified link does not contain a valid domain");
+        }
+
+        // Metadata is only retrieved from the ordinary web ports
+        if (url.getPort() != -1 && url.getPort() != 80 && url.getPort() != 443) {
+            throw new BadRequestException("The metadata of the specified link cannot be retrieved, because it does not use the port 80 or 443");
+        }
+
+        log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
+
+        try {
+            // The fetcher only talks to public hosts, re-validates every redirect target and limits the duration and the size of the response
+            Document document = LinkPreviewDocumentFetcher.fetch(url.toString());
+            String title = getMetaTagContent(document, "title");
+            String description = getMetaTagContent(document, "description");
+
+            return ResponseEntity.ok(new OnlineResourceDTO(url.toString(), title, description));
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Error while retrieving metadata from link");
+        }
+    }
+
+    /**
+     * Returns the content of the specified meta tag
+     * Inspired by <a href="https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/">...</a>
+     *
+     * @param document The Jsoup document to query
+     * @param tag      The meta tag from which to fetch the content
+     * @return The value of the content attribute of the specified tag
+     */
+    private String getMetaTagContent(Document document, String tag) {
+        Element element = document.select("meta[name=" + tag + "]").first();
+        if (element != null && !element.attr("content").isBlank()) {
+            return element.attr("content");
+        }
+        element = document.select("meta[property=og:" + tag + "]").first();
+        if (element != null) {
+            return element.attr("content");
+        }
+        return "";
+    }
+
+    /**
+     * Checks that the online unit belongs to the specified lecture.
+     *
+     * @param onlineUnit The online unit to check
+     * @param lectureId  The id of the lecture to check against
+     */
+    private static void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
+        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
+            throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
+        }
+        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
+        }
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    private static void validateOnlineUnitSource(String source) {
+        if (source == null || source.isBlank()) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+        URL url = validateUrlStringAndReturnUrl(source);
+        if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new BadRequestAlertException("The source of an online unit must be an http or https address", ENTITY_NAME, "inputInvalid");
+        }
+    }
+
+    private static URL validateUrlStringAndReturnUrl(String urlString) {
+        if (urlString == null || urlString.isBlank()) {
+            throw new BadRequestException("The specified link must not be empty");
+        }
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
+        }
+    }
+}

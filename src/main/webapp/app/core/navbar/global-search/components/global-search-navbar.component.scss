@@ -1,0 +1,93 @@
+/* global-search-navbar.scss */
+
+:host {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-right: 0.75rem;
+    padding-left: 0.5rem;
+}
+
+.search-trigger {
+    /* Reset */
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+
+    /* Alignment */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1;
+    vertical-align: middle;
+
+    /* Stacking context for ::before */
+    position: relative;
+    z-index: 1;
+
+    /* Text Styles */
+    color: var(--navbar-dark-color);
+    font-size: 0.875rem;
+    font-weight: 400;
+    cursor: pointer;
+    user-select: none; /* Prevent text selection on click */
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -0.375rem; /* ← Adjust this for height */
+        bottom: -0.375rem; /* ← Adjust this for height */
+        left: -0.75rem; /* ← Adjust this for width */
+        right: -0.75rem; /* ← Adjust this for width */
+        border-radius: 0.27rem;
+        z-index: -1;
+        transition: background-color 0.15s;
+    }
+
+    &:hover::before {
+        background: rgba(var(--bs-white-rgb), 0.1);
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    &:focus-visible::before {
+        border-radius: 0;
+        box-shadow: 0 0 0 var(--bs-focus-ring-width) var(--bs-focus-ring-color);
+    }
+}
+
+.keyboard-hint {
+    /* Reset */
+    margin-left: 0.25rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+
+    /* Text Styles */
+    font-size: 0.75rem;
+    font-weight: 400;
+    font-family: inherit;
+    color: var(--bs-white);
+
+    /* Stacking context for ::before */
+    position: relative;
+    z-index: 1;
+
+    /*
+     * TO ADJUST SIZE: Change top/bottom/left/right values
+     */
+    &::before {
+        content: '';
+        position: absolute;
+        top: -0.2rem; /* ← Adjust for height */
+        bottom: -0.2rem; /* ← Adjust for height */
+        left: -0.25rem; /* ← Adjust for width */
+        right: -0.25rem; /* ← Adjust for width */
+        background: var(--global-search-navbar-kbd-bg);
+        border-radius: 0.27rem;
+        z-index: -1;
+    }
+}

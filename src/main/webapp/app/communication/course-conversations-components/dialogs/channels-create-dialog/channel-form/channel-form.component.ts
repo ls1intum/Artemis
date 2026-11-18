@@ -1,0 +1,154 @@
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
+import { Subject, takeUntil } from 'rxjs';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiSelectButtonComponent,
+} from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+export interface ChannelFormData {
+    name?: string;
+    description?: string;
+    isPublic?: boolean;
+    isAnnouncementChannel?: boolean;
+    isCourseWideChannel?: boolean;
+}
+
+export type ChannelType = 'PUBLIC' | 'PRIVATE';
+
+export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
+
+@Component({
+    selector: 'jhi-channel-form',
+    templateUrl: './channel-form.component.html',
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        ChannelIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiSelectButtonComponent,
+    ],
+})
+export class ChannelFormComponent implements OnInit, OnDestroy {
+    private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
+
+    private ngUnsubscribe = new Subject<void>();
+
+    readonly visibilityOptions = signal<{ label: string; value: boolean }[]>([]);
+    readonly scopeOptions = signal<{ label: string; value: boolean }[]>([]);
+    readonly typeOptions = signal<{ label: string; value: boolean }[]>([]);
+
+    formData: ChannelFormData = {
+        name: undefined,
+        description: undefined,
+        isPublic: undefined,
+        isAnnouncementChannel: undefined,
+        isCourseWideChannel: undefined,
+    };
+    readonly formSubmitted = output<ChannelFormData>();
+    readonly channelTypeChanged = output<ChannelType>();
+    readonly isAnnouncementChannelChanged = output<boolean>();
+    /** Announcement channels can only be created by instructors, as only they can moderate them. */
+    readonly canCreateAnnouncementChannel = input<boolean>(true);
+    isCourseWideChannelChanged = output<boolean>();
+
+    form!: FormGroup; // set in initializeForm() from ngOnInit()
+
+    get nameControl() {
+        return this.form.get('name');
+    }
+
+    get descriptionControl() {
+        return this.form.get('description');
+    }
+
+    get isPublicControl() {
+        return this.form.get('isPublic');
+    }
+
+    get isisAnnouncementChannelControl() {
+        return this.form.get('isAnnouncementChannel');
+    }
+
+    get isCourseWideChannelControl() {
+        return this.form.get('isCourseWideChannel');
+    }
+
+    get isSubmitPossible() {
+        return !this.form.invalid;
+    }
+
+    ngOnInit(): void {
+        this.visibilityOptions.set([
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.public'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.private'), value: false },
+        ]);
+        this.scopeOptions.set([
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.true'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.false'), value: false },
+        ]);
+        this.typeOptions.set([
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false'), value: false },
+        ]);
+        this.initializeForm();
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
+    submitForm() {
+        const channelFormData: ChannelFormData = deepClone(this.form.value);
+        this.formSubmitted.emit(channelFormData);
+    }
+
+    private initializeForm() {
+        if (this.form) {
+            return;
+        }
+
+        this.form = this.fb.group({
+            name: [undefined, [Validators.required, Validators.maxLength(20), Validators.pattern(channelRegex)]],
+            description: [undefined, [Validators.maxLength(250)]],
+            isPublic: [true, [Validators.required]],
+            isAnnouncementChannel: [false, [Validators.required]],
+            isCourseWideChannel: [false, [Validators.required]],
+        });
+
+        if (this.isPublicControl) {
+            this.isPublicControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+                this.channelTypeChanged.emit(value ? 'PUBLIC' : 'PRIVATE');
+            });
+        }
+
+        if (this.isisAnnouncementChannelControl) {
+            this.isisAnnouncementChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+                this.isAnnouncementChannelChanged.emit(value);
+            });
+        }
+
+        if (this.isCourseWideChannelControl) {
+            this.isCourseWideChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+                this.isCourseWideChannelChanged.emit(value);
+            });
+        }
+    }
+}

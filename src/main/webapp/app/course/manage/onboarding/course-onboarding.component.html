@@ -1,0 +1,101 @@
+<div class="onboarding-wizard" data-testid="onboarding-wizard">
+    <div class="onboarding-header">
+        <h2 jhiTranslate="artemisApp.course.onboarding.title"></h2>
+        <p class="onboarding-subtitle" jhiTranslate="artemisApp.course.onboarding.subtitle"></p>
+    </div>
+
+    <div class="step-indicator" data-testid="onboarding-step-indicator">
+        @for (step of stepKeys; track step; let i = $index) {
+            <div
+                class="step-item"
+                data-testid="onboarding-step"
+                [attr.data-step-state]="activeStep() === i ? 'active' : activeStep() > i ? 'completed' : 'upcoming'"
+                [class.active]="activeStep() === i"
+                [class.completed]="activeStep() > i"
+                (click)="goToStep(i)"
+                [attr.aria-current]="activeStep() === i ? 'step' : null"
+                #keyboardAction9
+                role="button"
+                [attr.aria-disabled]="isSaving()"
+                [attr.tabindex]="!isSaving() ? 0 : -1"
+                (keydown.enter)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                (keydown.space)="!isSaving() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+            >
+                <div class="step-circle">
+                    @if (activeStep() > i) {
+                        <fa-icon [icon]="faCheck" />
+                    } @else {
+                        <fa-icon [icon]="stepIcons[i]" />
+                    }
+                </div>
+                <div class="step-label">{{ 'artemisApp.course.onboarding.steps.' + step | artemisTranslate }}</div>
+            </div>
+            @if (i < stepKeys.length - 1) {
+                <div class="step-line" [class.completed]="activeStep() > i"></div>
+            }
+        }
+    </div>
+
+    <div class="onboarding-content" data-testid="onboarding-content">
+        @switch (activeStep()) {
+            @case (0) {
+                <jhi-onboarding-general-settings
+                    [course]="course()"
+                    (courseUpdated)="onCourseUpdated($event)"
+                    (dateTextValidityChange)="generalSettingsDateTextValid.set($event)"
+                />
+            }
+            @case (1) {
+                <jhi-onboarding-enrollment [course]="course()" (courseUpdated)="onCourseUpdated($event)" (dateTextValidityChange)="enrollmentDateTextValid.set($event)" />
+            }
+            @case (2) {
+                <jhi-onboarding-communication [course]="course()" (courseUpdated)="onCourseUpdated($event)" />
+            }
+            @case (3) {
+                <jhi-onboarding-assessment-ai [course]="course()" (courseUpdated)="onCourseUpdated($event)" />
+            }
+            @case (4) {
+                <jhi-onboarding-explore [course]="course()" />
+            }
+            @default {}
+        }
+    </div>
+
+    <div class="onboarding-footer">
+        <div class="footer-left">
+            @if (!isFirstStep()) {
+                <button type="button" data-testid="onboarding-previous-button" class="btn btn-secondary" (click)="previousStep()" [disabled]="isSaving()">
+                    <fa-icon [icon]="faChevronLeft" class="me-1" />
+                    <span jhiTranslate="artemisApp.course.onboarding.actions.previous"></span>
+                </button>
+            }
+        </div>
+        <div class="footer-right">
+            @if (canFinish()) {
+                <button type="button" data-testid="onboarding-finish-button" class="btn btn-success" (click)="finishSetup()" [disabled]="isSaving()">
+                    @if (isSaving()) {
+                        <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
+                    } @else {
+                        <fa-icon [icon]="faRocket" class="me-1" />
+                        <span jhiTranslate="artemisApp.course.onboarding.actions.finishSetup"></span>
+                    }
+                </button>
+            } @else if (isLastStep()) {
+                <button type="button" data-testid="onboarding-go-to-course-button" class="btn btn-primary" (click)="goToCourse()">
+                    <span jhiTranslate="artemisApp.course.onboarding.actions.goToCourse"></span>
+                    <fa-icon [icon]="faChevronRight" class="ms-1" />
+                </button>
+            } @else {
+                <button type="button" data-testid="onboarding-next-button" class="btn btn-primary" (click)="nextStep()" [disabled]="isSaving()">
+                    @if (isSaving()) {
+                        <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.course.onboarding.actions.next"></span>
+                        <fa-icon [icon]="faChevronRight" class="ms-1" />
+                    }
+                </button>
+            }
+        </div>
+    </div>
+</div>

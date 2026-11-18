@@ -1,0 +1,35 @@
+{
+    "artemisApp": {
+        "programmingExerciseTestCase": {
+            "home": {
+                "title": "Testfälle für Programmieraufgabe",
+                "createLabel": "Programmingaufgabentestfall erstellen"
+            },
+            "created": "Programmingaufgabentestfall erstellt mit ID {{ param }}",
+            "updated": "Programmingaufgabentestfall aktualisiert mit ID {{ param }}",
+            "deleted": "Programmingaufgabentestfall gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Programmingaufgabentestfall {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Programmingaufgabentestfall"
+            },
+            "testName": "Testname",
+            "weight": "Breite",
+            "active": "Aktiv",
+            "exercise": "Aufgabe",
+            "visibility": {
+                "Always": "Immer",
+                "AfterDueDate": "Nach Einreichungsfrist",
+                "AfterReleaseDateOfResults": "Nach Veröffentlichung der Ergebnisse",
+                "Never": "Nie"
+            },
+            "type": {
+                "STRUCTURAL": "Struktur",
+                "BEHAVIORAL": "Verhalten",
+                "DEFAULT": "Standard",
+                "MIXED": "Verschieden"
+            }
+        }
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "artemisApp": {
+        "quizQuestion": {
+            "home": {
+                "title": "Fragen",
+                "createLabel": "Frage erstellen"
+            },
+            "created": "Frage erstellt mit ID {{ param }}",
+            "updated": "Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Frage gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Frage {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Frage"
+            },
+            "title": "Titel",
+            "text": "Text",
+            "hint": "Hinweis",
+            "explanation": "Erklärung",
+            "score": "Punktzahl",
+            "scoringType": "Bewertungstyp",
+            "randomizeOrder": "Zufällige Reihenfolge",
+            "questionStatistic": "Fragestatistik",
+            "exercise": "Übung",
+            "yourScore": "Erreichte Punktzahl",
+            "invalid": "Ungültig",
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
+            "retry": " Wiederholen",
+            "loading": "Warten bis das Bild geladen wurde.",
+            "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuche es erneut, indem du auf den Button klickst.",
+            "showSampleSolution": "Blende die Musterlösung ein",
+            "hideSampleSolution": "Blende die Musterlösung aus",
+            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus.",
+            "singleOption": "Wähle bitte die richtige Antwortmöglichkeit aus.",
+            "unratedConfirmation": "Es gibt keine fälligen Fragen. Möchtest du trotzdem im unbewerteten Modus trainieren?",
+            "unratedConfirmationTitle": "Keine fälligen Fragen"
+        }
+    }
+}

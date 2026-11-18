@@ -1,0 +1,996 @@
+{
+    "artemisApp": {
+        "programmingExercise": {
+            "instructionTableLabel": "Tabelle in der Aufgabenstellung",
+            "repositoryBuildOverview": {
+                "title": "Repositories und Builds",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Zusätzliches Repository",
+                "templateDescription": "Der Ausgangspunkt für Studierende.",
+                "solutionDescription": "Die Referenzimplementierung.",
+                "templateExpectedScore": "Erwartete Bewertung: 0%, bevor Studierende die Lösung implementieren.",
+                "solutionExpectedScore": "Erwartete Bewertung: 100% für die Referenzimplementierung.",
+                "result": "Build-Ergebnis",
+                "resultsLoading": "Build-Ergebnis wird geladen…",
+                "checkoutLoading": "Checkout-Verzeichnisse werden geladen…",
+                "checkoutUnavailable": "Checkout-Verzeichnisse konnten nicht geladen werden."
+            },
+            "home": {
+                "title": "Programmieraufgabe",
+                "createLabel": "Programmieraufgabe erstellen",
+                "editLabel": "Programmieraufgabe bearbeiten",
+                "importLabel": "Programmieraufgabe importieren",
+                "linkLabel": "Neue Programmieraufgabe verlinken",
+                "switchToSimpleMode": "Zum einfachen Modus wechseln",
+                "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
+            },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
+            "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
+            "gradingSection": {
+                "invalidReason": "Der Bewertungsbereich enthält ungültige Werte."
+            },
+            "delete": {
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
+                "questionLocalVC": {
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                },
+                "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
+                "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
+                "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+            },
+            "cleanup": {
+                "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
+                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet.",
+                "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
+            },
+            "reset": {
+                "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
+                "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe alle vorherigen Änderungen.",
+                "recreateCustomizedBuildPlans": "Setze die angepassten Build Pläne der Aufgabe auf die Standardversion aus der neuesten Übungsvorlage zurück und überschreibe dabei alle vorherigen Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um deine Auswahl zu bestätigen, gebe bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Das Zurücksetzen war erfolgreich.",
+                "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
+            },
+            "detail": {
+                "title": "Programmieraufgabe",
+                "showTemplateSubmissions": "Zeige Template-Abgaben",
+                "showSolutionSubmissions": "Zeige Lösungsabgaben"
+            },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programmieraufgaben-Metadaten",
+                    "noProgrammingData": "Diese Version enthält keine programmierspezifischen Metadaten.",
+                    "emptyValueHint": "In diesem Snapshot nicht verfügbar",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker-Flags",
+                    "theiaImage": "Online-IDE-Image",
+                    "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
+                    "postDueDateHandling": "Verhalten nach Abgabefrist",
+                    "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
+                    "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
+                    "testsCheckoutPath": "Tests-Checkout-Pfad",
+                    "buildPlanConfiguration": "Build-Plan-Konfiguration (JSON)",
+                    "noBuildPlanConfiguration": "Keine Build-Plan-Konfiguration in diesem Snapshot",
+                    "noBuildScript": "Kein Build-Skript in diesem Snapshot"
+                }
+            },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Informationen",
+                    "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
+                    "languageStepTitle": "Sprache",
+                    "gradingStepTitle": "Benotung",
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastruktur"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "Allgemein",
+                    "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
+                    "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
+                    "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
+                    "languageStepTitle": "Sprache",
+                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
+                    "versionControlTitle": "Versionskontrolle",
+                    "versionControlMessage": "Lege fest, welche Features für die Versionskontrolle erlaubt sein sollen.",
+                    "versionControlDocumentationLink": "Für weitere Informationen, lies bitte die <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise/create-an-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
+                    "problemStepTitle": "Aufgabe",
+                    "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
+                    "gradingStepTitle": "Bewertung",
+                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
+                },
+                "gradingLabels": {
+                    "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
+                    "noBonus": "Es gibt keine Bonuspunkte für diese Aufgabe.",
+                    "bonus": "Es können {bonusPoints} Bonuspunkte erreicht werden.",
+                    "assessment": "Diese Aufgabe wird {assessmentType} bewertet.",
+                    "lockedSubmission": "Die Repositories werden automatisch nach {submissionLimit} Abgaben gesperrt.",
+                    "penaltySubmission": "Es gibt einen Abzug von {exceedingPenalty} Punkten für jede Abgabe nach {submissionLimit} Abgaben.",
+                    "unrestrictedSubmission": "Es gibt keine Begrenzung für die Anzahl an Abgaben.",
+                    "staticAnalysisEnabled": "Statische Code-Analyse ist aktiviert für diese Aufgabe und es können maximal {maxPenalty} Punkte durch Probleme bei der Code-Analyse abgezogen werden.",
+                    "staticAnalysisDisabled": "Statische Code-Analyse ist deaktiviert für diese Aufgabe.",
+                    "normalExercise": "Aufgabe",
+                    "bonusExercise": "Bonusaufgabe",
+                    "assessmentAutomatic": "automatisch",
+                    "assessmentSemiautomatic": "halb-automatisch"
+                }
+            },
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Du kannst aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
+            "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
+            "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekttyp wirklich geändert werden?",
+            "templateRepositoryUri": "Vorlagen-Repository-Url",
+            "testRepositoryUri": "Test-Repository-Url",
+            "solutionRepositoryUri": "Lösungs-Repository-Url",
+            "auxiliaryRepositories": "Hilfs-Repositories",
+            "noCheckoutDirectorySet": "Es wurde kein Checkout-Verzeichnis gesetzt.",
+            "noCheckoutDirectorySetTooltip": "Da kein Checkout-Verzeichnis angegeben wurde, wurde das Repository nicht automatisch zu einem Build-Plan hinzugefügt.",
+            "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
+            "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
+            "repositories": "Repositories",
+            "buildplans": "Build-Pläne",
+            "buildplan": "Build-Plan",
+            "buildConfiguration": "Build Konfiguration",
+            "buildPlanEditor": "Build-Plan-Editor",
+            "buildPlanConfiguration": {
+                "saved": "Die Build-Plan-Konfiguration wurde erfolgreich gespeichert. Die Vorlagen- und Musterlösungs-Builds wurden ausgelöst.",
+                "submitTooltip": "Speichere die Build-Plan-Konfiguration und löse die Vorlagen- und Musterlösungs-Builds aus, um sie zu überprüfen."
+            },
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
+            "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
+            "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
+            "script": "Build Script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
+                "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck.",
+                "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern."
+            },
+            "buildPhasesEditor": {
+                "title": "Build-Phasen",
+                "help": "Bevor ein Build ausgeführt wird, werden die Skripte aller Phasen, deren Bedingungen erfüllt sind, in ihrer Reihenfolge zusammengefügt. Wenn keine Ergebnispfade konfiguriert sind, bestimmt der Exit-Code des Skripts den Build-Erfolg. Andernfalls hängt der Erfolg davon ab, ob Testergebnisse erzeugt werden.",
+                "addPhase": "Phase hinzufügen",
+                "phase": "Phase",
+                "phaseName": "Phasenname",
+                "phaseNamePlaceholder": "z. B. compile",
+                "phaseNameInvalidCharacters": "Phasenname ist ungültig",
+                "phaseNameDuplicate": "Phasennamen müssen eindeutig sein",
+                "phaseNameReserved": "Phasenname ist reserviert",
+                "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen und '_', beginne mit einem Buchstaben oder '_', vermeide reservierte Namen (wie 'main') und stelle sicher, dass Namen eindeutig sind.",
+                "condition": "Inklusionsbedingung",
+                "forceRun": "Am Ende trotz vorheriger Fehler ausführen",
+                "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",
+                "script": "Skript",
+                "scriptHelp": "Gib die Befehle ein, die in dieser Phase des Builds ausgeführt werden sollen.",
+                "resultPaths": "Ergebnispfade",
+                "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
+                "testsExpected": "Tests erwartet",
+                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, klicke oben auf dieser Seite auf \"Build-Plan bearbeiten\", setze die \"Inklusionsbedingung\" der Phase auf \"Nach Abgabefrist\" und klicke auf \"Absenden\".",
+                "expectedTestsBeforeDueDateEditorWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden.",
+                "resultPathPlaceholder": "z. B. **/results/*.xml",
+                "addResultPath": "Ergebnispfad hinzufügen",
+                "moveUp": "Nach oben verschieben",
+                "moveDown": "Nach unten verschieben",
+                "delete": "Löschen",
+                "conditions": {
+                    "always": "Immer",
+                    "afterDueDate": "Nach Abgabefrist"
+                }
+            },
+            "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
+            "parameters": "Parameter",
+            "dockerImage": "Docker Image",
+            "checkoutPath": {
+                "title": "Checkout-Pfad",
+                "customize": "Sie können den Checkout-Pfad anpassen, in dem die Repositories im Docker-Container geklont werden. Stellen Sie sicher, dass Sie einen gültigen absoluten UNIX-Pfad angeben. Der Standardpfad ist /var/tmp.",
+                "alert": "Checkout-Pfade dürfen nur Wörter, '_', '-', und '/' enthalten, dürfen jedoch nicht mit einem '/' beginnen oder enden. Die Pfade müssen für jedes Repository unterschiedlich sein.",
+                "edit": "Checkout-Pfad der Repositories bearbeiten",
+                "assignment": "Checkout-Pfad für das Aufgaben-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "solution": "Checkout-Pfad für das Lösungs-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "tests": "Checkout-Pfad für das Tests-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "invalid": "Ungültige Checkout-Pfade.",
+                "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen.",
+                "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
+            },
+            "timeout": {
+                "title": "Maximale Build-Dauer in Sekunden ",
+                "customize": "Setze den Wert auf 0, um den Standardwert zu verwenden. Stelle sicher, dass du einen gültigen ganzzahligen Wert angibst. Die Einheit ist Sekunden. Beachte, dass dieser Wert durch das von den Administratoren festgelegte maximale Limit (Standard ist 240s) überschrieben werden kann.",
+                "alert": "Das Timeout muss ein gültiger ganzzahliger Wert sein.",
+                "outOfBounds": "Die Build-Dauer muss zwischen {{ min }} und {{ max }} Sekunden liegen.",
+                "usesDefault": "(Standard)"
+            },
+            "workdir": "Verzeichnis",
+            "allowOnlineEditor": {
+                "title": "Online-Editor erlauben",
+                "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein."
+            },
+            "onlineEditor": "Online",
+            "allowOfflineIde": {
+                "title": "Offline-IDE erlauben",
+                "description": "Erlaubt Studierenden die Übung mit Git herunterzuladen und diese lokal mit der bevorzugten IDE zu bearbeiten.",
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+            },
+            "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Online-IDE erlauben",
+                "description": "Eine auf Visual Studio Code basierende Online-Entwicklungsumgebung mit Code-Hervorhebungs- und Formatierungsfunktionen. Vorkonfiguriert für die Sprache der Übung und mit der Möglichkeit, Code online zu kompilieren oder auszuführen.",
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+            },
+            "onlineIde": "Online IDE",
+            "allowBranching": {
+                "title": "Eigene Branches erlauben",
+                "description": "Erlaubt Studierenden, andere Branches als den default Branch zu pushen. Achtung! Diese Branches werden nicht in der Benutzeroberfläche angezeigt, und diese stellt auch keinen Merge-Support bereit. Studierende müssen ihre Branches lokal verwalten. Nur aktivieren, falls zusätzliche Branches wirklich benötigt werden."
+            },
+            "branchRegex": {
+                "title": "Regex für den Branchnamen",
+                "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
+            },
+            "buildTimeWindow": {
+                "title": "Build-Zeitfenster",
+                "message": "Begrenze optional, wann Pushes in die Repositories von Studierenden gebaut werden. Pushes außerhalb des Zeitfensters werden gespeichert, aber nicht gebaut und erzeugen keine Abgabe. Lasse beide Felder leer, um jeden Push zu bauen.",
+                "description": "Pushes von Studierenden außerhalb dieses Zeitfensters werden im Repository gespeichert, aber nicht gebaut, getestet oder bewertet. Jede Grenze kann leer bleiben: Mit nur einem Start beginnen die Builds zu diesem Zeitpunkt, mit nur einem Ende enden sie zu diesem Zeitpunkt. Beide Grenzen sind inklusive. Editoren und Instruktoren, der Übungsmodus und von Instruktoren ausgelöste Builds sind nicht betroffen. Das Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen. Bei Studierenden mit individueller Fristverlängerung verschiebt sich das Ende des Zeitfensters um dieselbe Verlängerung.",
+                "collapsedMessage": "Standardmäßig wird jeder Push gebaut. Lege ein Zeitfenster fest, wenn Pushes nur innerhalb eines Zeitraums gebaut werden sollen, zum Beispiel ab einem Startdatum eine Woche nach der Veröffentlichung.",
+                "addButton": "Zeitfenster für Builds festlegen",
+                "removeButton": "Zeitfenster für Builds entfernen",
+                "start": "Beginn des Build-Zeitfensters",
+                "end": "Ende des Build-Zeitfensters",
+                "endNotAfterStart": "Das Ende des Build-Zeitfensters muss nach dessen Beginn liegen.",
+                "outsideExerciseDates": "Das Build-Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+                "invalidInput": "Das Build-Zeitfenster enthält ein Datum, das nicht gelesen werden kann.",
+                "triggerDisabled": "Außerhalb des Build-Zeitfensters können keine Builds ausgelöst werden.",
+                "notice": {
+                    "before": "Builds starten am {{ start }}. Pushes davor werden gespeichert, aber nicht gebaut oder bewertet.",
+                    "during": "Builds sind bis {{ end }} aktiv.",
+                    "after": "Das Build-Zeitfenster endete am {{ end }}. Pushes werden gespeichert, aber nicht gebaut."
+                }
+            },
+            "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
+            "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
+            "participationMode": "Teilnahmemodus",
+            "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
+            "sequentialTestRuns": {
+                "title": "Sequentielle Testläufe",
+                "description": "Aktiviere diese Checkbox, um zuerst Struktur- und erst im Anschluss Verhaltenstests durchzuführen. Statische Code-Analyse wird nicht unterstützt. Dieses Feature hilft Studierenden dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test-Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+            },
+            "checkoutSolutionRepository": {
+                "title": "Checke Repository der Lösung aus",
+                "description": "Aktiviere diese Checkbox, um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe von Studierenden mit der Musterlösung zu vergleichen."
+            },
+            "enableStaticCodeAnalysis": {
+                "title": "Aktiviere Statische Code-Analyse",
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code-Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann bei erneutem Import der Aufgabe geändert werden, wenn die Build-Pläne neu erstellt werden und das Template aktualisiert wird."
+            },
+            "maxStaticCodeAnalysisPenalty": {
+                "title": "Max Strafe bei statischer Code-Analyse",
+                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20 % beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
+            },
+            "recreateBuildPlans": {
+                "title": "Build-Pläne neu erstellen",
+                "buttonText": "Build-Pläne",
+                "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
+                "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
+            },
+            "importFromFile": {
+                "title": "Programmieraufgabe aus Datei importieren",
+                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
+                "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
+            },
+            "programmingLanguage": "Programmiersprache",
+            "projectType": "Projekttyp",
+            "projectKey": "Projektschlüssel",
+            "testRepositoryProjectType": "Projekttyp des Test-Repository",
+            "packageName": "Package-Name",
+            "testsCommitId": "Test-Commit-ID",
+            "templateCommitId": "Vorlagen-Commit-ID",
+            "solutionCommitId": "Lösungs-Commit-ID",
+            "theiaImage": {
+                "title": "Konfiguration für Online IDE",
+                "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
+                "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
+            },
+            "onlineIdeExperienceLevel": {
+                "title": "Anfängliche Erfahrungsstufe in der Online IDE",
+                "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",
+                "description": "Studierende starten mit dieser Erfahrungsstufe, wenn sie die Aufgabe in der Online IDE öffnen. Artemis schreibt sie in die Datei .vscode/eduide.json jedes Repositorys, das es für Studierende aus der Vorlage erstellt, und ersetzt dabei eine gleichnamige Datei der Vorlage. Ohne Festlegung fügt Artemis keine Datei hinzu: Studierende starten mit der Stufe aus der .vscode/eduide.json der Vorlage, falls diese eine enthält, sonst mit der Standardstufe der Online IDE. Studierende können weiterhin eine andere Stufe wählen, und bereits bestehende Repositorys werden nicht verändert.",
+                "levels": {
+                    "BEGINNER": "Anfänger",
+                    "ADVANCED": "Fortgeschritten",
+                    "EXPERT": "Experte"
+                }
+            },
+            "appName": "App-Name",
+            "templateResult": "Ergebnis der Vorlage",
+            "solutionResult": "Ergebnis der Musterlösung",
+            "structureTestOracle": "Oracle Strukturtest aktualisieren",
+            "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
+            "checkPlagiarism": "Plagiatsprüfung",
+            "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
+            "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
+            "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
+            "editable": {
+                "unsaved": "Ungespeichert.",
+                "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
+                "saving": "Speichert...",
+                "savingTooltip": "Speichert die ungespeicherten Änderungen in der Aufgabenstellung.",
+                "saved": "Gespeichert.",
+                "savedTooltip": "Die Aufgabenstellung ist gespeichert."
+            },
+            "problemStatement": {
+                "title": "Aufgabenstellung",
+                "taskCommand": "Aufgabe",
+                "testCaseCommand": "Testfall einfügen",
+                "tasksOfExercise": "Teilaufgaben:",
+                "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
+                "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
+                "yourRequirements": "Deine Anforderungen",
+                "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
+                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte füge zuerst Inhalt hinzu.",
+                "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
+                "tooLong": "Die Aufgabenstellung darf {{max}} Zeichen nicht überschreiten.",
+                "reviewChanges": "KI-Vorschläge prüfen",
+                "reviewChangesDescription": "Die KI hat die unten gezeigten Änderungen vorgeschlagen. Grün markierte Zeilen werden hinzugefügt; rot markierte Zeilen werden entfernt.",
+                "revertAll": "Alle verwerfen",
+                "revertAllTooltip": "Alle KI-Vorschläge ablehnen und die ursprüngliche Aufgabenstellung wiederherstellen.",
+                "doneReviewing": "Übernehmen & Speichern",
+                "doneReviewingTooltip": "Alle KI-Vorschläge annehmen und auf die Aufgabenstellung anwenden.",
+                "diffView": {
+                    "originalLabel": "Dein Original",
+                    "suggestionLabel": "KI-Vorschlag",
+                    "unifiedHint": "→ rot markiert wird entfernt, grün markiert wird hinzugefügt →"
+                },
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
+                "generate": "Generieren",
+                "refine": "Verfeinern",
+                "inlineRefinement": {
+                    "placeholder": "Beschreibe, was geändert werden soll...",
+                    "triggerButton": "Auswahl verfeinern",
+                    "submitTooltip": "Verfeinerungsanweisung absenden",
+                    "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
+                    "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
+                    "emptyStatementError": "Eine leere Aufgabenstellung kann nicht verfeinert werden.",
+                    "close": "Schließen",
+                    "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
+                },
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
+            },
+            "status": {
+                "solutionFailsTest": "Die Musterlösung sollte 100% erreichen und alle Tests bestehen. Prüfe das Solution-Repository und die Testfälle.",
+                "templateFulfillsTest": "Die Vorlage sollte 0% erreichen. Prüfe bei einer abweichenden Bewertung das Template-Repository und die Testfälle."
+            },
+            "testCaseAnalysis": {
+                "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
+                "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
+                "issues": "Testfallprobleme.",
+                "ok": "Testfälle ok.",
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden.",
+                "repeatedTestCase": "Der Testfall '{{id}}' wiederholt sich.",
+                "repeatedTestCases": "{{number}} Testfälle wiederholen sich. Das kann unerwartetes Verhalten verursachen:"
+            },
+            "tasksAnalysis": {
+                "issues": "Aufgabenprobleme.",
+                "ok": "Aufgaben ok.",
+                "numOfTasks": "Die Anzahl der Aufgaben sollte {{limit}} nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
+                "issues": "Hinweisprobleme.",
+                "ok": "Hinweise ok.",
+                "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
+            },
+            "configureGrading": {
+                "title": "Konfiguration der Bewertung",
+                "shortTitle": "Bewertung",
+                "save": "Speichern",
+                "reset": "Zurücksetzen",
+                "expandAll": "Alle Testfälle einblenden",
+                "collapseAll": "Alle Testfälle ausblenden",
+                "status": {
+                    "unsavedChanges": "Ungespeicherte Änderungen",
+                    "unsavedTestCaseChanges": "Ungespeicherte Tests",
+                    "unsavedCategoryChanges": "Ungespeicherte Kategorien",
+                    "noUnsavedChanges": "Keine ungespeicherten Änderungen"
+                },
+                "testCases": {
+                    "title": "Testfälle",
+                    "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
+                    "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
+                    "updated": "Die Testfälle wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
+                    "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
+                    "showInactive": "Inaktive Testfälle anzeigen",
+                    "exercisePoints": "Aufgaben Punkte:",
+                    "settingNull": "Der Testfall {{testCase}} darf keine leeren Einstellungen haben.",
+                    "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
+                },
+                "categories": {
+                    "titleHeader": "Quelltext-Analyse",
+                    "title": "Quelltext-Analyse-Kategorien",
+                    "notGraded": "Nicht bewertet.",
+                    "noFeedback": "Ohne sichtbares Feedback.",
+                    "updated": "Die Kategorien wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
+                    "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",
+                    "resetFailed": "Die Kategorien konnten nicht zurückgesetzt werden.",
+                    "import": "Konfiguration übernehmen",
+                    "importLabel": "Konfiguration einer Aufgabe übernehmen",
+                    "importSuccessful": "Die Kategorien von Aufgabe {{exercise}} wurden erfolgreich übernommen.",
+                    "importFailed": "Die Kategorien von Aufgabe {{exercise}} konnten nicht übernommen werden."
+                },
+                "charts": {
+                    "title": "Diagramme",
+                    "preview": "Vorschau",
+                    "resetFilter": "Filter zurücksetzen",
+                    "testCaseWeights": {
+                        "title": "Testgewichtungen",
+                        "sumOfTestWeights": "Summe der Testgewichtungen:",
+                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "weight": "Gewichtung",
+                        "weightTooltip": "Gewichtung: {{ percentage }}% aller Gewichtungen.",
+                        "weightAndBonus": "Gewichtung & Bonus",
+                        "weightAndBonusTooltip": "Gewichtung & Bonus: {{ percentage }}% aller Gewichtungen und Boni."
+                    },
+                    "testCasePoints": {
+                        "title": "Punkte-Verteilung",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für einen bestimmten Testfall. 100 % in dem Diagramm steht für volle Punktzahl (100 %) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "points": "Punkte",
+                        "pointsTooltip": "Punkte: {{ percentage }}% aller Punkte."
+                    },
+                    "categoryDistribution": {
+                        "title": "Kategorie-Verteilung",
+                        "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
+                    }
+                },
+                "gradingTableHeader": {
+                    "testName": "<b>Task</b> / Test",
+                    "weight": "Gewichtung",
+                    "bonusMultiplier": "Bonusmultiplikator",
+                    "bonusPoints": "Bonuspunkte",
+                    "visibility": "Sichtbarkeit",
+                    "resultingPoints": "Resultierende Punkte",
+                    "testType": "Type",
+                    "passedPercent": "Bestanden %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analyse",
+                    "title": "Fehleranalyse für {{exerciseTitle}}",
+                    "occurrence": "Häufigkeit",
+                    "feedback": "Feedback",
+                    "task": "Aufgabe",
+                    "testcase": "Testfall",
+                    "errorCategory": "Fehlerkategorie",
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
+                    "filter": "Filter",
+                    "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
+                    "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
+                    "channelSuccess": "Kanal {{channelName}} erfolgreich erstellt.",
+                    "groupFeedback": "Feedback gruppieren",
+                    "groupFeedbackTooltip": "Feedback gruppieren ermöglicht es, ähnliche Feedback-Einträge mit demselben Testfall und derselben Aufgabenbezeichnung zu einem einzigen Eintrag zusammenzufassen. Dies ist nützlich, um die Anzahl der Einträge in der Tabelle zu reduzieren, insbesondere wenn zufällige Werte oder ähnliche Eingaben in den Testfällen verwendet und verglichen werden.",
+                    "feedbackModal": {
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filteroptionen",
+                        "task": "Tasks",
+                        "testcase": "Testfälle",
+                        "errorCategory": "Fehlerkategorien",
+                        "occurrence": "Häufigkeit",
+                        "clear": "Filter zurücksetzen",
+                        "cancel": "Abbrechen",
+                        "apply": "Filter anwenden"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Stichprobe für Betroffene Studierende",
+                        "description": "Die folgende Liste ist eine Stichprobe der betroffenen Studierenden für den ausgewählten Feedback-Eintrag, da diese ausreichend ist, um das Feedback zu analysieren. Die Liste ist auf 5 Studierende begrenzt. Insgesamt haben {{count}} Studierende dieses Feedback erhalten.",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Erstelle einen Feedback-Diskussionskanal",
+                        "studentNumber": "Anzahl der Studierende die dem Kanal hinzugefügt werden: {{count}}",
+                        "description": "Dieser Kanal soll Diskussionen über spezifisches Feedback zur bereitgestellten Übung erleichtern. Es ermöglicht allen betroffenen Studierenden und Lehrenden, zusammenzuarbeiten und das Feedback effektiv anzugehen.",
+                        "label": "Kanalname",
+                        "channelVisibility": "Kanal Sichtbarkeit",
+                        "visibilityPublic": "Öffentlich",
+                        "visibilityPrivate": "Privat",
+                        "announcementChannel": "Ankündigungskanal",
+                        "announcementChannelYes": "Ja",
+                        "announcementChannelNo": "Nein",
+                        "createAndNavigateLabel": "Erstellen und Navigieren",
+                        "createAndNavigateDescription": "Erstellt den Kanal und navigiert automatisch zum Kanal.",
+                        "createChannelLabel": "Kanal erstellen",
+                        "createChannelDescription": "Erstellt den Kanal, ohne die Seite zu verlassen.",
+                        "placeholder": "Dieses Feld bitte nicht leer lassen",
+                        "descriptionLabel": "Kanalbeschreibung",
+                        "requiredValidationErrorName": "Der Kanalname ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorName": "Kanalname kann max {{ max }} Zeichen lang sein!",
+                        "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
+                        "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "dueDate": "Das Abgabedatum der Übung ist noch nicht erreicht. Bitte beachte, dass das Ergebnis daher noch nicht endgültig ist und sich die betroffenen Studierenden in Zukunft ändern könnten. Zudem ist das Feedback möglicherweise noch nicht für Studierende sichtbar, falls es versteckte Testfälle in der Übung gibt. Bitte überprüfe, ob du dennoch einen Feedback-Kanal erstellen möchtest!",
+                        "confirmationModal": {
+                            "header": "Kanal Erstellen bestätigen",
+                            "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
+                            "cancel": "Abbrechen",
+                            "confirm": "Erstellen"
+                        }
+                    }
+                },
+                "help": {
+                    "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
+                    "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
+                    "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
+                    "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
+                    "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
+                    "weight": "Gewichtung: Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
+                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100 % führen.",
+                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100 % führen.",
+                    "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "visibilityExam": "Feedback und Punkte für Testfälle, die mit „Nach Veröffentlichung der Ergebnisse“ markiert sind, werden erst nach der Veröffentlichung der Klausurergebnisse angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
+                    "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
+                },
+                "updatedGradingConfigShort": "Veränderte Bewertung",
+                "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studierenden mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
+                "updatedGradingConfigTooltip": "Du hast die Bewertung verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studierenden. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studierenden mit der veränderten Bewertung erneut bewerten.",
+                "noUpdatedGradingConfig": "Keine veränderte Bewertung",
+                "notReleased": "Nicht veröffentlicht",
+                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studierenden. Daher kann die Bewertung geändert werden, ohne dass die Abgaben von Studierenden erneut ausgeführt werden müssen."
+            },
+            "export": {
+                "downloadRepo": "Repository Herunterladen",
+                "downloadExampleSolution": "Beispiellösung herunterladen",
+                "downloadTests": "Tests herunterladen",
+                "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",
+                "downloadExercise": "Programmierübung herunterladen",
+                "downloadAllStudents": "Oder lade die Repositories aller Studierenden herunter",
+                "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
+                "filterLateSubmissions": {
+                    "title": "Verspätete Abgaben herausfiltern",
+                    "tooltip": "Alle Abgaben und Commits nach einem bestimmten Datum ausschließen"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Datum zum Filtern verspäteter Abgaben",
+                    "tooltip": "Standardmäßig das Abgabedatum der Aufgabe, falls kein Datum gesetzt"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Abgaben aus dem Übungsmodus ausschließen",
+                    "tooltip": "Ignoriere als Übung markierte Abgaben und behalte nur benotete Abgaben"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Namen der Studierenden zum Projekt hinzufügen",
+                        "team": "Namen der Teams zum Projekt hinzufügen",
+                        "teamOrStudent": "Namen der Teams/Studierenden zum Projekt hinzufügen"
+                    },
+                    "tooltip": "Erlaubt das gleichzeitige Importieren mehrerer Projekte in Eclipse"
+                },
+                "combineStudentCommits": {
+                    "title": "Alle Änderungen in einem Commit zusammenfassen",
+                    "tooltip": "Fasst alle Commits eines Studierenden in einem einzigen Commit für leichtere Korrektur zusammen"
+                },
+                "anonymizeRepository": {
+                    "title": "Repository anonymisieren",
+                    "tooltip": "Verberge die Namen der Studierenden in Commits und Ordnernamen für eine unvoreingenommene Bewertung"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Code-Style normalisieren",
+                    "tooltip": "Standardisiere Zeilenumbrüche und Kodierung für Konsistenz"
+                },
+                "successMessageRepo": "Das Repository wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
+                "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
+                "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
+                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden.",
+                "errorMessageRepo": "Das Repository konnte nicht exportiert werden. Die angefragte Datei existiert nicht.",
+                "noParticipantsSelected": "Wähle mindestens eine Person aus oder aktiviere das Kontrollkästchen zum Herunterladen aller Repositories, bevor du exportierst."
+            },
+            "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
+            "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
+            "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
+            "resubmitSingleLabel": "Build auslösen",
+            "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
+            "resubmitAllConfirmAfterDueDate": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
+            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte wende dich an entsprechende Tutor:innen.",
+            "resubmitAll": "Alle erneut ausführen",
+            "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
+            "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
+            "resubmitFailed": "Gescheiterte Teilnahmen erneut ausführen",
+            "resubmitFailedTooltip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Gescheiterte Teilnahmen besitzen kein Ergebnis für die letzte Abgabe. Gescheiterte Abgaben können bei Kommunikationsfehlern zwischen dem CI System und Artemis entstehen. Die entstehenden Ergebnisse werden als bewertet gekennzeichnet.",
+            "buildingSubmissions": "Laufende Abgaben: {{number}}",
+            "failedSubmissions": "Gescheiterte Abgaben: {{number}}",
+            "resultETA": "Ergebniswartezeit: {{eta}}",
+            "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
+            "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "channelNameTooltip": "Es wird automatisch ein kursübergreifender Kanal mit diesem Namen erstellt. Der Name kann jederzeit geändert werden.",
+            "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
+            "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
+            "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
+            "timeline": {
+                "assessmentType": "Art der Bewertung",
+                "manualAssessment": "Manuelle Bewertung",
+                "automaticAssessment": "Automatische Bewertung",
+                "complaintsAllowed": "Beschwerden erlaubt",
+                "automaticTests": "Automatische Tests",
+                "afterDueDate": "Tests nach Ablaufdatum erneut ausführen",
+                "timelineLabel": "Zeitlicher Ablauf der Programmieraufgabe",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus. Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen.",
+                "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
+                "assessmentTypeTooltipAutomaticAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung",
+                "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können die Aufgabe ab diesem Datum sehen. Sollte kein Startdatum festgelegt sein können Studierende auch ab diesem Datum die Aufgabe beginnen.",
+                "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
+                "dueDateTooltip": "Die finale Einreichungsfrist, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
+                "afterDueDateTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde. Aktiviere diese Option, um die automatischen Tests zu einem Zeitpunkt nach der Einreichungsfrist erneut auf den letzten Abgaben aller Studierenden auszuführen. Ansonsten werden die Tests nur direkt nach Commits von Studierenden ausgeführt. Die durch den speziellen Testdurchlauf generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist.",
+                "automaticAfterDueDateTooltip": "Diese Option wurde aktiviert, weil der Build von der Abgabefrist abhängt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
+                "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
+                "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Datum der Veröffentlichung gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Fälligkeitsdatum gesetzt!",
+                "assessmentDueDate": "Einreichungsfrist der Bewertung",
+                "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
+                "enableManualAssessment": "Manuelle Bewertung aktivieren",
+                "enableManualAssessmentTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
+                "configureExampleSolutionPublication": "Konfiguriere Veröffentlichungsdatum für Lösungsvorschlag",
+                "notSet": "nicht gesetzt",
+                "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
+                "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
+                "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
+                "complaintOnAutomaticAssessmentExamModeTooltip": "Wenn die manuelle Bewertung deaktiviert ist, können Studierende nach einer automatischen Bewertung Beschwerde einlegen. Die Beschwerde wird anschließend von Tutor:innen bewertet.",
+                "complaintOnAutomaticAssessmentTooltip": "Wenn die manuelle Bewertung deaktiviert ist, können Studierende nach einer automatischen Bewertung Beschwerde einlegen. Die Beschwerde wird anschließend von Tutor:innen bewertet. Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
+                "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann beim Import nicht gesetzt werden.",
+                "includeTestsIntoExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
+                "includeTestsIntoExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag bereitgestellt werden. Nur auswählbar, wenn ein Veröffentlichungsdatum für den Lösungsvorschlag konfiguriert ist.",
+                "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt.",
+                "warningLeakFeedbackHeader": "Warnung: Mögliches Leaken von Feedback",
+                "warningLeakFeedback": "Wenn du diese Option deaktivierst, können Testergebnisse und Feedback während der Prüfung für Studierende sichtbar werden. Bist du sicher, dass du fortfahren möchtest?"
+            },
+            "repositoryIsLocked": {
+                "title": "Dein Repository ist gesperrt.",
+                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+            },
+            "checkoutDirectories": "Checkout-Verzeichnisse",
+            "preview": {
+                "label": "Vorschau",
+                "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build-Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
+                "tooltipLocalVC": "Hier findest du die mit der Programmieraufgabe verknüpften Repositories. Rechts werden die jeweiligen Checkout-Verzeichnisse während der Build-Ausführung angezeigt.",
+                "repositories": "Repositories",
+                "buildPlans": "Build-Pläne",
+                "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",
+                "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
+                "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
+                "auxiliaryRepoTooltip": "{{description}}",
+                "templateBuildPlanTooltip": "Der Build-Plan der Vorlage und Abgaben von Studierenden. Lässt alle Tests über die Vorlage/Studierenden-Abgabe, der Aufgabe laufen. Die Vorlage dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen.",
+                "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen",
+                "submissionBuildPlan": "Abgabe-Build-Plan",
+                "solutionBuildPlan": "Lösungs-Build-Plan"
+            },
+            "reEvaluate": "Alle erneut bewerten",
+            "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
+            "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
+            "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}",
+            "editSelectedModal": {
+                "currentlyEdited": "Du bearbeitest die folgenden Übungen:",
+                "errorReadButton": "Ok",
+                "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
+            },
+            "auxiliaryRepository": {
+                "error": "Es gibt ein Problem mit den Hilfs-Repositories.",
+                "addAuxiliaryRepository": "Hilfs-Repository anlegen",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Die eingefügten Dateien überschreiben alle Dateien im Checkout-Verzeichnis, die den gleichen Namen haben. Dateien, die nicht überschrieben werden, bleiben erhalten.",
+                "repositoryName": "Name des Repositorys",
+                "checkoutDirectory": "Checkout-Verzeichnis",
+                "description": "Beschreibung",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit diesem Namen in der Aufgabe.",
+                "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
+                "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
+                "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarningLocalCI": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "repositoryNameRequired": {
+                    "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
+                },
+                "invalidDirectoryName": {
+                    "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Bitte ändere die Hilfs-Repository-Konfiguration zu einer validen Konfiguration um zum Simple Mode zu wechseln."
+            },
+            "submissionPolicy": {
+                "title": "Abgaberichtlinie",
+                "updateButton": {
+                    "title": "Speichern",
+                    "tooltip": "Speichert die Änderungen an der Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories betroffen sind!"
+                },
+                "activateButton": {
+                    "title": "Aktivieren",
+                    "tooltip": "Aktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG:\nFür Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories gesperrt werden müssen!"
+                },
+                "deactivateButton": {
+                    "title": "Deaktivieren",
+                    "tooltip": "Deaktiviert die Abgaberichtlinie dieser Programmieraufgabe.\nACHTUNG: Für Repository Sperre Abgaberichtlinien kann diese Operation sehr zeitintensiv sein, wenn viele Repositories entsperrt werden müssen!"
+                },
+                "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
+                "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
+                "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} erlaubte Abgaben",
+                "none": {
+                    "optionLabel": "Keine"
+                },
+                "lockRepository": {
+                    "optionLabel": "Repository Sperre"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Punktabzug je Überschreitung",
+                    "detailLabel": "Punktabzug je Überschreitung",
+                    "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
+                    "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
+                    "penaltyInputFieldValidationWarning": {
+                        "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
+                        "required": "Der Punktabzug muss gesetzt sein."
+                    },
+                    "penaltyInfoLabel": "(Punktabzug je Überschreitung: {{points}} Punkte)",
+                    "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
+                },
+                "submissionPolicyType": {
+                    "title": "Typ der Abgaberichtlinie",
+                    "none": {
+                        "title": "-"
+                    },
+                    "lock_repository": {
+                        "title": "Repository Sperre",
+                        "tooltip": "Dein Abgaberepository wird gesperrt, sobald das Abgabelimit erreicht wird. Es wird nicht möglich sein, weiter an der Aufgabe teilzunehmen, sobald das Repository gesperrt wurde."
+                    },
+                    "submission_penalty": {
+                        "title": "Punktabzug je Überschreitung",
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Der Punktabzug für diese Aufgabe ist -{{points}} Punkte."
+                    }
+                },
+                "submissionLimitTitle": "Abgaben",
+                "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
+                "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
+                "submissionLimitWarning": {
+                    "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein.",
+                    "required": "Das Abgabelimit muss gesetzt sein."
+                }
+            },
+            "diffReport": {
+                "button": "Änderungen überprüfen",
+                "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "detailedTooltip": "Die Vergleichsansicht hebt alle Änderungen zwischen dem Vorlage- und dem Lösungs-Repository hervor. Rot markierte Zeilen zeigen Löschungen, d.h. Zeilen, die in der Lösung im Vergleich zur Vorlage entfernt wurden. Grün markierte Zeilen zeigen, was in der Lösung hinzugefügt wurde.",
+                "splitView": {
+                    "enable": "Getrennte Ansicht aktivieren",
+                    "disable": "Getrennte Ansicht deaktivieren",
+                    "tooltip": "In der getrennten Ansicht werden beide Versionen jeder geänderten Datei nebeneinander angezeigt. Beachte, dass die getrennte Ansicht nur dann angezeigt wird, wenn dein Browserfenster breit genug ist."
+                },
+                "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
+                "title": "Vergleich von Template und Lösung",
+                "shortDescription": "Überprüfe, welche Änderungen am Template von den Studierenden erwartet werden, um die Aufgabe zu lösen.",
+                "titleForSubmissions": "Abgaben-Diff",
+                "emptyRepository": "Leeres Repository",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "previousSubmission": "Vorherige Abgabe",
+                "previousCommit": "Vorheriger Commit",
+                "currentSubmission": "Aktuelle Abgabe",
+                "currentCommit": "Aktueller Commit",
+                "fileChange": {
+                    "created": "Erstellt",
+                    "deleted": "Gelöscht",
+                    "renamed": "Umbenannt"
+                },
+                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
+                "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
+                "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
+                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden."
+            },
+            "projectTypes": {
+                "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "Mit beispielhafter Abhängigkeit",
+            "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
+            "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
+            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
+            "commitInfo": {
+                "title": "Commit-Informationen",
+                "commitHash": "Commit-Hash",
+                "commits": "Commits",
+                "author": "Autor",
+                "date": "Datum",
+                "message": "Nachricht",
+                "previousSubmission": "Vorherige Abgabe",
+                "currentSubmission": "Aktuelle Abgabe",
+                "template": "Vorlage",
+                "history": "Commit-Historie",
+                "result": "Ergebnis"
+            },
+            "otherLanguageHints": {
+                "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen. Siehe die <a href=\"{{documentationLink}}\">Dokumentation</a> für Details.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
+                "buildScript": {
+                    "title": "Passe das Build Skript an:",
+                    "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
+                    "runTests": "Führe alle Tests aus. Sie sollten JUnit XML Dateien generieren.",
+                    "moveResults": "Bewege die XML Dateien in das <code>{{resultsDirectory}}</code> Verzeichnis."
+                },
+                "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
+                "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
+                "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
+            },
+            "dockerFlags": {
+                "useCustomNetwork": {
+                    "title": "Eigenes Dockernetzwerk verwenden",
+                    "description": "Aktiviere diese Option, wenn du ein eigenes Docker Netzwerk oder gar keines verwenden willst.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (kein Netzwerk)",
+                    "disableNetworkAccessWarning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                },
+                "envVars": {
+                    "title": "Umgebungsvariablen",
+                    "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
+                    "addEnvVar": "Umgebungsvariable hinzufügen",
+                    "removeEnvVar": "Entfernen"
+                },
+                "cpuCount": {
+                    "label": "Anzahl der CPUs bearbeiten",
+                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Anzahl der CPUs muss eine ganze Zahl von mindestens 1 sein."
+                },
+                "memory": {
+                    "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Arbeitsspeichergröße muss eine ganze Zahl von mindestens 6 MB sein."
+                },
+                "memorySwap": {
+                    "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Swap-Speichergröße muss eine ganze Zahl von mindestens 0 MB sein."
+                }
+            },
+            "artemisIntelligence": {
+                "title": "Artemis Intelligenz",
+                "consistencyCheckAlert": {
+                    "title": "Resultat der Konsistenzprüfung",
+                    "improvement": "Verbesserungsempfehlung",
+                    "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
+                }
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus der Austauschplattform importieren",
+                "export": "Exportieren in die Austauschplattform",
+                "error": {
+                    "export": "Kann Aufgabe nicht exportieren: {{ message }}"
+                }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
+                "problemStatementTooLong": "Die Problemstellung ist zu lang für die Checkliste. Bitte kürze sie auf höchstens {{ max }} Zeichen und versuche es erneut.",
+                "competencies": {
+                    "title": "Geschätzte Lernziele",
+                    "empty": "Keine Kompetenzen abgeleitet.",
+                    "primary": "Primär",
+                    "evidence": "Belege:",
+                    "relatedTasks": "Zugehörige Aufgaben:",
+                    "linked": "Verknüpft",
+                    "applyCompetencies": "Kompetenzen anwenden",
+                    "applyAll": "Alle anwenden",
+                    "applySelected": "Ausgewählte anwenden",
+                    "applyHint": "Verknüpft passende Kurskompetenzen und erstellt neue für nicht zugeordnete Lernziele.",
+                    "syncSuccess": "Kompetenzen erfolgreich auf die Aufgabe angewendet.",
+                    "allLinked": "Alle abgeleiteten Kompetenzen sind bereits verknüpft.",
+                    "syncError": "Anwenden der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
+                    "showDetails": "Details",
+                    "hideDetails": "Ausblenden",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discarded": "Kompetenz verworfen.",
+                    "discardedMultiple": "Ausgewählte Kompetenzen verworfen.",
+                    "discardCompetency": "Diese Kompetenz verwerfen",
+                    "selectCompetency": "Kompetenz auswählen"
+                },
+                "difficulty": {
+                    "title": "Schwierigkeitsbewertung",
+                    "suggested": "Vorgeschlagen:",
+                    "vsDeclared": "vs. Angegeben:",
+                    "tasks": "Aufgaben:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Schwerer als angegeben",
+                    "easierThanDeclared": "Leichter als angegeben",
+                    "matchesDeclared": "Entspricht der Angabe",
+                    "unknown": "Unbekannt"
+                },
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Beheben",
+                    "fixSelected": "Ausgewählte beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discardedMultiple": "Ausgewählte Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
+                },
+                "actions": {
+                    "success": "Änderungen vorgeschlagen — bitte die aktualisierte Problemstellung oben überprüfen, bevor du speicherst.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig.",
+                    "adaptTo": "Anpassen auf:",
+                    "current": "(aktuell)",
+                    "adaptedReasoning": "An {{ difficulty }} angepasst. Erneut analysieren für eine aktualisierte Bewertung."
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
+            },
+            "buildNotifications": {
+                "enable": "Browser-Benachrichtigungen für Build-Ergebnisse aktivieren",
+                "disable": "Browser-Benachrichtigungen für Build-Ergebnisse deaktivieren",
+                "blocked": "Benachrichtigungen sind blockiert. Erlaube sie in deinen Browser-Einstellungen.",
+                "error": "Browser-Benachrichtigungen sind nicht verfügbar. Das Tab-Symbol zeigt weiterhin Build-Ergebnisse an.",
+                "resultReceived": "Build-Ergebnis erhalten"
+            }
+        },
+        "checklistAnalysisRequest": {
+            "problemStatementMarkdown": "Problemstellung"
+        },
+        "checklistActionRequest": {
+            "problemStatementMarkdown": "Problemstellung"
+        },
+        "error": {
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+            "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."
+        }
+    }
+}

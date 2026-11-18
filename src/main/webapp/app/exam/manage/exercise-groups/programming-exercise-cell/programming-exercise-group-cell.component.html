@@ -1,0 +1,49 @@
+@if (exercise()) {
+    @if (displayShortName()) {
+        <div>
+            {{ exercise().shortName || '' }}
+        </div>
+    }
+    @if (displayTemplateUrls()) {
+        <div>
+            @if (exercise().templateParticipation?.buildPlanId) {
+                <span>
+                    @if (!localCIEnabled()) {
+                        <a target="_blank" rel="noreferrer" href="{{ exercise().templateParticipation!.buildPlanUrl }}">Template</a>
+                    } @else {
+                        {{ exercise().templateParticipation!.buildPlanId }}
+                    }
+                </span>
+            }
+            <br />
+            @if (exercise().solutionParticipation?.buildPlanId) {
+                <span>
+                    @if (!localCIEnabled()) {
+                        <a target="_blank" rel="noreferrer" href="{{ exercise().solutionParticipation!.buildPlanUrl }}">Solution</a>
+                    } @else {
+                        {{ exercise().solutionParticipation!.buildPlanId }}
+                    }
+                </span>
+            }
+            <br />
+        </div>
+    }
+    @if (displayEditorMode()) {
+        <div>
+            <div class="flex justify-between">
+                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
+                <span [jhiTranslate]="exercise().allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
+                <span [jhiTranslate]="exercise().allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+            </div>
+            @if (onlineIdeEnabled()) {
+                <div class="flex justify-between">
+                    <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
+                    <span [jhiTranslate]="exercise().allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                </div>
+            }
+        </div>
+    }
+}

@@ -1,0 +1,17 @@
+<div class="flex flex-wrap items-center gap-2" data-testid="unit-creation" role="group" aria-labelledby="unit-creation-label">
+    <span id="unit-creation-label" class="me-1 font-medium" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.title"></span>
+    @for (option of options; track option.type) {
+        @if (emitEvents()) {
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [id]="option.buttonId" (click)="onButtonClicked(option.type)">
+                <fa-icon [icon]="option.icon" />
+                <span [jhiTranslate]="option.label"></span>
+            </button>
+        } @else {
+            <a tumAetUiButton severity="secondary" variant="outlined" size="small" [id]="option.buttonId" [routerLink]="['./', option.route, 'create']">
+                <fa-icon [icon]="option.icon" />
+                <span [jhiTranslate]="option.label"></span>
+            </a>
+        }
+    }
+    <jhi-documentation-button [type]="documentationType" />
+</div>

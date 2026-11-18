@@ -1,0 +1,1020 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+    faBookmark,
+    faBoxArchive,
+    faClock,
+    faComment,
+    faComments,
+    faEnvelopeOpenText,
+    faFile,
+    faFilter,
+    faGraduationCap,
+    faHeart,
+    faList,
+    faMessage,
+    faPersonChalkboard,
+    faPlus,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
+import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
+import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
+import {
+    ChannelAction,
+    ChannelsOverviewDialogComponent,
+} from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
+import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
+import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
+import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
+import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { PageType, SortDirection } from 'app/communication/communication.util';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { FaqState } from 'app/communication/shared/entities/faq.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
+import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
+import { Observable, Subject, Subscription, firstValueFrom, of, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    unreadMessages: { entityData: [] },
+    favoriteChannels: { entityData: [] },
+    recents: { entityData: [] },
+    generalChannels: { entityData: [] },
+    exerciseChannels: { entityData: [] },
+    lectureChannels: { entityData: [] },
+    examChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
+    archivedChannels: { entityData: [] },
+    savedPosts: { entityData: [] },
+};
+
+const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
+    unreadMessages: faEnvelopeOpenText,
+    generalChannels: faMessage,
+    exerciseChannels: faList,
+    examChannels: faGraduationCap,
+    groupChats: faComments,
+    directMessages: faComment,
+    favoriteChannels: faHeart,
+    lectureChannels: faFile,
+    archivedChannels: faBoxArchive,
+    feedbackDiscussion: faPersonChalkboard,
+    savedPosts: faBookmark,
+    recents: faClock,
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    unreadMessages: false,
+    generalChannels: true,
+    exerciseChannels: true,
+    examChannels: true,
+    groupChats: true,
+    directMessages: true,
+    favoriteChannels: false,
+    lectureChannels: true,
+    archivedChannels: true,
+    feedbackDiscussion: true,
+    savedPosts: true,
+    recents: true,
+};
+
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+    unreadMessages: false,
+    generalChannels: true,
+    exerciseChannels: false,
+    examChannels: false,
+    groupChats: true,
+    directMessages: true,
+    favoriteChannels: true,
+    lectureChannels: false,
+    archivedChannels: false,
+    feedbackDiscussion: false,
+    savedPosts: true,
+    recents: true,
+};
+
+// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.scss); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
+
+@Component({
+    selector: 'jhi-course-conversations',
+    templateUrl: './course-conversations.component.html',
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [CommunicationService, LinkifyService, LinkPreviewService],
+    imports: [
+        LoadingIndicatorContainerComponent,
+        FormsModule,
+        CourseConversationsCodeOfConductComponent,
+        TranslateDirective,
+        SidebarComponent,
+        ConversationHeaderComponent,
+        ConversationMessagesComponent,
+        CourseWideSearchComponent,
+        SavedPostsComponent,
+        ConversationThreadSidebarComponent,
+        ConversationGlobalSearchComponent,
+        FeatureActivationComponent,
+        TumAetUiButtonDirective,
+    ],
+})
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private readonly selectionState = inject(ConversationSelectionState);
+    private courseConversationsService = inject(CourseConversationsService);
+    private communicationService = inject(CommunicationService);
+    private faqService = inject(FaqService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private breakpointObserver = inject(BreakpointObserver);
+    private courseSidebarService = inject(CourseSidebarService);
+
+    readonly isCommunicationEnabled = computed(() => {
+        const currentCourse = this.course();
+        return currentCourse ? isCommunicationEnabled(currentCourse) : false;
+    });
+    protected readonly faComments = faComments;
+    private tabReselectionSubscription?: Subscription;
+
+    readonly isMobile = toSignal(this.breakpointObserver.observe(MOBILE_SIDEBAR_BREAKPOINT).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(MOBILE_SIDEBAR_BREAKPOINT),
+    });
+
+    private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription?: Subscription;
+    private openSidebarEventSubscription?: Subscription;
+    private toggleSidebarEventSubscription?: Subscription;
+    private reloadSidebarEventSubscription?: Subscription;
+    // Transient observers that watch for a post/reply to appear in the DOM. They self-disconnect on
+    // success and via a 5s timeout, but are stored here so ngOnDestroy can disconnect them if the
+    // component is torn down within that window.
+    private highlightPostObserver?: MutationObserver;
+    private highlightReplyObserver?: MutationObserver;
+    course = signal<Course | undefined>(undefined);
+    readonly isLoading = signal(false);
+    readonly isServiceSetUp = signal(false);
+    messagingEnabled = false;
+    readonly postInThread = signal<Post | undefined>(undefined);
+    private pendingThreadPostId: number | undefined;
+    readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
+    readonly conversationsOfUser = signal<ConversationDTO[]>([]);
+    previousConversationBeforeSearch?: ConversationDTO;
+    lastKnownConversationId?: number;
+
+    conversationSelected = true;
+    readonly sidebarData = signal<SidebarData>(undefined!);
+    readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
+    readonly sidebarConversations = signal<SidebarCardElement[]>([]);
+    // the unread state of the conversations as the sidebar was built, to notice that a count was raised in place afterwards
+    private renderedUnreadState = '';
+    private renderedConversations: ConversationDTO[] = [];
+    readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
+    readonly focusPostId = signal<number | undefined>(undefined);
+    focusReplyId: number | undefined = undefined;
+    readonly openThreadOnFocus = signal(false);
+    readonly selectedSavedPostStatus = signal<undefined | SavedPostStatus>(undefined);
+    readonly showOnlyPinned = signal(false);
+    readonly pinnedCount = signal(0);
+    readonly isManagementView = signal(false);
+
+    readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
+    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
+    readonly isCodeOfConductAccepted = signal<boolean | undefined>(undefined);
+    readonly isCodeOfConductPresented = signal(false);
+
+    courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
+    globalSearchComponent = viewChild<ConversationGlobalSearchComponent>(ConversationGlobalSearchComponent);
+
+    // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
+    // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
+    // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!, { equal: () => false });
+    get courseWideSearchConfig(): CourseWideSearchConfig {
+        return this._courseWideSearchConfig();
+    }
+    set courseWideSearchConfig(value: CourseWideSearchConfig) {
+        this._courseWideSearchConfig.set(value);
+    }
+    private commitCourseWideSearchConfig(): void {
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._courseWideSearchConfig.set(this._courseWideSearchConfig());
+    }
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFilter = faFilter;
+
+    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
+    readonly channelActions$ = output<ChannelAction>();
+
+    getAsChannel = getAsChannelDTO;
+
+    private subscribeToPosts() {
+        this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+            if (this.pendingThreadPostId && posts) {
+                const found = posts.find((post) => post.id === this.pendingThreadPostId);
+                if (found) {
+                    this.postInThread.set(found);
+                    this.pendingThreadPostId = undefined;
+                }
+            } else if (this.postInThread()?.id && posts) {
+                this.postInThread.set(posts.find((post) => post.id === this.postInThread()?.id));
+            }
+        });
+    }
+
+    onForwardedMessagesLoaded(posts: Post[]): void {
+        const openPostId = this.postInThread()?.id;
+        const hydratedPost = posts.find((post) => post.id === openPostId);
+        if (openPostId !== undefined && hydratedPost) {
+            // Source previews load after the post stream. Publish a new reference so the open thread receives them too.
+            this.postInThread.set(Post.withSameValues(hydratedPost));
+        }
+    }
+
+    togglePinnedView(): void {
+        this.showOnlyPinned.set(!this.showOnlyPinned());
+    }
+
+    onPinnedCountChanged(newCount: number): void {
+        this.pinnedCount.set(newCount);
+        if (this.pinnedCount() == 0 && this.showOnlyPinned()) {
+            this.showOnlyPinned.set(false);
+        }
+    }
+
+    private setupCommunicationService() {
+        this.communicationService.setPageType(PageType.OVERVIEW);
+        const course = this.course();
+        this.communicationService.setCourse(course);
+        if (course?.id) {
+            this.faqService.findAllByCourseIdAndState(course.id, FaqState.ACCEPTED).subscribe({
+                next: (res) => {
+                    this.communicationService.setFaqs(res.body ?? []);
+                },
+            });
+        }
+    }
+
+    private getParentCourse(): Course | undefined {
+        return this.activatedRoute.parent?.snapshot.data?.course;
+    }
+
+    /** Mount conversation read ownership and wire the retained course state into this communication view. */
+    ngOnInit(): void {
+        // Selecting this tab while already on it acts as a refresh -- prepareSidebarData re-reads the conversations and
+        // replaces the rendered list only once they arrive
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.prepareSidebarData());
+
+        this.course.set(this.getParentCourse());
+        this.isManagementView.set(this.router.url.includes('course-management'));
+
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.setIsCollapsed(true);
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.setIsCollapsed(false);
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.toggleSidebar();
+        });
+
+        this.reloadSidebarEventSubscription = this.courseSidebarService.reloadSidebar$.subscribe(() => {
+            this.prepareSidebarData();
+        });
+
+        if (!this.isMobile()) {
+            if (this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation')) {
+                this.courseSidebarService.openSidebar();
+            } else {
+                this.courseSidebarService.closeSidebar();
+            }
+        } else {
+            this.courseSidebarService.openSidebar();
+        }
+
+        this.isLoading.set(true);
+        this.courseConversationsService.isServiceSetup$
+            .pipe(
+                switchMap((isServiceSetUp) => (isServiceSetUp ? this.courseConversationsService.prepareConversationView() : of(false))),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((isServiceSetUp: boolean) => {
+                if (isServiceSetUp) {
+                    // Mount read ownership only after retained metadata is fresh, before replaying the active conversation.
+                    this.courseConversationsService.setConversationViewOpen(true);
+                    this.course.set(this.courseConversationsService.course);
+                    this.initializeCourseWideSearchConfig();
+                    this.initializeSidebarAccordions();
+                    this.setupCommunicationService();
+                    this.subscribeToPosts();
+                    this.subscribeToQueryParameter();
+                    // service is fully set up, now we can subscribe to the respective observables
+                    this.subscribeToActiveConversation();
+                    this.subscribeToIsCodeOfConductAccepted();
+                    this.subscribeToIsCodeOfConductPresented();
+                    this.subscribeToConversationsOfUser();
+                    this.updateQueryParameters();
+                    this.prepareSidebarData();
+                    this.courseConversationsService.checkIsCodeOfConductAccepted(this.course()!);
+                    if (!this.isServiceSetUp()) {
+                        outputToObservable(this.channelActions$)
+                            .pipe(
+                                debounceTime(500),
+                                distinctUntilChanged(
+                                    (prev, curr) =>
+                                        curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
+                                ),
+                                takeUntil(this.ngUnsubscribe),
+                            )
+                            .subscribe((channelAction) => {
+                                this.performChannelAction(channelAction);
+                            });
+                    }
+                    this.isServiceSetUp.set(true);
+                    this.isLoading.set(false);
+                } else {
+                    // The service reported that it is not set up, either because loading the conversations failed or because it
+                    // was disabled. Follow that state instead of keeping the view in its previous one, and stop the loading
+                    // indicator rather than spinning forever. The error itself has already been raised by the service.
+                    this.isServiceSetUp.set(false);
+                    this.isLoading.set(false);
+                }
+
+                this.createChannelFn = (channel: ChannelDTO) => this.courseConversationsService.createChannel(channel);
+            });
+    }
+
+    performChannelAction(channelAction: ChannelAction) {
+        if (this.createChannelFn) {
+            this.createChannelFn(channelAction.channel)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                    },
+                    error: (error) => {
+                        captureException(new Error('Error creating channel', { cause: error }));
+                    },
+                });
+        }
+    }
+
+    subscribeToQueryParameter() {
+        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+            if (queryParams.focusPostId) {
+                this.focusPostId.set(Number(queryParams.focusPostId));
+                this.scrollToAndHighlightPost(this.focusPostId()!);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus.set(queryParams.openThreadOnFocus);
+            }
+
+            // Process messageId BEFORE setting the active conversation.
+            // setActiveConversation synchronously triggers updateQueryParameters (via subscribeToActiveConversation).
+            // postInThread must already be set at that point so that messageId is preserved in the URL;
+            // otherwise updateQueryParameters strips it, causing a cascading navigation loop.
+            if (queryParams.messageId) {
+                const messageId = Number(queryParams.messageId);
+                // Only create a bare post skeleton if we don't already have this post loaded.
+                // Re-setting postInThread to a bare object discards the full post data and
+                // causes updateQueryParameters to strip messageId from the URL.
+                if (this.postInThread()?.id !== messageId) {
+                    const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
+                    this.pendingThreadPostId = messageId;
+                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } });
+                    // Immediately try to resolve the full post from already-loaded posts
+                    this.communicationService.posts.pipe(take(1)).subscribe((posts) => {
+                        if (posts) {
+                            const found = posts.find((post) => post.id === messageId);
+                            if (found) {
+                                this.postInThread.set(found);
+                                this.pendingThreadPostId = undefined;
+                            }
+                        }
+                    });
+                }
+                if (queryParams.focusReplyId) {
+                    this.focusReplyId = Number(queryParams.focusReplyId);
+                    this.scrollToAndHighlightReply(this.focusReplyId);
+                }
+                this.closeSidebarOnMobile();
+            } else {
+                this.postInThread.set(undefined);
+            }
+
+            // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
+            if (queryParams.conversationId) {
+                if (
+                    isNaN(Number(queryParams.conversationId)) &&
+                    Object.values(SavedPostStatus)
+                        .map((status) => status.toString().toLowerCase())
+                        .includes(queryParams.conversationId)
+                ) {
+                    this.selectedSavedPostStatus.set(toSavedPostStatus(queryParams.conversationId));
+                } else {
+                    this.courseConversationsService.setActiveConversation(Number(queryParams.conversationId));
+                    this.closeSidebarOnMobile();
+                }
+            }
+        });
+    }
+
+    onNavigateToPost(post: Posting) {
+        if (post.referencePostId === undefined || post.conversation?.id === undefined) {
+            return;
+        }
+
+        this.focusPostId.set(post.referencePostId);
+        this.openThreadOnFocus.set((post.postingType as PostingType) === PostingType.ANSWER);
+        this.courseConversationsService.setActiveConversation(post.conversation.id);
+    }
+
+    updateQueryParameters() {
+        const queryParams: Record<string, string | number | undefined> = {
+            conversationId: this.activeConversation()?.id ?? this.selectedSavedPostStatus()?.toLowerCase(),
+        };
+        const threadBelongsToActiveConversation = this.postInThread()?.id && this.postInThread()?.conversation?.id === this.activeConversation()?.id;
+        if (threadBelongsToActiveConversation) {
+            queryParams.messageId = this.postInThread()!.id;
+        }
+        void this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams,
+            replaceUrl: true,
+        });
+    }
+
+    /** Release conversation read ownership when leaving Communication while retaining the course-level selection. */
+    ngOnDestroy() {
+        this.courseConversationsService.setConversationViewOpen(false);
+        this.tabReselectionSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
+        this.reloadSidebarEventSubscription?.unsubscribe();
+        this.highlightPostObserver?.disconnect();
+        this.highlightReplyObserver?.disconnect();
+    }
+
+    private subscribeToActiveConversation() {
+        this.courseConversationsService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
+            const previousConversation = this.activeConversation();
+            this.activeConversation.set(conversation);
+
+            if (conversation?.id) {
+                this.lastKnownConversationId = conversation.id;
+            }
+
+            if (this.isMobile() && conversation && previousConversation?.id !== conversation.id) {
+                this.courseSidebarService.closeSidebar();
+            }
+            if (previousConversation?.id !== conversation?.id && this.isEmptyDirectMessage(this.conversationsOfUser().find((cached) => cached.id === previousConversation?.id))) {
+                // The direct message that was just left has no messages. Reload the conversations so that it drops out of the sidebar,
+                // unless the user has written to it in the meantime and the server now reports it with a message date.
+                this.prepareSidebarData();
+            } else if (
+                this.sidebarData() &&
+                conversation?.id &&
+                !this.isListedInSidebar(conversation.id) &&
+                this.conversationsOfUser().some((cached) => cached.id === conversation.id)
+            ) {
+                // The conversation was opened although the sidebar does not list it yet, for example a course-wide channel that was created
+                // after the sidebar was built and opened through the notification about it.
+                this.rebuildSidebarData();
+            }
+            this.updateQueryParameters();
+        });
+    }
+
+    private subscribeToIsCodeOfConductAccepted() {
+        this.courseConversationsService.isCodeOfConductAccepted$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductAccepted: boolean) => {
+            this.isCodeOfConductAccepted.set(isCodeOfConductAccepted);
+        });
+    }
+
+    private subscribeToIsCodeOfConductPresented() {
+        this.courseConversationsService.isCodeOfConductPresented$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductPresented: boolean) => {
+            this.isCodeOfConductPresented.set(isCodeOfConductPresented);
+        });
+    }
+
+    private subscribeToConversationsOfUser() {
+        this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+            this.conversationsOfUser.set(conversations ?? []);
+            const visibleConversations = this.conversationsToShowInSidebar();
+            if (
+                !this.sidebarData() ||
+                visibleConversations.length !== this.renderedConversations.length ||
+                visibleConversations.some((conversation, index) => conversation !== this.renderedConversations[index]) ||
+                this.unreadStateOf(visibleConversations) !== this.renderedUnreadState
+            ) {
+                // Membership events replace DTOs, while message events can change unread state in place.
+                // Rebuild from the accepted cache so new chats and membership changes appear without another request.
+                this.rebuildSidebarData();
+            }
+        });
+    }
+
+    /** Detect count or badge changes in retained DTOs so sidebar state rebuilds without another server request. */
+    private unreadStateOf(conversations: ConversationDTO[]): string {
+        return conversations.map((conversation) => `${conversation.id}:${conversation.unreadMessagesCount ?? 0}:${!!conversation.hasUnreadMessage}`).join(',');
+    }
+
+    acceptCodeOfConduct() {
+        if (this.course()) {
+            this.courseConversationsService.acceptCodeOfConduct(this.course()!);
+        }
+    }
+
+    initializeCourseWideSearchConfig() {
+        this.courseWideSearchConfig = new CourseWideSearchConfig();
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.filterToCourseWide = false;
+        this.courseWideSearchConfig.filterToUnresolved = false;
+        this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
+        this.courseWideSearchConfig.sortingOrder = SortDirection.DESCENDING;
+        this.courseWideSearchConfig.selectedAuthors = [];
+        this.courseWideSearchConfig.selectedConversations = [];
+        this.commitCourseWideSearchConfig();
+    }
+
+    initializeSidebarAccordions() {
+        this.messagingEnabled = isMessagingEnabled(this.course());
+        this.accordionConversationGroups.set(
+            this.messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS,
+        );
+    }
+
+    onSearch(searchInfo: ConversationGlobalSearchConfig) {
+        if (this.isMobile()) {
+            const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations.length > 0 || searchInfo?.selectedAuthors.length > 0;
+            if (isSearchNonEmpty) {
+                this.courseSidebarService.closeSidebar();
+            } else {
+                this.courseSidebarService.openSidebar();
+            }
+        }
+
+        this.selectedSavedPostStatus.set(undefined);
+        this.courseConversationsService.setActiveConversation(undefined);
+        this.activeConversation.set(undefined);
+        this.updateQueryParameters();
+        this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
+        this.courseWideSearch()?.onSearch();
+    }
+
+    onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
+        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation() && !this.previousConversationBeforeSearch) {
+            this.previousConversationBeforeSearch = this.activeConversation();
+        }
+
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
+        this.courseWideSearch()?.onSearchConfigSelectionChange();
+    }
+
+    onClearSearchAndRestorePrevious() {
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.selectedConversations = [];
+        this.courseWideSearchConfig.selectedAuthors = [];
+        this.commitCourseWideSearchConfig();
+
+        if (this.previousConversationBeforeSearch?.id) {
+            this.courseConversationsService.setActiveConversation(this.previousConversationBeforeSearch.id);
+        } else if (this.lastKnownConversationId) {
+            this.courseConversationsService.setActiveConversation(this.lastKnownConversationId);
+        } else {
+            this.selectedSavedPostStatus.set(undefined);
+            this.courseConversationsService.setActiveConversation(undefined);
+            this.activeConversation.set(undefined);
+            this.updateQueryParameters();
+            this.courseWideSearch()?.onSearch();
+        }
+
+        this.previousConversationBeforeSearch = undefined;
+        this.closeSidebarOnMobile();
+    }
+
+    /**
+     * Refreshes and prepares the sidebar data used for rendering channel and chat groups.
+     *
+     * - Forces CourseConversationsService to refresh data (e.g., conversations).
+     * - Maps the latest conversations to sidebar card elements.
+     * - Regroups conversations under their respective accordion sections (e.g., general, exercise).
+     * - Sets the 'recents' section based on the currently open conversation.
+     * - Calls updateSidebarData() to finalize the sidebarData structure.
+     */
+    prepareSidebarData() {
+        this.courseConversationsService.forceRefresh().subscribe({
+            complete: () => this.rebuildSidebarData(),
+            error: () => {
+                // Keep the sidebar as it is. Rebuilding it from a refresh that failed would show a list that does not
+                // match the server, and the error has already been reported by the service.
+            },
+        });
+    }
+
+    /**
+     * Rebuilds the sidebar from the conversations that are already known, without asking the server again.
+     */
+    private rebuildSidebarData() {
+        const conversations = this.conversationsToShowInSidebar();
+        this.renderedConversations = [...conversations];
+        this.renderedUnreadState = this.unreadStateOf(conversations);
+        this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
+        this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));
+        this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
+        this.updateSidebarData();
+    }
+
+    /**
+     * The server also returns the empty direct messages the user created, so that a freshly created chat can be opened.
+     * Such a chat only belongs in the sidebar while it is open; once the user leaves it without writing, it should disappear.
+     */
+    private conversationsToShowInSidebar(): ConversationDTO[] {
+        const activeConversationId = this.activeConversation()?.id;
+        return this.conversationsOfUser().filter((conversation) => conversation.id === activeConversationId || !this.isEmptyDirectMessage(conversation));
+    }
+
+    private isListedInSidebar(conversationId: number): boolean {
+        return !!this.sidebarConversations()?.some((card) => card.id === conversationId);
+    }
+
+    private isEmptyDirectMessage(conversation: ConversationDTO | undefined): boolean {
+        return !!conversation && isOneToOneChatDTO(conversation) && !conversation.lastMessageDate;
+    }
+
+    updateSidebarData() {
+        this.sidebarData.set({
+            groupByCategory: true,
+            sidebarType: 'conversation',
+            storageId: 'conversation',
+            groupedData: this.accordionConversationGroups(),
+            ungroupedData: this.sidebarConversations(),
+            showAccordionLeadingIcon: true,
+            messagingEnabled: isMessagingEnabled(this.course()),
+            canCreateChannel: canCreateChannel(this.course()!),
+        });
+    }
+
+    // NOTE: conversationId can either be a number or a string according to SavedPostStatus (for saved post status)
+    onConversationSelected(conversationId: number | string) {
+        this.closeSidebarOnMobile();
+        this.focusPostId.set(undefined);
+        this.openThreadOnFocus.set(false);
+        if (typeof conversationId === 'string') {
+            if (
+                Object.values(SavedPostStatus)
+                    .map((status) => status.toString().toLowerCase())
+                    .includes(conversationId)
+            ) {
+                this.selectedSavedPostStatus.set(conversationId.toUpperCase() as SavedPostStatus);
+                this.postInThread.set(undefined);
+                this.courseConversationsService.setActiveConversation(undefined);
+                this.activeConversation.set(undefined);
+                this.updateQueryParameters();
+                this.communicationService.resetCachedPosts();
+            }
+        } else {
+            conversationId = +conversationId;
+            this.selectedSavedPostStatus.set(undefined);
+            this.courseConversationsService.setActiveConversation(conversationId);
+        }
+    }
+
+    toggleSidebar() {
+        this.setIsCollapsed(!this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
+    closeSidebarOnMobile() {
+        if (this.isMobile()) {
+            this.courseSidebarService.closeSidebar();
+        }
+    }
+
+    setIsCollapsed(value: boolean) {
+        this.isCollapsed.set(value);
+        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed());
+    }
+
+    openCreateGroupChatDialog() {
+        const ref = this.dialogService.open<GroupChatCreateDialogComponent, UserPublicInfoDTO[]>(
+            GroupChatCreateDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.createGroupChat.title'),
+                autoFocus: 'first-tabbable',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
+            .pipe(
+                filter((result: UserPublicInfoDTO[] | undefined) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((chatPartners: UserPublicInfoDTO[]) => {
+                this.courseConversationsService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                    },
+                    error: () => {
+                        // The group chat itself was created, only reloading the conversations failed. Leave the sidebar as
+                        // it is rather than rebuilding it from a list that never arrived; the service reported the error.
+                    },
+                });
+            });
+    }
+
+    openCreateOneToOneChatDialog() {
+        const ref = this.dialogService.open<OneToOneChatCreateDialogComponent, UserPublicInfoDTO>(
+            OneToOneChatCreateDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.createOneToOneChat.title'),
+                autoFocus: 'first-tabbable',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
+            .pipe(
+                filter((result: UserPublicInfoDTO | undefined) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((chatPartner: UserPublicInfoDTO) => {
+                if (chatPartner?.login) {
+                    this.courseConversationsService.createOneToOneChat(chatPartner.login).subscribe({
+                        complete: () => {
+                            this.prepareSidebarData();
+                        },
+                        error: () => {
+                            // see above, the chat exists and only the reload of the conversations failed
+                        },
+                    });
+                }
+            });
+    }
+
+    /**
+     * Opens the create channel dialog.
+     * Emits a create action for the given channel on confirmation.
+     */
+    openCreateChannelDialog() {
+        const ref = this.dialogService.open<ChannelsCreateDialogComponent, ChannelDTO>(
+            ChannelsCreateDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel'),
+                autoFocus: 'first-tabbable',
+                // The form is tall; the small preset wraps its texts so much that the create button leaves a 900px high window.
+                size: 'medium',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
+            .pipe(
+                filter((result: ChannelDTO | undefined) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((channel: ChannelDTO) => {
+                this.channelActions$.emit({ action: 'create', channel });
+            });
+    }
+
+    markAllChannelAsRead() {
+        this.courseConversationsService.markAllChannelsAsRead(this.course()).subscribe({
+            complete: () => {
+                this.courseConversationsService.forceRefresh().subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                        this.closeSidebarOnMobile();
+                    },
+                    // the service already reported the failure, the sidebar keeps its current contents
+                    error: () => {},
+                });
+            },
+        });
+    }
+
+    openChannelOverviewDialog() {
+        const subType = undefined;
+        const ref = this.dialogService.open<ChannelsOverviewDialogComponent, [ChannelDTO | undefined, boolean]>(
+            ChannelsOverviewDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.channelOverview.title', { courseTitle: this.course()?.title }),
+                data: {
+                    course: this.course(),
+                    createChannelFn: subType === ChannelSubType.GENERAL ? this.courseConversationsService.createChannel : undefined,
+                    channelSubType: subType,
+                },
+            }),
+        );
+        ref.onClose
+            .pipe(
+                filter((result): result is [ChannelDTO | undefined, boolean] => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((result) => {
+                const [newActiveConversation, isModificationPerformed] = result;
+                if (isModificationPerformed) {
+                    this.courseConversationsService.forceRefresh(!newActiveConversation, true).subscribe({
+                        complete: () => {
+                            if (newActiveConversation) {
+                                this.courseConversationsService.setActiveConversation(newActiveConversation);
+                                this.closeSidebarOnMobile();
+                            }
+                        },
+                        error: () => {
+                            // Do not open the conversation after a failed refresh. It is not part of the cached list yet,
+                            // so activating it would only warn that the user is not a member of it.
+                        },
+                    });
+                } else {
+                    if (newActiveConversation) {
+                        this.courseConversationsService.setActiveConversation(newActiveConversation);
+                        this.closeSidebarOnMobile();
+                    }
+                }
+                this.prepareSidebarData();
+            });
+    }
+
+    triggerSearchInConversation() {
+        if (this.globalSearchComponent() && this.activeConversation()) {
+            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation());
+        }
+    }
+
+    openThread(postToOpen: Post | undefined) {
+        this.selectionState.setOpenPostId(postToOpen?.id);
+        this.postInThread.set(postToOpen);
+        this.pendingThreadPostId = undefined;
+    }
+
+    closeThread() {
+        this.postInThread.set(undefined);
+        this.pendingThreadPostId = undefined;
+        this.updateQueryParameters();
+    }
+
+    private scrollToAndHighlightPost(postId: number): void {
+        const elementId = 'item-' + postId;
+
+        const tryHighlight = () => {
+            const host = document.getElementById(elementId);
+            const postDiv = host?.querySelector('.post');
+            if (postDiv) {
+                postDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postDiv.classList.add('highlight-post');
+                setTimeout(() => postDiv.classList.remove('highlight-post'), 2000);
+                return true;
+            }
+            return false;
+        };
+
+        if (tryHighlight()) return;
+
+        this.highlightPostObserver?.disconnect();
+        const observer = new MutationObserver(() => {
+            if (tryHighlight()) {
+                observer.disconnect();
+            }
+        });
+        this.highlightPostObserver = observer;
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 5000);
+    }
+
+    private scrollToAndHighlightReply(replyId: number): void {
+        const elementId = 'item-' + replyId;
+
+        // Check if element already exists
+        const existing = document.getElementById(elementId);
+        if (existing) {
+            this.highlightElement(existing);
+            return;
+        }
+
+        // Watch for the element to appear in the DOM
+        this.highlightReplyObserver?.disconnect();
+        const observer = new MutationObserver(() => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                observer.disconnect();
+                this.highlightElement(element);
+            }
+        });
+        this.highlightReplyObserver = observer;
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Clean up after 5 seconds if element never appears
+        setTimeout(() => {
+            observer.disconnect();
+            this.focusReplyId = undefined;
+        }, 5000);
+    }
+
+    private highlightElement(element: HTMLElement): void {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('highlight-reply');
+        setTimeout(() => element.classList.remove('highlight-reply'), 2000);
+        this.focusReplyId = undefined;
+    }
+
+    /**
+     * Determines which post to focus and whether to open thread view,
+     * then sets the active conversation accordingly.
+     *
+     * @param post The post or answer post being navigated to
+     */
+    onTriggerNavigateToPost(post: Posting) {
+        let id = (post as Post)?.conversation?.id;
+        this.focusPostId.set(post.id);
+        this.openThreadOnFocus.set(false);
+        if (post.id === undefined) {
+            return;
+        } else if ((post as Post)?.conversation?.id === undefined) {
+            this.openThreadOnFocus.set(true);
+            id = (post as AnswerPost)?.post?.conversation?.id;
+            this.focusPostId.set((post as AnswerPost)?.post?.id);
+        }
+
+        this.courseConversationsService.setActiveConversation(id);
+    }
+    async enableCommunication(withMessaging = true) {
+        const id = this.course()?.id;
+        if (id) {
+            try {
+                await firstValueFrom(this.communicationService.enable(id, withMessaging));
+                const updatedCourse = cloneWith(this.course()!, {
+                    courseInformationSharingConfiguration: withMessaging
+                        ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+                        : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                });
+                this.course.set(updatedCourse);
+
+                this.eventManager.broadcast({
+                    name: 'courseModification',
+                    content: 'Changed course communication settings',
+                });
+            } catch (error) {
+                this.alertService.error('artemisApp.communicationDisabled.enableError');
+            }
+        }
+    }
+}

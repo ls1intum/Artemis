@@ -1,0 +1,63 @@
+<div class="mb-6!">
+    <div class="flex items-center gap-2 mb-4!">
+        <h5 id="build-queue-overview" class="mb-0" jhiTranslate="artemisApp.buildQueue.statistics.title"></h5>
+        @if (displaySpanSelector()) {
+            <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
+            <tumaet-ui-select-button
+                class="ms-2"
+                [options]="spanOptions"
+                [ngModel]="currentSpan()"
+                (ngModelChange)="onTabChange($event)"
+                optionValue="value"
+                size="small"
+                [allowEmpty]="false"
+                [itemTemplate]="spanItem"
+            />
+            <ng-template #spanItem let-option>{{ option.label | artemisTranslate }}</ng-template>
+        }
+    </div>
+    <div class="flex items-center flex-wrap gap-4!">
+        <div class="chart-container">
+            <tumaet-ui-doughnut-chart
+                class="h-20 w-20"
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig"
+                [ariaLabel]="'artemisApp.buildQueue.statistics.title' | artemisTranslate"
+            />
+        </div>
+        <div class="flex flex-wrap gap-2 stats-container">
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().totalBuilds }}</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
+                <span class="stats-value">{{ buildJobStatistics().successfulBuilds }}</span>
+                <span class="stats-percentage">({{ successfulBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().failedBuilds }}</span>
+                <span class="stats-percentage">({{ failedBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().cancelledBuilds }}</span>
+                <span class="stats-percentage">({{ cancelledBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().timeOutBuilds }}</span>
+                <span class="stats-percentage">({{ timeoutBuildsPercentage() }})</span>
+            </div>
+            @if (displayMissingBuilds()) {
+                <div class="stats-item">
+                    <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
+                    <span class="stats-value">{{ buildJobStatistics().missingBuilds }}</span>
+                    <span class="stats-percentage">({{ missingBuildsPercentage() }})</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,404 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.AIWORKER_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+
+/**
+ * Helper class for property configuration, in particular for determining conditions
+ * whether services should be enabled or not.
+ * This bridges the gap between the condition classes and the actual property values.
+ */
+public class ArtemisConfigHelper {
+
+    /**
+     * Check if the Passkey feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Passkey feature is enabled, false otherwise
+     */
+    public boolean isPasskeyEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(PASSKEY_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if passkey is required for administrator features.
+     * This only applies when passkey is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if passkey is required for administrator features, false otherwise
+     */
+    public boolean isPasskeyRequiredForAdmin(Environment environment) {
+        return environment.getProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
+     * Check if the Sharing feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Sharing feature is enabled, false otherwise
+     */
+    public boolean isSharingEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(SHARING_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Atlas module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Atlas module is enabled, false otherwise
+     */
+    public boolean isAtlasEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the LLM-backed part of Atlas is enabled: the chat agent, the autonomous competency orchestrator, and the
+     * tool surfaces they call. Requires the Atlas module itself, since it operates on competencies.
+     *
+     * @param environment the Spring environment
+     * @return true if the AtlasLLM submodule is enabled, false otherwise
+     */
+    public boolean isAtlasLLMEnabled(Environment environment) {
+        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASLLM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Hyperion module is enabled on a core node. Worker-only nodes cannot load its server services.
+     *
+     * @param environment the Spring environment
+     * @return true if the Hyperion module is enabled, false otherwise
+     */
+    public boolean isHyperionEnabled(Environment environment) {
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether core may coordinate opt-in generation using LocalVC and LocalCI
+     */
+    public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
+        return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether this core node coordinates AI Workers for generation or an explicitly enabled workload
+     */
+    public boolean isAiWorkerEnabled(Environment environment) {
+        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
+                && (environment.getProperty(AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                        || (environment.getProperty(HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false) && isHyperionExerciseGenerationEnabled(environment)));
+    }
+
+    /**
+     * Check if the Deimos malicious participation analysis module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Deimos module is enabled, false otherwise
+     */
+    public boolean isDeimosEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(DEIMOS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Iris module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Iris module is enabled, false otherwise
+     */
+    public boolean isIrisEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(IRIS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the exam module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the exam module is enabled, false otherwise
+     */
+    public boolean isExamEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(EXAM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Plagiarism module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Plagiarism module is enabled, false otherwise
+     */
+    public boolean isPlagiarismEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the text module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the text module is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the modeling module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the modeling module is enabled, false otherwise
+     */
+    public boolean isModelingEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.MODELING_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the file upload module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the file upload module is enabled, false otherwise
+     */
+    public boolean isFileUploadEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the lecture module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the lecture module is enabled, false otherwise
+     */
+    public boolean isLectureEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.LECTURE_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the tutorial group feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the tutorial group feature is enabled, false otherwise
+     */
+    public boolean isTutorialGroupEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the LTI module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LTI_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Athena module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Athena module is enabled, false otherwise
+     */
+    public boolean isAthenaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(ATHENA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Apollon module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Apollon module is enabled, false otherwise
+     */
+    public boolean isApollonEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(APOLLON_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if LDAP-based user synchronization is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if LDAP is enabled, false otherwise
+     */
+    public boolean isLdapEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LDAP_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if SAML2-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if SAML2 is enabled, false otherwise
+     */
+    public boolean isSaml2Enabled(Environment environment) {
+        return getPropertyOrExitArtemis(SAML2_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if OIDC-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if OIDC is enabled, false otherwise
+     */
+    public boolean isOIDCEnabled(Environment environment) {
+        return !isWorkerOnly(environment) && environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
+     * Check if the Theia module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(THEIA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Weaviate integration is enabled.
+     * Defaults to false if not configured, as this is a development feature.
+     *
+     * @param environment the Spring environment
+     * @return true if the Weaviate integration is enabled, false otherwise
+     */
+    public boolean isWeaviateEnabled(Environment environment) {
+        // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
+        return !isWorkerOnly(environment) && environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
+     * Gets the list of all enabled module features based on configuration.
+     *
+     * @param environment the Spring environment
+     * @return list of enabled feature names
+     */
+    public List<String> getEnabledFeatures(Environment environment) {
+        List<String> enabledFeatures = new ArrayList<>();
+
+        if (isAtlasEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
+        }
+        if (isAtlasLLMEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASLLM);
+        }
+        if (isHyperionEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isHyperionExerciseGenerationEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+        }
+        if (isAiWorkerEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AIWORKER);
+        }
+        if (isDeimosEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
+        }
+        if (isIrisEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
+        }
+        if (isExamEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_EXAM);
+        }
+        if (isPlagiarismEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
+        }
+        if (isTextExerciseEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
+        if (isModelingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_MODELING);
+        }
+        if (isFileUploadEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
+        }
+        if (isLectureEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LECTURE);
+        }
+        if (isTutorialGroupEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
+        }
+        if (isPasskeyEnabled(environment)) {
+            enabledFeatures.add(Constants.FEATURE_PASSKEY);
+            if (isPasskeyRequiredForAdmin(environment)) {
+                enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+            }
+        }
+        if (isSharingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
+        }
+        if (isLtiEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+        if (isAthenaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATHENA);
+        }
+        if (isApollonEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_APOLLON);
+        }
+        if (isLdapEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LDAP);
+        }
+        if (isSaml2Enabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SAML2);
+        }
+        if (isTheiaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
+        }
+        if (isWeaviateEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
+        }
+        if (isAgentAccessEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AGENT_ACCESS);
+        }
+
+        return enabledFeatures;
+    }
+
+    /**
+     * Check if agent access (personal access tokens and the endpoints built on them) is enabled. Off unless explicitly configured.
+     *
+     * @param environment the Spring environment
+     * @return true if {@code artemis.agent-access.enabled} is true on a node that serves the core application
+     */
+    public boolean isAgentAccessEnabled(Environment environment) {
+        return !isWorkerOnly(environment) && Boolean.TRUE.equals(environment.getProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, Boolean.class));
+    }
+
+    private boolean isWorkerOnly(Environment environment) {
+        return environment.matchesProfiles(Constants.PROFILE_AIWORKER + " & !" + PROFILE_CORE);
+    }
+
+    private boolean getPropertyOrExitArtemis(String key, Environment environment) {
+        if (isWorkerOnly(environment)) {
+            return false;
+        }
+        Boolean value = environment.getProperty(key, Boolean.class);
+        if (value == null) {
+            throw new RuntimeException(
+                    "Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false".formatted(key));
+        }
+        return value;
+    }
+}

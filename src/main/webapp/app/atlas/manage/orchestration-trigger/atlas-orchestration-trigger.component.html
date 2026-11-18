@@ -1,0 +1,20 @@
+@if (orchestrationAvailable) {
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        variant="text"
+        [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
+        (click)="triggerAtlasOrchestrator()"
+        [disabled]="orchestrationRunning()"
+        [tumAetUiTooltip]="'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate"
+        [attr.aria-label]="'artemisApp.atlasOrchestrator.button' | artemisTranslate"
+        [class]="buttonClass()"
+    >
+        <fa-icon [icon]="faWandMagicSparkles" />
+        @if (showLabel()) {
+            <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+        }
+    </button>
+    <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />
+}

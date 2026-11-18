@@ -1,0 +1,590 @@
+import { Routes } from '@angular/router';
+import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
+import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
+import { AthenaGuard } from 'app/course/manage/services/athena-guard.service';
+import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
+import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
+import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
+
+/** Preloading uses the least-privileged child authority; each child still checks access during navigation. */
+function preloadTutorRoutes(loadChildren: NonNullable<Route['loadChildren']>): Route {
+    return { path: '', loadChildren, data: { authorities: IS_AT_LEAST_TUTOR } };
+}
+
+/**
+ * Matches `presentations`, `presentations/:presentationId` and `presentations/:presentationId/exercises/:exerciseId`.
+ * One route config for all three shapes lets Angular reuse the management component and its sidebar when the selected presentation
+ * changes. With one config per shape, moving between the overview, a presentation and an exercise-linked presentation would destroy
+ * and recreate the component, reload everything and reset the search, filters and paging.
+ */
+export const presentationAssessmentUrlMatcher: UrlMatcher = (segments): UrlMatchResult | null => {
+    if (segments[0]?.path !== 'presentations') {
+        return null;
+    }
+    switch (segments.length) {
+        case 1:
+            return { consumed: segments };
+        case 2:
+            return { consumed: segments, posParams: { presentationId: segments[1] } };
+        case 4:
+            return segments[2].path === 'exercises' ? { consumed: segments, posParams: { presentationId: segments[1], exerciseId: segments[3] } } : null;
+        default:
+            return null;
+    }
+};
+
+function presentationAssessmentManagementRoute(): Route {
+    return {
+        matcher: presentationAssessmentUrlMatcher,
+        loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_TUTOR,
+            pageTitle: 'artemisApp.presentationAssessment.home.title',
+            transparentCourseBody: true,
+        },
+        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
+    };
+}
+
+export const courseManagementRoutes: Routes = [
+    {
+        path: 'new',
+        loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
+        data: {
+            authorities: IS_AT_LEAST_ADMIN,
+            pageTitle: 'global.generic.create',
+            // The page renders its own shell (title bar above a scrolling card), like the course management container
+            // below, so it must not be wrapped in the app-level card as well.
+            usesModuleBackground: false,
+        },
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
+    },
+    {
+        path: ':courseId/onboarding',
+        loadComponent: () => import('./onboarding/course-onboarding.component').then((m) => m.CourseOnboardingComponent),
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.course.onboarding.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: '',
+        loadComponent: () => import('app/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
+        // The container renders a full-bleed layout (its own sidebar, title bar, and module-bg content box), so it must
+        // NOT be wrapped in the app-level module-background card (see app.component.html). Declare this explicitly so it
+        // overrides the parent `course-management` route's `usesModuleBackground: true`. Angular 22 inherits parent
+        // route data down to the deepest activated child, so relying on the flag's
+        // absence — as this did before — no longer keeps the container full-bleed and left it shifted/cropped (#13189).
+        data: {
+            usesModuleBackground: false,
+        },
+        children: [
+            {
+                path: ':courseId/exercises/:exerciseId/teams',
+                loadChildren: () => import('app/exercise/team/team.route').then((m) => m.teamManagementRoute),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
+            },
+            {
+                path: ':courseId',
+                loadComponent: () => import('./detail/course-detail.component').then((m) => m.CourseDetailComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.course.overview',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/grading',
+                loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.course.gradingSystem',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/iris-settings',
+                loadComponent: () => import('app/iris/manage/settings/iris-settings-update/iris-settings-update.component').then((m) => m.IrisSettingsUpdateComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.iris.settings.title.course',
+                },
+                canActivate: [UserRouteAccessService, IrisGuard],
+                canDeactivate: [PendingChangesGuard],
+            },
+            {
+                path: ':courseId/smart-quizzes',
+                loadComponent: () => import('app/hyperion/manage/quiz-question-pool/quiz-question-pool.component').then((m) => m.QuizQuestionPoolComponent),
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'artemisApp.hyperion.quizQuestionPool.title',
+                },
+                canActivate: [UserRouteAccessService, HyperionGuard],
+            },
+            {
+                path: ':courseId/athena-settings',
+                loadComponent: () => import('app/course/manage/athena-settings-update/athena-settings-update.component').then((m) => m.AthenaSettingsUpdateComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.course.athenaConfig.settingsPage.title',
+                },
+                canActivate: [UserRouteAccessService, AthenaGuard],
+            },
+            {
+                path: ':courseId/lectures',
+                loadChildren: () => import('app/lecture/manage/lecture.route').then((m) => m.lectureRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the lecture routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                },
+            },
+            {
+                path: ':courseId/tutorial-groups',
+                resolve: {
+                    course: TutorialGroupManagementCourseResolver,
+                },
+                loadChildren: () => import('app/tutorialgroup/manage/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the tutorial-group routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
+            },
+            {
+                path: ':courseId/assessment-dashboard/:exerciseId',
+                loadComponent: () =>
+                    import('app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component').then(
+                        (m) => m.ExerciseAssessmentDashboardComponent,
+                    ),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/assessment-dashboard',
+                loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.assessmentDashboard.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/scores',
+                loadComponent: () => import('app/course/manage/course-scores/course-scores.component').then((m) => m.CourseScoresComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.instructorDashboard.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/plagiarism-cases',
+                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the plagiarism routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                },
+            },
+            {
+                path: ':courseId/exams',
+                loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
+                // Preload-only authorities (no canActivate): least-privileged authority the exam management routes require, so eligible staff warm this lazy subtree while students stay pruned.
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
+            },
+            {
+                path: ':courseId/tutorial-groups-checklist',
+                loadComponent: () =>
+                    import('app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component').then((m) => m.TutorialGroupsChecklistComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.pages.checklist.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/create-tutorial-groups-configuration',
+                loadComponent: () =>
+                    import('app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component').then(
+                        (m) => m.CreateTutorialGroupsConfigurationComponent,
+                    ),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/lti-configuration',
+                loadComponent: () => import('app/course/manage/course-lti-configuration/course-lti-configuration.component').then((m) => m.CourseLtiConfigurationComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.lti.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/gocast-binding',
+                loadComponent: () => import('app/videosource/gocast/gocast-course-binding-page.component').then((m) => m.GocastCourseBindingPageComponent),
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.gocast.title',
+                },
+                canActivate: [UserRouteAccessService, GocastGuard],
+            },
+            {
+                path: ':courseId/lti-configuration/edit',
+                loadComponent: () =>
+                    import('app/course/manage/course-lti-configuration/edit-course-lti-configuration.component').then((m) => m.EditCourseLtiConfigurationComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                    pageTitle: 'artemisApp.lti.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
+                path: ':courseId',
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                children: [
+                    {
+                        path: 'exercises',
+                        loadComponent: () => import('app/course/manage/exercises/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                            pageTitle: 'artemisApp.course.exercises',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'communication',
+                        loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                            pageTitle: 'overview.communication',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'course-statistics',
+                        loadComponent: () => import('./statistics/course-management-statistics.component').then((m) => m.CourseManagementStatisticsComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                            pageTitle: 'artemisApp.courseStatistics.statistics',
+                            breadcrumbLabelVariable: '',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'settings',
+                        loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'overview.settings',
+                        },
+                        resolve: {
+                            course: CourseManagementResolve,
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        // Legacy redirect: keep old "groups/..." bookmarks working
+                        path: 'groups/:courseGroup',
+                        redirectTo: 'members/:courseGroup',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'members/:courseRoleSlug',
+                        loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.userManagement.groups',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'ratings',
+                        loadComponent: () => import('app/assessment/manage/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.ratingList.pageTitle',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    presentationAssessmentManagementRoute(),
+                    {
+                        path: 'competency-management',
+                        loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_EDITOR,
+                            pageTitle: 'artemisApp.competency.manage.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    preloadTutorRoutes(() => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute)),
+                    preloadTutorRoutes(() => import('app/assessment/manage/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute)),
+                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work.
+                    {
+                        path: 'text-exercises',
+                        pathMatch: 'full',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'modeling-exercises',
+                        pathMatch: 'full',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'file-upload-exercises',
+                        pathMatch: 'full',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'quiz-exercises',
+                        pathMatch: 'full',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'programming-exercises',
+                        pathMatch: 'full',
+                        redirectTo: 'exercises',
+                    },
+                    preloadTutorRoutes(() => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute)),
+                    preloadTutorRoutes(() => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute)),
+                    preloadTutorRoutes(() => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/modeling/manage/modeling-exercise.route').then((m) => m.routes)),
+                    preloadTutorRoutes(() => import('app/exercise/participation/participation.route').then((m) => m.routes)),
+                    {
+                        // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
+                        path: 'competency-management',
+                        data: {
+                            pageTitle: 'artemisApp.competency.manage.title',
+                        },
+                        children: [
+                            {
+                                path: 'create',
+                                loadComponent: () => import('app/atlas/manage/create/create-competency.component').then((m) => m.CreateCompetencyComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.competency.create.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: ':competencyId/edit',
+                                loadComponent: () => import('app/atlas/manage/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.competency.edit.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'import',
+                                loadComponent: () => import('app/atlas/manage/import/import-competencies.component').then((m) => m.ImportCompetenciesComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.competency.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                            {
+                                path: 'import-standardized',
+                                loadComponent: () =>
+                                    import('app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component').then(
+                                        (m) => m.CourseImportStandardizedCompetenciesComponent,
+                                    ),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.competency.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                            {
+                                path: 'generate',
+                                loadComponent: () => import('app/atlas/manage/generate-competencies/generate-competencies.component').then((m) => m.GenerateCompetenciesComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.competency.generate.title',
+                                },
+                                canActivate: [UserRouteAccessService, IrisGuard],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                        ],
+                    },
+                    {
+                        path: 'prerequisite-management',
+                        redirectTo: 'competency-management',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'prerequisite-management',
+                        data: {
+                            pageTitle: 'artemisApp.prerequisite.manage.title',
+                        },
+                        children: [
+                            {
+                                path: 'create',
+                                loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.prerequisite.create.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: ':prerequisiteId/edit',
+                                loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.prerequisite.edit.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'import',
+                                loadComponent: () => import('app/atlas/manage/import/import-prerequisites.component').then((m) => m.ImportPrerequisitesComponent),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.prerequisite.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                            {
+                                path: 'import-standardized',
+                                loadComponent: () =>
+                                    import('app/atlas/manage/import-standardized-competencies/course-import-standardized-prerequisites.component').then(
+                                        (m) => m.CourseImportStandardizedPrerequisitesComponent,
+                                    ),
+                                data: {
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
+                                    pageTitle: 'artemisApp.prerequisite.import.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
+                            },
+                        ],
+                    },
+                    {
+                        path: 'learning-path-management',
+                        loadComponent: () =>
+                            import('app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component').then((m) => m.LearningPathInstructorPageComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'build-overview',
+                        loadComponent: () => import('app/localci/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.buildQueue.title',
+                        },
+                        canActivate: [UserRouteAccessService, LocalCIGuard],
+                    },
+                    {
+                        path: 'build-overview/:jobId/job-details',
+                        loadComponent: () => import('app/localci/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.buildQueue.detail.title',
+                        },
+                        canActivate: [UserRouteAccessService, LocalCIGuard],
+                    },
+                    {
+                        path: 'faqs',
+                        children: [
+                            {
+                                path: '',
+                                loadComponent: () => import('app/communication/faq/faq.component').then((m) => m.FaqComponent),
+                                resolve: {
+                                    course: CourseManagementResolve,
+                                },
+                                data: {
+                                    authorities: IS_AT_LEAST_TUTOR,
+                                    pageTitle: 'artemisApp.faq.home.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                // Create a new path without a component defined to prevent the FAQ from being always rendered
+                                path: '',
+                                resolve: {
+                                    course: CourseManagementResolve,
+                                },
+                                children: [
+                                    {
+                                        path: 'new',
+                                        loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
+                                        data: {
+                                            authorities: IS_AT_LEAST_TUTOR,
+                                            pageTitle: 'global.generic.create',
+                                        },
+                                        canActivate: [UserRouteAccessService],
+                                    },
+                                    {
+                                        path: ':faqId',
+                                        resolve: {
+                                            faq: FaqResolve,
+                                        },
+                                        children: [
+                                            {
+                                                path: 'edit',
+                                                loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
+                                                data: {
+                                                    authorities: IS_AT_LEAST_TUTOR,
+                                                    pageTitle: 'global.generic.edit',
+                                                },
+                                                canActivate: [UserRouteAccessService],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    },
+];

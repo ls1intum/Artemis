@@ -1,0 +1,97 @@
+id;course_id;creation_date;discriminator;name;description;is_public;is_course_wide;is_announcement;is_archived;creator_id
+90001;9001;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90002;9001;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90003;9001;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90004;9001;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90005;9002;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90006;9002;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90007;9002;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90008;9002;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90009;9003;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90010;9003;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90011;9003;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90012;9003;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90013;9004;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90014;9004;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90015;9004;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90016;9004;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90017;9005;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90018;9005;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90019;9005;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90020;9005;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90021;9006;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90022;9006;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90023;9006;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90024;9006;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90025;9007;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90026;9007;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90027;9007;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90028;9007;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90029;9008;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90030;9008;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90031;9008;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90032;9008;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90033;9009;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90034;9009;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90035;9009;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90036;9009;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90037;9010;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90038;9010;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90039;9010;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90040;9010;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90041;9011;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90042;9011;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90043;9011;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90044;9011;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90045;9012;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90046;9012;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90047;9012;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90048;9012;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90049;9013;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90050;9013;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90051;9013;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90052;9013;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90053;9014;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90054;9014;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90055;9014;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90056;9014;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90057;9015;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90058;9015;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90059;9015;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90060;9015;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90061;9016;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90062;9016;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90063;9016;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90064;9016;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90069;9018;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90070;9018;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90071;9018;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90072;9018;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90073;9019;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90074;9019;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90075;9019;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90076;9019;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90077;9020;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90078;9020;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90079;9020;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90080;9020;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90081;9021;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90082;9021;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90083;9021;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90084;9021;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90085;9022;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90086;9022;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90087;9022;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90088;9022;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90089;9023;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90090;9023;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90091;9023;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90092;9023;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90093;9024;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90094;9024;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90095;9024;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90096;9024;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100
+90097;9025;2026-01-01T00:00:00.000;C;announcement;Announcements;true;true;true;false;100
+90098;9025;2026-01-01T00:00:00.000;C;organization;Organization;true;true;false;false;100
+90099;9025;2026-01-01T00:00:00.000;C;random;Random;true;true;false;false;100
+90100;9025;2026-01-01T00:00:00.000;C;tech-support;Technical Support;true;true;false;false;100

@@ -1,0 +1,53 @@
+<div>
+    <h1>
+        {{ titleKey() | artemisTranslate }}
+    </h1>
+    <p>
+        {{ description() | artemisTranslate }}
+    </p>
+    <div class="column d-flex justify-content-center align-content-center">
+        @if (!downloadMode()) {
+            <button
+                type="button"
+                jhiDataExportRequestButton
+                [adminDialog]="isAdmin()"
+                [expectedLogin]="currentLogin()!"
+                [dialogError]="dialogError$"
+                (dataExportRequest)="requestExport()"
+                (dataExportRequestForAnotherUser)="requestExportForAnotherUser($event)"
+                class="mb-1"
+                [disabled]="!canRequestDataExport() && !isAdmin()"
+            ></button>
+        }
+        @if (canDownload()) {
+            <jhi-button
+                id="download-data-export-btn"
+                [btnType]="ButtonType.SECONDARY"
+                [btnSize]="ButtonSize.LARGE"
+                [disabled]="!canDownload()"
+                [tooltip]="'artemisApp.dataExport.download'"
+                [title]="'artemisApp.dataExport.download'"
+                (onClick)="downloadDataExport()"
+            />
+        }
+    </div>
+    <div class="mt-3 d-flex-column align-content-center">
+        @if (dataExport().createdDate && state() !== DataExportState.FAILED) {
+            <p>
+                <span jhiTranslate="artemisApp.dataExport.lastRequestDate"></span>
+                <span class="bold">{{ dataExport().createdDate | artemisDate: 'long-date' }}</span>
+            </p>
+        }
+        @if (dataExport().nextRequestDate && (state() === DataExportState.DELETED || state() === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport()) {
+            <p>
+                <span jhiTranslate="artemisApp.dataExport.nextRequestDate"></span>
+                <span class="bold">{{ dataExport().nextRequestDate | artemisDate: 'long-date' }}</span>
+            </p>
+        }
+        @if (state() === DataExportState.REQUESTED || state() === DataExportState.IN_CREATION) {
+            <p>
+                <span jhiTranslate="artemisApp.dataExport.isBeingCreated"></span>
+            </p>
+        }
+    </div>
+</div>

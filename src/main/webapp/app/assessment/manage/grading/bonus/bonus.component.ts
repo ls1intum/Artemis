@@ -1,0 +1,423 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { catchError, finalize, tap } from 'rxjs/operators';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { Subject, forkJoin, of } from 'rxjs';
+import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+
+export enum BonusStrategyOption {
+    GRADES,
+    POINTS,
+}
+
+export enum BonusStrategyDiscreteness {
+    DISCRETE,
+    CONTINUOUS,
+}
+
+@Component({
+    selector: 'jhi-bonus',
+    templateUrl: './bonus.component.html',
+    styleUrls: ['./bonus.component.scss'],
+    imports: [
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        ModePickerComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        DeleteButtonDirective,
+        FontAwesomeModule,
+        TumAetUiTooltipDirective,
+        FormsModule,
+        CommonModule,
+        HelpIconComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonDirective,
+        PointsInputComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
+    ],
+})
+export class BonusComponent implements OnInit {
+    private bonusService = inject(BonusService);
+    private gradingService = inject(GradingService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+
+    readonly CALCULATION_PLUS = 1;
+    readonly CALCULATION_MINUS = -1;
+
+    // Icons
+    readonly faSave = faSave;
+    readonly faPlus = faPlus;
+    readonly faTrash = faTrash;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faQuestionCircle = faQuestionCircle;
+
+    readonly ButtonSize = ButtonSize;
+    readonly GradeEditMode = GradeEditMode;
+    readonly BonusStrategyOption = BonusStrategyOption;
+    readonly BonusStrategy = BonusStrategy;
+
+    readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
+        value: bonusStrategyOption,
+        labelKey: 'artemisApp.bonus.bonusStrategy.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
+    }));
+
+    readonly calculationSigns = [
+        {
+            value: this.CALCULATION_MINUS,
+            label: '−',
+        },
+        {
+            value: this.CALCULATION_PLUS,
+            label: '+',
+        },
+    ];
+
+    readonly sourceGradingScales = signal<GradingScale[]>([]);
+    readonly sourceGradingScaleOptions = computed(() => this.sourceGradingScales().map((scale) => ({ label: this.getGradingScaleTitle(scale) ?? '', value: scale })));
+
+    readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
+
+    readonly isLoading = signal(false);
+    private courseId!: number; // set in ngOnInit() from route params
+    private examId!: number; // set in ngOnInit() from route params
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    currentBonusStrategyOption?: BonusStrategyOption;
+    currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
+
+    readonly examples = signal<BonusExample[]>([]);
+    dynamicExample = new BonusExample(0, 0);
+
+    /**
+     * Backing signal for {@link bonus}. The template binds `[(ngModel)]="bonus.sourceGradingScale"` (a deep two-way
+     * target), so {@link bonus} is exposed as a getter/setter facade over this signal rather than a bare signal: the
+     * template keeps writing `bonus.…` while reads stay reactive. Deep mutations (e.g. `this.bonus.id = …`) must be
+     * followed by {@link commitBonus} so dependent template bindings re-render under zoneless.
+     */
+    private readonly _bonus = signal<Bonus>(new Bonus(), { equal: () => false });
+    get bonus(): Bonus {
+        return this._bonus();
+    }
+    set bonus(value: Bonus) {
+        this._bonus.set(value);
+    }
+    /** Rebuilds the bonus signal reference after an in-place mutation so dependent template bindings re-render under zoneless. */
+    private commitBonus(): void {
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._bonus.set(this._bonus());
+    }
+    readonly hasBonusStrategyWeightMismatch = signal(false);
+
+    private state: SearchTermPageableSearch = {
+        page: 1,
+        pageSize: 100,
+        searchTerm: '',
+        sortingOrder: SortingOrder.DESCENDING,
+        sortedColumn: 'ID',
+    };
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+
+        const paramMap = this.route.snapshot.paramMap;
+        this.courseId = Number(paramMap.get('courseId'));
+        this.examId = Number(paramMap.get('examId'));
+
+        forkJoin([
+            this.bonusService.findBonusForExam(this.courseId, this.examId).pipe(
+                tap((bonusResponse) => {
+                    this.setBonus(bonusResponse.body || new Bonus());
+                }),
+                catchError((error) => {
+                    if (error?.status === 404) {
+                        return of(undefined);
+                    }
+                    throw error;
+                }),
+            ),
+            this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
+                tap((gradingScalesDto) => {
+                    this.sourceGradingScales.set(
+                        gradingScalesDto.body?.resultsOnPage.map((dto) => {
+                            const scale = toEntity(dto);
+                            // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
+                            // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
+                            // can read them.
+                            scale.course = hydrate(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
+                            return scale;
+                        }) ?? [],
+                    );
+                }),
+            ),
+            this.gradingService.findGradeSteps(this.courseId, this.examId, 'management').pipe(
+                tap((gradeSteps) => {
+                    if (gradeSteps) {
+                        this.bonusToGradeStepsDTO.set(gradeSteps);
+                        this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
+                        this.gradingService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
+                    } else {
+                        throw new Error(`No grade steps found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
+                    }
+                }),
+                catchError((error) => {
+                    this.alertService.error(error.message);
+                    this.navigateToExam();
+                    throw new Error(`No grade scale found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
+                }),
+            ),
+        ])
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                }),
+            )
+            .subscribe(() => {
+                this.setSourceGradingScale();
+            });
+    }
+
+    private navigateToExam() {
+        void this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
+    }
+
+    private setSourceGradingScale() {
+        if (this.bonus.sourceGradingScale) {
+            const sourceGradingScale = this.sourceGradingScales().find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
+            if (!sourceGradingScale) {
+                throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
+            }
+            sourceGradingScale.course = this.bonus.sourceGradingScale.course;
+            sourceGradingScale.exam = this.bonus.sourceGradingScale.exam;
+            this.bonus.sourceGradingScale = sourceGradingScale;
+            this.commitBonus();
+            this.onBonusSourceChange(this.bonus.sourceGradingScale);
+        }
+    }
+
+    generateExamples() {
+        if (this.bonus.sourceGradingScale && this.bonus.bonusStrategy) {
+            this.hasBonusStrategyWeightMismatch.set(this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO()!.gradeSteps));
+            this.examples.set(!this.hasBonusStrategyWeightMismatch() ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO()!) : []);
+        } else {
+            this.hasBonusStrategyWeightMismatch.set(false);
+            this.examples.set([]);
+        }
+    }
+
+    /**
+     * Checks if given bonus strategy and weight combination would result in a worse grade for a student, which is counter-intuitive for a bonus.
+     * Warning: Assumes bonusToGradeSteps are sorted.
+     *
+     * @param bonusStrategy current bonus strategy
+     * @param weight current weight
+     * @param bonusToGradeSteps grade steps belonging to bonusTo grading scale, assumed to be sorted.
+     */
+    private checkBonusStrategyWeightMismatch(bonusStrategy: BonusStrategy, weight: number, bonusToGradeSteps: GradeStep[]) {
+        switch (bonusStrategy) {
+            case BonusStrategy.POINTS:
+                return weight < 0;
+            case BonusStrategy.GRADES_CONTINUOUS:
+            case BonusStrategy.GRADES_DISCRETE:
+                const maxGradeValue = this.gradingService.getNumericValueForGradeName(this.gradingService.maxGrade(bonusToGradeSteps));
+                const firstGradeValue = this.gradingService.getNumericValueForGradeName(bonusToGradeSteps[0]?.gradeName);
+                return this.bonusService.doesBonusExceedMax(firstGradeValue!, maxGradeValue!, weight);
+            default:
+                return false;
+        }
+    }
+
+    setBonus(bonus: Bonus) {
+        this.bonus = bonus;
+        switch (bonus.bonusStrategy) {
+            case BonusStrategy.POINTS:
+                this.currentBonusStrategyOption = BonusStrategyOption.POINTS;
+                this.currentBonusStrategyDiscreteness = undefined;
+                break;
+            case BonusStrategy.GRADES_CONTINUOUS:
+                this.currentBonusStrategyOption = BonusStrategyOption.GRADES;
+                this.currentBonusStrategyDiscreteness = BonusStrategyDiscreteness.CONTINUOUS;
+                break;
+            case BonusStrategy.GRADES_DISCRETE:
+                this.currentBonusStrategyOption = BonusStrategyOption.GRADES;
+                this.currentBonusStrategyDiscreteness = BonusStrategyDiscreteness.DISCRETE;
+                break;
+            default:
+                this.currentBonusStrategyOption = undefined;
+                this.currentBonusStrategyDiscreteness = undefined;
+        }
+    }
+
+    onBonusStrategyInputChange() {
+        this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
+        this.commitBonus();
+        this.generateExamples();
+        this.refreshDynamicExample();
+    }
+
+    onWeightChange() {
+        // The mode-picker two-way binding mutated bonus.weight in place; commit a fresh reference so dependent template bindings re-render under zoneless.
+        this.commitBonus();
+        this.generateExamples();
+        this.refreshDynamicExample();
+    }
+
+    convertFromInputsToBonusStrategy(
+        bonusStrategyOption: BonusStrategyOption | undefined,
+        bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined,
+    ): BonusStrategy | undefined {
+        if (bonusStrategyOption === BonusStrategyOption.POINTS) {
+            return BonusStrategy.POINTS;
+        } else if (bonusStrategyOption === BonusStrategyOption.GRADES) {
+            switch (bonusStrategyDiscreteness) {
+                case BonusStrategyDiscreteness.CONTINUOUS:
+                case undefined: // the undefined case also returns GRADES_CONTINUOUS because GRADES_DISCRETE is not implemented yet.
+                    return BonusStrategy.GRADES_CONTINUOUS;
+                case BonusStrategyDiscreteness.DISCRETE:
+                    return BonusStrategy.GRADES_DISCRETE;
+                default:
+                    return undefined;
+            }
+        }
+        return undefined;
+    }
+
+    save(): void {
+        this.isLoading.set(true);
+        const saveObservable = this.bonus.id
+            ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
+            : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
+
+        saveObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                }),
+            )
+            .subscribe((bonusResponse) => {
+                this.bonus.id = bonusResponse.body?.id;
+                this.commitBonus();
+            });
+    }
+
+    delete() {
+        if (!this.bonus.id) {
+            return;
+        }
+        this.isLoading.set(true);
+        this.bonusService
+            .deleteBonus(this.courseId, this.examId, this.bonus.id)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                }),
+            )
+            .subscribe({
+                next: (bonusResponse) => {
+                    this.setBonus(bonusResponse.body || new Bonus());
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => this.dialogErrorSource.next(error.message),
+            });
+    }
+
+    /**
+     * @see GradingService.getGradingScaleTitle
+     * @param gradingScale
+     */
+    getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
+        return this.gradingService.getGradingScaleTitle(gradingScale);
+    }
+
+    /**
+     * @see GradingService.getGradingScaleMaxPoints
+     * @param gradingScale
+     */
+    getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
+        return this.gradingService.getGradingScaleMaxPoints(gradingScale);
+    }
+
+    /**
+     * @see GradingService.hasPointsSet
+     */
+    hasPointsSet(): boolean {
+        return !!this.bonus.sourceGradingScale?.gradeSteps && this.gradingService.hasPointsSet(this.bonus.sourceGradingScale.gradeSteps);
+    }
+
+    /**
+     * Calculate points for each grade step of the selected gradingScale if they are not already calculated before
+     * to display in the table and sort the grading steps for matching.
+     * @param gradingScale the selected bonus source grading scale
+     */
+    private setBonusSourcePoints(gradingScale: GradingScale) {
+        if (!this.gradingService.hasPointsSet(gradingScale.gradeSteps)) {
+            this.gradingService.setGradePoints(gradingScale.gradeSteps, this.getGradingScaleMaxPoints(gradingScale));
+        }
+        this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
+    }
+
+    calculateDynamicExample() {
+        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO()!);
+    }
+
+    private refreshDynamicExample() {
+        if (this.dynamicExample.finalGrade == undefined) {
+            // Do not recalculate if it has not been calculated already.
+            return;
+        }
+        this.calculateDynamicExample();
+    }
+
+    onBonusSourceChange(gradingScale: GradingScale) {
+        // The select's two-way binding mutated bonus.sourceGradingScale in place; commit a fresh reference so the dependent table re-renders under zoneless.
+        this.commitBonus();
+        this.setBonusSourcePoints(gradingScale);
+        this.generateExamples();
+        this.refreshDynamicExample();
+    }
+
+    /**
+     * Gets the sign of the bonus calculation to display inside the formula.
+     * @param weight a positive or negative number
+     */
+    getCalculationSign(weight: number): string {
+        return weight > 0 ? '+' : '−';
+    }
+
+    maxPossibleGrade() {
+        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO()!.gradeSteps);
+    }
+}

@@ -1,0 +1,71 @@
+<div>
+    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
+        <h5 class="m-0!" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.title"></h5>
+        <div>
+            <strong jhiTranslate="artemisApp.learningPathManagement.averageProgress"></strong>:
+            {{ formattedAverageProgress() !== undefined ? formattedAverageProgress() + '%' : 'N/A' }}
+        </div>
+    </div>
+    <tumaet-ui-table-layout
+        class="max-h-72!"
+        [loading]="isLoading()"
+        [empty]="learningPaths().length === 0 && !isLoading()"
+        emptyTitle="artemisApp.learningPathManagement.learningPathsTable.noResults"
+    >
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <input
+                tumAetUiInput
+                tumAetUiInputSize="small"
+                id="learning-path-search"
+                type="search"
+                class="max-w-lg min-w-24 flex-1"
+                [placeholder]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
+                [attr.aria-label]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="search($event)"
+            />
+        </div>
+        <table tumAetUiTable size="small" striped>
+            <thead>
+                <tr>
+                    <th class="w-16">#</th>
+                    <th jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.name"></th>
+                    <th jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.login"></th>
+                    <th jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.progress"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (learningPath of learningPaths(); track learningPath.id) {
+                    <tr>
+                        <td>{{ learningPath.id }}</td>
+                        <td>
+                            <jhi-search-highlight [result]="learningPath.user.name" [term]="searchTerm()" />
+                        </td>
+                        <td>
+                            <jhi-search-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
+                        </td>
+                        <td>
+                            <button
+                                type="button"
+                                [id]="'open-competency-graph-button-' + learningPath.id"
+                                class="cursor-pointer border-0 bg-transparent p-0 text-primary underline"
+                                (click)="openCompetencyGraph(learningPath.id, learningPath.user.name)"
+                            >
+                                {{ learningPath.progress }} %
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="page() - 1"
+            [pageSize]="pageSize()"
+            [totalRecords]="collectionSize()"
+            [showRowsPerPage]="false"
+            [showCurrentPageReport]="false"
+            (pageChange)="setPage($event + 1)"
+        />
+    </tumaet-ui-table-layout>
+</div>

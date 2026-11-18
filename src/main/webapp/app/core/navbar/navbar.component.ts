@@ -1,0 +1,1102 @@
+import { Component, HostListener, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { User } from 'app/account/user/user.model';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_LTI,
+    PROFILE_LOCALCI,
+    VERSION,
+} from 'app/app.constants';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LoginService } from 'app/core/login/login.service';
+import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Title } from '@angular/platform-browser';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { NgClass, NgOptimizedImage, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ActiveMenuDirective } from './active-menu.directive';
+import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
+import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
+
+@Component({
+    selector: 'jhi-navbar',
+    templateUrl: './navbar.component.html',
+    styleUrls: ['navbar.scss'],
+    imports: [
+        NgOptimizedImage,
+        NgClass,
+        ThemeSwitchComponent,
+        NgbDropdown,
+        RouterLinkActive,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        RouterLink,
+        ActiveMenuDirective,
+        NgbTooltip,
+        JhiConnectionWarningComponent,
+        LoadingNotificationComponent,
+        NgTemplateOutlet,
+        NgbCollapse,
+        SystemNotificationComponent,
+        FindLanguageFromKeyPipe,
+        ArtemisTranslatePipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+        GlobalSearchNavbarComponent,
+        ImageComponent,
+        SlicePipe,
+        CourseNotificationOverviewComponent,
+        HyperionActivityTrayComponent,
+    ],
+})
+export class NavbarComponent implements OnInit, OnDestroy {
+    private readonly accountService = inject(AccountService);
+    private readonly loginService = inject(LoginService);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly examParticipationService = inject(ExamParticipationService);
+    private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly alertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly entityTitleService = inject(EntityTitleService);
+    private readonly titleService = inject(Title);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly courseStorageService = inject(CourseStorageService);
+
+    protected readonly faBars = faBars;
+    protected readonly faUser = faUser;
+    protected readonly faCog = faCog;
+    protected readonly faLock = faLock;
+    protected readonly faFlag = faFlag;
+    protected readonly faSignOutAlt = faSignOutAlt;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faUserShield = faUserShield;
+
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
+
+    readonly inProduction = signal<boolean>(undefined!);
+    readonly testServer = signal<boolean>(undefined!);
+    readonly isNavbarCollapsed = signal<boolean>(undefined!);
+    readonly gitCommitId = signal<string>(undefined!);
+    readonly gitBranchName = signal<string>(undefined!);
+    readonly gitTimestamp = signal<string>(undefined!);
+    readonly gitUsername = signal<string>(undefined!);
+    languages = LANGUAGES;
+    readonly version = signal<string>(undefined!);
+    readonly currAccount = signal<User | undefined>(undefined);
+    readonly passwordResetEnabled = signal(false);
+    readonly breadcrumbs = signal<Breadcrumb[]>([]);
+    breadcrumbSubscriptions: Subscription[] = [];
+    readonly isCollapsed = signal<boolean>(undefined!);
+    readonly iconsMovedToMenu = signal<boolean>(undefined!);
+    readonly isIconMenuCompact = signal<boolean>(undefined!);
+    readonly isExamActive = signal(false);
+    examActiveCheckFuture?: ReturnType<typeof setTimeout>;
+    atlasEnabled = false;
+    examEnabled = false;
+    localCIActive = false;
+    ltiEnabled = false;
+    standardizedCompetenciesEnabled = false;
+    readonly globalSearchEnabled = signal(false);
+    readonly hyperionEnabled = signal(false);
+    readonly hyperionExerciseGenerationEnabled = signal(false);
+    readonly isExamStarted = signal(false);
+    readonly currentCourse = this.courseStorageService.currentCourse;
+    readonly currentRoute = getCurrentRouteSignal(this.router);
+    readonly navigationContextIndicatorData = computed(() => this.computeNavigationContextIndicatorData());
+    readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
+    readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly perspectiveSwitchLinks = computed(() => this.computePerspectiveSwitchLinks());
+
+    courseTitle = signal<string | undefined>(undefined);
+    exerciseTitle = signal<string | undefined>(undefined);
+    lectureTitle = signal<string | undefined>(undefined);
+    examTitle = signal<string | undefined>(undefined);
+
+    // Assigned lazily in ngOnInit()/route handlers (some only when a feature is active) and torn down defensively
+    // in ngOnDestroy(), so they are genuinely optional rather than definitely assigned.
+    private standardizedCompetencySubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private authStateSubscription?: Subscription;
+    private routerEventSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
+    private studentExam?: StudentExam;
+    private examId?: number;
+    private routeExamId = 0;
+    private lastRouteUrlSegment?: string;
+
+    constructor() {
+        this.version.set(VERSION ? VERSION : '');
+        this.isNavbarCollapsed.set(true);
+        this.subscribeToNavigationEventsForExamId();
+        this.onResize();
+    }
+
+    @HostListener('window:resize')
+    onResize() {
+        // Figure out breakpoints depending on available menu options and length of login
+        let neededWidthToNotRequireCollapse: number;
+        let neededWidthForIconOptionsToBeInMainNavBar: number;
+        const currAccount = this.currAccount();
+        if (currAccount) {
+            const nameLength = (currAccount.login?.length ?? 0) * 8;
+            // Account for the notification bell and its gap to the surrounding icon-menu controls.
+            neededWidthForIconOptionsToBeInMainNavBar = 640 + nameLength;
+            neededWidthToNotRequireCollapse = 700 + nameLength;
+
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
+            if (hasCourseManageOption) {
+                neededWidthToNotRequireCollapse += 200;
+            }
+        } else {
+            // For login screen, we only see language and theme selectors which are smaller
+            neededWidthToNotRequireCollapse = 510;
+            neededWidthForIconOptionsToBeInMainNavBar = 430;
+        }
+
+        this.isCollapsed.set(window.innerWidth < neededWidthToNotRequireCollapse);
+        this.isIconMenuCompact.set(window.innerWidth < 480);
+        this.iconsMovedToMenu.set(window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar);
+    }
+
+    ngOnInit() {
+        const profileInfo = this.profileService.getProfileInfo();
+        this.inProduction.set(this.profileService.isProduction());
+        this.testServer.set(this.profileService.isTestServer());
+        this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
+        this.gitBranchName.set(profileInfo.git.branch);
+        this.gitTimestamp.set(new Date(profileInfo.git.commit.time).toUTCString());
+        this.gitUsername.set(profileInfo.git.commit.user.name);
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
+        this.hyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.hyperionExerciseGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
+
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled = isActive;
+        });
+
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled.set(isActive);
+        });
+
+        // The current user is needed to hide menu items for not logged-in users.
+        this.authStateSubscription = this.accountService
+            .getAuthenticationState()
+            .pipe(
+                tap((user: User | undefined) => {
+                    this.currAccount.set(user);
+                    this.passwordResetEnabled.set(user?.internal || false);
+                    this.onResize();
+                }),
+            )
+            .subscribe();
+
+        this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
+            this.studentExam = studentExam;
+            this.checkExamActive();
+        });
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+            this.isExamStarted.set(isStarted);
+        });
+
+        this.buildBreadcrumbs(this.router.url);
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
+    }
+
+    ngOnDestroy(): void {
+        if (this.authStateSubscription) {
+            this.authStateSubscription.unsubscribe();
+        }
+        if (this.routerEventSubscription) {
+            this.routerEventSubscription.unsubscribe();
+        }
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
+        }
+        if (this.standardizedCompetencySubscription) {
+            this.standardizedCompetencySubscription.unsubscribe();
+        }
+        this.globalSearchSubscription?.unsubscribe();
+        this.examStartedSubscription?.unsubscribe();
+    }
+
+    breadcrumbTranslation: { [key: string]: string } = {
+        generation: 'artemisApp.hyperion.generation.run.breadcrumb',
+        admin: 'global.menu.admin.main',
+        new: 'global.generic.create',
+        process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
+        verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
+        create: 'global.generic.create',
+        start: 'global.generic.start',
+        edit: 'global.generic.edit',
+        audits: 'global.menu.admin.sidebar.audits',
+        configuration: 'global.menu.admin.sidebar.configuration',
+        feature_toggles: 'global.menu.admin.sidebar.features',
+        health: 'global.menu.admin.sidebar.health',
+        logs: 'global.menu.admin.sidebar.logs',
+        docs: 'global.menu.admin.apidocs',
+        metrics: 'global.menu.admin.sidebar.metrics',
+        user_statistics: 'global.menu.admin.sidebar.statistics',
+        user_management: 'global.menu.admin.sidebar.users',
+        system_notification_management: 'global.menu.admin.sidebar.notifications',
+        upcoming_exams_and_exercises: 'global.menu.admin.sidebar.upcoming',
+        account: 'global.menu.account.main',
+        activate: 'activate.title',
+        password: 'global.menu.account.password',
+        reset: 'global.menu.account.password',
+        register: 'register.title',
+        settings: 'global.menu.account.settings',
+        course_management: 'overview.title',
+        exercises: 'artemisApp.course.exercises',
+        presentations: 'artemisApp.presentationAssessment.home.title',
+        text_exercises: 'artemisApp.course.exercises',
+        programming_exercises: 'artemisApp.course.exercises',
+        modeling_exercises: 'artemisApp.course.exercises',
+        file_upload_exercises: 'artemisApp.course.exercises',
+        quiz_exercises: 'artemisApp.course.exercises',
+        participations: 'artemisApp.participation.home.title',
+        submissions: 'artemisApp.exercise.submissions',
+        complaints: 'artemisApp.complaint.listOfComplaints.title',
+        more_feedback_requests: 'artemisApp.moreFeedback.list.title',
+        instructor_dashboard: 'entity.action.instructorDashboard',
+        assessment_dashboard: 'artemisApp.assessmentDashboard.home.title',
+        test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
+        iris: 'global.menu.admin.sidebar.iris',
+        lti_configuration: 'global.menu.admin.sidebar.lti',
+        teams: 'artemisApp.team.home.title',
+        ratings: 'artemisApp.ratingList.pageTitle',
+        competency_management: 'artemisApp.competency.manage.title',
+        smart_quizzes: 'artemisApp.hyperion.quizQuestionPool.title',
+        prerequisite_management: 'artemisApp.prerequisite.manage.title',
+        learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
+        assessment_locks: 'artemisApp.assessment.locks.home.title',
+        apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
+        communication: 'artemisApp.communication.label',
+        scores: 'entity.action.scores',
+        assessment: 'artemisApp.assessment.assessment',
+        export: 'artemisApp.quizExercise.export.export',
+        re_evaluate: 'entity.action.re-evaluate',
+        solution: 'artemisApp.quizExercise.solution',
+        preview: 'artemisApp.quizExercise.preview',
+        quiz_statistic: 'artemisApp.quizExercise.statistics',
+        quiz_point_statistic: 'artemisApp.quizExercise.statistics',
+        import: 'artemisApp.exercise.import.table.doImport',
+        import_from_file: 'artemisApp.programmingExercise.importFromFile.title',
+        plagiarism: 'artemisApp.plagiarism.plagiarismDetection',
+        example_solution: 'artemisApp.modelingExercise.exampleSolution',
+        example_submissions: 'artemisApp.exampleSubmission.home.title',
+        example_submission_editor: 'artemisApp.exampleSubmission.home.editor',
+        grading: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+        test: 'artemisApp.editor.home.title',
+        ide: 'artemisApp.editor.home.title',
+        lectures: 'artemisApp.lecture.home.title',
+        tutorial_lectures: 'artemisApp.lecture.tutorialLecture.title',
+        unit_management: 'artemisApp.lectureUnit.home.title',
+        exams: 'artemisApp.examManagement.title',
+        exercise_groups: 'artemisApp.examManagement.exerciseGroups',
+        quiz_pool: 'artemisApp.examManagement.quizPool',
+        students: 'artemisApp.course.students',
+        tutors: 'artemisApp.course.tutors',
+        instructors: 'artemisApp.course.instructors',
+        test_runs: 'artemisApp.examManagement.testRun.testRun',
+        assess: 'artemisApp.examManagement.assessmentDashboard',
+        summary: 'artemisApp.exam.summary',
+        conduction: 'artemisApp.exam.title',
+        student_exams: 'artemisApp.studentExams.title',
+        test_assessment_dashboard: 'artemisApp.examManagement.assessmentDashboard',
+        tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
+        organization_management: 'global.menu.admin.sidebar.organizations',
+        participant_scores: 'artemisApp.participantScores.pageTitle',
+        course_statistics: 'statistics.course_statistics_title',
+        grading_system: 'artemisApp.gradingSystem.title',
+        grading_key: 'artemisApp.gradingSystem.title',
+        exercise_statistics: 'exercise-statistics.title',
+        tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
+        user_settings: 'artemisApp.userSettings.title',
+        detailed: 'artemisApp.gradingSystem.detailedTab.title',
+        interval: 'artemisApp.gradingSystem.intervalTab.title',
+        plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
+        tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        tutorial_groups: 'artemisApp.breadcrumb.title',
+        registrations: 'artemisApp.pages.tutorialGroupRegistrations.title',
+        sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
+        tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+        tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
+        create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        privacy_statement: 'global.menu.admin.sidebar.privacy',
+        imprint: 'global.menu.admin.sidebar.imprint',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        version_history: 'artemisApp.exercise.versionHistory.title',
+        suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
+        suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
+        exam_timeline: 'artemisApp.examTimeline.breadcrumb',
+        iris_settings: 'artemisApp.iris.settings.title',
+        athena_settings: 'artemisApp.course.athenaConfig.settingsPage.title',
+        generate: 'entity.action.generate',
+        build_queue: 'global.menu.admin.sidebar.buildQueue',
+        build_overview: 'artemisApp.buildQueue.title',
+        job_details: 'artemisApp.buildQueue.detail.title',
+        build_agents: 'global.menu.admin.sidebar.buildAgents',
+        websocket: 'global.menu.admin.sidebar.websocket',
+        exam_rooms: 'global.menu.admin.sidebar.examRooms',
+        commit_history: 'artemisApp.repository.commitHistory.title',
+        commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
+        repository: 'artemisApp.repository.title',
+        standardized_competencies: 'global.menu.admin.sidebar.competencies',
+        prerequisites: 'artemisApp.prerequisite.title',
+        import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
+        cleanup_service: 'global.menu.admin.sidebar.cleanup',
+        course_requests: 'global.menu.admin.sidebar.courseRequests',
+        user_repository: 'artemisApp.repository.userRepository.title',
+        template_repository: 'artemisApp.repository.templateRepository.title',
+        solution_repository: 'artemisApp.repository.solutionRepository.title',
+        tests_repository: 'artemisApp.repository.testsRepository.title',
+        auxiliary_repository: 'artemisApp.repository.auxiliaryRepository.title',
+        vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
+        gocast_binding: 'artemisApp.gocast.title',
+    };
+
+    /**
+     * Fills the breadcrumbs array for routes inside a managed course
+     */
+    private buildBreadcrumbs(fullURI: string): void {
+        this.breadcrumbs.set([]);
+        this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
+        this.breadcrumbSubscriptions = [];
+        this.initTabTitles();
+
+        if (!fullURI) {
+            return;
+        }
+
+        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
+        if (!path.startsWith('/course-management/') || path === '/course-management/new') {
+            return;
+        }
+
+        fullURI = path;
+
+        // try catch for extra safety measures
+        try {
+            let currentPath = '/course-management/';
+            this.addTranslationAsCrumb('/courses', 'course-management');
+            this.lastRouteUrlSegment = 'course-management';
+
+            // The course management segment is represented by the course overview breadcrumb above.
+            const uri = fullURI.substring(currentPath.length);
+
+            // Go through all segments of the route starting from the root
+            for (const segment of uri.split('/')) {
+                currentPath += segment + '/';
+
+                // If we parse an entity ID we need to check the previous segment which entity the ID refers to
+                if (!isNaN(Number(segment))) {
+                    this.addBreadcrumbForNumberSegment(currentPath, segment);
+                } else {
+                    this.addBreadcrumbForUrlSegment(currentPath, segment);
+                    this.lastRouteUrlSegment = segment;
+                    // The selected presentation and its linked exercise are part of the page, not of the navigation hierarchy.
+                    // Following them would add a crumb for a route that does not exist and load the exercise on every navigation.
+                    if (segment === 'presentations') {
+                        break;
+                    }
+                }
+            }
+        } catch (e) {
+            /* empty */
+        }
+        this.buildTabTitles();
+    }
+
+    /**
+     * Adds a breadcrumb depending on the given entityID as string
+     *
+     * @param currentPath the complete path up until the breadcrumb to add
+     * @param segment the current url segment (string representation of an entityID) to add a crumb for
+     */
+    private addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+        switch (this.lastRouteUrlSegment) {
+            // Displays the path segment as breadcrumb (no other title exists)
+            case 'teams':
+            case 'code-editor':
+                this.addBreadcrumb(currentPath, segment, false);
+                break;
+            case 'course-management':
+                this.addResolvedTitleAsCrumb(EntityType.COURSE, [Number(segment)], currentPath, segment);
+                break;
+            case 'exercises':
+                // Special case: A raw /course-management/XXX/exercises/XXX doesn't work, we need to add the exercise type
+                // For example /course-management/XXX/programming-exercises/XXX
+                this.addExerciseCrumb(Number(segment), currentPath);
+                break;
+            case 'USER':
+                this.addTranslationAsCrumb(currentPath, 'user_repository');
+                break;
+            case 'AUXILIARY':
+                this.addTranslationAsCrumb(currentPath, 'auxiliary_repository');
+                break;
+            case 'text-exercises':
+            case 'modeling-exercises':
+            case 'file-upload-exercises':
+            case 'programming-exercises':
+            case 'quiz-exercises':
+            case 'assessment-dashboard':
+                this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
+                break;
+            case 'apollon-diagrams':
+                this.addResolvedTitleAsCrumb(EntityType.DIAGRAM, [Number(segment)], currentPath, segment);
+                break;
+            case 'lectures':
+                this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                break;
+            case 'competencies':
+                this.addResolvedTitleAsCrumb(EntityType.COMPETENCY, [Number(segment)], currentPath, segment);
+                break;
+            case 'exams':
+                this.routeExamId = Number(segment);
+                this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
+                break;
+            case 'tutorial-groups':
+                this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
+                break;
+            case 'import':
+                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
+                // This has to go in the future
+                this.addTranslationAsCrumb(currentPath, 'import');
+                break;
+            case 'import-from-file':
+                this.addTranslationAsCrumb(currentPath, 'import-from-file');
+                break;
+            case 'suspicious-behavior':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-behavior');
+                break;
+            case 'suspicious-sessions':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-sessions');
+                break;
+            case 'example-submissions':
+                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
+                this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
+                break;
+            // No breadcrumbs for those segments
+            case 'competency-management':
+            case 'prerequisite-management':
+            case 'unit-management':
+            case 'exercise-groups':
+            case 'student-exams':
+            case 'test-runs':
+            case 'mc-question-statistic':
+            case 'dnd-question-statistic':
+            case 'sa-question-statistic':
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Adds a breadcrumb for the given url segment
+     *
+     * @param currentPath the complete path up until the breadcrumb to add
+     * @param segment the current url segment to add a (translated) crumb for
+     */
+    private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
+        // When we're not dealing with an ID we need to translate the current part
+        // The translation might still depend on the previous parts
+        switch (segment) {
+            case 'configuration':
+                // Under tutorial groups, `configuration/:id` is an internal routing layer that carries the holidays
+                // and edit pages; it has no page of its own and its admin label misnames the step. Skip it there.
+                // Admin's own `/admin/configuration` keeps its crumb (and admin routes build no breadcrumbs anyway).
+                if (this.lastRouteUrlSegment !== 'tutorial-groups') {
+                    this.addTranslationAsCrumb(currentPath, segment);
+                }
+                break;
+            // No breadcrumbs for those segments
+            case 'reset':
+            case 'group':
+            case 'groups':
+            case 'code-editor':
+            case 'repository':
+            case 'ide':
+            case 'text-units':
+            case 'exercise-units':
+            case 'attachment-video-units':
+            case 'video-units':
+            case 'grading':
+            case 'mc-question-statistic':
+            case 'dnd-question-statistic':
+            case 'sa-question-statistic':
+            case 'test-exam':
+            case 'participate':
+            case 'overview':
+                break;
+            case 'example-submissions':
+                // Hide example submission dashboard for non editor users
+                if (this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
+                    this.addTranslationAsCrumb(currentPath, segment);
+                }
+                break;
+            case 'submissions':
+                // Link submission breadcrumbs to the exercise's participation page.
+                const updatedLink = currentPath.replace(/\/(?:participations\/\d+\/)?submissions\/$/, '/participations/');
+                this.addTranslationAsCrumb(updatedLink, 'submissions');
+                break;
+            case 'tutorial-lectures':
+                const tutorialGroupsLink = currentPath.replace('/tutorial-lectures/', '');
+                this.addTranslationAsCrumb(tutorialGroupsLink, segment);
+                break;
+            default:
+                // Special cases:
+                if (this.lastRouteUrlSegment === 'example-submissions') {
+                    // - Creating a new example submission should display the text for example submissions
+                    this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
+                    break;
+                } else if (this.lastRouteUrlSegment === 'grading') {
+                    // - Opening a grading tab should only display the text for grading
+                    this.addTranslationAsCrumb(currentPath, 'grading');
+                    break;
+                } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
+                    break;
+                } else if (this.lastRouteUrlSegment?.endsWith('-exercises') && segment === 'import') {
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
+                    break;
+                } else if (this.lastRouteUrlSegment === 'exercise-groups') {
+                    // - Don't display '<type>-exercises' because it has no associated route
+                    break;
+                } else if (this.lastRouteUrlSegment === 'exams' && segment === 'import') {
+                    // This route is only used internally when opening the exam import modal and therefore shouldn't be displayed.
+                    // When opening the exam-update.component, the id of the to be imported exam is appended (-> case `import`).
+                    break;
+                } else if (this.lastRouteUrlSegment === 'repository') {
+                    this.addRepositoryViewBreadcrumb(currentPath, segment);
+                    break;
+                }
+
+                this.addTranslationAsCrumb(currentPath, segment);
+                break;
+        }
+    }
+
+    /**
+     * Appends a breadcrumb to the list of breadcrumbs
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param label the displayed label for the breadcrumb
+     * @param translate if the label should be translated
+     * @return the created breadcrumb object
+     */
+    private addBreadcrumb(uri: string, label: string, translate: boolean): Breadcrumb {
+        return this.setBreadcrumb(uri, label, translate, this.breadcrumbs().length);
+    }
+
+    /**
+     * Sets a breadcrumb in the list of breadcrumbs at the given index
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param label the displayed label for the breadcrumb
+     * @param translate if the label should be translated
+     * @param index the index of the breadcrumbs array to set the breadcrumb at
+     * @return the created breadcrumb object
+     */
+    private setBreadcrumb(uri: string, label: string, translate: boolean, index: number): Breadcrumb {
+        const crumb = new Breadcrumb();
+        crumb.label = label;
+        crumb.translate = translate;
+        crumb.uri = uri;
+        const updatedBreadcrumbs = [...this.breadcrumbs()];
+        updatedBreadcrumbs[index] = crumb;
+        this.breadcrumbs.set(updatedBreadcrumbs);
+        return crumb;
+    }
+
+    /**
+     * Uses the server response to add a title for a breadcrumb
+     * While waiting for the response or in case of an error the segment is displayed directly as fallback
+     *
+     * @param type the type of the entity
+     * @param ids the ids of the entity
+     * @param uri the uri/path for the breadcrumb
+     * @param segment the current url segment to add a breadcrumb for
+     */
+    private addResolvedTitleAsCrumb(type: EntityType, ids: number[], uri: string, segment: string): void {
+        // Insert the segment until we fetched a title from the server to insert at the correct index
+        let crumb = this.addBreadcrumb(uri, segment, false);
+
+        this.breadcrumbSubscriptions.push(
+            this.entityTitleService.getTitle(type, ids).subscribe({
+                next: (title: string) => {
+                    crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs().indexOf(crumb));
+                    this.setTabTitles(type, title);
+                },
+            }),
+        );
+    }
+
+    /**
+     * Adds a link to an exercise to the breadcrumbs array. The link depends on the type of the exercise, so we need to fetch it first
+     * @param exerciseId the id of the exercise
+     * @param currentPath the initial path for the breadcrumb
+     */
+    private addExerciseCrumb(exerciseId: number, currentPath: string): void {
+        // Add dummy breadcrumb
+        const crumb = this.addBreadcrumb('', '', false);
+        const exerciseSource = currentPath.startsWith('/course-management/')
+            ? currentPath.includes('/exams/')
+                ? this.exerciseService.findForExamManagement(exerciseId)
+                : this.exerciseService.findForStaff(exerciseId)
+            : this.exerciseService.find(exerciseId);
+        exerciseSource.subscribe({
+            next: (response: HttpResponse<Exercise>) => {
+                // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
+                if (!response?.body?.title || !response?.body?.type) {
+                    this.removeBreadcrumb(crumb);
+                } else {
+                    // If all data is there, overwrite the breadcrumb with the correct link
+                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs().indexOf(crumb));
+                }
+            },
+            // Same as if data isn't available
+            error: () => this.removeBreadcrumb(crumb),
+        });
+    }
+
+    /**
+     * Removes the given breadcrumb from the list of breadcrumbs
+     *
+     * @param crumb the breadcrumb to remove
+     */
+    private removeBreadcrumb(crumb: Breadcrumb): void {
+        const index = this.breadcrumbs().indexOf(crumb);
+        if (index >= 0) {
+            const updatedBreadcrumbs = [...this.breadcrumbs()];
+            updatedBreadcrumbs.splice(index, 1);
+            this.breadcrumbs.set(updatedBreadcrumbs);
+        }
+    }
+
+    /**
+     * Adds a breadcrumb with a translated label
+     * If no translation can be found the key is displayed
+     *
+     * @param uri the uri/path for the breadcrumb
+     * @param translationKey the string to index the breadcrumbTranslation table with
+     */
+    private addTranslationAsCrumb(uri: string, translationKey: string): void {
+        const key = translationKey.split('-').join('_');
+        if (this.breadcrumbTranslation[key]) {
+            this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
+        } else {
+            // If there is no valid entry in the mapping display the raw key instead of a "not found"
+            this.addBreadcrumb(uri, translationKey, false);
+        }
+    }
+
+    changeLanguage(languageKey: string) {
+        if (this.currAccount()) {
+            this.accountService.updateLanguage(languageKey).subscribe({
+                next: () => {
+                    this.translateService.use(languageKey);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        } else {
+            this.translateService.use(languageKey);
+        }
+    }
+
+    collapseNavbar() {
+        this.isNavbarCollapsed.set(true);
+    }
+
+    isAuthenticated() {
+        return this.accountService.isAuthenticated();
+    }
+
+    logout() {
+        this.collapseNavbar();
+        void this.router.navigate(['/sign-in']).then((res) => {
+            if (res) {
+                this.participationWebsocketService.resetLocalCache();
+                this.loginService.logout(true);
+            }
+        });
+    }
+
+    getCourseLink(courseId: number | undefined): (string | number)[] | undefined {
+        if (!courseId) {
+            return undefined;
+        }
+        return this.router.url.startsWith('/course-management') ? ['/course-management', courseId] : ['/courses', courseId];
+    }
+
+    private isStudentCourseViewRoute(url: string): boolean {
+        return /(^|\/)courses(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private isCourseManagementViewRoute(url: string): boolean {
+        return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private computeNavigationContextIndicatorData(): NavigationContextIndicatorData | undefined {
+        const course = this.currentCourse();
+        if (course) {
+            return {
+                type: 'course',
+                routerLink: this.getCourseLink(course.id),
+                title: course.title,
+                imagePath: course.courseIconPath,
+            };
+        }
+
+        const path = this.currentRoute().split(/[?#]/)[0];
+        if (/^\/admin(?:\/|$)/.test(path)) {
+            return { type: 'administration', routerLink: '/admin', translationKey: 'global.menu.admin.main' };
+        }
+        if (/^\/user-settings(?:\/|$)/.test(path)) {
+            return { type: 'userSettings', routerLink: '/user-settings', translationKey: 'artemisApp.userSettings.userSettings' };
+        }
+        return undefined;
+    }
+
+    private computePerspectiveSwitchLinks(): PerspectiveSwitchLinks | undefined {
+        const currentRoute = this.currentRoute();
+        const path = currentRoute.split(/[?#]/)[0];
+        const coursePathMatch = /^\/(?:courses|course-management)\/(\d+)(?:\/|$)/.exec(path);
+        if (!coursePathMatch) {
+            return undefined;
+        }
+
+        const courseId = Number(coursePathMatch[1]);
+        const isAtLeastTutor = this.accountService.isAtLeastTutorInCourseWithId(courseId);
+        if (!isAtLeastTutor) {
+            return undefined;
+        }
+
+        const isAtLeastEditor = this.accountService.isAtLeastEditorInCourseWithId(courseId);
+        const isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourseWithId(courseId);
+        const courseIdAsString = courseId.toString();
+        return {
+            studentViewLink: this.getStudentViewLinkFromRoute(currentRoute, courseIdAsString),
+            managementViewLink: this.getManagementViewLinkFromRoute(currentRoute, courseIdAsString, isAtLeastEditor, isAtLeastInstructor),
+        };
+    }
+
+    private getStudentViewLinkFromRoute(url: string, courseId: string): string[] {
+        const baseStudentPath = ['/courses', courseId];
+
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseStudentPath, 'lectures'] },
+            { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
+            { urlParts: ['communication'], targetPath: [...baseStudentPath, 'communication'] },
+            { urlParts: ['learning-path-management'], targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlParts: ['competency-management'], targetPath: [...baseStudentPath, 'competencies'] },
+            { urlParts: ['faqs'], targetPath: [...baseStudentPath, 'faq'] },
+            { urlParts: ['course-statistics'], targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+        if (!matchedRoute) {
+            return baseStudentPath;
+        }
+
+        const exerciseId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'exercises', /\/(?:[^/]+-)?exercises\/(\d+)(?:\/|$)/);
+        if (exerciseId) {
+            return [...matchedRoute.targetPath, exerciseId];
+        }
+
+        const lectureId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'lectures', /\/lectures\/(\d+)(?:\/|$)/);
+        if (lectureId) {
+            return [...matchedRoute.targetPath, lectureId];
+        }
+
+        const tutorialGroupId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'tutorial-groups', /\/tutorial-groups\/(\d+)(?:\/|$)/);
+        if (tutorialGroupId) {
+            return [...matchedRoute.targetPath, tutorialGroupId];
+        }
+
+        return matchedRoute.targetPath;
+    }
+
+    private getManagementViewLinkFromRoute(url: string, courseId: string, isAtLeastEditor: boolean, isAtLeastInstructor: boolean): string[] {
+        const baseManagementPath = ['/course-management', courseId];
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseManagementPath, 'lectures'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
+            { urlParts: ['communication'], targetPath: [...baseManagementPath, 'communication'] },
+            { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-path-management'] },
+            { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
+            { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
+            { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+        if (!matchedRoute) {
+            return baseManagementPath;
+        }
+
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastEditor;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
+
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
+            return baseManagementPath;
+        }
+
+        const exerciseId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'exercises', /\/exercises\/(?:[^/]+-exercises\/)?(\d+)(?:\/|$)/);
+        if (exerciseId) {
+            const isProgrammingRepositoryRoute = /\/exercises\/\d+\/repository(?:\/|$)/.test(url);
+            const exerciseType = isProgrammingRepositoryRoute
+                ? ExerciseType.PROGRAMMING
+                : this.courseStorageService.getCourse(Number(courseId))?.exercises?.find((exercise) => exercise.id === Number(exerciseId))?.type;
+            if (exerciseType) {
+                return [...baseManagementPath, `${exerciseType}-exercises`, exerciseId];
+            }
+        }
+
+        const lectureId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'lectures', /\/(?:tutorial-)?lectures\/(\d+)(?:\/|$)/);
+        if (lectureId) {
+            return [...matchedRoute.targetPath, lectureId];
+        }
+
+        const tutorialGroupId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'tutorial-groups', /\/tutorial-groups\/(\d+)(?:\/|$)/);
+        if (tutorialGroupId) {
+            return [...matchedRoute.targetPath, tutorialGroupId];
+        }
+
+        return matchedRoute.targetPath;
+    }
+
+    private extractEntityIdIfMatchedRouteHasRoutePart(url: string, matchedRoute: PerspectiveRouteMapping, routePart: string, idPattern: RegExp): string | undefined {
+        return matchedRoute.urlParts.includes(routePart) ? idPattern.exec(url)?.[1] : undefined;
+    }
+
+    toggleNavbar() {
+        this.isNavbarCollapsed.update((collapsed) => !collapsed);
+    }
+
+    getImageUrl() {
+        return this.accountService.getImageUrl();
+    }
+
+    /**
+     * Subscribes to navigation end events to look for an exam id in the URL which indicates that we're in the student view of an exam.
+     */
+    subscribeToNavigationEventsForExamId() {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: Event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            if (event.url.includes('management')) {
+                this.examId = undefined;
+                return;
+            }
+
+            this.route.root.firstChild?.paramMap.pipe(map((params) => params.get('examId'))).subscribe((examId) => {
+                this.examId = examId ? Number(examId) : undefined;
+                this.checkExamActive();
+            });
+        });
+    }
+
+    /**
+     * Check if the student is currently working on an active exam.
+     * If yes, hide some elements like notifications and breadcrumbs.
+     * Schedules a check for this at the next relevant timestamp (exam start or exam end, whichever comes next)
+     */
+    checkExamActive() {
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
+            this.examActiveCheckFuture = undefined;
+        }
+
+        if (
+            this.studentExam?.exam &&
+            this.studentExam.exam.id === this.examId &&
+            this.studentExam.exam.examMode === ExamMode.REAL &&
+            !this.studentExam.testRun &&
+            this.studentExam.exam.startDate &&
+            this.studentExam.exam.endDate &&
+            !this.studentExam.submitted
+        ) {
+            const serverTime = this.serverDateService.now();
+            // As end date, we use the working time of this student plus the grace period
+            const workingTime = this.studentExam.workingTime ?? this.studentExam.exam.workingTime;
+            const examEndWithGracePeriod = (workingTime ? this.studentExam.exam.startDate.add(workingTime, 'seconds') : this.studentExam.exam.endDate).add(
+                this.studentExam.exam.gracePeriod ?? 0,
+                'seconds',
+            );
+            this.isExamActive.set(serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod));
+
+            const timeUntilStart = this.studentExam.exam.startDate.diff(serverTime);
+            const timeUntilEnd = examEndWithGracePeriod.diff(serverTime);
+            const timeUntilNextChange = timeUntilStart >= 0 ? timeUntilStart : timeUntilEnd;
+            if (timeUntilNextChange > 0) {
+                this.examActiveCheckFuture = setTimeout(this.checkExamActive.bind(this), timeUntilNextChange + 100);
+            }
+        } else {
+            this.isExamActive.set(false);
+        }
+    }
+
+    /**
+     * Method to build the tab titles based on the breadcrumbs.
+     * The tab titles are build from the most specific to the most general title.
+     * If the tab title is not defined, the titles in the Router Modules are used instead.
+     */
+    buildTabTitles() {
+        // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
+        const mostSpecificCrumb = this.breadcrumbs().at(-1);
+        if (!mostSpecificCrumb) {
+            return;
+        }
+        const breadcrumbs = this.breadcrumbs();
+        const generalTitle = mostSpecificCrumb.translate ? this.translateService.instant(mostSpecificCrumb.label) : undefined;
+        const titles = [generalTitle, this.exerciseTitle(), this.examTitle(), this.lectureTitle(), this.courseTitle()].filter((title) => title !== undefined).join(' | ');
+        // No need have a dynamic title on the start page -> use the title defined in the Router modules.
+        if (titles && breadcrumbs.length > 1) {
+            this.titleService.setTitle(titles);
+        }
+    }
+
+    /**
+     * Initialize the attributes for the tab titles to undefined, as they are defined during the building of the breadcrumbs
+     */
+    initTabTitles() {
+        // The course title is not set to undefined, as there is a change detection in the setTabTitle Method
+        this.exerciseTitle.set(undefined);
+        this.lectureTitle.set(undefined);
+        this.examTitle.set(undefined);
+    }
+
+    /**
+     * Set the title of the respective attribute based on the response from the entityTitleService
+     * @param type the type of the entity
+     * @param title the title of the entity
+     */
+    setTabTitles(type: EntityType, title: string) {
+        const tabTitle = this.tabTitleOf(type);
+        if (!tabTitle || tabTitle() === title) {
+            return;
+        }
+        tabTitle.set(title);
+        // A title that arrives or changes after the breadcrumbs were built, for example when an editor renames the entity, updates the tab too.
+        this.buildTabTitles();
+    }
+
+    private tabTitleOf(type: EntityType): WritableSignal<string | undefined> | undefined {
+        switch (type) {
+            case EntityType.COURSE:
+                return this.courseTitle;
+            case EntityType.EXERCISE:
+                return this.exerciseTitle;
+            case EntityType.EXAM:
+                return this.examTitle;
+            case EntityType.LECTURE:
+                return this.lectureTitle;
+            default:
+                return undefined;
+        }
+    }
+
+    /**
+     * Sets the breadcrumb for the template, tests and solution repository view. User and Auxiliary repositories are not treated here
+     * as they have an ID after the repository type.
+     *
+     * @param currentPath    The path that should get used for the breadcrumb
+     * @param repositoryType The type of the repository
+     */
+    private addRepositoryViewBreadcrumb(currentPath: string, repositoryType: string) {
+        switch (repositoryType) {
+            case RepositoryType.TEMPLATE:
+                this.addTranslationAsCrumb(currentPath, 'template_repository');
+                break;
+            case RepositoryType.TESTS:
+                this.addTranslationAsCrumb(currentPath, 'tests_repository');
+                break;
+            case RepositoryType.SOLUTION:
+                this.addTranslationAsCrumb(currentPath, 'solution_repository');
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+/** Instantiated via `new Breadcrumb()` and populated field-by-field in setBreadcrumb(), hence the definite-assignment (!) markers. */
+class Breadcrumb {
+    label!: string;
+    uri!: string;
+    translate!: boolean;
+}
+
+interface PerspectiveSwitchLinks {
+    studentViewLink: string[];
+    managementViewLink: string[];
+}
+
+interface PerspectiveRouteMapping {
+    urlParts: string[];
+    targetPath: string[];
+}
+
+type NavigationContextIndicatorData =
+    | {
+          type: 'course';
+          routerLink: (string | number)[] | undefined;
+          title: string | undefined;
+          imagePath: string | undefined;
+      }
+    | {
+          type: 'administration' | 'userSettings';
+          routerLink: string;
+          translationKey: string;
+      };

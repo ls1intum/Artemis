@@ -1,0 +1,122 @@
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
+
+import { AdminSidebarComponent } from 'app/admin/admin-sidebar/admin-sidebar.component';
+import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import {
+    MODULE_FEATURE_AIWORKER,
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_GLOBAL_SEARCH,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LTI,
+    MODULE_FEATURE_PASSKEY,
+    PROFILE_LOCALCI,
+} from 'app/app.constants';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
+
+/**
+ * Container component for the admin section.
+ * Manages the sidebar layout and feature flags for admin functionality.
+ */
+@Component({
+    selector: 'jhi-admin-container',
+    templateUrl: './admin-container.component.html',
+    styleUrl: './admin-container.component.scss',
+    imports: [RouterOutlet, AdminSidebarComponent, AdminTitleBarComponent],
+    host: {
+        '(window:resize)': 'onResize()',
+        '(document:keydown.control.m)': 'onKeyDown($event)',
+    },
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AdminContainerComponent implements OnInit, OnDestroy {
+    private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly layoutService = inject(LayoutService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
+
+    /** Whether the navbar is collapsed */
+    readonly isNavbarCollapsed = signal(false);
+
+    /** Feature flags */
+    readonly localCIActive = signal(false);
+    readonly ltiEnabled = signal(false);
+    readonly atlasEnabled = signal(false);
+    readonly examEnabled = signal(false);
+    readonly standardizedCompetenciesEnabled = signal(false);
+    readonly scienceEnabled = signal(false);
+    readonly passkeyEnabled = signal(false);
+    readonly isSuperAdmin = signal(false);
+    readonly irisEnabled = signal(false);
+    readonly hyperionGenerationEnabled = signal(false);
+    readonly aiWorkerEnabled = signal(false);
+    readonly weaviateEnabled = signal(false);
+
+    private standardizedCompetencySubscription?: Subscription;
+    private scienceSubscription?: Subscription;
+    private routerSubscription?: Subscription;
+
+    ngOnInit() {
+        this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
+        this.examEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM));
+        this.localCIActive.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
+        this.passkeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
+        this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
+        this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+        this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
+        this.aiWorkerEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AIWORKER));
+        this.weaviateEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_GLOBAL_SEARCH));
+
+        this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
+            this.standardizedCompetenciesEnabled.set(isActive);
+        });
+        this.scienceSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((isActive) => {
+            this.scienceEnabled.set(isActive);
+        });
+
+        this.updateCollapseState();
+
+        // Subscribe to router events to handle navigation
+        this.routerSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+            // Could add additional logic here if needed
+        });
+    }
+
+    ngOnDestroy() {
+        this.standardizedCompetencySubscription?.unsubscribe();
+        this.scienceSubscription?.unsubscribe();
+        this.routerSubscription?.unsubscribe();
+    }
+
+    onResize() {
+        this.updateCollapseState();
+    }
+
+    onKeyDown(event: Event) {
+        if (this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable)) {
+            event.preventDefault();
+            this.toggleCollapseState();
+        }
+    }
+
+    toggleCollapseState() {
+        this.isNavbarCollapsed.set(!this.isNavbarCollapsed());
+    }
+
+    private updateCollapseState() {
+        // Auto-collapse on smaller screens
+        if (!this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable)) {
+            this.isNavbarCollapsed.set(true);
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "artemisApp": {
+        "modelingExercise": {
+            "home": {
+                "title": "Modellierungsaufgabe",
+                "createLabel": "Modellierungsaufgabe erstellen",
+                "editLabel": "Modellierungsaufgabe bearbeiten",
+                "importLabel": "Modellierungsaufgabe importieren"
+            },
+            "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
+            "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
+            "deleted": "Modellierungsaufgabe gelöscht mit ID {{ param }}",
+            "detail": {
+                "title": "Modellierungsaufgabe"
+            },
+            "diagramType": "Diagrammtyp",
+            "diagramTypeChange": {
+                "title": "Diagrammtyp ändern?",
+                "message": "Beim Ändern des Diagrammtyps wird ein neues, leeres Diagramm erstellt. Alle Elemente und Beziehungen der aktuellen Beispiellösung werden entfernt.",
+                "confirm": "Typ ändern und Diagramm leeren"
+            },
+            "problemStatement": "Aufgabenstellung:",
+            "exampleSolution": "Beispiellösung",
+            "exampleSolutionExplanation": "Erklärung der Beispiellösung",
+            "createExampleSolution": "Beispiellösung erstellen",
+            "exampleSolutionRequiresExercise": "Um eine Beispiellösung zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
+            "exampleSolutionForModelingExercise": "Beispiellösung für Modellierungsaufgabe {{ exerciseTitle }}",
+            "saveExampleSolution": "Beispiellösung speichern",
+            "exampleSubmission": "Beispielabgabe {{ number }}",
+            "exampleSubmissions": "Beispielabgaben",
+            "createExampleSubmission": "Beispielabgabe erstellen",
+            "createNewExampleSubmission": "Neue Beispielabgabe erstellen",
+            "saveExampleSubmission": "Beispielabgabe speichern",
+            "saveExampleAssessment": "Beispielbewertung speichern",
+            "showExampleSubmission": "Abgabe anzeigen",
+            "showExampleAssessment": "Bewertung anzeigen",
+            "exampleSubmissionForModelingExercise": "Beispielabgabe für Modellierungsaufgabe {{ exerciseTitle }}",
+            "usedForTutorial": "Für Tutorial",
+            "apollonConversion": {
+                "error": "Apollon-Konvertierung ist nicht verfügbar"
+            }
+        }
+    }
+}

@@ -1,0 +1,230 @@
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { EMPTY, map, startWith, switchMap } from 'rxjs';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
+import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
+import { TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
+
+export const redColor = '#d9534f';
+export const greenColor = '#5cb85c';
+export const blueColor = '#428bca';
+export const lightBlueColor = '#5bc0de';
+export const greyColor = '#838383';
+
+@Component({
+    template: '',
+})
+export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
+    protected route = inject(ActivatedRoute);
+    protected router = inject(Router);
+    protected accountService = inject(AccountService);
+    protected quizExerciseService = inject(QuizExerciseService);
+    protected websocketService = inject(WebsocketService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
+    questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
+
+    // A signal so that setting it after the (async) quiz load schedules zoneless change detection.
+    // As a plain field the initial load would not render until an unrelated event (e.g. a click),
+    // because the `@if (quizExercise())` guard keeps the chart (the only other signal consumer) out of the DOM.
+    readonly quizExercise = signal<QuizQuestionStatisticResponse>(undefined!); // set in loadQuizCommon() before it is read
+    questionIdParam!: number; // set in ngOnInit() from the route params
+
+    // TODO: why do we have a second variable for labels?
+    labels: string[] = [];
+    // solutionLabels is currently only used for multiple choice questions
+    solutionLabels: string[] = [];
+
+    ratedCorrectData = 0;
+    unratedCorrectData = 0;
+
+    maxScore = 0;
+    showSolution = false;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
+
+    questionTextRendered?: SafeHtml;
+
+    backgroundColors: string[] = [];
+    backgroundSolutionColors: string[] = [];
+
+    ngOnInit() {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
+        });
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const questionId = Number(params['questionId']);
+                    this.questionIdParam = questionId;
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
+
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        map(() => true),
+                        startWith(false),
+                        switchMap((refresh) => this.quizExerciseService.findQuestionStatistic(exerciseId, questionId).pipe(map((response) => ({ response, questionId, refresh })))),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(({ response, questionId, refresh }) => {
+                this.questionIdParam = questionId;
+                this.loadQuiz(response, refresh);
+            });
+    }
+
+    /**
+     * reset old charts data
+     */
+    resetLabelsColors() {
+        this.labels = [];
+        this.solutionLabels = [];
+        this.backgroundColors = [];
+        this.backgroundSolutionColors = [];
+    }
+
+    resetData() {
+        this.ratedData = [];
+        this.unratedData = [];
+    }
+
+    addData(rated: number, unrated: number) {
+        this.ratedData.push(rated);
+        this.unratedData.push(unrated);
+    }
+
+    /**
+     * converts a number in a letter (0 -> A, 1 -> B, ...)
+     *
+     * @param index the given number
+     */
+    getLetter(index: number) {
+        return String.fromCharCode(65 + index);
+    }
+
+    updateData() {
+        // add data for the last bar (correct Solutions)
+        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
+        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
+        this.chartLabels = this.labels;
+        this.loadDataInDiagram();
+    }
+
+    /**
+     * switch between showing and hiding the solution in the chart
+     *  1. change the BackgroundColor of the bars
+     *  2. change the bar-Labels
+     */
+    switchSolution() {
+        this.showSolution = !this.showSolution;
+        this.loadDataInDiagram();
+    }
+
+    /**
+     * This functions loads the Quiz, which is necessary to build the Web-Template
+     *
+     * @param quiz the quizExercise, which the selected question is part of.
+     * @param refresh true if method is called from Websocket
+     */
+    abstract loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean): void;
+
+    loadQuizCommon(quiz: QuizQuestionStatisticResponse) {
+        // if the Student finds a way to the Website
+        //      -> the Student will be sent back to Courses
+        if (!this.accountService.isAtLeastTutor()) {
+            void this.router.navigateByUrl('courses');
+        }
+        // Use the page-specific question response instead of loading every question in the quiz.
+        this.quizExercise.set(quiz);
+        const updatedQuestion = quiz.quizQuestion;
+        const questionStatistic = quiz.quizQuestionStatistic;
+        // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
+        if (!updatedQuestion || !questionStatistic || this.questionIdParam !== updatedQuestion.id) {
+            void this.router.navigateByUrl('courses');
+            return undefined;
+        }
+        this.question = updatedQuestion;
+        this.questionStatistic = questionStatistic;
+        return updatedQuestion;
+    }
+
+    /**
+     * change label and color if an element is invalid
+     */
+    loadInvalidLayout(possibleInvalidElements: CanBecomeInvalid[]) {
+        // set Background for invalid answers = grey
+        const invalidLabel = this.translateService.instant('artemisApp.showStatistic.invalid');
+        possibleInvalidElements.forEach((element, i) => {
+            if (element.invalid) {
+                this.backgroundColors[i] = greyColor;
+                this.backgroundSolutionColors[i] = greyColor;
+                // add 'invalid' to bar-Label
+                this.labels[i] = this.getLetter(i) + '. ' + invalidLabel;
+            }
+        });
+    }
+
+    /**
+     * add Layout for the last bar
+     */
+    addLastBarLayout(length: number) {
+        // add Color for last bar
+        this.backgroundColors.push(lightBlueColor);
+        this.backgroundSolutionColors[length] = lightBlueColor;
+
+        // add Text for last label based on the language
+        const lastLabel = this.translateService.instant('artemisApp.showStatistic.quizStatistic.yAxes');
+        this.solutionLabels[length] = lastLabel;
+        this.labels[length] = lastLabel;
+        this.chartLabels = this.labels;
+    }
+
+    /**
+     * check if the rated or unrated, then load the rated or unrated data into the diagram
+     */
+    loadDataInDiagram() {
+        // if show Solution is true use the label, backgroundColor and Data, which show the solution
+        if (this.showSolution) {
+            // show Solution: use the backgroundColor which shows the solution
+            this.chartColors.set([...this.backgroundSolutionColors]);
+
+            this.setData(this.questionStatistic);
+            const additionalData = this.rated ? this.ratedCorrectData : this.unratedCorrectData;
+            this.data.push(additionalData);
+            // show Solution
+            this.chartLabels = this.solutionLabels;
+        } else {
+            // don't show Solution: use the backgroundColor which doesn't show the solution
+            this.chartColors.set([...this.backgroundColors]);
+
+            this.setData(this.questionStatistic);
+            // don't show Solution
+            this.chartLabels = this.labels;
+        }
+
+        this.updateChartData();
+        this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
+    }
+
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
+        // The extra "correct solutions" bar (participants who answered the whole question correctly) is only
+        // appended to the data in the show-solution view (see loadDataInDiagram). In the default view the last
+        // bar is just the last answer option/element, so only treat it as the summary bar while the solution is shown.
+        const isCorrectSolutionBar = this.showSolution && item.index === this.data.length - 1;
+        const key = isCorrectSolutionBar ? 'artemisApp.showStatistic.tooltip.correctOverall' : 'artemisApp.showStatistic.tooltip.participantShare';
+        return this.tooltipLine(key, item.value);
+    }
+}

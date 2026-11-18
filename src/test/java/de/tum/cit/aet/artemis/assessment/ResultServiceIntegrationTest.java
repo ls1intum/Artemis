@@ -1,0 +1,1445 @@
+package de.tum.cit.aet.artemis.assessment;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+
+class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "resultserviceintegration";
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ResultService resultService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    @Autowired
+    private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    private Course course;
+
+    private ProgrammingExercise programmingExercise;
+
+    private ModelingExercise modelingExercise;
+
+    private ModelingExercise examModelingExercise;
+
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation2;
+
+    private StudentParticipation studentParticipation;
+
+    private final int NUMBER_OF_STUDENTS = 3;
+
+    @BeforeEach
+    void setupTest() {
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 2);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
+        // This is done to avoid proxy issues in the processNewResult method of the ResultService.
+        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseStudentParticipation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis,
+                TEST_PREFIX + "student1");
+        Submission programmingSubmission = participationUtilService.addSubmission(programmingExerciseParticipation, new ProgrammingSubmission());
+        participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
+        Course secondCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
+        modelingExercise = ExerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseRepository.save(modelingExercise);
+        studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
+        Submission modelingSubmission = participationUtilService.addSubmission(studentParticipation, new ModelingSubmission());
+
+        Exam exam = examUtilService.addExamWithExerciseGroup(this.course, true);
+        this.examModelingExercise = new ModelingExercise();
+        this.examModelingExercise.setMaxPoints(100D);
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
+        this.modelingExerciseRepository.save(this.examModelingExercise);
+        this.examRepository.save(exam);
+
+        Result result = ParticipationFactory.generateResult(true, 200D).submission(modelingSubmission);
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        result.setFeedbacks(feedbacks);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        Result result2 = ParticipationFactory.generateResult(true, 200D).submission(programmingSubmission);
+        List<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        result2.setFeedbacks(feedbacks2);
+        result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
+        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
+        result = participationUtilService.addSampleFeedbackToResults(result);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+
+        // Set programming exercise due date in future.
+        exerciseUtilService.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+
+        String url = "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details";
+        List<FeedbackDTO> feedbacks = assertThatDb(() -> request.getList(url, HttpStatus.OK, FeedbackDTO.class)).hasBeenCalledAtMostTimes(10);
+
+        assertThat(feedbacks).extracting(FeedbackDTO::id).containsExactlyInAnyOrderElementsOf(result.getFeedbacks().stream().map(Feedback::getId).toList());
+        assertThat(feedbacks).extracting(FeedbackDTO::text).containsExactlyInAnyOrderElementsOf(result.getFeedbacks().stream().map(Feedback::getText).toList());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void resultDetailsKeepEveryTopLevelKeyOfTheEntityWire() throws Exception {
+        // the route is also read by the SCORPIO VS Code extension, so the DTO must be a superset of the former entity payload
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "goldenTest");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "test failed message");
+        participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "BAD_PRACTICE", "sca issue message");
+        Feedback manualFeedback = new Feedback().credits(1.5).positive(true).type(FeedbackType.MANUAL).text("manual text").detailText("manual detail").reference("file.java_1")
+                .visibility(Visibility.ALWAYS);
+        participationUtilService.addFeedbackToResult(manualFeedback, result);
+
+        Result entityResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(entityResult);
+        Map<Long, Set<String>> entityKeysById = new HashMap<>();
+        Map<Long, Set<String>> entityTestCaseKeysById = new HashMap<>();
+        for (Feedback feedback : entityResult.getFeedbacks()) {
+            JsonNode entityJson = request.getObjectMapper().valueToTree(feedback.result(null));
+            entityKeysById.put(feedback.getId(), keysOf(entityJson));
+            if (entityJson.has("testCase")) {
+                entityTestCaseKeysById.put(feedback.getId(), keysOf(entityJson.get("testCase")));
+            }
+        }
+        assertThat(entityKeysById).hasSize(3);
+        // the nested test case was serialized with all its scalars, only "tasks" and "exercise" were ignored on the entity
+        assertThat(entityTestCaseKeysById).hasSize(1);
+
+        String url = "/api/assessment/participations/" + programmingExerciseStudentParticipation.getId() + "/results/" + result.getId() + "/details";
+        JsonNode dtoJson = request.getObjectMapper().readTree(request.get(url, HttpStatus.OK, String.class));
+        assertThat(dtoJson).hasSize(3);
+        for (JsonNode feedbackJson : dtoJson) {
+            long id = feedbackJson.get("id").asLong();
+            assertThat(keysOf(feedbackJson)).as("keys of feedback %d", id).containsAll(entityKeysById.get(id));
+            if (entityTestCaseKeysById.containsKey(id)) {
+                assertThat(keysOf(feedbackJson.get("testCase"))).as("test case keys of feedback %d", id).containsAll(entityTestCaseKeysById.get(id));
+            }
+        }
+        JsonNode testCaseJson = dtoJson.findValue("testCase");
+        assertThat(testCaseJson).isNotNull();
+        assertThat(testCaseJson.get("id").asLong()).isEqualTo(testCase.getId());
+        assertThat(testCaseJson.get("testName").asString()).isEqualTo("goldenTest");
+        assertThat(testCaseJson.get("weight").asDouble()).isEqualTo(testCase.getWeight());
+        assertThat(testCaseJson.get("active").asBoolean()).isEqualTo(testCase.isActive());
+        assertThat(testCaseJson.get("visibility").asString()).isEqualTo(testCase.getVisibility().name());
+        assertThat(testCaseJson.get("bonusMultiplier").asDouble()).isEqualTo(testCase.getBonusMultiplier());
+        assertThat(testCaseJson.get("bonusPoints").asDouble()).isEqualTo(testCase.getBonusPoints());
+        assertThat(testCaseJson.get("type").asString()).isEqualTo(testCase.getType().name());
+    }
+
+    private static Set<String> keysOf(JsonNode node) {
+        return new HashSet<>(node.propertyNames());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldNotSynthesizeFeedbackForAResultLoadedWithoutItsFeedback() {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+
+        // Callers that do not need the feedback load the result without it (e.g. the non-locking variant of the
+        // submission-without-assessment endpoint, which the assessment dashboard polls). The collection is an
+        // uninitialized proxy on the detached result, so attaching the synthesized views must not try to add to it.
+        Result resultWithoutFeedback = resultRepository.findByIdElseThrow(result.getId());
+        assertThatCode(() -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultWithoutFeedback, programmingExercise, false)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefuseToScoreAResultWhoseTypedFeedbackWasNotLoaded() {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, true, null);
+
+        // The automatic points come from the typed collections, so scoring a result that was loaded without them
+        // would quietly drop every automatic test instead of failing.
+        Result resultWithoutTypedFeedback = resultRepository.findByIdElseThrow(result.getId());
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> resultWithoutTypedFeedback.calculateTotalPointsForProgrammingExercises(Map.of()))
+                .withMessageContaining("has to be loaded before its score is calculated");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldSynthesizeDistinctIdsForTestCaseAndScaFeedbackWithSameSeq() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        var testCaseRow = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+        var scaRow = participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "BAD_PRACTICE", "sca issue message");
+
+        List<FeedbackDTO> feedbacks = request.getList(
+                "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
+                FeedbackDTO.class);
+
+        // the two tables have independent id sequences, so both rows can carry the same id - without the stride the
+        // synthesized views would collide and one would be dropped from the (Set-backed) feedback collection
+        assertThat(feedbacks).hasSize(2);
+        assertThat(feedbacks.stream().map(FeedbackDTO::id)).containsExactlyInAnyOrder(ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(testCaseRow.getId()),
+                ProgrammingFeedbackSynthesizerService.syntheticScaId(scaRow.getId()));
+
+        // the synthesized issue JSON exposes the tool-reported category (legacy contract), not the Artemis
+        // grading category (which is carried by the feedback text)
+        FeedbackDTO scaView = feedbacks.stream().filter(feedback -> feedback.text() != null && feedback.text().startsWith(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER))
+                .findFirst().orElseThrow();
+        assertThat(scaView.detailText()).contains("\"category\":\"BAD_PRACTICE\"");
+        assertThat(scaView.text()).isEqualTo(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Bad Practice");
+        // the client renders test names and matches feedback to tasks through the test case reference
+        FeedbackDTO testCaseView = feedbacks.stream().filter(feedback -> feedback.testCase() != null).findFirst().orElseThrow();
+        assertThat(testCaseView.testCase().testName()).isEqualTo("test1");
+        assertThat(testCaseView.testCase().id()).isEqualTo(testCase.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
+        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
+        result = participationUtilService.addSampleFeedbackToResults(result);
+
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    private Result addManualExamResultOfStudent1(ZonedDateTime publishResultsDate) {
+        Exam exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        exam.setPublishResultsDate(publishResultsDate);
+        examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examModelingExercise);
+        Submission submission = participationUtilService.addSubmission(examModelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+        return participationUtilService.addSampleFeedbackToResults(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnTheResultDetailsOfAnExamParticipationBeforeTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().plusDays(1));
+
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamParticipationToTutorsBeforeTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().plusDays(1));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamParticipationOnceTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().minusMinutes(1));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    private Result addAutomaticExamProgrammingResultOfStudent1(String shortName, ZonedDateTime examStartDate, ZonedDateTime examEndDate) {
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Exam programming", shortName, true);
+        Exam exam = examRepository.findByIdElseThrow(examProgrammingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(examStartDate);
+        exam.setEndDate(examEndDate);
+        examRepository.save(exam);
+        userUtilService.enrollPrefixedUsersInCourse(examProgrammingExercise.getExerciseGroup().getExam().getCourse(), TEST_PREFIX);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examProgrammingExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
+        Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        return participationUtilService.addSampleFeedbackToResults(result);
+    }
+
+    /**
+     * During the exam the students see the automatic feedback of their programming exercises, so the result details they load for the instructions and the feedback have to be
+     * served as long as the exam is running.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamProgrammingParticipationWhileTheExamIsRunning() throws Exception {
+        Result result = addAutomaticExamProgrammingResultOfStudent1("EXAMRESRUN", ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(50));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnTheResultDetailsOfAnExamProgrammingParticipationAfterTheExamEndedBeforeTheResultsArePublished() throws Exception {
+        Result result = addAutomaticExamProgrammingResultOfStudent1("EXAMRESEND", ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    private StudentParticipation examParticipationInMemory(User participant, boolean testRun) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(examModelingExercise);
+        participation.setParticipant(participant);
+        participation.setTestRun(testRun);
+        return participation;
+    }
+
+    private Result examResultWithFeedbackOfEveryType(StudentParticipation participation) {
+        Submission submission = new ModelingSubmission();
+        submission.setParticipation(participation);
+        Result result = new Result().submission(submission);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setFeedbacks(new ArrayList<>(
+                List.of(new Feedback().type(FeedbackType.MANUAL).detailText("manual"), new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("manual unreferenced"),
+                        new Feedback().type(FeedbackType.AUTOMATIC).detailText("automatic"), new Feedback().detailText("untyped"))));
+        return result;
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsHeldBackFromTheStudentUntilTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(student));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("automatic", "untyped");
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptForTheStudentOnceTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(student));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
+    }
+
+    /**
+     * The summary of an instructor's own test run shows what a student sees after the results are published, including the feedback of the assessment.
+     */
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptInTheOwnTestRunOfAnInstructor() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        StudentParticipation participation = examParticipationInMemory(instructor, true);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(instructor));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptForTutorsBeforeTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(tutor));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
+        Submission submission = participationUtilService.addSubmission(solutionParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(null, null, submission);
+        result = participationUtilService.addSampleFeedbackToResults(result);
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnNotFoundForNonExistingResult() throws Exception {
+        Submission submission = participationUtilService.addSubmission(solutionParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(null, null, submission);
+        participationUtilService.addSampleFeedbackToResults(result);
+        request.getList(
+                "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details",
+                HttpStatus.NOT_FOUND, FeedbackDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
+        Submission submission = participationUtilService.addSubmission(solutionParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(null, null, submission);
+        participationUtilService.addSampleFeedbackToResults(result);
+        request.getList("/api/assessment/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, FeedbackDTO.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("setResultRatedPermutations")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate,
+            ZonedDateTime submissionDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
+        programmingExercise.setDueDate(dueDate);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
+                .submissionDate(submissionDate);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(programmingExerciseStudentParticipation, programmingSubmission);
+
+        result.setRatedIfNotAfterDueDate();
+        assertThat(result.isRated()).isSameAs(shouldBeRated);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testTestRunsNonRated() {
+        programmingExerciseStudentParticipation.setPracticeMode(true);
+        programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(programmingExerciseStudentParticipation, submission);
+
+        result.setRatedIfNotAfterDueDate();
+        // The participation is a test run -> should not be rated
+        assertThat(result.isRated()).isFalse();
+    }
+
+    private static Stream<Arguments> setResultRatedPermutations() {
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime dateInFuture = now.plusHours(1);
+        ZonedDateTime dateInPast = now.minusHours(1);
+        ZonedDateTime dateClosePast = now.minusSeconds(5);
+        ZonedDateTime dateWithinGracePeriod = now.minusSeconds(1);
+        return Stream.of(
+                // The result was created shortly after the due date within the grace period => rated
+                Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateWithinGracePeriod, now),
+                // The result was created shortly after the due date and grace period => unrated
+                Arguments.of(false, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
+                // The due date has not passed, normal student submission => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture, now),
+                // The due date is not set, normal student submission => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, null, now),
+                // The due date has passed, normal student submission => unrated result.
+                Arguments.of(false, null, SubmissionType.MANUAL, dateInPast, now),
+                // The result was generated by an instructor => rated result.
+                Arguments.of(true, null, SubmissionType.INSTRUCTOR, dateInPast, now),
+                // The result was generated by test update => rated result.
+                Arguments.of(true, null, SubmissionType.TEST, dateInPast, now),
+                // The build and test date has passed, the due date has passed, the result is generated by a test update => rated result.
+                Arguments.of(true, dateInPast, SubmissionType.TEST, dateInPast, now),
+                // The build and test date has passed, the due date has passed, the result is generated by an instructor => rated result.
+                Arguments.of(true, dateInPast, SubmissionType.INSTRUCTOR, dateInPast, now),
+                // The build and test date has not passed, due date has not passed, normal student submission => rated result.
+                Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture, now),
+                // The build and test date has not passed, due date has passed, normal student submission => unrated result.
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now),
+                // The submission has no submission date (empty participation), the due date has passed => rated result, a missing submission cannot be late.
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInPast, null),
+                // The submission has no submission date (empty participation) and no due date is set => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, null, null));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetResultsWithPointsForFileUploadExerciseNoGradingCriteria() throws Exception {
+        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
+
+        List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                .flatMap(submission -> submission.getResults().stream()).toList();
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+
+        // with points should return the same results as the /results endpoint
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
+        assertThat(resultsWithPoints).hasSameSizeAs(results);
+        assertThat(resultsWithPoints).extracting(resultWithPoints -> resultWithPoints.result().id())
+                .containsExactlyInAnyOrderElementsOf(results.stream().map(Result::getId).toList());
+
+        // the exercise has no grading criteria -> empty points map in every resultWithPoints
+        for (final var resultWithPoints : resultsWithPoints) {
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
+            // the CSV export reads the participant columns off the nested participation
+            var participation = resultWithPoints.result().submission().participation();
+            assertThat(participation.participantIdentifier()).startsWith(TEST_PREFIX + "student");
+            assertThat(participation.participantName()).isNotBlank();
+            assertThat(participation.team()).isNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetResultsWithPointsForFileUploadExerciseWithGradingCriteria() throws Exception {
+        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
+        addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
+
+        List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                .flatMap(submission -> submission.getResults().stream()).toList();
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+
+        // with points should return the same results as the /results endpoint
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
+        assertThat(resultsWithPoints).hasSameSizeAs(results);
+        assertThat(resultsWithPoints).extracting(resultWithPoints -> resultWithPoints.result().id())
+                .containsExactlyInAnyOrderElementsOf(results.stream().map(Result::getId).toList());
+
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
+
+        for (final var resultWithPoints : resultsWithPoints) {
+            final Map<Long, Double> points = resultWithPoints.pointsPerCriterion();
+            if (resultWithPoints.result().score() == 10.0) {
+                // feedback without criterion (1.1 points) is considered in the total points calculation
+                assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
+                // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
+                assertThat(points).hasSize(1);
+                assertThat(points).containsEntry(criterion1.getId(), 5.0);
+            }
+            else {
+                assertThat(resultWithPoints.totalPoints()).isEqualTo(14);
+                // two feedbacks of different criteria -> map should contain two entries
+                assertThat(resultWithPoints.pointsPerCriterion()).hasSize(2);
+                assertThat(points).containsEntry(criterion1.getId(), 1.0);
+                assertThat(points).containsEntry(criterion2.getId(), 3.0);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetResultsWithPointsWithoutSubmissions() throws Exception {
+        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
+        addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
+
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion?withSubmissions=false", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
+
+        assertThat(resultsWithPoints).hasSize(NUMBER_OF_STUDENTS / 2);
+
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        for (final var resultWithPoints : resultsWithPoints) {
+            // The points are derived from the feedbacks, so they are only correct if the feedbacks were loaded even though the submissions were not requested.
+            assertThat(resultWithPoints.result().score()).isEqualTo(10.0);
+            // the export of non-modeling exercises requests no submissions but still reads the participant off result.submission.participation
+            assertThat(resultWithPoints.result().submission().participation().participantIdentifier()).startsWith(TEST_PREFIX + "student");
+            assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
+            assertThat(resultWithPoints.pointsPerCriterion()).hasSize(1).containsEntry(criterion1.getId(), 5.0);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("gradeRelevantResultStates")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGradingCriteriaPointsIgnoreUnfinishedAthenaRequests(AssessmentType latestType, Boolean successful, boolean expectedLatest) throws Exception {
+        var submission = studentParticipation.findLatestSubmission().orElseThrow();
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        submissionRepository.save(submission);
+        var criteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
+        gradingCriterionRepository.saveAll(criteria);
+        modelingExerciseRepository.save(modelingExercise);
+        var criterion = GradingCriterionUtil.findGradingCriterionByTitle(modelingExercise, "test title");
+        var instruction = criterion.getStructuredGradingInstructions().iterator().next();
+
+        var manual = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now().minusMinutes(5), submission);
+        manual.setScore(70D);
+        resultRepository.save(manual);
+        var manualFeedback = new Feedback().credits(3D);
+        manualFeedback.setGradingInstruction(instruction);
+        participationUtilService.addFeedbackToResult(manualFeedback, manual);
+
+        var requestResult = participationUtilService.addResultToSubmission(latestType,
+                successful == null ? ZonedDateTime.now().plusMinutes(5) : ZonedDateTime.now().minusMinutes(1), submission);
+        requestResult.setRated(expectedLatest);
+        requestResult.setScore(20D);
+        requestResult.setSuccessful(successful);
+        resultRepository.save(requestResult);
+        var requestFeedback = new Feedback().credits(1D);
+        requestFeedback.setGradingInstruction(instruction);
+        participationUtilService.addFeedbackToResult(requestFeedback, requestResult);
+        assertThat(resultRepository.findByIdElseThrow(requestResult.getId()).isSuccessful()).isEqualTo(successful);
+
+        var resultsWithPoints = request.getList("/api/assessment/exercises/" + modelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
+
+        assertThat(resultsWithPoints).hasSize(1);
+        var gradedResult = resultsWithPoints.getFirst();
+        assertThat(gradedResult.result().id()).isEqualTo(expectedLatest ? requestResult.getId() : manual.getId());
+        assertThat(gradedResult.result().score()).isEqualTo(expectedLatest ? 20D : 70D);
+        assertThat(gradedResult.totalPoints()).isEqualTo(expectedLatest ? 1D : 3D);
+        assertThat(gradedResult.pointsPerCriterion()).containsExactlyEntriesOf(Map.of(criterion.getId(), expectedLatest ? 1D : 3D));
+    }
+
+    private static Stream<Arguments> gradeRelevantResultStates() {
+        return Stream.of(Arguments.of(AssessmentType.AUTOMATIC_ATHENA, null, false), Arguments.of(AssessmentType.AUTOMATIC_ATHENA, false, false),
+                Arguments.of(AssessmentType.AUTOMATIC_ATHENA, true, true), Arguments.of(AssessmentType.AUTOMATIC, false, true));
+    }
+
+    private FileUploadExercise setupFileUploadExerciseWithResults() {
+        var now = ZonedDateTime.now();
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
+        course.addExercises(fileUploadExercise);
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+            fileUploadSubmission.submitted(true);
+            fileUploadSubmission.submissionDate(now.minusHours(3));
+            participationUtilService.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
+            fileUploadExercise.addParticipation((StudentParticipation) fileUploadSubmission.getParticipation());
+
+            if (i % 3 == 0) {
+                participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
+            }
+            else if (i % 4 == 0) {
+                participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
+            }
+            submissionRepository.save(fileUploadSubmission);
+        }
+
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        return fileUploadExercise;
+    }
+
+    private void addFeedbacksWithGradingCriteriaToExercise(FileUploadExercise fileUploadExercise) {
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        final GradingCriterion criterion2 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title2");
+
+        final List<GradingInstruction> gradingInstructions1 = List.copyOf(criterion1.getStructuredGradingInstructions());
+        // as long as credits are equal we can choose any two here
+        assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
+        final GradingInstruction instruction1a = gradingInstructions1.getFirst();
+        final GradingInstruction instruction1b = gradingInstructions1.get(1);
+        final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
+        assertThat(gradingInstructions2).hasSize(1);
+        final GradingInstruction instruction2 = gradingInstructions2.stream().findFirst().orElseThrow();
+
+        for (final var participation : fileUploadExercise.getStudentParticipations()) {
+            for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {
+                if (result.getScore() == 10.0) {
+                    final Feedback feedback1 = new Feedback().credits(2.0);
+                    feedback1.setGradingInstruction(instruction1a);
+                    participationUtilService.addFeedbackToResult(feedback1, result);
+
+                    final Feedback feedback2 = new Feedback().credits(3.0);
+                    feedback2.setGradingInstruction(instruction1b);
+                    participationUtilService.addFeedbackToResult(feedback2, result);
+
+                    // one feedback without grading instruction should be included in total score calculation
+                    final Feedback feedback3 = new Feedback().credits(1.111);
+                    participationUtilService.addFeedbackToResult(feedback3, result);
+                }
+                else {
+                    final Feedback feedback1 = new Feedback().credits(1.0);
+                    feedback1.setGradingInstruction(instruction1a);
+                    participationUtilService.addFeedbackToResult(feedback1, result);
+
+                    final Feedback feedback2 = new Feedback().credits(3.0);
+                    feedback2.setGradingInstruction(instruction2);
+                    participationUtilService.addFeedbackToResult(feedback2, result);
+
+                    final Feedback feedback3 = new Feedback().credits(10.0);
+                    participationUtilService.addFeedbackToResult(feedback3, result);
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetResultsWithPointsForExamExercise() throws Exception {
+        List<Result> results = setupExamModelingExerciseWithResults();
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
+
+        // with points should return the same results as the /results endpoint
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(resultsWithPoints).hasSameSizeAs(results);
+        assertThat(resultsWithPoints).extracting(resultWithPoints -> resultWithPoints.result().id()).containsExactlyElementsOf(results.stream().map(Result::getId).toList());
+
+        // the exercise has no grading criteria -> empty points map in every resultWithPoints
+        for (final var resultWithPoints : resultsWithPoints) {
+            assertThat(resultWithPoints.pointsPerCriterion()).isNullOrEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetResultsWithPointsForExamExercise_asTutor() throws Exception {
+        setupExamModelingExerciseWithResults();
+        request.getList("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    private List<Result> setupExamModelingExerciseWithResults() {
+        List<Result> results = new ArrayList<>();
+        var now = ZonedDateTime.now();
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            ModelingSubmission modelingSubmission = new ModelingSubmission();
+            modelingSubmission.model("TestingSubmission");
+            modelingSubmission.submitted(true);
+            modelingSubmission.submissionDate(now.minusHours(2));
+            participationUtilService.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
+            Submission submission = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL,
+                    userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
+            results.addAll(submission.getResults());
+        }
+
+        // empty participation with submission
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(null);
+        participation.setExercise(this.examModelingExercise);
+        studentParticipationRepository.save(participation);
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.model("Text");
+        modelingSubmission.submitted(true);
+        modelingSubmission.submissionDate(now.minusHours(3));
+        participation.addSubmission(modelingSubmission);
+        modelingSubmission.setParticipation(participation);
+        submissionRepository.save(modelingSubmission);
+        studentParticipationRepository.save(participation);
+
+        return results;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission() throws Exception {
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        var createdResult = request.postWithResponseBody(
+                "/api/assessment/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1", result, ResultDTO.class,
+                HttpStatus.CREATED);
+        assertThat(createdResult).isNotNull();
+        assertThat(createdResult.rated()).isFalse();
+
+        Result persistedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(createdResult.id());
+        assertThat(persistedResult.isRated()).isFalse();
+        assertThat(persistedResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(persistedResult.getExerciseId()).isEqualTo(modelingExercise.getId());
+        assertThat(persistedResult.getSubmission().getType()).isEqualTo(SubmissionType.EXTERNAL);
+        assertThat(((StudentParticipation) persistedResult.getSubmission().getParticipation()).getParticipantIdentifier()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(persistedResult.getFeedbacks()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_clientShapedBody() throws Exception {
+        // the dialog posts its whole Result object without an exerciseId; the server derives the non-null exercise_id column from the path
+        ObjectNode body = request.getObjectMapper().createObjectNode();
+        body.put("successful", true);
+        body.put("score", 100);
+        body.put("rated", true);
+        body.put("completionDate", ZonedDateTime.now().toString());
+        ObjectNode feedback = body.putArray("feedbacks").addObject();
+        feedback.put("type", "MANUAL");
+        feedback.put("text", "external feedback");
+        feedback.put("detailText", "well done");
+        feedback.put("positive", true);
+        feedback.put("credits", 100);
+
+        var createdResult = request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), body, ResultDTO.class, HttpStatus.CREATED);
+        assertThat(createdResult.score()).isEqualTo(100);
+        assertThat(createdResult.rated()).isTrue();
+        assertThat(createdResult.exerciseId()).isEqualTo(modelingExercise.getId());
+
+        Result persistedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(createdResult.id());
+        assertThat(persistedResult.getExerciseId()).isEqualTo(modelingExercise.getId());
+        assertThat(persistedResult.getScore()).isEqualTo(100);
+        assertThat(persistedResult.isSuccessful()).isTrue();
+        assertThat(persistedResult.getFeedbacks()).hasSize(1);
+        Feedback persistedFeedback = persistedResult.getFeedbacks().iterator().next();
+        assertThat(persistedFeedback.getText()).isEqualTo("external feedback");
+        assertThat(persistedFeedback.getDetailText()).isEqualTo("well done");
+        assertThat(persistedFeedback.getCredits()).isEqualTo(100);
+        assertThat(persistedFeedback.isPositive()).isTrue();
+        assertThat(persistedFeedback.getType()).isEqualTo(FeedbackType.MANUAL);
+        assertThat(feedbackRepository.findByResult(persistedResult)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_wrongExerciseId() throws Exception {
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        long randomId = 2145;
+        var createdResult = request.postWithResponseBody("/api/assessment/exercises/" + randomId + "/external-submission-results", result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(createdResult).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_programmingExercise() throws Exception {
+        var studentLogin = TEST_PREFIX + "student1";
+        User user = userTestRepository.findOneByLogin(studentLogin).orElseThrow();
+        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
+        programmingExerciseRepository.save(programmingExercise);
+        var createdResult = request.postWithResponseBody(externalResultPath(programmingExercise.getId(), studentLogin), result, ResultDTO.class, HttpStatus.CREATED);
+        assertThat(createdResult).isNotNull();
+        assertThat(createdResult.rated()).isFalse();
+        Result persistedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(createdResult.id());
+        assertThat(persistedResult.getExerciseId()).isEqualTo(programmingExercise.getId());
+        assertThat(persistedResult.getSubmission().getParticipation()).isInstanceOf(ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void createResultForExternalSubmission_quizExercise(QuizMode quizMode) throws Exception {
+        var now = ZonedDateTime.now();
+        var quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), quizMode, course);
+        course.addExercises(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(quizExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student11"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmissionExam() throws Exception {
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result,
+                ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmissionExam_endedExamWithStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        var studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examModelingExercise);
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.CREATED);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmissionExam_studentWithoutStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+
+        // the student is part of the course but has no student exam, so there is no working period to attach the result to
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmissionExam_exerciseNotInStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        // the student exam exists, but it was assigned other exercises, so a result for this one would be left out of the exam result
+        examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    private void endExamOfExamModelingExercise() {
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+    }
+
+    private String externalResultPath(long exerciseId, String studentLogin) {
+        return "/api/assessment/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "own", "foreign", "missing" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void externalResultValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
+        var originalResultIds = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId()).stream().map(Result::getId).toList();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        var originalState = participation.getInitializationState();
+        var draft = new ModelingSubmission();
+        draft.setSubmitted(false);
+        var submission = participationUtilService.addSubmission(participation, draft);
+        var originalSubmissionDate = submission.getSubmissionDate();
+        var exercise = instructionSource.equals("own") ? modelingExercise : programmingExercise;
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
+        long instructionId = instructionSource.equals("missing") ? Long.MAX_VALUE : criteria.getFirst().getStructuredGradingInstructions().iterator().next().getId();
+        var body = Map.of("rated", true, "score", 20, "exerciseId", exercise.getId(), "feedbacks",
+                List.of(Map.of("text", "structured feedback", "type", "MANUAL", "credits", 1, "gradingInstruction", Map.of("id", instructionId))));
+
+        var response = request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), body, ResultDTO.class,
+                instructionSource.equals("own") ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
+
+        if (instructionSource.equals("own")) {
+            assertThat(feedbackRepository.findByResult(resultRepository.findByIdElseThrow(response.id()))).singleElement()
+                    .satisfies(feedback -> assertThat(feedback.getGradingInstruction().getId()).isEqualTo(instructionId));
+        }
+        else {
+            assertThat(resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId())).extracting(Result::getId)
+                    .containsExactlyInAnyOrderElementsOf(originalResultIds);
+            var unchangedSubmission = submissionRepository.findByIdElseThrow(submission.getId());
+            assertThat(unchangedSubmission.isSubmitted()).isFalse();
+            assertThat(unchangedSubmission.getSubmissionDate()).isEqualTo(originalSubmissionDate);
+            assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(originalState);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void storingFeedbackRejectsForeignGradingInstructions(boolean append) {
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(modelingExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, submission);
+        Feedback feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL).text("foreign instruction");
+        feedback.setGradingInstruction(instruction);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> {
+            if (append) {
+                resultService.addFeedbackToResult(result, List.of(feedback), false);
+            }
+            else {
+                resultService.storeFeedbackInResult(result, List.of(feedback), false);
+            }
+        }).withMessageContaining("grading instruction");
+        assertThat(feedback.getId()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
+        modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        modelingExerciseRepository.save(modelingExercise);
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_resultExists() throws Exception {
+        var now = ZonedDateTime.now();
+        var modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        modelingExerciseRepository.save(modelingExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAssessmentCountByCorrectionRound() {
+        // exercise
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(2), course);
+        textExercise = textExerciseRepository.save(textExercise);
+
+        // participation
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setParticipant(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        studentParticipation.setExercise(textExercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        // submission
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setParticipation(studentParticipation);
+        textSubmission.setSubmitted(true);
+        textSubmission.setText("abc");
+        textSubmission = submissionRepository.save(textSubmission);
+
+        // result 1
+        var result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), textSubmission, TEST_PREFIX + "instructor1", new ArrayList<>());
+        result1.setRated(true);
+        result1 = participationUtilService.addFeedbackToResults(result1);
+        result1.setSubmission(textSubmission);
+
+        // result 2
+        var result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), textSubmission, TEST_PREFIX + "tutor1", new ArrayList<>());
+        result2.setRated(true);
+        result2 = participationUtilService.addFeedbackToResults(result2);
+        result2.setSubmission(textSubmission);
+
+        textSubmission.addResult(result1);
+        textSubmission = submissionRepository.save(textSubmission);
+
+        textSubmission.addResult(result2);
+        submissionRepository.save(textSubmission);
+
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(textExercise, 2);
+        assertThat(assessments[0].inTime()).isEqualTo(1);    // correction round 1
+        assertThat(assessments[1].inTime()).isEqualTo(1);    // correction round 2
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
+        // exercise
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // participation
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setParticipant(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        programmingExerciseStudentParticipation.setExercise(programmingExercise);
+        programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        // submission
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission.setSubmitted(true);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // result 1
+        Submission submission1 = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission1, TEST_PREFIX + "instructor1", new ArrayList<>());
+        result1.setRated(true);
+        result1 = participationUtilService.addFeedbackToResults(result1);
+        result1.setSubmission(programmingSubmission);
+
+        // result 2
+        Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission2, TEST_PREFIX + "tutor1", new ArrayList<>());
+        result2.setRated(true);
+        result2 = participationUtilService.addFeedbackToResults(result2);
+        result2.setSubmission(programmingSubmission);
+
+        programmingSubmission.addResult(result1);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        programmingSubmission.addResult(result2);
+        submissionRepository.save(programmingSubmission);
+
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(programmingExercise, 2);
+        assertThat(assessments[0].inTime()).isEqualTo(1);    // correction round 1
+        assertThat(assessments[1].inTime()).isEqualTo(1);    // correction round 2
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllFeedbackDetailsForExercise() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        assertThat(response.feedbackDetails().getResultsOnPage()).isNotEmpty();
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().getFirst();
+        assertThat(feedbackDetail.count()).isEqualTo(1);
+        assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
+        assertThat(feedbackDetail.detailTexts()).isEqualTo(List.of("Some feedback"));
+        assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
+
+        assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    private static Stream<Arguments> feedbackTextsWithErrorCategory() {
+        return Stream.of(Arguments.of("Ares Security Error (Reason: Student-Code; Stage: Execution): Illegal file access", "Ares Error"),
+                Arguments.of("java.lang.SecurityException: Ares Security Error (Reason: Student-Code; Stage: Execution): Illegal file access", "Ares Error"),
+                Arguments.of("Ares Sicherheitsfehler (Grund: Student-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("Ares-Sicherheitsfehler (Grund: Ares-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("java.lang.SecurityException: Ares Sicherheitsfehler (Grund: Student-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("Unwanted statement found:\n - In src/Main.java:\n   - For-Statement was found", "AST Error"),
+                Arguments.of("Unerwünschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerw\u0308nschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerwu\u0308nschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerwartet: gewünschte Anweisung gefunden", "Student Error"), Arguments.of("Unerwxnschte Anweisung gefunden", "Student Error"),
+                Arguments.of("java.lang.SecurityException: do not use System.exit(int)", "Student Error"), Arguments.of("expected: <3> but was: <4>", "Student Error"));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("feedbackTextsWithErrorCategory")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetFeedbackDetailsClassifiesAndFiltersByErrorCategory(String feedbackText, String expectedCategory) throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, feedbackText);
+        String path = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details";
+
+        FeedbackAnalysisResponseDTO response = request.get(path, HttpStatus.OK, FeedbackAnalysisResponseDTO.class, feedbackDetailsParams(""));
+        assertThat(response.feedbackDetails().getResultsOnPage()).singleElement().extracting(FeedbackDetailDTO::errorCategory).isEqualTo(expectedCategory);
+
+        for (String category : response.errorCategories()) {
+            FeedbackAnalysisResponseDTO filteredResponse = request.get(path, HttpStatus.OK, FeedbackAnalysisResponseDTO.class, feedbackDetailsParams(category));
+            assertThat(filteredResponse.totalItems()).as("feedback filtered by %s", category).isEqualTo(category.equals(expectedCategory) ? 1 : 0);
+        }
+    }
+
+    private static MultiValueMap<String, String> feedbackDetailsParams(String errorCategory) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "1");
+        params.add("pageSize", "10");
+        params.add("sortedColumn", "count");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("searchTerm", "");
+        params.add("filterTasks", "");
+        params.add("filterTestCases", "");
+        params.add("filterOccurrence", "");
+        params.add("filterErrorCategories", errorCategory);
+        params.add("groupFeedback", "false");
+        return params;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllFeedbackDetailsForExerciseWithLongFeedbackMatchesAffectedStudents() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        String longMessage = "a".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH + 1);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, longMessage);
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().getFirst();
+        // the payload carries the legacy 300-character preview, not the full deduplicated message
+        assertThat(feedbackDetail.hasLongFeedbackText()).isTrue();
+        assertThat(feedbackDetail.detailTexts()).containsExactly("a".repeat(294) + " [...]");
+
+        // creating a feedback channel passes exactly these texts back, so the lookup has to match the preview
+        List<String> affectedLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(programmingExercise.getId(), feedbackDetail.detailTexts(),
+                feedbackDetail.testCaseName());
+        assertThat(affectedLogins).containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllFeedbackDetailsForExerciseSortedByTestCaseName() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCaseB = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "bTest");
+        ProgrammingExerciseTestCase testCaseA = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "aTest");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCaseB, false, "Feedback B");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCaseA, false, "Feedback A");
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=testCaseName&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        assertThat(response.feedbackDetails().getResultsOnPage()).extracting(FeedbackDetailDTO::testCaseName).containsExactly("aTest", "bTest");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllFeedbackDetailsForExerciseWithMultipleFeedback() throws Exception {
+        Submission submission1 = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+        Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
+
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedback");
+
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some different feedback");
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
+        assertThat(feedbackDetails).hasSize(2);
+
+        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some feedback").equals(feedbackDetail.detailTexts())).findFirst()
+                .orElseThrow();
+
+        FeedbackDetailDTO secondFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some different feedback").equals(feedbackDetail.detailTexts()))
+                .findFirst().orElseThrow();
+
+        assertThat(firstFeedbackDetail.count()).isEqualTo(2);
+        assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
+        assertThat(firstFeedbackDetail.detailTexts()).isEqualTo(List.of("Some feedback"));
+        assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
+
+        assertThat(secondFeedbackDetail.count()).isEqualTo(1);
+        assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
+        assertThat(secondFeedbackDetail.detailTexts()).isEqualTo(List.of("Some different feedback"));
+        assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
+
+        assertThat(response.totalItems()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllFeedbackDetailsForExerciseWithGroupFeedbackAndMultipleSimilarFeedback() throws Exception {
+        Submission submission1 = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+        Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
+
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedbacks");
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=true";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
+        assertThat(feedbackDetails).hasSize(1);
+
+        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some feedback", "Some feedbacks").equals(feedbackDetail.detailTexts()))
+                .findFirst().orElseThrow();
+
+        assertThat(firstFeedbackDetail.count()).isEqualTo(2);
+        assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
+        assertThat(firstFeedbackDetail.detailTexts()).isEqualTo(List.of("Some feedback", "Some feedbacks"));
+        assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
+
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
+
+        assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetMaxCountForExercise() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+
+        long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
+
+        assertThat(maxCount).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetMaxCountForExerciseWithMultipleFeedback() throws Exception {
+        Submission submission1 = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+        Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
+
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedback");
+
+        long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
+
+        assertThat(maxCount).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetParticipationForFeedbackDetailText() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+
+        var testCaseRow = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false,
+                "The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
+        // the feedback analysis works with synthetic ids that address the typed row
+        long feedbackId = ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(testCaseRow.getId());
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedbackId;
+
+        var response = request.get(url, HttpStatus.OK, List.class);
+        assertThat(response).hasSize(1);
+
+    }
+}

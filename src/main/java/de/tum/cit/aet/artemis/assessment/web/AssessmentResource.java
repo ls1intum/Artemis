@@ -1,0 +1,339 @@
+package de.tum.cit.aet.artemis.assessment.web;
+
+import java.util.List;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+
+public abstract class AssessmentResource {
+
+    private static final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
+
+    private final String entityName;
+
+    protected final AuthorizationCheckService authCheckService;
+
+    protected final UserRepository userRepository;
+
+    protected final ExerciseRepository exerciseRepository;
+
+    protected final AssessmentService assessmentService;
+
+    protected final ResultRepository resultRepository;
+
+    protected final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    protected final SubmissionRepository submissionRepository;
+
+    public AssessmentResource(String entityName, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
+        this.entityName = entityName;
+        this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.assessmentService = assessmentService;
+        this.resultRepository = resultRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.submissionRepository = submissionRepository;
+    }
+
+    /**
+     * Get the latest result using an endpoint-selected owner or instructor audience. Owner reads require current course access, ownership and a published, finished result.
+     * Instructor reads retain the existing result eligibility and test-run exception.
+     *
+     * @param submissionId   the id of the submission that should be sent to the client
+     * @param instructorView whether the endpoint selects the instructor audience
+     * @return the assessment of the given id
+     */
+    protected ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId, boolean instructorView) {
+        log.debug("REST request to get assessment for submission with id {}", submissionId);
+        Submission submission = loadSubmissionForAssessment(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
+        }
+        Exercise exercise = participation.getExercise();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(instructorView ? Role.INSTRUCTOR : Role.STUDENT, exercise, null);
+        if (!instructorView && !authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException();
+        }
+
+        Result result = submission.getLatestResult();
+        if (result == null) {
+            throw new EntityNotFoundException("Result with submission", submissionId);
+        }
+
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result, instructorView)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (!instructorView) {
+            exercise.filterSensitiveInformation();
+            result.filterSensitiveInformation();
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Loads the latest-result assessment context, shared with explicit modeling read audiences.
+     *
+     * @param submissionId the submission to load
+     * @return the submission with results, feedback and ownership context
+     */
+    protected Submission loadSubmissionForAssessment(Long submissionId) {
+        return submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
+    }
+
+    /**
+     * Save or submit manual assessment depending on the submit flag.
+     *
+     * @param submission     the submission containing the assessment
+     * @param feedbackList   list of feedbacks
+     * @param submit         if true the assessment is submitted, else only saved
+     * @param resultId       resultId of the result we save the feedbackList to, null of no results exists yet
+     * @param assessmentNote the assessment note of the result
+     * @return result after saving/submitting modeling assessment
+     */
+    public ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId, String assessmentNote) {
+        User user = userRepository.getUserWithAuthorities();
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        checkAuthorization(exercise, user);
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        checkNotAssessingOwnParticipation(studentParticipation, user, isAtLeastInstructor);
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
+            log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
+            throw new AccessForbiddenException("The user is not allowed to override the assessment");
+        }
+
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, assessmentNote, submit);
+
+        var participation = result.getSubmission().getParticipation();
+        // remove information about the student for tutors to ensure double-blind assessment
+        if (!isAtLeastInstructor) {
+            participation.filterSensitiveInformation();
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * @param exampleSubmissionId id of the example submission
+     * @param feedbacks           list of feedbacks
+     * @return result after saving example assessment
+     */
+    protected Result saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
+        User user = userRepository.getUserWithAuthorities();
+        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
+        Submission submission = exampleSubmission.getSubmission();
+        Exercise exercise = exampleSubmission.getExercise();
+        checkAuthorization(exercise, user);
+        // example assessments are training material that is written by editors
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
+        // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
+        Result result;
+        if (submission.getLatestResult() == null) {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null, null, exercise.getId());
+        }
+        else {
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), null, exercise.getId());
+        }
+        return resultRepository.submitResult(result, exercise);
+    }
+
+    /**
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the example submission
+     * @return the result linked to the example submission
+     */
+    protected ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
+
+        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the example submission", "exampleSubmission", "idsNotMatching");
+        }
+
+        var isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(exercise, user);
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        // It is allowed to get the example assessment, if the user is at least an editor or
+        // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
+        // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
+        // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it themselves
+        // Therefore we send a result with only the references included, which is needed to tell the tutor which elements they missed to assess
+        Result result = assessmentService.getExampleAssessment(submissionId);
+
+        if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+            Result freshResult = new Result();
+            freshResult.setId(result.getId());
+            if (result.getFeedbacks() != null) {
+                result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                        .forEach(feedback -> {
+                            Feedback freshFeedback = new Feedback();
+                            freshFeedback.setId(feedback.getId());
+                            freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
+                        });
+            }
+            result = freshResult;
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * checks that the given user has at least tutor rights for the given exercise
+     *
+     * @param exercise the exercise for which the authorization should be checked
+     * @throws BadRequestAlertException if no course is associated to the given exercise
+     */
+    protected void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
+        validateExercise(exercise);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
+    }
+
+    /**
+     * Refuses that a tutor or editor assesses a participation that belongs to themselves (or to their team). Instructors are exempt.
+     *
+     * @param participation       the participation that is assessed
+     * @param user                the user who assesses
+     * @param isAtLeastInstructor whether the user is an instructor of the exercise
+     * @throws AccessForbiddenException if the user owns the participation and is not an instructor
+     */
+    protected void checkNotAssessingOwnParticipation(StudentParticipation participation, User user, boolean isAtLeastInstructor) {
+        if (!isAtLeastInstructor && authCheckService.isOwnerOfParticipation(participation, user)) {
+            throw new AccessForbiddenException("The user is not allowed to assess their own submission");
+        }
+    }
+
+    void validateExercise(Exercise exercise) throws BadRequestAlertException {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", entityName, "courseNotFound");
+        }
+    }
+
+    protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
+        log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        // Examples and programming template/solution submissions are not ordinary student assessments.
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            throw new AccessForbiddenException();
+        }
+        // The caller has to be a tutor of the course before anything about the assessment state is revealed.
+        User user = userRepository.getUserWithAuthorities();
+        long exerciseId = studentParticipation.getExercise().getId();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        checkAuthorization(exercise, user);
+        // Release the result the caller named. A submission can hold one result per correction round, and the caller is
+        // the only one that knows which round its button belongs to: resolving it here always released the newest round,
+        // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
+        Result resultToCancel;
+        if (resultId != null) {
+            resultToCancel = submission.getManualResultsById(resultId);
+            if (resultToCancel == null) {
+                throw new BadRequestAlertException("The result does not belong to this submission or is not a manual assessment", "result", "resultNotFound");
+            }
+            // Cancelling releases a draft assessment, so a finished correction round is not a valid target here.
+            //
+            // The check is deliberately scoped to this branch. Its job is to make sure the new parameter cannot reach a
+            // result that was unreachable before: without a result id only the newest manual result is ever released,
+            // so naming an id is the only way to reach an older, already submitted correction round. Releasing the
+            // newest manual result even when it carries a completion date is long-standing behaviour that
+            // cancelOwnAssessmentAsTutor and cancelAssessmentOfOtherTutorAsInstructor both assert, and changing it is a
+            // product decision that does not belong in a hotfix.
+            if (resultToCancel.getCompletionDate() != null) {
+                throw new BadRequestAlertException("The assessment of this correction round is already submitted and cannot be cancelled", "result", "resultAlreadySubmitted");
+            }
+        }
+        else {
+            // Without a result id the newest correction round is released, which is what every caller got before the
+            // parameter existed.
+            //
+            // Deliberately the newest *manual* result rather than the highest id. In a normal lifecycle those are the
+            // same, because an Athena result is only created by a student's preliminary feedback request and never by
+            // the tutor-facing feedback suggestions, so it cannot follow a manual assessment. It can differ in an
+            // exercise that allows preliminary feedback requests with no due date, where a student may request AI
+            // feedback after a tutor has already assessed. Resolving by highest id would then pick a result with no
+            // assessor and the authorization check below would dereference null.
+            resultToCancel = submission.getLatestManualResult();
+        }
+        // The permission decision falls back to the latest result: a submission whose only result is automatic has nothing
+        // to cancel, but another tutor still has to be rejected rather than silently told everything is fine.
+        Result resultForAuthorization = resultToCancel != null ? resultToCancel : submission.getLatestResult();
+        if (resultForAuthorization == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
+        if (!(isAtLeastInstructor || isAssessorOfResult)) {
+            // tutors cannot cancel the assessment of other tutors (only instructors can)
+            throw new AccessForbiddenException();
+        }
+        assessmentService.cancelAssessmentOfSubmission(submission, resultToCancel);
+        return ResponseEntity.ok().build();
+    }
+
+    protected ResponseEntity<Void> deleteAssessment(Long participationId, Long submissionId, Long resultId) {
+        log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
+        // check authentication
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        Participation participation = submission.getParticipation();
+        if (participation == null) {
+            throw new AccessForbiddenException();
+        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
+        if (!participation.getId().equals(participationId)) {
+            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
+        }
+
+        if (!submission.getResults().contains(result)) {
+            throw new BadRequestAlertException("The specified result does not belong to the submission.", "Result", "invalidResultId");
+        }
+        // delete assessment
+        assessmentService.deleteAssessment(submission, result);
+        onAssessmentDeleted(exercise);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Called after {@link #deleteAssessment} deleted a result. Does nothing by default; exercise types that keep derived data up to date override it.
+     *
+     * @param exercise the exercise of the deleted result
+     */
+    protected void onAssessmentDeleted(Exercise exercise) {
+    }
+}

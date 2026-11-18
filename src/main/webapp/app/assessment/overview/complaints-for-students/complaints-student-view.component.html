@@ -1,0 +1,76 @@
+@if (complaint() || showSection()) {
+    <div>
+        @if (course()?.complaintsEnabled ?? false) {
+            <p>
+                @if (!isExamMode() && remainingNumberOfComplaints() >= 0) {
+                    <span
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise().teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
+                        [translateValues]="{ maxComplaintNumber: course()?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints() }"
+                    ></span>
+                }
+                @if (isExamMode()) {
+                    <span [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
+                }
+                @if (!isExamMode()) {
+                    <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon" />
+                }
+            </p>
+        }
+
+        @if (isCorrectUserToFileAction() && !complaint()) {
+            <div class="complaints-student-view__actions mt-6! flex flex-wrap gap-2">
+                @if (isExamMode() || (course()?.maxComplaints && course()!.maxComplaints! > 0)) {
+                    <button
+                        type="button"
+                        id="complain"
+                        data-testid="complain"
+                        tumAetUiButton
+                        size="small"
+                        [class.not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
+                        (click)="openComplaintForm(ComplaintType.COMPLAINT)"
+                        [disabled]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
+                        title="{{
+                            (!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()
+                                ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate)
+                                : ''
+                        }}"
+                        jhiTranslate="artemisApp.complaint.moreInfo"
+                    ></button>
+                }
+                @if (!isExamMode() && course()?.requestMoreFeedbackEnabled) {
+                    <button
+                        type="button"
+                        id="more-feedback"
+                        tumAetUiButton
+                        size="small"
+                        [class.not-allowed]="!timeOfFeedbackRequestValid()"
+                        (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
+                        [disabled]="!timeOfFeedbackRequestValid()"
+                        title="{{ !timeOfFeedbackRequestValid() ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
+                        jhiTranslate="artemisApp.moreFeedback.button"
+                    ></button>
+                }
+            </div>
+        }
+        @if (!complaint() && formComplaintType()) {
+            <jhi-complaint-form
+                class="complaints-student-view__form min-[1200px]:w-1/2"
+                [exercise]="exercise()"
+                [resultId]="result()!.id!"
+                [examId]="exam()?.id!"
+                [complaintType]="formComplaintType()!"
+                [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction()"
+                (onSubmit)="loadPotentialComplaint()"
+            />
+        }
+        <!-- Behind the form on purpose: scrolling it into view with 'nearest' reveals the end of the form, with its submit button, and leaves the page where it is when the form is visible. -->
+        <div #complaintScrollpoint data-testid="complaint-scrollpoint"></div>
+        @if (complaint(); as complaint) {
+            <!-- The cards share their rows (subgrid), so the texts of the request and of the response line up even if one header wraps. -->
+            <div class="complaints-student-view__cards mt-6! grid grid-cols-1 grid-rows-[auto_1fr] gap-4! min-[1200px]:grid-cols-2" data-testid="complaint-cards">
+                <jhi-complaint-request [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
+                <jhi-complaint-response [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
+            </div>
+        }
+    </div>
+}

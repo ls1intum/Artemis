@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "multipleChoiceQuestionStatistic": {
+            "home": {
+                "title": "Multiple Choice Question Statistics",
+                "createLabel": "Create a new Multiple Choice Question Statistic"
+            },
+            "created": "Created new Multiple Choice Question Statistic with identifier {{ param }}",
+            "updated": "Updated Multiple Choice Question Statistic with identifier {{ param }}",
+            "deleted": "Deleted Multiple Choice Question Statistic with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Multiple Choice Question Statistic {{ id }}?"
+            },
+            "detail": {
+                "title": "Multiple Choice Question Statistic"
+            },
+            "answerCounters": "Answer Counters"
+        }
+    }
+}

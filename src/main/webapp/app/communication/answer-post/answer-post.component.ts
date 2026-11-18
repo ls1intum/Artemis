@@ -1,0 +1,316 @@
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    Renderer2,
+    ViewContainerRef,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
+import dayjs from 'dayjs/esm';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
+import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { DOCUMENT, NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+@Component({
+    selector: 'jhi-answer-post',
+    templateUrl: './answer-post.component.html',
+    styleUrls: ['./answer-post.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        SavedPostingBannerComponent,
+        NgClass,
+        FormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        FaIconComponent,
+        TranslateDirective,
+        TumAetUiTooltipDirective,
+        PostingHeaderComponent,
+        PostingContentComponent,
+        PostingReactionsBarComponent,
+        AnswerPostCreateEditModalComponent,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
+})
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+    private alertService = inject(AlertService);
+
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    isLastAnswer = input<boolean>(false);
+    isReadOnlyMode = input<boolean>(false);
+    isConsecutive = input<boolean>(false);
+
+    openPostingCreateEditModal = output<void>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
+
+    containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
+
+    override isAnswerPost = true;
+    readonly course = signal<Course>(undefined!);
+
+    // Icons
+    override faBookmark = faBookmark;
+
+    readonly faPencilAlt = faPencilAlt;
+    readonly faShare = faShare;
+    readonly faSmile = faSmile;
+    readonly faTrash = faTrash;
+    readonly faCheck = faCheck;
+    readonly faTriangleExclamation = faTriangleExclamation;
+    readonly faXmark = faXmark;
+    static activeDropdownPost: AnswerPostComponent | undefined = undefined;
+    readonly mayEdit = signal<boolean>(false);
+    readonly mayDelete = signal<boolean>(false);
+    readonly isVerifying = signal(false);
+    readonly isEditingIrisReply = signal(false);
+    editedIrisContent = '';
+
+    constructor() {
+        super();
+        this.course.set(this.communicationService.getCourse());
+        // Normalise the bound posting to an AnswerPost instance whenever it changes.
+        //
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
+        // `model()` from PostingDirective, and consumers (and the spec) rely on `posting()` itself being an AnswerPost
+        // instance — so this cannot become a `computed()`/`linkedSignal()` without breaking the two-way contract. The
+        // read+write of the same signal is deliberately defused: the write runs inside `untracked()` and only fires
+        // when the value is not already an AnswerPost, so it self-terminates after one pass (no loop).
+        effect(() => {
+            this.posting();
+            untracked(() => {
+                const posting = this.posting();
+                if (!posting) return;
+                if (!(posting instanceof AnswerPost)) {
+                    this.posting.set(hydrate(new AnswerPost(), posting));
+                }
+            });
+        });
+    }
+
+    override ngOnInit() {
+        super.ngOnInit();
+        this.assignPostingToAnswerPost();
+    }
+
+    get reactionsBar() {
+        return this.reactionsBarComponent();
+    }
+
+    onPostingUpdated(updatedPosting: AnswerPost) {
+        this.posting.set(updatedPosting);
+    }
+
+    onReactionsUpdated(updatedReactions: Reaction[]) {
+        const current = this.posting();
+        if (!current) {
+            return;
+        }
+        const updated = deepClone(current);
+        updated.reactions = updatedReactions;
+        this.posting.set(updated);
+    }
+
+    /**
+     * Closes dropdown if user clicks anywhere outside the component.
+     */
+    @HostListener('document:click')
+    onClickOutside() {
+        this.showDropdown.set(false);
+        this.enableBodyScroll();
+    }
+
+    /**
+     * Disables vertical scrolling in the thread answer post container.
+     * Prevents background scroll when context menu is open.
+     */
+    private disableBodyScroll() {
+        const mainContainer = this.document.querySelector('.thread-answer-post');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
+        }
+    }
+
+    /**
+     * Re-enables vertical scrolling in the thread container.
+     */
+    enableBodyScroll() {
+        const mainContainer = this.document.querySelector('.thread-answer-post');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');
+        }
+    }
+
+    /** Updates internal flag for delete permission */
+    onMayDelete(value: boolean) {
+        this.mayDelete.set(value);
+    }
+
+    /** Updates internal flag for edit permission */
+    onMayEdit(value: boolean) {
+        this.mayEdit.set(value);
+    }
+
+    /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
+    readonly isUnverifiedIris = computed(() => {
+        const posting = this.posting();
+        return !!posting && posting.author?.bot === true && posting.verified === false;
+    });
+
+    /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
+    get mayVerify(): boolean {
+        return this.communicationService.currentUserIsAtLeastTutorInCourse();
+    }
+
+    /**
+     * Approves the current Iris answer, optionally replacing its content. The websocket update
+     * broadcast by the server will refresh the cached post and remove the badge from the UI.
+     */
+    approveAnswer(content?: string): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.communicationService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+            next: (verified) => {
+                // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
+                // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
+                // later edit/delete to the plagiarism API. Preserve the existing full parent post (incl. conversation).
+                const merged = hydrate(new AnswerPost(), verified, { post: posting.post });
+                this.posting.set(merged);
+                this.isEditingIrisReply.set(false);
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'approve', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
+    }
+
+    /** Switches to inline-edit mode so the tutor can adjust the Iris content before approving. */
+    editAnswer(): void {
+        this.editedIrisContent = this.posting()?.content ?? '';
+        this.isEditingIrisReply.set(true);
+    }
+
+    /** Cancels inline editing without making any changes. */
+    cancelEditAnswer(): void {
+        this.isEditingIrisReply.set(false);
+        this.editedIrisContent = '';
+    }
+
+    /** Rejects an unverified Iris answer by deleting it directly (no undo timer). */
+    rejectAnswer(): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.communicationService.deleteAnswerPost(posting).subscribe({
+            next: () => {
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'reject', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
+    }
+
+    /**
+     * Displays custom context menu on right-click,
+     * and sets this component as the currently active dropdown.
+     */
+    onRightClick(event: MouseEvent) {
+        const targetElement = event.target as HTMLElement;
+        let isPointerCursor: boolean;
+        try {
+            isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+        } catch (error) {
+            captureException(error);
+            isPointerCursor = true;
+        }
+
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            // Close any other active dropdown
+            if (AnswerPostComponent.activeDropdownPost !== this) {
+                AnswerPostComponent.cleanupActiveDropdown();
+            }
+
+            AnswerPostComponent.activeDropdownPost = this;
+
+            this.openDropdownAt(event);
+            this.disableBodyScroll();
+        }
+    }
+
+    /**
+     * Static utility that clears the currently active dropdown post,
+     * re-enables scrolling and updates view.
+     */
+    private static cleanupActiveDropdown(): void {
+        if (AnswerPostComponent.activeDropdownPost) {
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
+            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
+            AnswerPostComponent.activeDropdownPost = undefined;
+        }
+    }
+
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
+        if (AnswerPostComponent.activeDropdownPost === this) {
+            AnswerPostComponent.cleanupActiveDropdown();
+        }
+    }
+
+    private assignPostingToAnswerPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        const posting = this.posting();
+        if (posting && !(posting instanceof AnswerPost)) {
+            this.posting.set(hydrate(new AnswerPost(), posting));
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{{- /* Load-balanced git-over-SSH service across all core pods; TCPRoute target. */ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.sshName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "artemis.coreSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: ssh
+      port: {{ .Values.gateway.ssh.port }}
+      targetPort: ssh
+      protocol: TCP

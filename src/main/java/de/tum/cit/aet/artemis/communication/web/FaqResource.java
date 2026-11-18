@@ -1,0 +1,315 @@
+package de.tum.cit.aet.artemis.communication.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.dto.CreateFaqDTO;
+import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.service.FaqService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+
+/**
+ * REST controller for managing Faqs.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.FAQ)
+@RestController
+@RequestMapping("api/communication/")
+public class FaqResource {
+
+    private static final Logger log = LoggerFactory.getLogger(FaqResource.class);
+
+    private static final String ENTITY_NAME = "faq";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final FaqRepository faqRepository;
+
+    private final FaqService faqService;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+        this.faqRepository = faqRepository;
+        this.courseRepository = courseRepository;
+        this.authCheckService = authCheckService;
+        this.faqService = faqService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+    }
+
+    /**
+     * POST /courses/:courseId/faqs : Create a new faq.
+     *
+     * @param createFaqDTO the faq to create *
+     * @param courseId     the id of the course the faq belongs to
+     * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request)
+     *         if the faq has already an ID or if the faq course id does not match with the path variable
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/faqs")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<FaqDTO> createFaq(@Valid @RequestBody CreateFaqDTO createFaqDTO, @PathVariable Long courseId) throws URISyntaxException {
+        log.debug("REST request to save Faq : {}", createFaqDTO);
+
+        checkIsInstructorForAcceptedFaq(createFaqDTO.faqState(), courseId);
+        if (!courseId.equals(createFaqDTO.courseId())) {
+            throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
+        }
+
+        Faq faqToSave = createFaqDTO.toEntity();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        faqToSave.setCourse(course);
+        Faq savedFaq = faqRepository.save(faqToSave);
+        FaqDTO dto = new FaqDTO(savedFaq);
+        faqService.autoIngestFaqIntoPyris(savedFaq.getId());
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq)));
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
+    }
+
+    /**
+     * PUT /courses/:courseId/faqs/:faqId : Updates an existing faq.
+     *
+     * @param updateFaqDTO the faq to update
+     * @param faqId        id of the faq to be updated *
+     * @param courseId     the id of the course the faq belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request)
+     *         if the faq is not valid or if the faq course id does not match with the path variable
+     */
+    @PutMapping("courses/{courseId}/faqs/{faqId}")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<FaqDTO> updateFaq(@Valid @RequestBody UpdateFaqDTO updateFaqDTO, @PathVariable Long faqId, @PathVariable Long courseId) {
+        log.debug("REST request to update Faq : {}", updateFaqDTO);
+        if (faqId == null || !faqId.equals(updateFaqDTO.id())) {
+            throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
+        }
+        checkIsInstructorForAcceptedFaq(updateFaqDTO.faqState(), courseId);
+        Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
+        checkIsInstructorForAcceptedFaq(existingFaq.getFaqState(), courseId);
+        if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
+        }
+        existingFaq.setQuestionTitle(updateFaqDTO.questionTitle());
+        existingFaq.setQuestionAnswer(updateFaqDTO.questionAnswer());
+        existingFaq.setFaqState(updateFaqDTO.faqState());
+        existingFaq.setCategories(updateFaqDTO.categories());
+        Faq updatedFaq = faqRepository.save(existingFaq);
+        faqService.autoIngestFaqIntoPyris(updatedFaq.getId());
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq)));
+        FaqDTO dto = new FaqDTO(updatedFaq);
+        return ResponseEntity.ok().body(dto);
+    }
+
+    /**
+     * GET /courses/:courseId/faqs/:faqId : get the faq with the id faqId.
+     *
+     * @param faqId    the faqId of the faq to retrieve *
+     * @param courseId the id of the course the faq belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/faqs/{faqId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<FaqDTO> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
+        Faq faq = loadFaqInCourse(faqId, courseId);
+        checkAcceptedFaq(faq.getFaqState());
+        return ResponseEntity.ok(new FaqDTO(faq));
+    }
+
+    /**
+     * Retrieves an FAQ in any workflow state for course management.
+     *
+     * @param faqId    the FAQ to retrieve
+     * @param courseId the course owning the FAQ
+     * @return the FAQ, or 404 if it does not exist
+     */
+    @GetMapping("courses/{courseId}/faqs/{faqId}/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<FaqDTO> getFaqForManagement(@PathVariable Long faqId, @PathVariable Long courseId) {
+        return ResponseEntity.ok(new FaqDTO(loadFaqInCourse(faqId, courseId)));
+    }
+
+    private Faq loadFaqInCourse(Long faqId, Long courseId) {
+        Faq faq = faqRepository.findByIdElseThrow(faqId);
+        if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
+        }
+        return faq;
+    }
+
+    /**
+     * DELETE /courses/:courseId/faqs/:faqId : delete the "id" faq.
+     *
+     * @param faqId    the id of the faq to delete
+     * @param courseId the id of the course the faq belongs to
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("courses/{courseId}/faqs/{faqId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
+
+        log.debug("REST request to delete faq {}", faqId);
+        Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
+        if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
+        }
+        faqRepository.deleteById(faqId);
+        faqService.deleteFaqInPyris(faqId, courseId);
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId));
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
+    }
+
+    /**
+     * GET /courses/:courseId/faqs : get all the faqs of a course
+     * Returns accepted FAQs for every caller of the student audience.
+     *
+     * @param courseId the courseId of the course for which all faqs should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
+     */
+    @GetMapping("courses/{courseId}/faqs")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(loadFaqs(courseId, FaqState.ACCEPTED));
+    }
+
+    /**
+     * Retrieves course FAQs in all workflow states, optionally filtered by state.
+     *
+     * @param courseId the course whose FAQs are requested
+     * @param faqState optional data filter
+     * @return the FAQs ordered by creation date, newest first
+     */
+    @GetMapping("courses/{courseId}/faqs/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<FaqDTO>> getFaqsForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+        return ResponseEntity.ok(loadFaqs(courseId, faqState));
+    }
+
+    private List<FaqDTO> loadFaqs(Long courseId, FaqState faqState) {
+        List<Faq> faqs = faqState == null ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)
+                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, faqState);
+        return faqs.stream().map(FaqDTO::new).toList();
+    }
+
+    /**
+     * GET /courses/:courseId/faq-status/:faqState : get all the faqs of a course in the specified status
+     *
+     * @param courseId the courseId of the course for which all faqs should be returned
+     * @param faqState the state of all returned FAQs
+     * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
+     */
+    @GetMapping("courses/{courseId}/faq-state/{faqState}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+        log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
+        checkAcceptedFaq(faqState);
+        return ResponseEntity.ok(loadFaqs(courseId, faqState));
+    }
+
+    /**
+     * GET /courses/:courseId/faq-categories : get the categories of the accepted faqs of a course, the only faqs students can see.
+     * The categories of all faqs are available to course staff through {@code faq-categories/for-management}.
+     *
+     * @param courseId the courseId of the course for which the faq categories should be returned
+     * @return the ResponseEntity with status 200 (OK) and the categories of the accepted faqs in body
+     */
+    @GetMapping("courses/{courseId}/faq-categories")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get the Faq Categories of the accepted Faqs of the course with id : {}", courseId);
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, FaqState.ACCEPTED);
+        return ResponseEntity.ok().body(faqs);
+    }
+
+    @GetMapping("courses/{courseId}/faq-categories/{faqState}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<String>> getFaqCategoriesForCourseByState(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+        log.debug("REST request to get all Faq Categories for the course with id : {} and the state {}", courseId, faqState);
+        checkAcceptedFaq(faqState);
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
+        return ResponseEntity.ok().body(faqs);
+    }
+
+    /**
+     * Retrieves category names from all FAQ states or the selected state for management.
+     *
+     * @param courseId the course whose categories are requested
+     * @param faqState optional data filter
+     * @return the matching category names
+     */
+    @GetMapping("courses/{courseId}/faq-categories/for-management")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<Set<String>> getFaqCategoriesForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+        return ResponseEntity.ok(faqState == null ? faqRepository.findAllCategoriesByCourseId(courseId) : faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState));
+    }
+
+    /**
+     * @param courseId the id of the course the faq belongs to
+     * @param role     the required role of the user
+     * @throws AccessForbiddenException if the user does not have at least role
+     *
+     */
+    private void checkRoleForCourse(Long courseId, Role role) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+    }
+
+    private void checkAcceptedFaq(FaqState faqState) {
+        if (faqState != FaqState.ACCEPTED) {
+            throw new AccessForbiddenException("Only accepted FAQs are available in the student audience");
+        }
+    }
+
+    private void checkIsInstructorForAcceptedFaq(FaqState faqState, Long courseId) {
+        if (faqState == FaqState.ACCEPTED) {
+            checkRoleForCourse(courseId, Role.INSTRUCTOR);
+        }
+    }
+}

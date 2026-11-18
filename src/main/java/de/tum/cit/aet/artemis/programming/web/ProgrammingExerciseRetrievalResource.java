@@ -1,0 +1,437 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
+import io.swagger.v3.oas.annotations.Operation;
+
+/**
+ * REST controller for retrieving information about programming exercises.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExerciseRetrievalResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRetrievalResource.class);
+
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ExerciseService exerciseService;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    private final RepositoryCheckoutService repositoryCheckoutService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final ChannelRepository channelRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final RepositoryParticipationService repositoryParticipationService;
+
+    public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
+            CourseRepository courseRepository, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            ExerciseService exerciseService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
+            RepositoryParticipationService repositoryParticipationService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.exerciseService = exerciseService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.channelRepository = channelRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.repositoryCheckoutService = repositoryCheckoutService;
+        this.repositoryParticipationService = repositoryParticipationService;
+    }
+
+    /**
+     * GET /courses/:courseId/programming-exercises : get all the programming exercises.
+     *
+     * @param courseId of the course for which the exercise should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     */
+    @GetMapping("courses/{courseId}/programming-exercises")
+    @EnforceAtLeastTutorInCourse
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "List the programming exercises of a course", description = "Returns a summary of every programming exercise of the course. Get one exercise for all its fields.")
+    public ResponseEntity<List<ProgrammingExerciseListItemDTO>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
+        List<ProgrammingExerciseListItemDTO> exerciseDTOs = new ArrayList<>(exercises.size());
+        for (ProgrammingExercise exercise : exercises) {
+            // The course is deliberately left out of the payload to save bandwidth: the client already has it and
+            // re-attaches it (CourseExerciseService#findAllProgrammingExercisesForCourse). Detaching the course member
+            // before mapping keeps the slot empty, exactly as before this endpoint returned DTOs.
+            exercise.setCourse(null);
+            exerciseDTOs.add(ProgrammingExerciseListItemDTO.of(exercise));
+        }
+        return ResponseEntity.ok().body(exerciseDTOs);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId : get the "exerciseId" programmingExercise.
+     *
+     * @param exerciseId                    the id of the programmingExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}")
+    @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Get a programming exercise", description = """
+            Returns all fields of a programming exercise, including its build configuration and the repository addresses of its template, \
+            solution and test repositories. Exercises of exams cannot be read with a personal access token.""")
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExercise(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadProgrammingExerciseDetails(exerciseId, withPlagiarismDetectionConfig, false);
+    }
+
+    /**
+     * Retrieves management details of an exam programming exercise.
+     *
+     * @param exerciseId                    the id of the exam exercise to retrieve
+     * @param withPlagiarismDetectionConfig whether to include the plagiarism detection configuration
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("programming-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseForExam(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        return loadProgrammingExerciseDetails(exerciseId, withPlagiarismDetectionConfig, true);
+    }
+
+    private ResponseEntity<ProgrammingExerciseResponseDTO> loadProgrammingExerciseDetails(long exerciseId, boolean withPlagiarismDetectionConfig, boolean forExam) {
+        log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
+        if (forExam ? !programmingExercise.isExamExercise() : !programmingExercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
+        }
+        if (withPlagiarismDetectionConfig) {
+            plagiarismDetectionConfigRepository.attachTo(programmingExercise);
+        }
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(programmingExercise);
+        // Fetch grading criterion into exercise of participation
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
+
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
+        if (programmingExercise.isCourseExercise()) {
+            String channelName = channelRepository.findChannelNameByExerciseId(programmingExercise.getId());
+            if (channelName != null) {
+                programmingExercise.setChannelName(channelName);
+            }
+        }
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+
+        // gradingInstructionFeedbackUsed is a transient flag computed above; the grading-instruction editor branches on
+        // it, so it is passed into the mapper explicitly.
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
+        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, buildConfig, programmingExercise.isGradingInstructionFeedbackUsed()));
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/theia-config : get the theia config for the programmingExercise.
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve the configuration for
+     * @return the ResponseEntity with status 200 (OK) and with body the TheiaConfigDTO, or with status 404 (Not Found)
+     */
+    @FeatureUsage(UserFeature.PROGRAMMING_ONLINE_IDE)
+    @GetMapping("programming-exercises/{exerciseId}/theia-config")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<ProgrammingExerciseTheiaConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
+        log.debug("REST request to get theia image of ProgrammingExercise : {}", exerciseId);
+        var imageDTO = new ProgrammingExerciseTheiaConfigDTO(programmingExerciseBuildConfigRepository.getTheiaImageByProgrammingExerciseId(exerciseId));
+
+        return ResponseEntity.ok().body(imageDTO);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-participations")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
+        log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+        var programmingExercise = programmingExerciseService.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
+        var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(exerciseId, user.getId(), false);
+        Set<StudentParticipation> participations = new HashSet<>();
+        assignmentParticipation.ifPresent(participations::add);
+        programmingExercise.setStudentParticipations(participations);
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
+     *
+     * @param exerciseId            the id of the programmingExercise to retrieve
+     * @param withSubmissionResults get all submission results
+     * @param withGradingCriteria   also get the grading criteria for the exercise
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-template-and-solution-participation")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
+        log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExerciseResponseDTO> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
+
+        log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/test-case-state : Returns a DTO that offers information on the test case state of the programming exercise.
+     *
+     * @param exerciseId the id of a ProgrammingExercise
+     * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/test-case-state")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> getTestCaseState(@PathVariable long exerciseId) {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
+        boolean hasAtLeastOneResult = programmingExerciseService.hasAtLeastOneResult(programmingExercise);
+        boolean isReleased = programmingExercise.isReleased();
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneResult, programmingExercise.getTestCasesChanged(),
+                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        return ResponseEntity.ok(testCaseDTO);
+    }
+
+    /**
+     * Search for all programming exercises by id, title and course title. The result is pageable since there might be hundreds of exercises in the DB.
+     *
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("programming-exercises")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+        final var user = userRepository.getUserWithAuthorities();
+        return ResponseEntity.ok(toListItemPage(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user)));
+    }
+
+    /**
+     * Search for programming exercises by id, title and course title. Only exercises with SCA enabled and the given programming language will be included.
+     * The result is pageable since there might be hundreds of exercises in the DB.
+     *
+     * @param search              The pageable search containing the page size, page number and query string
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param programmingLanguage Filters for only exercises with this language
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("programming-exercises/with-sca")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExerciseListItemDTO>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
+            @RequestParam ProgrammingLanguage programmingLanguage) {
+        User user = userRepository.getUserWithAuthorities();
+        return ResponseEntity.ok(toListItemPage(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user)));
+    }
+
+    /**
+     * Maps a page of programming exercises onto the slim list-item DTO the import table renders, keeping the page
+     * metadata untouched.
+     */
+    private static SearchResultPageDTO<ProgrammingExerciseListItemDTO> toListItemPage(SearchResultPageDTO<ProgrammingExercise> page) {
+        return new SearchResultPageDTO<>(page.getResultsOnPage().stream().map(ProgrammingExerciseListItemDTO::of).toList(), page.getNumberOfPages());
+    }
+
+    /**
+     * Returns a list of auxiliary repositories for a given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
+     *         given programming exercise. 404 when the programming exercise was not found.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/auxiliary-repository")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<AuxiliaryRepositoryDTO>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
+        return ResponseEntity.ok(exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList());
+    }
+
+    /**
+     * GET programming-exercises/:exerciseId/solution-files-content : Returns the solution repository files with content
+     * for a given programming exercise. This convenience endpoint resolves the solution participation from the exercise
+     * id (which the client may not know) and returns the same payload as
+     * {@code participations/{participationId}/repository/files-content}.
+     *
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
+     */
+    @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
+    }
+
+    /**
+     * GET programming-exercises/:exerciseId/template-files-content : Returns the template repository files with content
+     * for a given programming exercise. This convenience endpoint resolves the template participation from the exercise
+     * id (which the client may not know) and returns the same payload as
+     * {@code participations/{participationId}/repository/files-content}.
+     *
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
+     */
+    @GetMapping("programming-exercises/{exerciseId}/template-files-content")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
+        var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
+    }
+
+    /**
+     * GET programming-exercises/repository-checkout-directories
+     *
+     * @param programmingLanguage for which the checkout directories should be retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan,
+     *                                if not supplied set to true as default
+     * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
+     *         for the requested programming language for the submission and solution build.
+     */
+    @Profile(PROFILE_LOCALCI)
+    @GetMapping("programming-exercises/repository-checkout-directories")
+    @EnforceAtLeastStudent
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<CheckoutDirectoriesDTO> getRepositoryCheckoutDirectories(@RequestParam(value = "programmingLanguage") ProgrammingLanguage programmingLanguage,
+            @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
+        log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
+
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = repositoryCheckoutService.getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
+    }
+
+}

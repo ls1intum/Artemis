@@ -1,0 +1,171 @@
+import { TranslateService } from '@ngx-translate/core';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDialogRef,
+    TumAetUiDialogService,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+
+import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ResultComponent } from '../result/result.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+
+@Component({
+    templateUrl: 'example-submissions.component.html',
+    imports: [
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        ResultComponent,
+        ArtemisTranslatePipe,
+        DeleteButtonDirective,
+    ],
+})
+export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private activatedRoute = inject(ActivatedRoute);
+    private dialogService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+
+    // `equal: () => false` so re-setting the same reference emits after the example submissions are spliced in place;
+    // copying the exercise would detach the nested associations from the parent that supplied it.
+    readonly exercise = signal<Exercise>(undefined!, { equal: () => false });
+    readonly exerciseType = ExerciseType;
+    readonly createdExampleAssessment = signal<boolean[]>([]);
+    private importDialogRef?: TumAetUiDialogRef<Submission, ExampleSubmissionImportComponent>;
+
+    // Icons
+    faPlus = faPlus;
+    faTrash = faTrash;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+
+    /**
+     * Initializes all relevant data for the exercise
+     */
+    ngOnInit() {
+        // Get the exercise
+        this.activatedRoute.data.subscribe(({ exercise }) => {
+            exercise.course = getCourseFromExercise(exercise);
+            this.accountService.setAccessRightsForCourse(exercise.course);
+            this.exercise.set(exercise);
+
+            this.createdExampleAssessment.set(
+                this.exercise().exampleSubmissions?.map((exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false) ?? [],
+            );
+        });
+        this.exercise()?.exampleSubmissions?.forEach((exampleSubmission) => {
+            if (exampleSubmission.submission) {
+                exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise());
+            }
+        });
+    }
+
+    /**
+     * Closes open modal on component destroy
+     */
+    ngOnDestroy() {
+        this.importDialogRef?.close();
+    }
+
+    /**
+     * Deletes example submission
+     * @param index in the example submissions array
+     */
+    deleteExampleSubmission(index: number) {
+        const exercise = this.exercise();
+        const submissionId = exercise.exampleSubmissions![index].id!;
+        this.exampleSubmissionService.delete(submissionId).subscribe({
+            next: () => {
+                exercise.exampleSubmissions!.splice(index, 1);
+                // Re-set the same reference so the signal notifies consumers; `equal: () => false` makes that emit.
+                this.exercise.set(exercise);
+                this.createdExampleAssessment.update((created) => {
+                    const updated = [...created];
+                    updated.splice(index, 1);
+                    return updated;
+                });
+            },
+            error: (error: HttpErrorResponse) => {
+                this.alertService.error(error.message);
+            },
+        });
+    }
+
+    /**
+     * Navigates to the detail view of the example submission
+     * @param exampleSubmissionId id of the submission or new for a new submission
+     */
+    getLinkToExampleSubmission(exampleSubmissionId: number | 'new') {
+        const exercise = this.exercise();
+        if (!exercise.exerciseGroup) {
+            return ['/course-management', exercise.course!.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmissionId];
+        } else {
+            return [
+                '/course-management',
+                exercise.course!.id,
+                'exams',
+                exercise.exerciseGroup.exam!.id,
+                'exercise-groups',
+                exercise.exerciseGroup.id,
+                exercise.type + '-exercises',
+                exercise.id,
+                'example-submissions',
+                exampleSubmissionId,
+            ];
+        }
+    }
+
+    /**
+     * Opens the import module for example submission
+     * Then invokes import api for selected submission
+     */
+    openImportModal() {
+        this.importDialogRef = this.dialogService.open<ExampleSubmissionImportComponent, Submission>(ExampleSubmissionImportComponent, {
+            size: 'large',
+            closable: false,
+            closeOnEscape: false,
+            dismissableMask: false,
+            showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.exampleSubmission.useAsExampleSubmissionLabel'),
+            inputValues: {
+                exercise: this.exercise(),
+            },
+        });
+        this.importDialogRef?.onClose.subscribe((selectedSubmission: Submission | undefined) => {
+            if (!selectedSubmission) {
+                return;
+            }
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise().id!).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                    location.reload();
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        });
+    }
+}

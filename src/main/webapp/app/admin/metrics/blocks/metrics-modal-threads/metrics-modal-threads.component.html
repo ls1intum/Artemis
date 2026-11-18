@@ -1,0 +1,78 @@
+<tumaet-ui-dialog [(visible)]="visible" [closable]="true" [dismissableMask]="true" size="large" header="">
+    <ng-template #header>
+        <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
+    </ng-template>
+    <tumaet-ui-select-button
+        class="block mb-4!"
+        [options]="filterOptions"
+        [(ngModel)]="selectedThreadState"
+        optionValue="value"
+        size="small"
+        [allowEmpty]="false"
+        aria-label="Filter threads by state"
+        [itemTemplate]="itemTpl"
+    />
+    <ng-template #itemTpl let-option>
+        <span class="flex items-center gap-2" [attr.data-testid]="option.testId">
+            <tumaet-ui-tag [severity]="option.severity" [value]="option.label" />
+            <span>{{ option.count() }}</span>
+        </span>
+    </ng-template>
+    <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
+    <input [attr.aria-label]="'accessibility.threadFilter' | artemisTranslate" type="text" [(ngModel)]="threadFilter" tumAetUiInput class="w-full mb-4!" />
+    @for (thread of filteredThreads(); track thread) {
+        <div class="py-2 border-b border-surface-200 dark:border-surface-700">
+            <h6 class="flex items-center gap-2 flex-wrap">
+                <tumaet-ui-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
+                {{ thread.threadName }} (ID {{ thread.threadId }})
+                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary">
+                    <span [hidden]="thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.show"></span>
+                    <span [hidden]="!thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.hide"></span>
+                </a>
+            </h6>
+            <div class="rounded-lg border border-surface-200 dark:border-surface-700 p-4! font-mono text-sm" [hidden]="!thread.showThreadDump">
+                @for (st of thread.stackTrace; track st) {
+                    <div class="mb-1">
+                        <samp
+                            >{{ st.className }}.{{ st.methodName }}(<code>{{ st.fileName }}:{{ st.lineNumber }}</code
+                            >)</samp
+                        >
+                    </div>
+                }
+            </div>
+            <table tumAetUiTable style="min-width: 30rem">
+                <caption>
+                    Threads dump:
+                    {{
+                        thread.threadName
+                    }}
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedtime"></th>
+                        <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedcount"></th>
+                        <th scope="col" jhiTranslate="metrics.jvm.threads.dump.waitedtime"></th>
+                        <th scope="col" jhiTranslate="metrics.jvm.threads.dump.waitedcount"></th>
+                        <th scope="col" jhiTranslate="metrics.jvm.threads.dump.lockname"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ thread.blockedTime }}</td>
+                        <td>{{ thread.blockedCount }}</td>
+                        <td>{{ thread.waitedTime }}</td>
+                        <td>{{ thread.waitedCount }}</td>
+                        <td class="max-w-xs truncate" [title]="thread.lockName">
+                            <code>{{ thread.lockName }}</code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+    <ng-template #footer>
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="dismiss()" data-testid="dismiss-button">
+            <span jhiTranslate="entity.action.done"></span>
+        </tumaet-ui-button>
+    </ng-template>
+</tumaet-ui-dialog>

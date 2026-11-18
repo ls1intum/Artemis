@@ -1,0 +1,8 @@
+- name: install_dependencies
+  script: 'npm ci --prefer-offline --no-audit'
+- name: build
+  script: npm run build
+- name: test
+  script: 'npm run test:ci'
+  resultPaths:
+    - junit.xml

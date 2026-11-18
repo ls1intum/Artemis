@@ -1,0 +1,143 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { AfterViewChecked, Component, OnDestroy, OnInit, input, output, signal, viewChild } from '@angular/core';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
+import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
+import { FormsModule, NgModel } from '@angular/forms';
+import { Subject, Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-team-config-form-group',
+    templateUrl: './team-config-form-group.component.html',
+    styleUrls: ['./team-config-form-group.component.scss'],
+    imports: [TumAetUiInputDirective, TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
+})
+export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {
+    readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
+    readonly TEAM = ExerciseMode.TEAM;
+
+    readonly exercise = input.required<Exercise>();
+    readonly isImport = input(false);
+    /** Emits the exercise after its mode or team assignment config was written onto it, so that a host can bind `[(exercise)]`. */
+    readonly exerciseChange = output<Exercise>();
+
+    readonly minTeamSizeField = viewChild<NgModel>('minTeamSize');
+    readonly maxTeamsizeField = viewChild<NgModel>('maxTeamSize');
+
+    formValid = false;
+    formValidChanges = new Subject<boolean>();
+
+    // `config` is bound deep two-way in the template (`[(ngModel)]="config.minTeamSize/maxTeamSize"`),
+    // which a bare signal cannot back. We expose a getter/setter facade over a signal so the template
+    // keeps writing `config.*` while reads stay reactive; `commitConfig()` rebuilds the reference after
+    // in-place mutations so the signal actually fires under zoneless change detection.
+    private readonly _config = signal<TeamAssignmentConfig>(undefined!, { equal: () => false });
+    get config(): TeamAssignmentConfig {
+        return this._config();
+    }
+    set config(value: TeamAssignmentConfig) {
+        this._config.set(value);
+    }
+    private commitConfig(): void {
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._config.set(this._config());
+    }
+    readonly modePickerOptions: ModePickerOption<ExerciseMode>[] = [
+        {
+            value: ExerciseMode.INDIVIDUAL,
+            labelKey: 'artemisApp.exercise.modes.individual',
+            severity: 'secondary',
+        },
+        {
+            value: ExerciseMode.TEAM,
+            labelKey: 'artemisApp.exercise.modes.team',
+            severity: 'info',
+        },
+    ];
+
+    inputFieldSubscriptions: (Subscription | undefined)[] = [];
+
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
+    ngOnInit() {
+        this.config = this.exercise().teamAssignmentConfig || new TeamAssignmentConfig();
+        this.calculateFormValid();
+    }
+
+    ngAfterViewChecked() {
+        const minTeamSizeField = this.minTeamSizeField();
+        const maxTeamsizeField = this.maxTeamsizeField();
+        if (!(minTeamSizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
+            this.inputFieldSubscriptions.push(minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        }
+        if (!(maxTeamsizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
+            this.inputFieldSubscriptions.push(maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        }
+    }
+
+    ngOnDestroy() {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
+    calculateFormValid() {
+        this.formValid = Boolean(!this.exercise().mode || this.exercise().mode === ExerciseMode.INDIVIDUAL || (this.maxTeamsizeField()?.valid && this.minTeamSizeField()?.valid));
+        this.formValidChanges.next(this.formValid);
+    }
+
+    get changeExerciseModeDisabled(): boolean {
+        // Should be disabled if exercise is present (-> edit menu), but not if menu is shown during import
+        // (old exercise id is present). Should also not be present for exam exercises.
+        return (!this.isImport() && Boolean(this.exercise().id)) || !!this.exercise().exerciseGroup;
+    }
+
+    /**
+     * Hook to indicate that exercise mode changed
+     * @param {ExerciseMode} mode - Exercise mode
+     */
+    onExerciseModeChange(mode: ExerciseMode) {
+        const exercise = this.exercise();
+        exercise.mode = mode;
+        if (mode === ExerciseMode.TEAM) {
+            this.applyCurrentConfig();
+        } else {
+            exercise.teamAssignmentConfig = undefined;
+        }
+        this.calculateFormValid();
+        this.exerciseChange.emit(exercise);
+    }
+
+    /**
+     * Update minimum number of team members
+     * @param {number} minTeamSize - minimum number of team members
+     */
+    updateMinTeamSize(minTeamSize: number) {
+        this.config.maxTeamSize = Math.max(this.config.maxTeamSize!, minTeamSize);
+        this.commitConfig();
+        this.applyCurrentConfig();
+        this.exerciseChange.emit(this.exercise());
+    }
+
+    /**
+     * Update maximum number of team members
+     * @param {number} maxTeamSize - maximum number of team members
+     */
+    updateMaxTeamSize(maxTeamSize: number) {
+        this.config.minTeamSize = Math.min(this.config.minTeamSize!, maxTeamSize);
+        this.commitConfig();
+        this.applyCurrentConfig();
+        this.exerciseChange.emit(this.exercise());
+    }
+
+    private applyCurrentConfig() {
+        this.exercise().teamAssignmentConfig = deepClone(this.config);
+    }
+}

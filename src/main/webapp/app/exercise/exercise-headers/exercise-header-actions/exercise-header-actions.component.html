@@ -1,0 +1,205 @@
+<div class="flex flex-wrap items-center gap-1 shrink-0">
+    @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
+        <a size="small" severity="danger" tumAetUiButton [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
+            @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
+            }
+        </a>
+    }
+    @if (exercise().isAtLeastTutor) {
+        <div class="inline">
+            <button
+                severity="secondary"
+                tumAetUiButton
+                type="button"
+                id="instructor-actions-dropdown"
+                [tumAetUiMenuTrigger]="instructorActions"
+                [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate"
+            >
+                <fa-icon [icon]="faWrench" />
+                <span class="hidden md:inline">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
+                >
+            </button>
+            <ng-template #instructorActions
+                ><tumaet-ui-menu>
+                    @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
+                        <a [routerLink]="instructorActionItem.routerLink" tumAetUiMenuItem>
+                            @if (instructorActionItem.icon) {
+                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-4!" />
+                            }
+                            <span [jhiTranslate]="instructorActionItem.translation"></span>
+                        </a>
+                    }</tumaet-ui-menu
+            ></ng-template>
+        </div>
+    }
+    @if (onSubmitExercise()) {
+        @if (showFeedbackPopover()) {
+            <span #submitOrigin>
+                <button
+                    type="button"
+                    data-testid="submit-exercise-popover"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faPaperPlane"
+                    [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                    [forceDisabled]="hasPendingAthenaFeedback()"
+                    [smallButton]="smallButtons()"
+                    (click)="submitAndShowPopover()"
+                ></button>
+            </span>
+        } @else {
+            <button
+                type="button"
+                id="submit-exercise"
+                jhi-exercise-action-button
+                [buttonIcon]="faPaperPlane"
+                [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
+                [forceDisabled]="hasPendingAthenaFeedback() || (exercise().type === ExerciseType.QUIZ && submitDisabled())"
+                [smallButton]="smallButtons()"
+                (click)="onSubmitExercise()!()"
+            ></button>
+        }
+    }
+    @if (onContinueExercise()) {
+        <button
+            type="button"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [buttonLabel]="'entity.action.continue' | artemisTranslate"
+            [smallButton]="smallButtons()"
+            (click)="onContinueExercise()!()"
+        ></button>
+    }
+    @switch (exercise().type) {
+        <!-- QUIZ EXERCISE ACTIONS START -->
+        @case (ExerciseType.QUIZ) {
+            <div class="inline-flex flex-wrap items-center">
+                @if (showQuizStartPracticeButton()) {
+                    <ng-container
+                        [ngTemplateOutlet]="quizActionButton"
+                        [ngTemplateOutletContext]="{
+                            $implicit: {
+                                id: 'quiz-start-practice-' + exercise().id,
+                                icon: faPlayCircle,
+                                label: 'artemisApp.exerciseActions.startPractice',
+                                quizMode: 'practice',
+                                hideLabelMobile: false,
+                            },
+                        }"
+                    />
+                }
+            </div>
+        }
+        <!-- QUIZ EXERCISE ACTIONS END -->
+        <!-- PROGRAMMING EXERCISE ACTIONS START -->
+        @case (ExerciseType.PROGRAMMING) {
+            <div class="flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this">
+                @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
+                    <jhi-request-feedback-button
+                        [exercise]="exercise()"
+                        [smallButtons]="smallButtons()"
+                        [isSubmitted]="hasProgrammingSubmission()"
+                        [participationId]="activeParticipationForCode()?.id"
+                    />
+                }
+                @if (shouldDisplayIDEButtons()) {
+                    @if (programmingExercise()?.allowOfflineIde) {
+                        <jhi-code-button
+                            [disabled]="isLoading()"
+                            [size]="smallButtons() ? 'small' : 'default'"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
+                            [exerciseId]="exercise().id!"
+                            [repositoryViewLink]="repositoryViewLink()"
+                            [hideLabelMobile]="true"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
+                        />
+                    }
+                }
+            </div>
+        }
+        <!-- PROGRAMMING EXERCISE ACTIONS END -->
+        <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
+        @default {
+            <div class="inline-flex flex-wrap items-center gap-1">
+                @if (isTeamAvailable()) {
+                    <button
+                        type="button"
+                        class="view-team"
+                        jhi-exercise-action-button
+                        [buttonIcon]="faUsers"
+                        [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
+                        [smallButton]="smallButtons()"
+                        [hideLabelMobile]="true"
+                        [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
+                    ></button>
+                }
+                @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                    <span
+                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
+                        [tumAetUiTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                    >
+                        <button
+                            type="button"
+                            [id]="'start-exercise-' + exercise().id"
+                            class="start-exercise"
+                            jhi-exercise-action-button
+                            [buttonIcon]="faPlayCircle"
+                            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+                            [buttonLoading]="isLoading()"
+                            [smallButton]="smallButtons()"
+                            [hideLabelMobile]="false"
+                            [forceDisabled]="isBeforeStartDateAndStudent"
+                            (click)="startExercise()"
+                        ></button>
+                    </span>
+                }
+                @if (isStartPracticeAvailable() && hasUserAcceptedLLM()) {
+                    <jhi-start-practice-mode-button
+                        [id]="'start-practice-' + exercise().id"
+                        class="start-practice"
+                        [smallButtons]="smallButtons()"
+                        [exercise]="exercise()"
+                        (practiceModeStarted)="receiveNewParticipation($event)"
+                    />
+                }
+            </div>
+        }
+        <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
+    }
+</div>
+
+<ng-template #quizActionButton let-button>
+    <button
+        type="button"
+        jhi-exercise-action-button
+        [id]="button.id"
+        [buttonIcon]="button.icon"
+        [buttonLabel]="button.label | artemisTranslate"
+        [buttonLoading]="isLoading()"
+        [smallButton]="smallButtons()"
+        [hideLabelMobile]="button.hideLabelMobile"
+        [outlined]="button.outlined"
+        (click)="handleQuizAction(button.quizMode)"
+    ></button>
+</ng-template>
+
+<tumaet-ui-popover #submitPopoverRef [ariaLabel]="'artemisApp.exercise.aiFeedbackPopover.title' | artemisTranslate">
+    @if (submitPopoverRef.isOpen()) {
+        <div class="flex items-center mb-2">
+            <fa-icon [icon]="faRobot" class="me-2" />
+            <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+        </div>
+        <p class="mb-4!" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+        <p
+            class="mb-4! text-text-secondary"
+            [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
+            [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | artemisTranslate) }"
+        ></p>
+        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" (click)="closeSubmitPopover()" />
+    }
+</tumaet-ui-popover>

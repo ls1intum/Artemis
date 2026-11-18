@@ -1,0 +1,12 @@
+<span [hidden]="buttonLoading()" class="inline-flex items-center gap-2">
+    @if (buttonIcon()) {
+        <fa-icon [icon]="buttonIcon()" [fixedWidth]="true" />
+    }
+    <span
+        [class.hidden]="hideLabelMobile()"
+        [class.md:inline]="hideLabelMobile() && hideLabelBreakpoint() === 'md'"
+        [class.xl:inline]="hideLabelMobile() && hideLabelBreakpoint() === 'xl'"
+        >{{ buttonLabel() }}</span
+    >
+</span>
+<fa-icon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" />

@@ -1,0 +1,127 @@
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TextFieldModule } from '@angular/cdk/text-field';
+import { FormsModule } from '@angular/forms';
+import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+
+@Component({
+    selector: 'jhi-calendar-subscription-popover',
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiSelectButtonComponent,
+        TextFieldModule,
+        FormsModule,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
+    templateUrl: './calendar-subscription-popover.component.html',
+})
+export class CalendarSubscriptionPopoverComponent {
+    private translateService = inject(TranslateService);
+    private isOnlyOneEventTypeSelected = computed<boolean>(() => this.computeIsOnlyOneEventTypeSelected());
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly faCopy = faCopy;
+    readonly faCheck = faCheck;
+
+    calendarSubscriptionPopover = viewChild<TumAetUiPopoverComponent>('calendarSubscriptionPopover');
+    subscriptionToken = input.required<string>();
+    courseId = input.required<number>();
+    isMobile = input<boolean>(false);
+    copiedUrl = signal(false);
+    includeLectureEvents = signal(true);
+    includeExerciseEvents = signal(true);
+    includeTutorialEvents = signal(true);
+    includeExamEvents = signal(true);
+    lecturesIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeLectureEvents());
+    exercisesIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeExerciseEvents());
+    tutorialsIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeTutorialEvents());
+    examsIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeExamEvents());
+    selectedLanguage = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
+    languageOptions = computed(() => this.computeLanguageOptions());
+    subscriptionUrl = computed<string>(() => this.buildCalendarSubscriptionURL());
+
+    constructor() {
+        effect(() => {
+            if (this.copiedUrl()) {
+                return this.setTimerToToggleBackCopiedUrl();
+            }
+            return undefined;
+        });
+    }
+
+    copySubscriptionUrlToClipboard() {
+        const url = this.subscriptionUrl();
+        if (url) {
+            this.copiedUrl.set(true);
+            void navigator.clipboard.writeText(url);
+        }
+    }
+
+    /** Opens the popover next to the element that received the click. */
+    open(event: Event): void {
+        const origin = event.currentTarget;
+        if (origin instanceof HTMLElement) {
+            this.calendarSubscriptionPopover()?.open(origin);
+        }
+    }
+
+    private buildCalendarSubscriptionURL(): string {
+        const courseId = this.courseId();
+        const subscriptionToken = this.subscriptionToken();
+        const includeLectureEvents = this.includeLectureEvents();
+        const includeExerciseEvents = this.includeExerciseEvents();
+        const includeTutorialEvents = this.includeTutorialEvents();
+        const includeExamEvents = this.includeExamEvents();
+        const selectedLanguage = this.selectedLanguage();
+        const origin = window.location.origin;
+        const route = `/api/calendar/courses/${courseId}/calendar-events-ics`;
+
+        const filterOptions: string[] = [];
+        if (includeLectureEvents) filterOptions.push('LECTURES');
+        if (includeExerciseEvents) filterOptions.push('EXERCISES');
+        if (includeTutorialEvents) filterOptions.push('TUTORIALS');
+        if (includeExamEvents) filterOptions.push('EXAMS');
+        const queryParameters = new URLSearchParams();
+        queryParameters.set('token', subscriptionToken);
+        if (filterOptions.length > 0) {
+            queryParameters.set('filterOptions', filterOptions.join(','));
+        }
+        queryParameters.set('language', selectedLanguage);
+
+        return origin + route + '?' + queryParameters.toString();
+    }
+
+    private setTimerToToggleBackCopiedUrl(): () => void {
+        const id = window.setTimeout(() => {
+            this.copiedUrl.set(false);
+        }, 1500);
+        return () => clearTimeout(id);
+    }
+
+    private computeLanguageOptions() {
+        this.currentLocale();
+        return [
+            {
+                label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.english'),
+                value: 'ENGLISH' as const,
+            },
+            {
+                label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.german'),
+                value: 'GERMAN' as const,
+            },
+        ];
+    }
+
+    private computeIsOnlyOneEventTypeSelected(): boolean {
+        return [this.includeLectureEvents(), this.includeExerciseEvents(), this.includeTutorialEvents(), this.includeExamEvents()].filter(Boolean).length === 1;
+    }
+}

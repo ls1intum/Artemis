@@ -1,0 +1,8 @@
+@if (complaint(); as complaint) {
+    @if (complaint.complaintType === ComplaintType.COMPLAINT) {
+        <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.complaint.hint"></span></tumaet-ui-message>
+    }
+    @if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+        <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.moreFeedback.hint"></span></tumaet-ui-message>
+    }
+}

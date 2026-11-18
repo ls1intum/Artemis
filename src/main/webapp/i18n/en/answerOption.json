@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "answerOption": {
+            "home": {
+                "title": "Answer Options",
+                "createLabel": "Create a new Answer Option"
+            },
+            "created": "Created new Answer Option with identifier {{ param }}",
+            "updated": "Updated Answer Option with identifier {{ param }}",
+            "deleted": "Deleted Answer Option with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Answer Option {{ id }}?"
+            },
+            "detail": {
+                "title": "Answer Option"
+            },
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "isCorrect": "Is Correct",
+            "invalid": "Invalid",
+            "question": "Question"
+        }
+    }
+}

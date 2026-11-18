@@ -1,0 +1,59 @@
+$sidebar-width-open: 235px;
+$sidebar-width-closed: 80px;
+
+/* The sidebar is a flex item of the exam body: it is as tall as the exam region lets it be, and its cards scroll inside it. */
+:host {
+    display: block;
+    flex: none;
+    height: 100%;
+    min-height: 0;
+}
+
+.sidebar {
+    width: $sidebar-width-open;
+    height: 100%;
+    transition: width 0.2s ease-in-out;
+
+    &.collapsed {
+        width: $sidebar-width-closed;
+    }
+}
+
+.scrollable-column {
+    padding: var(--spacing-divider) calc(var(--spacing-divider) + 0.25rem);
+
+    &.collapsed {
+        padding-inline: var(--spacing-divider);
+    }
+}
+
+.sidebar-footer {
+    flex: none;
+    height: var(--exam-footer-height, 2.25rem);
+}
+
+@media screen and (max-width: 800px) {
+    .sidebar {
+        width: $sidebar-width-closed !important;
+    }
+
+    .scrollable-column {
+        padding-inline: var(--spacing-divider) !important;
+    }
+
+    .auto-collapse {
+        display: none !important;
+    }
+}
+
+.notSynced {
+    --fa-secondary-color: var(--tumaet-ui-text-color);
+    --fa-secondary-opacity: 1; // necessary to set the opacity to 1, because it's 0.4 per default
+    --fa-primary-color: var(--warning);
+}
+
+.saved {
+    --fa-secondary-color: var(--tumaet-ui-text-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--success);
+}

@@ -1,0 +1,105 @@
+import { Service, inject } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+
+@Service()
+export class UserRouteAccessService implements CanActivate {
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+
+    /**
+     * Check if the client can activate a route.
+     * @param route The ActivatedRouteSnapshot of the route to activate.
+     * @param state The current RouterStateSnapshot.
+     * @return Whether the navigation is allowed, or a denial redirect when the initial page cannot be activated.
+     */
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
+        const ltiRedirectUrl = this.handleLTIRedirect(route, state);
+        const urlToStore = ltiRedirectUrl ?? state.url;
+
+        let authorities = route.data['authorities'];
+
+        // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
+        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
+        // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
+        if (
+            (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||
+                route.routeConfig?.path === ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
+            route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true' &&
+            authorities
+        ) {
+            /** Create a new array instead of mutating the existing as routes are defined as readonly {@link IS_AT_LEAST_INSTRUCTOR} */
+            authorities = [...authorities, Authority.EDITOR];
+        }
+        // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
+        // that the client has an account too, if they already logged in by the server.
+        // This could happen on a page refresh.
+        return this.checkLogin(authorities, urlToStore).then((allowed) => {
+            // An initial cancellation leaves both the page and navbar outlets empty. Render the denial page instead.
+            if (!allowed && this.router.lastSuccessfulNavigation() === null && this.accountService.isAuthenticated()) {
+                return this.router.createUrlTree(['/accessdenied']);
+            }
+            return allowed;
+        });
+    }
+
+    /**
+     * Deal with the redirect for LTI users: displays an alert. Removes the param so this only happens once.
+     * @param route {ActivatedRouteSnapshot} The ActivatedRouteSnapshot of the route to activate.
+     * @param state {RouterStateSnapshot} The current RouterStateSnapshot.
+     */
+    private handleLTIRedirect(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): string {
+        // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
+        const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
+        if (regexPattern.test(state.url)) {
+            if (route.queryParams['ltiSuccessLoginRequired']) {
+                const username = route.queryParams['ltiSuccessLoginRequired'];
+                this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: username });
+                this.accountService.setPrefilledUsername(username);
+                return state.url.split('?')[0]; // Removes the query parameters from the url so this is only done once
+            }
+        }
+        return state.url;
+    }
+
+    /**
+     * Check whether user is logged in and has the required authorities.
+     * @param authorities List of required authorities.
+     * @param url Current url.
+     * @return True if authorities are empty or null, False if user not logged in or does not have required authorities.
+     */
+    checkLogin(authorities: readonly Authority[], url: string): Promise<boolean> {
+        const accountService = this.accountService;
+        return Promise.resolve(
+            accountService.identity().then((account) => {
+                if (!authorities || authorities.length === 0) {
+                    return true;
+                }
+
+                if (account) {
+                    return accountService.hasAnyAuthority(authorities).then((response) => {
+                        return !!response;
+                    });
+                }
+
+                // The user is not logged in.
+                this.sessionStorageService.store('previousUrl', url);
+                // Two navigations in sequence: the user sees the access denied page and is then sent to the sign-in
+                // page, and both stay in the browser history. A redirect returned from a guard has exactly one target,
+                // so replacing this with a redirect to the sign-in page would drop the access denied page and its
+                // history entry. It therefore stays imperative until that change is decided on its own.
+                // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- first of two chained navigations, see above
+                void this.router.navigate(['accessdenied']).then(() => {
+                    // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- runs after the access denied navigation has finished
+                    void this.router.navigate(['/sign-in']);
+                });
+                return false;
+            }),
+        );
+    }
+}

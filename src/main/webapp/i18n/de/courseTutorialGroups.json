@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "breadcrumb": {
+            "title": "Übungsgruppen"
+        },
+        "pages": {
+            "courseTutorialGroups": {
+                "title": "Deine Übungsgruppen",
+                "noRegistrations": "Du bist in keiner Übungsgruppe angemeldet."
+            },
+            "courseTutorialGroupDetail": {
+                "title": "Übungsgruppen-Details",
+                "sections": {
+                    "general": "Informationen"
+                }
+            },
+            "courseTutorialGroupOverview": {
+                "title": "Übungsgruppen-Übersicht",
+                "sidePanel": {
+                    "header": "Kursinformationen",
+                    "numberOfGroups": "Anzahl an Übungsgruppen: ",
+                    "numberOfRegistrations": "Anzahl an Registrierungen: "
+                },
+                "freeDaySidePanel": {
+                    "header": "Tage ohne Übungsgruppen"
+                }
+            }
+        },
+        "tutorialGroupCard": {
+            "teachingAssistant": "Tutor:in: {{ name }}"
+        }
+    }
+}

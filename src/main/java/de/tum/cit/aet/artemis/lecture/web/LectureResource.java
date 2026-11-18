@@ -1,0 +1,620 @@
+package de.tum.cit.aet.artemis.lecture.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastInstructorInLecture;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
+import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+/**
+ * REST controller for managing Lecture.
+ */
+@Conditional(LectureEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
+@RestController
+@RequestMapping("api/lecture/")
+public class LectureResource {
+
+    private static final Logger log = LoggerFactory.getLogger(LectureResource.class);
+
+    private static final String ENTITY_NAME = "lecture";
+
+    private final SlideRepository slideRepository;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final LectureRepository lectureRepository;
+
+    private final LectureService lectureService;
+
+    private final LectureImportService lectureImportService;
+
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final UserRepository userRepository;
+
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    private final YouTubeUrlService youTubeUrlService;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final TumLiveUploadService tumLiveUploadService;
+
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
+            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService,
+            LectureUnitRepository lectureUnitRepository, TumLiveUploadService tumLiveUploadService) {
+        this.tumLiveUploadService = tumLiveUploadService;
+        this.lectureRepository = lectureRepository;
+        this.lectureService = lectureService;
+        this.lectureImportService = lectureImportService;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
+        this.slideRepository = slideRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.youTubeUrlService = youTubeUrlService;
+        this.lectureUnitRepository = lectureUnitRepository;
+    }
+
+    /**
+     * POST /lectures : Create a new lecture.
+     *
+     * @param newLectureDto the lecture to create with a unique channel name
+     * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("lectures")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Create a lecture", description = """
+            Creates an empty lecture in a course (set course with its id). title is required; startDate, if set, must not be after \
+            endDate. A lecture has no release date of its own: students see it with its title and description at once, and only \
+            its units can stay hidden with a releaseDate in the future. channelName names the lecture's communication channel and is derived from the \
+            title if omitted.""")
+    @ApiResponse(responseCode = "201", description = "The lecture was created.")
+    public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody SimpleLectureDTO newLectureDto) throws URISyntaxException {
+        log.debug("REST request to save Lecture : {}", newLectureDto);
+        if (newLectureDto.id() != null) {
+            throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
+        }
+        validateLectureDates(newLectureDto.startDate(), newLectureDto.endDate());
+        if (newLectureDto.course == null || newLectureDto.course.id() == null) {
+            throw new BadRequestAlertException("A new lecture must belong to a course", ENTITY_NAME, "courseMissing");
+        }
+        Course course = courseRepository.findByIdElseThrow(newLectureDto.course.id());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        Lecture newLecture = new Lecture();
+        updateLectureAttributesFromDTO(newLecture, newLectureDto);
+        newLecture.setCourse(course);
+
+        Lecture savedLecture = lectureRepository.save(newLecture);
+        String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
+        indexLectureInWeaviate(savedLecture);
+        SimpleLectureDTO savedLectureDTO = SimpleLectureDTO.from(savedLecture, course, channelName);
+        return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record SimpleLectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, String channelName, CourseDTO course) implements LectureDTO {
+
+        public static SimpleLectureDTO from(Lecture lecture, String channelName) {
+            return from(lecture, lecture.getCourse(), channelName);
+        }
+
+        public static SimpleLectureDTO from(Lecture lecture, @Nullable Course course, @Nullable String channelName) {
+            return new SimpleLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                    channelName, course == null ? null : CourseDTO.from(course));
+        }
+
+        public record CourseDTO(Long id, String title, String shortName, String semester) {
+
+            public static CourseDTO from(@NonNull Course course) {
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester());
+            }
+        }
+    }
+
+    /**
+     * POST /courses/{courseId}/lectures : Creates a series of lectures for the given course. Adjusts default lecture and channel names to new lecture order.
+     *
+     * @param courseId    the ID of the course for which to create the lectures
+     * @param lectureDTOs a list of DTOs defining the individual lectures to create
+     * @return 204 (No Content) if the lecture series was successfully created
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least editor in the course or the course does not exist
+     */
+    @PostMapping("courses/{courseId}/lectures")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureSeriesCreateLectureDTO> lectureDTOs) {
+        log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUser();
+
+        List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
+        List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
+        channelService.createChannelsForLectures(savedLectures, course, user);
+
+        lectureService.correctDefaultLectureAndChannelNames(courseId);
+
+        List<Long> savedLectureIds = savedLectures.stream().map(Lecture::getId).toList();
+        lectureRepository.findAllById(savedLectureIds).forEach(this::indexLectureInWeaviate);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private Lecture createLectureUsing(LectureSeriesCreateLectureDTO lectureDTO, Course course) {
+        validateLectureDates(lectureDTO.startDate(), lectureDTO.endDate());
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        lecture.setTitle(lectureDTO.title());
+        lecture.setStartDate(lectureDTO.startDate());
+        lecture.setEndDate(lectureDTO.endDate());
+        return lecture;
+    }
+
+    /**
+     * PUT /lectures : Updates an existing lecture.
+     *
+     * @param updatedLectureDto the lecture to update and the updated channel name
+     * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
+     *         Server Error) if the lecture couldn't be updated
+     */
+    @PutMapping("lectures")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SimpleLectureDTO> updateLecture(@RequestBody SimpleLectureDTO updatedLectureDto) {
+        log.debug("REST request to update Lecture : {}", updatedLectureDto);
+        if (updatedLectureDto.id() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
+        }
+        // This explicitly does NOT change any relationships such as attachments or lecture units
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(updatedLectureDto.id());
+        Course course = originalLecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("Lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        if (updatedLectureDto.course == null || !course.getId().equals(updatedLectureDto.course.id())) {
+            throw new BadRequestAlertException("Lecture does not belong to the specified course", ENTITY_NAME, "courseMismatch");
+        }
+        validateLectureDates(updatedLectureDto.startDate(), updatedLectureDto.endDate());
+        updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
+
+        channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
+        Lecture result = lectureRepository.save(originalLecture);
+        indexLectureInWeaviate(result);
+
+        SimpleLectureDTO resultDTO = SimpleLectureDTO.from(result, course, updatedLectureDto.channelName());
+        return ResponseEntity.ok().body(resultDTO);
+    }
+
+    private static void updateLectureAttributesFromDTO(Lecture lecture, SimpleLectureDTO lectureDTO) {
+        lecture.setTitle(lectureDTO.title());
+        lecture.setDescription(lectureDTO.description());
+        lecture.setStartDate(lectureDTO.startDate());
+        lecture.setEndDate(lectureDTO.endDate());
+        lecture.setIsTutorialLecture(lectureDTO.isTutorialLecture());
+    }
+
+    private static void validateLectureDates(@Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate) {
+        if (startDate != null && endDate != null && !startDate.isBefore(endDate)) {
+            throw new BadRequestAlertException("Lecture start date must be before end date", ENTITY_NAME, "invalidDateRange");
+        }
+    }
+
+    /**
+     * Search for all lectures by title and course title. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("lectures")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithAuthorities();
+        final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
+        // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
+        final List<SimpleLectureDTO> lectureDtos = lecturePage.getResultsOnPage().stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(lectureDtos, lecturePage.getNumberOfPages()));
+    }
+
+    /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course for the course management page
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Set<SimpleLectureDTO>> getLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        // Note: the course (which is set by lecture.getCourse()) is currently required in the client for access control checks
+        // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
+
+        return ResponseEntity.ok().body(lectureDtos);
+    }
+
+    /**
+     * GET /courses/:courseId/tutorial-lectures : get all the tutorial-lectures of a course
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
+    @GetMapping("courses/{courseId}/tutorial-lectures")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
+        // Note: the course (which is set by lecture.getCourse()) is currently required in the client for access control checks
+        // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
+        return ResponseEntity.ok().body(lectureDtos);
+    }
+
+    /**
+     * GET /courses/:courseId/lectures-for-overview : get the lectures of a course for the student course overview.
+     * <p>
+     * Projected to what the sidebar renders — title, dates and the tutorial flag. Attachments are not included: they are
+     * eagerly mapped on the entity, so returning whole lectures loaded and serialised them on every visit for nothing.
+     * Lecture visibility does not depend on attachments; the attachment filter only ever removed attachments, never
+     * lectures, so dropping them here does not change which lectures a student sees.
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @GetMapping("courses/{courseId}/lectures-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get the lectures of course {} for the course overview", courseId);
+        return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
+    }
+
+    /**
+     * Counts released learning materials and the current user's completions in one aggregate query.
+     *
+     * @param courseId the authorized course
+     * @return counts by lecture and material type, without other users' completion records or material payloads
+     */
+    @GetMapping("courses/{courseId}/learning-statistics")
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<LectureLearningStatisticsDTO>> getLearningStatistics(@PathVariable Long courseId) {
+        return ResponseEntity.ok(lectureUnitRepository.findLearningStatistics(courseId, userRepository.getUserWithAuthorities().getId(), ZonedDateTime.now()));
+    }
+
+    /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course with their attachment units and slides
+     * NOTE: the response does not include other types of lecture units except attachment video units
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @GetMapping("courses/{courseId}/lectures-with-slides")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<GetLecturesDTO>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.info("Getting all lectures with slides for course {}", courseId);
+        long start = System.currentTimeMillis();
+
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
+
+        // Load slides separately to avoid too large data exchange
+        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentVideoUnits(attachmentVideoUnitIds);
+
+        // Group slides by attachment video unit id to combine them into the DTOs
+        Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
+        // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
+        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(l -> GetLecturesDTO.from(l, youTubeUrlService)).sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
+
+        lectureDTOs.forEach(lectureDTO -> {
+            for (AttachmentVideoUnitDTO attachmentVideoUnitDTO : lectureDTO.lectureUnits) {
+                List<SlideDTO> slidesForAttachmentVideoUnit = slidesByAttachmentVideoUnitId.get(attachmentVideoUnitDTO.id);
+                if (slidesForAttachmentVideoUnit != null) {
+                    // remove unnecessary fields from the slide DTOs
+                    var finalSlides = slidesForAttachmentVideoUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                            .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
+                    attachmentVideoUnitDTO.slides.addAll(finalSlides);
+                }
+            }
+        });
+
+        log.info("     Finished getting all lectures with slides in {}ms", System.currentTimeMillis() - start);
+        return ResponseEntity.ok().body(lectureDTOs);
+    }
+
+    // includes the attachment video units visible to students only (no other lecture unit types)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record GetLecturesDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, List<AttachmentVideoUnitDTO> lectureUnits) implements de.tum.cit.aet.artemis.lecture.dto.LectureDTO {
+
+        /**
+         * Converts a lecture to a DTO. Only the attachment video units that are visible to students are included.
+         *
+         * @param lecture           The lecture to convert
+         * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
+         * @return The converted lecture DTO
+         */
+        public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
+            // only attachment video units visible to students are included
+            List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(GetLecturesDTO::isReleased).map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService))
+                    .toList();
+            return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                    attachmentVideoUnitDTOs);
+        }
+
+        /**
+         * Decides whether a unit may be handed to a student, using the same date the unit reports as its release date.
+         * <p>
+         * The create and update endpoints take the release date of the unit and the release date of its attachment as two
+         * separate values, so a unit without a date of its own can carry an attachment that is not released yet. Asking
+         * the unit alone would hand out that attachment's link, which is why the resolved date decides here.
+         *
+         * @param unit the attachment video unit to check
+         * @return true if the unit and its attachment are released
+         */
+        private static boolean isReleased(AttachmentVideoUnit unit) {
+            ZonedDateTime releaseDate = unit.resolveReleaseDate();
+            return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate, @Nullable List<Integer> displayPageNumbers) {
+
+        public static AttachmentDTO from(Attachment attachment) {
+            return new AttachmentDTO(attachment.getId(), attachment.getLink(), attachment.getName(), attachment.getReleaseDate(), attachment.getDisplayPageNumbers());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type,
+            @Nullable String videoSource, @Nullable VideoSourceType videoSourceType, @Nullable String youtubeVideoId) {
+
+        public AttachmentVideoUnitDTO {
+            if (videoSourceType == VideoSourceType.YOUTUBE && (youtubeVideoId == null || youtubeVideoId.isBlank())) {
+                throw new IllegalArgumentException("YOUTUBE videoSourceType requires non-blank youtubeVideoId");
+            }
+            if (videoSourceType != VideoSourceType.YOUTUBE && youtubeVideoId != null) {
+                throw new IllegalArgumentException("youtubeVideoId must be null when videoSourceType != YOUTUBE");
+            }
+        }
+
+        /**
+         * Converts an {@link AttachmentVideoUnit} to a DTO. YouTube video IDs are extracted via pure URL parsing (no network calls). TUM Live units will have
+         * {@code videoSourceType = null} from this endpoint, which is acceptable — the client resolves TUM Live playlist URLs on-demand via a separate endpoint.
+         *
+         * @param unit              the attachment video unit to convert
+         * @param youTubeUrlService pure URL parser for YouTube ID extraction; no network calls are made
+         * @return the populated DTO
+         */
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, YouTubeUrlService youTubeUrlService) {
+            var attachment = unit.getAttachment();
+            Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(unit.getVideoSource());
+            VideoSourceType type = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+            String youtubeVideoId = ytId.orElse(null);
+            return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), new ArrayList<>(), attachment != null ? AttachmentDTO.from(attachment) : null, unit.getReleaseDate(),
+                    "attachment", unit.getVideoSource(), type, youtubeVideoId);
+        }
+    }
+
+    /**
+     * GET /lectures/:lectureId : get the lecture for the given ID.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
+     */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @GetMapping("lectures/{lectureId}")
+    @EnforceAtLeastStudentInLecture
+    public ResponseEntity<SimpleLectureDTO> getLecture(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {}", lectureId);
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        String lectureChannelName = channelRepository.findChannelNameByLectureId(lectureId);
+        SimpleLectureDTO lectureDTO = SimpleLectureDTO.from(lecture, lectureChannelName);
+        return ResponseEntity.ok(lectureDTO);
+    }
+
+    /**
+     * POST /lectures/import: Imports an existing lecture into an existing course
+     * <p>
+     * This will clone and import the whole lecture with associated lectureUnits and attachments.
+     *
+     * @param sourceLectureId The ID of the original lecture which should get imported
+     * @param courseId        The ID of the course to import the lecture to
+     * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
+     *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     */
+    @PostMapping("lectures/import")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
+        final var user = userRepository.getUserWithAuthorities();
+        final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
+        final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
+
+        Course course = sourceLecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Check that the user is an editor in both the source and target course
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
+
+        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
+        indexLectureInWeaviate(savedLecture);
+
+        final var lectureDTO = SimpleLectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
+        return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
+    }
+
+    /**
+     * GET /lectures/:lectureId/details : get the "lectureId" lecture.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
+     */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @GetMapping("lectures/{lectureId}/details")
+    @EnforceAtLeastStudentInLecture
+    public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {} with details", lectureId);
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
+    }
+
+    /**
+     * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
+     */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("lectures/{lectureId}/title")
+    @EnforceAtLeastStudentInLecture
+    public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
+        final var title = lectureRepository.getLectureTitle(lectureId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * DELETE /lectures/:lectureId : delete the "id" lecture.
+     *
+     * @param lectureId               the id of the lecture to delete
+     * @param deleteTumLiveRecordings whether to delete in TUM.Live the videos Artemis uploaded for its units; uploads not attached yet are always deleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("lectures/{lectureId}")
+    @EnforceAtLeastInstructorInLecture
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId, @RequestParam(defaultValue = "false") boolean deleteTumLiveRecordings) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
+        log.debug("REST request to delete Lecture : {}", lectureId);
+        List<Long> unitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).toList();
+        lectureService.delete(lecture, true);
+        tumLiveUploadService.releaseForDeletion(unitIds, deleteTumLiveRecordings);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    private void indexLectureInWeaviate(Lecture lecture) {
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
+            lecture.getLectureUnits().forEach(unit -> {
+                if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
+                    service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                }
+            });
+        });
+    }
+
+}

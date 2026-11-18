@@ -1,0 +1,69 @@
+---
+id: quiz-exercise
+title: Quiz Exercise
+sidebar_label: Quiz Exercise
+last_reviewed: 2026-11-05
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import currentQuizExercise from './assets/quiz/current-quiz-exercise.png';
+import pleaseWaitMessage from './assets/quiz/please-wait-message.png';
+import oneChoiceQuestion from './assets/quiz/one-choice-question.png';
+import dragAndDropView from './assets/quiz/drag-and-drop-view.png';
+import finalQuiz from './assets/quiz/final-quiz.png';
+import solutionDragAndDrop from './assets/quiz/solution-drag-and-drop.png';
+
+A quiz is the one exercise type marked the moment it closes: every question has an answer a machine can check, so
+you see your score without waiting for anybody to read your work. A quiz also runs against a clock — the working
+time starts when the quiz starts, and when it runs out your answers are handed in as they are.
+
+## Start the Quiz
+
+Open the quiz from the course's exercise list. What you see next depends on how your instructor set it up.
+
+Where each student takes the quiz whenever they like, **Start Batch** begins your run and the clock with it.
+
+<Image src={currentQuizExercise} alt="Quiz before starting, with the duration and the Start Batch button" size={ImageSize.large} caption="Before you start" />
+
+Where the whole cohort takes the quiz at once, there is nothing to press: the page waits, and turns into the
+questions by itself the moment the quiz starts.
+
+<Image src={pleaseWaitMessage} alt="Quiz waiting for the instructor to start it" size={ImageSize.medium} caption="Waiting for the quiz to start" />
+
+## Answer the Questions
+
+Each question carries what it is worth, and the question types differ in how you answer them:
+
+- **Multiple choice** — tick the options you believe are right. Round buttons mean exactly one is correct; square
+  ones mean any number may be.
+- **Short answer** — type into the gaps in the text.
+- **Drag and drop** — drag the items on the right onto the places in the picture they belong to.
+
+<Image src={oneChoiceQuestion} alt="Multiple-choice question with two options ticked" size={ImageSize.large} caption="Answering a multiple-choice question" />
+
+<Image src={dragAndDropView} alt="Drag-and-drop question with the items to place beside the picture" size={ImageSize.large} caption="Answering a drag-and-drop question" />
+
+Artemis saves your answers as you go and the status bar at the bottom says when it last did. **Submit** hands the
+quiz in early; if you do not, what you have answered is handed in when the working time runs out.
+
+<Callout variant={CalloutVariant.warning}>
+
+  The clock does not stop if you close the tab. Reopening the quiz brings your answers back, but the time you were
+  away is gone.
+
+</Callout>
+
+## Your Result
+
+The moment the quiz closes it is marked, and the page turns into your result: the score, and every question with
+what you answered beside what was correct.
+
+<Image src={finalQuiz} alt="Quiz result with the score and the first question's solution" size={ImageSize.large} caption="Your result" />
+
+A drag-and-drop question shows your own placement first. **Show Sample Solution** replaces it with the correct one,
+which is the quickest way to see what you put in the wrong place.
+
+<Image src={solutionDragAndDrop} alt="Sample solution of a drag-and-drop question" size={ImageSize.large} caption="The sample solution" />

@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 34,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`from .sorting_algorithms import *` used; unable to detect undefined names"
+          },
+          "ruleId": "F403"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 42,
+                  "endLine": 11,
+                  "startColumn": 40,
+                  "startLine": 11
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Magic value used in comparison, consider replacing `10` with a constant variable"
+          },
+          "ruleId": "PLR2004"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 55,
+                  "endLine": 13,
+                  "startColumn": 46,
+                  "startLine": 13
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`MergeSort` may be undefined, or defined from star imports"
+          },
+          "ruleId": "F405"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 56,
+                  "endLine": 16,
+                  "startColumn": 46,
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`BubbleSort` may be undefined, or defined from star imports"
+          },
+          "ruleId": "F405"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 34,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Some unknown issue"
+          },
+          "ruleId": "X999"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "informationUri": "https://github.com/astral-sh/ruff",
+          "name": "ruff",
+          "rules": [
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for the use of wildcard imports.\n\n## Why is this bad?\nWildcard imports (e.g., `from module import *`) make it hard to determine\nwhich symbols are available in the current namespace, and from which module\nthey were imported. They're also discouraged by [PEP 8].\n\n## Example\n```python\nfrom math import *\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\nUse instead:\n```python\nfrom math import pi\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\n[PEP 8]: https://peps.python.org/pep-0008/#imports\n"
+              },
+              "help": {
+                "text": "`from {name} import *` used; unable to detect undefined names"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-local-with-import-star",
+              "id": "F403",
+              "properties": {
+                "id": "F403",
+                "kind": "Pyflakes",
+                "name": "undefined-local-with-import-star",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "`from {name} import *` used; unable to detect undefined names"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for names that might be undefined, but may also be defined in a\nwildcard import.\n\n## Why is this bad?\nWildcard imports (e.g., `from module import *`) make it hard to determine\nwhich symbols are available in the current namespace. If a module contains\na wildcard import, and a name in the current namespace has not been\nexplicitly defined or imported, then it's unclear whether the name is\nundefined or was imported by the wildcard import.\n\nIf the name _is_ defined in via a wildcard import, that member should be\nimported explicitly to avoid confusion.\n\nIf the name is _not_ defined in a wildcard import, it should be defined or\nimported.\n\n## Example\n```python\nfrom math import *\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\nUse instead:\n```python\nfrom math import pi\n\n\ndef area(radius):\n    return pi * radius**2\n```\n"
+              },
+              "help": {
+                "text": "`{name}` may be undefined, or defined from star imports"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-local-with-import-star-usage",
+              "id": "F405",
+              "properties": {
+                "id": "F405",
+                "kind": "Pyflakes",
+                "name": "undefined-local-with-import-star-usage",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "`{name}` may be undefined, or defined from star imports"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for the use of unnamed numerical constants (\"magic\") values in\ncomparisons.\n\n## Why is this bad?\nThe use of \"magic\" values can make code harder to read and maintain, as\nreaders will have to infer the meaning of the value from the context.\nSuch values are discouraged by [PEP 8].\n\nFor convenience, this rule excludes a variety of common values from the\n\"magic\" value definition, such as `0`, `1`, `\"\"`, and `\"__main__\"`.\n\n## Example\n```python\ndef apply_discount(price: float) -> float:\n    if price <= 100:\n        return price / 2\n    else:\n        return price\n```\n\nUse instead:\n```python\nMAX_DISCOUNT = 100\n\n\ndef apply_discount(price: float) -> float:\n    if price <= MAX_DISCOUNT:\n        return price / 2\n    else:\n        return price\n```\n\n## Options\n- `lint.pylint.allow-magic-value-types`\n\n[PEP 8]: https://peps.python.org/pep-0008/#constants\n"
+              },
+              "help": {
+                "text": "Magic value used in comparison, consider replacing `{value}` with a constant variable"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/magic-value-comparison",
+              "id": "PLR2004",
+              "properties": {
+                "id": "PLR2004",
+                "kind": "Pylint",
+                "name": "magic-value-comparison",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Magic value used in comparison, consider replacing `{value}` with a constant variable"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "This is an issue which does not declare a kind in its property bag"
+              },
+              "id": "X999",
+              "shortDescription": {
+                "text": "Some unknown issue"
+              }
+            }
+          ],
+          "version": "0.8.0"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

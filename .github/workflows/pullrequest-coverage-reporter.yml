@@ -1,0 +1,191 @@
+name: PR Coverage Reporter
+
+# Reuses coverage artifacts produced by the CI umbrella's `test` job (ci-test.yml) to render
+# the coverage table in the PR description, instead of re-running the entire test suite a
+# second time (which was the historical bottleneck).
+#
+# `workflow_run` listens for the umbrella's name. Coverage artifacts are uploaded by
+# ci-test.yml's `server-tests` job under the umbrella's run id, so artifact lookups via
+# `workflow_run.id` continue to work after the migration.
+#
+# FORK PRs ONLY. Internal (same-repo) PRs get their coverage table from ci.yml's in-run
+# `coverage-report` job, which posts as soon as `test` finishes (~28 min) instead of waiting for the
+# whole CI run (paced by the advisory e2e tail, up to ~120 min). This workflow_run path remains for
+# FORK PRs, where the in-run job's GITHUB_TOKEN is force-read-only and cannot post — fork runs have no
+# e2e, so this path is already timely for them.
+#
+# SECURITY: a `workflow_run` job runs in the base-repo context with write permissions. To avoid a
+# "pwn request", this workflow NEVER checks out or executes PR/fork code — it checks out the trusted
+# default branch, derives changed files from the GitHub API, and runs the coverage tooling with
+# `node` (no `pnpm install`, whose postinstall hook is fork-editable) against downloaded artifacts.
+on:
+  workflow_run:
+    # Must match the `name:` field of .github/workflows/ci.yml.
+    workflows: ["CI"]
+    types: [completed]
+
+env:
+  CI: true
+  node: 26
+
+permissions:
+  contents: read
+
+jobs:
+  report-coverage:
+    name: Report PR Coverage
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      !startsWith(github.event.workflow_run.display_title, 'PR metadata edit #') &&
+      github.event.workflow_run.head_repository.full_name != github.repository &&
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      github.event.workflow_run.conclusion != 'skipped'
+    # Group by PR number when available, falling back to head_sha — head_branch alone collides
+    # across PRs that share a branch name on a shared fork.
+    concurrency:
+      group: coverage-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pull-requests: write
+      contents: read
+      actions: read
+    steps:
+      - name: Find PR number
+        id: find-pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        continue-on-error: true
+        env:
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_REPO_OWNER: ${{ github.event.workflow_run.head_repository.owner.login }}
+        with:
+          result-encoding: string
+          script: |
+            const branch = process.env.HEAD_BRANCH;
+            const headOwner = process.env.HEAD_REPO_OWNER;
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${headOwner}:${branch}`,
+              state: 'open'
+            });
+            if (!prs.length) {
+              console.log(`No open PR found for branch ${headOwner}:${branch}`);
+              return '';
+            }
+            core.setOutput('author', prs[0].user.login);
+            return prs[0].number;
+
+      - name: Exit if no PR found
+        if: steps.find-pr.outputs.result == ''
+        run: |
+          echo "No matching open PR; skipping coverage report."
+          exit 0
+
+      # Trusted default branch only (never the PR head) — see the SECURITY note at the top of the
+      # file. Changed files come from the API below, not a git diff of a checked-out PR tree.
+      - name: Checkout coverage tooling (trusted default branch — never the PR head)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.find-pr.outputs.result != ''
+
+      - name: Detect changed files (via API — no PR checkout)
+        if: steps.find-pr.outputs.result != ''
+        id: changes
+        # A transient listFiles blip must not red this advisory job (skips downstream, retries next run).
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+        with:
+          script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
+
+      - name: Determine coverage scope from upstream run metadata
+        id: coverage-scope
+        if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
+        # Read the exact run attempt's CI Summary marker and artifact names/expiration from
+        # GitHub metadata; never trust or execute a scope file supplied by a fork.
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+        with:
+          script: await require('./.github/scripts/pr-coverage-scope.js')({ github, context, core })
+
+      - name: Overlay PR source for accurate line/expect counts (data only)
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+        run: |
+          set -uo pipefail
+          # Overlay ONLY the PR head's source trees as DATA so the per-file Lines/Expects columns
+          # count the PR's code, not the default branch we run. The tooling under supporting_scripts/
+          # is never overlaid and is what executes; these files are read as text only. Best-effort —
+          # on failure the counts fall back to default-branch values.
+          if git fetch --depth=1 origin "pull/${PR_NUMBER}/head" 2>/dev/null \
+             && git checkout FETCH_HEAD -- src/main/webapp src/main/java 2>/dev/null; then
+            echo "Overlaid PR source for accurate line/expect counts."
+          else
+            echo "::warning::Could not overlay PR source; line/expect counts may be default-branch-relative."
+          fi
+
+      - name: Download server JaCoCo XML
+        if: steps.coverage-scope.outputs.test_scope == 'full' && steps.changes.outputs.has_server_changes == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download client coverage summaries
+        if: steps.coverage-scope.outputs.test_scope == 'full' && steps.changes.outputs.has_client_changes == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          name: Client Coverage Summaries
+          # Nested path is deliberate: the single-file artifact unpacks flat, and it must land where
+          # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
+          path: build/test-results/vitest/coverage/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Setup Node.js
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '${{ env.node }}'
+
+      - name: Generate coverage table
+        id: coverage
+        if: steps.coverage-scope.outputs.test_scope == 'full' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
+        env:
+          CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
+          SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+        run: .github/scripts/generate-coverage-table.sh
+
+      - name: Update PR description with coverage
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+          PR_AUTHOR: ${{ steps.find-pr.outputs.author }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+          COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
+          COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
+          TEST_SCOPE: ${{ steps.coverage-scope.outputs.test_scope || 'unavailable' }}
+          TEST_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          POST_AUTHOR_COMMENT: 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: await require('./.github/scripts/update-pr-coverage.js')({ github, context, core })

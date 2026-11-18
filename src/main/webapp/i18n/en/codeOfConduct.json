@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "codeOfConduct": {
+            "accept": "Accept",
+            "title": "Code of Conduct",
+            "tooltip": "The Code of Conduct describes to users how best to communicate and which consequences might be raised if there is misconduct, as well as, contact information for reporting."
+        }
+    }
+}

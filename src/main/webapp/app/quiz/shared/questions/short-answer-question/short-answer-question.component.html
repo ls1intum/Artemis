@@ -1,0 +1,130 @@
+<div
+    class="sa-question"
+    [ngClass]="{
+        disabled: clickDisabled() && !showResult(),
+        result: showResult() && !forceSampleSolution(),
+        incorrect: (score() || 0) < shortAnswerQuestion().points! && !forceSampleSolution(),
+        'question-highlight': shortAnswerQuestion().isHighlighted,
+    }"
+>
+    <h4 class="question-title-display">
+        <span>{{ questionIndex() }})</span> {{ shortAnswerQuestion().title }}
+    </h4>
+    @if (!showResult()) {
+        <div>
+            @for (textPart of textParts(); track textPart; let i = $index) {
+                <div class="short-answer-question-display">
+                    @for (element of textPart; track element; let j = $index) {
+                        <div class="short-answer-question-display__element">
+                            @if (!shortAnswerQuestionUtil.isInputField(element)) {
+                                <div [innerHTML]="element"></div>
+                            }
+                            @if (shortAnswerQuestionUtil.isInputField(element)) {
+                                <div class="short-answer-question-container" id="sa-question-container-A">
+                                    <input
+                                        class="short-answer-question-container__input"
+                                        type="text"
+                                        [maxLength]="MAX_CHARACTER_COUNT"
+                                        [disabled]="clickDisabled()"
+                                        value="{{ getSubmittedTextForSpotAsString(element) }}"
+                                        id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion().id }}"
+                                        (change)="setSubmittedText()"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                            }
+                            &nbsp;
+                        </div>
+                    }
+                    <br />
+                </div>
+            }
+        </div>
+    }
+    @if (showResult()) {
+        <div>
+            @for (textPart of textParts(); track textPart) {
+                <div class="short-answer-question-display">
+                    @for (element of textPart; track element) {
+                        <div class="short-answer-question-display__element">
+                            @if (!shortAnswerQuestionUtil.isInputField(element)) {
+                                <div [innerHTML]="element"></div>
+                            }
+                            @if (shortAnswerQuestionUtil.isInputField(element)) {
+                                <div
+                                    class="short-answer-question-container"
+                                    [tumAetUiTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
+                                >
+                                    <input
+                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
+                                        class="short-answer-question-container__input {{ classifyInputField(element) }}"
+                                        type="text"
+                                        disabled
+                                        [maxLength]="MAX_CHARACTER_COUNT"
+                                        value="{{ getTextForSpotAsString(element) }}"
+                                        size="{{ getSizeForSpot(element) }}"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                            }
+                        </div>
+                    }
+                    <br />
+                </div>
+            }
+        </div>
+    }
+    @if (shortAnswerQuestion().invalid) {
+        <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+    }
+    @if (shortAnswerQuestion().hint || (shortAnswerQuestion().explanation && showResult())) {
+        <div class="hint">
+            <ng-template #renderedHint>
+                <div [innerHTML]="renderedQuestion().hint"></div>
+            </ng-template>
+            @if (shortAnswerQuestion().hint) {
+                <span [tumAetUiTooltip]="renderedHint" tumAetUiTooltipPlacement="right">
+                    <fa-icon [icon]="farQuestionCircle" />
+                    <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                </span>
+            }
+            <br />
+            <ng-template #renderedExplanation>
+                <div [innerHTML]="renderedQuestion().explanation"></div>
+            </ng-template>
+            @if (shortAnswerQuestion().explanation && showResult()) {
+                <span [tumAetUiTooltip]="renderedExplanation" tumAetUiTooltipPlacement="right">
+                    <fa-icon [icon]="faExclamationCircle" />
+                    <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
+                </span>
+            }
+        </div>
+    }
+    @if (!showResult() || forceSampleSolution()) {
+        <div class="question-score">
+            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+            <span>{{ shortAnswerQuestion().points }}</span>
+        </div>
+    }
+    @if (showResult() && !forceSampleSolution()) {
+        <div class="question-score result" [ngClass]="{ incorrect: (score() || 0) < shortAnswerQuestion().points! }">
+            <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
+            <span class="show-explanation">{{ score() || 0 }}/{{ shortAnswerQuestion().points }}</span>
+            <span class="show-explanation">
+                <jhi-quiz-scoring-infostudent-modal [score]="score()" [question]="shortAnswerQuestion()" [shortAnswerText]="submittedTexts()" [questionIndex]="questionIndex()" />
+            </span>
+        </div>
+    }
+    <br />
+    <br />
+    @if (showResult() && !forceSampleSolution()) {
+        <div>
+            @if (!showingSampleSolution()) {
+                <tumaet-ui-button variant="outlined" (clicked)="showSampleSolution()"><span jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></span></tumaet-ui-button>
+            }
+            @if (showingSampleSolution()) {
+                <tumaet-ui-button variant="outlined" (clicked)="hideSampleSolution()"><span jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></span></tumaet-ui-button>
+            }
+        </div>
+    }
+</div>

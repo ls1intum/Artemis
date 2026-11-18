@@ -1,0 +1,383 @@
+import dayjs from 'dayjs/esm';
+
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { convertDateFromServer, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import {
+    normalizeCategoryArray,
+    toCompetencyLinks,
+    toGradingCriteria,
+    toTeamAssignmentConfig,
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-programming.mapper';
+
+/**
+ * Defines how a specific exercise field is read, compared, and applied.
+ */
+export interface ExerciseMetadataFieldHandler<T extends Exercise, V = unknown> {
+    key: string;
+    labelKey: string;
+    // Method syntax (not `prop: (…) => V`) is intentional: it makes the members bivariant, so a concrete
+    // `…FieldHandler<Exercise, string | undefined>` remains assignable to the erased `…FieldHandler<Exercise, unknown>`
+    // element type of the handler arrays. Each value round-trips through its own handler (getters ↔ applyValue),
+    // so the variance is safe by construction. Without this, strictFunctionTypes rejects `applyValue`'s `V` parameter.
+    getCurrentValue(exercise: T): V;
+    getBaselineValue(exercise: T): V;
+    getIncomingValue(snapshot: ExerciseSnapshotDTO): V;
+    applyValue(exercise: T, value: V): void;
+}
+
+type ExerciseResolver = () => Exercise;
+
+const normalizeCategories = (value: unknown): ExerciseCategory[] | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+    return normalizeCategoryArray(value);
+};
+
+// Mutates the array in-place so that external references (e.g. the separate
+// `exerciseCategories` binding in ProgrammingExerciseUpdateComponent) stay in sync.
+const applyCategories = (exercise: Exercise, value: unknown): void => {
+    const incomingCategories = normalizeCategories(value);
+    const existingCategories = exercise.categories;
+
+    if (existingCategories) {
+        existingCategories.length = 0;
+        if (incomingCategories) {
+            existingCategories.push(...incomingCategories);
+        }
+        return;
+    }
+
+    exercise.categories = incomingCategories;
+};
+
+const applyGradingCriteria = (exercise: Exercise, value: unknown): void => {
+    const incomingCriteria = value as GradingCriterion[] | undefined;
+    const existingCriteria = exercise.gradingCriteria;
+
+    if (existingCriteria) {
+        existingCriteria.length = 0;
+        if (incomingCriteria) {
+            existingCriteria.push(...incomingCriteria);
+        }
+        return;
+    }
+
+    exercise.gradingCriteria = incomingCriteria;
+};
+
+// Simple reference replacement is sufficient here — unlike categories, auxiliary repositories
+// are not bound to a separate reference in the update component.
+const applyAuxiliaryRepositories = (exercise: ProgrammingExercise, value: unknown): void => {
+    exercise.auxiliaryRepositories = (value as AuxiliaryRepository[] | undefined) ?? [];
+};
+
+/**
+ * Creates a basic handler for scalar exercise fields stored directly on the snapshot.
+ *
+ * The `as V` cast in `getIncomingValue` is necessary because the snapshot field type
+ * (`ExerciseSnapshotDTO[K]`) may not exactly match the exercise field type `V` (e.g.
+ * categories are `string[]` in the snapshot but `ExerciseCategory[]` on the exercise).
+ * Type correctness is ensured by matching getter/setter pairs and verified by the
+ * reflection-based coverage tests in {@link ExerciseVersionServiceTest}.
+ */
+const baseHandler = <K extends keyof ExerciseSnapshotDTO, V>(
+    key: K,
+    labelKey: string,
+    getter: (exercise: Exercise) => V,
+    setter: (exercise: Exercise, value: V) => void,
+): ExerciseMetadataFieldHandler<Exercise, V> => {
+    return {
+        key,
+        labelKey,
+        getCurrentValue: getter,
+        getBaselineValue: getter,
+        getIncomingValue: (snapshot) => snapshot[key] as V,
+        applyValue: setter,
+    };
+};
+
+/**
+ * Keys of {@link ExerciseSnapshotDTO} whose value is an ISO date string. The snapshot stores dates as
+ * strings, so their incoming values are normalized with {@link convertDateStringFromServer}.
+ */
+type ExerciseSnapshotDateKey = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate';
+
+/**
+ * Creates a handler for date fields with server-date normalization.
+ */
+const dateHandler = (
+    key: ExerciseSnapshotDateKey,
+    labelKey: string,
+    getter: (exercise: Exercise) => dayjs.Dayjs | undefined,
+    setter: (exercise: Exercise, value: dayjs.Dayjs | undefined) => void,
+): ExerciseMetadataFieldHandler<Exercise, dayjs.Dayjs | undefined> => {
+    return {
+        key,
+        labelKey,
+        getCurrentValue: (exercise) => convertDateFromServer(getter(exercise)),
+        getBaselineValue: (exercise) => convertDateFromServer(getter(exercise)),
+        getIncomingValue: (snapshot) => convertDateStringFromServer(snapshot[key]),
+        applyValue: (exercise, value) => setter(exercise, value),
+    };
+};
+
+/**
+ * Builds handlers for exercise fields shared across all exercise types.
+ */
+export const createBaseHandlers = (resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
+    return [
+        baseHandler(
+            'title',
+            'artemisApp.exercise.title',
+            (exercise) => exercise.title,
+            (exercise, value) => (exercise.title = value),
+        ),
+        baseHandler(
+            'shortName',
+            'artemisApp.exercise.shortName',
+            (exercise) => exercise.shortName,
+            (exercise, value) => (exercise.shortName = value),
+        ),
+        {
+            key: 'competencyLinks',
+            labelKey: 'artemisApp.competency.competencies',
+            getCurrentValue: (exercise) => exercise.competencyLinks,
+            getBaselineValue: (exercise) => exercise.competencyLinks,
+            getIncomingValue: (snapshot) => (resolveExercise ? toCompetencyLinks(resolveExercise(), snapshot.competencyLinks) : snapshot.competencyLinks),
+            applyValue: (exercise, value) => (exercise.competencyLinks = value as CompetencyExerciseLink[] | undefined),
+        },
+        baseHandler(
+            'channelName',
+            'artemisApp.lecture.channelName',
+            (exercise) => exercise.channelName,
+            (exercise, value) => (exercise.channelName = value),
+        ),
+        baseHandler(
+            'maxPoints',
+            'artemisApp.gradingSystem.maxPoints',
+            (exercise) => exercise.maxPoints,
+            (exercise, value) => (exercise.maxPoints = value),
+        ),
+        baseHandler(
+            'bonusPoints',
+            'artemisApp.exercise.bonusPoints',
+            (exercise) => exercise.bonusPoints,
+            (exercise, value) => (exercise.bonusPoints = value),
+        ),
+        baseHandler(
+            'assessmentType',
+            'artemisApp.assessment.assessmentType',
+            (exercise) => exercise.assessmentType,
+            (exercise, value) => (exercise.assessmentType = value),
+        ),
+        dateHandler(
+            'releaseDate',
+            'artemisApp.exercise.releaseDate',
+            (exercise) => exercise.releaseDate,
+            (exercise, value) => (exercise.releaseDate = value),
+        ),
+        dateHandler(
+            'startDate',
+            'artemisApp.exercise.startDate',
+            (exercise) => exercise.startDate,
+            (exercise, value) => (exercise.startDate = value),
+        ),
+        dateHandler(
+            'dueDate',
+            'artemisApp.exercise.dueDate',
+            (exercise) => exercise.dueDate,
+            (exercise, value) => (exercise.dueDate = value),
+        ),
+        dateHandler(
+            'assessmentDueDate',
+            'artemisApp.exercise.assessmentDueDate',
+            (exercise) => exercise.assessmentDueDate,
+            (exercise, value) => (exercise.assessmentDueDate = value),
+        ),
+        dateHandler(
+            'exampleSolutionPublicationDate',
+            'artemisApp.exercise.exampleSolutionPublicationDate',
+            (exercise) => exercise.exampleSolutionPublicationDate,
+            (exercise, value) => (exercise.exampleSolutionPublicationDate = value),
+        ),
+        baseHandler(
+            'difficulty',
+            'artemisApp.exercise.difficulty',
+            (exercise) => exercise.difficulty,
+            (exercise, value) => (exercise.difficulty = value),
+        ),
+        baseHandler(
+            'mode',
+            'artemisApp.exercise.mode',
+            (exercise) => exercise.mode,
+            (exercise, value) => (exercise.mode = value),
+        ),
+        baseHandler(
+            'allowComplaintsForAutomaticAssessments',
+            'artemisApp.course.complaintsEnabled.title',
+            (exercise) => exercise.allowComplaintsForAutomaticAssessments,
+            (exercise, value) => (exercise.allowComplaintsForAutomaticAssessments = value),
+        ),
+        baseHandler(
+            'includedInOverallScore',
+            'artemisApp.exercise.includedInOverallScore',
+            (exercise) => exercise.includedInOverallScore,
+            (exercise, value) => (exercise.includedInOverallScore = value),
+        ),
+        // Note: problemStatement is handled by live synchronization with Yjs, not by metadata sync
+        baseHandler(
+            'gradingInstructions',
+            'artemisApp.assessmentInstructions.assessmentInstructions',
+            (exercise) => exercise.gradingInstructions,
+            (exercise, value) => (exercise.gradingInstructions = value),
+        ),
+        {
+            key: 'categories',
+            labelKey: 'artemisApp.exercise.categories',
+            getCurrentValue: (exercise) => exercise.categories,
+            getBaselineValue: (exercise) => exercise.categories,
+            getIncomingValue: (snapshot) => normalizeCategories(snapshot.categories),
+            applyValue: (exercise, value) => applyCategories(exercise, value),
+        },
+        baseHandler(
+            'teamAssignmentConfig',
+            'artemisApp.exercise.teamAssignmentConfig.teamSize',
+            (exercise) => exercise.teamAssignmentConfig,
+            (exercise, value) => (exercise.teamAssignmentConfig = toTeamAssignmentConfig(value)),
+        ),
+        baseHandler(
+            'presentationScoreEnabled',
+            'artemisApp.exercise.presentationScoreEnabled.title',
+            (exercise) => exercise.presentationScoreEnabled,
+            (exercise, value) => (exercise.presentationScoreEnabled = value),
+        ),
+        baseHandler(
+            'secondCorrectionEnabled',
+            'artemisApp.exam.secondCorrectionColumn',
+            (exercise) => exercise.secondCorrectionEnabled,
+            (exercise, value) => (exercise.secondCorrectionEnabled = (value as boolean | undefined) ?? false),
+        ),
+        {
+            key: 'gradingCriteria',
+            labelKey: 'artemisApp.assessmentInstructions.structuredGradingInstructions',
+            getCurrentValue: (exercise) => exercise.gradingCriteria,
+            getBaselineValue: (exercise) => exercise.gradingCriteria,
+            getIncomingValue: (snapshot) => toGradingCriteria(snapshot.gradingCriteria),
+            applyValue: (exercise, value) => applyGradingCriteria(exercise, value),
+        },
+        baseHandler(
+            'plagiarismDetectionConfig',
+            'artemisApp.plagiarism.plagiarismDetection',
+            (exercise) => exercise.plagiarismDetectionConfig,
+            (exercise, value) => (exercise.plagiarismDetectionConfig = value),
+        ),
+    ];
+};
+
+/**
+ * Builds handlers for programming exercise-specific fields.
+ */
+const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
+    return [
+        {
+            key: 'programmingData.allowOnlineEditor',
+            labelKey: 'artemisApp.programmingExercise.allowOnlineEditor.title',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineEditor,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineEditor,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.allowOnlineEditor,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowOnlineEditor = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.allowOfflineIde',
+            labelKey: 'artemisApp.programmingExercise.allowOfflineIde.title',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOfflineIde,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOfflineIde,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.allowOfflineIde,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowOfflineIde = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.allowOnlineIde',
+            labelKey: 'artemisApp.programmingExercise.allowOnlineIde.title',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineIde,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineIde,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.allowOnlineIde,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowOnlineIde = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.auxiliaryRepositories',
+            labelKey: 'artemisApp.programmingExercise.auxiliaryRepositories',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
+            getIncomingValue: (snapshot) => toAuxiliaryRepositories(snapshot.programmingData?.auxiliaryRepositories),
+            applyValue: (exercise, value) => applyAuxiliaryRepositories(exercise, value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, unknown>,
+        {
+            key: 'programmingData.maxStaticCodeAnalysisPenalty',
+            labelKey: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.maxStaticCodeAnalysisPenalty,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, number | undefined>,
+        {
+            key: 'programmingData.showTestNamesToStudents',
+            labelKey: 'artemisApp.programmingExercise.showTestNamesToStudents',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).showTestNamesToStudents,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).showTestNamesToStudents,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.showTestNamesToStudents,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).showTestNamesToStudents = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.buildAndTestStudentSubmissionsAfterDueDate',
+            labelKey: 'artemisApp.programmingExercise.timeline.afterDueDate',
+            getCurrentValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate),
+            getBaselineValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate),
+            getIncomingValue: (snapshot) => convertDateStringFromServer(snapshot.programmingData?.buildAndTestStudentSubmissionsAfterDueDate),
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, dayjs.Dayjs | undefined>,
+        {
+            key: 'programmingData.releaseTestsWithExampleSolution',
+            labelKey: 'artemisApp.programmingExercise.releaseTestsWithExampleSolution',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.releaseTestsWithExampleSolution,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).releaseTestsWithExampleSolution = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.buildConfig',
+            labelKey: 'artemisApp.programmingExercise.buildConfiguration',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
+            getIncomingValue: (snapshot) => toBuildConfig(snapshot.programmingData?.buildConfig),
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildConfig = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, ProgrammingExerciseBuildConfig | undefined>,
+    ];
+};
+
+/**
+ * Returns handlers for the given exercise type.
+ */
+export const createHandlersByType = (exerciseType: ExerciseType): ExerciseMetadataFieldHandler<Exercise>[] => {
+    switch (exerciseType) {
+        case ExerciseType.PROGRAMMING:
+            return createProgrammingHandlers();
+        default:
+            return [];
+    }
+};
+
+/**
+ * Builds the full set of handlers for a specific exercise type.
+ */
+export const createExerciseMetadataHandlers = (exerciseType: ExerciseType, resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
+    return createBaseHandlers(resolveExercise).concat(createHandlersByType(exerciseType));
+};

@@ -1,0 +1,97 @@
+import { Component, ViewContainerRef, ViewEncapsulation, input, output, signal } from '@angular/core';
+import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PostContentValidationPattern } from 'app/communication/communication.util';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-answer-post-create-edit-modal',
+    templateUrl: './answer-post-create-edit-modal.component.html',
+    styleUrls: ['answer-post-create-edit-modal.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TumAetUiButtonComponent, ArtemisTranslatePipe],
+})
+export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
+    createEditAnswerPostContainerRef = input<ViewContainerRef>();
+    postingUpdated = output<Posting>();
+    readonly isInputOpen = signal(false);
+
+    /**
+     * renders the ng-template to edit or create an answerPost
+     */
+    open(): void {
+        this.close();
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
+        this.isInputOpen.set(true);
+    }
+
+    /**
+     * clears the container to remove the input field when the user clicks cancel
+     */
+    close(): void {
+        this.createEditAnswerPostContainerRef()?.clear();
+        this.resetFormGroup();
+        this.isInputOpen.set(false);
+    }
+
+    /**
+     * resets the answer post content
+     */
+    resetFormGroup(): void {
+        if (!this.posting()) {
+            this.posting.set({ content: '' });
+        }
+        this.formGroup = this.formBuilder.group({
+            // the pattern ensures that the content must include at least one non-whitespace character
+            content: [this.posting()!.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+        });
+    }
+
+    /**
+     * invokes the communication service after setting current date as creation date of the new answer post,
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
+    createPosting(): void {
+        this.submitPosting(
+            (payload) => this.communicationService.createAnswerPost(payload),
+            (answerPost: AnswerPost) => {
+                this.resetFormGroup();
+                this.isLoading.set(false);
+                // clear before emitting so that a parent can reopen the editor in its onCreate handler
+                this.createEditAnswerPostContainerRef()?.clear();
+                this.onCreate.emit(answerPost);
+            },
+        );
+    }
+
+    /**
+     * invokes the communication service with the updated answer post
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
+    updatePosting(): void {
+        this.submitPosting(
+            (payload) => this.communicationService.updateAnswerPost(payload),
+            (updatedPost: AnswerPost) => {
+                this.postingUpdated.emit(updatedPost);
+                this.isLoading.set(false);
+                this.isInputOpen.set(false);
+                this.createEditAnswerPostContainerRef()?.clear();
+            },
+        );
+    }
+
+    /**
+     * updates the title in accordance with the current use case (edit or create)
+     */
+    updateModalTitle(): void {
+        if (this.editType === this.EditType.UPDATE) {
+            this.modalTitle = 'artemisApp.communication.editPosting';
+        } else if (this.editType === this.EditType.CREATE) {
+            this.modalTitle = 'artemisApp.communication.createModalTitleAnswer';
+        }
+    }
+}

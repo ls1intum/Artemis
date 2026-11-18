@@ -1,0 +1,154 @@
+package de.tum.cit.aet.artemis.modeling.repository;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+
+/**
+ * Spring Data JPA repository for the ModelingExercise entity.
+ */
+@Conditional(ModelingEnabled.class)
+@Lazy
+@Repository
+public interface ModelingExerciseRepository extends ArtemisJpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM ModelingExercise e
+                LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.exerciseVariantGroup
+            WHERE e.course.id = :courseId
+            """)
+    List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+
+    // The plagiarism detection configuration is not part of the exercise: the edit form reads it from this endpoint, so the
+    // single caller attaches it with PlagiarismDetectionConfigRepository.attachTo, because without it the response omits a
+    // stored config, the form falls back to its defaults, and the next save overwrites the instructor's settings. The nested
+    // exampleSubmissions.submission.results path already fetches exampleSubmissions, so it is not listed on its own.
+    // exerciseVariantGroup is deliberately not listed: a sixth path would cross the query-quality over-fetch threshold.
+    // The single caller sets it from ExerciseVariantGroupService.findOwningGroup instead, the same by-id resolution the
+    // write path uses.
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exampleSubmissions.submission.results" })
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
+    Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
+
+    @Query("""
+            SELECT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
+            WHERE modelingExercise.id = :exerciseId
+            """)
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.course
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
+                LEFT JOIN FETCH modelingExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE modelingExercise.id = :exerciseId
+            """)
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
+    Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
+
+    @Query("""
+            SELECT m
+            FROM ModelingExercise m
+                LEFT JOIN FETCH m.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE m.title = :title
+                AND m.course.id = :courseId
+            """)
+    Set<ModelingExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a ModelingExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic ModelingExercise fields (exampleSolutionModel, exampleSolutionExplanation, diagramType) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link ModelingExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "gradingCriteria" })
+    Optional<ModelingExercise> findForVersioningById(long exerciseId);
+
+    /**
+     * Finds a modeling exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
+    default Optional<ModelingExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<ModelingExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
+
+    @NonNull
+    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId), exerciseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "gradingCriteria" })
+    Optional<ModelingExercise> findWithCategoriesAndGradingCriteriaById(long exerciseId);
+
+    @NonNull
+    default ModelingExercise findWithCategoriesAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithCategoriesAndGradingCriteriaById(exerciseId), exerciseId);
+    }
+}

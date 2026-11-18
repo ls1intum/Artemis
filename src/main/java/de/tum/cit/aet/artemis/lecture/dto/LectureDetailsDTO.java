@@ -1,0 +1,93 @@
+package de.tum.cit.aet.artemis.lecture.dto;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+        @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits) implements LectureDTO {
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDTO(Long id, String title, String shortName, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+            boolean athenaFormativeFeedbackEnabled) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentDTO(Long id, String name, String link, ZonedDateTime releaseDate, ZonedDateTime uploadDate, Integer version, AttachmentType attachmentType,
+            String studentVersion, @Nullable List<Integer> displayPageNumbers) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CompetencyDTO(Long id, String title, CompetencyTaxonomy taxonomy) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CompetencyLinkDTO(CompetencyDTO competency, double weight, boolean generatedByAi) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LectureReferenceDTO(Long id, @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course) {
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
+    @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnitDTO.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnitDTO.class, name = "exercise"),
+            @JsonSubTypes.Type(value = OnlineUnitDTO.class, name = "online"), @JsonSubTypes.Type(value = TextUnitDTO.class, name = "text") })
+    public sealed interface LectureUnitDetailsDTO permits AttachmentUnitDTO, ExerciseUnitDTO, OnlineUnitDTO, TextUnitDTO {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
+            List<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, String description, String videoSource, @Nullable VideoSourceType videoSourceType,
+            @Nullable String youtubeVideoId, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
+
+        public AttachmentUnitDTO {
+            type = "attachment";
+            if (videoSourceType == VideoSourceType.YOUTUBE && (youtubeVideoId == null || youtubeVideoId.isBlank())) {
+                throw new IllegalArgumentException("YOUTUBE videoSourceType requires non-blank youtubeVideoId");
+            }
+            if (videoSourceType != VideoSourceType.YOUTUBE && youtubeVideoId != null) {
+                throw new IllegalArgumentException("youtubeVideoId must be null when videoSourceType != YOUTUBE");
+            }
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record ExerciseUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
+            List<CompetencyLinkDTO> competencyLinks, ExerciseOverviewDTO exercise, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
+
+        public ExerciseUnitDTO {
+            type = "exercise";
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record OnlineUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
+            List<CompetencyLinkDTO> competencyLinks, String description, String source, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
+
+        public OnlineUnitDTO {
+            type = "online";
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TextUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
+            List<CompetencyLinkDTO> competencyLinks, String content, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
+
+        public TextUnitDTO {
+            type = "text";
+        }
+    }
+}

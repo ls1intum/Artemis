@@ -1,0 +1,86 @@
+<div class="event-wrapper" [ngClass]="event().eventType">
+    <div class="headline">
+        <div class="type" data-testid="live-event-type">
+            {{ 'artemisApp.exam.events.type.' + event().eventType | artemisTranslate }}
+        </div>
+    </div>
+    <div class="date" data-testid="live-event-date">
+        <span><fa-icon [icon]="faPaperPlane" /> {{ event().createdDate | artemisDate }}</span>
+        @if (event().acknowledgeTimestamps?.user) {
+            <span>| <fa-icon [icon]="faEye" /> {{ event().acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
+        }
+    </div>
+    <div class="content" data-testid="live-event-content">
+        @switch (event().eventType) {
+            @case (ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT) {
+                <div [jhiMarkdown]="examWideAnnouncementEvent.text"></div>
+            }
+            @case (ExamLiveEventType.WORKING_TIME_UPDATE) {
+                <div>
+                    @if (workingTimeUpdateEvent.courseWide) {
+                        <div jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone" class="wt-title"></div>
+                    }
+                    @if (!workingTimeUpdateEvent.courseWide) {
+                        <div jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titlePersonal" class="wt-title"></div>
+                    }
+                    <jhi-working-time-change [oldWorkingTime]="workingTimeUpdateEvent.oldWorkingTime" [newWorkingTime]="workingTimeUpdateEvent.newWorkingTime" />
+                </div>
+            }
+            @case (ExamLiveEventType.EXAM_ATTENDANCE_CHECK) {
+                <div>
+                    <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
+                    @if (event().user) {
+                        <table class="mx-auto border-separate border-spacing-x-4 border-spacing-y-1">
+                            <tbody>
+                                <tr>
+                                    <th class="text-start" jhiTranslate="artemisApp.studentExamDetail.name"></th>
+                                    <td>{{ event().user?.firstName }} {{ event().user?.lastName }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-start" jhiTranslate="artemisApp.studentExamDetail.login"></th>
+                                    <td>{{ event().user?.login }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-start" jhiTranslate="artemisApp.studentExamDetail.email"></th>
+                                    <td>{{ event().user?.email }}</td>
+                                </tr>
+                                @if (event().user?.visibleRegistrationNumber) {
+                                    <tr>
+                                        <th class="text-start" jhiTranslate="artemisApp.studentExamDetail.matriculationNumber"></th>
+                                        <td>{{ event().user?.visibleRegistrationNumber }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            }
+            @case (ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+                <div>
+                    <div
+                        jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.description"
+                        [translateValues]="{ exerciseName: problemStatementUpdateEvent.exerciseName }"
+                    ></div>
+                    @if (problemStatementUpdateEvent.text) {
+                        <div jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage"></div>
+                        <div [jhiMarkdown]="problemStatementUpdateEvent.text"></div>
+                    }
+                </div>
+            }
+            @default {}
+        }
+    </div>
+    <div class="flex gap-2">
+        @if (showAcknowledge()) {
+            <button type="button" tumAetUiButton class="mt-2! w-full" data-testid="live-event-action-button" (click)="acknowledgeEvent()">
+                <fa-icon [icon]="faCheck" />
+                <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
+            </button>
+        }
+        @if (event().eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+            <button type="button" tumAetUiButton class="mt-2! w-full" data-testid="live-event-action-button" (click)="navigateToExercise()">
+                <span jhiTranslate="artemisApp.exam.events.navigateToExercise"></span>
+            </button>
+        }
+    </div>
+</div>

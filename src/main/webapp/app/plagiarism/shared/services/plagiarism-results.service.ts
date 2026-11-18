@@ -1,0 +1,14 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Service()
+export class PlagiarismResultsService {
+    private http = inject(HttpClient);
+
+    private resourceUrlExercises = 'api/plagiarism/exercises';
+
+    getNumberOfPlagiarismResultsForExercise(exerciseId: number): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrlExercises}/${exerciseId}/potential-plagiarism-count`);
+    }
+}

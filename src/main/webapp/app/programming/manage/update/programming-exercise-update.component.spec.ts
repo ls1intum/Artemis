@@ -1,0 +1,2789 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
+import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { NgForm } from '@angular/forms';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { Subject, map, of, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
+import { BuildTimeWindowError } from 'app/programming/shared/utils/build-time-window.utils';
+import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
+import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    MAX_PACKAGE_NAME_LENGTH,
+    MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
+} from 'app/foundation/constants/input.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockProvider } from 'ng-mocks';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { ChangeDetectorRef, Signal, computed, signal } from '@angular/core';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+
+vi.mock('y-monaco', () => ({
+    // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
+    MonacoBinding: vi.fn(function (this: any) {
+        this.destroy = vi.fn();
+    }),
+}));
+
+/**
+ * Typed view onto the protected `viewChild` signals so the spec can override them
+ * without a blanket `(component as any)` cast. The shape mirrors the component declaration.
+ */
+type ProgrammingExerciseUpdateInternals = ProgrammingExerciseUpdateComponent & {
+    exerciseInfoComponent: Signal<ProgrammingExerciseInformationComponent | undefined>;
+    exerciseDifficultyComponent: Signal<ProgrammingExerciseModeComponent | undefined>;
+    exerciseLanguageComponent: Signal<ProgrammingExerciseLanguageComponent | undefined>;
+    exerciseGradingComponent: Signal<ProgrammingExerciseGradingComponent | undefined>;
+    exercisePlagiarismComponent: Signal<ExerciseUpdatePlagiarismComponent | undefined>;
+};
+const internals = (c: ProgrammingExerciseUpdateComponent): ProgrammingExerciseUpdateInternals => c as ProgrammingExerciseUpdateInternals;
+
+describe('ProgrammingExerciseUpdateComponent', () => {
+    const courseId = 1;
+    const course = { id: courseId } as Course;
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: '123' }) },
+        url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
+        // ngOnInit pipes url through switchMap(() => params); a real ActivatedRoute always exposes a params
+        // stream, so provide an empty one here. Tests that need concrete params override route.params.
+        params: of({}),
+    } as ActivatedRoute;
+    let comp: ProgrammingExerciseUpdateComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
+    let programmingExerciseService: ProgrammingExerciseService;
+    let courseService: CourseManagementService;
+    let exerciseGroupService: ExerciseGroupService;
+    let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
+    let alertService: AlertService;
+    let profileService: ProfileService;
+    let programmingExerciseSharingService: ProgrammingExerciseSharingService;
+    let localStorageService: LocalStorageService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FaIconComponent, CategorySelectorComponent],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(CalendarService),
+                MockProvider(ExerciseEditorSyncService),
+                MockProvider(ExerciseMetadataSyncService),
+                {
+                    provide: ProblemStatementSyncService,
+                    useValue: {
+                        init: vi.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
+                        reset: vi.fn(),
+                        isAwaitingInitialSync: vi.fn(() => false),
+                        acknowledgeCanonicalSave: vi.fn(),
+                        stateReplaced$: of(),
+                        initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
+                    },
+                },
+                MockProvider(DialogService),
+            ],
+        })
+            .overrideComponent(ProgrammingExerciseUpdateComponent, {
+                set: {
+                    providers: [
+                        TumAetUiConfirmationService,
+                        {
+                            provide: HyperionGenerationActivityFacade,
+                            useValue: {
+                                connect: vi.fn(),
+                                retryStatus: vi.fn(),
+                                generationCompleted: new Subject(),
+                                generationReverted: new Subject(),
+                                exerciseContentsInvalidated: new Subject(),
+                                running: signal(false),
+                                statusLoading: signal(false),
+                                statusLoadFailed: signal(false),
+                            },
+                        },
+                    ],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        courseService = TestBed.inject(CourseManagementService);
+        exerciseGroupService = TestBed.inject(ExerciseGroupService);
+        programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        alertService = TestBed.inject(AlertService);
+        profileService = TestBed.inject(ProfileService);
+        programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
+        localStorageService = TestBed.inject(LocalStorageService);
+
+        const programmingLanguageFeature = {
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            sequentialTestRuns: true,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: true,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: true,
+            projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+            auxiliaryRepositoriesSupported: true,
+        } as ProgrammingLanguageFeature;
+
+        const newProfileInfo = new ProfileInfo();
+        newProfileInfo.activeProfiles = [];
+        newProfileInfo.activeModuleFeatures = [];
+        newProfileInfo.programmingLanguageFeatures = [programmingLanguageFeature];
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+
+        comp.isSimpleMode.set(false);
+
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        route.data = of({ programmingExercise });
+        vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(programmingLanguageFeature);
+        // Assign the mock class directly: under Vitest, wrapping it in vi.fn().mockImplementation(() => new ...)
+        // is not usable as a constructor (`new ResizeObserver()` throws "is not a constructor").
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('captures the settings document before saving and acknowledges only its successful response', () => {
+        const response = new Subject<HttpResponse<ProgrammingExercise>>();
+        const acknowledge = vi.fn();
+        const capture = vi.fn(() => acknowledge);
+        const problem = { editableInstructions: () => ({ createCanonicalSaveAcknowledgement: capture }) };
+        comp.exerciseProblemComponent = (() => problem) as unknown as typeof comp.exerciseProblemComponent;
+        vi.spyOn(comp as any, 'onSaveSuccess').mockImplementation(() => {});
+        comp['subscribeToSaveResponse'](response);
+        expect(capture).toHaveBeenCalledOnce();
+        expect(acknowledge).not.toHaveBeenCalled();
+        comp.exerciseProblemComponent = (() => undefined) as unknown as typeof comp.exerciseProblemComponent;
+        response.next(new HttpResponse({ body: { id: 42, problemStatement: 'saved by settings' } as ProgrammingExercise }));
+        expect(acknowledge).toHaveBeenCalledExactlyOnceWith('saved by settings');
+    });
+
+    describe('generation content revalidation', () => {
+        function protectedSettings() {
+            comp.programmingExercise = Object.assign(new ProgrammingExercise(new Course(), undefined), {
+                id: 42,
+                title: 'Saved exercise',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                projectType: ProjectType.PLAIN_GRADLE,
+                isAtLeastEditor: true,
+                problemStatement: 'Original statement',
+                assessmentType: AssessmentType.AUTOMATIC,
+            });
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            comp.isSaving.set(false);
+            comp.isEdit = true;
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            vi.spyOn(TestBed.inject(HyperionExerciseGenerationApi), 'getGenerationCapabilities').mockReturnValue(
+                of({ supported: true, canGenerate: true, canAdapt: true, canCreateVariant: true }),
+            );
+            comp['setupMetadataSync']();
+            return fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+        }
+
+        function savedExercise(statement: string) {
+            const exercise = deepClone(comp.backupExercise);
+            exercise.problemStatement = statement;
+            return new HttpResponse({ body: exercise });
+        }
+
+        it('publishes synchronized metadata through the settings signal', () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const syncContext = initialize.mock.calls[0][0];
+            const visibleTitle = computed(() => comp.programmingExercise.title);
+            expect(visibleTitle()).toBe('Saved exercise');
+            const categories = [new ExerciseCategory('Shared category', '#ffffff')];
+            const gradingCriteria = [{ id: 1, title: 'Shared criterion', structuredGradingInstructions: [] }];
+            comp.programmingExercise.categories = categories;
+            comp.programmingExercise.gradingCriteria = gradingCriteria;
+            const incoming = { ...comp.programmingExercise, title: 'Incoming exercise' };
+
+            syncContext.setCurrentExercise!(incoming);
+
+            expect(comp.programmingExercise).not.toBe(incoming);
+            expect(comp.programmingExercise).toEqual(incoming);
+            expect(comp.programmingExercise).toBeInstanceOf(ProgrammingExercise);
+            expect(comp.programmingExercise.categories).not.toBe(categories);
+            expect(comp.programmingExercise.categories).toEqual(categories);
+            expect(comp.programmingExercise.categories?.[0]).toBe(categories[0]);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories).toBe(comp.programmingExercise.categories);
+            expect(comp.programmingExercise.gradingCriteria).toBe(gradingCriteria);
+            expect(syncContext.getCurrentExercise()).toBe(comp.programmingExercise);
+            expect(visibleTitle()).toBe('Incoming exercise');
+        });
+
+        it('refreshes synchronized category chips through the separate settings binding', async () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const localCategories = [new ExerciseCategory('Local category', '#ffffff')];
+            comp.updateCategories(localCategories);
+            const categoryFixture = TestBed.createComponent(CategorySelectorComponent);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Local category');
+
+            // Align the owner after async fixture initialization, then simulate the metadata handler's in-place update.
+            comp.updateCategories(localCategories);
+            localCategories.splice(0, 1, new ExerciseCategory('Incoming category', '#691b0b'));
+            expect(comp.programmingExercise.categories).toBe(localCategories);
+            initialize.mock.calls[0][0].setCurrentExercise!(comp.programmingExercise);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+
+            expect(comp.programmingExercise.categories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.componentInstance.selectedCategoryItems().map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Incoming category');
+            expect(categoryFixture.nativeElement.textContent).not.toContain('Local category');
+        });
+
+        it('revalidates before a category save even when the generation event was missed', () => {
+            protectedSettings();
+            comp.programmingExercise.categories = [new ExerciseCategory('Local category', '#ffffff')];
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Generated statement')));
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+
+            comp.saveExercise();
+
+            expect(update).not.toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('Original statement');
+            expect(comp.programmingExercise.categories[0].category).toBe('Local category');
+            expect(comp.generationRefreshRequired()).toBe(true);
+            expect(reload).not.toHaveBeenCalled();
+        });
+
+        it.each(['generation', 'undo', 'invalidated'])('preserves dirty settings after remote %s until explicit reload confirmation', (change) => {
+            const activity = protectedSettings();
+            comp.programmingExercise.title = 'Unsaved title';
+            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Changed remotely')));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            const confirmation = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            if (change === 'generation') activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            else if (change === 'undo') activity.generationReverted.next('2026-10-17');
+            else activity.exerciseContentsInvalidated.next('remote');
+
+            expect(find).toHaveBeenCalledWith(42, true);
+            expect(comp.programmingExercise.title).toBe('Unsaved title');
+            expect(comp.generationSaveBlocked()).toBe(true);
+            expect(reload).not.toHaveBeenCalled();
+            comp['reloadSavedSettings']();
+            expect(reload).not.toHaveBeenCalled();
+            confirmation.mock.calls[0][0].accept?.();
+            expect(reload).toHaveBeenCalledOnce();
+        });
+
+        it('keeps the persisted generation scope after a local language change', () => {
+            const activity = protectedSettings();
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            comp['setupMetadataSync']();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Generated statement')));
+            activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            expect(comp['generationExerciseId']()).toBe(42);
+            expect(comp.generationSaveBlocked()).toBe(true);
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.PYTHON);
+        });
+
+        it('does not reload repeatedly for unchanged historical terminal state', () => {
+            const activity = protectedSettings();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Original statement')));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            activity.generationCompleted.next({ jobId: 'historical', liveExerciseChanged: true });
+            expect(comp.generationSaveBlocked()).toBe(false);
+            expect(reload).not.toHaveBeenCalled();
+        });
+
+        it('revalidates changed metadata even if the remote statement did not change', () => {
+            const activity = protectedSettings();
+            const fresh = savedExercise('Original statement');
+            fresh.body!.maxPoints = 30;
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(fresh));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            expect(reload).toHaveBeenCalledOnce();
+        });
+
+        it('fails closed on a failed canonical read and ignores an old reload confirmation after another change', () => {
+            const activity = protectedSettings();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(throwError(() => new Error('offline')));
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            const confirmation = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            comp.saveExercise();
+            comp['reloadSavedSettings']();
+            activity.exerciseContentsInvalidated.next('newer');
+            confirmation.mock.calls[0][0].accept?.();
+            comp.saveExercise();
+            expect(update).not.toHaveBeenCalled();
+            expect(reload).not.toHaveBeenCalled();
+            expect(comp.generationSaveBlocked()).toBe(true);
+        });
+
+        it.each([false, true])('keeps both save paths usable after its own asynchronous statement save (newer edit: %s)', async (editDuringSave) => {
+            protectedSettings();
+            const plagiarismDetectionConfig = {
+                id: 514,
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+                similarityThreshold: 90,
+                minimumScore: 0,
+                minimumSize: 50,
+            };
+            comp.programmingExercise.plagiarismDetectionConfig = plagiarismDetectionConfig;
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: 42 });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise.course! })));
+            const canonical = new Subject<HttpResponse<ProgrammingExercise>>();
+            const statementResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+            const canonicalBeforeSave = savedExercise('Original statement');
+            const withoutPlagiarismConfig = savedExercise('Original statement');
+            withoutPlagiarismConfig.body!.plagiarismDetectionConfig = undefined;
+            const find = vi
+                .spyOn(programmingExerciseService, 'find')
+                .mockImplementation((_exerciseId, withPlagiarismDetectionConfig) =>
+                    canonical.pipe(map((response) => (withPlagiarismDetectionConfig ? response : withoutPlagiarismConfig))),
+                );
+            const saveStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(statementResponse);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const problem = fixture.debugElement.query(By.directive(ProgrammingExerciseProblemComponent)).componentInstance as ProgrammingExerciseProblemComponent;
+            const instructions = problem.editableInstructions()!;
+            expect(instructions).toBeInstanceOf(ProgrammingExerciseEditableInstructionComponent);
+            vi.spyOn(instructions, 'getCurrentContent').mockImplementation(() => comp.programmingExercise.problemStatement);
+            instructions.updateProblemStatement('Own saved statement');
+            const event = { stopPropagation: () => {} } as Event;
+
+            instructions.saveInstructions(event);
+            fixture.detectChanges();
+            expect(comp.generationRefreshPending()).toBe(true);
+            expect(instructions.isGeneratingOrRefining()).toBe(false);
+            expect(instructions.savingInstructions()).toBe(true);
+            instructions.saveInstructions(event);
+            expect(find).toHaveBeenCalledOnce();
+            canonical.next(canonicalBeforeSave);
+            expect(saveStatement).toHaveBeenCalledExactlyOnceWith(42, 'Own saved statement');
+            expect(find).toHaveBeenCalledExactlyOnceWith(42, true);
+            comp.saveExercise();
+            comp.save();
+            expect(find).toHaveBeenCalledOnce();
+            expect(comp.generationFullSaveBlocked()).toBe(true);
+            expect(comp.generationRefreshRequired()).toBe(false);
+            if (editDuringSave) instructions.updateProblemStatement('Newer unsaved statement');
+            statementResponse.next(savedExercise('Own saved statement'));
+            statementResponse.complete();
+            expect(comp.backupExercise.problemStatement).toBe('Own saved statement');
+            expect(comp.programmingExercise.problemStatement).toBe(editDuringSave ? 'Newer unsaved statement' : 'Own saved statement');
+            if (editDuringSave) expect(instructions.unsavedChangesValue()).toBe(true);
+            comp.programmingExercise.categories = [new ExerciseCategory('Local category', '#ffffff')];
+            find.mockReturnValue(of(savedExercise('Own saved statement')));
+            const update = vi.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise })));
+            vi.spyOn(comp as any, 'onSaveSuccess').mockImplementation(() => {});
+            comp.saveExercise();
+            expect(update).toHaveBeenCalledOnce();
+            expect(update.mock.calls[0][0].problemStatement).toBe(editDuringSave ? 'Newer unsaved statement' : 'Own saved statement');
+            expect(comp.generationRefreshRequired()).toBe(false);
+        });
+
+        it.each(['generation', 'statement'])('checks both delayed update-modal callbacks while %s is active', async (busy) => {
+            const activity = protectedSettings();
+            const savingInstructions = signal(false);
+            comp.exerciseProblemComponent = (() => ({ editableInstructions: () => ({ savingInstructions }) })) as unknown as typeof comp.exerciseProblemComponent;
+            const confirmed = new Subject<void>();
+            const reEvaluated = new Subject<void>();
+            vi.spyOn(comp['modalService'], 'hasOpenDialogs').mockReturnValue(true);
+            vi.spyOn(comp['popupService'], 'checkExerciseBeforeUpdate').mockResolvedValue({
+                componentInstance: { confirmed, reEvaluated, deleteFeedback: signal(false) },
+            } as Awaited<ReturnType<(typeof comp)['popupService']['checkExerciseBeforeUpdate']>>);
+            const find = vi.spyOn(programmingExerciseService, 'find');
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reevaluate = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate');
+            comp.save();
+            await Promise.resolve();
+            if (busy === 'generation') activity.running.set(true);
+            else savingInstructions.set(true);
+            confirmed.next();
+            reEvaluated.next();
+            expect(find).not.toHaveBeenCalled();
+            expect(update).not.toHaveBeenCalled();
+            expect(reevaluate).not.toHaveBeenCalled();
+        });
+
+        it.each(['stale', 'failed'])('keeps dirty statement text editable while %s status blocks saving', async (state) => {
+            const activity = protectedSettings();
+            route.data = of({ programmingExercise: comp.programmingExercise });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: 42 });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise.course! })));
+            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Original statement')));
+            const saveStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(savedExercise('Copied draft')));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const problem = fixture.debugElement.query(By.directive(ProgrammingExerciseProblemComponent)).componentInstance as ProgrammingExerciseProblemComponent;
+            const instructions = problem.editableInstructions()!;
+            vi.spyOn(instructions, 'getCurrentContent').mockImplementation(() => comp.programmingExercise.problemStatement);
+            instructions.updateProblemStatement('Copied draft');
+            if (state === 'failed') activity.statusLoadFailed.set(true);
+            else comp.generationRefreshRequired.set(true);
+            fixture.detectChanges();
+            const editor = fixture.debugElement.query(By.css('jhi-markdown-editor-monaco'));
+            expect(editor.nativeElement.hasAttribute('inert')).toBe(false);
+            expect(instructions.isGeneratingOrRefining()).toBe(false);
+            instructions.updateProblemStatement('Draft remains editable');
+            expect(comp.programmingExercise.problemStatement).toBe('Draft remains editable');
+            instructions.saveInstructions({ stopPropagation: () => {} } as Event);
+            expect(find).not.toHaveBeenCalled();
+            expect(saveStatement).not.toHaveBeenCalled();
+            if (state === 'failed') {
+                const retry = fixture.debugElement.query(By.css('[data-testid="hyperion-settings-retry-status"]'));
+                expect(retry).toBeTruthy();
+                expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"]'))).toBeTruthy();
+                retry.nativeElement.click();
+                expect(activity.retryStatus).toHaveBeenCalledOnce();
+                activity.statusLoadFailed.set(false);
+                fixture.detectChanges();
+                instructions.saveInstructions({ stopPropagation: () => {} } as Event);
+                expect(saveStatement).toHaveBeenCalledExactlyOnceWith(42, 'Draft remains editable');
+            }
+        });
+
+        it('does not change an unguarded settings baseline on statement acknowledgement', () => {
+            protectedSettings();
+            comp['generationExerciseId'].set(undefined);
+            comp['onCanonicalStatementSaved']('New statement');
+            expect(comp.backupExercise.problemStatement).toBe('Original statement');
+            comp['generationExerciseId'].set(99);
+            comp['onCanonicalStatementSaved']('Different exercise');
+            expect(comp.backupExercise.problemStatement).toBe('Original statement');
+        });
+
+        it('blocks save while generation status is active or unknown', () => {
+            const activity = protectedSettings();
+            const find = vi.spyOn(programmingExerciseService, 'find');
+            for (const state of [activity.running, activity.statusLoading, activity.statusLoadFailed]) {
+                state.set(true);
+                comp.saveExercise();
+                expect(comp.generationSaveBlocked()).toBe(true);
+                state.set(false);
+            }
+            expect(find).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('initializeEditMode', () => {
+        function recreateComponent() {
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+        }
+
+        it('should set isSimpleMode to true if localStorage has value "true"', () => {
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
+            recreateComponent();
+
+            expect(comp.isSimpleMode()).toBeTruthy();
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(true);
+        });
+
+        it('should set isSimpleMode to false if localStorage has value "false"', () => {
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
+            recreateComponent();
+
+            expect(comp.isSimpleMode()).toBe(false);
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+        });
+
+        it('should set isSimpleMode to true if not present in local storage', () => {
+            localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            recreateComponent();
+
+            expect(comp.isSimpleMode()).toBe(true);
+        });
+    });
+
+    it('switchEditMode should toggle isSimpleMode and update local storage', () => {
+        localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        expect(comp.isSimpleMode()).toBeTruthy();
+
+        comp.switchEditMode();
+
+        expect(comp.isSimpleMode()).toBeFalsy();
+        expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+    });
+
+    describe('TUM update warning decisions', () => {
+        let warning: ExerciseUpdateWarningComponent;
+
+        beforeEach(() => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.backupExercise = new ProgrammingExercise(course, undefined);
+            comp.isSaving.set(false);
+            warning = TestBed.createComponent(ExerciseUpdateWarningComponent).componentInstance;
+            const ref = new TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>(vi.fn(), vi.fn());
+            ref.componentInstance = warning;
+            vi.spyOn(TestBed.inject(ExerciseUpdateWarningService), 'checkExerciseBeforeUpdate').mockResolvedValue(ref);
+            vi.spyOn(TestBed.inject(TumAetUiDialogService), 'hasOpenDialogs').mockReturnValue(true);
+        });
+
+        it('waits for the warning confirmation before saving', async () => {
+            const saveSpy = vi.spyOn(comp, 'saveExercise').mockImplementation(() => {});
+            comp.save();
+            await Promise.resolve();
+            expect(saveSpy).not.toHaveBeenCalled();
+            warning.confirmed.next();
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it.each([false, true])('passes the delete-feedback boolean %s when reevaluating', async (deleteFeedback) => {
+            warning.deleteFeedback.set(deleteFeedback);
+            const saveSpy = vi.spyOn(comp, 'saveExercise').mockImplementation(() => {});
+            const updateSpy = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate').mockReturnValue(new Subject<HttpResponse<ProgrammingExercise>>());
+            comp.save();
+            await Promise.resolve();
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(updateSpy).not.toHaveBeenCalled();
+            warning.reEvaluated.next();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(comp.programmingExercise, { deleteFeedback });
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('keeps the generation save guard when a warning is reevaluated', async () => {
+            const updateSpy = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate');
+            comp.save();
+            await Promise.resolve();
+            comp.generationRefreshPending.set(true);
+            warning.reEvaluated.next();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('save', () => {
+        it('should call update service on save and refresh calendar events for existing entity', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
+            expect(comp.isSaving()).toBe(false);
+            expect(refreshSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call create service on save and refresh calendar events for new entity', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving()).toBe(false);
+            expect(refreshSpy).toHaveBeenCalledOnce();
+        });
+
+        it('creates normal repositories when whole-exercise generation is off', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
+            entity.releaseDate = dayjs().add(1, 'day');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            const created = Object.assign(new ProgrammingExercise(course, undefined), entity, { id: 42, templateParticipation: { id: 420 } });
+            const setup = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: created })));
+            comp.save();
+            expect(setup).toHaveBeenCalledExactlyOnceWith(entity);
+        });
+
+        it('should trim the exercise title before saving', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            entity.title = 'My Exercise   ';
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(entity.title).toBe('My Exercise');
+        });
+
+        it('should send the assessmentType on saving', () => {
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 1;
+            entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            entity.releaseDate = dayjs().add(1, 'day');
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: entity,
+                    }),
+                ),
+            );
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
+            expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+        });
+
+        it('should not show an unsupported branch-pattern save error a second time when the global handler shows it', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should translate an unsupported branch-pattern save error that the global handler does not show', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(false);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.programmingExercise.buildConfig.branchRegexNotSupported',
+                disableTranslation: false,
+            });
+        });
+
+        it('should fail on error', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpResponse({
+                            headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
+                        }),
+                ),
+            );
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'error-message',
+                disableTranslation: true,
+            });
+        });
+
+        describe('should set project type in invalid default value is selected', () => {
+            beforeEach(() => {
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+                programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+                programmingExercise.course = course;
+
+                comp.programmingExercise = programmingExercise;
+                comp.backupExercise = {} as ProgrammingExercise;
+                route.url = of([{ path: 'new' }] as UrlSegment[]);
+                fixture.detectChanges();
+            });
+
+            it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
+                comp.isSimpleMode.set(true);
+                comp.projectTypes = [ProjectType.PLAIN_MAVEN];
+                fixture.changeDetectorRef.detectChanges();
+
+                comp.save();
+
+                fixture.changeDetectorRef.detectChanges();
+                expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+            });
+
+            it('should keep gradle if gradle is supported', () => {
+                comp.isSimpleMode.set(true);
+                comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
+                fixture.changeDetectorRef.detectChanges();
+
+                comp.save();
+
+                fixture.changeDetectorRef.detectChanges();
+                expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
+            });
+
+            it('should keep gradle not in creation modal', () => {
+                comp.isSimpleMode.set(true);
+                comp.isCreate = false;
+                comp.projectTypes = [ProjectType.PLAIN_MAVEN];
+                fixture.changeDetectorRef.detectChanges();
+
+                comp.save();
+
+                fixture.changeDetectorRef.detectChanges();
+                expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
+            });
+        });
+    });
+
+    describe('exam mode', () => {
+        const examId = 1;
+        const exerciseGroupId = 1;
+        const exerciseGroup = new ExerciseGroup();
+        exerciseGroup.id = exerciseGroupId;
+        const expectedExamProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+        expectedExamProgrammingExercise.exerciseGroup = exerciseGroup;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+        });
+
+        it('should be in exam mode after onInit', () => {
+            // GIVEN
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
+            expect(comp.isSaving()).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
+            expect(comp.isExamMode()).toBe(true);
+        });
+    });
+
+    describe('course mode', () => {
+        const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+        expectedProgrammingExercise.course = course;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+        });
+
+        it('should not be in exam mode after onInit', () => {
+            // GIVEN
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
+            expect(comp.isSaving()).toBe(false);
+            expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
+            expect(comp.isExamMode()).toBe(false);
+        });
+    });
+
+    describe('default programming language', () => {
+        it.each([true, false])('should set default programming language', (isExamExercise: boolean) => {
+            // SETUP
+            const route = TestBed.inject(ActivatedRoute);
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            if (isExamExercise) {
+                const examId = 1;
+                const exerciseGroupId = 1;
+                const exerciseGroup = new ExerciseGroup();
+                exerciseGroup.id = exerciseGroupId;
+                exerciseGroup.exam = { id: examId, course };
+                route.params = of({ courseId, examId, exerciseGroupId });
+                route.data = of({ programmingExercise: new ProgrammingExercise(undefined, exerciseGroup) });
+                vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            } else {
+                route.params = of({ courseId });
+                route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
+            }
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            // GIVEN
+            const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
+            expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
+            course.defaultProgrammingLanguage = testProgrammingLanguage;
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
+        });
+    });
+
+    describe('programming language change and features', () => {
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+        });
+
+        it('should reset sca settings if new programming language does not support sca', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            // Activate sca
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = 50;
+
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
+
+            // Switch to another programming language not supporting sca
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
+        });
+
+        it('should activate SCA for Swift', () => {
+            // WHEN
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
+
+            // THEN
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(APP_NAME_PATTERN_FOR_SWIFT);
+        });
+
+        it('should activate SCA for C', () => {
+            // WHEN
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.GCC);
+
+            // THEN
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.GCC);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+        });
+
+        it('should activate SCA for Java', () => {
+            // WHEN
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            // THEN
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.packageNamePattern).toBe(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
+        });
+
+        it('should deactivate SCA for C (FACT)', () => {
+            // WHEN
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.FACT);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+        });
+
+        it('should clear custom build definition on programming language change', () => {
+            // WHEN
+            fixture.detectChanges();
+            comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+        });
+    });
+
+    describe('form footer', () => {
+        const footer = () => fixture.debugElement.query(By.directive(FormFooterComponent));
+        const saveButton = () => footer().nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            // the shared course keeps the default language that an earlier test chose, the package name pattern below belongs to Java
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })),
+            );
+            vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+            comp.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('hands the footer the function that reads the invalid reasons again', () => {
+            const footerComponent = footer().componentInstance as FormFooterComponent;
+
+            expect(footerComponent.revalidate()).toBe(comp.revalidate);
+            expect(footerComponent.invalidReasons()).toEqual(comp.getInvalidReasons());
+        });
+
+        it('offers a saved-source variant entry and blocks unsaved settings', () => {
+            comp.programmingExercise.id = 123;
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            fixture.detectChanges();
+            const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent));
+            expect(action).not.toBeNull();
+            expect(action.componentInstance.exercise()).toBe(comp.programmingExercise);
+            expect(action.componentInstance.disabledReason()).toBeUndefined();
+
+            const form = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            form.form.markAsDirty();
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+            form.form.markAsPristine();
+            comp.hasUnsavedChanges = true;
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+            comp.hasUnsavedChanges = false;
+            comp.isSaving.set(true);
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        });
+
+        it('keeps a route-loaded saved source available after hydration and blocks a real nested title edit', async () => {
+            fixture.destroy();
+            const saved = new ProgrammingExercise(new Course(), undefined);
+            saved.id = 123;
+            saved.title = 'Saved title';
+            saved.assessmentType = AssessmentType.AUTOMATIC;
+            saved.course!.id = courseId;
+            saved.programmingLanguage = ProgrammingLanguage.JAVA;
+            saved.projectType = ProjectType.PLAIN_GRADLE;
+            saved.buildConfig = { checkoutSolutionRepository: false, sequentialTestRuns: false, allowBranching: false, branchRegex: '.*' };
+            saved.staticCodeAnalysisEnabled = false;
+            route.data = of({ programmingExercise: saved });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: saved.id });
+            const hydratedCourse = Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' });
+            const loadCourse = vi
+                .spyOn(courseService, 'findForManagement')
+                .mockReturnValue(of(new HttpResponse({ body: hydratedCourse })))
+                .mockClear();
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent)).componentInstance;
+            expect(loadCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+            expect(comp.programmingExercise.course?.title).toBe('Hydrated course');
+            expect(comp.backupExercise.course?.title).toBeUndefined();
+            expect(comp.programmingExercise.categories).toEqual([]);
+            expect(comp.backupExercise.categories).toBeUndefined();
+            expect(comp.variantSourceHasUnsavedChanges).toBe(false);
+            expect(action.disabledReason()).toBeUndefined();
+            const title = fixture.nativeElement.querySelector('#field_title') as HTMLInputElement;
+            title.value = 'Unsaved title';
+            title.dispatchEvent(new Event('input'));
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(comp.programmingExercise.title).toBe('Unsaved title');
+            expect(comp.variantSourceHasUnsavedChanges).toBe(true);
+            expect(action.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        });
+
+        it.each(['statement', 'points', 'date', 'buildConfig', 'gradingCriteria'])('still blocks an unsaved %s change', (field) => {
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            switch (field) {
+                case 'statement':
+                    comp.programmingExercise.problemStatement = 'Unsaved problem statement';
+                    break;
+                case 'points':
+                    comp.programmingExercise.maxPoints = 20;
+                    break;
+                case 'date':
+                    comp.programmingExercise.releaseDate = dayjs('2030-01-01');
+                    break;
+                case 'buildConfig':
+                    comp.programmingExercise.buildConfig!.timeoutSeconds = 300;
+                    break;
+                case 'gradingCriteria':
+                    comp.programmingExercise.gradingCriteria = [{ title: 'Unsaved grading criterion', structuredGradingInstructions: [] }];
+                    break;
+                default:
+                    throw new Error('Unknown test field');
+            }
+            expect(comp.variantSourceHasUnsavedChanges).toBe(true);
+        });
+
+        it('does not offer a settings variant entry for an unsaved source or import', () => {
+            expect(fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent))).toBeNull();
+            comp.programmingExercise.id = 123;
+            comp.isImportFromExistingExercise = true;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent))).toBeNull();
+        });
+
+        // what a user has to fill in to get a valid exercise, written into the exercise the page edits
+        const fillInRequiredFields = () => {
+            comp.programmingExercise.title = 'Valid title';
+            comp.programmingExercise.shortName = 'validshort';
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.maxPoints = 10;
+            // the grading section follows the points that were typed in
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: true,
+                timelineStatus: signal({ valid: true, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        it('shows the reasons of the exercise that is still incomplete and blocks the click', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            const footerComponent = footer().componentInstance as FormFooterComponent;
+            expect(footerComponent.invalidReasons().map((reason) => reason.translateKey)).toEqual([
+                'artemisApp.exercise.form.title.undefined',
+                'artemisApp.exercise.form.shortName.undefined',
+                'artemisApp.exercise.form.packageName.undefined',
+                'artemisApp.exercise.form.points.undefined',
+            ]);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+
+            saveButton().click();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('lets a click save when the reasons on display are outdated but the exercise is valid', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            // the footer still shows the reasons of the last change detection, the exercise was completed after it
+            fillInRequiredFields();
+            expect((footer().componentInstance as FormFooterComponent).invalidReasons()).toHaveLength(4);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+            expect(comp.getInvalidReasons()).toEqual([]);
+
+            saveButton().click();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('keeps blocking a click on save while a field is still missing after the other fields were completed', () => {
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            fillInRequiredFields();
+            comp.programmingExercise.shortName = undefined;
+
+            saveButton().click();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+        const windowComponent = () => fixture.debugElement.query(By.directive(ProgrammingExerciseBuildTimeWindowComponent));
+        const reasonKeys = () => comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })));
+            vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
+            comp.ngOnInit();
+            fixture.detectChanges();
+            // a new exercise gets default dates, which the tests below set explicitly
+            comp.programmingExercise.releaseDate = undefined;
+            comp.programmingExercise.startDate = undefined;
+            comp.programmingExercise.dueDate = undefined;
+        });
+
+        it('is displayed in the advanced mode, but not in the simple mode', () => {
+            comp.isSimpleMode.set(true);
+            fixture.detectChanges();
+            expect(windowComponent()).toBeNull();
+
+            comp.isSimpleMode.set(false);
+            fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('is not displayed in the simple mode for a valid window', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.add(1, 'hour');
+            fixture.detectChanges();
+
+            expect(windowComponent()).toBeNull();
+        });
+
+        it('is displayed in the simple mode for a window that a date change invalidated, so that it can be fixed', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.subtract(1, 'hour');
+            fixture.detectChanges();
+
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('stays displayed in the simple mode after the last date of an invalidated window was cleared, so that it can be replaced', () => {
+            comp.isSimpleMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart } };
+            comp.programmingExercise.dueDate = windowStart.subtract(1, 'hour');
+            fixture.detectChanges();
+            expect(windowComponent()).not.toBeNull();
+
+            // the change comes from an event of the picker, which marks the form as changed
+            comp.programmingExercise.buildConfig!.advancedSettings = undefined;
+            fixture.componentRef.changeDetectorRef.markForCheck();
+            fixture.detectChanges();
+
+            expect(windowComponent()).not.toBeNull();
+        });
+
+        it('is not displayed for exam exercises', () => {
+            comp.isSimpleMode.set(false);
+            comp.isExamMode.set(true);
+            fixture.detectChanges();
+
+            expect(windowComponent()).toBeNull();
+        });
+
+        it('passes the problem with the window, which depends on the dates edited elsewhere, to the component', () => {
+            comp.isSimpleMode.set(false);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd.subtract(1, 'hour');
+            fixture.detectChanges();
+
+            expect((windowComponent().componentInstance as ProgrammingExerciseBuildTimeWindowComponent).error()).toBe(BuildTimeWindowError.OUTSIDE_EXERCISE_DATES);
+
+            comp.programmingExercise.dueDate = windowEnd;
+            // the user edits the date in another section, whose event marks the form dirty
+            fixture.debugElement.injector.get(ChangeDetectorRef).markForCheck();
+            fixture.detectChanges();
+
+            expect((windowComponent().componentInstance as ProgrammingExerciseBuildTimeWindowComponent).error()).toBeUndefined();
+        });
+
+        it('adds no reason without a window or with a valid window', () => {
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
+
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.dueDate = windowEnd;
+
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
+        });
+
+        it('adds a reason when the end is not after the start', () => {
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowEnd, end: windowStart } };
+
+            expect(comp.getInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.programmingExercise.buildTimeWindow.endNotAfterStart', translateValues: {} });
+        });
+
+        it('adds a reason when the window lies outside the exercise dates', () => {
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            comp.programmingExercise.releaseDate = windowStart.add(1, 'minute');
+
+            expect(comp.getInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.programmingExercise.buildTimeWindow.outsideExerciseDates', translateValues: {} });
+        });
+
+        it('adds a reason when a picker holds text that is not a date', () => {
+            comp.isSimpleMode.set(false);
+            fixture.detectChanges();
+            // the fields are closed until the instructor asks for a window
+            (windowComponent().nativeElement.querySelector('[data-testid="build-time-window-add"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            const startField = windowComponent().nativeElement.querySelector('#build-time-window-start') as HTMLInputElement;
+
+            startField.value = '01.10.';
+            startField.dispatchEvent(new Event('input'));
+            startField.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(reasonKeys()).toContain('artemisApp.programmingExercise.buildTimeWindow.invalidInput');
+        });
+
+        it('does not validate the window of an exam exercise', () => {
+            comp.isExamMode.set(true);
+            comp.programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowEnd, end: windowStart } };
+
+            expect(reasonKeys().filter((key) => key.includes('buildTimeWindow'))).toEqual([]);
+        });
+    });
+
+    describe('import with static code analysis', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+        });
+
+        it('checks short names in the target course when importing from another course', () => {
+            const sourceCourse = new Course();
+            sourceCourse.id = courseId + 1;
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.course = sourceCourse;
+            route.data = of({ programmingExercise });
+            const existingDetailsSpy = vi
+                .spyOn(TestBed.inject(ExerciseService), 'getExistingExerciseDetailsInCourse')
+                .mockReturnValue(of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() }));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.courseId()).toBe(courseId);
+            expect(existingDetailsSpy).toHaveBeenCalledWith(courseId, ExerciseType.PROGRAMMING);
+            expect(existingDetailsSpy).not.toHaveBeenCalledWith(sourceCourse.id, ExerciseType.PROGRAMMING);
+        });
+
+        it('should correctly import into an exam exercise', () => {
+            const examId = 1;
+            const exerciseGroupId = 1;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+            const programmingExercise = new ProgrammingExercise(undefined, exerciseGroup);
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+
+            comp.ngOnInit();
+            expect(comp.programmingExercise.exerciseGroup).toBe(exerciseGroup);
+            expect(comp.programmingExercise.course).toBeUndefined();
+            expect(comp.isImportFromExistingExercise).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
+            expect(comp.courseId()).toBe(courseId);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
+        });
+
+        it('should reset dates, id and project key', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.isImportFromFile).toBe(false);
+            expect(comp.isImportFromExistingExercise).toBe(true);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
+
+            verifyImport(programmingExercise);
+        });
+
+        it.each([
+            [true, 80, ProjectType.PLAIN_MAVEN],
+            [false, undefined, ProjectType.PLAIN_GRADLE],
+        ])(
+            'should activate recreate build plans and update template when sca changes',
+            (scaActivatedOriginal: boolean, maxPenalty: number | undefined, projectType: ProjectType) => {
+                const newMaxPenalty = 50;
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.projectType = projectType;
+                programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
+                programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
+                route.data = of({ programmingExercise });
+                comp.ngOnInit();
+                fixture.detectChanges();
+
+                expect(comp.isImportFromExistingExercise).toBe(true);
+                expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
+                expect(comp.programmingExercise).toBe(programmingExercise);
+                expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
+
+                comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
+                comp.onStaticCodeAnalysisChanged();
+                fixture.changeDetectorRef.detectChanges();
+
+                if (!scaActivatedOriginal) {
+                    comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
+                }
+
+                // Recreating the build plans should be automatically selected
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.importOptions.recreateBuildPlans).toBe(true);
+
+                comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
+                comp.onRecreateBuildPlanChange();
+
+                // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            },
+        );
+
+        it('should load exercise categories on import', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            route.data = of({ programmingExercise });
+            const loadExerciseCategoriesSpy = vi.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
+
+        // Ensures that exerciseCategories are synchronized in course-mode imports
+        it('should sync exerciseCategories from programmingExercise during import', () => {
+            // GIVEN
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+            route.data = of({ programmingExercise });
+
+            const findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(course.id);
+            expect(comp.isExamMode()).toBe(false);
+            expect(comp.exerciseCategories).toBe(categories);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
+        });
+
+        // Ensures that exerciseCategories remain empty in exam-mode imports.
+        it('should NOT sync exerciseCategories from programmingExercise when importing into an exam', () => {
+            // GIVEN
+            const examId = 1;
+            const exerciseGroupId = 42;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+
+            // mock exerciseGroupService
+            const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
+            expect(comp.isExamMode()).toBe(true);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
+
+            expect(comp.exerciseCategories).toEqual([]);
+        });
+    });
+
+    describe('import from file', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+
+            route.url = of([{ path: 'import-from-file' } as UrlSegment]);
+        });
+
+        it('should reset dates, id, project key and store zipFile', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.isImportFromFile).toBe(true);
+            expect(comp.isImportFromExistingExercise).toBe(false);
+
+            verifyImport(programmingExercise);
+        });
+
+        it('should call import-from-file from service on import for entity from file', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.zipFileForImport = new File([''], 'test.zip');
+            comp.isImportFromFile = true;
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            vi.spyOn(programmingExerciseService, 'importFromFile').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId.set(course.id!);
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        const importFromFileWith = (customize: (exercise: ProgrammingExercise) => void) => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            customize(programmingExercise);
+            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            comp.ngOnInit();
+        };
+
+        it('should keep the imported sequential test runs setting', () => {
+            importFromFileWith((exercise) => (exercise.buildConfig!.sequentialTestRuns = true));
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+        });
+
+        it('should keep the imported static code analysis setting', () => {
+            importFromFileWith((exercise) => (exercise.staticCodeAnalysisEnabled = true));
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                importFromFileWith((exercise) => (exercise.projectType = projectType));
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
+    });
+
+    describe('import from sharing', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+
+            route.url = of([{ path: 'import-from-sharing' } as UrlSegment]);
+            route.queryParams = of({
+                basketToken: 'test-basket-token',
+                returnURL: '/test-return-url',
+                apiBaseURL: 'https://api.example.com',
+                selectedExercise: 5,
+                checksum: 'test-checksum',
+            });
+        });
+
+        it('should import and reset dates, id, project key and handle exercise', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.isImportFromFile).toBe(false);
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.isImportFromExistingExercise).toBe(false);
+
+            verifyImport(programmingExercise);
+        });
+
+        it('should keep the imported language and build options when the course has another default language', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.buildConfig!.sequentialTestRuns = true;
+            programmingExercise.staticCodeAnalysisEnabled = true;
+
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })),
+            );
+            comp.ngOnInit();
+
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                const programmingExercise = getProgrammingExerciseForImport();
+                programmingExercise.projectType = projectType;
+
+                route.data = of({ programmingExercise });
+                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                    getProgrammingLanguageFeature(language),
+                );
+                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+                comp.ngOnInit();
+
+                expect(comp.isImportFromSharing).toBe(true);
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
+
+        it('should also handle exam mode import', () => {
+            const examId = 1;
+            const exerciseGroupId = 1;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+            route.params = of({ courseId, examId, exerciseGroupId });
+
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.isImportFromFile).toBe(false);
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.isImportFromExistingExercise).toBe(false);
+
+            verifyImport(programmingExercise);
+        });
+
+        it('should call create service on save for new sharing entity', () => {
+            // GIVEN
+            const entity: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.isImportFromSharing = true;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId.set(course.id!);
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
+        });
+
+        it('should call create service on save for new sharing entity, but save failed', () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
+
+            comp.isImportFromSharing = true;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId.set(course.id!);
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
+        });
+
+        it('should import without buildConfig and reset dates, id, project key and store zipFile', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.buildConfig = undefined; // Simulate no build config
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.isImportFromFile).toBe(false);
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.isImportFromExistingExercise).toBe(false);
+
+            verifyImport(programmingExercise);
+        });
+    });
+
+    describe('input error validation', () => {
+        beforeEach(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
+        });
+
+        it('find validation errors for undefined input values', () => {
+            // invalid input
+            comp.programmingExercise.title = undefined;
+            comp.programmingExercise.shortName = undefined;
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = undefined;
+            comp.programmingExercise.packageName = undefined;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toHaveLength(5);
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for empty input strings', () => {
+            // invalid input
+            comp.programmingExercise.title = '';
+            comp.programmingExercise.shortName = '';
+            comp.programmingExercise.packageName = '';
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        const bonusPointReasonKeys = () =>
+            comp
+                .getInvalidReasons()
+                .map((reason) => reason.translateKey)
+                .filter((key) => key.startsWith('artemisApp.exercise.form.bonusPoints.'));
+
+        // the bonus points input is hidden for these exercises and the value is reset on save, so a missing or stale value cannot be fixed by the user
+        it.each([
+            { name: 'not included', includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED },
+            { name: 'included as bonus', includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS },
+            { name: 'not configured yet', includedInOverallScore: undefined },
+        ])('does not validate the bonus points of an exercise that is $name in the course score', ({ includedInOverallScore }) => {
+            comp.programmingExercise.includedInOverallScore = includedInOverallScore;
+            // other reasons are still reported
+            comp.programmingExercise.title = undefined;
+
+            for (const staleBonusPoints of [undefined, -1, 10_000, 'abc' as unknown as number]) {
+                comp.programmingExercise.bonusPoints = staleBonusPoints;
+
+                expect(bonusPointReasonKeys()).toEqual([]);
+                expect(comp.getInvalidReasons().map((reason) => reason.translateKey)).toContain('artemisApp.exercise.form.title.undefined');
+            }
+        });
+
+        it.each([
+            { name: 'missing', bonusPoints: undefined, expectedKey: 'artemisApp.exercise.form.bonusPoints.undefined' },
+            { name: 'not a number', bonusPoints: 'abc' as unknown as number, expectedKey: 'artemisApp.exercise.form.bonusPoints.undefined' },
+            { name: 'negative', bonusPoints: -1, expectedKey: 'artemisApp.exercise.form.bonusPoints.customMin' },
+            { name: 'above the maximum', bonusPoints: 10_000, expectedKey: 'artemisApp.exercise.form.bonusPoints.customMax' },
+        ])('validates the bonus points of an exercise that is included completely in the course score when they are $name', ({ bonusPoints, expectedKey }) => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            comp.programmingExercise.bonusPoints = bonusPoints;
+
+            expect(bonusPointReasonKeys()).toEqual([expectedKey]);
+        });
+
+        it.each([0, 5, 9999])('accepts the bonus points %s of an exercise that is included completely in the course score', (bonusPoints) => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            comp.programmingExercise.bonusPoints = bonusPoints;
+
+            expect(bonusPointReasonKeys()).toEqual([]);
+        });
+
+        it('asks for the bonus points again as soon as the exercise is switched back to being included completely', () => {
+            comp.programmingExercise.bonusPoints = undefined;
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            expect(bonusPointReasonKeys()).toEqual([]);
+
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+
+            expect(bonusPointReasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.undefined']);
+        });
+
+        describe('revalidate', () => {
+            it('reads the invalid reasons of the current state of the exercise on every call', () => {
+                comp.programmingExercise.title = undefined;
+                const reasonsWithoutTitle = comp.revalidate();
+                expect(reasonsWithoutTitle).toEqual(comp.getInvalidReasons());
+                expect(reasonsWithoutTitle.map((reason) => reason.translateKey)).toContain('artemisApp.exercise.form.title.undefined');
+
+                comp.programmingExercise.title = 'Valid title';
+                const reasonsWithTitle = comp.revalidate();
+
+                expect(reasonsWithTitle).toEqual(comp.getInvalidReasons());
+                expect(reasonsWithTitle.map((reason) => reason.translateKey)).not.toContain('artemisApp.exercise.form.title.undefined');
+                expect(reasonsWithTitle.length).toBe(reasonsWithoutTitle.length - 1);
+            });
+        });
+
+        describe('reasons that the footer reads again on a click', () => {
+            const reasonKeys = () => comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            it('reports a title and a short name that the server already knows as taken', () => {
+                comp.programmingExercise.title = 'Taken title';
+                comp.programmingExercise.shortName = 'taken';
+                internals(comp).exerciseInfoComponent = signal({
+                    exerciseTitleChannelComponent: () => ({ titleChannelNameComponent: () => ({ field_title: { control: { errors: { disallowedValue: true } } } }) }),
+                    shortNameField: () => ({ control: { errors: { disallowedValue: true } } }),
+                } as unknown as ProgrammingExerciseInformationComponent).asReadonly();
+
+                expect(reasonKeys().filter((key) => key === 'artemisApp.exercise.form.title.disallowedValue')).toHaveLength(2);
+            });
+
+            it('does not report a title or short name that nothing disallows', () => {
+                comp.programmingExercise.title = 'Free title';
+                comp.programmingExercise.shortName = 'free';
+                internals(comp).exerciseInfoComponent = signal({
+                    exerciseTitleChannelComponent: () => ({ titleChannelNameComponent: () => ({ field_title: { control: { errors: null } } }) }),
+                    shortNameField: () => ({ control: { errors: null } }),
+                } as unknown as ProgrammingExerciseInformationComponent).asReadonly();
+
+                expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
+            });
+
+            it.each([
+                { name: 'a negative value', maxPoints: -1, expected: ['artemisApp.exercise.form.points.customMin'] },
+                { name: 'a value above the maximum', maxPoints: 10_000, expected: ['artemisApp.exercise.form.points.customMax'] },
+                { name: 'no value', maxPoints: undefined, expected: ['artemisApp.exercise.form.points.undefined'] },
+                { name: 'zero', maxPoints: 0, expected: ['artemisApp.exercise.form.points.customMin'] },
+                { name: 'a positive value', maxPoints: 5, expected: [] },
+            ])('validates $name as the points of an exercise that is not included in the course score', ({ maxPoints, expected }) => {
+                comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+                comp.programmingExercise.maxPoints = maxPoints;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.points.'))).toEqual(expected);
+            });
+
+            it.each([
+                { language: ProgrammingLanguage.GO, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.GO' },
+                { language: ProgrammingLanguage.DART, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.DART' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de/', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.MAVEN_BLACKBOX,
+                    packageName: 'de/',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA_BLACKBOX',
+                },
+            ])('reports a package name that does not fit $language $projectType', ({ language, projectType, packageName, expected }) => {
+                comp.programmingExercise.programmingLanguage = language;
+                comp.programmingExercise.projectType = projectType;
+                comp.programmingExercise.packageName = packageName;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([expected]);
+            });
+
+            it('reports a package name that is too long before it checks the pattern', () => {
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.packageName = 'a'.repeat(MAX_PACKAGE_NAME_LENGTH + 1);
+
+                expect(comp.getInvalidReasons()).toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.maxlength',
+                    translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
+                });
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual(['artemisApp.exercise.form.packageName.maxlength']);
+            });
+        });
+
+        it('find validation errors for input values not matching the pattern', () => {
+            comp.programmingExercise.title = '%§"$"§';
+            comp.programmingExercise.shortName = '123';
+            comp.programmingExercise.maxPoints = 0;
+            comp.programmingExercise.bonusPoints = -1;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = -1;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for package name not matching the pattern', () => {
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.packageName = 'de/';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                translateValues: {},
+            });
+        });
+
+        it('validateExerciseChannelName', () => {
+            comp.programmingExercise.channelName = '';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
+                translateValues: {},
+            });
+        });
+
+        it('validateExerciseShortName', () => {
+            comp.programmingExercise.shortName = 'ab';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                translateValues: {},
+            });
+        });
+
+        it('enables saving in the form footer when there are no invalid reasons', () => {
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', []);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+            expect(saveButton.getAttribute('aria-describedby')).toBeNull();
+        });
+
+        it('validateExercisePoints', () => {
+            comp.programmingExercise.maxPoints = 10_000;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        });
+
+        const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
+        const withInvalidGradingForm = (isTimelineValid = true) => {
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: false,
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        // The timeline lives in the grading form and has no validator of its own, so the generic message
+        // is the only thing that can report it.
+        it('should report the generic grading reason when no grading field explains it', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = 100;
+            comp.programmingExercise.bonusPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual(gradingReason);
+        });
+
+        it('should not add the generic grading reason on top of a grading field reason', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
+        // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
+        // a field error would hide it until that field is fixed.
+        it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
+            withInvalidGradingForm(false);
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual(gradingReason);
+        });
+
+        it('should require points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = undefined;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('should reject zero points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+        });
+
+        it('should reject negative points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = -1;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+        });
+
+        it('validateExerciseBonusPoints', () => {
+            comp.programmingExercise.maxPoints = 10_000;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language C', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Empty', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Python', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Assembler', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.ASSEMBLER;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language OCAML', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language VHDL', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.VHDL;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid auxiliary repositories', () => {
+            comp.auxiliaryRepositoriesValid.set(false);
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
+                translateValues: {},
+            });
+        });
+
+        it.each([
+            [
+                'find validation errors for invalid ide selection',
+                {
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                    translateValues: {},
+                },
+            ],
+            [
+                'find validation errors for invalid ide selection without theia module feature',
+                {
+                    activeModuleFeatures: [],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
+                    translateValues: {},
+                },
+            ],
+        ])('%s', (description: string, profileInfo: Partial<ProfileInfo>, expectedException: ValidationReason) => {
+            const newProfileInfo = new ProfileInfo();
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
+            newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return newProfileInfo.activeModuleFeatures?.includes(feature) ?? false;
+            });
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOfflineIde = false;
+            comp.programmingExercise.allowOnlineIde = false;
+
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.getInvalidReasons()).toContainEqual(expectedException);
+        });
+
+        it('find validation errors for invalid online IDE image', () => {
+            comp.programmingExercise.allowOnlineIde = true;
+            comp.programmingExercise.buildConfig!.theiaImage = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should update AuxiliaryRepository checkout directory', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUri = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.checkoutDirectory).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
+        it('should update AuxiliaryRepository name', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUri = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateRepositoryName(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.name).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
+        it('should find no validation errors for valid input', () => {
+            comp.programmingExercise.title = 'New title';
+            comp.programmingExercise.shortName = 'home2';
+            comp.programmingExercise.maxPoints = 10;
+            comp.programmingExercise.bonusPoints = 0;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
+            comp.programmingExercise.allowOfflineIde = true;
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOnlineIde = false;
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            expect(comp.getInvalidReasons()).toEqual([]);
+        });
+
+        it('should find validation errors for invalid submission limit value', () => {
+            comp.programmingExercise.submissionPolicy = new LockRepositoryPolicy();
+            comp.programmingExercise.submissionPolicy.submissionLimit = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+                translateValues: {},
+            });
+
+            const patternViolatingValues = [0, 501, 30.3];
+            for (const value of patternViolatingValues) {
+                comp.programmingExercise.submissionPolicy.submissionLimit = value;
+                expect(comp.getInvalidReasons()).toContainEqual({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        });
+
+        it('should find validation errors invalid submission exceeding penalty', () => {
+            comp.programmingExercise.submissionPolicy = new SubmissionPenaltyPolicy();
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = 0;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('should find no package name related validation error for languages that do not need a package name', () => {
+            for (const programmingLanguage of [ProgrammingLanguage.C, ProgrammingLanguage.EMPTY, ProgrammingLanguage.PYTHON]) {
+                comp.programmingExercise.programmingLanguage = programmingLanguage;
+                expect(comp.getInvalidReasons()).not.toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                    translateValues: {},
+                });
+            }
+        });
+
+        it('should find invalid timeout', () => {
+            comp.programmingExercise.buildConfig!.timeoutSeconds = -1;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.timeoutSeconds = 100;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should find invalid checkoutpaths', () => {
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.solutionCheckoutPath = 'solution';
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'test';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment/';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+        });
+
+        it('should add validation error when title exceeds max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
+        it('should not add validation error when title is within max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
+        it('should add validation error when problem statement exceeds max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
+
+        it('should not add validation error when problem statement is within max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
+    });
+
+    describe('disable features based on selected language and project type', () => {
+        beforeEach(() => {
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            entity.channelName = 'notificationText';
+            comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+        });
+
+        describe('should initialize isEdit variable based on url', () => {
+            it('should be false if edit is in url', () => {
+                vi.spyOn(comp, 'selectedProgrammingLanguage', 'set').mockImplementation(() => {});
+
+                fixture.detectChanges();
+
+                expect(comp.isEdit).toBe(true);
+            });
+
+            it('should be true if edit is in url', () => {
+                vi.spyOn(comp, 'selectedProgrammingLanguage', 'set').mockImplementation(() => {});
+                const route = TestBed.inject(ActivatedRoute);
+                route.params = of({ courseId });
+                route.url = of([{ path: 'notEdit' } as UrlSegment]);
+                route.data = of({ programmingExercise: comp.programmingExercise });
+
+                fixture.detectChanges();
+
+                expect(comp.isEdit).toBe(false);
+            });
+        });
+
+        it('should disable checkboxes for certain options of existing exercise', () => {
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+        });
+
+        it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', () => {
+            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
+            expect(comp.sequentialTestRunsAllowed).toBe(false);
+
+            comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
+            expect(comp.sequentialTestRunsAllowed).toBe(true);
+
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
+            expect(comp.sequentialTestRunsAllowed).toBe(false);
+
+            comp.selectedProjectType = ProjectType.GRADLE_GRADLE;
+            expect(comp.sequentialTestRunsAllowed).toBe(true);
+        });
+    });
+
+    it('should return the exercise creation config', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const problemStepInputs = comp.getProgrammingExerciseCreationConfig();
+        expect(problemStepInputs).not.toBeNull();
+    });
+
+    // The getter runs on every change-detection pass, so every value it hands out has to keep its identity between
+    // passes. A fallback such as `?? []` allocates a new array each time, which re-seeds the category selector's local
+    // working copy, re-dirties this component and loops. A production build has no dev-mode guard to break that loop,
+    // so the creation page stopped responding altogether until this was fixed.
+    it('hands out the same identities on repeated calls, so change detection cannot loop', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const first = comp.getProgrammingExerciseCreationConfig();
+        // Read out before the second call: the config object is cached, so comparing its fields afterwards would
+        // compare each field with itself and pass even if the second call had replaced them.
+        const firstExerciseCategories = first.exerciseCategories;
+        const firstModePickerOptions = first.modePickerOptions;
+        const firstRerenderSubject = first.rerenderSubject;
+        const second = comp.getProgrammingExerciseCreationConfig();
+
+        // the config object itself is cached deliberately
+        expect(second).toBe(first);
+        // and so are the values a child could track by identity, even on a creation page with no categories yet
+        expect(second.exerciseCategories).toBe(firstExerciseCategories);
+        expect(second.exerciseCategories).toBeDefined();
+        expect(second.modePickerOptions).toBe(firstModePickerOptions);
+        expect(second.rerenderSubject).toBe(firstRerenderSubject);
+    });
+
+    it('stores with dependencies when changed', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        expect(comp.withDependencies).toBe(false);
+        comp.onWithDependenciesChanged(true);
+        expect(comp.withDependencies).toBe(true);
+    });
+
+    it('stores updated categories', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const categories = [new ExerciseCategory(undefined, undefined)];
+        // Starts as an empty array rather than undefined, on purpose: the creation config getter must hand out a stable
+        // array identity on every change-detection pass, which an undefined field cannot do.
+        expect(comp.exerciseCategories).toEqual([]);
+        comp.updateCategories(categories);
+        expect(comp.exerciseCategories).toBe(categories);
+    });
+
+    it('keeps exerciseCategories and programmingExercise.categories in sync when initially empty', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.categories = undefined;
+
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+        comp.ngOnInit();
+
+        expect(comp.exerciseCategories).toEqual([]);
+        expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
+    });
+
+    it('should mark the problem section as invalid when problem statement exceeds max length', () => {
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+        comp.calculateFormStatusSections();
+
+        const problemSection = comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle');
+
+        expect(problemSection?.valid).toBe(false);
+    });
+
+    it('should validate form sections', () => {
+        const calculateFormValidSectionsSpy = vi.spyOn(comp, 'calculateFormStatusSections');
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        const exerciseInfoComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseInformationComponent;
+        const exerciseDifficultyComponent = {
+            teamConfigComponent: {
+                formValidChanges: new Subject(),
+                formValid: true,
+            },
+        } as ProgrammingExerciseModeComponent;
+        const exerciseLanguageComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseLanguageComponent;
+        const exerciseGradingComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseGradingComponent;
+
+        internals(comp).exerciseInfoComponent = signal<ProgrammingExerciseInformationComponent | undefined>(exerciseInfoComponent).asReadonly();
+        internals(comp).exerciseDifficultyComponent = signal<ProgrammingExerciseModeComponent | undefined>(exerciseDifficultyComponent).asReadonly();
+        internals(comp).exerciseLanguageComponent = signal<ProgrammingExerciseLanguageComponent | undefined>(exerciseLanguageComponent).asReadonly();
+        internals(comp).exerciseGradingComponent = signal<ProgrammingExerciseGradingComponent | undefined>(exerciseGradingComponent).asReadonly();
+        internals(comp).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent | undefined>({
+            isFormValid: signal<boolean>(true),
+        } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
+
+        comp.ngAfterViewInit();
+        // we migrate from subscriptions to signals eventually
+        expect(comp.inputFieldSubscriptions).toHaveLength(4);
+        comp.calculateFormStatusSections();
+
+        for (const section of comp.formStatusSections()) {
+            expect(section.valid).toBe(true);
+        }
+
+        exerciseInfoComponent.formValid = false;
+        (exerciseInfoComponent.formValidChanges as Subject<boolean>).next(false);
+
+        expect(comp.formStatusSections()[0].valid).toBe(false);
+
+        (exerciseLanguageComponent.formValidChanges as Subject<boolean>).next(false);
+        (exerciseGradingComponent.formValidChanges as Subject<boolean>).next(false);
+        (exerciseDifficultyComponent.teamConfigComponent!.formValidChanges as Subject<boolean>).next(false);
+
+        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(5);
+
+        comp.programmingExercise.allowOfflineIde = false;
+        comp.programmingExercise.allowOnlineEditor = false;
+        comp.programmingExercise.allowOnlineIde = false;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections()[1].valid).toBe(false);
+        comp.programmingExercise.allowOnlineEditor = true;
+        comp.calculateFormStatusSections();
+        expect(comp.formStatusSections()[1].valid).toBe(true);
+
+        comp.ngOnDestroy();
+
+        for (const subscription of comp.inputFieldSubscriptions) {
+            expect(subscription?.closed ?? true).toBe(true);
+        }
+    });
+
+    function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
+        expect(comp.programmingExercise.projectKey).toBeUndefined();
+        expect(comp.programmingExercise.id).toBeUndefined();
+        expect(comp.programmingExercise.dueDate).toBeUndefined();
+        expect(comp.programmingExercise.releaseDate).toBeUndefined();
+        expect(comp.programmingExercise.startDate).toBeUndefined();
+        expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+        expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
+        expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
+        expect(comp.programmingExercise.allowOfflineIde).toBe(true);
+        expect(comp.programmingExercise.allowOnlineEditor).toBe(true);
+        expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+        // complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
+        // name and short name should also be imported
+        expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
+        expect(comp.programmingExercise.shortName).toEqual(importedProgrammingExercise.shortName);
+    }
+});
+
+const getProgrammingExerciseForImport = () => {
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+    programmingExercise.dueDate = dayjs();
+    programmingExercise.releaseDate = dayjs();
+    programmingExercise.startDate = dayjs();
+    programmingExercise.projectKey = 'projectKey';
+
+    programmingExercise.assessmentDueDate = dayjs();
+    programmingExercise.exampleSolutionPublicationDate = dayjs();
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.zipFileForImport = new File([''], 'test.zip');
+    programmingExercise.allowOfflineIde = true;
+    programmingExercise.allowOnlineEditor = true;
+    programmingExercise.allowComplaintsForAutomaticAssessments = true;
+
+    history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+
+    programmingExercise.shortName = 'shortName';
+    programmingExercise.title = 'title';
+
+    return programmingExercise;
+};
+
+const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
+    switch (programmingLanguage) {
+        case ProgrammingLanguage.SWIFT:
+            return {
+                programmingLanguage: ProgrammingLanguage.SWIFT,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: false,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: false,
+                projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
+                auxiliaryRepositoriesSupported: true,
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.JAVA:
+            return {
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                sequentialTestRuns: true,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+                auxiliaryRepositoriesSupported: true,
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.HASKELL:
+            return {
+                programmingLanguage: ProgrammingLanguage.HASKELL,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: false,
+                plagiarismCheckSupported: false,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                auxiliaryRepositoriesSupported: true,
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.C:
+            return {
+                programmingLanguage: ProgrammingLanguage.C,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.FACT, ProjectType.GCC],
+                auxiliaryRepositoriesSupported: true,
+            } as ProgrammingLanguageFeature;
+        default:
+            throw new Error();
+    }
+};

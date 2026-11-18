@@ -1,0 +1,162 @@
+import { vi } from 'vitest';
+import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
+import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { LearningObjectType, LearningPathCompetencyDTO, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockProvider } from 'ng-mocks';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+
+describe('LearningPathNavOverviewComponent', () => {
+    let component: LearningPathNavOverviewComponent;
+    let fixture: ComponentFixture<LearningPathNavOverviewComponent>;
+    let learningPathApiService: LearningPathApiService;
+    let alertService: AlertService;
+
+    const learningPathId = 1;
+    const competencies = [{ id: 1, title: 'Competency 1', masteryProgress: 10 }] as LearningPathCompetencyDTO[];
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [LearningPathNavOverviewComponent],
+            providers: [
+                provideHttpClient(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(ScienceService),
+                MockProvider(TumAetUiDialogService),
+            ],
+        })
+            .overrideComponent(LearningPathNavOverviewComponent, {
+                add: {
+                    imports: [LearningPathNavOverviewLearningObjectsComponent, CompetencyGraphComponent],
+                },
+            })
+            .compileComponents();
+
+        learningPathApiService = TestBed.inject(LearningPathApiService);
+        alertService = TestBed.inject(AlertService);
+
+        fixture = TestBed.createComponent(LearningPathNavOverviewComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('learningPathId', learningPathId);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+
+        expect(component).toBeDefined();
+        expect(component.learningPathId()).toBe(learningPathId);
+    });
+
+    it('should load competencies', async () => {
+        const loadLearningPathCompetenciesSpy = vi.spyOn(component, 'loadCompetencies');
+        const getLearningPathCompetenciesSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(loadLearningPathCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+        expect(getLearningPathCompetenciesSpy).toHaveBeenCalledExactlyOnceWith(learningPathId);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.competencies()).toEqual(competencies);
+    });
+
+    it('should correctly set isLoading to true and false', async () => {
+        vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockResolvedValue(competencies);
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+
+        await component.loadCompetencies(learningPathId);
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show error when loading competencies fails', async () => {
+        const error = 'Error loading competencies';
+        const getLearningPathCompetenciesSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencies').mockRejectedValue(error);
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+
+        await component.loadCompetencies(learningPathId);
+
+        expect(getLearningPathCompetenciesSpy).toHaveBeenCalledWith(learningPathId);
+        expect(alertServiceErrorSpy).toHaveBeenCalledWith(error);
+    });
+
+    it('should open competency graph modal', async () => {
+        fixture.detectChanges();
+
+        const openCompetencyGraphSpy = vi.spyOn(component, 'openCompetencyGraph');
+        const openCompetencyGraphButton = fixture.debugElement.query(By.css('#open-competency-graph-button'));
+        openCompetencyGraphButton.nativeElement.click();
+
+        fixture.detectChanges();
+
+        expect(openCompetencyGraphSpy).toHaveBeenCalled();
+    });
+
+    it('should expand the competency of the current learning object and collapse the previous one', () => {
+        const navigation = TestBed.inject(LearningPathNavigationService);
+        const navigationWith = (competencyId: number) =>
+            ({ currentLearningObject: { id: competencyId, competencyId, type: LearningObjectType.LECTURE } }) as unknown as LearningPathNavigationDTO;
+
+        navigation.learningPathNavigation.set(navigationWith(1));
+        expect(component.isExpanded(1)).toBe(true);
+
+        navigation.learningPathNavigation.set(navigationWith(2));
+        expect(component.isExpanded(1)).toBe(false);
+        expect(component.isExpanded(2)).toBe(true);
+    });
+
+    it('should toggle a competency', () => {
+        expect(component.isExpanded(5)).toBe(false);
+
+        component.toggleCompetency(5);
+        expect(component.isExpanded(5)).toBe(true);
+
+        component.toggleCompetency(5);
+        expect(component.isExpanded(5)).toBe(false);
+    });
+
+    it('should emit the selection and collapse all competencies when a learning object is selected', () => {
+        const emitSpy = vi.spyOn(component.onLearningObjectSelected, 'emit');
+        component.toggleCompetency(1);
+        component.toggleCompetency(2);
+
+        component.selectLearningObject();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(component.isExpanded(1)).toBe(false);
+        expect(component.isExpanded(2)).toBe(false);
+    });
+
+    it('should log opening the competency graph, which the modal cannot do outside the course overview', () => {
+        const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
+        const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open');
+
+        component.openCompetencyGraph();
+
+        expect(logEventSpy).toHaveBeenCalledWith(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+});

@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "multipleChoiceQuestionStatistic": {
+            "home": {
+                "title": "Multiple-Choice Fragestatistiken",
+                "createLabel": "Multiple-Choice Fragestatistik erstellen"
+            },
+            "created": "Multiple-Choice Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice Fragestatistik gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Multiple-Choice Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Multiple-Choice Fragestatistik"
+            },
+            "answerCounters": "Antwortzähler"
+        }
+    }
+}

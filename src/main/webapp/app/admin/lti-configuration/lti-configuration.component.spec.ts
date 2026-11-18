@@ -1,0 +1,181 @@
+/**
+ * Vitest tests for LtiConfigurationComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular';
+
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+describe('LtiConfigurationComponent', () => {
+    let component: LtiConfigurationComponent;
+    let fixture: ComponentFixture<LtiConfigurationComponent>;
+    let mockRouter: any;
+    let mockActivatedRoute: any;
+    let mockLtiConfigurationService: any;
+    let mockAlertService: AlertService;
+
+    beforeEach(async () => {
+        mockRouter = { navigate: vi.fn() };
+        mockActivatedRoute = {
+            data: of({ defaultSort: 'id,desc' }),
+            queryParamMap: of(
+                new Map([
+                    ['page', '1'],
+                    ['sort', 'id,asc'],
+                ]),
+            ),
+        };
+        mockLtiConfigurationService = {
+            query: vi.fn().mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [{ id: 1, registrationId: 'platform-1' }],
+                        headers: new HttpHeaders({ 'X-Total-Count': '1' }),
+                    }),
+                ),
+            ),
+            deleteLtiPlatform: vi.fn().mockReturnValue(of({})),
+        };
+        await TestBed.configureTestingModule({
+            imports: [LtiConfigurationComponent],
+            providers: [
+                { provide: Router, useValue: mockRouter },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
+                { provide: AlertService, useValue: { error: vi.fn() } },
+            ],
+        })
+            .overrideTemplate(LtiConfigurationComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(LtiConfigurationComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        component.predicate.set('id');
+        mockAlertService = TestBed.inject(AlertService);
+    });
+
+    describe('pagination (tumaet-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page and navigates', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onPageChange(2);
+
+            expect(component.page()).toBe(3);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
+        });
+    });
+
+    describe('setActiveTab (tumaet-ui tabs)', () => {
+        it('coerces the numeric tab value to the activeTab signal', () => {
+            component.setActiveTab(2);
+            expect(component.activeTab()).toBe(2);
+        });
+
+        it('coerces a string tab value to a number', () => {
+            component.setActiveTab('1');
+            expect(component.activeTab()).toBe(1);
+        });
+
+        it('ignores a non-numeric value and keeps the current tab (never sets NaN)', () => {
+            component.setActiveTab(2);
+            component.setActiveTab(undefined);
+            expect(component.activeTab()).toBe(2);
+        });
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should initialize and load LTI platforms', () => {
+        expect(component.platforms()).toBeDefined();
+        expect(component.page()).toBe(1);
+        expect(component.predicate()).toBe('id');
+        expect(component.ascending()).toBe(true);
+        expect(mockLtiConfigurationService.query).toHaveBeenCalled();
+        expect(component.platforms()).toHaveLength(1);
+    });
+
+    it('should generate URLs correctly', () => {
+        // Test for getDynamicRegistrationUrl
+        expect(component.getDynamicRegistrationUrl()).toContain('/lti/dynamic-registration');
+
+        // Test for getDeepLinkingUrl
+        expect(component.getDeepLinkingUrl()).toContain('/api/lti/public/lti13/deep-link');
+
+        // Test for getToolUrl
+        expect(component.getToolUrl()).toContain('/courses');
+
+        // Test for getKeysetUrl
+        expect(component.getKeysetUrl()).toContain('/.well-known/jwks.json');
+
+        // Test for getInitiateLoginUrl
+        expect(component.getInitiateLoginUrl()).toContain('/api/lti/public/lti13/initiate-login');
+
+        // Test for getRedirectUri
+        expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
+    });
+
+    describe('onTableSort (tumaet-ui table)', () => {
+        it('maps the sort field/order onto predicate/ascending and navigates (server-side sort)', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({ field: 'customName', order: -1 } as TumAetUiTableSortEvent);
+
+            expect(component.predicate()).toBe('customName');
+            expect(component.ascending()).toBe(false);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(
+                ['/admin/lti-configuration'],
+                expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'customName,desc' }) }),
+            );
+        });
+
+        it('treats a missing order as ascending', () => {
+            component.onTableSort({ field: 'clientId' } as unknown as TumAetUiTableSortEvent);
+
+            expect(component.predicate()).toBe('clientId');
+            expect(component.ascending()).toBe(true);
+        });
+
+        it('ignores a sort event without a field and does not navigate', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({} as unknown as TumAetUiTableSortEvent);
+
+            expect(component.predicate()).toBe('id');
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should delete an LTI platform and navigate', () => {
+        const platformIdToDelete = 1;
+        component.deleteLtiPlatform(platformIdToDelete);
+        expect(mockLtiConfigurationService.deleteLtiPlatform).toHaveBeenCalledWith(platformIdToDelete);
+        expect(component.platforms()).toHaveLength(0);
+    });
+
+    it('should handle navigation on transition', () => {
+        component.transition();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], {
+            queryParams: {
+                page: component.page(),
+                sort: 'id,asc',
+            },
+        });
+    });
+
+    it('should handle errors on deleting LTI platform', () => {
+        const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Error occurred' } });
+        const errorSpy = vi.spyOn(mockAlertService, 'error');
+        mockLtiConfigurationService.deleteLtiPlatform.mockReturnValue(throwError(() => errorResponse));
+        component.deleteLtiPlatform(123);
+        expect(errorSpy).toHaveBeenCalled();
+    });
+});

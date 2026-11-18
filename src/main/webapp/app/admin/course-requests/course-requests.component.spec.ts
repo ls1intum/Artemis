@@ -1,0 +1,742 @@
+/**
+ * Vitest tests for CourseRequestsComponent.
+ * Tests the admin view for managing course creation requests including
+ * accept, reject, edit functionality and form validation.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
+
+import { CourseRequestsComponent } from 'app/admin/course-requests/course-requests.component';
+import { CourseRequestService } from 'app/course/request/course-request.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
+import { getSemesterDateRange } from 'app/foundation/util/semester-utils';
+
+describe('CourseRequestsComponent', () => {
+    let component: CourseRequestsComponent;
+    let courseRequestService: CourseRequestService;
+    let alertService: AlertService;
+
+    /** The WS25/26 date range, used so mock requests carry dates that line up exactly with their semester */
+    const mockDateRange = getSemesterDateRange('WS25/26')!;
+
+    /** Sample pending course request for testing */
+    const mockRequest: CourseRequest = {
+        id: 1,
+        title: 'Test Course',
+        shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
+        testCourse: false,
+        gradeRelevant: true,
+        reason: 'Test reason',
+        status: CourseRequestStatus.PENDING,
+    };
+
+    /** Sample accepted course request */
+    const mockAcceptedRequest: CourseRequest = {
+        id: 1,
+        title: 'Test Course',
+        shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
+        testCourse: false,
+        gradeRelevant: true,
+        reason: 'Test reason',
+        status: CourseRequestStatus.ACCEPTED,
+        createdCourseId: 100,
+    };
+
+    /** Sample rejected course request */
+    const mockRejectedRequest: CourseRequest = {
+        id: 1,
+        title: 'Test Course',
+        shortName: 'TC',
+        semester: 'WS25/26',
+        startDate: mockDateRange.startDate,
+        endDate: mockDateRange.endDate,
+        testCourse: false,
+        gradeRelevant: true,
+        reason: 'Test reason',
+        status: CourseRequestStatus.REJECTED,
+        decisionReason: 'Not approved',
+    };
+
+    /** Mock CourseRequestService with spy functions */
+    const mockCourseRequestService = {
+        create: vi.fn(),
+        findAdminOverview: vi.fn(),
+        acceptRequest: vi.fn(),
+        rejectRequest: vi.fn(),
+        updateRequest: vi.fn(),
+    };
+
+    /** Mock AlertService with spy functions */
+    const mockAlertService = {
+        success: vi.fn(),
+        error: vi.fn(),
+        warning: vi.fn(),
+    };
+
+    beforeEach(async () => {
+        vi.restoreAllMocks();
+        vi.clearAllMocks();
+
+        await TestBed.configureTestingModule({
+            imports: [CourseRequestsComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: CourseRequestService, useValue: mockCourseRequestService },
+                { provide: AlertService, useValue: mockAlertService },
+                provideTranslateService(),
+                provideRouter([]),
+            ],
+        }).compileComponents();
+
+        courseRequestService = TestBed.inject(CourseRequestService);
+        alertService = TestBed.inject(AlertService);
+
+        // Default mock for initial load
+        const mockOverview: CourseRequestsAdminOverview = {
+            pendingRequests: [mockRequest],
+            decidedRequests: [],
+            totalDecidedCount: 0,
+        };
+        mockCourseRequestService.findAdminOverview.mockReturnValue(of(mockOverview));
+
+        const fixture = TestBed.createComponent(CourseRequestsComponent);
+        component = fixture.componentInstance;
+    });
+
+    describe('pagination (tumaet-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed decided page and reloads with the 0-indexed offset', () => {
+            mockCourseRequestService.findAdminOverview.mockClear();
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of({ pendingRequests: [], decidedRequests: [], totalDecidedCount: 0 } as CourseRequestsAdminOverview));
+
+            component.onDecidedPaginatorChange(2);
+
+            expect(component.decidedPage()).toBe(3);
+            expect(mockCourseRequestService.findAdminOverview).toHaveBeenCalledWith(2, component.decidedPageSize);
+        });
+    });
+
+    describe('previous instructor courses', () => {
+        const instructorCourses = [
+            { id: 11, title: 'Introduction to Programming', shortName: 'EIST', semester: 'WS24/25' },
+            { id: 12, title: 'Software Engineering', shortName: 'SE', semester: 'SS25' },
+        ];
+
+        function render(request: CourseRequest) {
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of({ pendingRequests: [request], decidedRequests: [], totalDecidedCount: 0 }));
+            const fixture = TestBed.createComponent(CourseRequestsComponent);
+            fixture.detectChanges();
+            return fixture;
+        }
+
+        afterEach(() => {
+            document.querySelectorAll('.cdk-overlay-container').forEach((container) => (container.innerHTML = ''));
+        });
+
+        it('lists the courses of the requester in a popover opened from the count', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+            const trigger = fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement;
+
+            expect(trigger).not.toBeNull();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+            expect(document.querySelector('[data-testid="instructor-courses-popover"]')).toBeNull();
+
+            trigger.click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(trigger.getAttribute('aria-expanded')).toBe('true');
+            const entries = Array.from(document.querySelectorAll('[data-testid="instructor-course"]'));
+            expect(entries).toHaveLength(2);
+            expect(entries[0].textContent).toContain('Introduction to Programming');
+            expect(entries[0].textContent).toContain('EIST');
+            expect(entries[0].textContent).toContain('WS24/25');
+            expect(entries[1].textContent).toContain('Software Engineering');
+            expect(entries[0].querySelector('a')?.getAttribute('href')).toBe('/course-management/11');
+        });
+
+        it('names what the count opens for assistive technology', () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+            const trigger = fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement;
+
+            expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+            // A narrow column must not break the label ("Yes" / "(12)") onto two lines.
+            expect(trigger.classList).toContain('whitespace-nowrap');
+            expect(trigger.querySelector('.font-semibold')?.classList).toContain('whitespace-nowrap');
+            expect(trigger.querySelector('.sr-only')?.textContent).toContain('artemisApp.courseRequest.admin.instructorCoursesShow');
+        });
+
+        it('falls back to the short name for a course without a title', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 1, instructorCourses: [{ id: 21, shortName: 'UNTITLED', semester: 'SS25' }] });
+
+            (fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(document.querySelector('[data-testid="instructor-course"] a')?.textContent?.trim()).toBe('UNTITLED');
+        });
+
+        it('keeps the course list scrollable', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+
+            (fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const list = document.querySelector('[data-testid="instructor-courses-list"]') as HTMLElement;
+            expect(list.classList).toContain('overflow-y-auto');
+            expect(list.classList).toContain('max-h-64');
+        });
+
+        it('shows no popover trigger when the requester instructs no course', () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 0 });
+
+            expect(fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="pending-table"] tbody td:nth-child(5)').textContent).toContain(
+                'artemisApp.courseRequest.admin.instructorCourseCountNo',
+            );
+        });
+    });
+
+    describe('ngOnInit', () => {
+        it('should load requests on init', () => {
+            component.ngOnInit();
+
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
+            expect(component.pendingRequests()).toEqual([mockRequest]);
+            expect(component.decidedRequests()).toEqual([]);
+            expect(component.loading()).toBe(false);
+        });
+    });
+
+    describe('load', () => {
+        it('should set loading to false after fetching', () => {
+            component.load();
+
+            expect(component.loading()).toBe(false);
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
+        });
+
+        it('should handle error when loading fails', () => {
+            const error = { status: 500, message: 'Server error' };
+            mockCourseRequestService.findAdminOverview.mockReturnValue(throwError(() => error));
+
+            component.load();
+
+            expect(component.loading()).toBe(false);
+        });
+    });
+
+    describe('accept', () => {
+        it('should accept a request and move it to decided list', () => {
+            mockCourseRequestService.acceptRequest.mockReturnValue(of(mockAcceptedRequest));
+            component.pendingRequests.set([mockRequest]);
+            component.decidedRequests.set([]);
+            component.totalDecidedCount.set(0);
+
+            component.accept(mockRequest);
+
+            expect(courseRequestService.acceptRequest).toHaveBeenCalledWith(1);
+            expect(component.pendingRequests()).toHaveLength(0);
+            expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.ACCEPTED);
+            expect(component.totalDecidedCount()).toBe(1);
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.acceptSuccess', { title: 'Test Course', shortName: 'TC' });
+        });
+
+        it('should not call service if request has no id', () => {
+            const requestWithoutId: CourseRequest = {
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                gradeRelevant: true,
+                reason: 'reason',
+            };
+
+            component.accept(requestWithoutId);
+
+            expect(courseRequestService.acceptRequest).not.toHaveBeenCalled();
+        });
+
+        it('should handle error when accepting fails', () => {
+            const error = { status: 500, message: 'Server error' };
+            mockCourseRequestService.acceptRequest.mockReturnValue(throwError(() => error));
+
+            component.accept(mockRequest);
+
+            expect(courseRequestService.acceptRequest).toHaveBeenCalledWith(1);
+        });
+    });
+
+    describe('openRejectModal', () => {
+        it('should open modal and set selected request', () => {
+            component.openRejectModal(mockRequest);
+
+            expect(component.selectedRequest()).toBe(mockRequest);
+            expect(component.decisionReason()).toBe('');
+            expect(component.reasonInvalid()).toBe(false);
+            expect(component.rejectModalVisible()).toBe(true);
+        });
+    });
+
+    describe('reject', () => {
+        beforeEach(() => {
+            component.selectedRequest.set(mockRequest);
+            component.rejectModalVisible.set(true);
+        });
+
+        it('should reject a request with a reason and move it to decided list', () => {
+            mockCourseRequestService.rejectRequest.mockReturnValue(of(mockRejectedRequest));
+            component.pendingRequests.set([mockRequest]);
+            component.decidedRequests.set([]);
+            component.totalDecidedCount.set(0);
+            component.decisionReason.set('Not approved');
+
+            component.reject();
+
+            expect(courseRequestService.rejectRequest).toHaveBeenCalledWith(1, 'Not approved');
+            expect(component.pendingRequests()).toHaveLength(0);
+            expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.REJECTED);
+            expect(component.totalDecidedCount()).toBe(1);
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.rejectSuccess', { title: 'Test Course' });
+            expect(component.rejectModalVisible()).toBe(false);
+            expect(component.reasonInvalid()).toBe(false);
+            expect(component.selectedRequest()).toBeUndefined();
+        });
+
+        it('should set reasonInvalid when reason is empty', () => {
+            component.decisionReason.set('');
+
+            component.reject();
+
+            expect(component.reasonInvalid()).toBe(true);
+            expect(courseRequestService.rejectRequest).not.toHaveBeenCalled();
+        });
+
+        it('should set reasonInvalid when reason is only whitespace', () => {
+            component.decisionReason.set('   ');
+
+            component.reject();
+
+            expect(component.reasonInvalid()).toBe(true);
+            expect(courseRequestService.rejectRequest).not.toHaveBeenCalled();
+        });
+
+        it('should not call service if selectedRequest has no id', () => {
+            component.selectedRequest.set({
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                gradeRelevant: true,
+                reason: 'reason',
+            });
+            component.decisionReason.set('Valid reason');
+
+            component.reject();
+
+            expect(courseRequestService.rejectRequest).not.toHaveBeenCalled();
+        });
+
+        it('should not call service if selectedRequest is undefined', () => {
+            component.selectedRequest.set(undefined);
+            component.decisionReason.set('Valid reason');
+
+            component.reject();
+
+            expect(courseRequestService.rejectRequest).not.toHaveBeenCalled();
+        });
+
+        it('should handle error when rejecting fails', () => {
+            const error = { status: 500, message: 'Server error' };
+            mockCourseRequestService.rejectRequest.mockReturnValue(throwError(() => error));
+            component.decisionReason.set('Not approved');
+
+            component.reject();
+
+            expect(courseRequestService.rejectRequest).toHaveBeenCalledWith(1, 'Not approved');
+        });
+    });
+
+    describe('badgeSeverity', () => {
+        it('should return success for ACCEPTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.ACCEPTED)).toBe('success');
+        });
+
+        it('should return danger for REJECTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.REJECTED)).toBe('danger');
+        });
+
+        it('should return secondary for PENDING status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.PENDING)).toBe('secondary');
+        });
+
+        it('should return secondary for undefined status', () => {
+            expect(component.badgeSeverity(undefined)).toBe('secondary');
+        });
+    });
+
+    describe('openEditModal', () => {
+        it('should open modal and populate form with request data', () => {
+            const requestWithDates: CourseRequest = {
+                ...mockRequest,
+                semester: 'WS25/26',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+            };
+
+            component.openEditModal(requestWithDates);
+
+            expect(component.selectedRequest()).toBe(requestWithDates);
+            expect(component.editDateRangeInvalid()).toBe(false);
+            expect(component.isSubmittingEdit()).toBe(false);
+            expect(component.editForm.get('title')?.value).toBe('Test Course');
+            expect(component.editForm.get('shortName')?.value).toBe('TC');
+            expect(component.editForm.get('semester')?.value).toBe('WS25/26');
+            expect(component.editForm.get('reason')?.value).toBe('Test reason');
+            expect(component.editModalVisible()).toBe(true);
+        });
+
+        it('should populate the grade relevant control from the request', () => {
+            component.openEditModal({ ...mockRequest, gradeRelevant: false });
+
+            expect(component.editForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should treat a request without a grade relevant value as grade relevant', () => {
+            component.openEditModal({ ...mockRequest, gradeRelevant: undefined as unknown as boolean });
+
+            expect(component.editForm.get('gradeRelevant')?.value).toBe(true);
+        });
+    });
+
+    describe('saveEdit', () => {
+        beforeEach(() => {
+            component.selectedRequest.set(mockRequest);
+            component.editModalVisible.set(true);
+        });
+
+        it('should update request and refresh list on success', () => {
+            const updatedRequest: CourseRequest = { ...mockRequest, title: 'Updated Course' };
+            mockCourseRequestService.updateRequest.mockReturnValue(of(updatedRequest));
+            component.pendingRequests.set([mockRequest]);
+            component.editForm.patchValue({
+                title: 'Updated Course',
+                shortName: 'UC1',
+                semester: 'WS25/26',
+                reason: 'Updated reason',
+            });
+
+            component.saveEdit();
+
+            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(
+                1,
+                expect.objectContaining({
+                    title: 'Updated Course',
+                    shortName: 'UC1',
+                }),
+            );
+            expect(component.pendingRequests()[0].title).toBe('Updated Course');
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.editSuccess');
+            expect(component.editModalVisible()).toBe(false);
+            expect(component.isSubmittingEdit()).toBe(false);
+            expect(component.selectedRequest()).toBeUndefined();
+        });
+
+        it('should not submit when form is invalid', () => {
+            component.editForm.patchValue({
+                title: '', // Invalid - required
+                shortName: 'TC',
+                reason: 'Valid reason',
+            });
+
+            component.saveEdit();
+
+            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
+            expect(component.editForm.get('title')?.touched).toBe(true);
+        });
+
+        it('should not submit when selectedRequest has no id', () => {
+            component.selectedRequest.set({
+                title: 'Test',
+                shortName: 'T',
+                startDate: dayjs('2025-10-01'),
+                endDate: dayjs('2026-03-31'),
+                testCourse: false,
+                gradeRelevant: true,
+                reason: 'reason',
+            });
+            component.editForm.patchValue({
+                title: 'Test',
+                shortName: 'TST',
+                semester: 'WS25/26',
+                reason: 'Valid reason',
+            });
+
+            component.saveEdit();
+
+            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
+        });
+
+        it('should set dateRangeInvalid when end date is before start date', () => {
+            component.editForm.patchValue({
+                title: 'Test Course',
+                shortName: 'TC1',
+                semester: 'WS25/26',
+                reason: 'Valid reason',
+                startDate: dayjs('2025-02-01'),
+                endDate: dayjs('2025-01-01'),
+            });
+
+            component.saveEdit();
+
+            expect(component.editDateRangeInvalid()).toBe(true);
+            expect(courseRequestService.updateRequest).not.toHaveBeenCalled();
+        });
+
+        it('should handle short name conflict error and apply suggested short name', () => {
+            const suggestedShortName = 'TC2025';
+            const errorResponse = new HttpErrorResponse({
+                error: {
+                    errorKey: 'courseShortNameExists',
+                    params: { suggestedShortName },
+                },
+                status: 400,
+            });
+            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
+            component.editForm.patchValue({
+                title: 'Test Course',
+                shortName: 'EXISTING',
+                semester: 'WS25/26',
+                reason: 'Valid reason',
+            });
+
+            component.saveEdit();
+
+            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
+            expect(component.editForm.get('shortName')?.value).toBe(suggestedShortName);
+            expect(component.isSubmittingEdit()).toBe(false);
+        });
+
+        it('should handle courseRequestShortNameExists error', () => {
+            const suggestedShortName = 'TC2025';
+            const errorResponse = new HttpErrorResponse({
+                error: {
+                    errorKey: 'courseRequestShortNameExists',
+                    params: { suggestedShortName },
+                },
+                status: 400,
+            });
+            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
+            component.editForm.patchValue({
+                title: 'Test Course',
+                shortName: 'EXISTING',
+                semester: 'WS25/26',
+                reason: 'Valid reason',
+            });
+
+            component.saveEdit();
+
+            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
+            expect(component.editForm.get('shortName')?.value).toBe(suggestedShortName);
+        });
+
+        it('should handle other errors using onError', () => {
+            const errorResponse = new HttpErrorResponse({
+                error: { message: 'Server error' },
+                status: 500,
+            });
+            mockCourseRequestService.updateRequest.mockReturnValue(throwError(() => errorResponse));
+            component.editForm.patchValue({
+                title: 'Test Course',
+                shortName: 'TC1',
+                semester: 'WS25/26',
+                reason: 'Valid reason',
+            });
+
+            component.saveEdit();
+
+            expect(component.isSubmittingEdit()).toBe(false);
+        });
+    });
+
+    describe('grade-relevant', () => {
+        const render = (pending: CourseRequest[], decided: CourseRequest[] = []) => {
+            const fixture = TestBed.createComponent(CourseRequestsComponent);
+            fixture.detectChanges(); // ngOnInit loads the (mocked) overview
+            fixture.componentInstance.pendingRequests.set(pending);
+            fixture.componentInstance.decidedRequests.set(decided);
+            fixture.detectChanges();
+            return fixture;
+        };
+        const tagsOfRows = (fixture: ReturnType<typeof render>, tableIndex: number): string[][] =>
+            Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('table')[tableIndex].querySelectorAll('tbody tr')).map((row) =>
+                Array.from<HTMLElement>(row.querySelectorAll('tumaet-ui-tag')).map((tag) => tag.textContent?.trim() ?? ''),
+            );
+
+        it('should tag only the exception in the pending table', () => {
+            const fixture = render([
+                { ...mockRequest, id: 1, gradeRelevant: true },
+                { ...mockRequest, id: 2, gradeRelevant: false },
+                { ...mockRequest, id: 3, testCourse: true, gradeRelevant: false },
+                { ...mockRequest, id: 4, gradeRelevant: undefined as unknown as boolean },
+            ]);
+
+            expect(tagsOfRows(fixture, 0)).toEqual([[], ['artemisApp.courseRequest.admin.notGradeRelevant'], ['artemisApp.courseRequest.admin.testCourse'], []]);
+        });
+
+        it('should tag only the exception in the decided table, next to the status', () => {
+            const fixture = render(
+                [],
+                [
+                    { ...mockAcceptedRequest, id: 1, gradeRelevant: true },
+                    { ...mockAcceptedRequest, id: 2, gradeRelevant: false },
+                    { ...mockRejectedRequest, id: 3, testCourse: true, gradeRelevant: false },
+                ],
+            );
+
+            expect(tagsOfRows(fixture, 1)).toEqual([
+                ['artemisApp.courseRequest.status.ACCEPTED'],
+                ['artemisApp.courseRequest.admin.notGradeRelevant', 'artemisApp.courseRequest.status.ACCEPTED'],
+                ['artemisApp.courseRequest.admin.testCourse', 'artemisApp.courseRequest.status.REJECTED'],
+            ]);
+        });
+
+        describe('editing', () => {
+            beforeEach(() => {
+                component.selectedRequest.set(mockRequest);
+                component.editModalVisible.set(true);
+                mockCourseRequestService.updateRequest.mockReturnValue(of(mockRequest));
+                component.editForm.patchValue({ title: 'Updated Course', shortName: 'UC1', semester: 'WS25/26', reason: 'Updated reason' });
+            });
+
+            it('should send a changed grade-relevant value when saving an edit', () => {
+                component.editForm.patchValue({ gradeRelevant: false });
+
+                component.saveEdit();
+
+                expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: false, gradeRelevant: false }));
+            });
+
+            it('should never send a test course as grade-relevant', () => {
+                component.editForm.patchValue({ testCourse: true, gradeRelevant: true });
+
+                component.saveEdit();
+
+                expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: true, gradeRelevant: false }));
+            });
+
+            it('should offer the default choice when a test course request is opened for editing', () => {
+                component.openEditModal({ ...mockRequest, testCourse: true, gradeRelevant: false });
+
+                expect(component.editForm.get('testCourse')!.value).toBe(true);
+                expect(component.editForm.get('gradeRelevant')!.value).toBe(true);
+            });
+        });
+    });
+
+    describe('required dates', () => {
+        it('prefills the dates from the request semester', () => {
+            component.openEditModal(mockRequest);
+            const range = getSemesterDateRange('WS25/26')!;
+
+            expect(component.editForm.get('startDate')!.value!.isSame(range.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(range.endDate)).toBe(true);
+        });
+
+        it('marks the form invalid when a date is cleared', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('startDate')!.setValue(undefined);
+
+            expect(component.editForm.get('startDate')!.valid).toBe(false);
+            expect(component.editForm.invalid).toBe(true);
+        });
+
+        it('follows the semester while the dates are untouched', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('semester')!.setValue('SS26');
+
+            expect(component.editForm.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(component.editForm.get('endDate')!.value!.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a hand-picked date when the semester changes', () => {
+            component.openEditModal(mockRequest);
+            component.editForm.get('startDate')!.setValue(dayjs('2025-11-05'));
+            component.editForm.get('semester')!.setValue('SS26');
+
+            expect(component.editForm.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2025-11-05');
+        });
+
+        it("does not clobber a request whose own stored dates coincide with a previously open request's semester range", () => {
+            // Open the WS25/26 request first, so previousSemester and the form both settle on its range.
+            component.openEditModal(mockRequest);
+
+            // Now open a different request, for SS26, whose own stored dates happen to equal WS25/26's range.
+            // Those dates must survive unchanged: they belong to this request, not to the one that was open before it.
+            const coincidentallyMatchingRequest: CourseRequest = {
+                ...mockRequest,
+                id: 2,
+                semester: 'SS26',
+                startDate: mockDateRange.startDate,
+                endDate: mockDateRange.endDate,
+            };
+
+            component.openEditModal(coincidentallyMatchingRequest);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
+        });
+
+        it('fills in dates from the semester when opening a request that has none yet', () => {
+            const requestWithoutDates: CourseRequest = {
+                ...mockRequest,
+                id: 4,
+                semester: 'WS25/26',
+                startDate: undefined,
+                endDate: undefined,
+            };
+
+            component.openEditModal(requestWithoutDates);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
+        });
+    });
+
+    describe('accept error handling', () => {
+        it('should show warning for short name conflict on accept', () => {
+            const suggestedShortName = 'TC2025';
+            const errorResponse = new HttpErrorResponse({
+                error: {
+                    errorKey: 'courseShortNameExists',
+                    params: { suggestedShortName },
+                },
+                status: 400,
+            });
+            mockCourseRequestService.acceptRequest.mockReturnValue(throwError(() => errorResponse));
+
+            component.accept(mockRequest);
+
+            expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.admin.shortNameConflict', {
+                suggestedShortName,
+                shortName: 'TC',
+            });
+        });
+    });
+});

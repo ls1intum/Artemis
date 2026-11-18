@@ -1,0 +1,315 @@
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { User } from 'app/account/user/user.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDialogService,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { Course } from 'app/course/shared/entities/course.model';
+import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { TranslateService } from '@ngx-translate/core';
+import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { getAsGroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { filter } from 'rxjs/operators';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/communication/conversations/conversation-permissions.utils';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: '[jhi-conversation-member-row]',
+    templateUrl: './conversation-member-row.component.html',
+    styleUrls: ['./conversation-member-row.component.scss'],
+    host: {
+        '[class.active]': 'isCurrentUser()',
+    },
+    imports: [
+        ProfilePictureComponent,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
+})
+export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    private ngUnsubscribe = new Subject<void>();
+
+    activeConversation = input.required<ConversationDTO>();
+    course = input<Course>();
+    changePerformed = output<void>();
+    conversationMember = input<ConversationUserDTO>();
+    readonly onUserNameClicked = output<number>();
+
+    idOfLoggedInUser!: number; // set in ngOnInit() from the resolved account identity; only read within that callback
+
+    readonly isCurrentUser = signal(false);
+
+    isCreator = false;
+
+    readonly canBeRemovedFromConversation = signal(false);
+
+    readonly canBeGrantedChannelModeratorRole = signal(false);
+
+    readonly canBeRevokedChannelModeratorRole = signal(false);
+
+    readonly userLabel = signal<string>('');
+    readonly userName = signal<string | undefined>(undefined);
+    readonly userId = signal<number | undefined>(undefined);
+    readonly userImageUrl = signal<string | undefined>(undefined);
+    // icons
+    readonly userIcon = signal<IconProp>(faUser);
+    readonly userTooltip = signal('');
+
+    faEllipsis = faEllipsis;
+    faUserGear = faUserGear;
+
+    isChannel = isChannelDTO;
+
+    canGrantChannelModeratorRole = canGrantChannelModeratorRole;
+    canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
+    canRemoveUsersFromConversation = canRemoveUsersFromConversation;
+
+    ngOnInit(): void {
+        if (this.conversationMember() && this.activeConversation()) {
+            void this.accountService.identity().then((loggedInUser: User | undefined) => {
+                if (!loggedInUser) {
+                    return;
+                }
+                this.idOfLoggedInUser = loggedInUser.id!;
+                if (this.conversationMember()?.id === this.idOfLoggedInUser) {
+                    this.isCurrentUser.set(true);
+                }
+                if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
+                    this.isCreator = true;
+                }
+
+                this.userImageUrl.set(this.conversationMember()?.imageUrl);
+                this.userId.set(this.conversationMember()?.id);
+                this.userName.set(this.conversationMember()?.name);
+                this.userLabel.set(getUserLabel(this.conversationMember()!));
+                this.setUserAuthorityIconAndTooltip();
+                // the creator of a channel can not be removed from the channel
+                this.canBeRemovedFromConversation.set(!this.isCurrentUser() && this.canRemoveUsersFromConversation(this.activeConversation()));
+                if (isChannelDTO(this.activeConversation())) {
+                    // the creator of a channel can not be removed from the channel
+                    const channelDTO = this.activeConversation() as ChannelDTO;
+                    this.canBeRemovedFromConversation.set(this.canBeRemovedFromConversation() && !this.isCreator && !channelDTO.isCourseWide);
+                    this.canBeGrantedChannelModeratorRole.set(this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator);
+                    // the creator of a channel cannot be revoked the channel moderator role
+                    this.canBeRevokedChannelModeratorRole.set(this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator);
+                }
+            });
+        }
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
+    openGrantChannelModeratorRoleDialog() {
+        this.openChannelModeratorRoleDialog(true);
+    }
+
+    openRevokeChannelModeratorRoleDialog() {
+        this.openChannelModeratorRoleDialog(false);
+    }
+
+    private openChannelModeratorRoleDialog(grant: boolean) {
+        const channel = getAsChannelDTO(this.activeConversation());
+        if (!channel) {
+            return;
+        }
+        const baseKey = `artemisApp.dialogs.${grant ? 'grant' : 'revoke'}ChannelModerator`;
+        const translationKeys = {
+            titleKey: `${baseKey}.title`,
+            questionKey: `${baseKey}.question`,
+            descriptionKey: `${baseKey}.description`,
+            confirmButtonKey: `${baseKey}.confirmButton`,
+        };
+        const translationParams = {
+            channelName: channel.name!,
+            userName: this.userLabel(),
+        };
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const channelId = channel?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !channelId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return grant
+                ? this.channelService.grantChannelModeratorRole(courseId, channelId, [memberLogin])
+                : this.channelService.revokeChannelModeratorRole(courseId, channelId, [memberLogin]);
+        };
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
+
+    openRemoveFromChannelDialog() {
+        const channel = getAsChannelDTO(this.activeConversation());
+        if (!channel) {
+            return;
+        }
+        let translationKeys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string };
+        if (channel.isPublic) {
+            translationKeys = {
+                titleKey: 'artemisApp.dialogs.removeUserPublicChannel.title',
+                questionKey: 'artemisApp.dialogs.removeUserPublicChannel.question',
+                descriptionKey: 'artemisApp.dialogs.removeUserPublicChannel.warning',
+                confirmButtonKey: 'artemisApp.dialogs.removeUserPublicChannel.remove',
+            };
+        } else {
+            translationKeys = {
+                titleKey: 'artemisApp.dialogs.removeUserPrivateChannel.title',
+                questionKey: 'artemisApp.dialogs.removeUserPrivateChannel.question',
+                descriptionKey: 'artemisApp.dialogs.removeUserPrivateChannel.warning',
+                confirmButtonKey: 'artemisApp.dialogs.removeUserPrivateChannel.remove',
+            };
+        }
+
+        const translationParams = {
+            userName: this.userLabel(),
+            channelName: channel.name!,
+        };
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.deregisterUsersFromChannel(courseId, activeConversationId, [memberLogin]);
+        };
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
+
+    openRemoveFromGroupChatDialog() {
+        const groupChat = getAsGroupChatDTO(this.activeConversation());
+        if (!groupChat) {
+            return;
+        }
+        const translationKeys = {
+            titleKey: 'artemisApp.dialogs.removeUserGroupChat.title',
+            questionKey: 'artemisApp.dialogs.removeUserGroupChat.question',
+            descriptionKey: 'artemisApp.dialogs.removeUserGroupChat.warning',
+            confirmButtonKey: 'artemisApp.dialogs.removeUserGroupChat.remove',
+        };
+        const translationParams = {
+            userName: this.userLabel(),
+        };
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.groupChatService.removeUsersFromGroupChat(courseId, activeConversationId, [memberLogin]);
+        };
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
+
+    private openConfirmationDialog(
+        translationKeys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string },
+        translationParams: { [key: string]: string },
+        confirmedCallback: () => Observable<HttpResponse<void>>,
+    ) {
+        const ref = this.dialogService.open(
+            GenericConfirmationDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant(translationKeys.titleKey, translationParams),
+                autoFocus: 'first-tabbable',
+                data: {
+                    translationParameters: translationParams,
+                    translationKeys,
+                    canBeUndone: true,
+                    isDangerousAction: true,
+                },
+            }),
+        );
+
+        ref?.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                confirmedCallback()
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        next: () => {
+                            this.changePerformed.emit();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
+            });
+    }
+
+    openRemoveFromConversationDialog() {
+        if (isChannelDTO(this.activeConversation())) {
+            this.openRemoveFromChannelDialog();
+        } else if (isGroupChatDTO(this.activeConversation())) {
+            this.openRemoveFromGroupChatDialog();
+        } else {
+            throw new Error('Unsupported conversation type');
+        }
+    }
+
+    setUserAuthorityIconAndTooltip(): void {
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
+        // highest authority is displayed
+        if (this.conversationMember()?.isInstructor) {
+            this.userIcon.set(faUserGraduate);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'instructor'));
+        } else if (this.conversationMember()?.isEditor || this.conversationMember()?.isTeachingAssistant) {
+            this.userIcon.set(faUserCheck);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'tutor'));
+        } else {
+            this.userIcon.set(faUser);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'student'));
+        }
+    }
+
+    /**
+     * Emits the user's ID when their name is clicked.
+     * This can be used to initiate a direct chat.
+     */
+    userNameClicked() {
+        const memberId = this.conversationMember()?.id;
+        if (memberId) {
+            this.onUserNameClicked.emit(memberId);
+        }
+    }
+}

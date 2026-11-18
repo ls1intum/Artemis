@@ -1,0 +1,78 @@
+<div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-(--module-bg)" [class.collapsed]="isNavbarCollapsed() || !canExpand()" data-testid="admin-sidebar">
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
+        <!-- NavItems grouped -->
+        <div>
+            <ul class="grow list-none p-0">
+                @for (group of sidebarGroups(); track group.translation; let groupIndex = $index) {
+                    <!-- Group Header -->
+                    @if (!isNavbarCollapsed()) {
+                        <li class="nav-group-header pt-2 pb-1">
+                            <span class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
+                        </li>
+                    } @else if (groupIndex > 0) {
+                        <li>
+                            <hr class="mx-2 my-2 border-surface opacity-50" />
+                        </li>
+                    }
+
+                    <!-- Group Items -->
+                    @for (item of group.items; track item.routerLink) {
+                        <li>
+                            <a
+                                class="nav-link-sidebar flex items-center px-2 py-2 whitespace-nowrap no-underline"
+                                [attr.id]="item.testId"
+                                [class.collapsed]="isNavbarCollapsed() || !canExpand()"
+                                [routerLink]="item.routerLink"
+                                routerLinkActive="active"
+                                [title]="item.title"
+                            >
+                                <fa-icon [fixedWidth]="true" [icon]="item.icon" />
+                                @if (!isNavbarCollapsed()) {
+                                    <span class="auto-collapse ms-2" [jhiTranslate]="item.translation"></span>
+                                }
+                            </a>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+
+    <div class="my-2 shrink-0 bg-(--module-bg)">
+        @if (!isNavbarCollapsed() && canExpand()) {
+            <button
+                type="button"
+                class="flex w-full justify-end border-none bg-transparent px-2"
+                [class.menu-collapsed]="isNavbarCollapsed()"
+                [tumAetUiTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
+                tumAetUiTooltipPlacement="right"
+                (click)="toggleCollapseState.emit()"
+                [attr.aria-expanded]="!isNavbarCollapsed()"
+                data-testid="admin-sidebar-collapse"
+            >
+                <span class="double-arrow-icon inline-flex min-w-10 items-center gap-1">
+                    <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
+                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                </span>
+            </button>
+        }
+
+        @if (isNavbarCollapsed() && canExpand()) {
+            <button
+                type="button"
+                class="w-full border-none bg-transparent text-center"
+                [class.menu-collapsed]="isNavbarCollapsed()"
+                [tumAetUiTooltip]="'global.menu.admin.expandMenu' | artemisTranslate"
+                tumAetUiTooltipPlacement="right"
+                (click)="toggleCollapseState.emit()"
+                [attr.aria-expanded]="!isNavbarCollapsed()"
+                data-testid="admin-sidebar-expand"
+            >
+                <span class="double-arrow-icon gap-1">
+                    <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
+                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                </span>
+            </button>
+        }
+    </div>
+</div>

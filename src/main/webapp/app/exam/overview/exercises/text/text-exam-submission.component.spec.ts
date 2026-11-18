@@ -1,0 +1,176 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
+import dayjs from 'dayjs/esm';
+import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+describe('TextExamSubmissionComponent', () => {
+    let fixture: ComponentFixture<TextExamSubmissionComponent>;
+    let component: TextExamSubmissionComponent;
+
+    let textSubmission: TextSubmission;
+    let exercise: TextExercise;
+
+    beforeEach(() => {
+        textSubmission = new TextSubmission();
+        exercise = new TextExercise(new Course(), new ExerciseGroup());
+
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TextExamSubmissionComponent);
+                component = fixture.componentInstance;
+            });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'Hello World';
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+
+        component.onActivate();
+        fixture.detectChanges();
+        component.onDeactivate();
+
+        expect(component.answer()).toBe('Hello World');
+        expect(component.wordCount).toBe(2);
+        expect(component.characterCount).toBe(11);
+        expect(component.getExerciseId()).toEqual(exercise.id);
+        expect(component.getSubmission()).toEqual(textSubmission);
+    });
+
+    it('should initialize with empty answer', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+
+        fixture.detectChanges();
+
+        expect(component.answer()).toBe('');
+        expect(component.wordCount).toBe(0);
+        expect(component.characterCount).toBe(0);
+    });
+
+    it('should return the negation of student submission isSynced value', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        component.studentSubmission().isSynced = false;
+
+        fixture.detectChanges();
+
+        expect(component.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('should update text of the submission', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'Text';
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+
+        fixture.detectChanges();
+        component.updateSubmissionFromView();
+
+        expect(component.studentSubmission().text).toBe('Text');
+    });
+
+    it('should keep the shared submission current when editing after continuing an exam', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'The original long answer';
+        textSubmission.isSynced = true;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        fixture.detectChanges();
+
+        const textarea = fixture.debugElement.query(By.css('#text-editor')).nativeElement as HTMLTextAreaElement;
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        expect(textSubmission.text).toBe('');
+
+        textarea.value = 'Short answer';
+        textarea.dispatchEvent(new Event('input'));
+        expect(component.answer()).toBe('Short answer');
+        expect(textSubmission.text).toBe('Short answer');
+        expect(textSubmission.isSynced).toBe(false);
+    });
+
+    it('should update problem statement of the exercise', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        component.exercise().problemStatement = 'old problem statement';
+        const newProblemStatement = 'new problem statement';
+
+        component.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
+
+        expect((component.problemStatementHtml() as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
+    });
+
+    it('should trigger text editor events', async () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'Hello World';
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+
+        fixture.detectChanges();
+        fixture.whenStable().then(() => {
+            expect(component.answer()).toBe('Hello World');
+            const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor'));
+            expect(textareaDebugElement).not.toBeNull();
+            const textarea = textareaDebugElement.nativeElement;
+            textarea.value = 'Test';
+            textarea.dispatchEvent(new Event('input'));
+
+            textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+            textarea.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(textarea.value).toBe('Test\t');
+            expect(component.studentSubmission().isSynced).toBe(false);
+        });
+    });
+
+    it('should update the answer if the submission version changes', () => {
+        const submissionVersion = { id: 1, content: 'submission version', submission: textSubmission, createdDate: dayjs('2021-01-01') };
+        component.setSubmissionVersion(submissionVersion);
+        expect(component.answer()).toBe('submission version');
+        expect(component.submissionVersion).toBe(submissionVersion);
+    });
+
+    it('should call triggerSave if save exercise button is clicked', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'Hello World';
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        fixture.detectChanges();
+        const saveExerciseSpy = vi.spyOn(component, 'notifyTriggerSave');
+        const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+        saveButton.triggerEventHandler('save', null);
+        expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onTextEditorInput({ target: { value: 'abc' } } as unknown as Event);
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
+    });
+});

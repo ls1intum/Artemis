@@ -1,0 +1,448 @@
+import { expect, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import {
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+} from 'app/assessment/shared/entities/feedback.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
+// Preliminary mock before import to prevent errors
+vi.mock('app/core/error-reporting/capture-exception', async () => {
+    const originalModule = await vi.importActual('app/core/error-reporting/capture-exception');
+    return {
+        ...originalModule,
+        captureException: vi.fn(),
+    };
+});
+
+describe('ResultService', () => {
+    let resultService: ResultService;
+    let translateService: TranslateService;
+    let http: HttpClient;
+
+    const programmingExercise: ProgrammingExercise = {
+        id: 34,
+        type: ExerciseType.PROGRAMMING,
+        releaseDate: dayjs().subtract(5, 'hours'),
+        dueDate: dayjs().subtract(1, 'hours'),
+        maxPoints: 200,
+        assessmentType: AssessmentType.MANUAL,
+        assessmentDueDate: dayjs().subtract(1, 'minutes'),
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const participation1: StudentParticipation = { type: ParticipationType.STUDENT, initializationDate: dayjs().subtract(4, 'hours'), exercise: programmingExercise };
+    const participation2: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise };
+    const submission1: ProgrammingSubmission = { buildFailed: true, participation: participation1 };
+    const submission2: ProgrammingSubmission = { buildFailed: false, participation: participation2 };
+    const participation3: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise, submissions: [submission1] };
+    const result1: Result = { id: 1, completionDate: dayjs().add(1, 'hours'), submission: submission1, score: 0 };
+    const result2: Result = { id: 2, submission: submission2, completionDate: dayjs().add(2, 'hours'), score: 20 };
+    const result3: Result = {
+        feedbacks: [
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: true, type: FeedbackType.AUTOMATIC },
+        ],
+        testCaseCount: 2,
+        passedTestCaseCount: 1,
+        codeIssueCount: 0,
+        completionDate: dayjs().add(3, 'hours'),
+        score: 60,
+    };
+    const result4: Result = {
+        feedbacks: [
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: false, type: FeedbackType.AUTOMATIC },
+        ],
+        testCaseCount: 2,
+        passedTestCaseCount: 1,
+        codeIssueCount: 1,
+        completionDate: dayjs().add(4, 'hours'),
+        score: 50,
+    };
+    const result5: Result = {
+        feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }],
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        score: 80,
+    };
+    const result6: Result = {
+        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: true,
+    };
+    const result7: Result = {
+        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: false,
+    };
+    const result8: Result = {
+        feedbacks: [],
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: undefined,
+    };
+    const result9: Result = {
+        feedbacks: [],
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
+        completionDate: dayjs().add(5, 'minutes'),
+        assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+        successful: undefined,
+    };
+
+    const modelingExercise: ModelingExercise = {
+        maxPoints: 50,
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const modelingParticipation: StudentParticipation = { type: ParticipationType.STUDENT, exercise: modelingExercise };
+    const modelingSubmission = { participation: modelingParticipation };
+    const modelingResult: Result = { submission: modelingSubmission, score: 42 };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                ResultService,
+                ExerciseService,
+                ParticipationService,
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(SubmissionService),
+            ],
+        });
+
+        resultService = TestBed.inject(ResultService);
+        translateService = TestBed.inject(TranslateService);
+        http = TestBed.inject(HttpClient);
+    });
+
+    it('should convert the dates and points map when receiving a result with points from the server', () => {
+        const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
+        resultWithPoints1.result = result1;
+        resultWithPoints1.totalPoints = 100;
+        resultWithPoints1.pointsPerCriterion = new Map();
+        const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
+        resultWithPoints2.result = result2;
+        resultWithPoints2.totalPoints = 50;
+        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
+
+        const results = [resultWithPoints1, resultWithPoints2];
+
+        const httpStub = vi.spyOn(http, 'get').mockReturnValue(of({ body: results }));
+
+        resultService.getResultsWithPointsPerGradingCriterion(programmingExercise).subscribe((res) => {
+            const resultsWithScores: ResultWithPointsPerGradingCriterion[] = res.body!;
+            expect(resultsWithScores).toHaveLength(2);
+
+            const receivedResult1 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 1);
+            expect(receivedResult1!.result.completionDate).toEqual(result1.completionDate);
+            expect(receivedResult1!.result.submission!.participation!.initializationDate).toEqual(participation1.initializationDate);
+            expect(receivedResult1!.result.submission!.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
+            expect(receivedResult1!.result.submission!.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
+            expect(receivedResult1!.result.durationInMinutes).toBe(300);
+
+            const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);
+            expect(receivedResult2!.result.completionDate).toBe(result2.completionDate);
+            const expectedPointsMap = new Map();
+            expectedPointsMap.set(1, 20);
+            expectedPointsMap.set(2, 30);
+            expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
+        });
+
+        expect(httpStub).toHaveBeenCalledExactlyOnceWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
+    });
+
+    it('should convert Result Response from Server', () => {
+        const emptyResponse: EntityResponseType = new HttpResponse<Result>({ body: undefined });
+        const response: EntityResponseType = new HttpResponse<Result>({ body: result1 });
+        const converResultsSpy = vi.spyOn(resultService as any, 'convertResultDatesFromServer');
+        const result = resultService.convertResultResponseDatesFromServer(emptyResponse);
+        expect(result).toBe(emptyResponse);
+        expect(converResultsSpy).toHaveBeenCalledTimes(0);
+        resultService.convertResultResponseDatesFromServer(response);
+        expect(converResultsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should trigger csv download', () => {
+        const createASpy = vi.spyOn(document, 'createElement');
+        resultService.triggerDownloadCSV(['row1', 'row2'], 'filename');
+        expect(createASpy).toHaveBeenCalledOnce();
+    });
+
+    describe('getResultString', () => {
+        let translateServiceSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            translateServiceSpy = vi.spyOn(translateService, 'instant');
+        });
+
+        it('should return correct string for non programming exercise long format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation)).toBe('artemisApp.result.resultString.nonProgramming');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
+        });
+
+        it('should return correct string for non programming exercise short format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result1, programmingExercise, participation3, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildFailed');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                    points: 0,
+                });
+            }
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result2, programmingExercise, participation2, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                    points: 40,
+                });
+            }
+        });
+
+        it.each([true, false])('should return correct string for manual programming exercise result with no tests', (short: boolean) => {
+            const manualResult: Result = { id: 10, submission: submission2, completionDate: dayjs().add(2, 'hours'), score: 96, assessmentType: AssessmentType.MANUAL };
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(manualResult, programmingExercise, participation2, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.manualResult');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 96,
+                    buildAndTestMessage: 'artemisApp.result.manualResult',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 96,
+                    buildAndTestMessage: 'artemisApp.result.manualResult',
+                    points: 192,
+                });
+            }
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result3, programmingExercise, participation1, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
+                    points: 120,
+                });
+            }
+        });
+
+        it('should return correct string for programming exercise with code issues', () => {
+            expect(resultService.getResultString(result4, programmingExercise, participation1)).toBe('artemisApp.result.resultString.programmingCodeIssues');
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programmingCodeIssues`, {
+                relativeScore: 50,
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
+                numberOfIssues: 1,
+                points: 100,
+            });
+        });
+
+        it('should return correct string for programming exercise preliminary', () => {
+            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
+
+            expect(resultService.getResultString(result5, programmingExercise, participation1)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
+            expect(translateServiceSpy).toHaveBeenCalledTimes(3);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programming`, {
+                relativeScore: 80,
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                points: 160,
+            });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
+        });
+
+        it('should return correct string for Athena non graded successful feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
+
+            expect(resultService.getResultString(result6, programmingExercise, participation1)).toBe(
+                'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
+            );
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should return correct string for Athena non graded unsuccessful feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
+
+            expect(resultService.getResultString(result7, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should return correct string for Athena timed out non graded feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
+
+            expect(resultService.getResultString(result8, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+        });
+
+        it('should return correct string for in progress Athena non-graded feedback', () => {
+            programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
+
+            expect(resultService.getResultString(result9, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        });
+
+        it('builds the string for a result without a participation and does not report it as an error', () => {
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
+            captureExceptionSpy.mockClear();
+
+            expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+            expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+
+        describe('rounding of the score', () => {
+            // an exercise of the course overview carries no course
+            const exerciseWithoutCourse = { id: 77, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+            const result: Result = { id: 7, score: 42.4567, completionDate: dayjs() };
+            const missingCourseMessage = 'The course object used for determining the rounding of scores was undefined';
+
+            beforeEach(() => {
+                vi.spyOn(ErrorReporting, 'captureException').mockClear();
+            });
+
+            it('rounds to the accuracy of the course that is passed for an exercise without a course, and does not report it', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('uses the course of the exercise before the passed course', () => {
+                const exerciseWithCourse = { id: 78, type: ExerciseType.TEXT, maxPoints: 10, course: { id: 1, accuracyOfScores: 0 } } as Exercise;
+
+                resultService.getResultString(result, exerciseWithCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('reports a missing course and rounds to the default accuracy when there is neither a course of the exercise nor a passed course', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true);
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.5 });
+                expect(ErrorReporting.captureException).toHaveBeenCalledWith(expect.objectContaining({ message: missingCourseMessage }));
+            });
+        });
+
+        it('reports an error if result or exercise is undefined', () => {
+            // Re-mock to get reference because direct import doesn't work here
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
+            captureExceptionSpy.mockClear();
+            expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
+            expect(captureExceptionSpy).toHaveBeenCalledExactlyOnceWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+    });
+
+    describe('evaluateBadge', () => {
+        it('should be calculated correctly for practice mode', () => {
+            const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
+            const result: Result = {};
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                severity: 'secondary',
+                text: 'artemisApp.result.practice',
+                tooltip: 'artemisApp.result.practiceTooltip',
+            });
+        });
+
+        it('should be calculated correctly for rated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: true };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                severity: 'success',
+                text: 'artemisApp.result.graded',
+                tooltip: 'artemisApp.result.gradedTooltip',
+            });
+        });
+
+        it('should be calculated correctly for unrated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: false };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                severity: 'info',
+                text: 'artemisApp.result.notGraded',
+                tooltip: 'artemisApp.result.notGradedTooltip',
+            });
+        });
+    });
+});

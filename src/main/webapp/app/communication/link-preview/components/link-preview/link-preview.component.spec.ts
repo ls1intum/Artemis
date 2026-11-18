@@ -1,0 +1,206 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { LinkPreviewComponent } from 'app/communication/link-preview/components/link-preview/link-preview.component';
+
+describe('LinkPreviewComponent', () => {
+    let component: LinkPreviewComponent;
+    let fixture: ComponentFixture<LinkPreviewComponent>;
+    let communicationService: CommunicationService;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), ConfirmIconComponent],
+            providers: [
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                LocalStorageService,
+            ],
+        });
+
+        fixture = TestBed.createComponent(LinkPreviewComponent);
+        communicationService = TestBed.inject(CommunicationService);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('posting', new Post());
+        fixture.componentRef.setInput('showLoadingsProgress', false);
+        fixture.componentRef.setInput('loaded', false);
+        fixture.componentRef.setInput('hasError', false);
+        fixture.detectChanges();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should render link preview when linkPreview is provided', () => {
+        fixture.componentRef.setInput('linkPreview', {
+            title: 'Test Title',
+            description: 'Test Description',
+            image: 'test-image.jpg',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        const previewContainer = fixture.nativeElement.querySelector('.preview-container');
+        const previewCard = fixture.nativeElement.querySelector('.preview-card');
+        const previewTitle = fixture.nativeElement.querySelector('.preview-title');
+        const previewDescription = fixture.nativeElement.querySelector('.preview-description');
+        const previewImage = fixture.nativeElement.querySelector('.preview-image img');
+
+        expect(previewContainer).toBeTruthy();
+        expect(previewCard).toBeTruthy();
+        expect(previewTitle.textContent).toBe('Test Title');
+        expect(previewDescription.textContent).toBe('Test Description');
+        expect(previewImage.src).toContain('test-image.jpg');
+    });
+
+    it('should keep the close button reachable and enabled when focused via keyboard', () => {
+        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        fixture.componentRef.setInput('linkPreview', {
+            title: 'Test Title',
+            description: 'Test Description',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        });
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const closeButton = fixture.nativeElement.querySelector('.close-button button');
+        expect(closeButton).toBeTruthy();
+
+        closeButton.focus();
+
+        expect(document.activeElement).toBe(closeButton);
+        expect(closeButton.disabled).toBe(false);
+        expect(closeButton.hidden).toBe(false);
+    });
+
+    it('should render link preview without image when multiple links are provided', () => {
+        fixture.componentRef.setInput('linkPreview', {
+            title: 'Test Title',
+            description: 'Test Description',
+            image: 'test-image.jpg',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        });
+        fixture.componentRef.setInput('multiple', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const previewContainer = fixture.nativeElement.querySelector('.preview-container');
+        const previewImage = fixture.nativeElement.querySelector('.preview-image img');
+
+        expect(previewContainer).toBeTruthy();
+        expect(previewImage).toBeFalsy();
+    });
+
+    it('should not render link preview when linkPreview is not provided', () => {
+        const previewContainer = fixture.nativeElement.querySelector('.preview-container');
+
+        expect(previewContainer).toBeFalsy();
+    });
+
+    it('should render loading spinner when linkPreview is not loaded and showLoadingsProgress is true', () => {
+        fixture.componentRef.setInput('showLoadingsProgress', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
+        const loadingSpinner = fixture.nativeElement.querySelector('.loading-spinner');
+
+        expect(loadingContainer).toBeTruthy();
+        expect(loadingSpinner).toBeTruthy();
+    });
+
+    it('should not render loading spinner when linkPreview is loaded', () => {
+        fixture.componentRef.setInput('loaded', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
+
+        expect(loadingContainer).toBeFalsy();
+    });
+
+    it('should not render loading spinner when showLoadingsProgress is false', () => {
+        fixture.componentRef.setInput('showLoadingsProgress', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const loadingContainer = fixture.nativeElement.querySelector('.loading-container');
+
+        expect(loadingContainer).toBeFalsy();
+    });
+
+    it('should not render error message when hasError is false', () => {
+        fixture.componentRef.setInput('hasError', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const errorContainer = fixture.nativeElement.querySelector('.error-container');
+
+        expect(errorContainer).toBeFalsy();
+    });
+
+    it('should initialize isAuthorOfOriginalPost', () => {
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+
+        component.ngOnInit();
+
+        expect(component.isAuthorOfOriginalPost()).toBe(true);
+        expect(communicationServiceSpy).toHaveBeenCalled();
+    });
+
+    it('should remove link preview from message', () => {
+        const linkPreview: any = {
+            url: 'https://example.com',
+        };
+
+        fixture.componentRef.setInput('isReply', false);
+        const posting = new Post();
+        posting.content = 'This is a sample post with a link: https://example.com';
+        fixture.componentRef.setInput('posting', posting);
+
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        const communicationServiceUpdatePostSpy = vi.spyOn(communicationService, 'updatePost');
+
+        component.ngOnInit();
+        component.removeLinkPreview(linkPreview);
+
+        expect(communicationServiceSpy).toHaveBeenCalled();
+        expect(communicationServiceUpdatePostSpy).toHaveBeenCalled();
+        expect(posting.content).toContain('<https://example.com>');
+    });
+
+    it('should remove link preview from reply', () => {
+        const linkPreview: any = {
+            url: 'https://example.com',
+        };
+
+        fixture.componentRef.setInput('isReply', true);
+        const posting = new AnswerPost();
+        posting.content = 'This is a sample answer post with a link: https://example.com';
+        fixture.componentRef.setInput('posting', posting);
+
+        const communicationServiceSpy = vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
+        const communicationServiceUpdateAnswerPostSpy = vi.spyOn(communicationService, 'updateAnswerPost');
+
+        component.ngOnInit();
+        component.removeLinkPreview(linkPreview);
+
+        expect(communicationServiceSpy).toHaveBeenCalled();
+        expect(communicationServiceUpdateAnswerPostSpy).toHaveBeenCalled();
+        expect(posting.content).toContain('<https://example.com>');
+    });
+});

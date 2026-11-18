@@ -1,0 +1,109 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExampleModels';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ChannelItemComponent } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channel-item/channel-item.component';
+
+describe('ChannelItemComponent', () => {
+    let component: ChannelItemComponent;
+    let fixture: ComponentFixture<ChannelItemComponent>;
+    const canJoinChannel = vi.fn();
+    const canLeaveConversation = vi.fn();
+    const channel = generateExampleChannelDTO({ id: 1 } as ChannelDTO);
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+    });
+
+    beforeEach(() => {
+        canJoinChannel.mockReturnValue(true);
+        canLeaveConversation.mockReturnValue(true);
+        fixture = TestBed.createComponent(ChannelItemComponent);
+        component = fixture.componentInstance;
+        component.canJoinChannel = canJoinChannel;
+        component.canLeaveConversation = canLeaveConversation;
+        fixture.componentRef.setInput('channel', channel);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should show buttons only if user has the required permissions', () => {
+        // `canJoinChannel` / `canLeaveConversation` are plain functions (not signals); under zoneless change
+        // detection a changed return value does not mark the component's view dirty, so the view's
+        // ChangeDetectorRef must be marked for check before re-rendering. `fixture.changeDetectorRef` refers to
+        // the test host wrapper, not the component view, so resolve the component view's ChangeDetectorRef.
+        const componentCdr = fixture.componentRef.injector.get(ChangeDetectorRef);
+
+        expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeTruthy();
+
+        canJoinChannel.mockReturnValue(false);
+        componentCdr.markForCheck();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeTruthy();
+
+        canLeaveConversation.mockReturnValue(false);
+        componentCdr.markForCheck();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
+
+        // change dto to one where not is member
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
+    });
+
+    it('should show the joined badge only for a channel the user is a member of', () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-joined-badge"]')).toBeTruthy();
+
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-joined-badge"]')).toBeFalsy();
+    });
+
+    it('should show the tutorial group of a tutorial group channel', () => {
+        expect(fixture.nativeElement.querySelector('tumaet-ui-tag [jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"]')).toBeFalsy();
+
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 3, tutorialGroupId: 5, tutorialGroupTitle: 'Group A' } as ChannelDTO));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('tumaet-ui-tag [jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"]')).toBeTruthy();
+    });
+
+    it('should emit channel action when the user clicks on the interaction buttons', () => {
+        const emitAction = vi.spyOn(component.channelAction, 'emit');
+        fixture.nativeElement.querySelector('#view' + channel.id).click();
+        expect(emitAction).toHaveBeenCalledWith({ action: 'view', channel });
+
+        emitAction.mockClear();
+        fixture.nativeElement.querySelector('#register' + channel.id).click();
+        expect(emitAction).toHaveBeenCalledWith({ action: 'register', channel });
+
+        emitAction.mockClear();
+        fixture.nativeElement.querySelector('#deregister' + channel.id).click();
+        expect(emitAction).toHaveBeenCalledWith({ action: 'deregister', channel });
+    });
+});

@@ -1,0 +1,21 @@
+<div class="unreferenced-feedback-detail" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+    <jhi-unified-feedback
+        [editable]="true"
+        [readOnly]="readOnly()"
+        [feedback]="feedback()"
+        [highlightDifferences]="highlightDifferences()"
+        [(feedbackTitle)]="feedback().text"
+        [(feedbackDetail)]="feedback().detailText"
+        [(feedbackCredits)]="feedback().credits!"
+        (feedbackTitleChange)="emitChanges()"
+        (feedbackDetailChange)="emitChanges()"
+        (feedbackCreditsChange)="emitChanges()"
+        (onDelete)="delete()"
+    />
+    <jhi-grading-instruction-usage-warning
+        [feedback]="feedback()"
+        [allFeedbacks]="allFeedbacks()"
+        [capAutomaticTestSubtotal]="capAutomaticTestSubtotal()"
+        [readOnly]="readOnly()"
+    />
+</div>

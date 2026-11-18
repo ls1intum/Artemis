@@ -1,0 +1,119 @@
+@if (form()) {
+    <div class="mb-2 rounded-md border border-border bg-(--overview-light-background-color)" [formGroup]="form()!">
+        <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4! py-2">
+            <div
+                class="clickable flex max-w-full items-center"
+                (click)="toggle()"
+                [attr.aria-expanded]="!isCollapsed()"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            >
+                <div class="me-4!">
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+                </div>
+                <h6 class="mb-0 truncate">{{ titleControl()?.value ?? '' }}</h6>
+            </div>
+            <div class="flex grow items-center justify-end">
+                <div class="me-4! flex items-center gap-1">
+                    <tumaet-ui-checkbox [inputId]="'viewed-' + index()" formControlName="viewed" />
+                    <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
+                </div>
+                @if (!isInEditMode()) {
+                    <jhi-button
+                        class="me-1"
+                        id="editButton-{{ index() }}"
+                        [btnType]="ButtonType.WARNING"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'entity.action.edit'"
+                        [icon]="faPen"
+                        (onClick)="edit()"
+                        [shouldSubmit]="false"
+                    />
+                } @else {
+                    <jhi-button
+                        class="me-1"
+                        id="saveButton-{{ index() }}"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'entity.action.save'"
+                        [icon]="faSave"
+                        (onClick)="save()"
+                        [disabled]="!isSavePossible()"
+                        [shouldSubmit]="false"
+                    />
+                }
+                <jhi-button
+                    id="deleteButton-{{ index() }}"
+                    [btnType]="ButtonType.ERROR"
+                    [btnSize]="ButtonSize.SMALL"
+                    [title]="'entity.action.delete'"
+                    [icon]="faTrash"
+                    (onClick)="delete()"
+                    [shouldSubmit]="false"
+                />
+            </div>
+        </div>
+        <div class="p-4!" [hidden]="isCollapsed()" formGroupName="competency">
+            <div class="mb-4!">
+                <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
+                <!-- The kit input keeps only a static id; tumAetUiInputId hands it the bound one, and the plain id shows the label association in the template. -->
+                <input
+                    type="text"
+                    tumAetUiInput
+                    class="block w-full"
+                    id="title-{{ index() }}"
+                    [tumAetUiInputId]="'title-' + index()"
+                    formControlName="title"
+                    [tumAetUiInputInvalid]="!!titleControl()?.invalid && (!!titleControl()?.dirty || !!titleControl()?.touched)"
+                />
+                @if (titleControl()?.invalid && (titleControl()?.dirty || titleControl()?.touched)) {
+                    <tumaet-ui-message severity="error" class="mt-2">
+                        @if (titleControl()?.errors?.required) {
+                            <div jhiTranslate="artemisApp.competency.create.titleRequiredValidationError"></div>
+                        }
+                        @if (titleControl()?.errors?.maxlength) {
+                            <div jhiTranslate="artemisApp.competency.create.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
+                        }
+                    </tumaet-ui-message>
+                }
+            </div>
+            <div class="mb-4!">
+                <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
+                @if (isInEditMode()) {
+                    <jhi-markdown-editor-monaco
+                        [markdown]="descriptionControl()?.value"
+                        (markdownChange)="updateDescriptionControl($event)"
+                        id="description-{{ index() }}"
+                        class="markdown-preview"
+                        [enableFileUpload]="false"
+                    />
+                } @else {
+                    <div
+                        id="description-{{ index() }}"
+                        disabled="true"
+                        class="markdown-preview rounded-md border border-border p-1"
+                        [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"
+                    ></div>
+                }
+                @if (descriptionControl()?.invalid && descriptionControl()?.dirty) {
+                    <tumaet-ui-message severity="error" class="mt-2">
+                        @if (descriptionControl()?.errors?.maxlength) {
+                            <div
+                                jhiTranslate="artemisApp.competency.create.descriptionMaxLengthValidationError"
+                                [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                            ></div>
+                        }
+                    </tumaet-ui-message>
+                }
+            </div>
+            <div class="mb-4!">
+                <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
+                <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl()!" />
+            </div>
+        </div>
+    </div>
+}

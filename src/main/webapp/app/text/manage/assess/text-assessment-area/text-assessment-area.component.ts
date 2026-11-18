@@ -1,0 +1,190 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/text-block-assessment-card.component';
+import { ManualTextblockSelectionComponent } from '../manual-textblock-selection/manual-textblock-selection.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+@Component({
+    selector: 'jhi-text-assessment-area',
+    templateUrl: './text-assessment-area.component.html',
+    styles: [
+        `
+            :host {
+                width: 100%;
+            }
+        `,
+    ],
+    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective, TumAetUiTagComponent],
+})
+export class TextAssessmentAreaComponent {
+    private readonly document = inject(DOCUMENT);
+    private stringCountService = inject(StringCountService);
+
+    // inputs
+    submission = input.required<TextSubmission>();
+    allFeedbacks = input<Feedback[]>([]);
+    textBlockRefs = model.required<TextBlockRef[]>();
+    readOnly = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    criteria = input<GradingCriterion[]>();
+    allowManualBlockSelection = input<boolean>(true);
+
+    // outputs
+    textBlockRefsAddedRemoved = output<void>();
+
+    // state signals
+    autoTextBlockAssessment = signal(true);
+    selectedRef = model<TextBlockRef | undefined>(undefined);
+    wordCount = signal(0);
+    characterCount = signal(0);
+    // block that was just added by manual selection; its feedback editor is focused as soon as the card is rendered, once
+    blockToFocus = signal<TextBlock | undefined>(undefined);
+
+    constructor() {
+        // Effect to handle submission changes - updates word/character counts
+        effect(() => {
+            const submissionValue = this.submission();
+            if (submissionValue) {
+                const { text } = submissionValue;
+                this.wordCount.set(this.stringCountService.countWords(text));
+                this.characterCount.set(this.stringCountService.countCharacters(text));
+            }
+        });
+
+        // Effect to ensure textBlockRefs are sorted by startIndex
+        effect(() => {
+            const refs = this.textBlockRefs();
+            if (!refs || refs.length <= 1) {
+                return;
+            }
+
+            // Create a sorted copy without mutating the original
+            const sortedRefs = [...refs].sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
+
+            // Check if order actually changed by comparing startIndices
+            const orderChanged = refs.some((ref, index) => ref.block!.startIndex !== sortedRefs[index].block!.startIndex);
+
+            if (orderChanged) {
+                this.textBlockRefs.set(sortedRefs);
+            }
+        });
+    }
+
+    @HostListener('document:keydown.alt', ['$event', 'false'])
+    @HostListener('document:keyup', ['$event', 'true'])
+    onAltToggle(event: Event, toggleValue: boolean) {
+        // Restore even if focus or the other held modifiers changed after Alt entered manual selection.
+        if (toggleValue) {
+            if (event instanceof KeyboardEvent && event.key === 'Alt') {
+                this.autoTextBlockAssessment.set(true);
+            }
+            return;
+        }
+        if (!this.allowManualBlockSelection() || event.composedPath().some((target) => this.isEditableElement(target)) || this.isEditableElement(this.document.activeElement)) {
+            return;
+        }
+        if (this.autoTextBlockAssessment()) {
+            // a new manual selection starts, so the previous one must not claim the focus when the cards are rendered again
+            this.blockToFocus.set(undefined);
+        }
+        this.autoTextBlockAssessment.set(false);
+    }
+
+    /**
+     * The release of Alt can be lost, for example when the operating system consumes it for a keyboard layout switch (Alt+Shift) or a window shortcut. The area would
+     * then stay in manual selection, where unassessed text has no drop targets, so a criterion dropped onto it silently links to nothing until the page is reloaded.
+     * Any key press, pointer press or drag start without Alt proves that Alt is up, so it brings the area back to the automatic selection.
+     * @param event the interaction that was observed on the document
+     */
+    @HostListener('document:pointerdown', ['$event'])
+    @HostListener('document:dragstart', ['$event'])
+    @HostListener('document:keydown', ['$event'])
+    onInteractionWithoutAlt(event: MouseEvent | KeyboardEvent): void {
+        if (this.autoTextBlockAssessment() || event.altKey || (event instanceof KeyboardEvent && event.key === 'Alt')) {
+            return;
+        }
+        this.blockToFocus.set(undefined);
+        this.autoTextBlockAssessment.set(true);
+    }
+
+    @HostListener('window:blur')
+    onWindowBlur(): void {
+        this.blockToFocus.set(undefined);
+        this.autoTextBlockAssessment.set(true);
+    }
+
+    private isEditableElement(target: EventTarget | null): boolean {
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+        if (target.closest('input, textarea, select') || target.isContentEditable) {
+            return true;
+        }
+        const editable = target.closest('[contenteditable]');
+        return !!editable && editable.getAttribute('contenteditable')?.toLowerCase() !== 'false';
+    }
+
+    /**
+     * Emit the reference change of text blocks
+     */
+    textBlockRefsChangeEmit(): void {
+        // Trigger model update by setting the same value (forces change detection)
+        this.textBlockRefs.set([...this.textBlockRefs()]);
+    }
+
+    /**
+     * It is called if a text block is added manually.
+     * @param ref - added text block
+     */
+    addTextBlockRef(ref: TextBlockRef): void {
+        const currentRefs = this.textBlockRefs();
+        this.textBlockRefs.set([...currentRefs, ref]);
+        this.blockToFocus.set(ref.block);
+        this.textBlockRefsAddedRemoved.emit();
+    }
+
+    /**
+     * It is called if the assessment for a text block is deleted. So, textBlockRef is deleted
+     * @param ref - TextBlockRef that has a deleted assessment(feedback).
+     */
+    removeTextBlockRef(ref: TextBlockRef): void {
+        const currentRefs = this.textBlockRefs();
+        const index = currentRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
+        if (index === -1) {
+            return;
+        }
+        if (this.blockToFocus() === ref.block) {
+            this.blockToFocus.set(undefined);
+        }
+        const newRefs = [...currentRefs];
+        newRefs.splice(index, 1);
+        this.textBlockRefs.set(newRefs);
+        this.textBlockRefsAddedRemoved.emit();
+    }
+
+    /**
+     * It is called when a card handled the request to focus its feedback editor. The request is used up, so it cannot
+     * move the focus again later on, e.g. when the assessment becomes editable again or the feedback is re-added.
+     * @param ref - TextBlockRef of the card that handled the request
+     */
+    didHandleFocusFeedback(ref: TextBlockRef): void {
+        if (this.blockToFocus() === ref.block) {
+            this.blockToFocus.set(undefined);
+        }
+    }
+
+    /**
+     * It is called when a text block is selected.
+     * @param ref - selected TextBlockRef
+     */
+    didSelectRef(ref?: TextBlockRef): void {
+        this.selectedRef.set(ref);
+    }
+}

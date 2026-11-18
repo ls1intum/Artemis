@@ -1,0 +1,1158 @@
+package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.File;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+
+class HyperionCodeGenerationExecutionServiceTest {
+
+    private static final String COMMIT_HASH = "abc123abc123abc123abc123abc123abc123abc1";
+
+    @Mock
+    private GitService gitService;
+
+    @Mock
+    private RepositoryService repositoryService;
+
+    @Mock
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Mock
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+
+    @Mock
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Mock
+    private BuildLogEntryService buildLogEntryService;
+
+    @Mock
+    private ResultTestRepository resultRepository;
+
+    @Mock
+    private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    @Mock
+    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @Mock
+    private HyperionProgrammingExerciseContextRendererService repositoryStructureService;
+
+    @Mock
+    private HyperionSolutionRepositoryService solutionStrategy;
+
+    @Mock
+    private HyperionTemplateRepositoryService templateStrategy;
+
+    @Mock
+    private HyperionTestRepositoryService testStrategy;
+
+    @Mock
+    private ProgrammingSubmissionService programmingSubmissionService;
+
+    @Mock
+    private HyperionConsistencyCheckService consistencyCheckService;
+
+    @Mock
+    private HyperionReviewCommentContextRendererService reviewCommentContextRendererService;
+
+    @Mock
+    private ExerciseVersionService exerciseVersionService;
+
+    @Mock
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    @Mock
+    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService liveSaves;
+
+    private HyperionCodeGenerationExecutionService service;
+
+    private User user;
+
+    private ProgrammingExercise exercise;
+
+    @TempDir
+    private Path tempDir;
+
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+        this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
+                templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, buildLogEntryService, resultRepository, continuousIntegrationTriggerService,
+                programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService, liveSaves);
+
+        this.user = new User();
+        user.setLogin("testuser");
+
+        this.exercise = new ProgrammingExercise();
+        exercise.setId(1L);
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProblemStatement("Implement sorting algorithm");
+    }
+
+    @Test
+    void resolveStrategy_withSolutionRepositoryType_returnsSolutionStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
+
+        assertThat(result).isEqualTo(solutionStrategy);
+    }
+
+    @Test
+    void resolveStrategy_withTemplateRepositoryType_returnsTemplateStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
+
+        assertThat(result).isEqualTo(templateStrategy);
+    }
+
+    @Test
+    void resolveStrategy_withTestsRepositoryType_returnsTestStrategy() {
+        HyperionCodeGenerationService result = ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
+
+        assertThat(result).isEqualTo(testStrategy);
+    }
+
+    @Test
+    void resolveStrategy_withUnsupportedRepositoryType_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.AUXILIARY)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported repository type for code generation: auxiliary");
+    }
+
+    @Test
+    void generateAndCompileCode_withNullRepositoryUri_returnsNull() {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isNull();
+        verify(publisher, times(1)).error(anyString());
+    }
+
+    @Test
+    void generateAndCompileCode_withSuccessfulRun_createsExerciseVersion() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(true);
+        when(buildResult.getScore()).thenReturn(100.0);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any());
+        verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository.");
+    }
+
+    @Test
+    void generateAndCompileCode_withNoGeneratedFiles_reportsErrorCompletion() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(new CodeGenerationResponseDTO(null, List.of(), List.of()));
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isNull();
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.ERROR, HyperionCodeGenerationEventDTO.CompletionReason.NO_COMMITTED_FILES, Map.of(), 1,
+                "Solution generation did not produce any committed files.");
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    @Test
+    void generateAndCompileCode_withCommittedFilesAndFailedBuild_reportsPartialCompletion() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(50.0);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
+                argThat(message -> message.contains("solution repository") && message.contains("build failed")));
+    }
+
+    @Test
+    void generateAndCompileCode_withInitialAutoGeneration_limitsSolutionToSingleAttempt() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(50.0);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, true, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(1),
+                argThat(message -> message.contains("solution repository") && message.contains("build failed")));
+    }
+
+    @Test
+    void resolveMaxIterations_withInitialAutoGeneration_limitsSolutionAndTemplateOnly() {
+        int solutionIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.SOLUTION, true);
+        int templateIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.TEMPLATE, true);
+        int testIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.TESTS, true);
+        int manualSolutionIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.SOLUTION, false);
+
+        assertThat(solutionIterations).isEqualTo(1);
+        assertThat(templateIterations).isEqualTo(1);
+        assertThat(testIterations).isEqualTo(2);
+        assertThat(manualSolutionIterations).isEqualTo(2);
+    }
+
+    @Test
+    void generateAndCompileCode_withCommittedFilesAndMissingBuildResult_reportsNoBuildResultMessage() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isNull();
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.PARTICIPATION_NOT_FOUND, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
+    }
+
+    @Test
+    void generateAndCompileCode_withInterruptedBuildPolling_preservesCommittedPartialState() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(null);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        try {
+            Thread.currentThread().interrupt();
+
+            Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+            assertThat(result).isNull();
+            // The interrupt is surfaced as an error and the thread's interrupt flag is preserved (asserted before the finally clears it).
+            verify(publisher).error(anyString());
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_TIMED_OUT), eq(Map.of()),
+                    eq(1), argThat(message -> message.contains("solution repository") && message.contains("timed out")));
+            verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void legacyModelRunsWithoutTheSaveReservationButCannotWriteDuringAnotherSave() throws Exception {
+        var provider = mock(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.class);
+        when(provider.<String, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot>getMap(
+                de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.MAP_NAME))
+                .thenReturn(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap<>());
+        var realLiveSaves = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
+        ReflectionTestUtils.setField(service, "liveSaves", realLiveSaves);
+        var repository = mock(Repository.class);
+        var solution = new SolutionProgrammingExerciseParticipation();
+        solution.setId(99L);
+        solution.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solution);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("baseline");
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("build.gradle");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        var saving = new java.util.concurrent.CountDownLatch(1);
+        var finishSave = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var save = executor.submit(() -> {
+                String token = realLiveSaves.claim(exercise.getId());
+                try {
+                    saving.countDown();
+                    assertThat(finishSave.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                }
+                finally {
+                    realLiveSaves.release(exercise.getId(), token);
+                }
+                return null;
+            });
+            try {
+                assertThat(saving.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, mock(HyperionCodeGenerationEventPublisher.class));
+                verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+                verify(repositoryService, never()).createFile(any(), anyString(), any());
+                verify(repositoryService, never()).commitChanges(any(), any());
+            }
+            finally {
+                finishSave.countDown();
+            }
+            save.get(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void generateAndCompileCode_withCiTriggerFailure_skipsPollingAndReportsTriggerFailure(boolean coordinated) throws Exception {
+        when(liveSaves.isCoordinationEnabled()).thenReturn(coordinated);
+        when(liveSaves.claim(exercise.getId())).thenReturn("legacy-save");
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        if (coordinated) {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, originalCommitId, originalCommitId, newCommitId, newCommitId);
+        }
+        else {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        }
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+
+        assertThat(result).isNull();
+        verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
+        verify(resultRepository, never()).findLatestResultWithFeedbacksForSubmission(anyLong());
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
+        if (coordinated) {
+            var order = org.mockito.Mockito.inOrder(liveSaves, exerciseVersionService);
+            order.verify(liveSaves).claim(exercise.getId());
+            order.verify(exerciseVersionService).createExerciseVersionSynchronously(exercise, user);
+            order.verify(liveSaves).release(exercise.getId(), "legacy-save");
+            verify(exerciseVersionService, never()).createExerciseVersion(exercise, user);
+        }
+        else {
+            verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        }
+    }
+
+    @Test
+    void generateAndCompileCode_withOnlyObsoleteFileDeletion_commitsAndBuilds() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(99L);
+        templateParticipation.setRepositoryUri("http://localhost/git/abc/abc-template.git");
+        exercise.setTemplateParticipation(templateParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
+        doNothing().when(repositoryService).deleteFile(repository, "src/main/java/OldSort.java");
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(templateStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(), List.of("src/main/java/OldSort.java")));
+        when(programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId())).thenReturn(templateParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(1);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.TEMPLATE, false, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(repositoryService).deleteFile(repository, "src/main/java/OldSort.java");
+        verify(publisher).fileDeleted("src/main/java/OldSort.java", RepositoryType.TEMPLATE, 1);
+        verify(repositoryService).commitChanges(repository, user);
+        verify(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED), eq(Map.of()),
+                eq(1), argThat(message -> message.contains("Obsolete template files") && message.contains("removed")));
+    }
+
+    @Test
+    void extractBuildLogs_withNullResult_returnsDefaultMessage() {
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", (Object) null);
+
+        assertThat(result).isEqualTo("Build failed to produce a result.");
+    }
+
+    @Test
+    void cleanupRepository_withValidInputs_callsGitService() {
+        Repository mockRepository = mock(Repository.class);
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, "commit-hash");
+        verify(gitService, times(1)).resetToOriginHead(mockRepository);
+    }
+
+    @Test
+    void cleanupRepository_withNullRepository_doesNotThrow() {
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", null, "commit-hash");
+    }
+
+    @Test
+    void cleanupRepository_withNullCommitHash_doesNotThrow() {
+        Repository mockRepository = mock(Repository.class);
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, null);
+    }
+
+    @Test
+    void setupRepository_withNullRepositoryUri_returnsFalse() {
+        // Don't set any repository URI, so getRepositoryURI will return null
+
+        Object result = ReflectionTestUtils.invokeMethod(service, "setupRepository", exercise, RepositoryType.SOLUTION);
+
+        assertThat(result).hasFieldOrPropertyWithValue("success", false);
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withNoIssues_returnsNone() {
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(), null, null, null));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo("None");
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withLocations_formatsAndDefaultsMissingPath() {
+        ArtifactLocationDTO problemStatementLocation = new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 2);
+        ArtifactLocationDTO templateLocation = new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 5, 7);
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "desc", "fix",
+                List.of(problemStatementLocation, templateLocation));
+
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(issue), null, null, null));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo(
+                "1. [HIGH] METHOD_RETURN_TYPE_MISMATCH: desc\n   Suggested fix: fix\n   Locations: PROBLEM_STATEMENT:problem_statement.md:1-2; TEMPLATE_REPOSITORY:src/Main.java:5-7");
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withRuntimeException_returnsUnavailableMarker() {
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenThrow(new RuntimeException("consistency service unavailable"));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo("Unavailable (consistency check failed)");
+    }
+
+    @Test
+    void updateSingleFile_withExistingFile_deletesAndCreatesFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("Test.java", "public class Test {}");
+        File existingFile = mock(File.class);
+
+        when(gitService.getFileByName(mockRepository, "Test.java")).thenReturn(Optional.of(existingFile));
+        doNothing().when(repositoryService).deleteFile(mockRepository, "Test.java");
+        doNothing().when(repositoryService).createFile(eq(mockRepository), eq("Test.java"), any());
+
+        ReflectionTestUtils.invokeMethod(service, "updateSingleFile", mockRepository, generatedFile, exercise);
+
+        verify(repositoryService).deleteFile(mockRepository, "Test.java");
+        verify(repositoryService).createFile(eq(mockRepository), eq("Test.java"), any());
+    }
+
+    @Test
+    void updateSingleFile_withNonExistingFile_createsFileOnly() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("NewTest.java", "public class NewTest {}");
+
+        when(gitService.getFileByName(mockRepository, "NewTest.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(mockRepository), eq("NewTest.java"), any());
+
+        ReflectionTestUtils.invokeMethod(service, "updateSingleFile", mockRepository, generatedFile, exercise);
+
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(repositoryService).createFile(eq(mockRepository), eq("NewTest.java"), any());
+    }
+
+    @Test
+    void updateSingleFile_withIOException_throwsException() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("Test.java", "public class Test {}");
+
+        when(gitService.getFileByName(mockRepository, "Test.java")).thenReturn(Optional.empty());
+        doThrow(new IOException("IO error")).when(repositoryService).createFile(eq(mockRepository), eq("Test.java"), any());
+
+        // When using reflection, IOException gets wrapped in UndeclaredThrowableException
+        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "updateSingleFile", mockRepository, generatedFile, exercise)).isInstanceOf(Exception.class)
+                .hasRootCauseInstanceOf(IOException.class);
+    }
+
+    @Test
+    void deleteObsoleteFiles_withSafeSourceFile_deletesExistingFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        when(gitService.getFileByName(mockRepository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java/OldSort.java"), exercise,
+                RepositoryType.TEMPLATE, publisher, 2);
+
+        assertThat(deletedAnyFile).isTrue();
+        verify(repositoryService).deleteFile(mockRepository, "src/main/java/OldSort.java");
+        verify(publisher).fileDeleted("src/main/java/OldSort.java", RepositoryType.TEMPLATE, 2);
+    }
+
+    @Test
+    void deleteObsoleteFiles_withSafeTestFile_deletesExistingFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        when(gitService.getFileByName(mockRepository, "test/OldTest.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/OldTest.java"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isTrue();
+        verify(repositoryService).deleteFile(mockRepository, "test/OldTest.java");
+        verify(publisher).fileDeleted("test/OldTest.java", RepositoryType.TESTS, 2);
+    }
+
+    @Test
+    void publishGeneratedFiles_withGeneratedPathPointingAtDirectory_skipsWithoutDeleting() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path existingDirectory = Files.createDirectories(tempDir.resolve("src/main/java"));
+        File directory = new File(existingDirectory, null);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/main/java", "public class Whoops {}");
+
+        when(gitService.getFileByName(mockRepository, "src/main/java")).thenReturn(Optional.of(directory));
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(publisher, never()).fileUpdated(anyString(), any(), anyInt());
+        verify(publisher, never()).newFile(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void publishGeneratedFiles_withPathOutsideSourceRoot_skipsFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("pom.xml", "<project/>");
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isFalse();
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(publisher, never()).newFile(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void deleteObsoleteFiles_withSourceDirectoryPath_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("src/main/java"));
+        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
+
+        when(gitService.getFileByName(mockRepository, "src/main/java")).thenReturn(Optional.of(obsoleteDirectory));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java"), exercise, RepositoryType.TEMPLATE,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void deleteObsoleteFiles_withGitkeepPlaceholder_deletesExistingFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        when(gitService.getFileByName(mockRepository, "test/.gitkeep")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/.gitkeep"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isTrue();
+        verify(repositoryService).deleteFile(mockRepository, "test/.gitkeep");
+        verify(publisher).fileDeleted("test/.gitkeep", RepositoryType.TESTS, 2);
+    }
+
+    @Test
+    void deleteObsoleteFiles_withGitkeepPlaceholderOutsideAllowedDirectory_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("config/.gitkeep"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(gitService, never()).getFileByName(eq(mockRepository), anyString());
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void deleteObsoleteFiles_withUnsafePaths_ignoresDeletionRequests() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(
+                service, "deleteObsoleteFiles", mockRepository, List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", "../.gitkeep",
+                        "src/../.gitkeep", "", "src/.env", "src/.gitignore", "src/.github/workflows/ci.yml", "src/main/java/.secret"),
+                exercise, RepositoryType.TEMPLATE, publisher, 1);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(gitService, never()).getFileByName(eq(mockRepository), anyString());
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void commitAndGetHash_withSuccessfulCommit_returnsHash() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
+        SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
+
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
+
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(true);
+        verify(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
+    }
+
+    @Test
+    void commitAndGetHash_withCIException_returnsHashAndFailedTriggerState() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
+        SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
+
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("new-commit-hash");
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
+        doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash",
+                RepositoryType.SOLUTION);
+
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(false);
+    }
+
+    @Test
+    void commitAndGetHash_withTestsRepositoryType_createsTestSubmissionAndTriggersCI() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
+        SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
+
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(mockRepository, user);
+        when(gitService.getLastCommitHash(repositoryUri)).thenReturn("commit-tests");
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
+
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
+
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("commit-tests");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(true);
+        verify(programmingSubmissionService, times(1)).createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), "commit-tests");
+        verify(continuousIntegrationTriggerService, times(1)).triggerBuild(mockParticipation, "commit-tests", RepositoryType.TESTS);
+    }
+
+    @Test
+    void extractBuildLogs_withProgrammingSubmission_returnsConcatenatedLogs() {
+        Result mockResult = mock(Result.class);
+        ProgrammingSubmission mockSubmission = mock(ProgrammingSubmission.class);
+        BuildLogEntry logEntry1 = mock(BuildLogEntry.class);
+        BuildLogEntry logEntry2 = mock(BuildLogEntry.class);
+        List<BuildLogEntry> logEntries = List.of(logEntry1, logEntry2);
+
+        when(mockResult.getSubmission()).thenReturn(mockSubmission);
+        when(mockSubmission.getId()).thenReturn(42L);
+        // extractBuildLogs reads the logs of the failed build through the service, which serves them from disk and falls back to the table.
+        when(buildLogEntryService.getLatestBuildLogs(mockSubmission)).thenReturn(logEntries);
+        when(logEntry1.getLog()).thenReturn("Error in line 1");
+        when(logEntry2.getLog()).thenReturn("Error in line 2");
+
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
+
+        assertThat(result).isEqualTo("Error in line 1\nError in line 2");
+    }
+
+    @Test
+    void extractBuildLogs_withNonProgrammingSubmission_returnsDefaultMessage() {
+        Result mockResult = mock(Result.class);
+
+        when(mockResult.getSubmission()).thenReturn(null);
+
+        String result = ReflectionTestUtils.invokeMethod(service, "extractBuildLogs", mockResult);
+
+        assertThat(result).isEqualTo("Build failed to produce a result.");
+    }
+
+    @Test
+    void extractBuildFeedback_withTestFeedback_appendsCompactSummary() {
+        Result result = new Result();
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        BuildLogEntry logEntry = mock(BuildLogEntry.class);
+        ProgrammingExerciseTestCase passedTest = new ProgrammingExerciseTestCase().testName("testCompiles");
+        ProgrammingExerciseTestCase failedTest = new ProgrammingExerciseTestCase().testName("testSorts");
+        Feedback passedFeedback = new Feedback().testCase(passedTest).positive(true).type(FeedbackType.AUTOMATIC).detailText("Compilation works");
+        Feedback failedFeedback = new Feedback().testCase(failedTest).positive(false).type(FeedbackType.AUTOMATIC).detailText("Expected sorted result");
+
+        result.setSubmission(submission);
+        result.setFeedbacks(List.of(passedFeedback, failedFeedback));
+        // Production reads build logs through the service, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
+        when(submission.getId()).thenReturn(7L);
+        when(buildLogEntryService.getLatestBuildLogs(submission)).thenReturn(List.of(logEntry));
+        when(logEntry.getLog()).thenReturn("javac: cannot find symbol Sort");
+
+        String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);
+
+        // Build logs precede the test-feedback section so the retry prompt sees compile errors before per-test diffs;
+        // failures appear before passes so the actionable signal leads.
+        assertThat(summary).containsSubsequence("javac: cannot find symbol Sort", "Test feedback summary:", "testSorts", "FAILED", "Expected sorted result", "testCompiles",
+                "PASSED", "Compilation works");
+    }
+
+    @Test
+    void waitForBuildResult_withNoParticipation_returnsParticipationNotFoundOutcome() {
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+
+        Object resultSolution = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+        Object resultTemplate = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+
+        assertThat(resultSolution).hasFieldOrPropertyWithValue("result", null);
+        assertThat(ReflectionTestUtils.getField(resultSolution, "state")).hasToString("PARTICIPATION_NOT_FOUND");
+        assertThat(resultTemplate).hasFieldOrPropertyWithValue("result", null);
+        assertThat(ReflectionTestUtils.getField(resultTemplate, "state")).hasToString("PARTICIPATION_NOT_FOUND");
+    }
+
+    @Test
+    void waitForBuildResult_withSuccessfulResult_returnsSuccessOutcome() {
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(99L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(true);
+        when(buildResult.getScore()).thenReturn(100.0);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("SUCCESS");
+    }
+
+    @Test
+    void waitForBuildResult_withFailedResult_returnsFailedOutcome() {
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(100L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(100L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(50.0);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("FAILED");
+    }
+
+    @Test
+    void waitForBuildResult_withTemplateScoreZero_returnsSuccessOutcome() {
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(101L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(101L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(1);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("SUCCESS");
+    }
+
+    @Test
+    void waitForBuildResult_withTemplateCompileFailureScoreZero_returnsFailedOutcome() {
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(102L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(102L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(0);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("FAILED");
+    }
+
+    @Test
+    void generateAndCompileCode_withTemplateScoreAboveZero_retriesGeneration() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(88L);
+        templateParticipation.setRepositoryUri("http://localhost/git/abc/abc-template.git");
+        exercise.setTemplateParticipation(templateParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
+        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(templateStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        when(programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId())).thenReturn(templateParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(88L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(25.0);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.TEMPLATE, false, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(templateStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
+                argThat(message -> message.contains("template repository") && message.contains("build failed")));
+    }
+
+    private Repository preparePublicExecution() throws Exception {
+        exercise = org.mockito.Mockito.spy(exercise);
+        LocalVCRepositoryUri uri = mock(LocalVCRepositoryUri.class);
+        doReturn(uri).when(exercise).getRepositoryURI(any());
+        Repository repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(eq(uri), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(uri)).thenReturn(COMMIT_HASH);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("repository tree");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("build context");
+        return repository;
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = RepositoryType.class, names = { "SOLUTION", "TEMPLATE", "TESTS" })
+    void publicGenerationRejectsUnsafeGeneratedAndDeletedPathsWithoutCommitting(RepositoryType type) throws Exception {
+        preparePublicExecution();
+        HyperionCodeGenerationService strategy = switch (type) {
+            case SOLUTION -> solutionStrategy;
+            case TEMPLATE -> templateStrategy;
+            default -> testStrategy;
+        };
+        var generated = java.util.Arrays.asList((GeneratedFileDTO) null, new GeneratedFileDTO(null, "x"), new GeneratedFileDTO(" ", "x"),
+                new GeneratedFileDTO("../src/Escape.java", "x"), new GeneratedFileDTO("/src/Absolute.java", "x"), new GeneratedFileDTO("src/inva" + (char) 0 + "lid", "x"),
+                new GeneratedFileDTO("pom.xml", "x"));
+        var deletions = java.util.Arrays.asList(null, " ", "../src/Escape.java", "/src/Absolute.java", "src/inva" + (char) 0 + "lid", "src/.env", "src/.config/file", "pom.xml");
+        when(strategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(new CodeGenerationResponseDTO(null, generated, deletions));
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, type, false, publisher)).isNull();
+        String label = type == RepositoryType.SOLUTION ? "Solution" : type == RepositoryType.TEMPLATE ? "Template" : "Test";
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.ERROR, HyperionCodeGenerationEventDTO.CompletionReason.NO_COMMITTED_FILES, Map.of(), 1,
+                label + " generation did not produce any committed files.");
+        verify(repositoryService, never()).commitChanges(any(), any());
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+    }
+
+    @Test
+    void selectedFeedbackRendererFailureFallsBackAndConsistencyLocationsReachGeneratedRequest() throws Exception {
+        preparePublicExecution();
+        List<Long> selection = List.of(12L);
+        when(reviewCommentContextRendererService.renderCodeGenerationSelectedFeedback(exercise.getId(), RepositoryType.SOLUTION, selection))
+                .thenThrow(new IllegalStateException("renderer unavailable"));
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.now(),
+                java.util.Arrays.asList(null,
+                        new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "Mismatch", " ", java.util.Arrays.asList(null,
+                                new ArtifactLocationDTO(null, null, null, null), new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/X.java", 3, null)))),
+                null, null, null));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any(), any())).thenReturn(null);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, selection, publisher)).isNull();
+        org.mockito.ArgumentCaptor<String> issues = org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.ArgumentCaptor<String> feedback = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), eq("repository tree"), eq("build context"), issues.capture(), feedback.capture());
+        assertThat(issues.getValue()).contains("Mismatch", "problem_statement.md", "src/X.java:3").doesNotContain("Suggested fix:");
+        assertThat(feedback.getValue()).isEqualTo("{\"repositoryType\":\"SOLUTION\",\"threads\":[]}");
+    }
+
+    @Test
+    void generatedExistingFilesAreUpdatedAndMissingParticipationIsReportedAfterCommit() throws Exception {
+        Repository repository = preparePublicExecution();
+        File existing = mock(File.class);
+        when(existing.isFile()).thenReturn(true);
+        when(gitService.getFileByName(repository, "src/X.java")).thenReturn(Optional.of(existing));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO(" src\\X.java ", "class X {}")), List.of("src/missing.java")));
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, true, publisher)).isNull();
+        verify(publisher).fileUpdated("src/X.java", RepositoryType.SOLUTION, 1);
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.PARTICIPATION_NOT_FOUND, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
+        org.mockito.ArgumentCaptor<java.io.InputStream> content = org.mockito.ArgumentCaptor.forClass(java.io.InputStream.class);
+        verify(repositoryService).createFile(eq(repository), eq("src/X.java"), content.capture());
+        assertThat(new String(content.getValue().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).isEqualTo("class X {}");
+    }
+
+    @Test
+    void repositoryCheckoutFailureReportsSetupErrorWithoutGenerating() throws Exception {
+        preparePublicExecution();
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(null);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        assertThat(service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher)).isNull();
+        verify(publisher).error("Repository setup failed");
+        verify(solutionStrategy, never()).generateCode(any(), any(), any(), any(), any(), any(), any());
+    }
+
+}

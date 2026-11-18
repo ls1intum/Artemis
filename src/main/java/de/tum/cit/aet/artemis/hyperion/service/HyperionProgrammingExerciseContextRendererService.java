@@ -1,0 +1,542 @@
+package de.tum.cit.aet.artemis.hyperion.service;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.IntStream;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+
+/**
+ * Produces a deterministic textual snapshot of a {@link ProgrammingExercise} combining:
+ * <ul>
+ * <li>Problem statement (as pseudo file problem_statement.md)</li>
+ * <li>Filtered template repository</li>
+ * <li>Filtered solution repository</li>
+ * </ul>
+ * Hidden paths (segments starting with '.') are skipped. Repository access failures degrade gracefully to empty sections.
+ * <p>
+ * <b>Example Output (abridged)</b>
+ *
+ * <pre>
+ * ===== Problem Statement =====
+ * --------------------------------------------------------------------------------
+ * problem_statement.md:
+ * --------------------------------------------------------------------------------
+ * 1 | # Implement a Stack
+ * 2 | Create a LIFO stack supporting push/pop/peek operations.
+ *
+ * ===== Template Repository =====
+ * template_repository
+ * ├── src
+ * │   └── main
+ * │       └── java
+ * │           └── example
+ * │               └── Stack.java
+ * └── README.md
+ *
+ * --------------------------------------------------------------------------------
+ * template_repository/src/main/java/example/Stack.java:
+ * --------------------------------------------------------------------------------
+ *  1 | package example;
+ *  2 | public class Stack { // TODO student implementation }
+ *
+ * --------------------------------------------------------------------------------
+ * template_repository/README.md:
+ * --------------------------------------------------------------------------------
+ *  1 | # Stack Exercise
+ *  2 | Fill in the missing methods.
+ *
+ * ===== Solution Repository =====
+ * solution_repository
+ * └── src
+ *     └── main
+ *         └── java
+ *             └── example
+ *                 └── Stack.java
+ *
+ * --------------------------------------------------------------------------------
+ * solution_repository/src/main/java/example/Stack.java:
+ * --------------------------------------------------------------------------------
+ *  1 | package example;
+ *  2 | import java.util.ArrayDeque;
+ *  3 | public class Stack { // Full reference implementation }
+ * </pre>
+ *
+ * Lines are numbered by default and separated per file with a fixed-width horizontal rule; trees appear only
+ * for repositories (not the problem statement pseudo file). Numbering can be switched off per call — see
+ * {@link #renderContext(ProgrammingExercise, boolean)} — for consumers that neither report nor consume line
+ * numbers. Callers that do, such as the consistency check (whose verification stage re-opens files at the
+ * reported line numbers to discard hallucinated issues), must keep it on.
+ */
+@Service
+@Lazy
+@Conditional(HyperionEnabled.class)
+public class HyperionProgrammingExerciseContextRendererService {
+
+    private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRendererService.class);
+
+    private static final Set<String> EXCLUDED_DIRECTORIES = Set.of(".git", ".idea", ".vscode", "target", "build", "out", "bin", "node_modules", ".gradle", ".mvn", "dist", ".next",
+            "coverage");
+
+    private static final Set<String> EXCLUDED_FILES = Set.of(".DS_Store", "Thumbs.db", ".gitkeep");
+
+    private static final Set<String> BUILD_ENVIRONMENT_FILES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
+            "requirements.txt", "pyproject.toml", "setup.py", "Pipfile", "Pipfile.lock", "CMakeLists.txt", "Makefile", "Package.swift", "Cargo.toml", "Gemfile", "package.json",
+            ".java-version", ".tool-versions");
+
+    private static final int MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH = 4000;
+
+    private final RepositoryService repositoryService;
+
+    private final HyperionProgrammingLanguageContextFilterService languageFilter;
+
+    public HyperionProgrammingExerciseContextRendererService(RepositoryService repositoryService, HyperionProgrammingLanguageContextFilterService languageFilter) {
+        this.repositoryService = repositoryService;
+        this.languageFilter = languageFilter;
+    }
+
+    /**
+     * Render a context snapshot for the exercise. Returns empty string if exercise is null.
+     *
+     * @param exercise exercise reference
+     * @return textual snapshot
+     */
+    public String renderContext(ProgrammingExercise exercise) {
+        return renderContext(exercise, true);
+    }
+
+    /**
+     * Renders the exercise snapshot, optionally without the per-line number gutters.
+     * <p>
+     * The gutters (" 12 | code") help a consumer that reports locations back, such as the consistency check.
+     * They are noise for a consumer that edits by unique text match and never cites a line number: they cost
+     * tokens on every file, and a model shown a gutter may reproduce it as content — exercise-variant
+     * generation was writing " 1 | " prefixes into every generated problem statement because of exactly this.
+     * <p>
+     * Defaults to {@code true} so existing callers, and the consistency-check benchmark's reference scores,
+     * are unaffected.
+     *
+     * @param exercise        exercise reference
+     * @param withLineNumbers whether to prefix each rendered line with its number
+     * @return textual snapshot
+     */
+    public String renderContext(ProgrammingExercise exercise, boolean withLineNumbers) {
+        if (exercise == null) {
+            return "";
+        }
+        String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
+        ProgrammingLanguage language = exercise.getProgrammingLanguage();
+        Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
+                "template", exercise.getId(), language);
+        Map<String, String> solutionRepoFiles = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
+                "solution", exercise.getId(), language);
+
+        templateRepoFiles = languageFilter.filter(templateRepoFiles, language);
+        solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
+
+        List<String> parts = new ArrayList<>(3);
+        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement", withLineNumbers));
+        parts.add(renderRepository(templateRepoFiles, "Template Repository", withLineNumbers));
+        parts.add(renderRepository(solutionRepoFiles, "Solution Repository", withLineNumbers));
+        return String.join("\n\n", parts);
+    }
+
+    private Map<String, String> fetchRepoContents(@Nullable LocalVCRepositoryUri localVCRepositoryUri, String label, long exerciseId, ProgrammingLanguage language) {
+        if (localVCRepositoryUri == null) {
+            return Map.of();
+        }
+        try {
+            // The files that the language filter drops are not read, so that they cannot use up the limit of the total size that the files of the context need
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri, languageFilter.pathFilterFor(language),
+                    HyperionProgrammingLanguageContextFilterService.MAX_FILE_SIZE_BYTES);
+        }
+        catch (IOException ex) {
+            log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
+            return Map.of();
+        }
+    }
+
+    private static String renderRepository(Map<String, String> files, String repoName, boolean withLineNumbers) {
+        final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
+        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase(Locale.ROOT));
+        String treePart = "";
+        if (!isProblemStatement) {
+            treePart = renderFileStructure(root, files.keySet());
+        }
+        List<String> fileParts = new ArrayList<>(files.size());
+        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue(), withLineNumbers)));
+        String body = String.join("\n\n", fileParts);
+        String headline = "\n===== " + repoName + " =====\n";
+        if (!treePart.isEmpty()) {
+            return headline + treePart + "\n\n" + body;
+        }
+        return headline + body;
+    }
+
+    private static final class DirNode {
+
+        final TreeMap<String, DirNode> dirs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        final TreeSet<String> files = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private static String renderFileStructure(String root, Iterable<String> paths) {
+        DirNode rootNode = new DirNode();
+        for (String path : paths) {
+            if (path == null || path.isBlank()) {
+                continue;
+            }
+            String[] segments = Arrays.stream(path.split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
+            if (Arrays.stream(segments).anyMatch(seg -> seg.startsWith("."))) {
+                continue;
+            }
+            DirNode cursor = rootNode;
+            for (int i = 0; i < segments.length; i++) {
+                String seg = segments[i];
+                boolean last = i == segments.length - 1;
+                if (last) {
+                    cursor.files.add(seg);
+                }
+                else {
+                    cursor = cursor.dirs.computeIfAbsent(seg, k -> new DirNode());
+                }
+            }
+        }
+        List<String> lines = new ArrayList<>();
+        if (root != null && !root.isBlank()) {
+            lines.add(root);
+        }
+        collectTree(lines, rootNode, "");
+        return String.join("\n", lines);
+    }
+
+    private static void collectTree(List<String> lines, DirNode node, String prefix) {
+        List<String> dirNames = new ArrayList<>(node.dirs.keySet());
+        List<String> fileNames = new ArrayList<>(node.files);
+        int total = dirNames.size() + fileNames.size();
+        int index = 0;
+        for (String dir : dirNames) {
+            boolean last = ++index == total;
+            lines.add(prefix + (last ? "└── " : "├── ") + dir);
+            collectTree(lines, node.dirs.get(dir), prefix + (last ? "    " : "│   "));
+        }
+        for (String file : fileNames) {
+            boolean last = ++index == total;
+            lines.add(prefix + (last ? "└── " : "├── ") + file);
+        }
+    }
+
+    private static final int HR_WIDTH = 80;
+
+    private static String renderFileString(String root, String path, String content, boolean withLineNumbers) {
+        String horizonalLine = "-".repeat(HR_WIDTH);
+        String header = (root != null && !root.isBlank() ? horizonalLine + "\n" + root + "/" + path + ":\n" + horizonalLine : horizonalLine + "\n" + path + ":\n" + horizonalLine);
+        if (content == null) {
+            content = "";
+        }
+        if (!withLineNumbers) {
+            return header + "\n" + content;
+        }
+        List<String> lines = Arrays.asList(content.split("\n", -1));
+        int w = Integer.toString(lines.size()).length();
+        List<String> out = new ArrayList<>(lines.size() + 1);
+        out.add(header);
+        IntStream.range(0, lines.size()).forEach(i -> {
+            String num = ("%" + w + "d").formatted(i + 1);
+            out.add(num + " | " + lines.get(i));
+        });
+        return String.join("\n", out);
+    }
+
+    /**
+     * Generates a tree-format representation of the repository structure.
+     * Reads the current state fresh each time to capture any changes.
+     *
+     * @param repository the repository to analyze
+     * @return tree-format string representation of the repository structure
+     */
+    public String getRepositoryStructure(Repository repository) {
+        try {
+            File repositoryRoot = repository.getLocalPath().toFile();
+            if (!repositoryRoot.exists() || !repositoryRoot.isDirectory()) {
+                log.warn("Repository path does not exist or is not a directory: {}", repositoryRoot.getAbsolutePath());
+                return "Repository structure could not be determined.";
+            }
+
+            StringBuilder structure = new StringBuilder();
+            structure.append(repositoryRoot.getName()).append("/").append("\n");
+            generateTreeStructure(repositoryRoot, structure, "", true);
+
+            return structure.toString();
+
+        }
+        catch (Exception e) {
+            log.error("Failed to generate repository structure for repository: {}", repository.getLocalPath(), e);
+            return "Repository structure could not be determined due to an error.";
+        }
+    }
+
+    /**
+     * Renders a deterministic snapshot of build-environment files that influence compilation and testing.
+     *
+     * @param repository the repository whose build files should be rendered
+     * @return formatted build-file context, or a fallback message when no relevant files exist
+     */
+    public String getBuildEnvironmentContext(Repository repository) {
+        if (repository == null || repository.getLocalPath() == null) {
+            return "No build environment files found.";
+        }
+
+        Path repositoryPath = repository.getLocalPath();
+        if (!Files.isDirectory(repositoryPath)) {
+            return "No build environment files found.";
+        }
+
+        try (var walk = Files.walk(repositoryPath)) {
+            Map<String, String> buildFiles = walk.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                    .filter(path -> isRelevantBuildEnvironmentFile(repositoryPath, path))
+                    .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).collect(TreeMap::new,
+                            (files, path) -> files.put(repositoryPath.relativize(path).toString().replace('\\', '/'), readBuildEnvironmentFile(path)), TreeMap::putAll);
+
+            if (buildFiles.isEmpty()) {
+                return "No build environment files found.";
+            }
+            return renderRepository(buildFiles, "Build Environment Files", true);
+        }
+        catch (IOException | UncheckedIOException e) {
+            log.warn("Failed to render build environment context for repository {}: {}", repositoryPath, e.getMessage());
+            return "Build environment files could not be determined.";
+        }
+    }
+
+    /**
+     * Recursively generates the tree structure representation.
+     *
+     * @param directory the current directory to process
+     * @param structure the StringBuilder to append to
+     * @param prefix    the current line prefix for proper tree formatting
+     * @param isLast    whether this is the last item in its parent directory
+     */
+    private void generateTreeStructure(File directory, StringBuilder structure, String prefix, boolean isLast) {
+        File[] files = directory.listFiles();
+        if (files == null) {
+            return;
+        }
+
+        // Filter out excluded directories and files
+        File[] filteredFiles = Arrays.stream(files).filter(file -> !EXCLUDED_DIRECTORIES.contains(file.getName()) && !EXCLUDED_FILES.contains(file.getName())).sorted((a, b) -> {
+            // Directories first, then files
+            if (a.isDirectory() && !b.isDirectory()) {
+                return -1;
+            }
+            else if (!a.isDirectory() && b.isDirectory()) {
+                return 1;
+            }
+            return a.getName().compareToIgnoreCase(b.getName());
+        }).toArray(File[]::new);
+
+        for (int i = 0; i < filteredFiles.length; i++) {
+            File file = filteredFiles[i];
+            boolean isLastFile = (i == filteredFiles.length - 1);
+
+            structure.append(prefix);
+            structure.append(isLastFile ? "└── " : "├── ");
+            structure.append(file.getName());
+
+            if (file.isDirectory()) {
+                structure.append("/");
+            }
+            structure.append("\n");
+
+            // Recursively process subdirectories
+            if (file.isDirectory()) {
+                String newPrefix = prefix + (isLastFile ? "    " : "│   ");
+                generateTreeStructure(file, structure, newPrefix, false);
+            }
+        }
+    }
+
+    private boolean isRelevantBuildEnvironmentFile(Path repositoryRoot, Path path) {
+        if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+            return false;
+        }
+
+        Path relativePath = repositoryRoot.relativize(path);
+        if (relativePath.getNameCount() == 0) {
+            return false;
+        }
+
+        for (int i = 0; i < relativePath.getNameCount() - 1; i++) {
+            String segment = relativePath.getName(i).toString();
+            if (segment.startsWith(".") || EXCLUDED_DIRECTORIES.contains(segment)) {
+                return false;
+            }
+        }
+
+        return BUILD_ENVIRONMENT_FILES.contains(relativePath.getFileName().toString());
+    }
+
+    private String readBuildEnvironmentFile(Path path) {
+        int maxCharsToRead = MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH + 1;
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            char[] buffer = new char[maxCharsToRead];
+            int offset = 0;
+            while (offset < buffer.length) {
+                int read = reader.read(buffer, offset, buffer.length - offset);
+                if (read == -1) {
+                    break;
+                }
+                offset += read;
+            }
+            String content = new String(buffer, 0, offset);
+            if (content.length() <= MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) {
+                return content;
+            }
+            return content.substring(0, MAX_BUILD_ENVIRONMENT_FILE_CONTENT_LENGTH) + "\n... [truncated]";
+        }
+        catch (IOException e) {
+            log.warn("Failed to read build environment file {}: {}", path, e.getMessage());
+            return "[Failed to read file]";
+        }
+    }
+
+    /**
+     * Reads existing solution code from the solution repository.
+     * This method retrieves source files from the solution repository
+     * and concatenates their content as a string for test generation.
+     *
+     * @param exercise   the programming exercise
+     * @param gitService the git service for repository operations
+     * @return concatenated content of all solution source files
+     * @throws NetworkingException if repository access fails
+     */
+    public String getExistingSolutionCode(ProgrammingExercise exercise, GitService gitService) throws NetworkingException {
+        try {
+            var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
+            if (solutionRepositoryUri == null) {
+                log.warn("No solution repository URI found for exercise {}, using problem statement only", exercise.getId());
+                return "No solution code available. Please refer to the problem statement.";
+            }
+
+            Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepositoryUri, true, "main", false);
+            if (solutionRepository == null) {
+                log.warn("Failed to access solution repository for exercise {}", exercise.getId());
+                return "Solution repository not accessible. Please refer to the problem statement.";
+            }
+
+            // Read all Java files from the solution repository
+            Path repositoryPath = solutionRepository.getLocalPath();
+            StringBuilder solutionCode = new StringBuilder();
+
+            // Files.walk holds an open directory handle, so it belongs in a try-with-resources like the other two
+            // walks in this class. A solution repository is scanned once per Hyperion request, so a leaked handle
+            // here accumulates for the lifetime of the node.
+            try (var paths = Files.walk(repositoryPath)) {
+                // The source root is matched on the path relative to the repository, with separators normalised: the
+                // absolute path uses a backslash on Windows, so a plain contains("src/") found nothing there and the
+                // method silently fell back to "no solution code". Relativizing also stops a repository whose own
+                // location happens to contain "src/" from matching every file.
+                paths.filter(path -> path.toString().endsWith(".java")).filter(path -> repositoryPath.relativize(path).toString().replace('\\', '/').contains("src/"))
+                        .filter(Files::isRegularFile).forEach(path -> {
+                            try {
+                                String content = Files.readString(path);
+                                solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");
+                                solutionCode.append(content).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read file {}: {}", path, e.getMessage());
+                            }
+                        });
+            }
+            catch (IOException e) {
+                log.error("Failed to scan solution repository for exercise {}: {}", exercise.getId(), e.getMessage());
+                return "Failed to read solution code. Please refer to the problem statement.";
+            }
+
+            return solutionCode.length() > 0 ? solutionCode.toString() : "No solution code found. Please refer to the problem statement.";
+
+        }
+        catch (Exception e) {
+            log.error("Error accessing solution repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            throw new NetworkingException("Failed to access solution repository", e);
+        }
+    }
+
+    /**
+     * Reads the existing test sources from the test repository so code generation can match the exact API and behaviour
+     * the tests require. Returns a "no tests" marker (never throws) when the repository is absent or empty, so generation
+     * still proceeds from the problem statement alone.
+     *
+     * @param exercise   the programming exercise
+     * @param gitService the git service for repository operations
+     * @return concatenated content of the test source files, or a marker string when none are available
+     */
+    public String getExistingTestCode(ProgrammingExercise exercise, GitService gitService) {
+        String noTests = "No tests available yet.";
+        try {
+            var testRepositoryUri = exercise.getVcsTestRepositoryUri();
+            if (testRepositoryUri == null) {
+                return noTests;
+            }
+            Repository testRepository = gitService.getOrCheckoutRepository(testRepositoryUri, true, "main", false);
+            if (testRepository == null) {
+                return noTests;
+            }
+            Path repositoryPath = testRepository.getLocalPath();
+            StringBuilder testCode = new StringBuilder();
+            try (var paths = Files.walk(repositoryPath)) {
+                // Include the structural spec (test.json for Ares exercises) and test sources (.java) so the exact expected API is visible.
+                // Emit test.json first so the definitive structural contract survives length capping in the caller.
+                // Skip symbolic links (NOFOLLOW_LINKS) so a symlinked file cannot leak server-local content into the prompt.
+                paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json"))
+                        .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                        .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
+                            try {
+                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                            }
+                        });
+            }
+            return testCode.length() > 0 ? testCode.toString() : noTests;
+        }
+        catch (Exception e) {
+            log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
+            return noTests;
+        }
+    }
+
+    private static boolean isStructuralSpec(Path path) {
+        return "test.json".equals(path.getFileName().toString());
+    }
+}

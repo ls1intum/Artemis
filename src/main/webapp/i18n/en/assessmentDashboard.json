@@ -1,0 +1,85 @@
+{
+    "artemisApp": {
+        "assessmentDashboard": {
+            "home": {
+                "title": "Assessment Dashboard"
+            },
+            "title": "Assessment Dashboard",
+            "noSubmissionFound": "No submission found",
+            "noExercises": "No exercises have been created yet.",
+            "noExercisesMatchFilters": "No exercises match the selected filters.",
+            "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} assessments completed)",
+            "progressTitle": "Assessment progress",
+            "assessmentsCompleted": "assessments completed",
+            "assessed": "Assessed",
+            "inProgress": "In progress",
+            "open": "Open",
+            "course": "Course",
+            "yours": "Yours",
+            "assessmentInformation": "Assessment Information",
+            "submissions": "Submissions",
+            "pageHeader": "Assessment Dashboard for course",
+            "pageHeaderExam": "Assessment Dashboard",
+            "pageHeaderExamTestRun": "Test Run Assessment Dashboard",
+            "assessments": "Assessments",
+            "assessmentsChartAriaLabel": "Pie chart showing how the submissions are distributed across assessment states",
+            "assessmentLocks": "Assessment Locks",
+            "totalAssessmentsForCorrectionrounds": "Assessments for correction rounds",
+            "complaints": "Complaints",
+            "totalComplaints": "Total complaints",
+            "moreFeedbackRequests": "More Feedback Requests",
+            "totalMoreFeedbackRequests": "Total More Feedback Requests",
+            "hideFinishedExercises": "Hide Finished",
+            "hideOptional": "Hide Optional",
+            "exercise": "Exercise",
+            "exerciseType": "Type",
+            "yourStatus": "Your status",
+            "exerciseDueDate": "Exercise due",
+            "assessmentsDueDate": "Assessment due",
+            "dueDates": "Due dates",
+            "actions": "Actions",
+            "notReleased": "Not released",
+            "readGradingInstructions": "Read grading instructions and click on confirmation button below",
+            "trainOnExampleSubmissions": "Train with example submissions",
+            "assessStudentsSubmissions": "Review students' submissions",
+            "assessStudentsLateSubmissions": "Review students' late submissions",
+            "evaluateStudentsComplaints": "Evaluate students' complaints and feedback requests",
+            "numberOfOpenComplaints": "Number of open complaints",
+            "exerciseTeams": "Exercise Teams",
+            "exerciseTable": {
+                "title": "Exercise Table",
+                "courseInformation": "Exercise table displays all exercises in this course. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions.",
+                "examInformation": "Exercise table displays all exercises in this exam. In order to see all exercises, including the finished ones, just tick the checkbox below. You can click <strong>Exercise Dashboard</strong> to view the exercise details and student submissions."
+            },
+            "tutorPerformanceIssues": {
+                "title": "Issues with tutor performance",
+                "tutor": "Tutor {{ tutorName }} has performance issues",
+                "ratings": {
+                    "below": "{{tutorName}} has received {{numberOfTutorItems}} ratings with an average of {{averageTutorValue}} ⭐️️ which is below {{threshold}} ⭐."
+                },
+                "score": {
+                    "above": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is above {{threshold}}%.",
+                    "below": "{{tutorName}} has reviewed {{numberOfTutorItems}} submissions with an average score of {{averageTutorValue}}% which is below {{threshold}}%."
+                },
+                "complaints": {
+                    "above": "{{tutorName}} has received {{numberOfTutorItems}} complaints, having a complaint ratio of {{averageTutorValue}}% which is above {{threshold}}%."
+                }
+            },
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor Course Leaderboard",
+                "examTitle": "Tutor Exam Leaderboard",
+                "id": "ID",
+                "name": "Name",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfNotAnsweredMoreFeedbackRequests": "Open requests",
+                "numberOfComplaintResponses": "Complaint responses",
+                "numberOfAnsweredMoreFeedbackRequests": "Answered requests",
+                "points": "Points",
+                "averageScore": "Average score",
+                "averageRating": "Average rating"
+            },
+            "exerciseAverageRating": "Average rating"
+        }
+    }
+}

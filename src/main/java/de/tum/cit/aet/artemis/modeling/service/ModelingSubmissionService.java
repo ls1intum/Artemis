@@ -1,0 +1,222 @@
+package de.tum.cit.aet.artemis.modeling.service;
+
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SavedSubmission;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingParticipationDTO;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+
+@Conditional(ModelingEnabled.class)
+@Lazy
+@Service
+public class ModelingSubmissionService extends SubmissionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final SubmissionVersionService submissionVersionService;
+
+    private final ExerciseDateService exerciseDateService;
+
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
+            ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaApi> athenaSubmissionSelectionService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService, testCaseFeedbackRepository,
+                scaFeedbackRepository);
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.submissionVersionService = submissionVersionService;
+        this.exerciseDateService = exerciseDateService;
+    }
+
+    /**
+     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     * Additionally, check if the submission lock limit has been reached.
+     *
+     * @param submissionId     the id of the modeling submission
+     * @param modelingExercise the corresponding exercise
+     * @param correctionRound  the correction round for which we want the lock
+     * @return the locked modeling submission
+     */
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
+        var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+
+        var latestResult = submission.getLatestResult();
+        if (latestResult == null || latestResult.getAssessor() == null) {
+            checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+        }
+
+        lockSubmission(submission, correctionRound);
+        return submission;
+    }
+
+    /**
+     * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions.
+     *
+     * @param modelingSubmission        the submission that should be saved
+     * @param exercise                  the exercise the submission belongs to
+     * @param user                      the user who initiated the save
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
+     * @return the saved modelingSubmission entity
+     */
+    public SavedSubmission<ModelingSubmission, ModelingParticipationDTO> handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user,
+            @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        // A projection, rebuilt with the exercise and the user this method already has: nothing here reads the
+        // participation's submissions, and loading the entity for them pulled the whole eager exercise chain along.
+        final var target = participationFromExamGate != null ? participationFromExamGate
+                : participationService.findSubmitTargetByExerciseAndStudent(exercise, user).orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId()));
+        if (modelingSubmission.getId() != null && !modelingSubmissionRepository.existsByIdAndParticipationId(modelingSubmission.getId(), target.id())) {
+            throw new AccessForbiddenException();
+        }
+        final var dueDate = ExerciseDateService.getDueDate(exercise, target);
+        // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(exercise, target, user) && target.initializationDate().isBefore(dueDate.get())) {
+            throw new AccessForbiddenException();
+        }
+
+        // update submission properties
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(exercise, target, user) || target.testRun()) {
+            modelingSubmission.setSubmitted(true);
+        }
+
+        // if athena results are present, then create a new submission on submit
+        // If results exist for this submission, create a new submission by setting the ID to null
+        if (modelingSubmission.getId() != null && resultRepository.existsBySubmissionId(modelingSubmission.getId())) {
+            modelingSubmission.setId(null);
+        }
+        modelingSubmission = save(modelingSubmission, exercise, user, target);
+        // The response embeds the whole exercise, so a student must not see its example solution. hideDetails used to
+        // strip that after the fact; the response is mapped here now, so it is stripped before the mapping.
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            exercise.filterSensitiveInformation();
+        }
+        // Mapped here rather than read back off the submission: its participation is only a foreign key, and reading it
+        // would load the entity this whole path exists to avoid.
+        return new SavedSubmission<>(modelingSubmission,
+                ModelingParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user, target), true));
+    }
+
+    /**
+     * Saves the given submission. Is used for creating and updating modeling submissions.
+     *
+     * @param modelingSubmission the submission that should be saved
+     * @param participation      the participation the submission belongs to
+     * @param modelingExercise   the exercise the submission belongs to
+     * @param user               the user who initiated the save
+     * @return the textSubmission entity that was saved to the database
+     */
+    private ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user, StudentParticipationSubmitTargetDTO target) {
+        modelingSubmission.setSubmissionDate(ZonedDateTime.now());
+        modelingSubmission.setType(SubmissionType.MANUAL);
+        // the foreign key is all the save needs from the participation, and the id gives it that without a load
+        modelingSubmission.setParticipation(StudentParticipation.idOnlyReference(target.id()));
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResults(new HashSet<>());
+        if (modelingSubmission.getId() != null) {
+            // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
+            // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
+            // back before writing it.
+            int updatedRows = modelingSubmissionRepository.updateExistingSubmission(modelingSubmission.getId(), target.id(), modelingSubmission.getModel(),
+                    modelingSubmission.getExplanationText(), modelingSubmission.isSubmitted(), modelingSubmission.getSubmissionDate(), modelingSubmission.getType());
+            if (updatedRows == 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Submission changed during save. Please try again.");
+            }
+        }
+        else {
+            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        }
+
+        if (target.initializationState() != InitializationState.FINISHED) {
+            // Only this one column changes and the row exists, so it is an update by id rather than a save of an entity.
+            studentParticipationRepository.updateInitializationState(target.id(), InitializationState.FINISHED);
+        }
+
+        // versioning of submission
+        try {
+            // a practice participation of a team exercise is individual, so it has no team to version for
+            if (modelingExercise.isTeamMode() && !target.testRun()) {
+                submissionVersionService.saveVersionForTeam(modelingSubmission, user);
+            }
+            else if (modelingExercise.isExamExercise()) {
+                submissionVersionService.saveVersionForIndividualAsync(modelingSubmission, user);
+            }
+        }
+        catch (Exception ex) {
+            log.error("Modeling submission version could not be saved", ex);
+        }
+
+        return modelingSubmission;
+    }
+
+    /**
+     * retrieves a modeling submission without assessment for the specified correction round and potentially locks the submission
+     *
+     * @param lockSubmission   whether the submission should be locked
+     * @param correctionRound  the correction round (0 = first correction, 1 = second correction
+     * @param modelingExercise the modeling exercise for which a
+     * @param isExamMode       whether the exercise belongs to an exam
+     * @return a random modeling submission if present
+     */
+    public Optional<ModelingSubmission> findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise,
+            boolean isExamMode) {
+        var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound);
+        if (submissionWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+        var submissionId = submissionWithoutResult.get().getId();
+        var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+        if (lockSubmission) {
+            lockSubmission(submission, correctionRound);
+        }
+
+        return Optional.of(submission);
+    }
+}

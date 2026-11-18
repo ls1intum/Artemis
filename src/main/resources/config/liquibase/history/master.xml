@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+        Every changelog a baseline has already folded, oldest generation first. A fresh installation
+        records these without executing them; an upgrade has already executed the ones it ran before.
+        Delete a generation only when upgrades from it are no longer supported.
+    -->
+    <include file="config/liquibase/history/v10/master.xml" relativeToChangelogFile="false"/>
+</databaseChangeLog>

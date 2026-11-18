@@ -1,0 +1,10 @@
+/${studentParentWorkingDirectoryName}/
+/test-reports/
+/build/
+
+cmake-build-*/
+
+.vscode/
+.idea/
+
+__pycache__/

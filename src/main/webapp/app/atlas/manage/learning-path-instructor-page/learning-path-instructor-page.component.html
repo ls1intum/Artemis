@@ -1,0 +1,32 @@
+@if (isLoading()) {
+    <div class="flex justify-center p-2">
+        <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+} @else if (learningPathsEnabled()) {
+    <div>
+        <div class="flex w-full flex-wrap gap-4!">
+            <!-- TODO: The following section has been commented out as the functional implementation has not been decided yet. -->
+            <!-- <div class="grow basis-0 bg-surface-raised p-2">-->
+            <!--     <jhi-learning-paths-configuration [courseId]="courseId()" />-->
+            <!-- </div>-->
+            <div class="grow basis-0 bg-surface-raised p-2">
+                <jhi-learning-paths-state [courseId]="courseId()" />
+            </div>
+            <div class="w-1/2 shrink-0 bg-surface-raised p-2">
+                <jhi-learning-paths-table [courseId]="courseId()" />
+            </div>
+        </div>
+        <div class="w-full bg-surface-raised px-2 pt-4!">
+            <jhi-learning-paths-analytics [courseId]="courseId()" />
+        </div>
+    </div>
+} @else if (course()?.isAtLeastInstructor) {
+    <jhi-feature-activation
+        [headerTitle]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
+        [description]="'artemisApp.learningPathManagement.learningPathsDisabled.description'"
+        [activateButtonText]="'artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel'"
+        [isLoading]="this.isLoading()"
+        [headerIcon]="faNetworkWired"
+        (enable)="enableLearningPaths()"
+    />
+}

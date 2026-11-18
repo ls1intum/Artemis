@@ -1,0 +1,71 @@
+@if (sortedHistoryResults().length > 0) {
+    <span #dropdownArrow>
+        <fa-icon [icon]="faAngleDown" class="ms-1 font-bold" style="font-size: 0.875rem" />
+    </span>
+}
+<tumaet-ui-popover #resultsPopover padding="none" [ariaLabel]="'artemisApp.result.progressString.title' | artemisTranslate">
+    <div class="flex items-center justify-between px-4! bg-surface-raised border-b" style="height: 40px">
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="faClock" class="text-text-secondary" style="font-size: 14px" />
+            <span class="font-medium text-text-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
+        </div>
+        <span class="text-text-secondary" style="font-size: 12px">{{
+            (sortedHistoryResults().length === 1 ? 'artemisApp.result.progressString.resultsCount.one' : 'artemisApp.result.progressString.resultsCount.other')
+                | artemisTranslate: { count: sortedHistoryResults().length }
+        }}</span>
+    </div>
+    <div class="flex flex-col divide-y divide-border" style="max-height: 362px; overflow-y: auto; width: 443px">
+        @for (result of displayedResults(); track result.id ?? $index) {
+            <div
+                data-testid="result-history-row"
+                class="px-4! py-2 flex items-center gap-2"
+                [class.cursor-pointer]="isRowClickable(result)"
+                [class.bg-active-row]="result.id === activeResultId()"
+                [attr.role]="isRowClickable(result) ? 'button' : undefined"
+                [attr.tabindex]="isRowClickable(result) ? 0 : undefined"
+                (click)="isRowClickable(result) && navigateToSubmission(result, $event)"
+                (keydown.enter)="isRowClickable(result) && navigateToSubmission(result, $event)"
+                (keydown.space)="handleRowSpaceKeydown(result, $event)"
+            >
+                <div class="rounded-full self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
+                <fa-icon
+                    [icon]="getResultIcon(result)"
+                    [animation]="getResultIconAnimation(result)"
+                    [class]="getResultColorClass(result)"
+                    class="shrink-0"
+                    style="font-size: 14px"
+                />
+                <div class="grow flex flex-col overflow-hidden" style="gap: 3px">
+                    <div class="flex items-center gap-1">
+                        @if (shouldShowResultScore(result)) {
+                            <span class="font-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
+                            <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        }
+                        @if (isAthenaAIResult(result)) {
+                            <fa-icon
+                                data-testid="ai-feedback-indicator"
+                                [icon]="faRobot"
+                                class="shrink-0"
+                                role="img"
+                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                [tumAetUiTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                            />
+                        }
+                        <span class="font-bold truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
+                    </div>
+                    @if (shouldShowResultMetadata(result)) {
+                        <div class="flex items-center gap-1">
+                            <tumaet-ui-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
+                            <span class="text-xs text-text-secondary">{{ result.completionDate | artemisDate }}</span>
+                        </div>
+                    }
+                </div>
+                @if (exercise().type === ExerciseType.PROGRAMMING && shouldShowResultMetadata(result)) {
+                    <tumaet-ui-button variant="outlined" size="small" class="shrink-0" (clicked)="showFeedback(result, $event)">{{
+                        'artemisApp.result.progressString.feedbackButton' | artemisTranslate
+                    }}</tumaet-ui-button>
+                }
+            </div>
+        }
+    </div>
+</tumaet-ui-popover>

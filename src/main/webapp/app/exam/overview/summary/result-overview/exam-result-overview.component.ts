@@ -1,0 +1,282 @@
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { isExamResultPublished, isRealExam } from 'app/exam/overview/exam.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
+import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+
+type ExerciseInfo = {
+    icon: IconProp;
+    achievedPercentage?: number;
+    colorClass?: string;
+};
+
+type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-key';
+
+@Component({
+    selector: 'jhi-exam-result-overview',
+    templateUrl: './exam-result-overview.component.html',
+    imports: [TranslateDirective, CollapsibleCardComponent, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe, TumAetUiTableDirective],
+})
+export class ExamResultOverviewComponent implements OnInit {
+    private serverDateService = inject(ArtemisServerDateService);
+    exerciseService = inject(ExerciseService);
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly BonusStrategy = BonusStrategy;
+
+    readonly studentExamWithGrade = input<StudentExamWithGradeDTO>(undefined!);
+    readonly isGradingKeyCollapsed = input(true);
+    readonly isBonusGradingKeyCollapsed = input(true);
+    readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
+    readonly isTestRun = input(false);
+    readonly gradingKeyPurpose = input<'student' | 'management'>('student');
+
+    // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
+    // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
+    readonly gradingScaleExists = computed(() => this.hasAutomaticScore() && !!this.areResultsPublished() && !!this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isTestExam = computed(() => !isRealExam(this.studentExamWithGrade()?.studentExam?.exam));
+    readonly pendingExerciseIds = computed(() => new Set(this.isTestExam() ? (this.studentExamWithGrade()?.pendingExerciseIds ?? []) : []));
+    readonly hasAutomaticScore = computed(() => !this.isTestExam() || (this.studentExamWithGrade()?.maxPoints > 0 && this.pendingExerciseIds().size === 0));
+    readonly manuallyAssessedExerciseIds = computed(
+        () =>
+            new Set(
+                (this.isTestExam() ? (this.studentExamWithGrade()?.studentExam?.exercises ?? []) : [])
+                    .filter(
+                        (exercise) =>
+                            exercise.type !== ExerciseType.QUIZ &&
+                            !(exercise.type === ExerciseType.PROGRAMMING && (!exercise.assessmentType || exercise.assessmentType === AssessmentType.AUTOMATIC)),
+                    )
+                    .map((exercise) => exercise.id),
+            ),
+    );
+    readonly hasManuallyAssessedExercises = computed(() => this.manuallyAssessedExerciseIds().size > 0);
+    readonly bonusPending = computed(() => !!this.studentExamWithGrade()?.studentResult?.gradeWithBonus?.pending);
+    readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
+    // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
+    // (overallGrade undefined) the achieved-percentage badge must not switch to the passed color.
+    readonly hasPassed = computed(() => this.gradingScaleExists() && !!this.studentExamWithGrade()?.studentResult?.hasPassed);
+
+    /**
+     * Color for the overall achieved percentage. With a grading scale the pass/fail outcome is authoritative,
+     * so passed stays green and not-passed stays red. Without a grading scale there is no pass/fail concept,
+     * so fall back to the same score thresholds as the per-exercise rows (avoids e.g. a red 100%).
+     */
+    readonly overallScoreTextColorClass = computed(() => {
+        if (this.gradingScaleExists()) {
+            return this.hasPassed() ? 'text-state-success' : 'text-state-danger';
+        }
+        const percentage = this.overallAchievedPercentageRoundedByCourseSettings();
+        if (percentage >= MIN_SCORE_GREEN) {
+            return 'text-state-success';
+        }
+        if (percentage >= MIN_SCORE_ORANGE) {
+            return 'result-orange';
+        }
+        return 'text-state-danger';
+    });
+
+    // Icons
+    faClipboard = faClipboard;
+    faAward = faAward;
+    faChevronRight = faChevronRight;
+
+    readonly showIncludedInScoreColumn = signal(false);
+    /**
+     * the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
+     */
+    readonly maxPoints = signal(0);
+    readonly overallAchievedPoints = signal(0);
+    readonly overallAchievedPercentageRoundedByCourseSettings = signal(0);
+    readonly isBonusGradingKeyDisplayed = signal(false);
+
+    /**
+     * The points summary table will only be shown if:
+     * - exam.publishResultsDate is set
+     * - we are after the exam.publishResultsDate
+     * - at least one exercise has a result
+     * - it is a test run (results are published immediately)
+     */
+    readonly showResultOverview = signal(false);
+
+    isCollapsed: Record<ResultOverviewSection, boolean> = {
+        'grading-table': false,
+        'grading-key': true,
+        'bonus-grading-key': true,
+    };
+
+    constructor() {
+        effect(() => {
+            // Re-run whenever any signal input changes
+            this.studentExamWithGrade();
+            this.exerciseInfos();
+            this.isTestRun();
+            this.updateLocalVariables();
+        });
+    }
+
+    ngOnInit() {
+        this.updateLocalVariables();
+    }
+
+    private areResultsPublished() {
+        const studentExam = this.studentExamWithGrade()?.studentExam;
+        return isRealExam(studentExam?.exam) ? isExamResultPublished(this.isTestRun(), studentExam?.exam, this.serverDateService) : !!studentExam?.submitted;
+    }
+
+    private updateLocalVariables() {
+        this.showResultOverview.set(!!(this.areResultsPublished() && (this.isTestExam() || this.hasAtLeastOneResult())));
+        this.showIncludedInScoreColumn.set(this.containsExerciseThatIsNotIncludedCompletely());
+        this.maxPoints.set(this.studentExamWithGrade()?.maxPoints ?? 0);
+        this.isBonusGradingKeyDisplayed.set(this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined);
+
+        this.overallAchievedPoints.set(this.getOverallAchievedPoints());
+        this.overallAchievedPercentageRoundedByCourseSettings.set(this.getOverallAchievedPercentageRoundedByCourseSettings());
+    }
+
+    /**
+     * Points the student achieved in the given exercise, or 0 if none were recorded.
+     * `achievedPointsPerExercise` is keyed by exercise id and may not contain every exercise.
+     */
+    achievedPointsForExercise(exerciseId: number): number {
+        return this.studentExamWithGrade()?.achievedPointsPerExercise?.[exerciseId] ?? 0;
+    }
+
+    /**
+     * used as fallback if not pre-calculated by the server
+     */
+    private sumExerciseScores() {
+        return (this.studentExamWithGrade().studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
+            const achievedPoints = this.studentExamWithGrade()?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+            return exerciseScoreSum + achievedPoints;
+        }, 0);
+    }
+
+    private getOverallAchievedPoints() {
+        const overallAchievedPoints = this.studentExamWithGrade()?.studentResult.overallPointsAchieved;
+        if (overallAchievedPoints == null) {
+            return this.sumExerciseScores();
+        }
+
+        return overallAchievedPoints;
+    }
+
+    private getOverallAchievedPercentageRoundedByCourseSettings() {
+        let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
+        overallScoreAchieved ??= this.summedAchievedExerciseScorePercentage();
+
+        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade().studentExam?.exam?.course);
+    }
+
+    /**
+     * used as fallback if not pre-calculated by the server
+     */
+    private summedAchievedExerciseScorePercentage() {
+        let summedPercentages = 0;
+        let numberOfExercises = 0;
+
+        Object.entries(this.exerciseInfos()).forEach(([, exerciseInfo]) => {
+            summedPercentages += exerciseInfo.achievedPercentage ?? 0;
+            numberOfExercises++;
+        });
+
+        if (numberOfExercises === 0) {
+            return 0;
+        }
+
+        return summedPercentages / numberOfExercises;
+    }
+
+    /**
+     * If all exercises are included in the overall score, we do not need to show the column
+     * -> displayed if at least one exercise is not included in the overall score
+     */
+    containsExerciseThatIsNotIncludedCompletely(): boolean {
+        for (const exercise of this.studentExamWithGrade()?.studentExam?.exercises ?? []) {
+            if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
+     */
+    getMaxNormalAndBonusPointsSum(): number {
+        const maxAchievableBonusPoints = this.studentExamWithGrade()?.maxBonusPoints ?? 0;
+        return this.maxPoints() + maxAchievableBonusPoints;
+    }
+
+    /**
+     * Styling of an exercise row. Exercises that are not included in the score are dimmed and red, bonus exercises are orange.
+     * The table sets the text color of its cells itself, so the color has to be applied to them as well.
+     */
+    rowClass(exercise: Exercise): string {
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return 'font-bold italic opacity-50 [&_td]:text-state-danger! [&_th]:text-state-danger!';
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return 'font-bold italic [&_td]:text-state-warning! [&_th]:text-state-warning!';
+            default:
+                return '';
+        }
+    }
+
+    scrollToExercise(exerciseId?: number) {
+        if (exerciseId === undefined) {
+            return;
+        }
+
+        const searchedId = `exercise-${exerciseId}`;
+        const targetElement = document.getElementById(searchedId);
+
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        } else {
+            const errorMessage = 'Cannot scroll to exercise, could not find exercise with corresponding id';
+            captureException(new Error(errorMessage), {
+                extra: {
+                    exerciseId,
+                    searchedId,
+                    targetElement,
+                },
+            });
+        }
+    }
+
+    private hasAtLeastOneResult(): boolean {
+        const exercises = this.studentExamWithGrade()?.studentExam?.exercises;
+        if (exercises?.length && exercises.length > 0) {
+            return exercises.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length > 0);
+        }
+        return false;
+    }
+
+    toggleCollapse(resultOverviewSection: ResultOverviewSection) {
+        return () => (this.isCollapsed[resultOverviewSection] = !this.isCollapsed[resultOverviewSection]);
+    }
+}

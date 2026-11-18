@@ -1,0 +1,54 @@
+import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('StandardizedCompetencyDetailComponent', () => {
+    let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
+    let component: StandardizedCompetencyDetailComponent;
+    const defaultCompetency: StandardizedCompetencyDTO = {
+        id: 1,
+        title: 'title',
+        description: 'description',
+        taxonomy: CompetencyTaxonomy.ANALYZE,
+        knowledgeAreaId: 1,
+        sourceId: 1,
+        version: '1.0.0',
+    };
+    const defaultKnowledgeAreaTitle = 'knowledgeArea';
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StandardizedCompetencyDetailComponent, MockDirective(MarkdownDirective), MockDirective(TranslateDirective)],
+            declarations: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.componentRef.setInput('competency', defaultCompetency);
+        componentFixture.componentRef.setInput('knowledgeAreaTitle', defaultKnowledgeAreaTitle);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        componentFixture.detectChanges();
+        expect(component).toBeDefined();
+    });
+
+    it('should close', () => {
+        const closeSpy = vi.spyOn(component.onClose, 'emit');
+        component.close();
+
+        expect(closeSpy).toHaveBeenCalled();
+    });
+});

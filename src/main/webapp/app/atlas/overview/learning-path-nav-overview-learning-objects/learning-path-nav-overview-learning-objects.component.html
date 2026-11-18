@@ -1,0 +1,52 @@
+<div class="bg-(--hover-slightly-darker-body-bg)">
+    @if (learningObjects()) {
+        @for (learningObject of learningObjects(); let last = $last; track learningObject) {
+            <div
+                data-testid="learning-object"
+                (click)="selectLearningObject(learningObject)"
+                class="flex flex-wrap items-center p-4!"
+                [ngClass]="{
+                    'bg-(--overview-light-background-color) text-(--primary)':
+                        currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type,
+                    'cursor-pointer': !learningObject.unreleased,
+                }"
+                #keyboardAction4
+                [attr.role]="!learningObject.unreleased ? 'button' : undefined"
+                [attr.tabindex]="!learningObject.unreleased ? 0 : undefined"
+                [attr.aria-current]="
+                    !learningObject.unreleased && currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type ? true : null
+                "
+                (keydown.enter)="!learningObject.unreleased && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+                (keydown.space)="!learningObject.unreleased && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="!learningObject.unreleased && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            >
+                @if (learningObject.unreleased) {
+                    <span class="w-full text-(--text-body-secondary) md:w-auto" jhiTranslate="artemisApp.learningPath.navigation.overview.unreleasedLearningObjectLabel"></span>
+                    <fa-icon [icon]="faLock" class="w-full px-2 text-(--text-body-secondary) md:w-auto" />
+                } @else {
+                    <span class="w-full md:w-auto">{{ learningObject.name }}</span>
+                }
+                @if (learningObject.completed) {
+                    <fa-icon [icon]="faCheckCircle" class="w-full px-2 text-state-success md:w-auto" />
+                } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
+                    <tumaet-ui-tag class="ms-2" severity="warn" size="sm">
+                        {{ 'artemisApp.learningPath.navigation.overview.nextLearningObjectOnPathLabel' | artemisTranslate }}
+                    </tumaet-ui-tag>
+                }
+            </div>
+            @if (!last) {
+                <hr class="m-0!" />
+            }
+        } @empty {
+            <div class="p-4! text-(--text-body-secondary)">
+                <em
+                    ><small><span jhiTranslate="artemisApp.learningPath.navigation.overview.emptyLearningObjectsLabel"></span></small
+                ></em>
+            </div>
+        }
+    } @else {
+        <div class="flex justify-center p-2">
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+        </div>
+    }
+</div>

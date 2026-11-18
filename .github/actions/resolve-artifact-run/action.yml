@@ -1,0 +1,46 @@
+name: 'Resolve artifact run'
+description: >-
+  Resolve the CI run whose artifacts contain a named, non-expired artifact for an exact
+  commit SHA. Enumerates all runs for the SHA instead of trusting `.workflow_runs[0]`.
+
+inputs:
+  repository:
+    description: 'owner/repo'
+    required: false
+    default: ${{ github.repository }}
+  workflow:
+    description: 'Workflow file name, e.g. ci.yml'
+    required: true
+  sha:
+    description: 'Commit SHA to resolve the run for'
+    required: true
+  artifact-name:
+    description: 'Artifact that must be present on the run, e.g. Artemis.war'
+    required: true
+  branch:
+    description: 'Optional branch filter'
+    required: false
+    default: ''
+  token:
+    description: 'Token with actions:read'
+    required: true
+
+outputs:
+  run-id:
+    description: 'The resolved workflow run id that carries the artifact'
+    value: ${{ steps.resolve.outputs.run_id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve run carrying the artifact
+      id: resolve
+      shell: bash
+      env:
+        REPO: ${{ inputs.repository }}
+        WORKFLOW: ${{ inputs.workflow }}
+        SHA: ${{ inputs.sha }}
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        BRANCH: ${{ inputs.branch }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: "${GITHUB_ACTION_PATH}/resolve-artifact-run.sh"

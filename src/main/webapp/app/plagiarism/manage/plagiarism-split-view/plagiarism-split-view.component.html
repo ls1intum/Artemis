@@ -1,0 +1,72 @@
+<div class="plagiarism-split-view">
+    <tumaet-ui-splitter
+        class="plagiarism-splitter"
+        layout="horizontal"
+        [gutterSize]="gutterSize"
+        [panelSizes]="panelSizes()"
+        [minSizes]="minSizes()"
+        (sizesChange)="onSizesChange($event)"
+        (resizeEnd)="onResizeEnd($event)"
+    >
+        <ng-template #panel>
+            <div class="plagiarism-split-pane">
+                @if (plagiarismComparison()) {
+                    @if (isProgrammingOrTextExercise()) {
+                        <jhi-text-submission-viewer
+                            [viewingPurpose]="forStudent() ? 'owner' : 'staff-preview'"
+                            [fileSelectedSubject]="this.fileSelectedSubject"
+                            [exercise]="exercise()"
+                            [matches]="matchesA()"
+                            [plagiarismSubmission]="getTextSubmissionA()"
+                            [isLockFilesEnabled]="isLockFilesEnabled()"
+                            [hideContent]="false"
+                            [dropdownHoverSubject]="this.dropdownHoverSubject"
+                            [showFilesSubject]="this.showFilesSubject"
+                        />
+                    }
+                }
+            </div>
+        </ng-template>
+        <ng-template #panel>
+            <div class="plagiarism-split-pane">
+                @if (plagiarismComparison()) {
+                    @if (isProgrammingOrTextExercise()) {
+                        <jhi-text-submission-viewer
+                            [viewingPurpose]="forStudent() ? 'owner' : 'staff-preview'"
+                            [fileSelectedSubject]="this.fileSelectedSubject"
+                            [exercise]="exercise()"
+                            [matches]="matchesB()"
+                            [plagiarismSubmission]="getTextSubmissionB()"
+                            [isLockFilesEnabled]="isLockFilesEnabled()"
+                            [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
+                            [dropdownHoverSubject]="this.dropdownHoverSubject"
+                            [showFilesSubject]="this.showFilesSubject"
+                        />
+                    }
+                }
+            </div>
+        </ng-template>
+    </tumaet-ui-splitter>
+    <!-- Lock-files control: follows the gutter (lockButtonLeft) so it stays on the divider while dragging instead of
+         staying fixed at the centre. Hidden when one pane is fully collapsed, because the divider then sits at the edge. -->
+    @if (!collapsedSide()) {
+        <div class="split-pane-header-color" [style.left]="lockButtonLeft()">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                size="small"
+                [variant]="isLockFilesEnabled() ? 'outlined' : 'text'"
+                (click)="toggleLockFiles()"
+                [attr.aria-pressed]="isLockFilesEnabled()"
+                [tumAetUiTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                tumAetUiTooltipPlacement="bottom"
+                tumAetUiTooltipDescribesHost="false"
+                [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                data-qa="lock-files-toggle-button"
+            >
+                <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" />
+            </button>
+        </div>
+    }
+</div>

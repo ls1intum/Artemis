@@ -1,0 +1,27 @@
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+
+import { admin, studentOne } from '../../../support/users';
+import { test } from '../../../support/fixtures';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
+
+test.describe('Modeling Exercise Participation', { tag: '@fast' }, () => {
+    let modelingExercise: ModelingExercise;
+
+    test.beforeEach('Create modeling exercise', async ({ login, exerciseAPIRequests }) => {
+        await login(admin);
+        modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+    });
+
+    test('Student can start and submit their model', async ({ login, courseOverview, modelingExerciseEditor }) => {
+        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+        await courseOverview.startExercise(modelingExercise.id!);
+        await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1, 310, 320);
+        await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2, 730, 500);
+        await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3, 1000, 100);
+        await courseOverview.submitExercise('api/modeling/exercises/*/modeling-submissions');
+    });
+
+    // Seed courses are persistent — no cleanup needed
+});

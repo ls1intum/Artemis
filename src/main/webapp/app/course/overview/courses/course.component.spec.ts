@@ -1,0 +1,353 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Location } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseCardComponent } from 'app/course/overview/course-card/course-card.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { CoursesComponent } from 'app/course/overview/courses/courses.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Component } from '@angular/core';
+import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import { User } from 'app/account/user/user.model';
+
+const endDate1 = dayjs().add(1, 'days');
+const visibleDate1 = dayjs().subtract(1, 'days');
+const endDate2 = dayjs().subtract(1, 'days');
+const visibleDate2 = dayjs().subtract(2, 'days');
+const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
+const exercise1: Exercise = {
+    id: 5,
+    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
+    studentAssignedTeamIdComputed: false,
+    dueDate: dayjs().add(2, 'hours'),
+    secondCorrectionEnabled: true,
+};
+const exercise2: Exercise = {
+    id: 6,
+    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
+    studentAssignedTeamIdComputed: false,
+    dueDate: dayjs().add(1, 'hours'),
+    secondCorrectionEnabled: true,
+};
+const exercise3: Exercise = {
+    id: 7,
+    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
+    studentAssignedTeamIdComputed: false,
+    dueDate: dayjs().add(3, 'hours'),
+    secondCorrectionEnabled: true,
+};
+const courseEmpty: Course = {};
+
+const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
+const exam2: Exam = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
+const exams = [exam1, exam2];
+const course1: Course = { id: 1, exams, exercises: [exercise1, exercise3] };
+const course1Dashboard = { course: course1 } as CourseForDashboardDTO;
+const course2: Course = { id: 2, exercises: [exercise2], testCourse: true };
+const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
+const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
+const courses: Course[] = [course1, course2];
+const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
+
+function createAuthenticatedUser(authority: Authority): User {
+    return new User(1, 'test-user', 'Test', 'User', 'test-user@example.com', true, 'en', [authority]);
+}
+
+@Component({
+    template: '',
+})
+class DummyComponent {}
+
+describe('CoursesComponent', () => {
+    let component: CoursesComponent;
+    let fixture: ComponentFixture<CoursesComponent>;
+    let courseService: CourseManagementService;
+    let serverDateService: ArtemisServerDateService;
+    let courseAccessStorageService: CourseAccessStorageService;
+    let router: Router;
+    let location: Location;
+    let httpMock: HttpTestingController;
+    let accountService: AccountService;
+    let teamAssignmentSubscribeSpy: ReturnType<typeof vi.spyOn>;
+
+    const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
+
+    beforeEach(async () => {
+        const teamAssignmentUpdates = of<TeamAssignmentPayload>();
+        teamAssignmentSubscribeSpy = vi.spyOn(teamAssignmentUpdates, 'subscribe');
+        TestBed.configureTestingModule({
+            imports: [
+                RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]),
+                CoursesComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(SearchFilterPipe),
+            ],
+            providers: [
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: CourseExerciseRowComponent },
+                MockProvider(AlertService),
+                MockProvider(WebsocketService),
+                { provide: TeamService, useValue: { teamAssignmentUpdates: Promise.resolve(teamAssignmentUpdates) } },
+                MockProvider(FeatureToggleService),
+                MockProvider(CourseAccessStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).overrideComponent(CoursesComponent, {
+            remove: { imports: [CourseCardComponent, SearchFilterComponent] },
+            add: { imports: [MockComponent(CourseCardComponent), MockComponent(SearchFilterComponent)] },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CoursesComponent);
+        component = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
+        courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
+        location = TestBed.inject(Location);
+        serverDateService = TestBed.inject(ArtemisServerDateService);
+        TestBed.inject(AlertService);
+        httpMock = TestBed.inject(HttpTestingController);
+        router = TestBed.inject(Router);
+        accountService = TestBed.inject(AccountService);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    describe('onInit', () => {
+        it('should subscribe to the injected team assignment stream on init', async () => {
+            await fixture.whenStable();
+
+            expect(teamAssignmentSubscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call loadAndFilterCourses on init', () => {
+            const loadAndFilterCoursesSpy = vi.spyOn(component, 'loadAndFilterCourses');
+
+            component.ngOnInit();
+
+            expect(loadAndFilterCoursesSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should load courses on init', () => {
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+            serverDateServiceSpy.mockReturnValue(dayjs());
+
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            expect(component.courses()).toEqual(courses);
+            expect(component.regularCourses()).toEqual([course1]);
+            expect(component.testCourses()).toEqual([course2]);
+            expect(component.nextRelevantExams()).toHaveLength(0);
+        });
+
+        it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+
+            const req = httpMock.expectOne({ method: 'GET', url: `api/course/courses/for-dashboard` });
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            req.flush(null);
+            expect(component.courses()).toBeUndefined();
+        });
+
+        it('should load exercises on init', () => {
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
+
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+            serverDateServiceSpy.mockReturnValue(dayjs());
+
+            component.ngOnInit();
+
+            expect(component.nextRelevantCourse).toEqual(exercise1.course);
+        });
+
+        it('should sort courses into regular and recently accessed after loading', () => {
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const sortCoursesInRecentlyAccessedAndRegularCoursesSpy = vi.spyOn(component, 'sortCoursesInRecentlyAccessedAndRegularCourses');
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+
+            component.ngOnInit();
+
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            expect(sortCoursesInRecentlyAccessedAndRegularCoursesSpy).toHaveBeenCalledOnce();
+
+            const lastAccessedCourses = [1, 2];
+            const recentCoursesSpy = vi.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue(lastAccessedCourses);
+
+            // Test for less than 5 courses
+            const courses = [];
+            for (let i = 1; i <= 3; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
+
+            component.courses.set(courses);
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses()).toEqual(courses);
+            expect(component.recentlyAccessedCourses()).toEqual([]);
+            expect(recentCoursesSpy).not.toHaveBeenCalled();
+
+            // Test for more than 5 courses
+            for (let i = 4; i <= 7; i++) {
+                const course = { id: i };
+                courses.push(course);
+            }
+            component.courses.set(courses);
+            component.sortCoursesInRecentlyAccessedAndRegularCourses();
+            expect(component.regularCourses()).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses()).toEqual(courses.slice(0, 2));
+            expect(recentCoursesSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    it('should load next relevant exam', async () => {
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        // nextRelevantCourseForExam is derived from the relevant exam's course
+        const relevantExam: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: course1 };
+        component.nextRelevantExams.set([relevantExam]);
+        component.openExam();
+        await fixture.whenStable();
+
+        expect(component.nextRelevantCourseForExam()).toEqual(course1);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
+        expect(location.path()).toBe('/courses/1/exams/3');
+    });
+
+    it('should load next relevant exam ignoring test exams', async () => {
+        const testExam1 = {
+            id: 5,
+            startDate: dayjs().add(1, 'hour'),
+            endDate: endDate1,
+            visibleDate: visibleDate1.subtract(10, 'minutes'),
+            course: courseEmpty,
+            workingTime: 3600,
+            examMode: ExamMode.TEST,
+        };
+        const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
+        const courseForDashboard1 = { course: course1 } as CourseForDashboardDTO;
+        const courseForDashboard2 = { course: course2 } as CourseForDashboardDTO;
+        const courseForDashboard6 = { course: course6 } as CourseForDashboardDTO;
+        const coursesForDashboard: CoursesForDashboardDTO = { courses: [courseForDashboard1, courseForDashboard2, courseForDashboard6] };
+
+        const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+        const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
+        findAllForDashboardSpy.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: coursesForDashboard,
+                    headers: new HttpHeaders(),
+                }),
+            ),
+        );
+        serverDateServiceSpy.mockReturnValue(dayjs());
+
+        component.ngOnInit();
+        await fixture.whenStable();
+
+        expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+        expect(component.courses()).toEqual([course1, course2, course6]);
+        expect(component.nextRelevantExams()).toEqual([]);
+    });
+
+    it('should initialize search course text correctly', () => {
+        const searchedCourse = 'Test Course';
+        component.setSearchValue('Test Course');
+        expect(searchedCourse).toBe(component.searchCourseText());
+    });
+
+    it('should show the course request action to instructors', () => {
+        const instructor = createAuthenticatedUser(Authority.STUDENT);
+        instructor.courseRoles = [{ courseId: 1, roles: ['INSTRUCTOR'] }];
+        accountService.authenticate(instructor);
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(requestCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
+    });
+
+    it('should show the course creation action to administrators', () => {
+        accountService.authenticate(createAuthenticatedUser(Authority.ADMIN));
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(createCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+    });
+
+    it('should show primary course enrollment without course management actions to students', () => {
+        accountService.authenticate(createAuthenticatedUser(Authority.STUDENT));
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
+        expect(enrollmentButton.severity()).toBe('primary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
+    });
+
+    it('should adjust sort direction by clicking on sort icon', () => {
+        const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+        component.ngOnInit();
+
+        expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+        expect(component.courses()).toEqual(courses);
+        expect(component.isSortAscending()).toBe(true);
+
+        const onSortSpy = vi.spyOn(component, 'onSort');
+        const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
+        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumAetUiButtonDirective);
+        button.click();
+        expect(onSortSpy).toHaveBeenCalledOnce();
+        expect(component.isSortAscending()).toBe(false);
+        expect(sortButton.variant()).toBe('text');
+    });
+});

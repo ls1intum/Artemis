@@ -1,0 +1,39 @@
+@let languageValidation = languageValidationResult();
+<tumaet-ui-form-field
+    controlId="tutorial-edit-language-input"
+    [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
+    [required]="true"
+    [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()"
+    [error]="languageValidation.status === TutorialEditValidationStatus.INVALID ? (languageValidation.message | artemisTranslate) : ''"
+>
+    <input
+        id="tutorial-edit-language-input"
+        [attr.aria-label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
+        #searchInput
+        tumAetUiInput
+        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.language' | artemisTranslate"
+        [(ngModel)]="language"
+        (blur)="onBlur()"
+        (focus)="openPanel()"
+        (keydown)="onKeyDown($event)"
+    />
+</tumaet-ui-form-field>
+
+<ng-template #panelTemplate>
+    <div class="suggestion-panel">
+        <div class="suggestion-panel-header" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.languageAutocompleteHeader"></div>
+        <div class="suggestion-scroll-container">
+            @for (suggestedLanguage of alreadyUsedLanguages(); track suggestedLanguage; let index = $index) {
+                <button
+                    class="language-row"
+                    type="button"
+                    [class.active]="suggestionHighlightIndex() === index"
+                    (mousedown)="selectSuggestedLanguage(index)"
+                    (mousemove)="suggestionHighlightIndex.set(index)"
+                >
+                    {{ suggestedLanguage }}
+                </button>
+            }
+        </div>
+    </div>
+</ng-template>

@@ -1,0 +1,410 @@
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+
+describe('CourseCompetencyRelationFormComponent', () => {
+    let component: CourseCompetencyRelationFormComponent;
+    let fixture: ComponentFixture<CourseCompetencyRelationFormComponent>;
+    let courseCompetencyApiService: CourseCompetencyApiService;
+    let alertService: AlertService;
+
+    let createCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let updateCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let deleteCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+
+    const courseId = 1;
+    const courseCompetencies: CourseCompetency[] = [
+        { id: 1, title: 'Competency 1' },
+        { id: 2, title: 'Competency 2' },
+        { id: 3, title: 'Competency 3' },
+    ];
+    const relations: CompetencyRelationDTO[] = [
+        {
+            id: 1,
+            tailCompetencyId: 1,
+            headCompetencyId: 2,
+            relationType: CompetencyRelationType.EXTENDS,
+        },
+    ];
+    const selectedRelationId = 1;
+
+    const newRelation = <CompetencyRelationDTO>{
+        id: 2,
+        headCompetencyId: 2,
+        tailCompetencyId: 3,
+        relationType: CompetencyRelationType.EXTENDS,
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CourseCompetencyRelationFormComponent],
+            providers: [
+                {
+                    provide: AlertService,
+                    useClass: MockAlertService,
+                },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                {
+                    provide: CourseCompetencyApiService,
+                    useValue: {
+                        createCourseCompetencyRelation: vi.fn(),
+                        updateCourseCompetencyRelation: vi.fn(),
+                        deleteCourseCompetencyRelation: vi.fn(),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
+        alertService = TestBed.inject(AlertService);
+
+        createCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
+        updateCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
+        deleteCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
+
+        fixture = TestBed.createComponent(CourseCompetencyRelationFormComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('courseCompetencies', courseCompetencies);
+        fixture.componentRef.setInput('relations', relations);
+        fixture.componentRef.setInput('selectedRelationId', undefined);
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should set relationAlreadyExists correctly', () => {
+        component.headCompetencyId.set(2);
+        component.tailCompetencyId.set(1);
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        fixture.detectChanges();
+
+        expect(component.relationAlreadyExists()).toBeTruthy();
+    });
+
+    it('should set exactRelationAlreadyExists correctly', () => {
+        component.headCompetencyId.set(2);
+        component.tailCompetencyId.set(1);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        fixture.detectChanges();
+
+        expect(component.exactRelationAlreadyExists()).toBeTruthy();
+    });
+
+    it('should select relation if selectedRelationId is set', () => {
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.tailCompetencyId()).toBe(1);
+        expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
+    });
+
+    it('should set tailCompetencyId if it is undefined', () => {
+        component.tailCompetencyId.set(undefined);
+        component.headCompetencyId.set(2);
+
+        component.selectCourseCompetency(1);
+
+        expect(component.tailCompetencyId()).toBe(1);
+        expect(component.headCompetencyId()).toBeUndefined();
+    });
+
+    it('should set headCompetencyId if tailCompetencyId is defined and headCompetencyId is undefined', () => {
+        component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(undefined);
+
+        component.selectCourseCompetency(2);
+
+        expect(component.headCompetencyId()).toBe(2);
+    });
+
+    it('should reset tailCompetencyId if both tailCompetencyId and headCompetencyId are defined', () => {
+        component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(2);
+
+        component.selectCourseCompetency(3);
+
+        expect(component.tailCompetencyId()).toBe(3);
+        expect(component.headCompetencyId()).toBeUndefined();
+    });
+
+    it('should place the tail select before the head select so the form reads "tail requires head"', () => {
+        fixture.detectChanges();
+
+        const selectIds = Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-select button[role="combobox"]')).map((select) => (select as HTMLButtonElement).id);
+
+        expect(selectIds).toEqual(['tail', 'type', 'head']);
+    });
+
+    it('should create relation', async () => {
+        component.headCompetencyId.set(2);
+        component.tailCompetencyId.set(3);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        await component['createRelation']();
+
+        expect(createCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, {
+            headCompetencyId: 2,
+            tailCompetencyId: 3,
+            relationType: CompetencyRelationType.EXTENDS,
+        });
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.tailCompetencyId()).toBe(3);
+        expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
+        expect(component.selectedRelationId()).toBe(2);
+        expect(component.relations()).toEqual([...relations, newRelation]);
+    });
+
+    it('should set isLoading correctly when creating a relation', async () => {
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+
+        component.headCompetencyId.set(2);
+        component.tailCompetencyId.set(3);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        await component['createRelation']();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show error when creating relation fails', async () => {
+        const error = 'Error creating relation';
+        createCourseCompetencyRelationSpy.mockRejectedValue(error);
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+
+        component.headCompetencyId.set(2);
+        component.tailCompetencyId.set(3);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        await component['createRelation']();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should update relation', async () => {
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        await component['updateRelation']();
+
+        expect(updateCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId, <UpdateCourseCompetencyRelationDTO>{
+            newRelationType: CompetencyRelationType.ASSUMES,
+        });
+        const newRelations = [...relations].map((relation) => {
+            if (relation.id === selectedRelationId) {
+                return { ...relation, relationType: CompetencyRelationType.ASSUMES };
+            }
+            return relation;
+        });
+        expect(component.relations()).toEqual(newRelations);
+    });
+
+    it('should set isLoading correctly when updating a relation', async () => {
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        await component['updateRelation']();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show error when updating relation fails', async () => {
+        updateCourseCompetencyRelationSpy.mockRejectedValue('Error updating relation');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        await component['updateRelation']();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should select tail course competency', () => {
+        component['selectTailCourseCompetency'](2);
+
+        expect(component.tailCompetencyId()).toBe(2);
+        expect(component.headCompetencyId()).toBeUndefined();
+        expect(component.selectedRelationId()).toBeUndefined();
+    });
+
+    it('should set headCompetencyId and selectedRelationId when an existing relation is found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const headId = 2;
+        component.tailCompetencyId.set(1);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        component['selectHeadCourseCompetency'](headId);
+
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.selectedRelationId()).toBe(1);
+    });
+
+    it('should set headCompetencyId and clear selectedRelationId when no existing relation is found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const headId = 2;
+        component.tailCompetencyId.set(3);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        component['selectHeadCourseCompetency'](headId);
+
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.selectedRelationId()).toBeUndefined();
+    });
+
+    it('should not allow to create circular dependencies', () => {
+        component.tailCompetencyId.set(1);
+        component.headCompetencyId.set(1);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        expect(component['selectableHeadCourseCompetencyIds']()).not.toContain(1);
+        expect(component.showCircularDependencyError()).toBeTruthy();
+    });
+
+    it('should not flag the selected existing relation as circular when changing its type', () => {
+        // existing relation: tail 1 EXTENDS head 2; changing it to MATCHES must not count the old EXTENDS edge
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+        component.relationType.set(CompetencyRelationType.MATCHES);
+
+        expect(component['selectableHeadCourseCompetencyIds']()).toContain(2);
+        expect(component.showCircularDependencyError()).toBeFalsy();
+    });
+
+    it('should disable heads that would close a cycle', () => {
+        // existing relation: tail 1 EXTENDS head 2, so 2 ASSUMES 1 would be circular
+        component.tailCompetencyId.set(2);
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        expect(component['selectableHeadCourseCompetencyIds']()).toEqual([3]);
+    });
+
+    it('should offer only selectable heads, and keep an already chosen one so that it stays visible', () => {
+        component.tailCompetencyId.set(2);
+        component.relationType.set(CompetencyRelationType.ASSUMES);
+
+        expect(component['headOptions']().map(({ id }) => id)).toEqual([3]);
+
+        component.headCompetencyId.set(1);
+
+        expect(component['headOptions']().map(({ id }) => id)).toEqual([1, 3]);
+    });
+
+    it('should offer every relation type with its translated label', () => {
+        const options = component['relationTypeOptions']();
+
+        expect(options.map(({ value }) => value)).toEqual(Object.values(CompetencyRelationType));
+        expect(options[0].label).toBe(`artemisApp.courseCompetency.relations.relationTypes.${options[0].value}`);
+    });
+
+    it('should delete relation', async () => {
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        await component['deleteRelation']();
+
+        expect(deleteCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId);
+        expect(component.relations()).toHaveLength(relations.length - 1);
+    });
+
+    it('should set isLoading correctly when deleting a relation', async () => {
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        await component['deleteRelation']();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show error when deleting relation fails', async () => {
+        deleteCourseCompetencyRelationSpy.mockRejectedValue('Error deleting relation');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+
+        fixture.detectChanges();
+
+        await component['deleteRelation']();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+});
+
+describe('UnionFind', () => {
+    let unionFind: UnionFind;
+
+    beforeEach(() => {
+        unionFind = new UnionFind(5);
+    });
+
+    it('should initialize parent and rank arrays correctly', () => {
+        expect(unionFind.parent).toEqual([0, 1, 2, 3, 4]);
+        expect(unionFind.rank).toEqual([1, 1, 1, 1, 1]);
+    });
+
+    it('should find the representative of a set', () => {
+        expect(unionFind.find(0)).toBe(0);
+        expect(unionFind.find(1)).toBe(1);
+    });
+
+    it('should perform union by rank correctly', () => {
+        unionFind.union(0, 1);
+        expect(unionFind.find(0)).toBe(unionFind.find(1));
+    });
+
+    it('should perform path compression correctly', () => {
+        unionFind.union(0, 1);
+        unionFind.union(1, 2);
+        expect(unionFind.find(2)).toBe(0);
+        expect(unionFind.parent[2]).toBe(0);
+    });
+
+    it('should handle union of already connected components', () => {
+        unionFind.union(0, 1);
+        unionFind.union(1, 2);
+        unionFind.union(0, 2);
+        expect(unionFind.find(2)).toBe(0);
+    });
+
+    it('should handle union of components with equal rank', () => {
+        unionFind.union(0, 1);
+        unionFind.union(2, 3);
+        unionFind.union(1, 2);
+        expect(unionFind.find(3)).toBe(0);
+        expect(unionFind.rank[0]).toBe(3); // Corrected expected rank value
+    });
+});

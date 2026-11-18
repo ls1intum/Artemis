@@ -1,0 +1,50 @@
+@let complaint = this.complaint();
+<jhi-assessment-header
+    [isLoading]="isLoading()"
+    [saveBusy]="saveBusy()"
+    [submitBusy]="submitBusy()"
+    [cancelBusy]="cancelBusy()"
+    [nextSubmissionBusy]="nextSubmissionBusy()"
+    [isTeamMode]="isTeamMode()"
+    [isAssessor]="isAssessor()"
+    [isTestRun]="isTestRun()"
+    [exerciseDashboardLink]="exerciseDashboardLink()"
+    [canOverride]="canOverride()"
+    [assessmentsAreValid]="assessmentsAreValid()"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+    [exercise]="exercise()"
+    [result]="result()"
+    [correctionRound]="correctionRound()"
+    [isProgrammingExercise]="isProgrammingExercise()"
+    (save)="save.emit()"
+    (onSubmit)="onSubmit.emit()"
+    (onCancel)="onCancel.emit()"
+    [(highlightDifferences)]="highlightDifferences"
+    (nextSubmission)="nextSubmission.emit()"
+    [hasComplaint]="!!complaint"
+    [hasMoreFeedbackRequest]="complaint?.complaintType === MORE_FEEDBACK"
+    [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
+    [complaintType]="complaint?.complaintType"
+    (useAsExampleSubmission)="useAsExampleSubmission.emit()"
+>
+    <ng-content select="[jhiBannerSlot]" ngProjectAs="[jhiBannerSlot]" />
+</jhi-assessment-header>
+@if (showComplaintSection()) {
+    <jhi-assessment-complaint-alert [complaint]="complaint" />
+}
+<ng-content />
+@if (submission() && showAssessmentNote()) {
+    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+}
+@if (complaint && showComplaintSection()) {
+    <jhi-complaints-for-tutor-form
+        class="flex flex-wrap gap-y-2 mt-6!"
+        [zeroIndent]="false"
+        [complaint]="complaint"
+        [exercise]="exercise()"
+        [isAssessor]="isAssessor()"
+        [submission]="submission()"
+        [isTestRun]="isTestRun()"
+        (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
+    />
+}

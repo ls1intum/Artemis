@@ -1,0 +1,20 @@
+<div class="display-container">
+    <span>{{ roundedScore() ?? 0 }}&nbsp;</span>
+    @if (maxPoints()) {
+        <span>/&nbsp;{{ maxPoints() }}&nbsp;</span>
+    }
+    <span jhiTranslate="artemisApp.modelingAssessment.points"></span>
+    @if (bonusPoints()) {
+        <span>(Bonus:&nbsp;{{ bonusPoints() }})&nbsp;</span>
+    }
+    @if (maxBonusPoints()) {
+        <fa-icon
+            [icon]="faQuestionCircle"
+            placement="bottom auto"
+            tumAetUiTooltip="{{
+                'artemisApp.assessment.dashboard.bonusPointExplanation'
+                    | artemisTranslate: { maxPoints: maxPoints(), maxBonusPoints: maxBonusPoints(), maxPointsWithBonus: maxPointsWithBonus(), maxPercentage: maxPercentage() }
+            }}"
+        />
+    }
+</div>

@@ -1,0 +1,122 @@
+<div
+    class="search-result-item relative cursor-pointer p-4!"
+    [class.selected]="isSelected()"
+    (click)="onClick()"
+    (keydown.enter)="onClick()"
+    (keydown.space)="$event.preventDefault(); onClick()"
+    [attr.aria-selected]="isSelected()"
+    [attr.id]="optionId()"
+    role="option"
+    tabindex="-1"
+>
+    <div class="flex items-start gap-4!">
+        <!-- Icon -->
+        <div class="result-icon shrink-0">
+            <fa-icon [icon]="icon()" size="lg" class="text-primary" aria-hidden="true" />
+        </div>
+
+        <!-- Content -->
+        <div class="result-content min-w-0 flex-1">
+            <div class="mb-1 flex items-center gap-2">
+                <h6 class="result-title mt-0 mb-0 truncate leading-[1.2]">{{ result().title }}</h6>
+                @if (isExamExercise()) {
+                    <tumaet-ui-tag severity="warn" size="sm" data-testid="search-result-exam-tag">
+                        <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />
+                        {{ 'global.search.results.examExercise' | artemisTranslate }}
+                    </tumaet-ui-tag>
+                }
+                @if (isReply()) {
+                    <tumaet-ui-tag severity="info" size="sm" data-testid="search-result-reply-tag">
+                        <fa-icon [icon]="faReply" size="xs" aria-hidden="true" />
+                        {{ 'global.search.results.reply' | artemisTranslate }}
+                    </tumaet-ui-tag>
+                }
+            </div>
+
+            <!-- Metadata Row -->
+            @if (result().badgeKey || hasAnyMetadata()) {
+                <div class="result-metadata mb-2 flex items-center gap-2">
+                    @if (result().badgeKey) {
+                        <span class="result-type">{{ badgeLabelKey() | artemisTranslate }}</span>
+                        @if (hasAnyMetadata()) {
+                            <span>•</span>
+                        }
+                    }
+                    @if (courseName()) {
+                        <span class="flex items-center gap-1">
+                            <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
+                            <span>{{ courseName() }}</span>
+                        </span>
+                    }
+                    @if (isLectureContent()) {
+                        <span>•</span>
+                        <span>{{ lectureName() }}</span>
+                        <span>•</span>
+                        @if (pageNumber() >= 0) {
+                            <span>{{ 'global.search.pageAbbreviation' | artemisTranslate }} {{ pageNumber() }}</span>
+                        } @else {
+                            <span>{{ displayMeta() || ('global.search.results.video' | artemisTranslate) }}</span>
+                        }
+                    }
+                    @if (channelName()) {
+                        @if (courseName()) {
+                            <span>•</span>
+                        }
+                        <span class="flex items-center gap-1">
+                            <fa-icon [icon]="faHashtag" size="sm" aria-hidden="true" />
+                            <span>{{ channelName() }}</span>
+                        </span>
+                    }
+                    @if (showCourseSeparator()) {
+                        <span>•</span>
+                    }
+                    @if (dueDate()) {
+                        <span class="flex items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
+                        </span>
+                    }
+                    @if (showStartDateOnly()) {
+                        <span class="flex items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ formattedStartDate() }}</span>
+                        </span>
+                    }
+                    @if (showDatePointsSeparator()) {
+                        <span>•</span>
+                    }
+                    @if (points()) {
+                        <span class="flex items-center gap-1">
+                            <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
+                            <span>{{ points() }} {{ (points() === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span>
+                        </span>
+                    }
+                    @if (showDifficultySeparator()) {
+                        <span>•</span>
+                    }
+                    @if (difficulty()) {
+                        <span class="capitalize">{{ difficulty() }}</span>
+                    }
+                </div>
+            }
+
+            @if (cleanedDescription()) {
+                <div
+                    class="result-description mb-0"
+                    [jhiMarkdown]="cleanedDescription()"
+                    [markdownAllowedTags]="PREVIEW_ALLOWED_TAGS"
+                    [markdownAllowedAttributes]="PREVIEW_ALLOWED_ATTRS"
+                ></div>
+            }
+        </div>
+    </div>
+
+    <!-- Navigation hint for selected item (positioned absolutely) -->
+    @if (isSelected()) {
+        <div class="result-nav-hint absolute">
+            <kbd class="key-hint-small" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
+                <fa-icon [icon]="faLevelDownAlt" />
+            </kbd>
+        </div>
+    }
+</div>

@@ -1,0 +1,552 @@
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Params, RouterOutlet } from '@angular/router';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
+import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
+import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+
+@Component({
+    selector: 'jhi-course-overview',
+    templateUrl: './course-overview.component.html',
+    styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
+    imports: [
+        CdkScrollable,
+        NgClass,
+        RouterOutlet,
+        NgTemplateOutlet,
+        CourseSidebarComponent,
+        CourseUnenrollmentModalComponent,
+        CourseTitleBarComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+    ],
+    providers: [CourseConversationsService, ScienceService],
+})
+export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
+    private alertService = inject(AlertService);
+    private examParticipationService = inject(ExamParticipationService);
+    private sidebarItemService = inject(CourseSidebarItemService);
+    private courseTitleBarService = inject(CourseTitleBarService);
+    private courseAvailableTabsService = inject(CourseAvailableTabsService);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private scienceSettingsService = inject(ScienceSettingsService);
+    private scienceService = inject(ScienceService);
+    private llmSelectionModalService = inject(LLMSelectionModalService);
+
+    /**
+     * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
+     * management and administration — calendar, statistics, competencies, learning path and quiz training previously
+     * had no bar at all. The title comes from the route's `pageTitle`.
+     *
+     * The sidebar pages (exercises, lectures, exams, communication, tutorial groups) are excluded because their
+     * sidebar header already carries the page identity and the collapse control; a second bar above it would only
+     * repeat it. Those pages can still project content, which is what keeps the communication search bar working.
+     */
+    protected readonly showCourseTitleBar = computed(
+        () => !this.isolatedView() && (!this.hasSidebar() || !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate())),
+    );
+
+    /**
+     * Whether the active page is shown on its own (route data `isolatedView`, e.g. a text unit in full screen). The
+     * course sidebar and the title bar are dropped then, so that only the main navbar and the footer remain around it.
+     */
+    protected readonly isolatedView = signal(false);
+
+    /**
+     * The consent state of the course currently on screen, loaded by the page-scoped {@link ScienceService} on every
+     * course entry. Matched against {@link course}, so an in-place course switch can never leave the dialog showing the
+     * previous course's decision.
+     */
+    readonly scienceConsentCourse = computed(() => {
+        const consent = this.scienceService.courseConsent();
+        return consent && consent.courseId === this.course()?.id ? consent : undefined;
+    });
+
+    /** The courses the consent prompt was dismissed for while this page lives. */
+    private readonly scienceConsentDismissedFor = signal<ReadonlySet<number>>(new Set());
+    /** Whether a decision from the dialog is being stored. Both buttons are locked, so two saves can never overtake each other. */
+    readonly scienceConsentSaving = signal(false);
+
+    /**
+     * Exam pages never show the prompt: a reload during an exam rebuilds this page, which would otherwise put a modal
+     * over a running exam.
+     */
+    private readonly onExamPage = computed(() => {
+        this.navigationEnd(); // re-evaluated on every navigation
+        return this.router.url.split('?')[0].split('/')[3] === 'exams';
+    });
+
+    /**
+     * Shown while the course collects science data, the student has not decided, and they have not waved the prompt
+     * away. Consent has to be freely given, so there is always a way out: the prompt returns the next time this page is
+     * built rather than holding the course hostage until an answer is given - and a failed save cannot lock anyone out.
+     * Switching course in place does not rebuild the page, so a course dismissed once stays dismissed until the student
+     * navigates away from the course overview entirely.
+     */
+    readonly showScienceConsentModal = computed(() => {
+        const consent = this.scienceConsentCourse();
+        if (!consent || this.onExamPage() || this.llmSelectionModalService.isOpen() || this.scienceConsentDismissedFor().has(consent.courseId)) {
+            return false;
+        }
+        return consent.scienceEnabled && (consent.active === undefined || consent.active === null);
+    });
+
+    dismissScienceConsent(): void {
+        const courseId = this.scienceConsentCourse()?.courseId;
+        if (courseId !== undefined) {
+            this.scienceConsentDismissedFor.update((dismissed) => new Set(dismissed).add(courseId));
+        }
+    }
+
+    private toggleSidebarEventSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
+    private availableTabsSubscription?: Subscription;
+    /** Set when the user selects a sidebar tab, so the navigation it causes reconciles which tabs exist. */
+    private reconcileTabsOnNextNavigation = false;
+    private readonly tabSelectionSubscription = this.courseTabRefreshService
+        .selections()
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => (this.reconcileTabsOnNextNavigation = true));
+
+    /**
+     * Which course tabs are available to the user. Server-computed and shared with the {@link CourseOverviewGuard}
+     * via {@link CourseAvailableTabsService}, so the sidebar and the guard can never disagree.
+     */
+    availableTabs = signal<CourseAvailableTabs | undefined>(undefined);
+    showUnenrollModal = signal<boolean>(false);
+    courseActionItems = signal<CourseActionItem[]>([]);
+    canUnenroll = signal<boolean>(false);
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
+
+    // Icons
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faCircleNotch = faCircleNotch;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+
+    override ngOnInit() {
+        void this.initializeCourseOverviewComponent();
+    }
+
+    private async initializeCourseOverviewComponent(): Promise<void> {
+        // The router outlet only activates once the course is loaded, so a page opened directly (reload, shared link)
+        // would otherwise show the sidebar until then.
+        this.isolatedView.set(!!this.route.snapshot.firstChild?.data?.isolatedView);
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed() ?? !value);
+        });
+
+        this.subscription = this.route?.params.subscribe((params: Params) => {
+            const id = Number(params.courseId);
+            const previousCourseId = this.courseId();
+            this.courseId.set(id);
+            // Covers course entry and an in-place switch alike; the service drops the previous course's state first.
+            this.scienceService.loadConsent(id);
+            // In-place navigation to a different course (without destroying this container) must reload the course
+            // content and the available tabs. loadCourse() does both; the tabs are keyed by course id, so the new
+            // course's tabs are always fetched rather than the previous course's being reused.
+            if (previousCourseId && previousCourseId !== id) {
+                // The exercise data of the previous course must not be reused for the new one
+                this.courseOverviewExercisesService.clear();
+                this.courseOverviewTabDataService.clear();
+                // loadCourse() unsubscribes any in-flight loadCourseSubscription internally before returning the observable
+                this.loadCourseSubscription = this.loadCourse().subscribe({
+                    next: () => {
+                        this.sidebarItems.set(this.getSidebarItems());
+                        this.courseActionItems.set(this.getCourseActionItems());
+                    },
+                    error: () => this.handleLoadCourseError(),
+                });
+            }
+        });
+        await super.initializeBaseCourseContainerComponent();
+
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
+            this.isExamStarted.set(isStarted);
+        });
+
+        this.courseActionItems.set(this.getCourseActionItems());
+        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed() ?? false);
+        this.sidebarItems.set(this.getSidebarItems());
+    }
+
+    handleCourseIdChange(courseId: number): void {
+        this.courseId.set(courseId);
+    }
+
+    /**
+     * Fetches the course itself and, in parallel, which tabs are available for it.
+     *
+     * Neither request carries course content: exercises, participations and scores are loaded by the exercises and
+     * statistics tabs (via {@link CourseOverviewExercisesService}) and lectures by the lectures tab, so entering a
+     * course on any tab only pays for what that tab shows. The two requests are issued together, keeping entering a
+     * course to a single round trip of latency.
+     */
+    loadCourse(): Observable<void> {
+        // The course this call is for. The very first load is subscribed by the base class through firstValueFrom and
+        // is therefore not held in loadCourseSubscription, so an in-place switch to another course cannot cancel it.
+        // Every emission below is checked against this id: otherwise the slower of two overlapping loads wins and
+        // restores the course the user has already left, and its 403 branch would redirect using the new course's id.
+        const requestedCourseId = this.courseId();
+        const isStale = () => this.courseId() !== requestedCourseId;
+
+        this.loadAvailableTabs();
+        const observable = this.courseManagementService.findCourseForOverview(requestedCourseId).pipe(
+            map((res: HttpResponse<Course>) => {
+                if (res.body && !isStale()) {
+                    this.course.set(res.body);
+                }
+            }),
+            // catch 403 errors where registration is possible
+            catchError((error: HttpErrorResponse) => {
+                if (isStale()) {
+                    return of(undefined);
+                }
+                if (error.status === 403) {
+                    this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
+                    // Emit a default value, for example `undefined`
+                    return of(undefined);
+                } else {
+                    return throwError(() => error);
+                }
+            }),
+            // handle other errors
+            catchError((error: HttpErrorResponse) => {
+                const errorMessage = error.headers.get('X-artemisApp-message')!;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+                return throwError(() => error);
+            }),
+        );
+        // Start fetching, even if we don't subscribe to the result.
+        this.loadCourseSubscription?.unsubscribe();
+        return observable;
+    }
+
+    /**
+     * Loads which tabs are available for the current course and updates the sidebar from the result.
+     *
+     * The value the guard already fetched for this navigation is reused, so entering a guarded tab costs one
+     * `available-tabs` request rather than two.
+     *
+     * A failure here is deliberately not alerted: the parallel course load reports the same network problem. The old
+     * course's flags are cleared before starting so an in-place course switch can never retain links that are not
+     * available in the new course; on failure the sidebar therefore stays at its safe, always-available baseline.
+     */
+    /**
+     * Keeps the sidebar's tab list in step with the guard.
+     *
+     * The container outlives child-tab navigations, so its flags would otherwise stay at whatever the course load found
+     * on entry while the guard decides each guarded navigation from a freshly fetched answer. The two could then
+     * disagree: a tab removed since entry would still be offered, and one that became available would stay hidden.
+     *
+     * Adopts the guard's answer whenever there is one: the tab service is scoped to the navigation, so a guard that ran
+     * for this navigation has left its response there, free to read. Entering a course is a chain of navigations
+     * (course, then tab, then the auto-selected item), and refetching on each would undo what this endpoint was split
+     * out to achieve, so nothing else fetches here.
+     *
+     * The exception is a navigation the user caused by selecting a sidebar tab. Adopting alone is not enough there:
+     * an unguarded tab (statistics, calendar, settings) fetches nothing at all, and a guard that *denies* a removed tab
+     * cancels its navigation and redirects, so the answer it fetched is filed under the cancelled navigation and the
+     * redirect can no longer see it. Either way the sidebar would keep offering a link that can never be opened, and no
+     * amount of clicking it would clear it. One selection therefore reconciles once, sharing the guard's request when
+     * the guard ran in the same navigation.
+     */
+    protected override handleNavigationEndActions(): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
+        const causedBySidebarSelection = this.reconcileTabsOnNextNavigation;
+        this.reconcileTabsOnNextNavigation = false;
+
+        const tabsFetchedByGuard = this.courseAvailableTabsService.tabsFor(courseId);
+        if (tabsFetchedByGuard) {
+            this.availableTabs.set(tabsFetchedByGuard);
+            this.sidebarItems.set(this.getSidebarItems());
+            return;
+        }
+        if (causedBySidebarSelection) {
+            this.reconcileAvailableTabs(courseId);
+        }
+    }
+
+    /**
+     * Refetches which tabs exist and adopts the answer, leaving the rendered sidebar in place meanwhile so it does not
+     * flicker. Unlike {@link loadAvailableTabs} this is a reconciliation of an already-rendered sidebar, not its
+     * initial load, so it neither clears the flags first nor reports an error the user cannot act on.
+     */
+    private reconcileAvailableTabs(courseId: number): void {
+        this.availableTabsSubscription?.unsubscribe();
+        this.availableTabsSubscription = this.courseAvailableTabsService.loadIfNeeded(courseId).subscribe({
+            next: (tabs) => {
+                // The user may have left for another course while this was in flight
+                if (this.courseId() === courseId) {
+                    this.availableTabs.set(tabs);
+                    this.sidebarItems.set(this.getSidebarItems());
+                }
+            },
+            error: () => {},
+        });
+    }
+
+    private loadAvailableTabs(): void {
+        const courseId = this.courseId();
+        this.availableTabs.set(undefined);
+        this.sidebarItems.set(this.getSidebarItems());
+        const tabs$ = this.courseAvailableTabsService.loadIfNeeded(courseId);
+        this.availableTabsSubscription?.unsubscribe();
+        this.availableTabsSubscription = tabs$.subscribe({
+            next: (tabs) => {
+                // The user may have switched to another course while this was in flight
+                if (this.courseId() === courseId) {
+                    this.availableTabs.set(tabs);
+                    this.sidebarItems.set(this.getSidebarItems());
+                }
+            },
+            error: () => {},
+        });
+    }
+
+    /**
+     * Terminal error observer for `loadCourse()`.
+     * <p>
+     * `loadCourse()` deliberately rethrows every non-403 error after alerting the user, so each subscriber has to
+     * provide an error observer — otherwise RxJS reports it as an unhandled error and it surfaces through the global
+     * error handler. The user-facing alert already happens inside the pipe, so there is nothing left to do here beyond
+     * terminating the stream cleanly.
+     */
+    private handleLoadCourseError(): void {
+        // intentionally empty: the user-facing alert is already raised in loadCourse()'s catchError
+    }
+
+    protected getHasSidebar(): boolean {
+        return !!this.route.snapshot.firstChild?.data?.hasSidebar;
+    }
+
+    protected handleComponentActivation(componentRef: unknown): void {
+        this.isolatedView.set(!!this.route.snapshot.firstChild?.data?.isolatedView);
+
+        const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
+        if (sidebarView) {
+            this.activatedComponentReference.set(sidebarView);
+        }
+
+        if (isPageTitleView(componentRef)) {
+            componentRef.setPageTitle(this.pageTitle());
+        }
+
+        this.isSidebarCollapsed.set(sidebarView?.isCollapsed() ?? false);
+    }
+
+    handleToggleSidebar(): void {
+        const childRouteComponent = this.activatedComponentReference();
+        if (!childRouteComponent) {
+            return;
+        }
+        childRouteComponent.toggleSidebar();
+        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
+    }
+
+    acceptScienceConsent(): void {
+        this.saveScienceConsent(true);
+    }
+
+    declineScienceConsent(): void {
+        this.saveScienceConsent(false);
+    }
+
+    /**
+     * Stores the decision. The dialog closes on its own once the stored consent no longer reads as undecided, so there
+     * is no separate visibility flag that could disagree with the persisted state.
+     */
+    private saveScienceConsent(active: boolean): void {
+        const consentCourse = this.scienceConsentCourse();
+        if (!consentCourse || this.scienceConsentSaving()) {
+            return;
+        }
+        this.scienceConsentSaving.set(true);
+        // Reported here as well as by the global error handler: that one stays silent for a 404 or a proxy error page,
+        // and a decision that was not stored must never fail silently. The dialog stays open either way.
+        this.scienceSettingsService
+            .saveConsentForCourse(consentCourse.courseId, active)
+            .pipe(finalize(() => this.scienceConsentSaving.set(false)))
+            .subscribe({
+                next: (updatedConsent) => this.scienceService.setConsent(updatedConsent),
+                error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
+            });
+    }
+
+    /**
+     * Builds the sidebar from the server-computed available tabs. The same value backs the {@link CourseOverviewGuard},
+     * so a tab is offered here exactly when opening it is allowed — the two cannot drift apart.
+     *
+     * Before the tabs have arrived only the always-available entries are rendered; `loadAvailableTabs` rebuilds the
+     * sidebar once they do.
+     */
+    getSidebarItems(): SidebarItem[] {
+        const sidebarItems: SidebarItem[] = [];
+        const tabs = this.availableTabs();
+
+        // Use the service to get sidebar items
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(tabs?.training);
+        if (tabs?.iris) {
+            defaultItems.unshift(this.sidebarItemService.getIrisItem());
+        }
+        sidebarItems.push(...defaultItems);
+
+        if (this.lectureEnabled && tabs?.lectures) {
+            const lecturesItem = this.sidebarItemService.getLecturesItem();
+            sidebarItems.splice(-2, 0, lecturesItem);
+        }
+
+        if (tabs?.exams) {
+            const examsItem = this.sidebarItemService.getExamsItem();
+            sidebarItems.unshift(examsItem);
+        }
+
+        if (tabs?.communication) {
+            const communicationsItem = this.sidebarItemService.getCommunicationsItem();
+            sidebarItems.push(communicationsItem);
+        }
+
+        if (this.tutorialGroupEnabled && tabs?.tutorialGroups) {
+            const tutorialGroupsItem = this.sidebarItemService.getTutorialGroupsItem();
+            sidebarItems.push(tutorialGroupsItem);
+        }
+
+        if (this.atlasEnabled && tabs?.competencies) {
+            const competenciesItem = this.sidebarItemService.getCompetenciesItem();
+            sidebarItems.push(competenciesItem);
+
+            if (tabs.learningPaths) {
+                const learningPathItem = this.sidebarItemService.getLearningPathItem();
+                sidebarItems.push(learningPathItem);
+            }
+        }
+
+        if (tabs?.faq) {
+            const faqItem = this.sidebarItemService.getFaqItem();
+            sidebarItems.push(faqItem);
+        }
+
+        sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
+
+        return sidebarItems;
+    }
+
+    getCourseActionItems(): CourseActionItem[] {
+        const courseActionItems = [];
+        const currentCourse = this.course();
+
+        this.canUnenroll.set(this.canStudentUnenroll() && !currentCourse?.isAtLeastTutor);
+        if (this.canUnenroll()) {
+            const unenrollItem = this.getUnenrollItem();
+            courseActionItems.push(unenrollItem);
+        }
+        return courseActionItems;
+    }
+
+    canStudentUnenroll(): boolean {
+        const currentCourse = this.course();
+        return !!currentCourse?.unenrollmentEnabled && dayjs().isBefore(currentCourse?.unenrollmentEndDate);
+    }
+
+    courseActionItemClick(item?: CourseActionItem) {
+        if (item?.action) {
+            item.action(item);
+        }
+    }
+
+    getUnenrollItem(): CourseActionItem {
+        return {
+            title: 'Unenroll',
+            icon: faDoorOpen,
+            translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
+            action: () => this.openUnenrollStudentModal(),
+        };
+    }
+
+    openUnenrollStudentModal() {
+        this.showUnenrollModal.set(true);
+    }
+
+    /**
+     * Determines whether the user can register for the course by trying to fetch the for-registration version
+     */
+    canRegisterForCourse(): Observable<boolean> {
+        return this.courseManagementService.findOneForRegistration(this.courseId()).pipe(
+            map(() => true),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    return of(false);
+                } else {
+                    return throwError(() => error);
+                }
+            }),
+        );
+    }
+
+    redirectToCourseRegistrationPage() {
+        void this.router.navigate(['courses', this.courseId(), 'register']);
+    }
+
+    redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): void {
+        this.canRegisterForCourse().subscribe((canRegister) => {
+            if (canRegister) {
+                this.redirectToCourseRegistrationPage();
+            } else {
+                throw error;
+            }
+        });
+    }
+
+    override ngOnDestroy() {
+        super.ngOnDestroy();
+        this.availableTabsSubscription?.unsubscribe();
+        this.tabSelectionSubscription.unsubscribe();
+        // Drop what is held for the current navigation so nothing outlives the course being left
+        this.courseAvailableTabsService.clear();
+        this.courseOverviewExercisesService.clear();
+        this.courseOverviewTabDataService.clear();
+        this.examStartedSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
+    }
+}

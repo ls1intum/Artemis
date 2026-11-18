@@ -1,0 +1,326 @@
+import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Subject, of, throwError } from 'rxjs';
+import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+
+describe('CompetencyManagementComponent', () => {
+    let fixture: ComponentFixture<CompetencyManagementComponent>;
+    let component: CompetencyManagementComponent;
+    let courseCompetencyApiService: CourseCompetencyApiService;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
+    let dialogService: TumAetUiDialogService;
+    let alertService: AlertService;
+    let localStorageService: LocalStorageService;
+    let featureToggleService: MockFeatureToggleService;
+
+    let getProfileInfoSpy: ReturnType<typeof vi.spyOn>;
+    let getAllForCourseSpy: ReturnType<typeof vi.spyOn>;
+    let getIrisSettingsSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CompetencyManagementComponent,
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(ImportAllCompetenciesComponent),
+                MockComponent(CompetencyManagementTableComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(MarkdownDirective),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(MockHasAnyAuthorityDirective),
+            ],
+            declarations: [],
+            providers: [
+                provideRouter([]),
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                {
+                    provide: AlertService,
+                    useClass: MockAlertService,
+                },
+                {
+                    provide: ProfileService,
+                    useClass: MockProfileService,
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: {
+                            params: of({
+                                courseId: 1,
+                            }),
+                        },
+                    },
+                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                MockProvider(TumAetUiDialogService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        profileService = TestBed.inject(ProfileService);
+        alertService = TestBed.inject(AlertService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+
+        // Initialize the feature toggle service's subject before component creation
+        featureToggleService.getFeatureToggles();
+
+        const competency: Competency = new Competency();
+        competency.id = 1;
+        competency.description = 'test';
+        const courseCompetencyProgress = new CourseCompetencyProgress();
+        courseCompetencyProgress.competencyId = 1;
+        courseCompetencyProgress.numberOfStudents = 8;
+        courseCompetencyProgress.numberOfMasteredStudents = 5;
+        courseCompetencyProgress.averageStudentScore = 90;
+
+        getAllForCourseSpy = vi.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
+            competency,
+            { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
+            {
+                id: 3,
+                type: CourseCompetencyType.PREREQUISITE,
+            } as Prerequisite,
+        ]);
+
+        vi.spyOn(courseCompetencyApiService, 'getCourseProgressForCourse').mockResolvedValue([courseCompetencyProgress]);
+
+        const profileInfoResponse = {
+            activeModuleFeatures: [MODULE_FEATURE_IRIS],
+        } as ProfileInfo;
+        getProfileInfoSpy = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
+
+        getIrisSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
+
+        fixture = TestBed.createComponent(CompetencyManagementComponent);
+        component = fixture.componentInstance;
+
+        dialogService = TestBed.inject(TumAetUiDialogService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show generate button if IRIS is enabled', async () => {
+        const irisSettingsResponse = {
+            courseId: 1,
+            settings: {
+                enabled: true,
+                variant: 'default',
+                rateLimit: {},
+            },
+        } as IrisCourseSettingsWithRateLimitDTO;
+        getIrisSettingsSpy.mockReturnValue(of(irisSettingsResponse));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(getProfileInfoSpy).toHaveBeenCalled();
+        expect(getIrisSettingsSpy).toHaveBeenCalled();
+    });
+
+    it('should load competencies and prerequisites', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getAllForCourseSpy).toHaveBeenCalledExactlyOnceWith(1);
+
+        expect(component.competencies()).toHaveLength(2);
+        expect(component.prerequisites()).toHaveLength(1);
+    });
+
+    it('should set isLoading correctly', async () => {
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show alert when loading iris settings fails', async () => {
+        const errorSpy = vi.spyOn(alertService, 'error');
+        getIrisSettingsSpy.mockReturnValueOnce(throwError(() => ({})));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show alert when loading course competencies fails', async () => {
+        const errorSpy = vi.spyOn(alertService, 'error');
+        getAllForCourseSpy.mockRejectedValueOnce({});
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should open course competency explanation', () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        const openSpy = vi.spyOn(dialogService, 'open');
+        fixture.detectChanges();
+
+        component.openCourseCompetencyExplanation();
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should open import modal and update values', async () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+
+        // Import competencies with new IDs (not already present in initial load)
+        const importedCompetencies: CompetencyWithTailRelationDTO[] = [
+            { competency: { id: 10, type: CourseCompetencyType.COMPETENCY }, tailRelations: [{ id: 11 }] },
+            { competency: { id: 20, type: CourseCompetencyType.COMPETENCY } },
+        ];
+
+        // Set up spies BEFORE detectChanges
+        vi.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const existingCompetencies = component.competencies().length;
+        expect(existingCompetencies).toBe(2); // Verify initial competencies loaded
+
+        // Test updateDataAfterImportAll directly instead of openImportAllModal
+        // This avoids the modal async complexity while still testing the core logic
+        component.updateDataAfterImportAll(importedCompetencies);
+
+        // Verify competencies were added
+        expect(component.competencies()).toHaveLength(existingCompetencies + 2);
+    });
+
+    it('should open import modal with correct options', () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+
+        const dialogRef = {
+            onClose: new Subject<unknown>(), // Never emits - we just test the modal opens
+        } as any;
+
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
+
+        fixture.detectChanges();
+
+        // Call the method - it will open the dialog but we don't await the result
+        component.openImportAllModal();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            ImportAllCourseCompetenciesModalComponent,
+            expect.objectContaining({
+                header: 'artemisApp.courseCompetency.importAll.title',
+                size: 'medium',
+                dismissableMask: false,
+                data: { courseId: 1 },
+            }),
+        );
+    });
+
+    it('should open agent chat modal and pass the courseId', () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        const openSpy = vi.spyOn(dialogService, 'open');
+        fixture.detectChanges();
+
+        component['openAgentChatModal']();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            AgentChatModalComponent,
+            expect.objectContaining({
+                ariaLabel: 'AI Assistant',
+                showHeader: false,
+                size: 'medium',
+                dismissableMask: true,
+                data: expect.objectContaining({ courseId: 1 }),
+            }),
+        );
+    });
+
+    it('should not enable the agent chat when Atlas is active but AtlasLLM is not', async () => {
+        // The profile of an installation with competencies and no chat model: the AtlasAgent toggle may still be on,
+        // and the instructor may still have the authority, but the agent endpoint is not registered on that server.
+        getProfileInfoSpy.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        vi.spyOn(TestBed.inject(AccountService), 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.agentChatEnabled()).toBe(false);
+    });
+
+    it('should enable the agent chat when AtlasLLM is active', async () => {
+        getProfileInfoSpy.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM] } as ProfileInfo);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        vi.spyOn(TestBed.inject(AccountService), 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.agentChatEnabled()).toBe(true);
+    });
+
+    it('should wire onCompetencyChanged callback to reload competencies', async () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        let capturedData: Record<string, unknown> | undefined;
+        vi.spyOn(dialogService, 'open').mockImplementation((_component, config) => {
+            capturedData = config?.data as Record<string, unknown>;
+            return undefined as never;
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component['openAgentChatModal']();
+
+        expect(capturedData).toBeDefined();
+        expect(typeof capturedData!['onCompetencyChanged']).toBe('function');
+
+        const loadSpy = vi.spyOn(component as any, 'loadCourseCompetencies').mockResolvedValue(undefined);
+        (capturedData!['onCompetencyChanged'] as () => void)();
+        expect(loadSpy).toHaveBeenCalledOnce();
+    });
+});

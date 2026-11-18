@@ -1,0 +1,28 @@
+<span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
+<div class="font-bold">
+    @if (lineChangesLoading()) {
+        <fa-icon [icon]="faSpinner" animation="spin" />
+    } @else {
+        <jhi-git-diff-line-stat
+            [addedLineCount]="addedLineCount()"
+            [removedLineCount]="removedLineCount()"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate"
+            tumAetUiTooltipPlacement="right"
+        />
+    }
+</div>
+@if (!lineChangesLoading() && (addedLineCount() > 0 || removedLineCount() > 0)) {
+    <div class="mt-1">
+        <jhi-button
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
+            [isLoading]="false"
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faCodeCompare"
+            [title]="'artemisApp.programmingExercise.diffReport.button'"
+            [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
+            (onClick)="showGitDiff()"
+            [btnType]="WARNING"
+            [tooltipPlacement]="TooltipPlacement.RIGHT"
+        />
+    </div>
+}

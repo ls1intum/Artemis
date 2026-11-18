@@ -1,0 +1,100 @@
+<jhi-fireworks [active]="showFireworks()" />
+@if (isLoading()) {
+    <div class="flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+}
+@if (competency(); as competency) {
+    <div class="-mt-4!">
+        <!-- HEADER INFORMATION START -->
+        <div class="mt-2 me-1 course-info-bar">
+            <div class="-mx-2 flex flex-wrap items-center">
+                <div class="min-w-0 flex-1 px-2">
+                    <h3 class="mb-0!">
+                        <fa-icon
+                            [icon]="getIcon(competency.taxonomy)"
+                            [fixedWidth]="true"
+                            [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                        />
+                        <span>{{ competency!.title }}</span>
+                        @if (isMastered) {
+                            <tumaet-ui-tag class="align-middle" severity="success" data-testid="competency-mastered-badge">{{
+                                'artemisApp.competency.mastered' | artemisTranslate
+                            }}</tumaet-ui-tag>
+                        }
+                        @if (competency.optional) {
+                            <tumaet-ui-tag class="align-middle" severity="warn">{{ 'artemisApp.competency.optional' | artemisTranslate }}</tumaet-ui-tag>
+                        }
+                    </h3>
+                    @if (competency.description) {
+                        <div class="markdown-preview" [jhiMarkdown]="competency.description"></div>
+                    }
+                </div>
+                @if (competency.softDueDate) {
+                    <div class="w-auto px-2 text-end">
+                        <span class="align-middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
+                        <tumaet-ui-tag id="date-badge" class="align-middle" size="sm" [severity]="softDueDatePassed ? 'danger' : 'success'">
+                            {{ competency.softDueDate | artemisTimeAgo }}
+                        </tumaet-ui-tag>
+                    </div>
+                }
+                <div class="w-auto px-2">
+                    @if (competency.course?.isAtLeastInstructor) {
+                        <a tumAetUiButton severity="warn" size="small" [routerLink]="['/course-management', courseId(), 'competency-management', competency.id, 'edit']">
+                            <fa-icon [icon]="faPencilAlt" />
+                            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+        <!-- HEADER INFORMATION END -->
+        <div class="-mx-2 mt-2 flex flex-wrap">
+            <div class="w-full px-2 md:w-2/3 lg:w-3/4">
+                <div class="-mx-2 flex flex-wrap">
+                    @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
+                        @if (lectureUnitLink.lectureUnit; as lectureUnit) {
+                            <div class="mt-4! w-full px-2 lg:w-11/12">
+                                @switch (lectureUnit.type) {
+                                    @case (LectureUnitType.EXERCISE) {
+                                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
+                                    }
+                                    @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                        <jhi-attachment-video-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.TEXT) {
+                                        <jhi-text-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.ONLINE) {
+                                        <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @default {}
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="w-full px-2 md:w-1/3 lg:w-1/4">
+                <div class="mx-auto my-2 w-1/2">
+                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" />
+                </div>
+                <jhi-side-panel class="mt-4! block" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
+                    <div class="mb-1 flex">
+                        <div class="w-7/12"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
+                        <div class="w-5/12">
+                            <span> {{ mastery }} %</span>
+                            @if (competencyProgress()?.confidenceReason && competencyProgress()!.confidenceReason !== ConfidenceReason.NO_REASON) {
+                                <jhi-help-icon text="{{ 'artemisApp.competency.confidenceReasons.' + competencyProgress()!.confidenceReason }}" />
+                            }
+                        </div>
+                    </div>
+                    <div class="mb-1 flex">
+                        <div class="w-7/12"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
+                        <div class="w-5/12">{{ progress }} %</div>
+                    </div>
+                </jhi-side-panel>
+            </div>
+        </div>
+    </div>
+}

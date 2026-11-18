@@ -1,0 +1,263 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import dayjs from 'dayjs/esm';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { By } from '@angular/platform-browser';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('PostingSummaryComponent', () => {
+    let component: PostingSummaryComponent;
+    let fixture: ComponentFixture<PostingSummaryComponent>;
+
+    const mockPost: Posting = {
+        id: 1,
+        author: {
+            id: 1,
+            name: 'Test Author',
+            internal: false,
+        },
+        content: 'Test Content',
+        postingType: PostingType.POST,
+        creationDate: dayjs(),
+        conversation: {
+            id: 1,
+            title: 'Test Conversation',
+            type: ConversationType.CHANNEL,
+        },
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                FaIconComponent,
+                PostingSummaryComponent,
+                MockPipe(ArtemisDatePipe),
+                MockComponent(ProfilePictureComponent),
+                MockComponent(PostingContentComponent),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(PostingSummaryComponent, {
+                remove: { imports: [PostingContentComponent] },
+                add: { imports: [MockComponent(PostingContentComponent)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(PostingSummaryComponent);
+        component = fixture.componentInstance;
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it.each([true, false])('should keep post navigation separate from rich content and saved actions (conversation: %s)', (showConversation) => {
+        fixture.componentRef.setInput('post', { ...mockPost, conversation: showConversation ? mockPost.conversation : undefined });
+        fixture.componentRef.setInput('isShowSavedPostOptions', true);
+        fixture.detectChanges();
+        const navigation = fixture.nativeElement.querySelector('[data-testid="posting-summary-open"]') as HTMLButtonElement;
+        const richContent = fixture.nativeElement.querySelector('jhi-posting-content') as HTMLElement;
+        const savedActions = fixture.nativeElement.querySelector('[role="group"]') as HTMLElement;
+        const navigate = vi.spyOn(component.onNavigateToPost, 'emit');
+        const remove = vi.spyOn(component.onRemoveBookmark, 'emit');
+        expect(navigation).not.toBeNull();
+        expect(navigation.type).toBe('button');
+        expect(navigation.querySelector('button, input, a, jhi-posting-content')).toBeNull();
+        expect(richContent.closest('button, [role="button"]')).toBeNull();
+        expect(savedActions.closest('button, [role="button"]')).toBeNull();
+        savedActions.querySelector('button')!.click();
+        expect(remove).toHaveBeenCalledOnce();
+        expect(navigate).not.toHaveBeenCalled();
+        navigation.click();
+        expect(navigate).toHaveBeenCalledExactlyOnceWith(component.post());
+        navigate.mockClear();
+        richContent.click();
+        expect(navigate).toHaveBeenCalledExactlyOnceWith(component.post());
+    });
+
+    describe('Input handling', () => {
+        it('should handle post input', () => {
+            fixture.componentRef.setInput('post', mockPost);
+            fixture.detectChanges();
+
+            // Assert
+            expect(component['isAnswerPost']()).toBeFalsy();
+            expect(component['postingIsOfToday']()).toBeTruthy();
+        });
+
+        it('should handle undefined post', () => {
+            fixture.componentRef.setInput('post', undefined);
+            fixture.detectChanges();
+
+            expect(component['isAnswerPost']()).toBeFalsy();
+        });
+    });
+
+    describe('PostingType detection', () => {
+        it('should detect answer post', () => {
+            const answerPost = { ...mockPost, postingType: PostingType.ANSWER.valueOf() };
+
+            fixture.componentRef.setInput('post', answerPost);
+            fixture.detectChanges();
+
+            expect(component['isAnswerPost']()).toBeTruthy();
+        });
+
+        it('should detect non-answer post', () => {
+            fixture.componentRef.setInput('post', mockPost);
+            fixture.detectChanges();
+
+            expect(component['isAnswerPost']()).toBeFalsy();
+        });
+    });
+
+    describe('Date handling', () => {
+        it('should detect post from today', () => {
+            const todayPost = { ...mockPost, creationDate: dayjs() };
+
+            fixture.componentRef.setInput('post', todayPost);
+            fixture.detectChanges();
+
+            expect(component['postingIsOfToday']()).toBeTruthy();
+        });
+
+        it('should detect post not from today', () => {
+            const yesterdayPost = { ...mockPost, creationDate: dayjs().subtract(1, 'day') };
+
+            fixture.componentRef.setInput('post', yesterdayPost);
+            fixture.detectChanges();
+
+            expect(component['postingIsOfToday']()).toBeFalsy();
+        });
+    });
+
+    describe('Tooltips', () => {
+        it('should not add a tooltip to the time of a post from today', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, creationDate: dayjs() });
+            fixture.detectChanges();
+
+            const tooltip = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+            expect(tooltip.content()).toBe('');
+        });
+
+        it('should show the time as tooltip of the date of an older post', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, creationDate: dayjs().subtract(1, 'day') });
+            fixture.detectChanges();
+
+            const tooltip = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+            expect(tooltip.content()).toMatch(/\d{1,2}:\d{2}/);
+        });
+
+        it('should give each saved post action a tooltip and disable the action of the current status', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, savedPostStatus: SavedPostStatus.IN_PROGRESS });
+            fixture.componentRef.setInput('isShowSavedPostOptions', true);
+            fixture.detectChanges();
+
+            const actions = fixture.debugElement.queryAll(By.css('[role="group"] button'));
+            expect(actions).toHaveLength(4);
+            expect(actions.map((action) => (action.nativeElement as HTMLButtonElement).disabled)).toEqual([false, true, false, false]);
+            expect(actions.every((action) => action.injector.get(TumAetUiTooltipDirective, undefined) !== undefined)).toBe(true);
+        });
+    });
+
+    describe('Event emissions', () => {
+        it('should emit status change', () => {
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onChangeSavedPostStatus, 'emit');
+            const newStatus = SavedPostStatus.ARCHIVED;
+
+            component['onStatusChangeClick'](mockEvent, newStatus);
+
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledWith(newStatus);
+        });
+
+        it('should emit remove bookmark event', () => {
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', mockPost);
+
+            component['onRemoveBookmarkClick'](mockEvent);
+
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledWith(mockPost);
+        });
+
+        it('should not emit remove bookmark event when post is undefined', () => {
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', undefined);
+
+            component['onRemoveBookmarkClick'](mockEvent);
+
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should emit navigation event with post', () => {
+            const emitSpy = vi.spyOn(component.onNavigateToPost, 'emit');
+            fixture.componentRef.setInput('post', mockPost);
+
+            component['onTriggerNavigateToPost']();
+
+            expect(emitSpy).toHaveBeenCalledWith(mockPost);
+        });
+
+        it('should not emit navigation event when post is undefined', () => {
+            const emitSpy = vi.spyOn(component.onNavigateToPost, 'emit');
+            fixture.componentRef.setInput('post', undefined);
+
+            component['onTriggerNavigateToPost']();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Template rendering', () => {
+        beforeEach(async () => {
+            fixture.componentRef.setInput('post', mockPost);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        });
+
+        it('should render author name', () => {
+            const authorElement = fixture.nativeElement.querySelector('.posting-summary-author-content');
+            expect(authorElement.textContent).toContain(mockPost.author!.name);
+        });
+
+        it('should render conversation title', () => {
+            const conversationElement = fixture.nativeElement.querySelector('.posting-summary-conversation');
+            expect(conversationElement.textContent).toContain(mockPost.conversation!.title);
+        });
+
+        it('should show saved post options when enabled', () => {
+            fixture.componentRef.setInput('isShowSavedPostOptions', true);
+            fixture.detectChanges();
+
+            const optionsElement = fixture.nativeElement.querySelector('.posting-summary-saved-post-options');
+            expect(optionsElement).toBeTruthy();
+        });
+
+        it('should not show saved post options when disabled', () => {
+            fixture.componentRef.setInput('isShowSavedPostOptions', false);
+            fixture.detectChanges();
+
+            const optionsElement = fixture.nativeElement.querySelector('.posting-summary-saved-post-options');
+            expect(optionsElement).toBeFalsy();
+        });
+    });
+});

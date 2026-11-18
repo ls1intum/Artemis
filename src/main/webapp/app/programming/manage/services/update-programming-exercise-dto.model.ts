@@ -1,0 +1,248 @@
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { DifficultyLevel, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BuildConfigAdvancedSettings } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
+/**
+ * DTO for auxiliary repository
+ */
+export interface AuxiliaryRepositoryDTO {
+    id?: number;
+    name?: string;
+    checkoutDirectory?: string;
+    repositoryUri?: string;
+    description?: string;
+}
+
+/**
+ * DTO for build config
+ */
+export interface UpdateProgrammingExerciseBuildConfigDTO {
+    id?: number;
+    sequentialTestRuns?: boolean;
+    branch?: string;
+    buildPlanConfiguration?: string;
+    buildScript?: string;
+    checkoutSolutionRepository: boolean;
+    testCheckoutPath?: string;
+    assignmentCheckoutPath?: string;
+    solutionCheckoutPath?: string;
+    timeoutSeconds: number;
+    dockerFlags?: string;
+    theiaImage?: string;
+    onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
+    allowBranching: boolean;
+    branchRegex?: string;
+    advancedSettings?: BuildConfigAdvancedSettingsDTO;
+}
+
+/**
+ * DTO for the time window in which pushes to student repositories are built. The bounds are ISO-8601 date-times and either may be missing.
+ */
+export interface BuildTimeWindowDTO {
+    start?: string;
+    end?: string;
+}
+
+/**
+ * DTO for the advanced settings of a build config. Matches the server-side BuildConfigAdvancedSettingsDTO record.
+ */
+export interface BuildConfigAdvancedSettingsDTO {
+    buildTimeWindow?: BuildTimeWindowDTO;
+}
+
+/**
+ * Converts the advanced settings of a build config to the DTO sent to the server.
+ * Returns undefined when no window is set, so that the property is omitted and the server stores no window.
+ *
+ * @param advancedSettings the advanced settings of the build config
+ */
+export function toBuildConfigAdvancedSettingsDTO(advancedSettings: BuildConfigAdvancedSettings | undefined): BuildConfigAdvancedSettingsDTO | undefined {
+    const start = convertDateFromClient(advancedSettings?.buildTimeWindow?.start);
+    const end = convertDateFromClient(advancedSettings?.buildTimeWindow?.end);
+    return start || end ? { buildTimeWindow: { start, end } } : undefined;
+}
+
+/**
+ * DTO for updating programming exercises.
+ * Matches the server-side UpdateProgrammingExerciseDTO record structure.
+ */
+export interface UpdateProgrammingExerciseDTO {
+    // Core identification
+    id: number;
+
+    // Exercise base fields
+    title?: string;
+    channelName?: string;
+    shortName?: string;
+    problemStatement?: string;
+    categories?: string[];
+    difficulty?: DifficultyLevel;
+    maxPoints?: number;
+    bonusPoints?: number;
+    includedInOverallScore?: IncludedInOverallScore;
+    allowComplaintsForAutomaticAssessments?: boolean;
+    presentationScoreEnabled?: boolean;
+    secondCorrectionEnabled?: boolean;
+    gradingInstructions?: string;
+
+    // Timeline fields
+    releaseDate?: string;
+    startDate?: string;
+    dueDate?: string;
+    assessmentDueDate?: string;
+    assessmentType?: AssessmentType;
+    exampleSolutionPublicationDate?: string;
+
+    // Course/ExerciseGroup references (by ID)
+    courseId?: number;
+    exerciseGroupId?: number;
+
+    // Grading and competencies
+    gradingCriteria?: GradingCriterionDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
+
+    // Programming exercise specific fields
+    testRepositoryUri?: string;
+    auxiliaryRepositories?: AuxiliaryRepositoryDTO[];
+    allowOnlineEditor?: boolean;
+    allowOfflineIde?: boolean;
+    allowOnlineIde: boolean;
+    staticCodeAnalysisEnabled?: boolean;
+    maxStaticCodeAnalysisPenalty?: number;
+    programmingLanguage?: ProgrammingLanguage;
+    packageName?: string;
+    showTestNamesToStudents: boolean;
+    buildAndTestStudentSubmissionsAfterDueDate?: string;
+    testCasesChanged?: boolean;
+    projectKey?: string;
+    submissionPolicy?: SubmissionPolicy;
+    projectType?: ProjectType;
+    releaseTestsWithExampleSolution: boolean;
+
+    // Build config
+    buildConfig?: UpdateProgrammingExerciseBuildConfigDTO;
+
+    // Plagiarism detection config
+    plagiarismDetectionConfig?: PlagiarismDetectionConfig;
+}
+
+/**
+ * Converts a ProgrammingExercise entity to an UpdateProgrammingExerciseDTO.
+ * This ensures the correct data structure is sent to the server.
+ *
+ * @param exercise the programming exercise to convert
+ * @returns the corresponding DTO
+ */
+export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): UpdateProgrammingExerciseDTO {
+    // Compute constrained bonus points without mutating the input
+    const bonusPoints = exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (exercise.bonusPoints ?? 0);
+
+    // Convert competency links to DTOs
+    const competencyLinkDTOs: CompetencyLinkDTO[] = (exercise.competencyLinks ?? []).map((link) => ({
+        competency: { id: link.competency!.id! },
+        weight: link.weight,
+    }));
+
+    // Convert grading criteria to DTOs
+    const gradingCriteriaDTOs: GradingCriterionDTO[] | undefined = exercise.gradingCriteria?.map((criterion) => ({
+        id: criterion.id,
+        title: criterion.title,
+        structuredGradingInstructions: criterion.structuredGradingInstructions?.map((instruction) => ({
+            id: instruction.id,
+            credits: instruction.credits,
+            gradingScale: instruction.gradingScale,
+            instructionDescription: instruction.instructionDescription,
+            feedback: instruction.feedback,
+            usageCount: instruction.usageCount,
+        })),
+    }));
+
+    // Convert auxiliary repositories to DTOs
+    const auxiliaryRepositoryDTOs: AuxiliaryRepositoryDTO[] | undefined = exercise.auxiliaryRepositories?.map((repo) => ({
+        id: repo.id,
+        name: repo.name,
+        checkoutDirectory: repo.checkoutDirectory,
+        repositoryUri: repo.repositoryUri,
+        description: repo.description,
+    }));
+
+    // Convert build config to DTO
+    const buildConfigDTO: UpdateProgrammingExerciseBuildConfigDTO | undefined = exercise.buildConfig
+        ? {
+              sequentialTestRuns: exercise.buildConfig.sequentialTestRuns,
+              buildPlanConfiguration: exercise.buildConfig.buildPlanConfiguration,
+              buildScript: undefined, // legacy buildScript is now read-only via the editor and only nulled on conversion
+              checkoutSolutionRepository: exercise.buildConfig.checkoutSolutionRepository ?? false,
+              testCheckoutPath: exercise.buildConfig.testCheckoutPath,
+              assignmentCheckoutPath: exercise.buildConfig.assignmentCheckoutPath,
+              solutionCheckoutPath: exercise.buildConfig.solutionCheckoutPath,
+              timeoutSeconds: exercise.buildConfig.timeoutSeconds ?? 120,
+              dockerFlags: exercise.buildConfig.dockerFlags,
+              theiaImage: exercise.buildConfig.theiaImage,
+              onlineIdeExperienceLevel: exercise.buildConfig.onlineIdeExperienceLevel,
+              allowBranching: exercise.buildConfig.allowBranching ?? false,
+              branchRegex: exercise.buildConfig.branchRegex,
+              advancedSettings: toBuildConfigAdvancedSettingsDTO(exercise.buildConfig.advancedSettings),
+          }
+        : undefined;
+
+    // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
+    // For course exercises: set courseId, leave exerciseGroupId undefined
+    // For exam exercises: set exerciseGroupId, leave courseId undefined
+    const exerciseGroupId = exercise.exerciseGroup?.id;
+    const courseId = exerciseGroupId ? undefined : exercise.course?.id;
+
+    // Convert categories to JSON strings
+    const categories = ExerciseService.stringifyExerciseDTOCategories(exercise);
+
+    return {
+        id: exercise.id!,
+        title: exercise.title,
+        channelName: exercise.channelName,
+        shortName: exercise.shortName,
+        problemStatement: exercise.problemStatement,
+        categories,
+        difficulty: exercise.difficulty,
+        maxPoints: exercise.maxPoints,
+        bonusPoints,
+        includedInOverallScore: exercise.includedInOverallScore,
+        allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
+        presentationScoreEnabled: exercise.presentationScoreEnabled,
+        secondCorrectionEnabled: exercise.secondCorrectionEnabled,
+        gradingInstructions: exercise.gradingInstructions,
+        releaseDate: convertDateFromClient(exercise.releaseDate),
+        startDate: convertDateFromClient(exercise.startDate),
+        dueDate: convertDateFromClient(exercise.dueDate),
+        assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
+        assessmentType: exercise.assessmentType,
+        exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
+        courseId,
+        exerciseGroupId,
+        gradingCriteria: gradingCriteriaDTOs,
+        competencyLinks: competencyLinkDTOs,
+        testRepositoryUri: exercise.testRepositoryUri,
+        auxiliaryRepositories: auxiliaryRepositoryDTOs,
+        allowOnlineEditor: exercise.allowOnlineEditor,
+        allowOfflineIde: exercise.allowOfflineIde,
+        allowOnlineIde: exercise.allowOnlineIde ?? false,
+        staticCodeAnalysisEnabled: exercise.staticCodeAnalysisEnabled,
+        maxStaticCodeAnalysisPenalty: exercise.maxStaticCodeAnalysisPenalty,
+        programmingLanguage: exercise.programmingLanguage,
+        packageName: exercise.packageName,
+        showTestNamesToStudents: exercise.showTestNamesToStudents ?? false,
+        buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
+        testCasesChanged: exercise.testCasesChanged,
+        projectKey: exercise.projectKey,
+        submissionPolicy: exercise.submissionPolicy,
+        projectType: exercise.projectType,
+        releaseTestsWithExampleSolution: exercise.releaseTestsWithExampleSolution ?? false,
+        buildConfig: buildConfigDTO,
+        plagiarismDetectionConfig: exercise.plagiarismDetectionConfig,
+    };
+}

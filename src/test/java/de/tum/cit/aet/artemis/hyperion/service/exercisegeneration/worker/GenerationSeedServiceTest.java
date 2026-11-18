@@ -1,0 +1,409 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.lib.CommitBuilder;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.TreeFormatter;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+
+class GenerationSeedServiceTest {
+
+    private final de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository buildConfigRepository = org.mockito.Mockito
+            .mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class);
+
+    @TempDir
+    Path temporary;
+
+    private final GitService git = mock();
+
+    private final BareGitRepositoryService bareRepositories = mock();
+
+    private final GenerationRequestService requests = mock();
+
+    private final de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository testCases = mock();
+
+    private final ProgrammingExerciseTaskService taskService = mock();
+
+    private final ProgrammingExercise exercise = mock();
+
+    private final LocalVCRepositoryUri uri = new LocalVCRepositoryUri(URI.create("https://artemis.example"), "TEST", "TEST-template");
+
+    private final List<String> commits = new ArrayList<>();
+
+    private GenerationSeedService service;
+
+    private FileMode sourceMode = FileMode.REGULAR_FILE;
+
+    private boolean harnessFilesPresent = true;
+
+    private byte[] sourceBytes = "class App {}".getBytes(StandardCharsets.UTF_8);
+
+    @BeforeEach
+    void setup() throws Exception {
+        org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, bareRepositories, "main");
+        when(exercise.getRepositoryURI(any())).thenReturn(uri);
+        when(exercise.getId()).thenReturn(42L);
+        when(exercise.getProblemStatement()).thenReturn("The instructor's specification.");
+        when(requests.isAuthoritativeProblemStatement(any())).thenReturn(true);
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> createRepository(invocation.getArgument(1)));
+        when(bareRepositories.getExistingBareRepository(uri, "main"))
+                .thenAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "current harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE));
+    }
+
+    @Test
+    void capturesCommittedBytesModesAndExactHeadsAndDeletesTemporaryTrees() {
+        var seed = service.capture(exercise);
+        assertThat(seed.heads()).containsKeys(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
+        assertThat(seed.heads().values()).containsAll(commits);
+        assertThat(seed.snapshot().files()).hasSize(10);
+        for (String role : List.of("template", "solution", "tests")) {
+            assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals(role + "/gradlew")).singleElement().satisfies(file -> {
+                assertThat(file.executable()).isTrue();
+                assertThat(file.content()).isEqualTo("#!/bin/sh\n".getBytes(StandardCharsets.UTF_8));
+            });
+            assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals(role + "/wrapper.jar")).singleElement()
+                    .satisfies(file -> assertThat(file.content()).containsExactly(0, 1, 2));
+        }
+        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
+                .satisfies(file -> assertThat(new String(file.content(), StandardCharsets.UTF_8)).isEqualTo("The instructor's specification."));
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "exercise-branch", "", " " })
+    @org.junit.jupiter.params.provider.NullSource
+    void capturesConfiguredBranchWithDefaultFallback(String configuredBranch) throws Exception {
+        var buildConfig = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig();
+        buildConfig.setBranch(configuredBranch);
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())).thenReturn(buildConfig);
+        String expectedBranch = configuredBranch == null || configuredBranch.isBlank() ? "main" : configuredBranch;
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq(expectedBranch))).thenAnswer(invocation -> createRepository(invocation.getArgument(1)));
+        var seed = service.capture(exercise);
+        org.mockito.Mockito.verify(git, org.mockito.Mockito.times(3)).getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq(expectedBranch));
+        assertThat(seed.heads().values()).containsAll(commits);
+    }
+
+    @Test
+    void capturesOnlyActiveAssessedNonStructuralTestsForTheAdaptationBaseline() {
+        var testCase = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase();
+        testCase.setTestName("testPush");
+        testCase.setActive(true);
+        testCase.setWeight(1.0);
+        var inactive = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("oldTest").active(false);
+        var structural = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("testClass[Stack]").active(true);
+        structural.setType(de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType.STRUCTURAL);
+        var preservation = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("preservationOnly").active(true).weight(0.0);
+        var bonus = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("bonusOnly").active(true).weight(0.0).bonusPoints(1.0);
+        var disabledCredit = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("noCredit").active(true).weight(1.0).bonusMultiplier(0.0);
+        var invisible = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("hiddenWeight").active(true).weight(1.0)
+                .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.NEVER);
+        var invisibleBonus = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("hiddenBonus").active(true).weight(0.0).bonusPoints(1.0)
+                .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.NEVER);
+        var afterDue = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase().testName("afterDue").active(true).weight(1.0)
+                .visibility(de.tum.cit.aet.artemis.assessment.domain.Visibility.AFTER_DUE_DATE);
+        when(testCases.findByExerciseId(42L))
+                .thenReturn(java.util.Set.of(testCase, inactive, structural, preservation, bonus, disabledCredit, invisible, invisibleBonus, afterDue));
+        when(exercise.getDueDate()).thenReturn(java.time.ZonedDateTime.parse("2026-10-01T12:00:00Z"));
+        var grading = service.capture(exercise).gradingContext();
+        assertThat(grading.hasDueDate()).isTrue();
+        assertThat(grading.baselineGradedTestNames()).containsExactlyInAnyOrder("testPush", "bonusOnly", "afterDue");
+        assertThat(grading.baselineHiddenTestNames()).containsExactly("afterDue");
+    }
+
+    @Test
+    void missingGradingReadFailsClosedRatherThanInventingAnEmptyAdaptationBaseline() {
+        when(testCases.findByExerciseId(42L)).thenThrow(new IllegalStateException("unavailable"));
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasMessage("unavailable");
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void seededStatementRendersTestIdsAsNamesWithoutMutatingTheLoadedExercise() {
+        ProgrammingExercise loaded = spy(new ProgrammingExercise());
+        loaded.setId(42L);
+        loaded.setProblemStatement("[task][Push](<testid>3245</testid>)\n@startuml\ntestsColor(<testid>3240</testid>)\n@enduml");
+        loaded.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        loaded.setProjectType(ProjectType.PLAIN_GRADLE);
+        doReturn(uri).when(loaded).getRepositoryURI(any());
+        ArgumentCaptor<ProgrammingExercise> rendered = ArgumentCaptor.forClass(ProgrammingExercise.class);
+        doAnswer(invocation -> {
+            ProgrammingExercise copy = invocation.getArgument(0);
+            copy.setProblemStatement(copy.getProblemStatement().replace("<testid>3245</testid>", "testPush").replace("<testid>3240</testid>", "testPop"));
+            return null;
+        }).when(taskService).replaceTestIdsWithNames(rendered.capture());
+
+        var seed = service.capture(loaded);
+
+        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
+                .satisfies(file -> assertThat(new String(file.content(), StandardCharsets.UTF_8)).isEqualTo("[task][Push](testPush)\n@startuml\ntestsColor(testPop)\n@enduml"));
+        // The loaded entity is the compare-and-set expectation for the later save, so it must keep the ids the database holds.
+        assertThat(loaded.getProblemStatement()).contains("<testid>3245</testid>", "<testid>3240</testid>");
+        assertThat(rendered.getValue()).isNotSameAs(loaded);
+        assertThat(rendered.getValue().getId()).isEqualTo(42L);
+        assertThat(rendered.getValue().getProgrammingLanguage()).isEqualTo(ProgrammingLanguage.JAVA);
+        assertThat(rendered.getValue().getProjectType()).isEqualTo(ProjectType.PLAIN_GRADLE);
+        // The authoritative-statement check compares against the shipped readme, which uses names, so it must see the rendered copy.
+        verify(requests).isAuthoritativeProblemStatement(rendered.getValue());
+    }
+
+    @Test
+    void seededSampleStatementIsNotSentAsAnAuthoritativeContract() {
+        when(requests.isAuthoritativeProblemStatement(any())).thenReturn(false);
+        assertThat(service.capture(exercise).snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
+                .satisfies(file -> assertThat(file.content()).isEmpty());
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsupportedModes")
+    void linksAndSubmodulesAreRejectedBeforeWorkerTransport(FileMode mode) {
+        sourceMode = mode;
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasRootCauseInstanceOf(IllegalArgumentException.class)
+                .hasStackTraceContaining("links or submodules");
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void oversizedBlobIsRejectedAndCheckoutIsRemoved() {
+        sourceBytes = new byte[WorkspaceFile.MAX_FILE_BYTES + 1];
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class);
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void captureFailureSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new IllegalStateException("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void captureErrorSurvivesTemporaryCheckoutDeletionFailure() throws Exception {
+        var captureFailure = new AssertionError("checkout failed");
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isSameAs(captureFailure);
+            assertThat(captureFailure.getSuppressed()).containsExactly(cleanupFailure);
+        }
+    }
+
+    @Test
+    void repositoryCloseFailureDoesNotMaskCaptureFailureAndStillDeletesTemporaryCheckout() throws Exception {
+        var closeFailure = new IllegalStateException("repository close failed");
+        sourceMode = FileMode.SYMLINK;
+        when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> {
+            Repository repository = spy(createRepository(invocation.getArgument(1)));
+            doAnswer(close -> {
+                close.callRealMethod();
+                throw closeFailure;
+            }).when(repository).closeBeforeDelete();
+            return repository;
+        });
+
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).cause().isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("links or submodules").satisfies(failure -> assertThat(failure.getSuppressed()).containsExactly(closeFailure));
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void temporaryCheckoutDeletionFailureIsReportedAfterSuccessfulCapture() {
+        var cleanupFailure = new IOException("temporary checkout deletion failed");
+        try (var fileUtils = mockStatic(FileUtils.class)) {
+            fileUtils.when(() -> FileUtils.deleteDirectory(any(java.io.File.class))).thenThrow(cleanupFailure);
+
+            assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasCause(cleanupFailure);
+        }
+    }
+
+    @Test
+    void missingRepositoryStillCleansItsTemporaryDirectory() {
+        when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(null);
+        assertThatThrownBy(() -> service.capture(exercise)).isInstanceOf(IllegalStateException.class).hasStackTraceContaining("Missing generation repository");
+        assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @Test
+    void readsOnlyThreeCommittedHarnessBlobsWithoutCloningOrMaterializingOtherFiles() {
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("build.gradle", "gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(harness.get("build.gradle")).isEqualTo("current harness");
+        assertThat(harness.get("gradle/AresReservedPackages.gradle")).isEqualTo("reserved");
+        verify(exercise, times(1)).getRepositoryURI(RepositoryType.TESTS);
+        verifyNoInteractions(git, requests, testCases, taskService);
+        assertThat(temporary.toFile().list()).containsExactly("harness.git");
+    }
+
+    @Test
+    void missingHarnessFilesRemainAbsentInsteadOfInventingDefaults() {
+        harnessFilesPresent = false;
+        assertThat(service.readTestHarness(exercise)).isEmpty();
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void oversizedHarnessBlobRemainsAbsentForValidationWithoutCloning() {
+        doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), new byte[WorkspaceFile.MAX_FILE_BYTES + 1], FileMode.REGULAR_FILE)).when(bareRepositories)
+                .getExistingBareRepository(uri, "main");
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(GenerationBuildTool.GRADLE, harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void harnessSymlinkRemainsAbsentForValidationWithoutCloning() {
+        doAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "somewhere".getBytes(StandardCharsets.UTF_8), FileMode.SYMLINK)).when(bareRepositories)
+                .getExistingBareRepository(uri, "main");
+        Map<String, String> harness = service.readTestHarness(exercise);
+        assertThat(harness).containsOnlyKeys("gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml");
+        assertThat(AresTestHarness.reasons(GenerationBuildTool.GRADLE, harness)).anyMatch(reason -> reason.contains("Gradle harness file"));
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void harnessRepositoryReadFailureRemainsAnAccessFailure() {
+        var failure = new GitException("repository read failed", new IOException("disk unavailable"));
+        doThrow(failure).when(bareRepositories).getExistingBareRepository(uri, "main");
+
+        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasCause(failure);
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void readsConfiguredBranchInsteadOfBareRepositoryHead() throws Exception {
+        buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(42L).setBranch("exercise-branch");
+        Repository repository = createHarnessRepository(temporary.resolve("harness.git"), "exercise branch harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE);
+        var branch = repository.updateRef(Constants.R_HEADS + "exercise-branch");
+        branch.setNewObjectId(repository.resolve(Constants.R_HEADS + "main"));
+        branch.update();
+        repository.updateRef(Constants.HEAD, true).link(Constants.R_HEADS + "missing-default");
+        when(bareRepositories.getExistingBareRepository(uri, "exercise-branch")).thenReturn(repository);
+        assertThat(service.readTestHarness(exercise).get("build.gradle")).isEqualTo("exercise branch harness");
+        verifyNoInteractions(git);
+    }
+
+    @Test
+    void missingConfiguredBranchDoesNotFallBackToBareHead() {
+        buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(42L).setBranch("missing-branch");
+        when(bareRepositories.getExistingBareRepository(uri, "missing-branch"))
+                .thenAnswer(invocation -> createHarnessRepository(temporary.resolve("harness.git"), "default harness".getBytes(StandardCharsets.UTF_8), FileMode.REGULAR_FILE));
+        assertThatThrownBy(() -> service.readTestHarness(exercise)).isInstanceOf(IllegalStateException.class).hasStackTraceContaining("Missing generation tests branch");
+        verifyNoInteractions(git);
+    }
+
+    private Repository createHarnessRepository(Path path, byte[] build, FileMode mode) throws Exception {
+        Repository repository = new Repository(new FileRepositoryBuilder().setBare().setGitDir(path.toFile()).setup(), path, uri);
+        repository.create(true);
+        try (var objects = repository.newObjectInserter()) {
+            TreeFormatter nested = new TreeFormatter();
+            nested.append("AresReservedPackages.gradle", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, "reserved".getBytes(StandardCharsets.UTF_8)));
+            TreeFormatter tree = new TreeFormatter();
+            if (harnessFilesPresent) {
+                tree.append("SecurityPolicy.yaml", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, "policy".getBytes(StandardCharsets.UTF_8)));
+                tree.append("build.gradle", mode, objects.insert(Constants.OBJ_BLOB, build));
+                tree.append("gradle", FileMode.TREE, objects.insert(nested));
+            }
+            tree.append("unrelated-large.bin", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, new byte[WorkspaceFile.MAX_FILE_BYTES + 1]));
+            CommitBuilder commit = new CommitBuilder();
+            commit.setTreeId(objects.insert(tree));
+            commit.setAuthor(new PersonIdent("Instructor", "instructor@example.org"));
+            commit.setCommitter(commit.getAuthor());
+            commit.setMessage("Committed harness");
+            var id = objects.insert(commit);
+            objects.flush();
+            var head = repository.updateRef(Constants.R_HEADS + "main");
+            head.setNewObjectId(id);
+            head.update();
+            repository.updateRef(Constants.HEAD, true).link(Constants.R_HEADS + "main");
+        }
+        return repository;
+    }
+
+    private Repository createRepository(Path path) throws Exception {
+        Repository repository = new Repository(path.resolve(".git").toString(), uri);
+        repository.create();
+        try (var objects = repository.newObjectInserter()) {
+            TreeFormatter tree = new TreeFormatter();
+            tree.append("App.java", sourceMode, objects.insert(Constants.OBJ_BLOB, sourceBytes));
+            tree.append("gradlew", FileMode.EXECUTABLE_FILE, objects.insert(Constants.OBJ_BLOB, "#!/bin/sh\n".getBytes(StandardCharsets.UTF_8)));
+            tree.append("wrapper.jar", FileMode.REGULAR_FILE, objects.insert(Constants.OBJ_BLOB, new byte[] { 0, 1, 2 }));
+            CommitBuilder commit = new CommitBuilder();
+            commit.setTreeId(objects.insert(tree));
+            commit.setAuthor(new PersonIdent("Instructor", "instructor@example.org"));
+            commit.setCommitter(commit.getAuthor());
+            commit.setMessage("Seed exercise");
+            var id = objects.insert(commit);
+            objects.flush();
+            var head = repository.updateRef(Constants.HEAD);
+            head.setNewObjectId(id);
+            head.update();
+            commits.add(id.name());
+        }
+        return repository;
+    }
+
+    private static Stream<FileMode> unsupportedModes() {
+        return Stream.of(FileMode.SYMLINK, FileMode.GITLINK);
+    }
+}

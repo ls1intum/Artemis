@@ -1,0 +1,289 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance } from 'vitest';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DebugElement, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Params } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ResultService } from 'app/exercise/result/result.service';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
+import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockInstance as NgMockInstance, MockModule, MockPipe } from 'ng-mocks';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { getElement } from 'test/helpers/utils/general-test.utils';
+
+describe('CodeEditorStudentIntegration', () => {
+    let container: CodeEditorStudentContainerComponent;
+    let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
+    let containerDebugElement: DebugElement;
+    let participationWebsocketService: ParticipationWebsocketService;
+    let resultService: ResultService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let route: ActivatedRoute;
+
+    let subscribeForLatestResultOfParticipationStub: MockInstance;
+    let getFeedbackDetailsForResultStub: MockInstance;
+    let getStudentParticipationWithLatestResultStub: MockInstance;
+
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
+    let routeSubject: Subject<Params>;
+
+    const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
+
+    NgMockInstance(CodeEditorGridComponent, () => ({ buildOutputIsCollapsed: signal(false) }));
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule), CodeEditorStudentContainerComponent, CodeEditorContainerComponent, CodeEditorRepositoryIsLockedComponent, TreeViewComponent],
+            providers: [
+                JhiLanguageHelper,
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                SessionStorageService,
+                { provide: ResultService, useClass: MockResultService },
+                LocalStorageService,
+                { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
+                { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideComponent(CodeEditorStudentContainerComponent, {
+                set: {
+                    imports: [
+                        FaIconComponent,
+                        TranslateDirective,
+                        CodeEditorContainerComponent,
+                        CodeEditorRepositoryIsLockedComponent,
+                        MockComponent(IncludedInScoreBadgeComponent),
+                        MockComponent(UpdatingResultComponent),
+                        MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                        MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
+                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(AdditionalFeedbackComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .overrideComponent(CodeEditorContainerComponent, {
+                set: {
+                    imports: [
+                        MockComponent(CodeEditorGridComponent),
+                        MockComponent(CodeEditorActionsComponent),
+                        MockComponent(CodeEditorFileBrowserComponent),
+                        MockComponent(CodeEditorMonacoComponent),
+                        MockComponent(CodeEditorInstructionsComponent),
+                        MockComponent(CodeEditorBuildOutputComponent),
+                        MockPipe(KeysPipe),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
+        container = containerFixture.componentInstance;
+        containerDebugElement = containerFixture.debugElement;
+
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        resultService = TestBed.inject(ResultService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        route = TestBed.inject(ActivatedRoute);
+
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+
+        routeSubject = new Subject<Params>();
+        // @ts-ignore
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+
+        subscribeForLatestResultOfParticipationStub = vi
+            .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+            .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getStudentParticipationWithLatestResultStub = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+
+        routeSubject = new Subject<Params>();
+        // @ts-ignore
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+    });
+
+    it('should initialize correctly on route change if participation can be retrieved', () => {
+        container.ngOnInit();
+        result.feedbacks = [{ id: 2 }] as Feedback[];
+        const submission = { id: 1, results: [result] } as any;
+        const participation = { id: 1, submissions: [submission], exercise: { id: 99 } } as Participation;
+        const findWithLatestResultSubject = new Subject<Participation>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+
+        expect(container.loadingParticipation()).toBe(true);
+
+        findWithLatestResultSubject.next(participation);
+
+        expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
+        expect(container.loadingParticipation()).toBe(false);
+        expect(container.participationCouldNotBeFetched()).toBe(false);
+        expect(container.participation()).toEqual({ ...participation, submissions: [{ ...submission, results: [result] }] });
+    });
+
+    it('should show the repository locked badge and disable the editor actions when due date has passed', () => {
+        container.ngOnInit();
+        const exercise = { id: 99, dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise;
+        const participation = {
+            id: 1,
+            submissions: [{ id: 1, results: [result] }],
+            exercise,
+            testRun: false, // Not practice mode
+        } as any;
+        const findWithLatestResultSubject = new Subject<Participation>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+        findWithLatestResultSubject.next(participation);
+
+        containerFixture.detectChanges();
+
+        // Repository should be locked because due date has passed and it's not practice mode
+        expect(container.repositoryIsLocked()).toBe(true);
+        expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
+        expect(container.codeEditorContainer()!.fileBrowser()!.disableActions()).toBe(true);
+        expect(container.codeEditorContainer()!.actions()!.disableActions()).toBe(true);
+
+        const grid = containerDebugElement.query(By.directive(CodeEditorGridComponent)).componentInstance as CodeEditorGridComponent;
+        const buildOutput = containerDebugElement.query(By.directive(CodeEditorBuildOutputComponent)).componentInstance as CodeEditorBuildOutputComponent;
+        expect(buildOutput.collapsed()).toBe(false);
+        grid.buildOutputIsCollapsed.set(true);
+        containerFixture.detectChanges();
+        expect(buildOutput.collapsed()).toBe(true);
+        grid.buildOutputIsCollapsed.set(false);
+        containerFixture.detectChanges();
+        expect(buildOutput.collapsed()).toBe(false);
+    });
+
+    // The exercise page shows the problem statement next to the editor, so the editor of a student leaves out its own instructions there. The code of a
+    // student that an instructor opens from the participations page has no such page around it: the editor brings the instructions and is framed like the
+    // other editors of the course management.
+    it.each([true, false])('should bring its instructions and frame itself like the other editors only as a page of its own (full page: %s)', (fullPage) => {
+        Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
+        container.ngOnInit();
+        const participation = { id: 1, submissions: [], exercise: { id: 99 } as ProgrammingExercise } as Participation;
+        const findWithLatestResultSubject = new Subject<Participation>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+        findWithLatestResultSubject.next(participation);
+        containerFixture.detectChanges();
+
+        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('module-bg')).toBe(fullPage);
+        expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('d-none')).toBe(!fullPage);
+    });
+
+    // The result and the submissions of a participation of a student come on the topics of the student. An instructor who edits the code of a student gets them
+    // on the topics of the instructors, so the page of its own uses the non-personal subscriptions and the build button of the instructors.
+    it.each([
+        { fullPage: true, isAtLeastInstructor: true },
+        { fullPage: true, isAtLeastInstructor: false },
+        { fullPage: false, isAtLeastInstructor: false },
+    ])(
+        'should subscribe to the topics of the instructors and offer the build of an instructor only as a page of its own for instructors (%o)',
+        ({ fullPage, isAtLeastInstructor }) => {
+            Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
+            container.ngOnInit();
+            const participation = { id: 1, submissions: [], exercise: { id: 99, isAtLeastInstructor } as ProgrammingExercise } as Participation;
+            const findWithLatestResultSubject = new Subject<Participation>();
+            getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+            routeSubject.next({ participationId: 1 });
+            findWithLatestResultSubject.next(participation);
+            containerFixture.detectChanges();
+
+            const result = containerDebugElement.query(By.directive(UpdatingResultComponent)).componentInstance as UpdatingResultComponent;
+            const instructions = containerDebugElement.query(By.directive(ProgrammingExerciseInstructionComponent)).componentInstance as ProgrammingExerciseInstructionComponent;
+            expect(result.personalParticipation()).toBe(!fullPage);
+            expect(instructions.personalParticipation()).toBe(!fullPage);
+            expect(containerDebugElement.query(By.directive(ProgrammingExerciseInstructorTriggerBuildButtonComponent)) !== null).toBe(fullPage && isAtLeastInstructor);
+            expect(containerDebugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent)) !== null).toBe(!fullPage);
+        },
+    );
+
+    it('should abort initialization and show error state if participation cannot be retrieved', () => {
+        container.ngOnInit();
+        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+
+        expect(container.loadingParticipation()).toBe(true);
+
+        findWithLatestResultSubject.error('fatal error');
+
+        expect(container.loadingParticipation()).toBe(false);
+        expect(container.participationCouldNotBeFetched()).toBe(true);
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(container.participation()).toBeUndefined();
+    });
+});

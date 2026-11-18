@@ -1,0 +1,207 @@
+<div>
+    <div class="flex flex-wrap">
+        <div *titleBarTitle class="w-full md:w-1/3 flex items-center">
+            <jhi-course-title-bar-title id="page-heading" title="artemisApp.lecture.home.title" />
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
+        <div *titleBarActions class="flex flex-wrap justify-end gap-2">
+            <div class="flex flex-wrap items-center justify-end gap-2" role="group" [attr.aria-label]="'artemisApp.lecture.home.title' | artemisTranslate">
+                <button
+                    tumAetUiButton
+                    type="button"
+                    size="small"
+                    [severity]="activeFilters.size ? 'success' : 'secondary'"
+                    [tumAetUiPopoverTrigger]="filters"
+                    id="filter-dropdown-button"
+                >
+                    <fa-icon [icon]="faFilter" />
+                    <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
+                </button>
+                <tumaet-ui-popover #filters [ariaLabel]="'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size }">
+                    <div class="flex flex-col gap-2">
+                        @for (filter of [filterType.PAST, filterType.CURRENT, filterType.FUTURE, filterType.UNSPECIFIED]; track filter) {
+                            <div class="flex items-center gap-2">
+                                <tumaet-ui-checkbox [inputId]="filter" [checked]="activeFilters.has(filter)" (changed)="toggleFilters([filter])" />
+                                <label class="cursor-pointer leading-5" [for]="filter" [jhiTranslate]="'artemisApp.lecture.home.filterOptions.' + filter"></label>
+                            </div>
+                        }
+                    </div>
+                </tumaet-ui-popover>
+                <div class="flex flex-wrap items-center justify-end gap-2 text-end">
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="solid"
+                        size="small"
+                        type="button"
+                        (click)="openImportModal()"
+                        class="jh-create-entity import-lecture truncate"
+                        id="lecture-import-button"
+                    >
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.lecture.import.label"></span>
+                    </button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="small"
+                        id="jh-create-entity"
+                        class="jh-create-entity create-lecture"
+                        (click)="navigateToLectureCreationPage()"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (lectures()) {
+        <jhi-pdf-drop-zone class="mb-6! block" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-upload-target-dialog
+            [(visible)]="isPdfUploadTargetDialogVisible"
+            [lectures]="lectures()"
+            [uploadedFiles]="droppedPdfFiles()"
+            (targetSelected)="onPdfUploadTargetSelected($event)"
+        />
+    }
+
+    @if (loaded() && filteredLectures().length > 0) {
+        <tumaet-ui-table-layout>
+            <table
+                tumAetUiTable
+                size="small"
+                [striped]="true"
+                [sortField]="predicate"
+                [sortOrder]="ascending ? 1 : -1"
+                (sortChange)="predicate = $event.field; ascending = $event.order > 0; sortRows()"
+            >
+                <thead>
+                    <tr>
+                        <th class="md:table-cell" tumAetUiSortableColumn="id">
+                            <span jhiTranslate="global.field.id"></span>
+                        </th>
+                        <th tumAetUiSortableColumn="title">
+                            <span jhiTranslate="artemisApp.lecture.title"></span>
+                        </th>
+                        <th tumAetUiSortableColumn="startDate">
+                            <span jhiTranslate="artemisApp.lecture.startDate"></span>
+                        </th>
+                        <th tumAetUiSortableColumn="endDate">
+                            <span jhiTranslate="artemisApp.lecture.endDate"></span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="lecture-preview">
+                    @for (lecture of filteredLectures(); track trackId(i, lecture); let i = $index) {
+                        <tr id="lecture-{{ lecture.id }}">
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
+                            </td>
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                            </td>
+                            <td>{{ lecture.startDate | artemisDate }}</td>
+                            <td>{{ lecture.endDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <!-- The actions stay in one row; their labels give way on narrow screens. -->
+                                <div class="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="lecture-actions">
+                                    @if (lecture.isAtLeastEditor) {
+                                        <!-- The labels are hidden on narrow screens, so the links carry their names for screen readers. -->
+                                        <a
+                                            tumAetUiButton
+                                            severity="primary"
+                                            variant="solid"
+                                            size="small"
+                                            [routerLink]="[lecture.id, 'unit-management']"
+                                            id="units"
+                                            [attr.aria-label]="'entity.action.units' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faPuzzlePiece" />
+                                            <span class="hidden md:inline" jhiTranslate="entity.action.units"></span>
+                                        </a>
+                                        <a
+                                            tumAetUiButton
+                                            severity="warn"
+                                            variant="solid"
+                                            size="small"
+                                            [routerLink]="[lecture.id, 'edit']"
+                                            [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faPencilAlt" />
+                                            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                        </a>
+                                    }
+                                    @if (lecture.isAtLeastInstructor) {
+                                        <button
+                                            tumAetUiButton
+                                            severity="danger"
+                                            variant="text"
+                                            size="small"
+                                            type="button"
+                                            jhiDeleteButton
+                                            [renderButtonStyle]="false"
+                                            data-testid="delete-lecture"
+                                            [entityTitle]="lecture.title || ''"
+                                            deleteQuestion="artemisApp.lecture.delete.question"
+                                            deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
+                                            [additionalChecks]="
+                                                tumLiveUploadsUnknown() || tumLiveUploadLectureIds().has(lecture.id!)
+                                                    ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecordings' }
+                                                    : {}
+                                            "
+                                            (delete)="deleteLecture(lecture.id!, $event)"
+                                            [dialogError]="dialogError$"
+                                        >
+                                            <fa-icon [icon]="faTrash" />
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </tumaet-ui-table-layout>
+    } @else if (loaded()) {
+        <tumaet-ui-empty-state
+            class="mt-12!"
+            [icon]="faChalkboardTeacher"
+            [title]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.title' : 'artemisApp.lecture.home.empty.noMatchingTitle') | artemisTranslate"
+            [description]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.description' : 'artemisApp.lecture.home.empty.noMatchingDescription') | artemisTranslate"
+        >
+            <ng-container tumAetUiEmptyStateActions>
+                @if (lectures().length === 0) {
+                    <button tumAetUiButton severity="secondary" variant="solid" size="small" type="button" (click)="openImportModal()">
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.lecture.import.label"></span>
+                    </button>
+                    <button tumAetUiButton severity="primary" variant="solid" size="small" type="button" (click)="navigateToLectureCreationPage()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
+                    </button>
+                }
+            </ng-container>
+            <ng-container tumAetUiEmptyStateDocumentation>
+                @if (lectures().length === 0) {
+                    <a
+                        href="https://docs.artemis.tum.de/instructor/lectures/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        jhiTranslate="artemisApp.lecture.home.empty.documentation"
+                    ></a>
+                }
+            </ng-container>
+        </tumaet-ui-empty-state>
+    }
+</div>
+
+<tumaet-ui-dialog [(visible)]="isImportDialogVisible" size="medium" [header]="'artemisApp.lecture.import.label' | artemisTranslate">
+    @if (isImportDialogVisible()) {
+        <jhi-lecture-import (selected)="importLecture($event)" />
+    }
+</tumaet-ui-dialog>

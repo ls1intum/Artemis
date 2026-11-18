@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "programmingSubmission": {
+            "home": {
+                "title": "Programming Submissions",
+                "createLabel": "Create a new Programming Submission"
+            },
+            "created": "Created new Programming Submission with identifier {{ param }}",
+            "updated": "Updated Programming Submission with identifier {{ param }}",
+            "deleted": "Deleted Programming Submission with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Programming Submission {{ id }}?"
+            },
+            "detail": {
+                "title": "Programming Submission"
+            },
+            "commitHash": "Commit Hash",
+            "view": "View assessment"
+        }
+    }
+}

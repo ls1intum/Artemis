@@ -1,0 +1,817 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import java.util.regex.Pattern;
+
+/**
+ * Application constants.
+ */
+public final class Constants {
+
+    public static final String HYPERION_LIVE_SAVE_COORDINATION_MAP = "hyperion-live-save-coordination";
+
+    public static final String HYPERION_GENERATION_JOBS_MAP = "hyperion-exercise-generation-jobs";
+
+    // NOTE: those 4 values have to be the same as in app.constants.ts
+    public static final int USERNAME_MIN_LENGTH = 4;
+
+    public static final int USERNAME_MAX_LENGTH = 50;
+
+    public static final int PASSWORD_MIN_LENGTH = 8;
+
+    public static final int PASSWORD_MAX_LENGTH = 100;
+
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    public static final int PASSWORD_MAX_BYTES = 72;
+
+    public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
+
+    public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
+
+    // Regex for acceptable logins
+    public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
+
+    public static final String SIMPLE_EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+
+    public static final String SYSTEM_ACCOUNT = "system";
+
+    public static final String DEFAULT_LANGUAGE = "en";
+
+    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
+
+    public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
+
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
+    /**
+     * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
+     */
+    public static final int MAX_BUILD_PLAN_CONFIGURATION_LENGTH = 1024 * 1024;
+
+    /**
+     * The maximum allowed length (in characters) of the docker flags stored for a programming exercise build config.
+     */
+    public static final int MAX_DOCKER_FLAGS_LENGTH = 8 * 1024;
+
+    /**
+     * The default REST/URL-path prefix for accessing file uploads.
+     * Don't use this constant elsewhere than in the Presentation-Layer to reduce
+     * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
+     * presentation layer ({@link org.springframework.web.bind.annotation.RestController}).
+     * There might be exceptions if the path can be considered part of the business logic, and not presentation.
+     */
+    public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
+
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * Submissions after the grace period exceeded will be unrated.
+     * <p>
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the processing of the push was up to 1s late.
+     * <p>
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
+     */
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
+
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
+
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
+
+    // short names should have at least 3 characters and must start with a letter
+    public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
+
+    public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
+
+    // Maximum length for course and programming exercise short names. The combined value appears twice in
+    // student repository URLs ({base}/git/{COURSE+EXERCISE}/{course+exercise}-{login}.git) and the slug must fit
+    // in NAME_MAX (255 bytes) and the participation.repository_url column (varchar(255)).
+    // NOTE: keep these values in sync with input.constants.ts.
+    public static final int COURSE_SHORT_NAME_MAX_LENGTH = 24;
+
+    public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
+
+    // Must be consistent with the exam.title varchar(255) database column.
+    public static final int EXAM_TITLE_MAX_LENGTH = 255;
+
+    // Upper bound for configurable max-points values in a course or exam grading configuration (int database columns).
+    // Keep in sync with MAX_GRADING_POINTS in input.constants.ts.
+    public static final int MAX_GRADING_POINTS = 9999;
+
+    // Upper bound for the course presentation score. Must stay <= 127 because course.presentation_score is a tinyint column.
+    // Keep in sync with MAX_PRESENTATION_SCORE in input.constants.ts.
+    public static final int MAX_PRESENTATION_SCORE = 100;
+
+    // Upper bound for the number of graded presentations in a course. A domain limit, not a database constraint.
+    // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
+    public static final int MAX_PRESENTATION_COUNT = 100;
+
+    public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
+
+    public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
+
+    // Keep existing programming exercise title restrictions separate from non-programming display titles.
+    public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
+
+    // Non-programming exercise display titles additionally allow periods, e.g. "Strategy vs. bridge pattern".
+    public static final Pattern EXERCISE_DISPLAY_TITLE_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s.]*");
+
+    public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
+
+    public static final String TUM_LDAP_MAIN_EMAIL = "imHauptEMail";
+
+    public static final String TUM_LDAP_EMAILS = "imEmailAdressen";
+
+    // NOTE: the following values for programming exercises are hard-coded at the moment
+    public static final String TEST_REPO_NAME = "tests";
+
+    public static final String ASSIGNMENT_REPO_NAME = "assignment";
+
+    public static final String SOLUTION_REPO_NAME = "solution";
+
+    // Used to cut off CI specific path segments when receiving static code analysis reports
+    public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
+
+    // Used as a value for <sourceDirectory> for the Java template pom.xml
+    public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
+
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
+
+    // TODO: the following numbers should be configurable in the yml files
+
+    public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5L * 1024 * 1024; // 5 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8L * 1024 * 1024; // 8 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
+
+    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
+
+    /**
+     * Stride encoding a typed automatic feedback row into one synthetic negative feedback id:
+     * {@code -(rowId * STRIDE)} for a test-case row and {@code -(rowId * STRIDE + 1)} for an SCA row.
+     * <p>
+     * The two tables have independent id sequences, so the low bit is what tells a test-case view from an
+     * SCA view; without it the same client-visible id could mean either. Shared between the Java
+     * encoder/decoder (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that
+     * builds the same ids in the database, so the two sides cannot drift. Ids stay JavaScript-safe on the
+     * client as long as {@code rowId * STRIDE} is below {@code Number.MAX_SAFE_INTEGER}, which allows
+     * ~4.5e15 rows per table.
+     */
+    public static final long SYNTHETIC_FEEDBACK_ID_STRIDE = 2L;
+
+    public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
+
+    /**
+     * Maximum length of the explanation of a quiz question and of an answer option. Must match the quiz_question.explanation column and
+     * MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD in input.constants.ts.
+     */
+    public static final int MAX_QUIZ_EXPLANATION_LENGTH = 2000;
+
+    // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
+    public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
+
+    /**
+     * Maximum length in the database for the feedback detail text.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH = 5000;
+
+    /**
+     * Maximum length of feedback detail texts before a long feedback is created.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH = 1000;
+
+    /**
+     * Maximum length for feedback detail text that is trimmed and moved to a connected long feedback instead.
+     */
+    public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
+
+    // This value limits the amount of characters allowed for a complaint response text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
+    // Also, the value on the client side must match this value.
+    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+
+    // This value limits the amount of characters allowed for a complaint text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
+    // Also, the value on the client side must match this value.
+    public static final int COMPLAINT_TEXT_LIMIT = 65535;
+
+    // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
+    public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
+    /**
+     * Maximum number of retry attempts for lecture content processing
+     * (transcription and ingestion) before marking as failed.
+     */
+    public static final int MAX_PROCESSING_RETRIES = 5;
+
+    public static final String SETUP_COMMIT_MESSAGE = "Setup";
+
+    public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
+
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
+
+    public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
+
+    /** An administrator switched an account off, so it can no longer authenticate anywhere. */
+    public static final String DEACTIVATE_USER = "DEACTIVATE_USER";
+
+    /** An account was activated, either by an administrator or by the account holder redeeming their activation key. */
+    public static final String ACTIVATE_USER = "ACTIVATE_USER";
+
+    public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
+
+    public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
+
+    public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
+
+    public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
+
+    public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
+
+    public static final String DELETE_COURSE = "DELETE_COURSE";
+
+    public static final String RESET_COURSE = "RESET_COURSE";
+
+    public static final String DELETE_EXAM = "DELETE_EXAM";
+
+    public static final String UPDATE_EXAM = "UPDATE_EXAM";
+
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
+
+    public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
+
+    public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
+
+    public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
+
+    public static final String RESET_EXAM = "RESET_EXAM";
+
+    // same constant as in the client
+    public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
+
+    public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
+
+    public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
+
+    public static final String PREPARE_EXERCISE_START = "PREPARE_EXERCISE_START";
+
+    public static final String GENERATE_STUDENT_EXAMS = "GENERATE_STUDENT_EXAMS";
+
+    public static final String GENERATE_MISSING_STUDENT_EXAMS = "GENERATE_MISSING_STUDENT_EXAMS";
+
+    public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
+
+    public static final String DELETE_TEAM = "DELETE_TEAM";
+
+    public static final String DELETE_EXERCISE_GROUP = "DELETE_EXERCISE_GROUP";
+
+    public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
+
+    public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
+
+    public static final String UPDATE_GRADING_CONFIGURATION = "UPDATE_GRADING_CONFIGURATION";
+
+    public static final String RESET_GRADING = "RESET_GRADING";
+
+    /**
+     * Audit event: a user changed their own password from inside their account.
+     */
+    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD";
+
+    /**
+     * Audit event: a user completed a password reset from an emailed link.
+     */
+    public static final String COMPLETE_PASSWORD_RESET = "COMPLETE_PASSWORD_RESET";
+
+    /**
+     * Audit event: an administrator replaced a user's password through the user management form.
+     */
+    public static final String ADMIN_CHANGE_USER_PASSWORD = "ADMIN_CHANGE_USER_PASSWORD";
+
+    /**
+     * Audit event: a user revoked their own passkeys, SSH keys or VCS access tokens without changing their password.
+     */
+    public static final String REVOKE_OWN_CREDENTIALS = "REVOKE_OWN_CREDENTIALS";
+
+    public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
+
+    public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
+    public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
+
+    public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
+
+    public static final String REGISTRATION_ENABLED = "registrationEnabled";
+
+    public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
+
+    public static final String MAIL_CONFIGURED = "mailConfigured";
+
+    public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
+
+    public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";
+
+    public static final String ALLOWED_LDAP_USERNAME_PATTERN = "allowedLdapUsernamePattern";
+
+    public static final String ACCOUNT_NAME = "accountName";
+
+    public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
+
+    public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
+
+    public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
+
+    public static final String ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = PLAGIARISM_CACHE_PREFIX + "active-plagiarism-checks-per-course-cache";
+
+    public static final String VERSION_CONTROL_URL = "versionControlUrl";
+
+    public static final String VERSION_CONTROL_NAME = "versionControlName";
+
+    public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION = "buildTimeoutMin";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
+
+    public static final String DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS = "allowedCustomDockerNetworks";
+
+    public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
+
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
+
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
+
+    public static final String USE_EXTERNAL = "useExternal";
+
+    public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
+
+    public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
+
+    public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
+    public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String COURSE_OPERATION_PROGRESS_STATUS = "course-operation-progress-status";
+
+    /**
+     * The cipher the server encrypts push notification payloads with, and — because the name is handed to the device in
+     * {@code PushNotificationRegisterDTO} at registration — the cipher the iOS and Android clients decrypt with. It is a
+     * wire contract, so it cannot be changed on the server alone: every already-installed app would stop being able to
+     * read its notifications.
+     *
+     * <p>
+     * Static analysis flags CBC for being unauthenticated, and that is true as far as it goes. It is accepted here for
+     * what this encryption is actually for. The purpose is data privacy in transit through a third-party relay that
+     * should not be able to read notification text — not integrity of a security decision. Nothing sensitive rides in
+     * the payload: it is the same title and body the user is about to see on their lock screen, never credentials,
+     * tokens or grades-in-confidence. The classic CBC attacks also need a decryption oracle, and the server has none —
+     * it only ever encrypts, and the ciphertext reaches the relay over TLS with a fresh IV per notification.
+     *
+     * <p>
+     * Moving to an AEAD mode stays worthwhile, but it is a staged migration rather than an edit here: teach the clients
+     * the new mode, ship those releases, pick per device from the {@code versionCode} / {@code apiType} the client
+     * already reports at registration, and only then retire CBC.
+     */
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
+
+    /**
+     * The name of the Spring profile used to choose the local VC system.
+     */
+    public static final String PROFILE_LOCALVC = "localvc";
+
+    /**
+     * The name of the Spring profile used to choose the local CI system.
+     */
+    public static final String PROFILE_LOCALCI = "localci";
+
+    /**
+     * The name of the Spring profile used to process build jobs in a local CI setup.
+     */
+    public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    /**
+     * The name of the Spring profile used to run isolated AI Worker jobs.
+     */
+    public static final String PROFILE_AIWORKER = "aiworker";
+
+    public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
+
+    /**
+     * The name of the Spring profile used to process build jobs in a Jenkins setup.
+     */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
+    public static final String PROFILE_JENKINS = "jenkins";
+
+    /**
+     * The name of the Spring profile used for Artemis functionality.
+     */
+    public static final String PROFILE_ARTEMIS = "artemis";
+
+    /**
+     * The name of the Spring profile used for Artemis core functionality.
+     */
+    public static final String PROFILE_CORE = "core";
+
+    /**
+     * The name of the Spring profile used for seeding a demo course on startup.
+     * NOTE: this profile is opt-in and intended for demo and manual testing instances only. It must never be activated on a production instance,
+     * because the seeding routine writes demo courses, users and content directly into the database.
+     */
+    public static final String PROFILE_DEMO = "demo";
+
+    /**
+     * The name of the Spring profile used for activating the scheduling functionality.
+     * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
+     * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
+     * please use {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService} and
+     * {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService}
+     */
+    public static final String PROFILE_SCHEDULING = "scheduling";
+
+    /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling AND core is active
+     * The distinction is necessary, because otherwise most scheduled operations (regarding database and file system) should only be executed ONCE on the primary node and NOT
+     * on secondary nodes.
+     * NOTE: secondary nodes should only use PROFILE_CORE
+     */
+    public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * The name of the module feature used for Theia as an external online IDE.
+     */
+    public static final String MODULE_FEATURE_THEIA = "theia";
+
+    /**
+     * The name of the profile for integration independent tests
+     */
+    public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
+
+    /**
+     * The InfoContributor's detail key for the Theia Portal URL
+     */
+    public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
+     * The InfoContributor's detail key for the active module features.
+     */
+    public static final String ACTIVE_MODULE_FEATURES = "activeModuleFeatures";
+
+    /**
+     * The name of the module feature used for Passkey functionality.
+     */
+    public static final String FEATURE_PASSKEY = "passkey";
+
+    /**
+     * The name of the module feature indicating passkey is required for administrator features.
+     */
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkey-admin";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the module feature used for the LLM-backed part of Atlas.
+     */
+    public static final String MODULE_FEATURE_ATLASLLM = "atlasllm";
+
+    /**
+     * The name of the module feature used for Hyperion functionality.
+     */
+    public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for whole-exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
+
+    /**
+     * The name of the module feature used for Deimos malicious participation analysis functionality.
+     */
+    public static final String MODULE_FEATURE_DEIMOS = "deimos";
+
+    /**
+     * The name of the module feature used for Iris / Pyris functionality.
+     */
+    public static final String MODULE_FEATURE_IRIS = "iris";
+
+    /**
+     * The name of the module feature used for Exam functionality.
+     */
+    public static final String MODULE_FEATURE_EXAM = "exam";
+
+    /**
+     * The name of the module feature used for plagiarism functionality.
+     */
+    public static final String MODULE_FEATURE_PLAGIARISM = "plagiarism";
+
+    /**
+     * The name of the module feature used for Text Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
+     * The name of the module feature used for Modeling Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_MODELING = "modeling";
+
+    /**
+     * The name of the module feature used for File Upload Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
+
+    /**
+     * The name of the module feature used for Lecture functionality.
+     */
+    public static final String MODULE_FEATURE_LECTURE = "lecture";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
+
+    /**
+     * The name of the module feature used for Sharing functionality.
+     */
+    public static final String MODULE_FEATURE_SHARING = "sharing";
+
+    /**
+     * The name of the module feature used for LTI functionality.
+     */
+    public static final String MODULE_FEATURE_LTI = "lti";
+
+    /**
+     * The name of the module feature used for Athena (LLM-based automatic assessment) functionality.
+     */
+    public static final String MODULE_FEATURE_ATHENA = "athena";
+
+    /**
+     * The name of the module feature used for Apollon (UML modeling conversion) functionality.
+     */
+    public static final String MODULE_FEATURE_APOLLON = "apollon";
+
+    /**
+     * The name of the module feature used for synchronizing user details from an external LDAP system.
+     */
+    public static final String MODULE_FEATURE_LDAP = "ldap";
+
+    /**
+     * The name of the module feature used for SAML2-based single sign-on, see {@link de.tum.cit.aet.artemis.account.security.SAML2Service}.
+     */
+    public static final String MODULE_FEATURE_SAML2 = "saml2";
+
+    /**
+     * The name of the module feature used for the global search (Weaviate) integration. It is published to the client
+     * when {@link #WEAVIATE_ENABLED_PROPERTY_NAME} is enabled, so the client can gate global-search admin surfaces.
+     */
+    public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
+
+    /**
+     * The name of the module feature for agent access (personal access tokens). It is published to the client when
+     * {@link #AGENT_ACCESS_ENABLED_PROPERTY_NAME} is enabled, so the client can hide the token settings otherwise.
+     */
+    public static final String MODULE_FEATURE_AGENT_ACCESS = "agent-access";
+
+    public static final String AGENT_ACCESS_ENABLED_PROPERTY_NAME = "artemis.agent-access.enabled";
+
+    /**
+     * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
+     */
+    public static final String SAML2_PROPERTIES_PREFIX = "saml2";
+
+    /**
+     * The name of the property used to enable or disable Atlas functionality.
+     */
+    public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous
+     * competency orchestrator, and the tool surfaces they call. Disabled by default, because none of it can work
+     * without a configured chat model, and every bean behind it is dead weight on an installation that has none.
+     */
+    public static final String ATLASLLM_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasllm.enabled";
+
+    /**
+     * The name of the property used to enable or disable Hyperion functionality.
+     */
+    public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable whole-exercise generation.
+     */
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
+
+    /**
+     * The name of the property used to enable or disable Iris / Pyris functionality.
+     */
+    public static final String IRIS_ENABLED_PROPERTY_NAME = "artemis.iris.enabled";
+
+    /**
+     * The name of the property used to enable or disable exam functionality.
+     */
+    public static final String EXAM_ENABLED_PROPERTY_NAME = "artemis.exam.enabled";
+
+    /**
+     * The name of the property used to enable or disable plagiarism functionality.
+     */
+    public static final String PLAGIARISM_ENABLED_PROPERTY_NAME = "artemis.plagiarism.enabled";
+
+    /**
+     * The name of the property used to enable or disable text exercise functionality.
+     */
+    public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
+     * The name of the property used to enable or disable modeling exercise functionality.
+     */
+    public static final String MODELING_ENABLED_PROPERTY_NAME = "artemis.modeling.enabled";
+
+    /**
+     * The name of the property used to enable or disable file upload exercise functionality.
+     */
+    public static final String FILEUPLOAD_ENABLED_PROPERTY_NAME = "artemis.fileupload.enabled";
+
+    /**
+     * The name of the property used to enable or disable lecture functionality.
+     */
+    public static final String LECTURE_ENABLED_PROPERTY_NAME = "artemis.lecture.enabled";
+
+    /**
+     * The name of the property used to enable or disable tutorial group functionality.
+     */
+    public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
+
+    /**
+     * The name of the property used to enable or disable the passkey authentication functionality.
+     */
+    public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to require passkey authentication for access to administrator features.
+     */
+    public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
+
+    /**
+     * The name of the property used to enable or disable the sharing functionality.
+     */
+    public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
+
+    /**
+     * The name of the property used to enable or disable LTI functionality.
+     */
+    public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Athena functionality.
+     */
+    public static final String ATHENA_ENABLED_PROPERTY_NAME = "artemis.athena.enabled";
+
+    /**
+     * The name of the property used to enable or disable Apollon functionality.
+     */
+    public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
+
+    /**
+     * The name of the property used to enable or disable LDAP-based user synchronization.
+     */
+    public static final String LDAP_ENABLED_PROPERTY_NAME = "artemis.user-management.ldap.enabled";
+
+    /**
+     * The name of the property used to enable or disable SAML2-based single sign-on.
+     */
+    public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
+
+    /**
+     * The name of the property used to enable or disable OIDC-based single sign-on.
+     */
+    public static final String OIDC_ENABLED_PROPERTY_NAME = "artemis.user-management.oidc.enabled";
+
+    /**
+     * The name of the property used to enable or disable Theia functionality.
+     */
+    public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
+
+    /**
+     * The name of the property used to enable or disable Weaviate integration.
+     */
+    public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
+
+    /**
+     * The name of the property used to enable or disable the Deimos malicious participation analysis module.
+     */
+    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
+
+    /**
+     * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
+     * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
+     * {@code false}.
+     * <p>
+     * It means something different on each node role. On a build agent it picks the mechanism the agent uses. On a core
+     * node it governs only the build-agent shortcut over https: {@code true} stops that pair from granting
+     * repository-wide read, though it is still processed as ordinary Basic credentials afterwards. Core nodes
+     * accept a registered build agent's public key either way, because a key is per-agent and only reaches a core node
+     * through an agent that has joined the cluster, so unlike the shared credential pair there is nothing to close.
+     * Setting it on the agents therefore keeps builds running, and setting it on the core nodes is what removes the
+     * credential.
+     */
+    public static final String BUILD_AGENT_USE_SSH_PROPERTY_NAME = "artemis.version-control.build-agent-use-ssh";
+
+    /**
+     * The name of the property used to define the directories for file uploads.
+     */
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
+
+    /**
+     * The fallback value when no value for the uploads file path is defined.
+     */
+    public static final String UPLOADS_FILE_PATH_DEFAULT = "uploads";
+
+    /**
+     * Size of an unsigned tinyInt in SQL, that is used in the database
+     */
+    public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
+
+    /**
+     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     */
+    public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
+
+    /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
+    public static final int PUSH_NOTIFICATION_VERSION = 1;
+
+    /**
+     * The directory in the docker container in which the results can be found
+     */
+    public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
+
+    /**
+     * The directory in the docker container in which the build script is executed
+     */
+    public static final String LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = "/var/tmp";
+
+    /**
+     * Minimum score for a result to be considered successful and shown in green
+     */
+    public static final int MIN_SCORE_GREEN = 80;
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
+
+    public static final String TEST_REPO_PLACEHOLDER = "${testWorkingDirectory}";
+
+    public static final String SOLUTION_REPO_PLACEHOLDER = "${solutionWorkingDirectory}";
+
+    public static final String ASSIGNMENT_REPO_PARENT_PLACEHOLDER = "${studentParentWorkingDirectoryName}";
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
+
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]++(?:/[\\w-]++)*+$");
+
+    public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
+
+    public static final String BEARER_PREFIX = "Bearer ";
+
+    /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
+    public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
+
+    public static final String HAZELCAST = "Hazelcast";
+
+    public static final String REDIS = "Redis";
+
+    public static final String LOCAL = "Local";
+
+    public static final String AI_SELECTION_DECISION = "AI_SELECTION_DECISION";
+
+    private Constants() {
+    }
+}

@@ -1,0 +1,50 @@
+package de.tum.cit.aet.artemis.notification.domain.course_notifications;
+
+import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.Objects;
+
+import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.payload.AddedToChannelPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
+
+/**
+ * Notification that tells the user they were added to a channel.
+ */
+@CourseNotificationType(19)
+public class AddedToChannelNotification extends CourseNotification {
+
+    private final AddedToChannelPayloadDTO payload;
+
+    /**
+     * Default constructor used when creating the notification.
+     */
+    public AddedToChannelNotification(Long courseId, String courseTitle, String courseImageUrl, String channelModerator, String channelName, Long channelId) {
+        super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
+        // A group chat has no name of its own, so the notification names it the way the client would.
+        this.payload = new AddedToChannelPayloadDTO(channelModerator, Objects.requireNonNullElse(channelName, "Group Chat"), channelId);
+    }
+
+    /**
+     * Constructor used when loading the existing notification from the database.
+     */
+    public AddedToChannelNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+        super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, AddedToChannelPayloadDTO.class);
+    }
+
+    @Override
+    protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+        return CourseNotificationDeliveryPolicy.COMMUNICATION;
+    }
+
+    @Override
+    public String getRelativeWebAppUrl() {
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId();
+    }
+
+    @Override
+    public AddedToChannelPayloadDTO payload() {
+        return payload;
+    }
+}

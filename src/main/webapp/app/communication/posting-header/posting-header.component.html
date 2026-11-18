@@ -1,0 +1,73 @@
+<div class="flex justify-between pt-1">
+    <div id="header-author-date" class="post-header-author-date flex flex-wrap items-start gap-2">
+        @if (authorOfPosting) {
+            <span class="inline-flex flex-wrap items-start gap-2">
+                <jhi-profile-picture
+                    imageSizeInRem="2.15"
+                    fontSizeInRem="0.9"
+                    imageId="post-profile-picture"
+                    defaultPictureId="post-default-profile-picture"
+                    [isGray]="isDeleted()"
+                    [authorId]="authorOfPosting.id"
+                    [authorName]="authorOfPosting.name"
+                    [imageUrl]="addPublicFilePrefix(authorOfPosting.imageUrl)"
+                    [imageBackgroundColor]="authorOfPosting.bot ? 'transparent' : undefined"
+                    [isEditable]="currentUser() !== undefined && authorOfPosting.id === currentUser()!.id"
+                />
+                <span class="fs-small inline-flex flex-col items-start">
+                    <span class="inline-flex items-center gap-2">
+                        <span
+                            class="font-semibold"
+                            [ngClass]="{ clickable: !isAuthorOfPosting() && posting()?.authorRole }"
+                            (click)="userNameClicked()"
+                            #keyboardAction19
+                            [attr.role]="!isAuthorOfPosting() && posting()?.authorRole ? 'button' : null"
+                            [attr.tabindex]="!isAuthorOfPosting() && posting()?.authorRole ? 0 : null"
+                            (keydown.enter)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            (keydown.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            >{{ authorOfPosting.name }}</span
+                        >
+                        @if (isUnverifiedIris()) {
+                            <tumaet-ui-tag severity="warn">
+                                <fa-icon [icon]="faTriangleExclamation" class="me-1" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.badge"></span>
+                            </tumaet-ui-tag>
+                        }
+                    </span>
+                    <span class="fs-x-small mt-1 inline-flex flex-wrap items-center gap-2 text-muted-color">
+                        <span class="inline-flex items-center">
+                            <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority()" id="role-badge">
+                                <fa-icon [icon]="userAuthorityIcon()" />
+                            </span>
+                            <span [tumAetUiTooltip]="userAuthorityTooltip() | artemisTranslate" [jhiTranslate]="userRoleBadge()"></span>
+                        </span>
+                    </span>
+                </span>
+            </span>
+        }
+        <span class="post-header-date-separator">-</span>
+        <span class="post-header-date">
+            @if (postingIsOfToday()) {
+                <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="fs-small"></span>,
+            }
+            <span class="post-header-date fs-small" [tumAetUiTooltip]="postingIsOfToday() ? '' : (creationDate | artemisDate: 'time')" tumAetUiTooltipDescribesHost="false">
+                {{ postingIsOfToday() ? (creationDate | artemisDate: 'time') : (creationDate | artemisDate: 'short-date') + ' - ' + (creationDate | artemisDate: 'time') }}
+            </span>
+        </span>
+        @if (isPostResolved()) {
+            <fa-icon
+                [icon]="faCheckSquare"
+                iconSize="xs"
+                class="resolved shrink-0 ps-1"
+                [tumAetUiTooltip]="'artemisApp.communication.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+            />
+        }
+        @if (isPostPinned()) {
+            <jhi-emoji class="fs-x-small" emoji="pushpin" />
+        }
+        @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting())) {
+            <tumaet-ui-tag size="sm" class="hideAfter5Seconds"><span jhiTranslate="global.generic.new"></span></tumaet-ui-tag>
+        }
+    </div>
+</div>

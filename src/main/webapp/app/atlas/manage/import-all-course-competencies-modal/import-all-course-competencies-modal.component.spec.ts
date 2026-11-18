@@ -1,0 +1,124 @@
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { CourseCompetencyImportSettings } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { By } from '@angular/platform-browser';
+
+describe('ImportAllCourseCompetenciesModalComponent', () => {
+    let component: ImportAllCourseCompetenciesModalComponent;
+    let fixture: ComponentFixture<ImportAllCourseCompetenciesModalComponent>;
+
+    let dialogRef: TumAetUiDialogRef;
+    let closeModalSpy: ReturnType<typeof vi.spyOn>;
+
+    const courseId = 1;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ImportAllCourseCompetenciesModalComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+                {
+                    provide: TumAetUiDialogRef,
+                    useValue: {
+                        close: vi.fn(),
+                    },
+                },
+                {
+                    provide: TumAetUiDialogConfig,
+                    useValue: { data: { courseId } },
+                },
+            ],
+        }).compileComponents();
+
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
+        closeModalSpy = vi.spyOn(dialogRef, 'close');
+
+        fixture = TestBed.createComponent(ImportAllCourseCompetenciesModalComponent);
+        component = fixture.componentInstance;
+    });
+
+    it('should initialize', () => {
+        expect(component).toBeTruthy();
+        expect(component.courseId()).toEqual(courseId);
+        const settings = new CourseCompetencyImportSettings();
+        expect(component.importSettings()).toEqual(settings);
+    });
+
+    it('should set disabledIds', () => {
+        expect(component.disabledIds()).toEqual([courseId]);
+    });
+
+    it('should select course and close modal', () => {
+        const course = <Course>{ id: 2, title: 'Course 02', shortName: 'C2' };
+        component.selectCourse(course);
+
+        expect(closeModalSpy).toHaveBeenCalledExactlyOnceWith({
+            course: course,
+            courseCompetencyImportOptions: {
+                sourceCourseId: course.id,
+                importExercises: false,
+                importLectures: false,
+                importRelations: false,
+                referenceDate: undefined,
+                isReleaseDate: undefined,
+            },
+        });
+    });
+
+    it('should not close the modal while the reference date holds text that is not a date', () => {
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        fixture.detectChanges();
+        const settings = fixture.debugElement.query(By.css('jhi-import-course-competencies-settings'));
+        const course = <Course>{ id: 2, title: 'Course 02', shortName: 'C2' };
+
+        settings.triggerEventHandler('referenceDateTextValidChange', false);
+        component.selectCourse(course);
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.courseCompetency.importSettings.referenceDateTextInvalid');
+        expect(closeModalSpy).not.toHaveBeenCalled();
+
+        settings.triggerEventHandler('referenceDateTextValidChange', true);
+        component.selectCourse(course);
+
+        expect(closeModalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should initialize table columns correctly', () => {
+        expect(component['tableColumns']).toEqual([
+            { name: 'TITLE', getProperty: expect.any(Function) },
+            { name: 'SHORT_NAME', getProperty: expect.any(Function) },
+            { name: 'SEMESTER', getProperty: expect.any(Function) },
+        ]);
+    });
+
+    it('should get correct property for TITLE column', () => {
+        const course = { title: 'Course Title' } as Course;
+        const titleColumn = component['tableColumns'].find((col) => col.name === 'TITLE');
+        expect(titleColumn?.getProperty(course)).toBe('Course Title');
+    });
+
+    it('should get correct property for SHORT_NAME column', () => {
+        const course = { shortName: 'CS101' } as Course;
+        const shortNameColumn = component['tableColumns'].find((col) => col.name === 'SHORT_NAME');
+        expect(shortNameColumn?.getProperty(course)).toBe('CS101');
+    });
+
+    it('should get correct property for SEMESTER column', () => {
+        const course = { semester: 'Fall 2023' } as Course;
+        const semesterColumn = component['tableColumns'].find((col) => col.name === 'SEMESTER');
+        expect(semesterColumn?.getProperty(course)).toBe('Fall 2023');
+    });
+});

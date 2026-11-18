@@ -1,0 +1,294 @@
+package de.tum.cit.aet.artemis.core.service.feature;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class FeatureToggleService {
+
+    private static final Logger log = LoggerFactory.getLogger(FeatureToggleService.class);
+
+    @Value("${artemis.science.event-logging.enable:false}")
+    private boolean scienceEnabledOnStart;
+
+    @Value("${artemis.iris.lecture-content-processing.enabled:false}")
+    private boolean lectureContentProcessingEnabledOnStart;
+
+    private final boolean globalSearchEnabledOnStart;
+
+    // The reconcile passes have their own static config (artemis.weaviate.reconcile.*) precisely because their
+    // numeric tuning (batch sizes, the outbox depth limit) still needs a deliberate, restart-time decision — see
+    // WeaviateReconcileProperties. These two booleans exist only to seed the runtime toggle's very first value, the
+    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch; from then on the toggle is the live,
+    // restart-free switch. missing and drift share one toggle because neither deletes; orphan stays separate
+    // because it does.
+    private final boolean globalSearchReconcileEnabledOnStart;
+
+    private final boolean globalSearchReconcileOrphanEnabledOnStart;
+
+    private final RateLimitConfigurationService rateLimitConfigurationService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final ProfileService profileService;
+
+    /**
+     * Features whose functionality was removed. Each one stays in {@link Feature} only so that the constants after it keep
+     * their position, because Redis stores the feature map keys by enum position. A retired feature is removed from the map
+     * at startup, writes for it are ignored, and it is never reported as enabled, whatever an older node stored for it.
+     * Remove the constant itself together with the next {@code DistributedDataSchema} version bump.
+     */
+    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.AtlasML, Feature.Memiris);
+
+    private DistributedMap<Feature, Boolean> features;
+
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider, ProfileService profileService,
+            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:true}") boolean missingSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:true}") boolean driftSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.orphan-sweep-enabled:false}") boolean orphanSweepEnabledOnStart) {
+        this.websocketMessagingService = websocketMessagingService;
+        this.distributedDataProvider = distributedDataProvider;
+        this.profileService = profileService;
+        this.rateLimitConfigurationService = rateLimitConfigurationService;
+        this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
+        // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable.
+        this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
+        this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
+    }
+
+    private Optional<DistributedMap<Feature, Boolean>> getFeatures() {
+        try {
+            if (isDistributedDataAvailable()) {
+                return Optional.ofNullable(getFeaturesMap());
+            }
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to get features in {} as the distributed data provider is unavailable.", FeatureToggleService.class.getSimpleName());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Lazy init: Retrieves the distributed map that stores features
+     * If the map is not initialized, it initializes it.
+     *
+     * @return The map of features
+     */
+    private DistributedMap<Feature, Boolean> getFeaturesMap() {
+        if (this.features == null) {
+            initFeatures();
+        }
+        return this.features;
+    }
+
+    /**
+     * Initialize relevant data from the distributed data provider
+     */
+    private void initFeatures() {
+        // The map is shared across all nodes by the distributed data provider.
+        features = distributedDataProvider.getMap("features");
+
+        // Features that are neither enabled nor disabled should be enabled by default
+        // This ensures that all features (except Science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
+        // enabled once
+        // the
+        // system starts up
+        for (Feature feature : Feature.values()) {
+            if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
+                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
+                features.put(feature, true);
+            }
+        }
+        // init science feature from config
+        if (!features.containsKey(Feature.Science)) {
+            features.put(Feature.Science, scienceEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.AtlasAgent)) {
+            features.put(Feature.AtlasAgent, false);
+        }
+
+        if (!features.containsKey(Feature.TutorSuggestions)) {
+            features.put(Feature.TutorSuggestions, false);
+        }
+
+        RETIRED_FEATURES.forEach(features::remove);
+
+        if (!features.containsKey(Feature.GlobalSearch)) {
+            features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcile)) {
+            features.put(Feature.GlobalSearchReconcile, globalSearchReconcileEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcileOrphan)) {
+            features.put(Feature.GlobalSearchReconcileOrphan, globalSearchReconcileOrphanEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.AutonomousTutor)) {
+            features.put(Feature.AutonomousTutor, false);
+        }
+
+        if (!features.containsKey(Feature.Deimos)) {
+            features.put(Feature.Deimos, false);
+        }
+
+        // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
+        if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
+            features.put(Feature.LectureContentProcessing, false);
+        }
+
+        if (rateLimitConfigurationService.isRateLimitingEnabled() && !features.containsKey(Feature.RateLimit)) {
+            features.put(Feature.RateLimit, true);
+        }
+    }
+
+    /**
+     * Enables the given feature. Also notifies all clients by sending a message via the websocket.
+     *
+     * @param feature The feature that should be enabled
+     */
+    public void enableFeature(Feature feature) {
+        if (RETIRED_FEATURES.contains(feature)) {
+            return;
+        }
+        getFeatures().ifPresent(features -> {
+            getFeaturesMap().put(feature, true);
+            sendUpdate();
+        });
+    }
+
+    /**
+     * Disable the given feature. Also notifies all clients by sending a message via the websocket.
+     *
+     * @param feature The feature that should be disabled
+     */
+    public void disableFeature(Feature feature) {
+        if (RETIRED_FEATURES.contains(feature)) {
+            return;
+        }
+        getFeatures().ifPresent(features -> {
+            getFeaturesMap().put(feature, false);
+            sendUpdate();
+        });
+    }
+
+    /**
+     * Updates the given feature toggles and enables/disables the features based on the given map. Also notifies all clients
+     * by sending a message via the websocket.
+     *
+     * @param updatedFeatures A map of features (feature -> shouldBeActivated)
+     */
+    public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
+        Map<Feature, Boolean> activeFeatures = new HashMap<>(updatedFeatures);
+        activeFeatures.keySet().removeAll(RETIRED_FEATURES);
+        getFeatures().ifPresent(features -> {
+            getFeaturesMap().putAll(activeFeatures);
+            sendUpdate();
+        });
+    }
+
+    private void sendUpdate() {
+        try {
+            if (isDistributedDataAvailable()) {
+                websocketMessagingService.sendMessage(FEATURE_TOGGLES.at(), enabledFeatures());
+            }
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to send features update in {} as the distributed data provider is unavailable.", FeatureToggleService.class.getSimpleName());
+        }
+    }
+
+    /**
+     * Return whether a given feature is enabled
+     *
+     * @param feature the feature that should be checked
+     * @return if the feature is enabled
+     */
+    public boolean isFeatureEnabled(Feature feature) {
+        try {
+            if (isDistributedDataAvailable() && !RETIRED_FEATURES.contains(feature)) {
+                Boolean isEnabled = getFeaturesMap().get(feature);
+                return Boolean.TRUE.equals(isEnabled);
+            }
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to check if feature is enabled in FeatureToggleService as the distributed data provider is unavailable.");
+        }
+        return false;
+    }
+
+    /**
+     * Get all features that are currently enabled on the system
+     *
+     * @return A list of enabled features
+     */
+    public List<Feature> enabledFeatures() {
+        try {
+            if (isDistributedDataAvailable()) {
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey)
+                        .filter(feature -> !RETIRED_FEATURES.contains(feature)).toList();
+            }
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to retrieve enabled features update in FeatureToggleService as the distributed data provider is unavailable.");
+        }
+        return List.of();
+    }
+
+    /**
+     * Get all features that are currently disabled on the system
+     *
+     * @return A list of disabled features
+     */
+    public List<Feature> disabledFeatures() {
+        try {
+            if (isDistributedDataAvailable()) {
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey)
+                        .filter(feature -> !RETIRED_FEATURES.contains(feature)).toList();
+            }
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to retrieve disabled features update in FeatureToggleService as the distributed data provider is unavailable.");
+        }
+        return List.of();
+    }
+
+    /**
+     * The distributed store can be unreachable while a node is starting or reconnecting. Callers degrade gracefully
+     * rather than failing the request, so they check this first.
+     *
+     * @return true if the distributed data provider is usable right now
+     */
+    private boolean isDistributedDataAvailable() {
+        return distributedDataProvider.isInstanceRunning();
+    }
+}

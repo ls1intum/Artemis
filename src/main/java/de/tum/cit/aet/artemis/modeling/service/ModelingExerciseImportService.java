@@ -1,0 +1,182 @@
+package de.tum.cit.aet.artemis.modeling.service;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+
+@Conditional(ModelingEnabled.class)
+@Lazy
+@Service
+public class ModelingExerciseImportService extends ExerciseImportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ModelingExerciseImportService.class);
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final ChannelService channelService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
+    public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+            Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, exerciseConfigurationService);
+        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.channelService = channelService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
+    }
+
+    /**
+     * Imports a modeling exercise: builds a new entity from {@code newExercise} (the destination and any caller
+     * overrides), backfills its basis from {@code sourceExercise} (the original), copies a hard copy of the example
+     * submissions, and saves it. Student-/tutor participations are not copied.
+     * This method calls {@link #copyModelingExerciseBasis(ModelingExercise, ModelingExercise, Map)} to set up the basis
+     * of the exercise and {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
+     *
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the source exercise whose content is copied
+     * @return The newly created exercise
+     */
+    @NonNull
+    public ModelingExercise importModelingExercise(ModelingExercise newExercise, ModelingExercise sourceExercise) {
+        log.debug("Creating a new modeling exercise based on exercise {}", sourceExercise.getId());
+        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        copyModelingExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
+
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The
+        // second save operates on a detached entity and therefore merges into a new instance, so its result must be used:
+        // otherwise the freshly added competency links keep their unset embedded id on the returned graph.
+        ModelingExercise savedExercise = modelingExerciseRepository.save(newExercise);
+        // The permanent configuration rows are created right after the exercise exists, before anything else can fail.
+        initializeConfigurations(savedExercise, newExercise);
+        if (!competencyLinks.isEmpty()) {
+            ModelingExercise firstSave = savedExercise;
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = modelingExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
+        }
+        final ModelingExercise persistedExercise = savedExercise;
+        // The channel name is transient, so a merged copy does not carry it. Restore it so the serialized import response
+        // reports the channel the caller asked for.
+        persistedExercise.setChannelName(newExercise.getChannelName());
+
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
+        persistedExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, persistedExercise, gradingInstructionCopyTracker));
+
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedExercise));
+
+        return persistedExercise;
+    }
+
+    /**
+     * Backfills the modeling exercise basis onto {@code newExercise} from {@code sourceExercise}: the generic basis
+     * follows the "keep the caller's value, else take the source's" rule (see
+     * {@link ExerciseImportService#copyExerciseBasis}), and the modeling-specific fields likewise prefer the caller's
+     * edited value. All external entities and the start-, end-, and assessment due dates are intentionally not copied
+     * here. Also fills {@code gradingInstructionCopyTracker}.
+     *
+     * @param newExercise                   the exercise being built; mutated in place
+     * @param sourceExercise                the source exercise providing the content to backfill
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     */
+    private void copyModelingExerciseBasis(ModelingExercise newExercise, ModelingExercise sourceExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        log.debug("Copying the modeling exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        super.copyExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
+        newExercise.validateTitle();
+
+        // Prefer the caller's edited value (standalone import form), fall back to the source content.
+        newExercise.setDiagramType(firstNonNull(newExercise.getDiagramType(), sourceExercise.getDiagramType()));
+        newExercise.setExampleSolutionModel(firstNonNull(newExercise.getExampleSolutionModel(), sourceExercise.getExampleSolutionModel()));
+        newExercise.setExampleSolutionExplanation(firstNonNull(newExercise.getExampleSolutionExplanation(), sourceExercise.getExampleSolutionExplanation()));
+    }
+
+    /**
+     * This functions does a hard copy of the example submissions contained in {@code sourceExercise}.
+     * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}
+     *
+     * @param sourceExercise                The source exercise from which to fetch the example submissions
+     * @param newExercise                   The new exercise in which we will insert the example submissions
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @return The cloned set of example submissions
+     */
+    private Set<ExampleSubmission> copyExampleSubmission(Exercise sourceExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
+        Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
+        for (ExampleSubmission originalExampleSubmission : sourceExercise.getExampleSubmissions()) {
+            ModelingSubmission originalSubmission = (ModelingSubmission) originalExampleSubmission.getSubmission();
+            ModelingSubmission newSubmission = (ModelingSubmission) copySubmission(originalSubmission, gradingInstructionCopyTracker);
+
+            ExampleSubmission newExampleSubmission = new ExampleSubmission();
+            newExampleSubmission.setExercise(newExercise);
+            newExampleSubmission.setSubmission(newSubmission);
+            newExampleSubmission.setAssessmentExplanation(originalExampleSubmission.getAssessmentExplanation());
+
+            exampleSubmissionRepository.save(newExampleSubmission);
+            newExampleSubmissions.add(newExampleSubmission);
+        }
+        return newExampleSubmissions;
+    }
+
+    /**
+     * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
+     * To copy the submission results this function calls {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
+     *
+     * @param originalSubmission            The original submission to be copied.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @return The cloned submission
+     */
+    public Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        ModelingSubmission newSubmission = new ModelingSubmission();
+        if (originalSubmission != null) {
+            log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
+            newSubmission.setExampleSubmission(true);
+            newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
+            newSubmission.setType(originalSubmission.getType());
+            newSubmission.setParticipation(originalSubmission.getParticipation());
+            newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
+            newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
+
+            newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            Result originalResult = originalSubmission.getLatestResult();
+            if (originalResult != null) {
+                newSubmission.addResult(copyExampleResult(originalResult, newSubmission, gradingInstructionCopyTracker));
+            }
+            newSubmission = submissionRepository.saveAndFlush(newSubmission);
+        }
+        return newSubmission;
+    }
+}

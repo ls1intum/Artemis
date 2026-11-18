@@ -1,0 +1,11 @@
+@if (exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) {
+    <tumaet-ui-tag
+        class="not-released-tag"
+        severity="warn"
+        size="sm"
+        [class.ms-1]="!noMargin()"
+        [tumAetUiTooltip]="('artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate) + (exercise().releaseDate | artemisDate)"
+    >
+        <span jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"></span>
+    </tumaet-ui-tag>
+}

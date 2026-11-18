@@ -1,0 +1,146 @@
+import { expect } from '@playwright/test';
+import { setMonacoEditorContentByLocator } from '../../../utils';
+import { QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
+import { Fixtures } from '../../../../fixtures/fixtures';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
+
+export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
+    private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
+
+    async addMultipleChoiceQuestion(title: string, points = 1) {
+        await this.page.locator('[data-testid="quiz-add-mc-question"]').click();
+        await this.page.locator('[data-testid="mc-question-title"]').fill(title);
+        await this.page.locator('#score').fill(points.toString());
+
+        const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
+        // Use specific selector for the multiple choice question editor
+        const textInputField = this.page.locator('.edit-mc-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
+    }
+
+    /**
+     * Creates a multiple choice question using the default template and makes changes in the visual mode.
+     * @param title The title of the question.
+     * @param answerOptions An array, each element containing the text of an answer option.
+     */
+    async createAndEditMultipleChoiceQuestionInVisualMode(title: string, answerOptions: string[]) {
+        await this.addMultipleChoiceQuestion(title);
+        const editLocator = this.page.locator('.edit-mc-question');
+        await editLocator.getByRole('tab', { name: 'Visual' }).click();
+        for (const [index, answerOption] of answerOptions.entries()) {
+            let answerOptionLocator = this.page.locator(`#answer-option-${index}`);
+            if ((await answerOptionLocator.count()) === 0) {
+                await this.page.locator('[data-testid="add-mc-answer-option"]').click();
+                answerOptionLocator = this.page.locator(`#answer-option-${index}`);
+            }
+            await answerOptionLocator.locator(`#answer-option-${index}-text`).fill(answerOption);
+        }
+
+        // Delete excess answer options, going backwards to avoid index issues.
+        for (let i = this.DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT; i > answerOptions.length; i--) {
+            await this.page.locator(`#answer-option-${i - 1}-delete`).click();
+        }
+    }
+
+    async addShortAnswerQuestion(title: string) {
+        await this.page.locator('[data-testid="quiz-add-short-answer-question"]').click();
+        await this.page.locator('#short-answer-question-title').fill(title);
+
+        const fileContent = await Fixtures.get('exercise/quiz/short_answer/question.txt');
+        // Use specific selector for the short answer question editor
+        const textInputField = this.page.locator('.edit-sa-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
+        // Wait for the visual toggle to be ready before clicking
+        const visualToggle = this.page.locator('[data-testid="short-answer-show-visual"]');
+        await visualToggle.waitFor({ state: 'visible' });
+        await expect(visualToggle).toBeEnabled();
+        await visualToggle.click();
+    }
+
+    async addDragAndDropQuestion(title: string) {
+        await this.page.locator('[data-testid="quiz-add-dnd-question"]').click();
+        await this.page.locator('[data-testid="drag-and-drop-question-title"]').fill(title);
+
+        await this.uploadDragAndDropBackground();
+
+        // Wait for the click-layer to be enabled (background image loaded)
+        const clickLayer = this.page.locator('[data-testid="drag-and-drop-click-layer"][data-ready="true"]');
+        await clickLayer.waitFor({ state: 'visible', timeout: 20000 });
+
+        const element = this.page.locator('.background-area');
+        const boundingBox = await element.boundingBox();
+
+        expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
+
+        // Use relative coordinates based on element size to ensure we stay within bounds
+        const startX = boundingBox!.x + boundingBox!.width * 0.1;
+        const startY = boundingBox!.y + boundingBox!.height * 0.1;
+        const endX = boundingBox!.x + boundingBox!.width * 0.5;
+        const endY = boundingBox!.y + boundingBox!.height * 0.6;
+
+        await this.page.mouse.move(startX, startY);
+        await this.page.mouse.down();
+        await this.page.mouse.move(endX, endY, { steps: 5 });
+        await this.page.mouse.up();
+
+        // Wait for drop location to be created after drawing
+        const dropLocator = this.page.locator('#drop-location');
+        await dropLocator.waitFor({ state: 'visible', timeout: 5000 });
+
+        await this.createDragAndDropItem('Rick Astley');
+        const dragLocator = this.page.locator('#drag-item-0');
+
+        // Hover first — Playwright's hover() calls scrollIntoViewIfNeeded() internally,
+        // so any targetBox computed before this point would have stale viewport coordinates.
+        await dragLocator.hover();
+
+        // Recalculate target coordinates after hover's implicit scroll.
+        const targetBox = await dropLocator.boundingBox();
+        if (!targetBox) {
+            throw new Error('Could not determine drop location bounding box for drag operation.');
+        }
+
+        await this.page.mouse.down();
+        // Move to center of dropLocator
+        await this.page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 8 });
+        await this.page.mouse.up();
+
+        const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
+        // Use specific selector for the drag-and-drop question editor
+        const textInputField = this.page.locator('.edit-dnd-question');
+        await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
+    }
+
+    async createDragAndDropItem(text: string) {
+        await this.page.locator('[data-testid="add-text-drag-item"]').click();
+        const dragItem = this.page.locator('#drag-item-0-text');
+        await dragItem.clear();
+        await dragItem.fill(text);
+    }
+
+    async uploadDragAndDropBackground() {
+        const fileChooserPromise = this.page.waitForEvent('filechooser');
+        await this.page.locator('[data-testid="background-file-input-button"]').click();
+        const fileChooser = await fileChooserPromise;
+        await fileChooser.setFiles('./fixtures/exercise/quiz/drag_and_drop/background.jpg');
+    }
+
+    async saveQuiz() {
+        const saveButton = this.page.locator('[data-testid="quiz-save"]');
+        await saveButton.scrollIntoViewIfNeeded();
+        // Wait for the save button to be visible AND enabled.
+        // After complex question creation (DnD drag operations, image uploads, Monaco editor),
+        // Angular's form validation may take several seconds to complete.
+        await saveButton.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(saveButton).toBeEnabled({ timeout: 30000 });
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION, { timeout: 60000 });
+        await saveButton.click();
+        return await responsePromise;
+    }
+
+    async import() {
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
+        await this.page.locator('[data-testid="quiz-save"]').click();
+        return await responsePromise;
+    }
+}

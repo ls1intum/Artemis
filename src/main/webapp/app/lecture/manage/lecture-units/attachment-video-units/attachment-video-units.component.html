@@ -1,0 +1,180 @@
+<jhi-lecture-unit-layout [isLoading]="isLoading()">
+    <div class="flex flex-col gap-1">
+        <h2 id="page-heading" class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.title"></h2>
+        <!-- How the sections are found, so that a PDF without them does not look like a failure. -->
+        <p class="m-0 text-sm text-muted-color" data-testid="split-detection-hint" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.detectionHint"></p>
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.hint"></p>
+    </div>
+    <!-- What Artemis found is a result of the page, not a description of it. Without sections, it says why and what to do until a row exists. -->
+    @if (numberOfPages() > 0) {
+        @let summary = summaryKey() | artemisTranslate: { count: foundSections(), slides: numberOfPages() };
+        @if (showsNoSectionsHint()) {
+            <tumaet-ui-message
+                severity="warn"
+                [icon]="faExclamationTriangle"
+                data-testid="split-summary"
+                [text]="summary + ' ' + ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected' | artemisTranslate)"
+            />
+        } @else {
+            <tumaet-ui-message severity="info" [icon]="faCircleInfo" data-testid="split-summary" [text]="summary" />
+        }
+    }
+    <tumaet-ui-table-layout class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]" [empty]="units().length === 0 && !isLoading()">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <span class="flex-1"></span>
+            <button
+                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit' | artemisTranslate"
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                (click)="addRow()"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span class="hidden md:inline" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit"></span>
+            </button>
+        </div>
+        <table tumAetUiTable size="small" striped>
+            <thead>
+                <tr>
+                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.unitName"></th>
+                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.slides"></th>
+                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.releaseDate"></th>
+                    <th><span class="sr-only" jhiTranslate="entity.action.delete"></span></th>
+                </tr>
+            </thead>
+            <tbody id="lecture-preview">
+                @for (unit of units(); track unit; let i = $index) {
+                    <tr id="unit-row-{{ i }}">
+                        <td class="min-w-48">
+                            <input
+                                tumAetUiInput
+                                class="w-full"
+                                required
+                                type="text"
+                                name="unitName"
+                                autocomplete="off"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.unitName' | artemisTranslate"
+                                [(ngModel)]="units()[i].unitName"
+                            />
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-1.5">
+                                <input
+                                    tumAetUiInput
+                                    class="w-20"
+                                    required
+                                    type="number"
+                                    name="startPage"
+                                    autocomplete="off"
+                                    [min]="1"
+                                    [max]="unit.endPage"
+                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.startPage' | artemisTranslate"
+                                    [(ngModel)]="unit.startPage"
+                                />
+                                <span aria-hidden="true">–</span>
+                                <input
+                                    tumAetUiInput
+                                    class="w-20"
+                                    required
+                                    type="number"
+                                    name="endPage"
+                                    autocomplete="off"
+                                    [min]="unit.startPage"
+                                    [max]="numberOfPages()"
+                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.endPage' | artemisTranslate"
+                                    [(ngModel)]="unit.endPage"
+                                />
+                            </div>
+                        </td>
+                        <td class="min-w-56">
+                            <tumaet-ui-date-picker
+                                [inputId]="'release-date-' + i"
+                                [hideLabelName]="true"
+                                [shouldDisplayTimeZoneWarning]="false"
+                                [ariaLabel]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.releaseDate' | artemisTranslate"
+                                [(value)]="units()[i].releaseDate"
+                            />
+                        </td>
+                        <td>
+                            @let deleteLabel = 'entity.action.delete' | artemisTranslate;
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="danger"
+                                variant="text"
+                                size="small"
+                                [disabled]="units().length === 1"
+                                [attr.aria-label]="deleteLabel"
+                                [tumAetUiTooltip]="deleteLabel"
+                                tumAetUiTooltipDescribesHost="false"
+                                (click)="deleteRow(i)"
+                            >
+                                <fa-icon [icon]="faTimes" />
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div tumAetUiTableEmptyActions>
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="addRow()">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit"></span>
+            </button>
+        </div>
+    </tumaet-ui-table-layout>
+    <tumaet-ui-form-field controlId="removeSlidesCommaSeparatedKeyPhrases" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlides' | artemisTranslate">
+        <input
+            [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesPlaceholder' | artemisTranslate"
+            tumAetUiInput
+            id="removeSlidesCommaSeparatedKeyPhrases"
+            type="text"
+            autocomplete="off"
+            aria-describedby="remove-slides-info"
+            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesPlaceholder' | artemisTranslate"
+            [(ngModel)]="searchTerm"
+        />
+    </tumaet-ui-form-field>
+    <tumaet-ui-message id="remove-slides-info" severity="info">
+        <ul class="m-0 flex flex-col gap-1 ps-6">
+            <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesInfo.firstLine"></li>
+            <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesInfo.secondLine"></li>
+            <li>
+                {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
+                {{ removedSlidesNumbers().length > 0 ? removedSlidesNumbers() : '-' }}
+            </li>
+        </ul>
+    </tumaet-ui-message>
+    @if (sourceUnit; as source) {
+        <div class="flex flex-col gap-1" data-testid="split-remove-source">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="remove-source-unit" [checked]="removeSourceUnit()" (checkedChange)="removeSourceUnit.set($event)" />
+                <label class="m-0" for="remove-source-unit">{{
+                    'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSource' | artemisTranslate: { name: source.name ?? '' }
+                }}</label>
+            </div>
+            <p id="remove-source-unit-hint" class="m-0 ps-7 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSourceHint"></p>
+        </div>
+    }
+    @if (invalidUnitTableMessage(); as invalidMessage) {
+        <tumaet-ui-message severity="warn" [icon]="faExclamationTriangle" [text]="invalidMessage" />
+    }
+    <div class="flex flex-wrap gap-2">
+        <button
+            tumAetUiButton
+            type="button"
+            data-testid="split-create"
+            [disabled]="units().length < 1"
+            [tumAetUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processTimeInfo' | artemisTranslate"
+            (click)="createAttachmentVideoUnits()"
+        >
+            <span>{{ createLabelKey() | artemisTranslate: { count: units().length } }}</span>
+        </button>
+        <button tumAetUiButton type="button" severity="secondary" (click)="cancelSplit()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+    </div>
+</jhi-lecture-unit-layout>

@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "dragAndDropSubmittedAnswer": {
+            "home": {
+                "title": "Drag And Drop Submitted Answers",
+                "createLabel": "Create a new Drag And Drop Submitted Answer"
+            },
+            "created": "Created new Drag And Drop Submitted Answer with identifier {{ param }}",
+            "updated": "Updated Drag And Drop Submitted Answer with identifier {{ param }}",
+            "deleted": "Deleted Drag And Drop Submitted Answer with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag And Drop Submitted Answer {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag And Drop Submitted Answer"
+            },
+            "mappings": "Mappings",
+            "assignments": "Assignments"
+        }
+    }
+}

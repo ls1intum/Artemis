@@ -1,0 +1,152 @@
+<div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
+    <span class="mb-2" jhiTranslate="artemisApp.communication.overview.mobileDisclaimer"></span>
+    <button
+        tumAetUiButton
+        type="button"
+        severity="secondary"
+        variant="outlined"
+        jhiTranslate="artemisApp.communication.overview.mobileDisclaimerCallToAction"
+        (click)="openSidebar()"
+    ></button>
+</div>
+<div class="course-wide-search-content" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
+    <div class="mt-2 mx-2 course-wide-search-inner">
+        <div>
+            <h4 class="inline-block rounded p-1 info">
+                @if (!courseWideSearchConfig().searchTerm) {
+                    <span jhiTranslate="artemisApp.communication.overview.allMessages">All Messages</span>
+                } @else {
+                    <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="me-2 min-[576px]:hidden!" (click)="openSidebar()">
+                        <fa-icon [icon]="faChevronLeft" />
+                    </button>
+                    <span jhiTranslate="artemisApp.communication.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig().searchTerm }"></span>
+                }
+            </h4>
+        </div>
+        @if (formGroup) {
+            <div class="mb-1">
+                <form [formGroup]="formGroup">
+                    <!-- filter and sort controls -->
+                    <div class="ms-2 me-1 flex flex-wrap justify-between">
+                        <!-- attribute filter -->
+                        <div class="flex flex-wrap items-center gap-x-2">
+                            <fa-icon [icon]="faFilter" />
+                            <div class="flex items-center gap-1">
+                                <tumaet-ui-checkbox inputId="filterToCourseWide" name="filterToCourseWide" formControlName="filterToCourseWide" (changed)="onSelectContext()" />
+                                <label for="filterToCourseWide" jhiTranslate="artemisApp.communication.overview.filterToCourseWide"></label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <tumaet-ui-checkbox inputId="filterToUnresolved" name="filterToUnresolved" formControlName="filterToUnresolved" (changed)="onSelectContext()" />
+                                <label for="filterToUnresolved" jhiTranslate="artemisApp.communication.overview.filterToUnresolved"></label>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <tumaet-ui-checkbox
+                                    inputId="filterToAnsweredOrReacted"
+                                    name="filterToAnsweredOrReacted"
+                                    formControlName="filterToAnsweredOrReacted"
+                                    (changed)="onSelectContext()"
+                                />
+                                <label for="filterToAnsweredOrReacted" jhiTranslate="artemisApp.communication.overview.filterToAnsweredOrReacted"></label>
+                            </div>
+                            @if (isAtLeastTutor()) {
+                                <div class="flex items-center gap-1">
+                                    <tumaet-ui-checkbox
+                                        inputId="filterToUnverifiedIris"
+                                        name="filterToUnverifiedIris"
+                                        formControlName="filterToUnverifiedIris"
+                                        (changed)="onSelectContext()"
+                                    />
+                                    <label for="filterToUnverifiedIris" jhiTranslate="artemisApp.communication.overview.filterToUnverifiedIris"></label>
+                                </div>
+                            }
+                        </div>
+                        <!-- sort dropdown -->
+                        <div class="flex">
+                            <div class="me-1" jhiTranslate="artemisApp.communication.overview.sortedByDate"></div>
+                            <div
+                                class="clickable"
+                                role="button"
+                                (click)="onChangeSortDir()"
+                                #keyboardAction80
+                                tabindex="0"
+                                [attr.aria-label]="
+                                    (sortingOrder() === SortDirection.ASCENDING
+                                        ? 'artemisApp.communication.overview.sortAscending'
+                                        : 'artemisApp.communication.overview.sortDescending'
+                                    ) | artemisTranslate
+                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction80.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction80.click() : undefined"
+                            >
+                                <fa-icon
+                                    [icon]="sortingOrder() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                    [tumAetUiTooltip]="
+                                        sortingOrder() === SortDirection.ASCENDING
+                                            ? ('artemisApp.communication.overview.sortAscending' | artemisTranslate)
+                                            : ('artemisApp.communication.overview.sortDescending' | artemisTranslate)
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        }
+        <hr />
+        <div class="coursewide-search">
+            <div class="coursewide-search-column">
+                <div class="coursewide-search-rows">
+                    <!-- loading messages -->
+                    @if (isFetchingPosts() && posts().length === 0) {
+                        <div class="envelope">
+                            <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
+                        </div>
+                    }
+                    <!-- no message exist -->
+                    @if (!isFetchingPosts() && posts().length === 0) {
+                        <div class="envelope">
+                            <fa-icon size="5x" [icon]="faEnvelope" />
+                            <div class="text-center mt-2" jhiTranslate="artemisApp.communication.noPosts"></div>
+                        </div>
+                    }
+                    <!-- list of messages -->
+                    <!-- Kept mounted (hidden via the is-fetching-posts class while loading) instead of recreated on every -->
+                    <!-- fetch, so the infinite-scroll directive and the scroll position survive across pages and chained paging works. -->
+                    <div
+                        id="scrollableDiv"
+                        #container
+                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() && posts().length === 0 }"
+                        infinite-scroll
+                        [scrollWindow]="false"
+                        [infiniteScrollDisabled]="isFetchingPosts() || posts().length >= totalNumberOfPosts()"
+                        (scrolledUp)="fetchNextPage()"
+                    >
+                        <!-- list of all top level posts -->
+                        <!-- answers are opened in the thread sidebar -->
+                        <div #resultContent data-testid="course-wide-search-results">
+                            @for (post of posts(); track postsTrackByFn($index, post)) {
+                                <div class="cursor-pointer pt-2">
+                                    <jhi-posting-thread
+                                        #postingThread
+                                        [lastReadDate]="post.conversation?.lastMessageDate"
+                                        [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                                        [id]="'item-' + post.id"
+                                        [post]="post"
+                                        [showAnswers]="false"
+                                        [searchConfig]="courseWideSearchConfig()"
+                                        [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                                        [isCommunicationPage]="true"
+                                        [showChannelReference]="true"
+                                        (openThread)="setPostForThread($event)"
+                                        (click)="onTriggerNavigateToPost(post)"
+                                    />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

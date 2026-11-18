@@ -1,0 +1,31 @@
+<div class="flex justify-between">
+    @if (exams()) {
+        @if (sidebarData(); as currentSidebarData) {
+            <div id="exam-sidebar-test" [class.sidebar-collapsed]="isCollapsed()" [hidden]="isExamStarted()">
+                <jhi-sidebar
+                    [itemSelected]="examSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="currentSidebarData"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                    [pageTitle]="pageTitle()"
+                    [showSidebarToggle]="true"
+                    [isSidebarCollapsed]="isCollapsed()"
+                    (toggleSidebar)="toggleSidebar()"
+                />
+            </div>
+        }
+
+        @if (examSelected()) {
+            <div class="module-bg w-screen min-w-50 rounded-lg">
+                @if (canRenderSelectedExam()) {
+                    <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
+                }
+            </div>
+        } @else {
+            <div class="module-bg flex w-screen justify-between rounded-lg p-6!">
+                <div class="my-auto w-full text-center" jhiTranslate="artemisApp.courseOverview.exams.selectExam"></div>
+            </div>
+        }
+    }
+</div>

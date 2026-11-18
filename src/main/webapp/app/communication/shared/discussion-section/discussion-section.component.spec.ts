@@ -1,0 +1,573 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { Subject, of } from 'rxjs';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { AnswerPostService } from 'app/communication/service/answer-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
+import { PostService } from 'app/communication/service/post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
+import {
+    communicationCourse,
+    communicationExercise,
+    communicationExerciseChannelDTO,
+    communicationExercisePosts,
+    communicationLecture,
+    communicationLectureChannelDTO,
+    communicationPostTechSupport,
+    messagesBetweenUser1User2,
+} from 'test/helpers/sample/communication-sample-data';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { PostContextFilter, SortDirection } from 'app/communication/communication.util';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { ApplicationRef, Directive, input, output } from '@angular/core';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-conversations.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
+import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+
+@Directive({
+    selector: '[infinite-scroll]',
+})
+class InfiniteScrollStubDirective {
+    readonly scrollWindow = input(true);
+    readonly scrolledUp = output<void>();
+}
+
+describe('DiscussionSectionComponent', () => {
+    let component: DiscussionSectionComponent;
+    let fixture: ComponentFixture<DiscussionSectionComponent>;
+    let communicationService: CommunicationService;
+    let communicationServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;
+    let channelService: ChannelService;
+    let getChannelOfLectureSpy: ReturnType<typeof vi.spyOn>;
+    let getChannelOfExerciseSpy: ReturnType<typeof vi.spyOn>;
+    let courseStorageService: CourseStorageService;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), DiscussionSectionComponent, FaIconComponent, InfiniteScrollStubDirective],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                FormBuilder,
+                MockProvider(SessionStorageService),
+                MockProvider(ChannelService),
+                { provide: LinkifyService, useClass: LinkifyService },
+                { provide: LinkPreviewService, useClass: LinkPreviewService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
+                { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: AnswerPostService, useClass: MockAnswerPostService },
+                { provide: PostService, useClass: MockPostService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: CommunicationService, useClass: CommunicationService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseStorageService, useClass: CourseStorageService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ postId: communicationPostTechSupport.id, courseId: communicationCourse.id }),
+                },
+            ],
+        })
+            .overrideComponent(DiscussionSectionComponent, {
+                set: {
+                    providers: [{ provide: CommunicationService, useClass: CommunicationService }],
+                },
+            })
+            .overrideComponent(DiscussionSectionComponent, {
+                remove: { imports: [PostingThreadComponent, MessageInlineInputComponent] },
+                add: { imports: [MockComponent(PostingThreadComponent), MockComponent(MessageInlineInputComponent)] },
+            });
+
+        fixture = TestBed.createComponent(DiscussionSectionComponent);
+        component = fixture.componentInstance;
+        communicationService = fixture.debugElement.injector.get(CommunicationService);
+        channelService = TestBed.inject(ChannelService);
+        getChannelOfLectureSpy = vi.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: communicationLectureChannelDTO,
+                    status: 200,
+                }),
+            ),
+        );
+        getChannelOfExerciseSpy = vi.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: communicationExerciseChannelDTO,
+                    status: 200,
+                }),
+            ),
+        );
+        communicationServiceGetFilteredPostsSpy = vi.spyOn(communicationService, 'getFilteredPosts');
+
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseStorageService.setCourses([communicationCourse]);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should set course and messages for lecture with lecture channel on initialization', () => {
+        fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(component.course()).toEqual(communicationCourse);
+        expect(component.createdPost()).toBeDefined();
+        expect(component.channel()).toEqual(communicationLectureChannelDTO);
+        expect(getChannelOfLectureSpy).toHaveBeenCalled();
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts()).toEqual([...messagesBetweenUser1User2].reverse());
+    });
+
+    it('should set course and messages for exercise with exercise channel on initialization', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(component.course()).toEqual(communicationCourse);
+        expect(component.createdPost()).toBeDefined();
+        expect(component.channel()).toEqual(communicationExerciseChannelDTO);
+        expect(getChannelOfExerciseSpy).toHaveBeenCalled();
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts()).toEqual([...messagesBetweenUser1User2].reverse());
+    });
+
+    it('should reset current post', () => {
+        fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+        fixture.detectChanges();
+        component.resetCurrentPost();
+        vi.advanceTimersByTime(0);
+        expect(component.currentPost()).toBeUndefined();
+        expect(component.currentPostId).toBeUndefined();
+    });
+
+    it('should initialize correctly for exercise posts with default settings', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
+        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
+        fixture.changeDetectorRef.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'jhi-search-filter input');
+        expect((searchInput as HTMLInputElement).value).toBe('');
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should display one new message button for more then 3 messages in channel', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        vi.advanceTimersByTime(0);
+        // Create posts with unique IDs to avoid duplicate key errors with track by post.id
+        component.posts.set([
+            { ...communicationExercisePosts[0], id: 101 },
+            { ...communicationExercisePosts[1], id: 102 },
+            { ...communicationExercisePosts[0], id: 103 },
+            { ...communicationExercisePosts[1], id: 104 },
+        ]);
+        fixture.changeDetectorRef.detectChanges();
+        vi.advanceTimersByTime(0);
+        const newPostButtons = getElements(fixture.debugElement, '#new-post');
+        expect(newPostButtons).not.toBeNull();
+        expect(newPostButtons).toHaveLength(1);
+    });
+
+    it('should display one new message button', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        const newPostButtons = getElements(fixture.debugElement, '#new-post');
+        expect(newPostButtons).not.toBeNull();
+        expect(newPostButtons).toHaveLength(1);
+    });
+
+    it('should show search-bar and filters if not focused to a post', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'jhi-search-filter input');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        expect(searchInput).not.toBeNull();
+        expect(filterResolvedCheckbox).not.toBeNull();
+        expect(filterOwnCheckbox).not.toBeNull();
+        expect(filterToAnsweredOrReacted).not.toBeNull();
+    });
+
+    it('should hide search-bar and filters if focused to a post', () => {
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'jhi-search-filter input');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        expect(searchInput).toBeNull();
+        expect(filterResolvedCheckbox).toBeNull();
+        expect(filterOwnCheckbox).toBeNull();
+        expect(filterToAnsweredOrReacted).toBeNull();
+    });
+
+    it('triggering filters should invoke the communication service', () => {
+        fixture.componentRef.setInput('exercise', { ...communicationExercise, course: communicationCourse });
+        communicationServiceGetFilteredPostsSpy.mockReset();
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        component.currentUser = { id: 99, login: 'admin' } as User;
+
+        // toggle the filters the way a user does: the native input changes and reports it
+        for (const name of ['filterToUnresolved', 'filterToOwn', 'filterToAnsweredOrReacted']) {
+            const checkbox = getElement(fixture.debugElement, `input[name=${name}]`) as HTMLInputElement;
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change'));
+        }
+
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.authorIds!.length > 0).toBe(true);
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(true);
+        expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
+    });
+
+    it('loads exercise messages if communication only', () => {
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
+        fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.setChannel(1);
+
+        expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            { ...component.currentPostContextFilter, conversationIds: [communicationExerciseChannelDTO.id] } as PostContextFilter,
+            true,
+            communicationExerciseChannelDTO,
+            expect.objectContaining({ beforeApply: expect.any(Function), complete: expect.any(Function) }),
+        );
+        expect(component.channel()).toBe(communicationExerciseChannelDTO);
+    });
+
+    it('loads lecture messages if communication only', () => {
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.setChannel(1);
+
+        expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            { ...component.currentPostContextFilter, conversationIds: [communicationLectureChannelDTO.id] },
+            true,
+            communicationLectureChannelDTO,
+            expect.objectContaining({ beforeApply: expect.any(Function), complete: expect.any(Function) }),
+        );
+        expect(component.channel()).toBe(communicationLectureChannelDTO);
+    });
+
+    it('collapses sidebar if no channel exists', () => {
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
+        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+        fixture.changeDetectorRef.detectChanges();
+        getChannelOfLectureSpy = vi.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: undefined as any,
+                    status: 200,
+                }),
+            ),
+        );
+
+        component.setChannel(1);
+
+        expect(component.channel()).toBeUndefined();
+        expect(component.noChannelAvailable()).toBe(true);
+        expect(component.collapsed()).toBe(true);
+    });
+
+    it('should react to scroll up event', () => {
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
+        fixture.detectChanges();
+        const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage');
+
+        const scrolledUp = new CustomEvent('scrolledUp');
+        component.content()!.nativeElement.dispatchEvent(scrolledUp);
+
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('request-scoped pagination', () => {
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[], total = 120) => new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': String(total) }) });
+        const scrollUp = () => component.content()!.nativeElement.dispatchEvent(new CustomEvent('scrolledUp'));
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+            fixture.detectChanges();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
+        });
+
+        it('serializes repeated top-scroll events and keeps live updates from unlocking a pending page', () => {
+            const delayed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(delayed)
+                .mockReturnValueOnce(of(response(page(101, 120))));
+            component.fetchPosts(true);
+            scrollUp();
+            scrollUp();
+            communicationService.setPosts(page(1, 50));
+            scrollUp();
+            expect(request).toHaveBeenCalledTimes(2);
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1]);
+
+            delayed.next(response(page(51, 100)));
+            delayed.complete();
+            expect(component.posts()).toHaveLength(100);
+            scrollUp(); // Pagination stays locked until the response has rendered and its viewport is restored.
+            expect(request).toHaveBeenCalledTimes(2);
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
+            expect(new Set(component.posts().map((post) => post.id))).toEqual(new Set(Array.from({ length: 120 }, (_, index) => index + 1)));
+        });
+
+        it('rolls back an unsuccessful page and retries that index', () => {
+            const failed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(failed)
+                .mockReturnValueOnce(of(response(page(51, 100))));
+            component.fetchPosts(true);
+            scrollUp();
+            failed.complete(); // No response was applied, as for an unsuccessful HTTP request.
+            expect(component.posts()).toHaveLength(50);
+            expect(component['page']).toBe(1);
+            expect(component.currentPostContextFilter.page).toBe(0);
+
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 1]);
+            expect(component.posts()).toHaveLength(100);
+        });
+
+        it('retries an unsuccessful initial load at page zero and replaces the old cache', () => {
+            const failed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(failed)
+                .mockReturnValueOnce(of(response(page(201, 220), 20)));
+            component.fetchPosts(true);
+            failed.complete();
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 0]);
+            expect(component.posts().map((post) => post.id)).toEqual(
+                page(201, 220)
+                    .map((post) => post.id)
+                    .reverse(),
+            );
+            expect(component['page']).toBe(1);
+            expect(component.isLoading()).toBe(false);
+        });
+
+        it('keeps an older completion from unlocking or rolling back a new search', () => {
+            const oldPage = new Subject<HttpResponse<Post[]>>();
+            const newSearch = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(oldPage)
+                .mockReturnValueOnce(newSearch);
+            component.fetchPosts(true);
+            scrollUp();
+            component.onSearch('new search');
+            oldPage.next(response(page(51, 100)));
+            oldPage.complete();
+            communicationService.setPosts(page(1, 50));
+            scrollUp();
+            expect(request).toHaveBeenCalledTimes(3);
+            expect(component.isLoading()).toBe(true);
+            expect(component.currentPostContextFilter.page).toBe(0);
+            expect(component.currentPostContextFilter.searchText).toBe('new search');
+
+            newSearch.next(response(page(201, 220), 20));
+            newSearch.complete();
+            expect(component.posts().map((post) => post.id)).toEqual(
+                page(201, 220)
+                    .map((post) => post.id)
+                    .reverse(),
+            );
+            expect(component.isLoading()).toBe(false);
+            expect(component['page']).toBe(1);
+        });
+    });
+
+    describe('rendered pagination and sentinel rearming', () => {
+        class ScrollObserver implements IntersectionObserver {
+            static instances: ScrollObserver[] = [];
+            readonly root: Element | Document | null;
+            readonly rootMargin = '0px';
+            readonly scrollMargin = '0px';
+            readonly thresholds = [0];
+            constructor(
+                private callback: IntersectionObserverCallback,
+                options?: IntersectionObserverInit,
+            ) {
+                this.root = options?.root ?? null;
+                ScrollObserver.instances.push(this);
+            }
+            observe = vi.fn((_target: Element) => {});
+            unobserve = vi.fn((_target: Element) => {});
+            disconnect = vi.fn();
+            takeRecords = () => [];
+            emitTop(container: HTMLElement): void {
+                const target = container.querySelector('[data-infinite-scroll-sentinel="top"]')!;
+                const rect = new DOMRect(0, 0, 100, 1);
+                this.callback(
+                    [
+                        {
+                            target,
+                            isIntersecting: container.scrollTop <= 1,
+                            intersectionRatio: container.scrollTop <= 1 ? 1 : 0,
+                            boundingClientRect: rect,
+                            intersectionRect: rect,
+                            rootBounds: null,
+                            time: performance.now(),
+                        },
+                    ],
+                    this,
+                );
+            }
+        }
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '120' }) });
+        const render = () => {
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
+        };
+
+        beforeEach(() => {
+            ScrollObserver.instances = [];
+            vi.stubGlobal('IntersectionObserver', ScrollObserver);
+            fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+            render();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
+            render();
+        });
+        afterEach(() => vi.unstubAllGlobals());
+
+        it('restores the live viewport after rendering and rearms the real directive for the next page', () => {
+            const delayed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(delayed)
+                .mockReturnValueOnce(of(response(page(101, 120))));
+            component.fetchPosts(true);
+            render();
+            const container: HTMLElement = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => container.querySelectorAll('jhi-posting-thread').length * 20 });
+            Object.defineProperty(container, 'clientHeight', { configurable: true, value: 200 });
+            const observer = ScrollObserver.instances.find((instance) => instance.root === container)!;
+            expect(observer).toBeDefined();
+            container.scrollTop = 800;
+            observer.emitTop(container); // Top sentinel leaves and arms.
+            container.scrollTop = 0;
+            observer.emitTop(container); // Genuine re-entry invokes the directive output.
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1]);
+            container.scrollTop = 120; // Reader moves while the response is delayed.
+            delayed.next(response(page(51, 100)));
+            delayed.complete();
+            render();
+            expect(container.scrollTop).toBe(1120);
+            observer.emitTop(container); // Restoration moved the top sentinel out, rearming it.
+            container.scrollTop = 0;
+            observer.emitTop(container);
+            render();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
+            expect(container.scrollTop).toBe(400);
+            expect(component.posts()).toHaveLength(120);
+        });
+    });
+
+    it('should toggle send message', () => {
+        component.shouldSendMessage.set(true);
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage()).toBe(false);
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage()).toBe(true);
+    });
+
+    it('should change sort direction', () => {
+        fixture.detectChanges();
+        component.currentSortDirection.set(SortDirection.ASCENDING);
+        fixture.changeDetectorRef.detectChanges();
+        component.onChangeSortDir();
+        expect(component.currentSortDirection()).toBe(SortDirection.DESCENDING);
+        component.onChangeSortDir();
+        expect(component.currentSortDirection()).toBe(SortDirection.ASCENDING);
+    });
+
+    it('fetches new messages on scroll up if more messages are available', () => {
+        // Use unique post IDs to avoid duplicate key warnings from Angular's @for track
+        communicationServiceGetFilteredPostsSpy.mockImplementation(() => {
+            component.posts.set([{ id: 1001 } as any, { id: 1002 } as any]);
+        });
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
+        fixture.detectChanges();
+        component.posts.set([]);
+        const fetchPostsSpy = vi.spyOn(component, 'fetchNextPage');
+
+        const scrolledUp = new CustomEvent('scrolledUp');
+        component.content()!.nativeElement.dispatchEvent(scrolledUp);
+
+        expect(fetchPostsSpy).toHaveBeenCalledOnce();
+    });
+});

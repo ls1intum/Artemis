@@ -1,0 +1,21 @@
+{
+    "artemisApp": {
+        "textSubmission": {
+            "home": {
+                "title": "Text Submissions",
+                "createLabel": "Create a new Text Submission"
+            },
+            "created": "Created new Text Submission with identifier {{ param }}",
+            "updated": "Updated Text Submission with identifier {{ param }}",
+            "deleted": "Deleted Text Submission with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Text Submission {{ id }}?"
+            },
+            "detail": {
+                "title": "Text Submission"
+            },
+            "text": "Text",
+            "view": "View assessment"
+        }
+    }
+}

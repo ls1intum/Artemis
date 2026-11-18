@@ -1,0 +1,21 @@
+@import '../../../../content/scss/artemis-mixins';
+
+.edit-mc-question {
+    .question-card-header {
+        width: 100%;
+        padding: 15px 5px 5px;
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+
+    .question-card-header-reevaluation {
+        width: 100%;
+        padding: 0.6rem 0.85rem;
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+}

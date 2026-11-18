@@ -1,0 +1,28 @@
+import dayjs from 'dayjs/esm';
+import { User } from 'app/account/user/user.model';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+
+export enum ComplaintType {
+    COMPLAINT = 'COMPLAINT',
+    MORE_FEEDBACK = 'MORE_FEEDBACK',
+}
+
+export class Complaint implements BaseEntity {
+    public id?: number;
+
+    public complaintText?: string;
+    public accepted?: boolean;
+    public submittedTime?: dayjs.Dayjs;
+    public result?: Result;
+    public student?: User;
+    public team?: Team;
+    public complaintType?: ComplaintType;
+    public complaintResponse?: ComplaintResponse;
+    /** Privacy-safe stable assessor id for tutor All-scope filtering (not login). */
+    public assessorKey?: string;
+    /** Privacy-safe assessor display name (first/last only; no login). */
+    public assessorLabel?: string;
+}

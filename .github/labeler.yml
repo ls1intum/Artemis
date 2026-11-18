@@ -1,0 +1,213 @@
+server:
+  - changed-files:
+      - any-glob-to-any-file: src/main/java/**/*.java
+
+client:
+  - changed-files:
+      - any-glob-to-any-file: src/main/webapp/**/*
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: src/test/**/*
+
+playwright:
+  - changed-files:
+      - any-glob-to-any-file: src/test/playwright/**/*
+
+database:
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/config/liquibase/master.xml
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: documentation/**/*
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file: deployment/**/*
+
+config-change:
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/config/*.yml
+
+template:
+  - changed-files:
+      - any-glob-to-any-file: src/main/resources/templates/**/*
+
+# module labels
+account:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/account/**/*
+          - src/test/java/de/tum/cit/aet/artemis/account/**/*
+          - src/main/webapp/app/account/**/*
+
+admin:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/admin/**/*
+          - src/test/java/de/tum/cit/aet/artemis/admin/**/*
+          - src/main/webapp/app/admin/**/*
+
+assessment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/assessment/**/*
+          - src/test/java/de/tum/cit/aet/artemis/assessment/**/*
+          - src/main/webapp/app/assessment/**/*
+
+athena:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/athena/**/*
+          - src/test/java/de/tum/cit/aet/artemis/athena/**/*
+
+atlas:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/atlas/**/*
+          - src/test/java/de/tum/cit/aet/artemis/atlas/**/*
+          - src/main/webapp/app/atlas/**/*
+
+buildagent:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/buildagent/**/*
+          - src/test/java/de/tum/cit/aet/artemis/buildagent/**/*
+          - src/main/webapp/app/localci/**/*
+
+calendar:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/calendar/**/*
+          - src/test/java/de/tum/cit/aet/artemis/calendar/**/*
+          - src/main/webapp/app/calendar/**/*
+
+communication:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/communication/**/*
+          - src/test/java/de/tum/cit/aet/artemis/communication/**/*
+          - src/main/webapp/app/communication/**/*
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/core/**/*
+          - src/test/java/de/tum/cit/aet/artemis/core/**/*
+          - src/main/webapp/app/core/**/*
+
+course:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/course/**/*
+          - src/test/java/de/tum/cit/aet/artemis/course/**/*
+          - src/main/webapp/app/course/**/*
+
+exam:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/exam/**/*
+          - src/test/java/de/tum/cit/aet/artemis/exam/**/*
+          - src/main/webapp/app/exam/**/*
+
+exercise:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/exercise/**/*
+          - src/test/java/de/tum/cit/aet/artemis/exercise/**/*
+          - src/main/webapp/app/exercise/**/*
+
+fileupload:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/fileupload/**/*
+          - src/test/java/de/tum/cit/aet/artemis/fileupload/**/*
+          - src/main/webapp/app/fileupload/**/*
+
+globalsearch:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/globalsearch/**/*
+          - src/test/java/de/tum/cit/aet/artemis/globalsearch/**/*
+
+iris:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/iris/**/*
+          - src/test/java/de/tum/cit/aet/artemis/iris/**/*
+          - src/main/webapp/app/iris/**/*
+
+hyperion:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/hyperion/**/*
+          - src/test/java/de/tum/cit/aet/artemis/hyperion/**/*
+          - src/main/webapp/app/hyperion/**/*
+
+lecture:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/lecture/**/*
+          - src/test/java/de/tum/cit/aet/artemis/lecture/**/*
+          - src/main/webapp/app/lecture/**/*
+
+lti:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/lti/**/*
+          - src/test/java/de/tum/cit/aet/artemis/lti/**/*
+          - src/main/webapp/app/lti/**/*
+
+modeling:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/modeling/**/*
+          - src/test/java/de/tum/cit/aet/artemis/modeling/**/*
+          - src/main/webapp/app/modeling/**/*
+
+plagiarism:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/plagiarism/**/*
+          - src/test/java/de/tum/cit/aet/artemis/plagiarism/**/*
+          - src/main/webapp/app/plagiarism/**/*
+
+programming:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/programming/**/*
+          - src/test/java/de/tum/cit/aet/artemis/programming/**/*
+          - src/main/webapp/app/programming/**/*
+          - src/main/java/de/tum/cit/aet/artemis/localci/**/*
+          - src/test/java/de/tum/cit/aet/artemis/localci/**/*
+          - src/main/java/de/tum/cit/aet/artemis/localvc/**/*
+          - src/test/java/de/tum/cit/aet/artemis/localvc/**/*
+          - src/main/webapp/app/localvc/**/*
+
+quiz:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/quiz/**/*
+          - src/test/java/de/tum/cit/aet/artemis/quiz/**/*
+          - src/main/webapp/app/quiz/**/*
+
+text:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/text/**/*
+          - src/test/java/de/tum/cit/aet/artemis/text/**/*
+          - src/main/webapp/app/text/**/*
+
+tutorialgroup:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/tutorialgroup/**/*
+          - src/test/java/de/tum/cit/aet/artemis/tutorialgroup/**/*
+          - src/main/webapp/app/tutorialgroup/**/*
+
+videosource:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/videosource/**/*
+          - src/test/java/de/tum/cit/aet/artemis/videosource/**/*

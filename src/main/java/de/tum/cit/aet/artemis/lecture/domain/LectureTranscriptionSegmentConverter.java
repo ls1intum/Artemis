@@ -1,0 +1,52 @@
+package de.tum.cit.aet.artemis.lecture.domain;
+
+import java.util.List;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+
+@Converter
+public class LectureTranscriptionSegmentConverter implements AttributeConverter<List<LectureTranscriptionSegment>, String> {
+
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
+
+    @Override
+    public String convertToDatabaseColumn(List<LectureTranscriptionSegment> transcriptionSegments) {
+        if (transcriptionSegments == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(transcriptionSegments);
+        }
+        catch (JacksonException e) {
+            throw new IllegalArgumentException("Could not convert list of transcription segments to JSON", e);
+        }
+    }
+
+    @Override
+    public List<LectureTranscriptionSegment> convertToEntityAttribute(String jsonData) {
+        if (jsonData == null || jsonData.isEmpty()) {
+            return List.of();
+        }
+
+        try {
+            JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, LectureTranscriptionSegment.class);
+
+            if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
+                jsonData = objectMapper.readValue(jsonData, String.class);
+            }
+
+            return objectMapper.readValue(jsonData, type);
+        }
+        catch (JacksonException e) {
+            throw new IllegalArgumentException("Could not convert JSON to list of transcription segments", e);
+        }
+    }
+
+}

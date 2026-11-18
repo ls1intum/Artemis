@@ -1,0 +1,12 @@
+@if (exercise() && result(); as result) {
+    <jhi-result-detail
+        [exercise]="exercise()"
+        [result]="result"
+        [showScoreChart]="true"
+        [participation]="participation()"
+        [latestDueDate]="latestDueDate()"
+        [messageKey]="messageKey()"
+        [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation()"
+        class="p-4!"
+    />
+}

@@ -1,0 +1,428 @@
+package de.tum.cit.aet.artemis.programming.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ProgrammingExerciseParticipationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+
+    private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+
+    private final ParticipationRepository participationRepository;
+
+    private final Optional<VersionControlService> versionControlService;
+
+    private final GitService gitService;
+
+    private final BareGitRepositoryService bareGitRepositoryService;
+
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final UserRepository userRepository;
+
+    public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            ParticipationRepository participationRepository, GitService gitService, BareGitRepositoryService bareGitRepositoryService,
+            Optional<VersionControlService> versionControlService, ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.solutionParticipationRepository = solutionParticipationRepository;
+        this.templateParticipationRepository = templateParticipationRepository;
+        this.participationRepository = participationRepository;
+        this.versionControlService = versionControlService;
+        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
+        this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Retrieve the solution participation of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @return the SolutionProgrammingExerciseParticipation of programming exercise.
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     SolutionParticipation).
+     */
+    // TODO: move into solutionParticipationRepository
+    public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = solutionParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+        if (solutionParticipation.isEmpty()) {
+            throw new EntityNotFoundException("Could not find solution participation for programming exercise with id " + programmingExerciseId);
+        }
+        return solutionParticipation.get();
+    }
+
+    /**
+     * Retrieve the template participation of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @return the TemplateProgrammingExerciseParticipation of programming exercise.
+     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a
+     *                                     TemplateParticipation).
+     */
+    // TODO: move into templateParticipationRepository
+    public TemplateProgrammingExerciseParticipation findTemplateParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<TemplateProgrammingExerciseParticipation> templateParticipation = templateParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+        if (templateParticipation.isEmpty()) {
+            throw new EntityNotFoundException("Could not find solution participation for programming exercise with id " + programmingExerciseId);
+        }
+        return templateParticipation.get();
+    }
+
+    /**
+     * Tries to retrieve a student participation for the given team exercise and user
+     *
+     * @param exercise the exercise for which to find a participation.
+     * @param user     the user who is member of the team to which the participation belongs.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
+        return findTeamParticipationByExerciseAndUser(exercise.getId(), user);
+    }
+
+    /**
+     * The team participation of a user in an exercise, for a caller that holds only the exercise's id.
+     *
+     * @param exerciseId the exercise to look in
+     * @param user       the user whose team participation is wanted
+     * @return the participation, or empty if the user has none
+     */
+    public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(long exerciseId, User user) {
+        return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exerciseId, user.getId());
+    }
+
+    /**
+     * Try to find a programming exercise participation for the given id.
+     * It contains the last submission which might be illegal!
+     *
+     * @param participationId ProgrammingExerciseParticipation id
+     * @return the casted participation
+     * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
+     */
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
+        if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
+            throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
+        }
+        return (ProgrammingExerciseParticipation) participation.get();
+    }
+
+    /**
+     * Setup the initial solution participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URI. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     */
+    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
+        final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        newExercise.setSolutionParticipation(solutionParticipation);
+        solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
+        solutionParticipation.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), solutionRepoName).toString());
+        solutionParticipation.setProgrammingExercise(newExercise);
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        solutionParticipationRepository.save(solutionParticipation);
+    }
+
+    /**
+     * Setup the initial template participation for an exercise. Creates the new participation entity and sets
+     * the correct build plan ID and repository URI. Saves the participation after all values have been set.
+     *
+     * @param newExercise The new exercise for which a participation should be generated
+     */
+    public void setupInitialTemplateParticipation(ProgrammingExercise newExercise) {
+        final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
+        templateParticipation.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(newExercise.getProjectKey(), exerciseRepoName).toString());
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setProgrammingExercise(newExercise);
+        newExercise.setTemplateParticipation(templateParticipation);
+        templateParticipationRepository.save(templateParticipation);
+    }
+
+    /**
+     * Replaces all files except the .git folder of the target repository with the files from the source repository
+     *
+     * @param targetUri the repository where all files should be replaced
+     * @param sourceUri the repository that should be used as source for all files
+     */
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
+        // Everything in the target is replaced, so its working copy on the server must not block the reset because of a local modification that conflicts with the remote.
+        // The lock of the target is held until the reset is committed, so that two resets of the same repository cannot interleave.
+        gitService.replaceWorkingCopyContent(targetUri, targetRepo -> {
+            // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
+            FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
+            final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : targetRepoFiles) {
+                FileSystemUtils.deleteRecursively(file);
+            }
+            final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : sourceRepoFiles) {
+                if (file.isDirectory()) {
+                    FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
+                else {
+                    FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
+            }
+            String login = SecurityUtils.getCurrentUserLogin().orElse(null);
+            User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
+            String commitMessage = "Reset Exercise";
+
+            if (coAuthor != null && coAuthor.getEmail() != null) {
+                String name = coAuthor.getName() != null ? coAuthor.getName() : login;
+                commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
+            }
+
+            gitService.stageAllChanges(targetRepo);
+            gitService.commitAndPush(targetRepo, commitMessage, true, null);
+        });
+
+        log.info("Reset repo by {}", SecurityUtils.getCurrentUserLogin().orElse("unknown"));
+    }
+
+    /**
+     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
+     * participation for logging operations on the repository.
+     *
+     * @param repositoryTypeOrUserName the name of the user or the type of the repository
+     * @param repositoryURI            the participation's repository URL
+     * @param exercise                 the exercise the participation belongs to
+     * @return the participation belonging to the provided repositoryURI and repository type or username
+     */
+    public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
+        return fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, repositoryURI, exercise.getId());
+    }
+
+    /**
+     * The participation behind a repository together with its submissions, for a caller that holds only the
+     * exercise's id.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryURI            the uri of the repository
+     * @param exerciseId               the exercise the repository belongs to
+     * @return the participation behind the repository
+     */
+    public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, long exerciseId) {
+        var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
+        }
+        return studentParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
+
+    }
+
+    /**
+     * A reference to the participation a repository belongs to, read as one id and nothing else.
+     *
+     * <p>
+     * Unlike {@link #fetchParticipationWithSubmissionsByRepository}, this loads no entity at all: the query returns the
+     * primary key, and the participation is handed back unloaded. It exists for the access log, which records that a
+     * repository was touched and therefore stores the participation as a foreign key without reading anything from it.
+     * Loading the entity instead would pull the exercise and its course along, because a participation holds those as
+     * eager associations and the exercise of a solution participation cannot even be proxied, and this runs on every
+     * rejected authentication, which is traffic whose volume an attacker chooses.
+     *
+     * <p>
+     * The returned participation carries its id and nothing more. Reading any other field initialises it, which fails
+     * outside a transaction, so it is only good for writing the association.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryUri            the uri of the repository
+     * @param projectKey               the project key of the exercise, which is how the solution participation shared
+     *                                     with the test repository is found
+     * @return a reference to the participation behind the repository, or empty if there is none
+     */
+    public Optional<ProgrammingExerciseParticipation> getParticipationReferenceForRepository(String repositoryTypeOrUserName, String repositoryUri, String projectKey) {
+        String repositoryUriWithoutService = repositoryUri.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findIdByProjectKey(projectKey).map(solutionParticipationRepository::getReferenceById);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(templateParticipationRepository::getReferenceById);
+        }
+        return studentParticipationRepository.findIdByRepositoryUri(repositoryUriWithoutService).map(studentParticipationRepository::getReferenceById);
+    }
+
+    public ProgrammingExerciseParticipation retrieveSolutionParticipation(Exercise exercise) {
+        return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+    }
+
+    /**
+     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
+     * participation for logging operations on the repository.
+     *
+     * @param repositoryTypeOrUserName the name of the user or the type of the repository
+     * @param repositoryURI            the participation's repository URL
+     * @param exercise                 the exercise the participation belongs to
+     * @return the participation belonging to the provided repositoryURI and repository type or username
+     */
+    public ProgrammingExerciseParticipation fetchParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
+        return fetchParticipationByRepository(repositoryTypeOrUserName, repositoryURI, exercise.getId());
+    }
+
+    /**
+     * The participation behind a repository, for a caller that holds only the exercise's id.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryURI            the uri of the repository
+     * @param exerciseId               the exercise the repository belongs to
+     * @return the participation behind the repository
+     */
+    public ProgrammingExerciseParticipation fetchParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, long exerciseId) {
+        var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
+        }
+
+        return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
+    }
+
+    /**
+     * Get the commits information for the given repository URI: can be a template, solution, tests, auxiliary or student repository.
+     *
+     * @param localVCRepositoryUri the repository URI for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    // TODO: use some kind of paging mechanism
+    public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri localVCRepositoryUri) {
+        try {
+            return bareGitRepositoryService.getCommitInfos(localVCRepositoryUri);
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for repository with uri {}", localVCRepositoryUri);
+            return List.of();
+        }
+    }
+
+    /**
+     * Returns the matching template, solution or student participation for a given build plan key.
+     *
+     * @param planKey the build plan key
+     * @return the matching participation
+     */
+    @Nullable
+    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey == null) {
+            return null;
+        }
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
+            return templateParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
+            return solutionParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
+        ProgrammingExerciseStudentParticipation participation = null;
+        if (!participations.isEmpty()) {
+            participation = participations.getFirst();
+            if (participations.size() > 1) {
+                // in the rare case of multiple participations, take the latest one.
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
+        }
+        return participation;
+    }
+
+    /**
+     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
+     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * If no submission exists for the participation, the returned participation will contain
+     * an empty set of submissions. If a submission exists but no result with feedback is found,
+     * the submission will contain an empty list of results.
+     * </p>
+     *
+     * @param participationId the ID of the student participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation exists with the given ID
+     */
+    public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
+        if (latestSubmissionOptional.isEmpty()) {
+            participation.setSubmissions(Set.of());
+            return participation;
+        }
+        Submission latestSubmission = latestSubmissionOptional.get();
+        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
+        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(Set.of(latestResult)), () -> latestSubmission.setResults(Set.of()));
+        participation.setSubmissions(Set.of(latestSubmission));
+        return participation;
+    }
+}

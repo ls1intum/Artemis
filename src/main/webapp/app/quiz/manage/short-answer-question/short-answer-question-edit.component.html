@@ -1,0 +1,566 @@
+<div class="edit-sa-question">
+    @if (!reEvaluationInProgress()) {
+        <div class="question-options question-card-header">
+            <button
+                type="button"
+                class="question-collapse text-(--body-color)"
+                (click)="toggleQuestionCollapse()"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="question-title">
+                <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate"
+                    #titleInput="ngModel"
+                    id="short-answer-question-title"
+                    tumAetUiInput
+                    [tumAetUiInputInvalid]="isQuestionTitleLengthLimitReached()"
+                    [(ngModel)]="shortAnswerQuestion.title"
+                    (ngModelChange)="questionUpdated.emit()"
+                    [maxlength]="MAX_QUESTION_TITLE_LENGTH"
+                    name="short-answer-question-title-{{ questionIndex() }}"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate }}"
+                />
+                @if (isQuestionTitleLengthLimitReached()) {
+                    <small class="mt-1 block text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
+                }
+            </div>
+            <div class="question-card-header-inputs">
+                <div class="question-score">
+                    <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                    <jhi-points-input
+                        inputId="score"
+                        class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                        fluid
+                        [(ngModel)]="shortAnswerQuestion.points"
+                        (ngModelChange)="questionUpdated.emit()"
+                        [min]="0"
+                        [max]="MAX_POINTS"
+                    />
+                </div>
+                <div class="question-action-buttons">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
+                        class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
+                        (click)="deleteQuestion()"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+                <div class="question-type">
+                    <span class="question-type-badge question-type-badge--sa">SA</span>
+                </div>
+            </div>
+        </div>
+    }
+    @if (reEvaluationInProgress()) {
+        <div class="question-card-header-reevaluation">
+            <button
+                type="button"
+                class="question-collapse text-(--body-color)"
+                (click)="toggleQuestionCollapse()"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="question-reevaluation-title">
+                <div class="question-reevaluation-title-input">
+                    <input
+                        #reEvaluateTitleInput="ngModel"
+                        tumAetUiInput
+                        [tumAetUiInputInvalid]="isQuestionTitleLengthLimitReached()"
+                        [(ngModel)]="shortAnswerQuestion.title"
+                        (ngModelChange)="questionUpdated.emit()"
+                        [maxlength]="MAX_QUESTION_TITLE_LENGTH"
+                        name="short-answer-question-title-reevaluate-{{ questionIndex() }}"
+                        placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                        attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                    />
+                    @if (isQuestionTitleLengthLimitReached()) {
+                        <small class="mt-1 block text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
+                    }
+                </div>
+                <button
+                    tumAetUiButton
+                    variant="outlined"
+                    severity="secondary"
+                    type="button"
+                    (click)="resetQuestionTitle()"
+                    [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faUndo" />
+                </button>
+            </div>
+            <div class="question-type">
+                <span class="question-type-badge question-type-badge--sa">SA</span>
+            </div>
+            <div jhi-question-reevaluation-actions class="question-reevaluation-actions" (moveUp)="moveUp()" (moveDown)="moveDown()" (resetQuestion)="resetQuestion()"></div>
+        </div>
+    }
+    <div class="question-card-body" [hidden]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
+        @if (!reEvaluationInProgress()) {
+            <div class="question-options">
+                <div class="flex items-center [&>*]:mx-1">
+                    <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                    <tumaet-ui-select
+                        [options]="scoringTypeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ariaLabel]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                        [(ngModel)]="shortAnswerQuestion.scoringType"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                    <jhi-quiz-scoring-info-modal />
+                </div>
+                <div class="sa-slider-group flex items-center [&>*]:mx-1">
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
+                    <input
+                        type="range"
+                        name="similarity-slider"
+                        min="50"
+                        max="100"
+                        step="1"
+                        value="85"
+                        id="{{ 'matchPercentageSlider' + questionIndex() }}"
+                        [(ngModel)]="shortAnswerQuestion.similarityValue"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                    <span class="sa-slider-value">{{ shortAnswerQuestion.similarityValue }} %</span>
+                    <jhi-match-percentage-info-modal />
+                </div>
+                <div class="sa-checkbox-group">
+                    <div class="flex items-center [&>*]:mx-1">
+                        <tumaet-ui-checkbox
+                            [inputId]="'cbMatchAnswersExactly' + questionIndex()"
+                            [checked]="shortAnswerQuestion.similarityValue === 100"
+                            (changed)="toggleExactMatchCheckbox($event.checked)"
+                        />
+                        <label for="{{ 'cbMatchAnswersExactly' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchPercentage.title"></label>
+                    </div>
+                    <div class="flex items-center [&>*]:mx-1">
+                        <tumaet-ui-checkbox
+                            [inputId]="'cbMatchLetterCase' + questionIndex()"
+                            [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                            (changed)="questionUpdated.emit()"
+                        />
+                        <label for="{{ 'cbMatchLetterCase' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></label>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (reEvaluationInProgress()) {
+            <div class="question-options question-options--row question-options-reevaluation m-0 w-full flex-wrap! items-start! justify-start!">
+                <div class="w-full px-3! md:w-1/3">
+                    <div class="mx-[5px] mb-[15px] flex items-center [&>*]:mx-1">
+                        <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                        <tumaet-ui-select
+                            [options]="scoringTypeOptions()"
+                            optionLabel="label"
+                            optionValue="value"
+                            [ariaLabel]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                            [(ngModel)]="shortAnswerQuestion.scoringType"
+                            (ngModelChange)="questionUpdated.emit()"
+                        />
+                        <jhi-quiz-scoring-info-modal />
+                    </div>
+                </div>
+                <div class="w-full px-3! md:w-1/6">
+                    <div class="mx-[5px] mb-[15px] flex items-center [&>*]:mx-1">
+                        <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                        <jhi-points-input
+                            [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            fluid
+                            [ngModel]="shortAnswerQuestion.points"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="true"
+                        />
+                    </div>
+                </div>
+                <div class="flex w-full items-center gap-2 px-3! md:w-1/2">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
+                        [hidden]="shortAnswerQuestion.invalid"
+                        (click)="shortAnswerQuestion.invalid = true"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
+                        [hidden]="!shortAnswerQuestion.invalid"
+                        [disabled]="shortAnswerQuestion.invalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+                    ></button>
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction207
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
+                    >
+                        <fa-icon [icon]="faTrash" size="2x" />
+                    </div>
+                </div>
+                <div class="flex w-full flex-wrap items-center justify-center md:justify-start">
+                    <div class="flex w-full flex-wrap items-center md:w-1/2">
+                        <div class="mx-[5px] mt-1 mb-[15px] flex w-full items-center px-3! md:w-1/3 [&>*]:mx-1">
+                            <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
+                        </div>
+                        <div class="w-full px-3! md:w-7/12">
+                            <div class="slider-container">
+                                <div style="display: flex">
+                                    <input
+                                        type="range"
+                                        name="similarity-slider"
+                                        min="50"
+                                        max="100"
+                                        step="1"
+                                        value="85"
+                                        id="{{ 'matchPercentageSlider' + questionIndex() }}"
+                                        [(ngModel)]="shortAnswerQuestion.similarityValue"
+                                        (ngModelChange)="questionUpdated.emit()"
+                                        style="width: 60%"
+                                    />
+                                    <p style="margin: 0.5rem">{{ shortAnswerQuestion.similarityValue }} %</p>
+                                    <jhi-match-percentage-info-modal />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/4" style="padding: 0 0.5rem">
+                        <div class="flex items-center gap-2">
+                            <tumaet-ui-checkbox
+                                [inputId]="'cbMatchAnswersExactly' + questionIndex()"
+                                [checked]="shortAnswerQuestion.similarityValue === 100"
+                                (changed)="toggleExactMatchCheckbox($event.checked)"
+                            />
+                            <label for="{{ 'cbMatchAnswersExactly' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchPercentage.title"></label>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/4" style="padding: 0 0.5rem">
+                        <div class="flex items-center gap-2">
+                            <tumaet-ui-checkbox
+                                [inputId]="'cbMatchLetterCase' + questionIndex()"
+                                [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                                (changed)="questionUpdated.emit()"
+                            />
+                            <label for="{{ 'cbMatchLetterCase' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="markupEditorArea" [hidden]="showVisualMode()">
+            @if (!reEvaluationInProgress()) {
+                <div class="question-content">
+                    <jhi-markdown-editor-monaco
+                        #questionEditor
+                        [enableResize]="false"
+                        [enableFileUpload]="false"
+                        [showPreviewButton]="false"
+                        [defaultActions]="markdownActions()"
+                        [colorAction]="undefined"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [externalHeight]="true"
+                        [useDefaultMarkdownEditorOptions]="false"
+                        [markdown]="questionEditorText()"
+                        (markdownChange)="questionEditorText.set($event)"
+                        (markdownChange)="onTextChange($event)"
+                    />
+                </div>
+            }
+        </div>
+        @if (showVisualMode() || reEvaluationInProgress()) {
+            <div class="edit-sa-question" style="padding: 20px" cdkDropListGroup>
+                <h4 jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
+                @if (!reEvaluationInProgress()) {
+                    <span jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
+                }
+                <hr />
+                @if (!reEvaluationInProgress()) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot"
+                        (click)="addSpotAtCursorVisualMode()"
+                    ></button>
+                }
+                @if (!reEvaluationInProgress()) {
+                    <hr />
+                }
+                <div style="display: flex">
+                    <div #question class="sa-question">
+                        @for (textPart of textParts(); track $index; let i = $index) {
+                            <div class="short-answer-question-display">
+                                @for (element of textPart; track $index; let j = $index) {
+                                    <div class="short-answer-question-display__element">
+                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && !reEvaluationInProgress()) {
+                                            <div id="element-{{ i }}-{{ j }}" class="short-answer-question-container" [innerHTML]="element"></div>
+                                        }
+                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && reEvaluationInProgress()) {
+                                            <input
+                                                class="short-answer-question-container__input"
+                                                id="element-{{ i }}-{{ j }}-textInput"
+                                                [value]="element"
+                                                [size]="(element?.length || 0) + 1"
+                                                type="text"
+                                                [maxLength]="MAX_CHARACTER_COUNT"
+                                                (change)="setQuestionText('element-' + i + '-' + j + '-textInput')"
+                                            />
+                                        }
+                                        @if (shortAnswerQuestionUtil.isInputField(element || '')) {
+                                            <div class="short-answer-question-container">
+                                                <div
+                                                    class="short-answer-question-container__div-input"
+                                                    cdkDropList
+                                                    (cdkDropListDropped)="
+                                                        onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)
+                                                    "
+                                                ></div>
+                                                @if (reEvaluationInProgress()) {
+                                                    <div style="position: absolute; top: -8px; right: -4px; display: inline-flex">
+                                                        @if (!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid) {
+                                                            <div
+                                                                class="re-evaluate-button"
+                                                                title="Set invalid"
+                                                                (click)="
+                                                                    shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid =
+                                                                        true
+                                                                "
+                                                                #keyboardAction329
+                                                                role="button"
+                                                                tabindex="0"
+                                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
+                                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
+                                                            >
+                                                                <fa-icon [icon]="faBan" size="lg" />
+                                                            </div>
+                                                        }
+                                                        <div
+                                                            class="re-evaluate-button"
+                                                            title="Reset"
+                                                            (click)="
+                                                                resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
+                                                            "
+                                                            #keyboardAction340
+                                                            role="button"
+                                                            tabindex="0"
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                        >
+                                                            <fa-icon [icon]="faUndo" size="lg" />
+                                                        </div>
+                                                        <div
+                                                            [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'"
+                                                            title="Delete"
+                                                            (click)="
+                                                                deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
+                                                            "
+                                                            #keyboardAction349
+                                                            role="button"
+                                                            tabindex="0"
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
+                                                        >
+                                                            <fa-icon [icon]="faTrash" size="lg" />
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div [ngClass]="'mapping-number mapping-color-' + (shortAnswerQuestionUtil.getSpotNr(element || '') % 8)">
+                                                    {{ shortAnswerQuestionUtil.getSpotNr(element || '') }}
+                                                </div>
+                                            </div>
+                                        }
+                                        &nbsp;
+                                    </div>
+                                }
+                                <br />
+                            </div>
+                        }
+                    </div>
+                    @if (reEvaluationInProgress()) {
+                        <span class="align-top">
+                            <button
+                                tumAetUiButton
+                                variant="outlined"
+                                severity="secondary"
+                                type="button"
+                                (click)="resetQuestionText()"
+                                [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faUndo" />
+                            </button>
+                        </span>
+                    }
+                </div>
+                <hr />
+                @if (!shortAnswerQuestion.solutions || !shortAnswerQuestion.solutions.length) {
+                    <div class="dnd-instructions">
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
+                    </div>
+                }
+                @if (shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length) {
+                    <div class="dnd-instructions">
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
+                    </div>
+                }
+                @if (shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length) {
+                    <div class="drag-items" cdkDropList cdkDropListOrientation="horizontal">
+                        @for (solution of shortAnswerQuestion.solutions; track solution.id ?? solution.tempID) {
+                            <div class="drag-item" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
+                                <div>
+                                    <textarea
+                                        [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
+                                        [(ngModel)]="solution.text"
+                                        (ngModelChange)="questionUpdated.emit()"
+                                    ></textarea>
+                                </div>
+                                <div
+                                    class="delete-button"
+                                    title="Delete"
+                                    (click)="deleteSolution(solution)"
+                                    #keyboardAction403
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
+                                >
+                                    <fa-icon [icon]="faTrash" size="lg" />
+                                </div>
+                                <div class="drag-handle drag-handle-wrapper" title="Move">
+                                    <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
+                                </div>
+                                <div class="mapping-numbers-wrapper">
+                                    @for (mapping of getMappingsForSolution(solution); track mapping.id ?? mapping.spot?.id ?? mapping.spot?.tempID) {
+                                        <div>
+                                            @if (mapping.spot !== undefined) {
+                                                <div [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">
+                                                    {{ mapping.spot.spotNr }}
+                                                    <div
+                                                        class="unlink-mapping"
+                                                        [attr.aria-label]="'global.action.unlink' | artemisTranslate"
+                                                        (click)="deleteMapping(mapping)"
+                                                        #keyboardAction415
+                                                        role="button"
+                                                        tabindex="0"
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
+                                                    >
+                                                        <fa-icon [icon]="faUnlink" size="lg" />
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div *cdkDragPlaceholder></div>
+                                <div *cdkDragPreview class="border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-highlight-background) px-0.5 pb-0.5 pt-1">
+                                    <div title="Move">
+                                        <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
+                                    </div>
+                                    <div>
+                                        <textarea
+                                            [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
+                                            disabled
+                                            [(ngModel)]="solution.text"
+                                            (ngModelChange)="questionUpdated.emit()"
+                                        ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="question-options question-options--row m-0 justify-start! flex-wrap!">
+                    <div class="question-options">
+                        <div class="flex-1">
+                            <button type="button" tumAetUiButton variant="outlined" severity="secondary" (click)="addTextSolution()">
+                                <i class="fa fa-plus"></i>
+                                <span jhiTranslate="artemisApp.shortAnswerQuestion.addShortAnswerSolution"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        <hr />
+        @if (!showVisualMode() && !reEvaluationInProgress()) {
+            <div class="toolbar">
+                <tumaet-ui-button-group>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="solid"
+                        severity="secondary"
+                        aria-pressed="true"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        aria-pressed="false"
+                        data-testid="short-answer-show-visual"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"
+                        (click)="togglePreview()"
+                    ></button>
+                </tumaet-ui-button-group>
+            </div>
+        }
+        @if (showVisualMode() && !reEvaluationInProgress()) {
+            <div class="toolbar">
+                <tumaet-ui-button-group>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        aria-pressed="false"
+                        id="short-answer-show-text"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"
+                        (click)="togglePreview()"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="solid"
+                        severity="secondary"
+                        aria-pressed="true"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"
+                    ></button>
+                </tumaet-ui-button-group>
+            </div>
+        }
+    </div>
+</div>

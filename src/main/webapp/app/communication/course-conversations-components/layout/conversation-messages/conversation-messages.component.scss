@@ -1,0 +1,73 @@
+.conversation-messages {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    .posting-infinite-scroll-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .envelope {
+        text-align: center;
+        opacity: 0.75;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+
+    .conversation-messages-message-list.is-fetching-posts {
+        display: none;
+    }
+}
+
+.message-group {
+    display: flex;
+    flex-direction: column;
+}
+
+jhi-posting-thread {
+    margin-bottom: 0.25rem;
+}
+
+.channel-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    justify-content: space-between;
+}
+
+.new-messages-separator {
+    position: relative;
+    margin: 0.5rem 0;
+    height: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.separator-line {
+    flex-grow: 1;
+    border-top: 1px solid var(--primary);
+    margin-right: 0.5rem;
+}
+
+.new-label {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0;
+    margin-right: 0.75rem;
+}
+
+.scroll-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+}

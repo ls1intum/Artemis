@@ -1,0 +1,209 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * REST controller for updating partial information of a programming exercise such as the timeline or the problem statement.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExercisePartialUpdateResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePartialUpdateResource.class);
+
+    private static final String ENTITY_NAME = "programmingExercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final ExerciseService exerciseService;
+
+    private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final UserRepository userRepository;
+
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
+    private final ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard;
+
+    public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
+            AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ExerciseVariantGroupService exerciseVariantGroupService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard) {
+        this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
+        this.exerciseService = exerciseService;
+        this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
+    }
+
+    /**
+     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     *
+     * @param timelineUpdateDTO containing the timeline changes that have to be saved
+     * @param notificationText  an optional text to notify the student group about the update on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
+     *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     */
+    @PutMapping("programming-exercises/timeline")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @FeatureToggle(Feature.ProgrammingExercises)
+    @Operation(summary = "Change the dates of a programming exercise", description = """
+            Replaces the timeline of a programming exercise: releaseDate, startDate, dueDate, assessmentType, assessmentDueDate, \
+            exampleSolutionPublicationDate and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from the request is cleared, \
+            so read the exercise first and send the current value of every field that must stay. A request with a personal access token can change only an \
+            exercise that students cannot see yet and that has no student participations, and releaseDate must stay in the future. \
+            The exercise becomes visible automatically at releaseDate, so the instructor must review it before that date \
+            and can move the date in the Artemis web interface.""")
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update the timeline of ProgrammingExercise : {}", timelineUpdateDTO.id());
+        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(existingProgrammingExercise, timelineUpdateDTO.releaseDate(), timelineUpdateDTO.startDate());
+        // The whole point of this endpoint is changing dates, and a variant group owns its members' timeline. Silently
+        // discarding the request would return 200 while doing nothing, so reject it and point the caller at the group.
+        // The guard lives here rather than in updateTimeline(), because ExerciseVariantGroupService calls that service
+        // directly to propagate group dates onto programming members and must not be blocked by its own invariant.
+        if (exerciseVariantGroupService.findOwningGroup(timelineUpdateDTO.id()).isPresent()) {
+            throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
+                    "timelineManagedByVariantGroup");
+        }
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id()) : existingProgrammingExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise, timelineUpdateDTO.releaseDate(), timelineUpdateDTO.startDate());
+            var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
+            exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
+            teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                    .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
+                            programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
+        }
+    }
+
+    /**
+     * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
+     *
+     * @param exerciseId              The ID of the exercise for which to change the problem statement
+     * @param updatedProblemStatement The new problemStatement
+     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
+     *         user does not have permissions to access the programming exercise.
+     */
+    @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
+    @EnforceAtLeastEditorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Replace the problem statement of a programming exercise", description = """
+            The request body is the new problem statement as plain Markdown text, not JSON. Test cases are referenced in tasks as \
+            [task][Task name](testName1,testName2). A request with a personal access token can change only an exercise that students \
+            cannot see yet and that has no student participations.""")
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = "text/plain", schema = @Schema(type = "string"))) @RequestBody String updatedProblemStatement,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
+        var authorizationExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        var user = userRepository.getUserWithAuthorities();
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise);
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
+                    .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId)) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
+            var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
+            exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
+            // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
+            programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
+            teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                    .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
+                            programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
+        }
+    }
+
+}

@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "tutorialGroupExportDialog": {
+            "buttonHeader": "Tutoriumsgruppen exportieren",
+            "header": "Bitte wähle die zu exportierenden Felder aus",
+            "description": "Bitte mindestens ein Feld für den CSV-Export auswählen:",
+            "toolTip": "Dieser Dialog kann verwendet werden, um Tutoriumsgruppen in eine CSV-Datei oder JSON-Datei zu exportieren. Du kannst auswählen, welche Informationen du aufnehmen möchtest.",
+            "cancel": "Abbrechen",
+            "exportCSV": "Als CSV Exportieren",
+            "exportJSON": "Als JSON Exportieren",
+            "selectAll": "Alle auswählen",
+            "failedCSV": "Export zu CSV fehlgeschlagen",
+            "failedJSON": "Export zu JSON fehlgeschlagen"
+        }
+    }
+}

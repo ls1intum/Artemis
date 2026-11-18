@@ -1,0 +1,11 @@
+# This file overwrites some parameters of the test-configuration (src/test/application.yml) so that a MYSQL-database is used
+# It can be activated e.g. by setting the environment variable SPRING_PROFILES_INCLUDE=mysql
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.MySQLDialect
+        database: MYSQL
+
+zonky:
+    test:
+        database:
+            type: MYSQL

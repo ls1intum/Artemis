@@ -1,0 +1,1125 @@
+package de.tum.cit.aet.artemis.programming.util;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.TestConstants;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+
+/**
+ * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
+ */
+@Lazy
+@Service
+@Profile(SPRING_PROFILE_TEST)
+public class ProgrammingExerciseUtilService {
+
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepo;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
+
+    @Autowired
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
+
+    @Autowired
+    private ResultTestRepository resultRepo;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepo;
+
+    @Autowired
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    public ProgrammingExercise createSampleProgrammingExercise(Course course) {
+        return createSampleProgrammingExercise(course, "Title", "Shortname");
+    }
+
+    /**
+     * Generates a programming exercise for the given course. Configures only the exercise's schedule, no other properties.
+     *
+     * @param course            The course of the exercise.
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public ProgrammingExercise createProgrammingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+            ZonedDateTime assessmentDueDate) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        var savedExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
+    }
+
+    /**
+     * Create an example programming exercise in the given course.
+     *
+     * @param course    the course the exercise belongs to; an exercise row names a course or an exercise group, never neither
+     * @param title     the title of the exercise
+     * @param shortName the short name of the exercise
+     * @return the created programming exercise
+     */
+    public ProgrammingExercise createSampleProgrammingExercise(Course course, String title, String shortName) {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(course);
+        programmingExercise.setTitle(title);
+        programmingExercise.setShortName(shortName);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setMaxPoints(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise.setGradingInstructions("Grading instructions");
+        programmingExercise.setProblemStatement("Problem statement");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course with an exam and an exercise group with a programming exercise. Test cases are added to this programming exercise.
+     *
+     * @return The newly created programming exercise with test cases.
+     */
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
+        ProgrammingExercise programmingExercise = addCourseExamExerciseGroupWithOneProgrammingExercise();
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a programming exercise. Test cases are added.
+     *
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The newly created programming exercise with test cases.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(String userPrefix) {
+        ProgrammingExercise programmingExercise = addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(userPrefix);
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course with an exam and an exercise group with a programming exercise. The provided title and short name are used for the exercise and test cases are
+     * added.
+     *
+     * @param title                      The title of the exercise.
+     * @param shortName                  The short name of the exercise.
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam with a programming exercise should be before the current time, needed for examLiveEvent tests
+     * @return The newly created programming exercise with test cases.
+     */
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName, boolean startDateBeforeCurrentTime) {
+        ExerciseGroup exerciseGroup;
+        if (startDateBeforeCurrentTime) {
+            exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, true);
+        }
+        else {
+            exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        }
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves course with an exam and an exercise group with a programming exercise. <code>Testtitle</code> is the title and <code>TESTEXFOREXAM</code> the short name of
+     * the exercise.
+     *
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
+        return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", false);
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a programming exercise.
+     * Uses {@code "Testtitle"} as title and {@code "TESTEXFOREXAM"} as short name.
+     *
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(String userPrefix) {
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a named programming exercise.
+     *
+     * @param title      The title of the programming exercise.
+     * @param shortName  The short name of the programming exercise.
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The newly created exam programming exercise with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName, String userPrefix) {
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a named programming exercise.
+     * Uses the provided {@code startDateBeforeCurrentTime} flag to control the exam start date.
+     *
+     * @param title                      The title of the programming exercise.
+     * @param shortName                  The short name of the programming exercise.
+     * @param startDateBeforeCurrentTime True if the exam start date should be before the current time.
+     * @param userPrefix                 The prefix used to look up test users for enrollment.
+     * @return The newly created exam programming exercise with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName, boolean startDateBeforeCurrentTime, String userPrefix) {
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime, userPrefix);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a programming exercise with exam dates.
+     *
+     * @param visibleDate        The visible date of the exam.
+     * @param startDate          The start date of the exam.
+     * @param endDate            The end date of the exam.
+     * @param publishResultsDate The publish results date of the exam.
+     * @param userLogin          The login of the user for the student exam.
+     * @param workingTime        The working time of the student exam in seconds.
+     * @param userPrefix         The prefix used to look up test users for enrollment.
+     * @return The newly created exam programming exercise with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
+            ZonedDateTime publishResultsDate, String userLogin, int workingTime, String userPrefix) {
+        var programmingExercise = this.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(userPrefix);
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, visibleDate, startDate, endDate);
+        exam.setPublishResultsDate(publishResultsDate);
+        examRepository.save(exam);
+        var studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userLogin, workingTime);
+        examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
+     * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the provided exam.
+     * exerciseGroupNumber must be smaller than the number of exercise groups!
+     *
+     * @param exam                The exam to which the exercise should be added.
+     * @param exerciseGroupNumber Used as an index into which exercise group of the exam the programming exercise should be added. Has to be smaller than the number of exercise
+     *                                groups!
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(exerciseGroupNumber));
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        exam.getExerciseGroups().get(exerciseGroupNumber).addExercise(programmingExercise);
+        examRepository.save(exam);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves a course with an exam and an exercise group with a programming exercise.
+     *
+     * @param visibleDate        The visible date of the exam.
+     * @param startDate          The start date of the exam.
+     * @param endDate            The end date of the exam.
+     * @param publishResultsDate The publish results date of the exam.
+     * @param userLogin          The login of the user for the student exam.
+     * @param workingTime        The working time of the student exam in seconds.
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
+            ZonedDateTime publishResultsDate, String userLogin, int workingTime) {
+        var programmingExercise = this.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, visibleDate, startDate, endDate);
+        exam.setPublishResultsDate(publishResultsDate);
+        examRepository.save(exam);
+        var studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userLogin, workingTime);
+        examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
+     * Creates and saves an already submitted programming submission done manually.
+     *
+     * @param participation The exercise participation.
+     * @param buildFailed   True, if the submission resulted in a build failed.
+     * @param commitHash    The commit hash of the submission.
+     * @return The newly created programming submission.
+     */
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setBuildFailed(buildFailed);
+        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
+        programmingSubmission.setCommitHash(commitHash);
+        programmingSubmission.setParticipation(participation);
+        return submissionRepository.save(programmingSubmission);
+    }
+
+    /**
+     * Creates and saves an already submitted programming submission done manually. <code>9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d</code> is used as the commit hash.
+     *
+     * @param participation The exercise participation.
+     * @param buildFailed   True, if the submission resulted in a build failed.
+     * @return The newly created programming submission.
+     */
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with static code analysis and test wise coverage disabled, java as the programming language.
+     * Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
+     *
+     * @return The created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExercise() {
+        return addCourseWithOneProgrammingExercise(false);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(false);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param userPrefix               the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language of the exercise.
+     * @param userPrefix               the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
+     * @param userPrefix               the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String title, String shortName, String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, title, shortName);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with test wise coverage disabled and java as the programming language.
+     * Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @return The created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with test wise coverage disabled and java as the programming language.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
+     * @return The created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String title, String shortName) {
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA, title, shortName);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language fo the exercise.
+     * @return The created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC");
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language fo the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
+     * @return The created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title, String shortName) {
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, title, shortName, null);
+        course = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
+        for (var exercise : course.getExercises()) {
+            if (exercise instanceof ProgrammingExercise) {
+                course.getExercises().remove(exercise);
+                course.addExercises(exercise);
+            }
+        }
+        return course;
+    }
+
+    /**
+     * Adds a java programming exercise with disabled test wise code coverage and static code analysis to the given course.
+     *
+     * @param course The course to which the exercise should be added.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course) {
+        return addProgrammingExerciseToCourse(course, false);
+    }
+
+    /**
+     * Adds a java programming exercise with disabled test wise code coverage analysis to the given course.
+     *
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+    }
+
+    /**
+     * Adds a java programming exercise with disabled test wise code coverage analysis to the given course.
+     *
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param assessmentDueDate        The assessment due date of the exercise.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ZonedDateTime assessmentDueDate) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA, assessmentDueDate);
+    }
+
+    /**
+     * Adds a programming exercise to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
+     *
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
+     * @param assessmentDueDate        The assessment due date of the exercise.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage,
+            ZonedDateTime assessmentDueDate) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC", assessmentDueDate);
+    }
+
+    /**
+     * Adds a programming exercise without an assessment due date to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the
+     * exercise.
+     *
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC", null);
+    }
+
+    /**
+     * Adds a programming exercise to the given course.
+     *
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
+     * @param assessmentDueDate        The assessment due date of the exercise.
+     * @return The programming exercise which was added to the course.
+     */
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title,
+            String shortName, ZonedDateTime assessmentDueDate) {
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, programmingLanguage);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        course.addExercises(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with the given title.
+     *
+     * @param programmingExerciseTitle The title of the exercise.
+     * @param scaActive                True, if static code analysis should be enabled.
+     * @return The newly created course with a programming exercise.
+     */
+    public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
+        course.addExercises(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
+    }
+
+    /**
+     * Creates and saves a course with a java programming exercise with static code analysis enabled and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The newly created programming exercise, with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(String userPrefix) {
+        ProgrammingExercise exercise = addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+        userUtilService.enrollPrefixedUsersInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return exercise;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with static code analysis enabled and enrolls the users identified by the given prefix.
+     *
+     * @param programmingLanguage The programming language of the exercise.
+     * @param userPrefix          the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The newly created programming exercise, with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage, String userPrefix) {
+        ProgrammingExercise exercise = addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
+        userUtilService.enrollPrefixedUsersInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return exercise;
+    }
+
+    /**
+     * Creates and saves a course with a java programming exercise with static code analysis enabled.
+     *
+     * @return The newly created programming exercise.
+     */
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
+        return addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise with static code analysis enabled.
+     *
+     * @param programmingLanguage The programming language of the exercise.
+     * @return The newly created programming exercise.
+     */
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
+        Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).orElseThrow();
+        addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Adds 4 static code analysis categories to the given programming exercise. 2 are graded, 1 is inactive and 1 is feedback.
+     *
+     * @param programmingExercise The programming exercise to which static code analysis categories should be added.
+     */
+    public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+        var category1 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Bad Practice", CategoryState.GRADED, 3D, 10D);
+        var category2 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Code Style", CategoryState.GRADED, 5D, 10D);
+        var category3 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Miscellaneous", CategoryState.INACTIVE, 2D, 10D);
+        var category4 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Potential Bugs", CategoryState.FEEDBACK, 5D, 20D);
+        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3, category4));
+        programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and test cases and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The newly created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExerciseAndTestCases(String userPrefix) {
+        Course course = addCourseWithOneProgrammingExerciseAndTestCases();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and test cases.
+     *
+     * @return The newly created course with a programming exercise.
+     */
+    public Course addCourseWithOneProgrammingExerciseAndTestCases() {
+        Course course = addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
+    }
+
+    /**
+     * Creates and saves a course with a named programming exercise and test cases.
+     *
+     * @param programmingExerciseTitle The title of the programming exercise.
+     */
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+        addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, false);
+    }
+
+    /**
+     * Creates and saves a course with a named programming exercise and test cases.
+     *
+     * @param programmingExerciseTitle The title of the programming exercise.
+     * @param scaActive                True, if the static code analysis should be activated.
+     */
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, boolean scaActive) {
+        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle, scaActive);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+
+        courseRepo.findById(course.getId()).orElseThrow();
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with a named programming exercise and test cases.
+     *
+     * @param programmingExerciseTitle The title of the programming exercise.
+     * @param userPrefix               The prefix used to look up test users for enrollment
+     */
+    public void addEnrolledCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, String userPrefix) {
+        addEnrolledCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, false, userPrefix);
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with a named programming exercise and test cases.
+     *
+     * @param programmingExerciseTitle The title of the programming exercise.
+     * @param scaActive                True, if the static code analysis should be activated.
+     * @param userPrefix               The prefix used to look up test users for enrollment
+     */
+    public void addEnrolledCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, boolean scaActive, String userPrefix) {
+        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle, scaActive);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+    }
+
+    /**
+     * Adds 3 test cases to the given programming exercise. 2 are always visible and 1 is visible after due date. The test cases are weighted differently.
+     *
+     * @param programmingExercise The programming exercise to which test cases should be added.
+     * @return The created programming exercise test cases.
+     */
+    public List<ProgrammingExerciseTestCase> addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        // Clean up existing test cases
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
+                .bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
+                .bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCaseRepository.saveAll(testCases);
+
+        return testCases;
+    }
+
+    /**
+     * Adds an active test case to the given programming exercise. The test case is always visible.
+     *
+     * @param programmingExercise The programming exercise to which a test case should be added.
+     * @param testName            The name of the test case.
+     * @return The created programming exercise test case.
+     */
+    public ProgrammingExerciseTestCase addTestCaseToProgrammingExercise(ProgrammingExercise programmingExercise, String testName) {
+        var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1.)
+                .bonusPoints(0.);
+        return testCaseRepository.save(testCase);
+    }
+
+    /**
+     * Adds build plan and build plan access secret to the given programming exercise.
+     *
+     * @param programmingExercise The exercise to which the build plan should be added.
+     * @param buildPlan           The build plan script.
+     */
+    public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
+        buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
+        var buildConfig = buildConfigOf(programmingExercise);
+        buildConfig.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
+        assertThat(buildPlanOptional).isPresent();
+        assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
+        assertThat(buildConfig.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
+    }
+
+    /**
+     * Writes a build configuration for an exercise a test built in memory, unless it already has one. The exercise
+     * does not carry its configuration: it is a row of its own that names the exercise, so it is written once that
+     * exercise exists.
+     *
+     * @param programmingExercise the exercise the configuration belongs to
+     * @return the stored build configuration
+     */
+    public ProgrammingExerciseBuildConfig saveBuildConfigIfMissing(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())
+                .orElseGet(() -> programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise));
+    }
+
+    /**
+     * Reads the build configuration of an exercise. It is a row of its own that names the exercise, so it is not
+     * loaded with it; a fixture that stored the exercise without one gets the default written first.
+     *
+     * @param programmingExercise the exercise whose configuration to read
+     * @return the stored build configuration
+     */
+    public ProgrammingExerciseBuildConfig buildConfigOf(ProgrammingExercise programmingExercise) {
+        return saveBuildConfigIfMissing(programmingExercise);
+    }
+
+    /**
+     * Creates, saves and adds an auxiliary repository to the given programming exercise.
+     *
+     * @param programmingExercise The exercise to which the auxiliary repository should be added.
+     * @return The newly created auxiliary repository.
+     */
+    public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
+        AuxiliaryRepository repository = new AuxiliaryRepository();
+        repository.setName("auxrepo");
+        repository.setDescription("Description");
+        repository.setCheckoutDirectory("assignment/src");
+        repository.setExercise(programmingExercise);
+        repository = auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(Set.of(repository));
+        return repository;
+    }
+
+    /**
+     * Adds submission policy to a programming exercise and saves the exercise.
+     *
+     * @param policy              The submission policy which should be added to the exercise.
+     * @param programmingExercise The exercise to which the submission policy should be added.
+     */
+    public void addSubmissionPolicyToExercise(SubmissionPolicy policy, ProgrammingExercise programmingExercise) {
+        policy = submissionPolicyRepository.save(policy);
+        programmingExercise.setSubmissionPolicy(policy);
+        programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+    }
+
+    /**
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     *
+     * @param exercise   The exercise to which the submission should be added.
+     * @param submission The submission which should be added to the programming exercise.
+     * @param login      The login of the user used to access or create an exercise participation.
+     * @return The created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     *
+     * @param exercise   The exercise to which the submission should be added.
+     * @param submission The submission which should be added to the programming exercise.
+     * @param team       The login of the user used to access or create an exercise participation.
+     * @return The created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionToTeamExercise(ProgrammingExercise exercise, ProgrammingSubmission submission, Team team) {
+        StudentParticipation participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Adds a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or
+     * create a new participation).
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param exercise   The exercise for which to create the submission/participation/result combination.
+     * @param submission The submission to use for adding to the exercise/participation/result.
+     * @param login      The login of the user used to access or create an exercise participation.
+     * @return the newly created result
+     */
+    public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        // TODO check if it needs to be persisted
+        Result result = new Result();
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submission.addResult(result);
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        programmingSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return result;
+    }
+
+    /**
+     * Adds a template submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(templateParticipation);
+        templateParticipation.addSubmission(submission);
+        submission = submissionRepository.save(submission);
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
+        submission.addResult(result);
+        result = resultRepo.save(result);
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        return result;
+    }
+
+    /**
+     * Adds a solution submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(solutionParticipation);
+        solutionParticipation.addSubmission(submission);
+        submission = submissionRepository.save(submission);
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        // Adding the result to the submission also gives it the back reference it is written with, so one save is
+        // enough. Saving the submission again here would let the cascade write a second result for the same submission.
+        submission.addResult(result);
+        result = resultRepo.save(result);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        return result;
+    }
+
+    /**
+     * Adds a programming submission with a result and assessor to the given programming exercise.
+     *
+     * @param exercise          The exercise to which the submission should be added.
+     * @param submission        The submission which should be added to the exercise.
+     * @param login             The user login used to access or create the exercise participation.
+     * @param assessorLogin     The login of the user assessing the exercise.
+     * @param assessmentType    The type of the assessment.
+     * @param hasCompletionDate True, if the result has a completion date.
+     * @return The programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
+            AssessmentType assessmentType, boolean hasCompletionDate) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+        Result result = new Result();
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
+        result.setAssessmentType(assessmentType);
+        result.setScore(50D);
+        if (hasCompletionDate) {
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+
+        studentParticipationRepo.save(participation);
+        programmingSubmissionRepo.save(submission);
+
+        submission.setParticipation(participation);
+
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        result = resultRepo.save(result);
+        submission.addResult(result);
+        // Manual results are always rated
+        if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
+            result.rated(true);
+        }
+        submission = programmingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Adds a programming submission to result and participation of a programming exercise.
+     *
+     * @param result        The result of the programming exercise.
+     * @param participation The participation of the programming exercise.
+     * @param commitHash    The commit hash of the submission.
+     * @return The newly created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionToResultAndParticipation(Result result, StudentParticipation participation, String commitHash) {
+        ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
+        submission.addResult(result);
+        submission.setCommitHash(commitHash);
+        result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
+        resultRepo.save(result);
+        participation.addSubmission(submission);
+        studentParticipationRepo.save(participation);
+        return submissionRepository.save(submission);
+    }
+
+    /**
+     * Adds a task for each test case and adds it to the problem statement of the programming exercise.
+     *
+     * @param programmingExercise The programming exercise to which tasks should be added.
+     */
+    public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
+        problemStatement.append('\n');
+
+        var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
+            var task = new ProgrammingExerciseTask();
+            task.setTaskName("Task for " + testCase.getTestName());
+            task.setExercise(programmingExercise);
+            task.setTestCases(Set.of(testCase));
+            testCase.setTasks(Set.of(task));
+            problemStatement.append("[task][").append(task.getTaskName()).append("](")
+                    .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
+            return task;
+        }).toList();
+        programmingExercise.setTasks(tasks);
+        programmingExercise.setProblemStatement(problemStatement.toString());
+        programmingExerciseTaskRepository.saveAll(tasks);
+        programmingExerciseRepository.save(programmingExercise);
+        exerciseConfigurationService.initialize(programmingExercise);
+    }
+
+    /**
+     * Loads a programming exercise with eager references from the repository.
+     *
+     * @param lazyExercise The exercise without references, the id is used when accessing the repository.
+     * @return The programming exercise with references.
+     */
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
+        ProgrammingExercise exercise = programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+        // The plagiarism detection configuration is not part of the exercise, so it is read explicitly.
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Loads a programming exercise with its grading criteria and the stored plagiarism detection configuration, which an
+     * exercise does not carry by itself.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exercise, whose slot carries the stored plagiarism detection configuration
+     */
+    public Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigAndGradingCriteriaById(long exerciseId) {
+        Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findByIdWithGradingCriteria(exerciseId);
+        exercise.ifPresent(plagiarismDetectionConfigRepository::attachTo);
+        return exercise;
+    }
+}

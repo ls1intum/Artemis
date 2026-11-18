@@ -1,0 +1,101 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { PostingService } from 'app/communication/service/posting.service';
+import { map } from 'rxjs/operators';
+
+type EntityResponseType = HttpResponse<AnswerPost>;
+
+@Service()
+export class AnswerPostService extends PostingService<AnswerPost> {
+    protected http = inject(HttpClient);
+
+    constructor() {
+        super();
+    }
+
+    /**
+     * creates an answerPost
+     * @param {number} courseId
+     * @param {AnswerPost} answerPost
+     * @return {Observable<EntityResponseType>}
+     */
+    create(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
+        const answerPostDTO = {
+            content: answerPost.content,
+            post: answerPost.post ? { id: answerPost.post.id } : undefined,
+            creationDate: answerPost.creationDate,
+            updatedDate: answerPost.updatedDate,
+        };
+        const copy = this.convertPostingDateFromClient(answerPostDTO);
+        return this.http.post<AnswerPost>(`${this.getResourceEndpoint(courseId, answerPost)}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
+    }
+
+    /**
+     * updates an answerPost
+     * @param {number} courseId
+     * @param {AnswerPost} answerPost
+     * @return {Observable<EntityResponseType>}
+     */
+    update(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
+        const updatedAnswer = {
+            id: answerPost.id,
+            content: answerPost.content,
+            resolvesPost: answerPost.resolvesPost,
+            creationDate: answerPost.creationDate,
+            updatedDate: answerPost.updatedDate,
+        };
+        const copy = this.convertPostingDateFromClient(updatedAnswer);
+        return this.http
+            .put<AnswerPost>(`${this.getResourceEndpoint(courseId, answerPost)}/${answerPost.id}`, copy, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
+    }
+
+    /**
+     * deletes an answerPost
+     * @param {number} courseId
+     * @param {AnswerPost} answerPost
+     * @return {Observable<HttpResponse<void>>}
+     */
+    delete(courseId: number, answerPost: AnswerPost): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.getResourceEndpoint(courseId, answerPost)}/${answerPost.id}`, { observe: 'response' });
+    }
+
+    /**
+     * gets source answer posts(original (forwarded) answer posts in posts) of posts
+     * @param {number} courseId
+     * @param {number[]} postIds
+     * @return {Observable<AnswerPost[]>}
+     */
+    getSourceAnswerPostsByIds(courseId: number, answerPostIds: number[]): Observable<AnswerPost[]> {
+        const params = new HttpParams().set('answerPostIds', answerPostIds.join(','));
+        // The chat renders an unavailable-source placeholder if a source is deleted or cannot be loaded.
+        return this.http
+            .get<AnswerPost[]>(`api/communication/courses/${courseId}/answer-messages-source-posts`, {
+                params,
+                observe: 'response',
+                context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+            })
+            .pipe(map((response) => response.body!));
+    }
+
+    /**
+     * Approves an Iris-generated answer post (optionally with edited content). Tutor role required server-side.
+     */
+    verify(courseId: number, answerPostId: number, content?: string): Observable<EntityResponseType> {
+        const body = content && content.trim().length > 0 ? { content } : {};
+        return this.http
+            .patch<AnswerPost>(`api/communication/courses/${courseId}/answer-messages/${answerPostId}/verify`, body, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
+    }
+
+    private getResourceEndpoint(courseId: number, param: AnswerPost): string {
+        if (param.post?.conversation) {
+            return `api/communication/courses/${courseId}/answer-messages`;
+        } else {
+            return `api/plagiarism/courses/${courseId}/answer-posts`;
+        }
+    }
+}

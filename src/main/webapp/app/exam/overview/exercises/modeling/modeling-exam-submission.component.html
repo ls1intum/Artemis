@@ -1,0 +1,44 @@
+@if (exercise()) {
+    <jhi-exam-exercise-header [exercise]="exercise()">
+        <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
+    </jhi-exam-exercise-header>
+
+    <jhi-resizeable-container class="w-full" [examTimeline]="examTimeline()" [flushLeftBody]="true">
+        <!--region Left Panel-->
+        <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
+        <div left-body class="submission-container flex w-full flex-col">
+            @if (studentSubmission() && isActive) {
+                <div class="editor-large">
+                    <jhi-modeling-editor
+                        [tile]="true"
+                        [umlModel]="umlModel()"
+                        [diagramType]="exercise().diagramType!"
+                        [problemStatement]="exercise().problemStatement"
+                        (onModelChanged)="modelChanged($event)"
+                        [readOnly]="readonly()"
+                        [withExplanation]="true"
+                        [explanation]="explanationText()"
+                        (explanationChange)="explanationChanged($event)"
+                        [savedStatus]="savedStatus()"
+                    />
+                </div>
+            }
+        </div>
+        <!--endregion-->
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="faListAlt" />&nbsp;
+        <span right-header jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
+        <!-- problem statement update & difference highlighter -->
+        <ng-container right-body>
+            @if (exercise()) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
+            }
+            @if (problemStatementHtml()) {
+                <p class="mb-4! markdown-preview">
+                    <span [innerHTML]="problemStatementHtml()"></span>
+                </p>
+            }
+        </ng-container>
+        <!--endregion-->
+    </jhi-resizeable-container>
+}

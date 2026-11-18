@@ -1,0 +1,14 @@
+<div class="connection-status" [ngClass]="{ disconnected: disconnected() }">
+    @if (!disconnected()) {
+        <tumaet-ui-tag severity="success" size="sm" data-testid="connection-status-connected">
+            <fa-icon class="text-xs" [fixedWidth]="true" [icon]="faTowerBroadcast" />
+            <span jhiTranslate="connectionStatus.connected"></span>
+        </tumaet-ui-tag>
+    } @else {
+        <tumaet-ui-tag severity="danger" size="sm" data-testid="connection-status-disconnected">
+            <fa-icon class="text-xs" [fixedWidth]="true" [icon]="faExclamation" />
+            <span jhiTranslate="connectionStatus.disconnected"></span>
+        </tumaet-ui-tag>
+    }
+    <ng-content select="[innerContent]" />
+</div>

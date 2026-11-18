@@ -1,0 +1,249 @@
+<div
+    [id]="'item-' + posting()?.id"
+    class="answer-post hover-container"
+    [ngClass]="{
+        'module-bg rounded-md': isCommunicationPage(),
+        'is-saved': !isConsecutive() && posting()?.isSaved,
+        'non-consecutive': !isConsecutive(),
+        'unverified-iris': isUnverifiedIris(),
+        'resolves-post': posting()?.resolvesPost,
+    }"
+>
+    @if (posting()?.resolvesPost) {
+        <div class="resolving-answer-marker post-content-padding fs-xx-small py-1" data-testid="resolving-answer-marker">
+            <fa-icon [icon]="faCheck" aria-hidden="true" />
+            <span class="font-semibold" jhiTranslate="artemisApp.communication.answerPost.resolvesPost"></span>
+        </div>
+    }
+    @if (posting()?.isSaved) {
+        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
+    }
+    @if (isConsecutive()) {
+        <span class="post-time fs-small" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
+            {{ posting()?.creationDate | artemisDate: 'time' }}
+        </span>
+    }
+    @if (!isConsecutive()) {
+        <div class="ps-4!">
+            <jhi-posting-header
+                [posting]="posting()"
+                [readOnlyMode]="isReadOnlyMode()"
+                [isCommunicationPage]="isCommunicationPage()"
+                [lastReadDate]="lastReadDate()"
+                [isDeleted]="isDeleted"
+                [isUnverifiedIris]="isUnverifiedIris()"
+                (onUserNameClicked)="onUserNameClicked()"
+            />
+        </div>
+    }
+    @if (!createAnswerPostModal.isInputOpen()) {
+        <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
+            <div class="message-content" [class.force-hover]="showDropdown()">
+                @if (isUnverifiedIris() && mayVerify && isEditingIrisReply()) {
+                    <div class="iris-edit-area mt-1">
+                        <textarea
+                            tumAetUiInput
+                            class="mb-2 w-full"
+                            rows="4"
+                            [(ngModel)]="editedIrisContent"
+                            [disabled]="isVerifying()"
+                            [attr.aria-label]="'artemisApp.communication.answerPost.unverifiedIris.editAreaLabel' | artemisTranslate"
+                        ></textarea>
+                        <div class="flex gap-2">
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="success"
+                                size="small"
+                                variant="outlined"
+                                (click)="approveAnswer(editedIrisContent)"
+                                [disabled]="isVerifying() || !editedIrisContent.trim()"
+                                data-testid="iris-save-approve-button"
+                            >
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.saveAndApprove"></span>
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="secondary"
+                                size="small"
+                                variant="text"
+                                (click)="cancelEditAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-cancel-button"
+                            >
+                                <fa-icon [icon]="faXmark" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.cancelEdit"></span>
+                            </button>
+                        </div>
+                    </div>
+                } @else {
+                    <jhi-posting-content
+                        [content]="posting()?.content"
+                        [isEdited]="!!posting()?.updatedDate"
+                        [author]="posting()?.author"
+                        [posting]="posting()"
+                        [isReply]="true"
+                        [isDeleted]="isDeleted"
+                        [deleteTimerInSeconds]="deleteTimerInSeconds()"
+                        (onUndoDeleteEvent)="onDeleteEvent(false)"
+                        (userReferenceClicked)="onUserReferenceClicked($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
+                    @if (isUnverifiedIris() && mayVerify) {
+                        <div class="iris-verify-actions mt-1 flex gap-2">
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="success"
+                                size="small"
+                                variant="outlined"
+                                (click)="approveAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-approve-button"
+                            >
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.approve"></span>
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="warn"
+                                size="small"
+                                variant="outlined"
+                                (click)="editAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-edit-button"
+                            >
+                                <fa-icon [icon]="faPencilAlt" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.edit"></span>
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="danger"
+                                size="small"
+                                variant="outlined"
+                                (click)="rejectAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-reject-button"
+                            >
+                                <fa-icon [icon]="faTrash" />
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.reject"></span>
+                            </button>
+                        </div>
+                    }
+                }
+                <div class="post-content-padding hover-actions">
+                    <jhi-posting-reactions-bar
+                        [isReadOnlyMode]="isReadOnlyMode()"
+                        [course]="course()"
+                        [posting]="posting()"
+                        [isLastAnswer]="isLastAnswer()"
+                        [isThreadSidebar]="isThreadSidebar()"
+                        (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                        (reactionsUpdated)="onReactionsUpdated($event)"
+                        (mayDeleteOutput)="onMayDelete($event)"
+                        (mayEditOutput)="onMayEdit($event)"
+                        (isDeleteEvent)="onDeleteEvent(true)"
+                        (onBookmarkClicked)="toggleSavePost()"
+                    />
+                </div>
+            </div>
+        </div>
+    }
+    <div class="post-content-padding">
+        <ng-container #createEditAnswerPostContainer />
+    </div>
+    @if (!isDeleted) {
+        <div animate.enter="reactions-entering" animate.leave="reactions-leaving">
+            <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting()?.isSaved && isConsecutive() }">
+                <jhi-posting-reactions-bar
+                    [isReadOnlyMode]="isReadOnlyMode()"
+                    [posting]="posting()"
+                    [isLastAnswer]="isLastAnswer()"
+                    [isThreadSidebar]="isThreadSidebar()"
+                    (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                    (reactionsUpdated)="onReactionsUpdated($event)"
+                    [isEmojiCount]="true"
+                    (onBookmarkClicked)="toggleSavePost()"
+                />
+            </div>
+        </div>
+    }
+</div>
+<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting()" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef()" />
+
+<!-- Right-Click Dropdown -->
+@if (showDropdown()) {
+    <div
+        class="fixed z-1000 flex min-w-40 flex-col rounded-md border border-border bg-surface-raised py-2 text-text shadow-md"
+        [style.top.px]="dropdownPosition().y"
+        [style.left.px]="dropdownPosition().x"
+        data-testid="posting-context-menu"
+    >
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="addReaction($event)"
+            data-testid="posting-menu-react"
+        >
+            <fa-icon [icon]="faSmile" class="item-icon" />
+            <span jhiTranslate="artemisApp.communication.post.addReaction"></span>
+        </button>
+        @if (mayEdit()) {
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="editPosting()"
+                data-testid="posting-menu-edit"
+            >
+                <fa-icon [icon]="faPencilAlt" class="item-icon" />
+                <span jhiTranslate="artemisApp.communication.post.editMessage"></span>
+            </button>
+        }
+        @if (mayDelete()) {
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="deletePost()"
+                data-testid="posting-menu-delete"
+            >
+                <fa-icon [icon]="faTrash" class="item-icon" />
+                <span jhiTranslate="artemisApp.communication.answerPost.deleteAnswer"></span>
+            </button>
+        }
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="toggleSavePost()"
+            data-testid="posting-menu-bookmark"
+        >
+            <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
+            <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost'"></span>
+        </button>
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="forwardMessage()"
+            data-testid="posting-menu-forward"
+        >
+            <fa-icon [icon]="faShare" class="item-icon" />
+            <span jhiTranslate="artemisApp.communication.post.forwardMessage"></span>
+        </button>
+    </div>
+}
+
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin class="fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
+
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayHasBackdrop]="true"
+    [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+    [cdkConnectedOverlayOrigin]="emojiPickerTrigger"
+    [cdkConnectedOverlayOpen]="showReactionSelector"
+    (backdropClick)="toggleEmojiSelect()"
+>
+    <jhi-emoji-picker (emojiSelect)="selectReaction($event)" />
+</ng-template>

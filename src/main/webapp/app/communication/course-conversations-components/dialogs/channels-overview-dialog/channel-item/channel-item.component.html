@@ -1,0 +1,64 @@
+<div class="group flex items-start justify-between p-2">
+    <div class="ms-2 me-auto flex flex-col gap-1">
+        <div class="font-bold">
+            <span>
+                <jhi-channel-icon [isPublic]="channel().isPublic!" [isAnnouncementChannel]="channel().isAnnouncementChannel!" />
+            </span>
+            <span>{{ channel().name }}</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1">
+            @if (channel().isMember) {
+                <tumaet-ui-tag severity="success" size="sm" rounded data-testid="channel-joined-badge">{{
+                    'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate
+                }}</tumaet-ui-tag>
+            }
+            <span> {{ channel().numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
+        </div>
+        @if (channel().description && channel().description!.length > 0) {
+            <div>
+                <span class="inline-block max-w-[600px] truncate italic"> {{ channel().description }}</span>
+            </div>
+        }
+        @if (channel().tutorialGroupId && channel().tutorialGroupTitle) {
+            <div>
+                <tumaet-ui-tag severity="info" size="sm" rounded>
+                    <span jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse" [translateValues]="{ title: channel().tutorialGroupTitle }"></span>
+                </tumaet-ui-tag>
+            </div>
+        }
+    </div>
+    <div class="flex items-center gap-1 opacity-0! group-hover:opacity-100! focus-within:opacity-100! [@media(hover:none)]:opacity-100!">
+        @if (canJoinChannel(channel())) {
+            <button
+                [id]="'register' + channel().id"
+                type="button"
+                tumAetUiButton
+                size="small"
+                (click)="emitChannelAction($event, 'register')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.join"
+            ></button>
+        }
+        @if (!!channel().isMember) {
+            <button
+                [id]="'view' + channel().id"
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                size="small"
+                (click)="emitChannelAction($event, 'view')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.view"
+            ></button>
+        }
+        @if (canLeaveConversation(channel())) {
+            <button
+                [id]="'deregister' + channel().id"
+                type="button"
+                tumAetUiButton
+                severity="danger"
+                size="small"
+                (click)="emitChannelAction($event, 'deregister')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.leave"
+            ></button>
+        }
+    </div>
+</div>

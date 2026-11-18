@@ -1,0 +1,958 @@
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Subscription, combineLatest } from 'rxjs';
+import { filter, skip } from 'rxjs/operators';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import dayjs from 'dayjs/esm';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { latestSubmissionRoute } from 'app/exercise/exercise-headers/exercise-headers-information/result-history-dropdown/result-history-dropdown.component';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+
+/**
+ * Type guard mirroring the domain rule that a student participation is any participation that is neither a
+ * template nor a solution participation. Used to soundly narrow the app-wide participation stream (which is
+ * only ever fed student participations for this view) from Participation to StudentParticipation.
+ */
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
+}
+import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
+import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
+import { TeamService } from 'app/exercise/team/team.service';
+import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { hasResults } from 'app/exercise/participation/participation.utils';
+import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
+import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
+
+interface InstructorActionItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    translation: string;
+}
+@Component({
+    selector: 'jhi-course-exercise-details',
+    templateUrl: './course-exercise-details.component.html',
+    styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
+    providers: [ExerciseCacheService],
+    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
+})
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private complaintService = inject(ComplaintService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly scienceService = inject(ScienceService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
+
+    protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
+
+    protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
+    protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
+
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+
+    readonly AssessmentType = AssessmentType;
+    readonly PlagiarismVerdict = PlagiarismVerdict;
+    readonly QuizStatus = QuizStatus;
+    readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.OPEN_FOR_PRACTICE];
+    readonly QUIZ_EDITABLE_STATUS: (QuizStatus | undefined)[] = [QuizStatus.VISIBLE, QuizStatus.INVISIBLE];
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+    readonly TEXT = ExerciseType.TEXT;
+    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly dayjs = dayjs;
+    readonly ChatServiceMode = ChatServiceMode;
+
+    readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
+
+    // Use signals for reactive state
+    public learningPathMode = false;
+    public exerciseId!: number; // set in ngOnInit() from the route params subscription before it is read
+
+    // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
+    // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
+    // The backing signal is honestly typed as number | undefined (its construction-time value is genuinely undefined);
+    // the getter narrows with a single non-null assertion because courseId is always assigned before it is ever read.
+    private readonly _courseId = signal<number | undefined>(undefined);
+    public get courseId(): number {
+        return this._courseId()!;
+    }
+    public set courseId(value: number) {
+        this._courseId.set(value);
+    }
+
+    // Main exercise signal
+    private readonly _exercise = signal<Exercise | undefined>(undefined);
+    public get exercise(): Exercise | undefined {
+        return this._exercise();
+    }
+    public set exercise(value: Exercise | undefined) {
+        this._exercise.set(value);
+    }
+
+    // Student participations signal
+    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
+    public get studentParticipations(): StudentParticipation[] {
+        return this._studentParticipations();
+    }
+    public set studentParticipations(value: StudentParticipation[]) {
+        this._studentParticipations.set(value);
+    }
+
+    // Computed signals for derived state
+    readonly gradedStudentParticipation = computed(() => {
+        return this.participationService.getSpecificStudentParticipation(this._studentParticipations(), false);
+    });
+
+    readonly practiceStudentParticipation = computed(() => {
+        return this.participationService.getSpecificStudentParticipation(this._studentParticipations(), true);
+    });
+
+    readonly numberOfPracticeResults = computed(() => {
+        return this.practiceStudentParticipation()?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
+    });
+
+    readonly participationMode = signal<ParticipationMode>('graded');
+
+    // Display-only override for the quiz participation status badge, set from the live quiz view.
+    readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
+
+    readonly activeParticipation = computed(() => {
+        return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
+    });
+
+    /**
+     * The submit-disabled state for the header. While the page is already in practice mode but the routed quiz
+     * component has not switched to practice yet (not mounted, or still the live component), its submit-disabled
+     * state belongs to the graded attempt and is ignored.
+     */
+    readonly quizSubmitDisabledForMode = computed(() => {
+        const splitPanel = this.splitPanel();
+        if (this.participationMode() === 'practice' && splitPanel?.quizComponentMode() !== 'practice') {
+            return false;
+        }
+        return splitPanel?.quizSubmitDisabled() ?? false;
+    });
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
+
+    // Sorted results signal
+    private readonly _sortedHistoryResults = signal<Result[]>([]);
+    public get sortedHistoryResults(): Result[] {
+        return this._sortedHistoryResults();
+    }
+    public set sortedHistoryResults(value: Result[]) {
+        this._sortedHistoryResults.set(value);
+    }
+
+    // Read-only signal accessors for state only modified internally
+    private readonly _resultWithComplaint = signal<Result | undefined>(undefined);
+    readonly resultWithComplaint = this._resultWithComplaint.asReadonly();
+
+    private readonly _latestRatedResult = signal<Result | undefined>(undefined);
+    readonly latestRatedResult = this._latestRatedResult.asReadonly();
+
+    private readonly _complaint = signal<Complaint | undefined>(undefined);
+    readonly complaint = this._complaint.asReadonly();
+
+    private readonly _showMoreResults = signal(false);
+    readonly showMoreResults = this._showMoreResults.asReadonly();
+
+    private readonly _resultsOfGradedStudentParticipation = signal<(Result | undefined)[]>([]);
+    readonly resultsOfGradedStudentParticipation = this._resultsOfGradedStudentParticipation.asReadonly();
+
+    private readonly _isAfterAssessmentDueDate = signal(false);
+    readonly isAfterAssessmentDueDate = this._isAfterAssessmentDueDate.asReadonly();
+
+    private readonly _allowComplaintsForAutomaticAssessments = signal(false);
+    readonly allowComplaintsForAutomaticAssessments = this._allowComplaintsForAutomaticAssessments.asReadonly();
+
+    private readonly _baseResource = signal('');
+    readonly baseResource = this._baseResource.asReadonly();
+
+    private readonly _submissionPolicy = signal<SubmissionPolicy | undefined>(undefined);
+    readonly submissionPolicy = this._submissionPolicy.asReadonly();
+
+    private readonly _plagiarismCaseInfo = signal<PlagiarismCaseInfo | undefined>(undefined);
+    readonly plagiarismCaseInfo = this._plagiarismCaseInfo.asReadonly();
+
+    private readonly _irisEnabled = signal(false);
+    readonly irisEnabled = this._irisEnabled.asReadonly();
+
+    private readonly _irisChatEnabled = signal(false);
+    readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
+
+    private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
+    readonly instructorActionItems = this._instructorActionItems.asReadonly();
+
+    private readonly _exerciseIcon = signal<IconProp | undefined>(undefined);
+    readonly exerciseIcon = this._exerciseIcon.asReadonly();
+
+    private readonly _exampleSolutionInfo = signal<ExampleSolutionInfo | undefined>(undefined);
+    readonly exampleSolutionInfo = this._exampleSolutionInfo.asReadonly();
+
+    // Subscription tracking for methods called on each exercise load
+    private participationUpdateListener?: Subscription;
+    private teamAssignmentUpdateListener?: Subscription;
+
+    // Icons
+    faBook = faBook;
+    faEye = faEye;
+    faWrench = faWrench;
+    faListAlt = faListAlt;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
+
+    ngOnInit() {
+        // Keeps the mode in step with the participation in the URL for navigations that do not reload the exercise.
+        // Angular reuses this component when only the child participation changes - switching between graded and
+        // practice does that, and so does going back afterwards - and `loadExercise()` does not run then, so the mode
+        // would go on describing a participation the editor no longer shows.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.syncModeWithRoutedParticipation());
+
+        // Its own subscription rather than a second call inside the one above: the two are independent, and sharing a
+        // subscriber would let a failure in either one stop the other from ever running again.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.syncViewingSubmissionWithRoute());
+        this.syncViewingSubmissionWithRoute();
+
+        const courseIdParams$ = this.route.parent?.parent?.params;
+        const exerciseIdParams$ = this.route.params;
+        if (courseIdParams$) {
+            combineLatest([courseIdParams$, exerciseIdParams$])
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(([courseIdParams, exerciseIdParams]) => {
+                    const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
+                    const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
+
+                    // if learningPathMode is enabled these attributes will be set by the parent
+                    if (!this.learningPathMode) {
+                        this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
+                        this.courseId = parseInt(courseIdParams.courseId, 10);
+                    }
+                    if (didExerciseChange || didCourseChange) {
+                        this.loadExercise();
+                    }
+
+                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId, this.courseId);
+                });
+        }
+    }
+
+    /**
+     * Selects the mode of the participation the URL addresses, e.g. practice for
+     * `/courses/1/exercises/programming-exercises/2/code-editor/680` with 680 being the practice participation.
+     * <p>
+     * The routed participation is what the student asked to see, so it decides the mode. Without this the mode fell
+     * back to `graded` on every load, and {@link ExerciseSplitPanelComponent} then redirected the embedded editor from
+     * the practice participation in the URL to the graded one — after the due date a read-only repository. Starting the
+     * practice mode routes to the practice participation, so this is also what keeps the practice mode selected across
+     * a reload (issue #12780).
+     * <p>
+     * Both modes are selected from the URL, not just practice: going back after a switch leaves the editor on the other
+     * participation, and a mode that only ever moved towards practice would then describe the wrong one. A routed id
+     * that belongs to neither participation (not loaded yet) leaves the mode untouched.
+     * Quiz routes name the mode directly; in particular, the live route has no participation id to match.
+     */
+    private syncModeWithRoutedParticipation(): void {
+        const targetUrl = this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url;
+        const targetPath = targetUrl.split(/[?#]/, 1)[0];
+        const quizMode = /\/quiz-exercises\/\d+\/(live|practice)(?:\/|;|$)/.exec(targetPath)?.[1];
+        if (quizMode) {
+            this.participationMode.set(quizMode === 'practice' ? 'practice' : 'graded');
+            return;
+        }
+        const routedParticipationId = this.routedParticipationId();
+        if (routedParticipationId === undefined) {
+            return;
+        }
+        if (routedParticipationId === this.practiceStudentParticipation()?.id) {
+            this.participationMode.set('practice');
+        } else if (routedParticipationId === this.gradedStudentParticipation()?.id) {
+            this.participationMode.set('graded');
+        }
+    }
+
+    /**
+     * The participation id in the navigation target, or in the active child route once navigation has completed.
+     * <p>
+     * Both are needed. Angular activates a child route only after this component has initialised, so during the first
+     * pass `route.firstChild` is still empty or belongs to the outgoing navigation. Reading it alone left the mode on `graded` until the details
+     * response arrived - by which time the split panel had redirected the editor to the graded participation and the
+     * URL no longer named the one the student had asked for. The URL of the running navigation is what covers that
+     * first pass; the child route covers every later evaluation.
+     */
+    private routedParticipationId(): number | undefined {
+        // Until child activation, firstChild still addresses the outgoing participation. A late details response
+        // must follow the navigation target, otherwise it switches the mode back and redirects the editor again.
+        const navigationUrl = this.router.currentNavigation()?.finalUrl?.toString();
+        const fromNavigation = navigationUrl && /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        if (fromNavigation) {
+            return Number(fromNavigation[1]);
+        }
+        const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
+        if (fromChildRoute) {
+            return Number(fromChildRoute);
+        }
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(this.router.url);
+        return fromUrl ? Number(fromUrl[1]) : undefined;
+    }
+
+    loadExercise() {
+        this.participationMode.set('graded');
+        this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
+        // Evaluated here as well as after the details arrive, because it has to be settled before the first change
+        // detection: ExerciseSplitPanelComponent routes the embedded editor to the active participation as soon as it
+        // runs, so a mode derived only from the response would arrive after that redirect had already replaced the
+        // practice participation in the URL with the graded one, and the redirect is what the mode is then read back
+        // from. The locally known participations already contain the practice one right after it was started.
+        this.syncModeWithRoutedParticipation();
+        this._resultWithComplaint.set(
+            getFirstResultWithComplaintFromResults(
+                this.gradedStudentParticipation()?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
+            ),
+        );
+        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+            this.handleNewExercise(exerciseResponse.body!);
+            if (!this.gradedStudentParticipation() && this.practiceStudentParticipation()) {
+                this.participationMode.set('practice');
+            }
+            // Re-evaluated now that the participations are known: before the response the routed id could not be
+            // matched to one of them yet.
+            this.syncModeWithRoutedParticipation();
+            this.loadComplaintAndLatestRatedResult();
+        });
+    }
+
+    handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
+        this._exercise.set(newExerciseDetails.exercise);
+        this.filterUnfinishedResults(this.exercise?.studentParticipations);
+        this.mergeResultsAndSubmissionsForParticipations();
+        this.liveQuizStatus.set(this.computeInitialLiveQuizStatus());
+        this._isAfterAssessmentDueDate.set(!this.exercise?.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate));
+        this._allowComplaintsForAutomaticAssessments.set(false);
+        this._plagiarismCaseInfo.set(newExerciseDetails.plagiarismCaseInfo);
+        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = this.exercise as ProgrammingExercise;
+            const isAfterDateForComplaint =
+                !this.exercise.dueDate ||
+                (hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation()) &&
+                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
+
+            this._allowComplaintsForAutomaticAssessments.set(!!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint);
+            this._submissionPolicy.set(programmingExercise.submissionPolicy);
+        }
+
+        if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
+            this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+            if (this.irisEnabled()) {
+                this.irisSettingsService
+                    .getCourseSettingsWithRateLimit(this.courseId)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe((response) => {
+                        this._irisChatEnabled.set(response?.settings?.enabled ?? false);
+                    });
+            }
+        }
+
+        this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
+        this.subscribeForNewResults();
+        void this.subscribeToTeamAssignmentUpdates();
+
+        this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
+        if (this.exercise?.type) {
+            this._exerciseIcon.set(getIcon(this.exercise.type));
+        }
+        this.createInstructorActions();
+    }
+
+    /**
+     * Sets example solution and related fields if exampleSolution exists on newExercise,
+     * otherwise clears the previously set example solution related fields.
+     *
+     * @param newExercise Exercise model that may have an exampleSolution.
+     */
+    showIfExampleSolutionPresent(newExercise: Exercise) {
+        this._exampleSolutionInfo.set(ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown));
+    }
+
+    /**
+     * Filters out any unfinished Results
+     */
+    private filterUnfinishedResults(participations?: StudentParticipation[]) {
+        participations?.forEach((participation) => {
+            const results = participation?.submissions?.flatMap((submission) => submission.results) ?? [];
+            if (results) {
+                this._resultsOfGradedStudentParticipation.set(results);
+            }
+        });
+    }
+
+    sortResults() {
+        const participations = this._studentParticipations();
+        if (participations?.length) {
+            participations.forEach((participation) => participation.submissions?.flatMap((submission) => submission.results)?.sort(this.resultSortFunction));
+            const sorted = participations
+                .flatMap(
+                    (participation) =>
+                        participation.submissions?.flatMap((submission) => {
+                            return (
+                                submission.results?.map((result) => {
+                                    result.submission = submission;
+                                    result.submission.participation = participation;
+                                    return result;
+                                }) ?? []
+                            );
+                        }) ?? [],
+                )
+                .sort(this.resultSortFunction)
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
+            this._sortedHistoryResults.set(sorted);
+        }
+    }
+    private resultSortFunction = (a: Result | undefined, b: Result | undefined) => {
+        // Missing/undefined completion dates sort last (treated as the max timestamp). This keeps the prior
+        // ordering (`dayjs(undefined)` evaluated to "now", placing undated results after real dates) but is
+        // deterministic and avoids the "now" footgun — and two undated results compare equal (0) rather than NaN.
+        const aValue = a?.completionDate ? dayjs(a.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
+        const bValue = b?.completionDate ? dayjs(b.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
+        return aValue - bValue;
+    };
+
+    mergeResultsAndSubmissionsForParticipations() {
+        // if there are new student participation(s) from the server, we need to update studentParticipations
+        if (this.exercise?.studentParticipations?.length) {
+            const merged = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+            if (merged?.length) {
+                this._studentParticipations.set(merged);
+                this.sortResults();
+                // Add exercise to studentParticipation, as the result component is dependent on its existence.
+                merged.forEach((participation) => (participation.exercise = this.exercise));
+            }
+        }
+    }
+
+    subscribeForNewResults() {
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.participationUpdateListener?.unsubscribe();
+
+        const participations = this._studentParticipations();
+        if (this.exercise && participations?.length) {
+            participations.forEach((participation) => {
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
+            });
+        }
+
+        this.participationUpdateListener = this.participationWebsocketService
+            .subscribeForParticipationChanges()
+            // Skip the first event, as it is the initial state. All data should already be loaded.
+            .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+            .subscribe((changedParticipation: Participation | undefined) => {
+                // The app-wide participation subject only ever emits (structurally plain) student participations for this view.
+                if (isStudentParticipationChange(changedParticipation) && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                    const currentGraded = this.gradedStudentParticipation();
+                    // Notify student about late submission result
+                    if (
+                        changedParticipation.exercise?.dueDate &&
+                        hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
+                        changedParticipation.id === currentGraded?.id &&
+                        getAllResultsOfAllSubmissions(changedParticipation.submissions).length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length
+                    ) {
+                        this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                    }
+                    const changedResults = getAllResultsOfAllSubmissions(changedParticipation.submissions);
+                    const previousParticipation = this._studentParticipations().find((participation) => participation.id === changedParticipation.id);
+                    const previousResults = getAllResultsOfAllSubmissions(previousParticipation?.submissions);
+                    const completedAthenaResult = getNewestResult(
+                        changedResults.filter((result) => {
+                            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful === undefined) {
+                                return false;
+                            }
+                            const previous = previousResults.find((oldResult) => result.id !== undefined && oldResult.id === result.id);
+                            return !previous || previous.successful === undefined;
+                        }),
+                    );
+                    if (completedAthenaResult?.successful === true) {
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
+                    } else if (completedAthenaResult?.successful === false) {
+                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                    }
+                    const currentParticipations = this._studentParticipations();
+                    let updatedParticipations: StudentParticipation[];
+                    if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        // Keep the existing participation's fields, but accept a live transition to FINISHED so the
+                        // exercise header reflects text/modeling submissions without requiring a page reload.
+                        // Submissions are still merged so prior attempts are not lost (see mergeSubmissions).
+                        updatedParticipations = currentParticipations.map((participation) => {
+                            if (participation.id !== changedParticipation.id) {
+                                return participation;
+                            }
+                            const merged = deepClone(participation);
+                            if (changedParticipation.initializationState === InitializationState.FINISHED) {
+                                merged.initializationState = InitializationState.FINISHED;
+                            }
+                            merged.submissions = this.mergeSubmissions(participation.submissions, changedParticipation.submissions);
+                            return merged;
+                        });
+                    } else {
+                        updatedParticipations = currentParticipations.concat(changedParticipation);
+                    }
+                    this._studentParticipations.set(updatedParticipations);
+                    this.sortResults();
+                    if (completedAthenaResult?.successful === true) {
+                        this.navigateToAthenaResult(changedParticipation, completedAthenaResult);
+                    }
+                }
+            });
+    }
+
+    /**
+     * Receives team assignment changes and applies them if they belong to this exercise
+     */
+    async subscribeToTeamAssignmentUpdates() {
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.teamAssignmentUpdateListener?.unsubscribe();
+
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
+            .pipe(
+                filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((teamAssignment) => {
+                if (this.exercise && teamAssignment.studentParticipations) {
+                    const updatedExercise = deepClone(this.exercise);
+                    updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
+                    updatedExercise.studentParticipations = withPracticeParticipations(this.exercise.studentParticipations, teamAssignment.studentParticipations);
+                    this.exercise = updatedExercise;
+                    this.mergeResultsAndSubmissionsForParticipations();
+                }
+            });
+    }
+
+    /**
+     * Merges incoming submissions into the existing ones, deduplicating by id so the full attempt history is preserved.
+     *
+     * Practice quiz submits (and websocket result deltas) deliver a participation payload that only carries the latest
+     * submission. Replacing the stored submissions with that payload would drop every prior attempt from the
+     * result-history dropdown until a page refresh reloads the full participation. Existing submissions are therefore
+     * kept in place (an incoming submission with the same id replaces its older version), and genuinely new
+     * submissions are appended. Submissions without an id are never deduplicated away.
+     */
+    private mergeSubmissions(existingSubmissions: Submission[] = [], incomingSubmissions: Submission[] = []): Submission[] {
+        const incomingById = new Map(incomingSubmissions.filter((submission) => submission.id !== undefined).map((submission) => [submission.id, submission]));
+        const updatedExisting = existingSubmissions.map((submission) => (submission.id !== undefined ? (incomingById.get(submission.id) ?? submission) : submission));
+        const existingIds = new Set(existingSubmissions.map((submission) => submission.id));
+        const newSubmissions = incomingSubmissions.filter((submission) => submission.id === undefined || !existingIds.has(submission.id));
+        return updatedExisting.concat(newSubmissions);
+    }
+
+    /**
+     * Whether the route points at a specific earlier submission. Derived here rather than reported by the result
+     * history, which lives in the details panel and is unmounted whenever another tab is shown - the header would
+     * then keep offering "continue" with nothing to act on, or fail to hide submit at all.
+     */
+    readonly isViewingSubmission = signal(false);
+
+    /**
+     * Whether the title bar is carrying the status and due date pills, which only it can know: it depends on the width
+     * left over once the title and the controls have taken theirs. The details panel leaves them out while it is true,
+     * so each of the two facts is stated once on the page rather than twice.
+     */
+    readonly titleBarShowsPills = signal(false);
+
+    /** Handed to the header. Navigates directly, for the same reason the flag above is derived here. */
+    readonly continueToLatest = (): void => {
+        const participation = this.activeParticipation();
+        const exercise = this.exercise;
+        if (!participation || !exercise) {
+            return;
+        }
+        const route = latestSubmissionRoute(exercise, participation);
+        if (!route) {
+            return;
+        }
+        void this.router.navigate(route);
+    };
+
+    private syncViewingSubmissionWithRoute(): void {
+        this.isViewingSubmission.set(/\/(result|submission)\/\d+/.test(this.router.url));
+    }
+
+    onNewParticipation(participation: StudentParticipation) {
+        const current = this._studentParticipations();
+        if (current.some((p) => p.id === participation.id)) {
+            // Keep the incoming participation's fields (it is the freshly started/changed one) but preserve the full
+            // attempt history by merging submissions rather than replacing them (see mergeSubmissions for the why).
+            this._studentParticipations.set(
+                current.map((p) => {
+                    if (p.id !== participation.id) {
+                        return p;
+                    }
+                    const merged = deepClone(participation);
+                    merged.submissions = this.mergeSubmissions(p.submissions, participation.submissions);
+                    return merged;
+                }),
+            );
+        } else {
+            this._studentParticipations.set(current.concat(participation));
+
+            if (this.exercise) {
+                this.exercise.studentParticipations = (this.exercise.studentParticipations ?? []).concat(participation);
+            }
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
+            }
+        }
+        this.propagateParticipationsToCachedCourse();
+        this.sortResults();
+        if (participation.testRun) {
+            this.participationMode.set('practice');
+            this.routeToStartedPracticeParticipation(participation);
+        }
+    }
+
+    /**
+     * Points the URL at a freshly started practice participation.
+     * <p>
+     * Setting the mode is not enough on its own. The split panel redirects to the code editor as soon as a participation
+     * is available, and `/courses/:courseId/exercises/:exerciseId` and
+     * `/courses/:courseId/exercises/programming-exercises/:exerciseId` are separate route configs, so that redirect
+     * destroys and re-creates this component. The new instance starts from `loadExercise()`, which sets the mode to
+     * graded and then re-derives it from the URL - and if the redirect went out while the practice start was still in
+     * flight, the URL names the graded participation. The practice selection was then lost for good, which is what made
+     * the practice-mode e2e tests fail: the graded participation was shown while the practice one existed.
+     * <p>
+     * Writing the URL fixes that at the level the mode is actually decided at. `replaceUrl` because this corrects an
+     * address the user never chose, so it must not add a history entry that would take them back to the graded editor.
+     *
+     * @param participation the practice participation that has just been created
+     */
+    private routeToStartedPracticeParticipation(participation: StudentParticipation): void {
+        const exercise = this.exercise;
+        if (!exercise || this.routedParticipationId() === participation.id) {
+            return;
+        }
+        const segments = participationChildRouteSegments(exercise, participation);
+        if (segments) {
+            void this.router.navigate(segments, { relativeTo: this.route.parent, replaceUrl: true });
+        }
+    }
+
+    /**
+     * Propagates the currently resolved student participations into the cached course (via {@link CourseStorageService})
+     * so the course-overview sidebar re-maps and reflects the started exercise live — its card transitions from
+     * "Not yet started" to the started/result state and shows the score without a page reload.
+     *
+     * This must run for both a participation that is new to this component instance and one that is already present:
+     * starting a programming exercise immediately navigates to the code editor, which re-resolves this component with
+     * the participation already loaded. In that case {@link onNewParticipation} takes the "already present" branch, so
+     * scoping the propagation to only newly created participations left the sidebar card stuck at "Not yet started".
+     */
+    private propagateParticipationsToCachedCourse(): void {
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId);
+        const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
+        if (course && cachedExercise) {
+            // Mutated in place, and the same course object re-stored: the sidebar card renders this very exercise
+            // object, so replacing it with a copy would leave the card bound to the pre-update one.
+            cachedExercise.studentParticipations = this._studentParticipations();
+            this.courseStorageService.updateCourse(course);
+        }
+    }
+
+    onLiveQuizStatusChange(status: LiveQuizParticipationStatus | undefined) {
+        this.liveQuizStatus.set(status);
+    }
+
+    /**
+     * Derives the initial live quiz badge status from the loaded exercise data. Returns undefined for non-quiz or
+     * ended quizzes (where the result / data-driven status applies). A started batch means the student is in the
+     * running quiz; otherwise they are still at the waiting/join phase.
+     */
+    private computeInitialLiveQuizStatus(): LiveQuizParticipationStatus | undefined {
+        if (this.exercise?.type !== ExerciseType.QUIZ) {
+            return undefined;
+        }
+        const quizExercise = this.exercise as QuizExercise;
+        const submitted = this.gradedStudentParticipation()?.submissions?.some((submission) => submission.submitted) ?? false;
+        if (quizExercise.quizEnded) {
+            return submitted ? undefined : LiveQuizParticipationStatus.MISSED;
+        }
+        if (submitted) {
+            return LiveQuizParticipationStatus.SUBMITTED;
+        }
+        return quizExercise.quizBatches?.some((batch) => batch.started) ? LiveQuizParticipationStatus.PARTICIPATING : LiveQuizParticipationStatus.NOT_STARTED;
+    }
+
+    /**
+     * Reflects a live quiz submission in the graded participation immediately, so the participation status badge
+     * switches from "Currently participating" to "Submitted, waiting for due date"
+     */
+    onQuizSubmitted(submission: QuizSubmission) {
+        const graded = this.gradedStudentParticipation();
+        if (!graded) {
+            return;
+        }
+        const updatedParticipations = this._studentParticipations().map((participation) => {
+            if (participation.id !== graded.id) {
+                return participation;
+            }
+            const merged = deepClone(participation);
+            merged.submissions = this.mergeSubmissions(participation.submissions, [submission]);
+            return merged;
+        });
+        this._studentParticipations.set(updatedParticipations);
+    }
+
+    exerciseRatedBadge(result: Result): string {
+        return result.rated ? 'bg-success' : 'bg-info';
+    }
+
+    /**
+     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
+     */
+    loadComplaintAndLatestRatedResult(): void {
+        const graded = this.gradedStudentParticipation();
+        const sorted = this._sortedHistoryResults();
+        if (!graded?.submissions?.[0] || !sorted?.length) {
+            return;
+        }
+        this.complaintService.findBySubmissionId(graded.submissions[0].id!).subscribe({
+            next: (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this._complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.resultWithComplaint()));
+            },
+            error: (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        });
+
+        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
+            return;
+        }
+
+        const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
+            ?.filter((result: Result) => result.rated)
+            .sort(this.resultSortFunction);
+        if (ratedResults) {
+            const latestResult = ratedResults.last();
+            this._latestRatedResult.set(latestResult);
+        }
+    }
+
+    /**
+     * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
+     */
+    get quizExerciseStatus(): QuizStatus | undefined {
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            return this.quizExerciseService.getStatus(this.exercise);
+        }
+        return undefined;
+    }
+
+    private onError(error: string) {
+        this.alertService.error(error);
+    }
+
+    toggleShowMoreResults() {
+        this._showMoreResults.update((v) => !v);
+    }
+
+    // INSTRUCTOR ACTIONS
+    createInstructorActions() {
+        const items: InstructorActionItem[] = [];
+        if (this.exercise?.isAtLeastTutor) {
+            this.createTutorActions().forEach((item) => items.push(item));
+        }
+        if (this.exercise?.isAtLeastEditor) {
+            this.createEditorActions().forEach((item) => items.push(item));
+        }
+        if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
+            items.push(this.getReEvaluateItem());
+        }
+        this._instructorActionItems.set(items);
+    }
+
+    createTutorActions(): InstructorActionItem[] {
+        const tutorActionItems = this.getDefaultItems().slice();
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            this.getQuizItems().forEach((item) => tutorActionItems.push(item));
+        }
+        return tutorActionItems;
+    }
+
+    getDefaultItems(): InstructorActionItem[] {
+        return [
+            {
+                routerLink: `${this.baseResource()}`,
+                icon: faEye,
+                translation: 'entity.action.view',
+            },
+            this.getParticipationItem(),
+        ];
+    }
+
+    getQuizItems(): InstructorActionItem[] {
+        return [
+            {
+                routerLink: `${this.baseResource()}preview`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.preview',
+            },
+            {
+                routerLink: `${this.baseResource()}solution`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.solution',
+            },
+        ];
+    }
+
+    getParticipationItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource()}participations`,
+            icon: faListAlt,
+            translation: 'artemisApp.exercise.participations',
+        };
+    }
+
+    createEditorActions(): InstructorActionItem[] {
+        const editorItems: InstructorActionItem[] = [];
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            editorItems.push(this.getStatisticItem('quiz-point-statistic'));
+            if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
+                editorItems.push(this.getQuizEditItem());
+            }
+        } else if (this.exercise?.type === ExerciseType.MODELING) {
+            editorItems.push(this.getStatisticItem('exercise-statistics'));
+        } else if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            editorItems.push(this.getGradingItem());
+        }
+        return editorItems;
+    }
+
+    getStatisticItem(routerLink: string): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource()}${routerLink}`,
+            icon: faSignal,
+            translation: 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics',
+        };
+    }
+
+    getGradingItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource()}grading/test-cases`,
+            icon: faFileSignature,
+            translation: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+        };
+    }
+
+    getQuizEditItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource()}edit`,
+            icon: faWrench,
+            translation: 'entity.action.edit',
+        };
+    }
+
+    getReEvaluateItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource()}re-evaluate`,
+            icon: faWrench,
+            translation: 'entity.action.re-evaluate',
+        };
+    }
+
+    private navigateToAthenaResult(changedParticipation: StudentParticipation, completedResult: Result) {
+        const athenaSubmission = changedParticipation.submissions?.find((submission) => submission.results?.some((result) => result.id === completedResult.id));
+
+        const submissionId = athenaSubmission?.id;
+        if (!submissionId || !this.exercise?.type || !changedParticipation.id) {
+            return;
+        }
+        let exerciseTypePath: string;
+        if (this.exercise.type === ExerciseType.TEXT) {
+            exerciseTypePath = 'text-exercises';
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            exerciseTypePath = 'modeling-exercises';
+        } else {
+            return;
+        }
+        void this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
+    }
+
+    ngOnDestroy() {
+        const participations = this._studentParticipations();
+        participations?.forEach((participation) => {
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
+            }
+        });
+    }
+
+    protected readonly hasResults = hasResults;
+}

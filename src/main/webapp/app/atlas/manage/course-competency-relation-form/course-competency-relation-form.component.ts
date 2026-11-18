@@ -1,0 +1,289 @@
+import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { getCurrentLocaleSignal, getErrorMessage } from 'app/foundation/util/global.utils';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-course-competency-relation-form',
+    templateUrl: './course-competency-relation-form.component.html',
+    styleUrl: './course-competency-relation-form.component.scss',
+    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, FormsModule, TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent],
+})
+export class CourseCompetencyRelationFormComponent {
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    protected readonly faSpinner = faSpinner;
+
+    readonly courseId = input.required<number>();
+    readonly courseCompetencies = input.required<CourseCompetency[]>();
+    readonly relations = model.required<CompetencyRelationDTO[]>();
+    readonly selectedRelationId = model.required<number | undefined>();
+
+    readonly headCompetencyId = signal<number | undefined>(undefined);
+    readonly tailCompetencyId = signal<number | undefined>(undefined);
+    readonly relationType = model<CompetencyRelationType | undefined>(undefined);
+
+    readonly isLoading = signal<boolean>(false);
+
+    readonly relationAlreadyExists = computed(() => this.getRelation(this.headCompetencyId(), this.tailCompetencyId()) !== undefined);
+    readonly exactRelationAlreadyExists = computed(() => this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType()) !== undefined);
+
+    private readonly selectableHeadCourseCompetencyIds = computed(() => {
+        if (this.tailCompetencyId() && this.relationType()) {
+            return this.getSelectableHeadCompetencyIds(this.tailCompetencyId()!, this.relationType()!);
+        }
+        return this.courseCompetencies().map(({ id }) => id!);
+    });
+
+    readonly showCircularDependencyError = computed(() => this.headCompetencyId() && !this.selectableHeadCourseCompetencyIds().includes(this.headCompetencyId()!));
+
+    protected readonly relationTypeOptions = computed(() => {
+        this.currentLocale();
+        return Object.values(CompetencyRelationType).map((value) => ({
+            value,
+            label: this.translateService.instant(`artemisApp.courseCompetency.relations.relationTypes.${value}`),
+        }));
+    });
+
+    /** The select cannot grey out an option, so a head that would close a cycle is left out; the one already chosen stays to be shown. */
+    protected readonly headOptions = computed(() => this.courseCompetencies().filter(({ id }) => this.isCourseCompetencySelectable(id!) || id === this.headCompetencyId()));
+
+    constructor() {
+        effect(() => this.selectRelation(this.selectedRelationId()));
+    }
+
+    protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {
+        return this.selectableHeadCourseCompetencyIds().includes(courseCompetencyId);
+    }
+
+    private selectRelation(relationId?: number): void {
+        const relation = this.relations().find(({ id }) => id === relationId);
+        if (relation) {
+            this.headCompetencyId.set(relation?.headCompetencyId);
+            this.tailCompetencyId.set(relation?.tailCompetencyId);
+            this.relationType.set(relation?.relationType);
+        }
+    }
+
+    public selectCourseCompetency(courseCompetencyId: number): void {
+        if (!this.tailCompetencyId()) {
+            this.selectTailCourseCompetency(courseCompetencyId);
+        } else if (!this.headCompetencyId()) {
+            this.selectHeadCourseCompetency(courseCompetencyId);
+        } else {
+            this.selectTailCourseCompetency(courseCompetencyId);
+        }
+    }
+
+    protected selectTailCourseCompetency(tailId: number) {
+        this.tailCompetencyId.set(tailId);
+        this.headCompetencyId.set(undefined);
+        this.selectedRelationId.set(undefined);
+    }
+
+    protected selectHeadCourseCompetency(headId: number) {
+        this.headCompetencyId.set(headId);
+        const existingRelation = this.getRelation(this.headCompetencyId(), this.tailCompetencyId());
+        if (existingRelation) {
+            this.selectedRelationId.set(existingRelation.id);
+        } else {
+            this.selectedRelationId.set(undefined);
+        }
+    }
+
+    protected async createRelation(): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const courseCompetencyRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId(), {
+                headCompetencyId: this.headCompetencyId()!,
+                tailCompetencyId: Number(this.tailCompetencyId()!),
+                relationType: this.relationType()!,
+            });
+            this.relations.update((relations) => [...relations, courseCompetencyRelation]);
+            this.selectedRelationId.set(courseCompetencyRelation.id);
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    protected getExactRelation(headCompetencyId?: number, tailCompetencyId?: number, relationType?: CompetencyRelationType): CompetencyRelationDTO | undefined {
+        return this.relations().find(
+            (relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === tailCompetencyId && relation.relationType === relationType,
+        );
+    }
+
+    protected getRelation(headCompetencyId?: number, tailCompetencyId?: number): CompetencyRelationDTO | undefined {
+        return this.relations().find((relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === tailCompetencyId);
+    }
+
+    protected async updateRelation(): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const newRelationType = this.relationType()!;
+            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), this.selectedRelationId()!, {
+                newRelationType: newRelationType,
+            });
+            this.relations.update((relations) =>
+                relations.map((relation) => {
+                    if (relation.id === this.selectedRelationId()) {
+                        return cloneWith(relation, { relationType: newRelationType });
+                    }
+                    return relation;
+                }),
+            );
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    protected async deleteRelation(): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const deletedRelation = this.relations().find(
+                ({ headCompetencyId, tailCompetencyId, relationType }) =>
+                    headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
+            );
+            if (!deletedRelation) {
+                this.isLoading.set(false);
+                return;
+            }
+            await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation.id!);
+            this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation.id));
+            this.selectedRelationId.set(undefined);
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    /**
+     * Function to get the selectable head competency ids for the given tail
+     * competency and relation type without creating a cyclic dependency
+     */
+    private getSelectableHeadCompetencyIds(tailCompetencyId: number, relationType: CompetencyRelationType): number[] {
+        return this.courseCompetencies()
+            .map(({ id }) => id!)
+            .filter((id) => id !== tailCompetencyId)
+            .filter((id) => {
+                let relations = this.relations();
+                const existingRelation = this.getRelation(id, tailCompetencyId);
+                if (existingRelation) {
+                    relations = relations.filter((relation) => relation.id !== existingRelation.id);
+                }
+                const potentialRelation: CompetencyRelationDTO = {
+                    headCompetencyId: id,
+                    tailCompetencyId: tailCompetencyId,
+                    relationType: relationType,
+                };
+                return !this.detectCycleInRelations(relations.concat(potentialRelation), this.courseCompetencies().length);
+            });
+    }
+
+    private detectCycleInRelations(relations: CompetencyRelationDTO[], numOfCompetencies: number): boolean {
+        const idToIndexMap = new Map<number, number>();
+        let currentIndex = 0;
+        relations.forEach((relation) => {
+            const tail = relation.tailCompetencyId!;
+            const head = relation.headCompetencyId!;
+            if (!idToIndexMap.has(tail)) {
+                idToIndexMap.set(tail, currentIndex++);
+            }
+            if (!idToIndexMap.has(head)) {
+                idToIndexMap.set(head, currentIndex++);
+            }
+        });
+        const unionFind = new UnionFind(numOfCompetencies);
+        relations.forEach((relation) => {
+            if (relation.relationType === CompetencyRelationType.MATCHES) {
+                const tailIndex = idToIndexMap.get(relation.tailCompetencyId!);
+                const headIndex = idToIndexMap.get(relation.headCompetencyId!);
+                if (tailIndex !== undefined && headIndex !== undefined) {
+                    unionFind.union(tailIndex, headIndex);
+                }
+            }
+        });
+        const reducedGraph: number[][] = Array.from({ length: numOfCompetencies }, () => []);
+        relations.forEach((relation) => {
+            const tail = unionFind.find(idToIndexMap.get(relation.tailCompetencyId!)!);
+            const head = unionFind.find(idToIndexMap.get(relation.headCompetencyId!)!);
+            if (relation.relationType === CompetencyRelationType.EXTENDS || relation.relationType === CompetencyRelationType.ASSUMES) {
+                reducedGraph[tail].push(head);
+            }
+        });
+        return this.hasCycle(reducedGraph, numOfCompetencies);
+    }
+
+    private hasCycle(graph: number[][], noOfCourseCompetencies: number): boolean {
+        const visited: boolean[] = Array(noOfCourseCompetencies).fill(false);
+        const recursionStack: boolean[] = Array(noOfCourseCompetencies).fill(false);
+        const depthFirstSearch = (v: number): boolean => {
+            visited[v] = true;
+            recursionStack[v] = true;
+            for (const neighbor of graph[v] || []) {
+                if (!visited[neighbor]) {
+                    if (depthFirstSearch(neighbor)) return true;
+                } else if (recursionStack[neighbor]) {
+                    return true;
+                }
+            }
+            recursionStack[v] = false;
+            return false;
+        };
+        for (let node = 0; node < noOfCourseCompetencies; node++) {
+            if (!visited[node]) {
+                if (depthFirstSearch(node)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+export class UnionFind {
+    parent: number[];
+    rank: number[];
+    constructor(size: number) {
+        this.parent = Array.from({ length: size }, (_, index) => index);
+        this.rank = Array(size).fill(1);
+    }
+    public find(competencyId: number): number {
+        if (this.parent[competencyId] !== competencyId) {
+            this.parent[competencyId] = this.find(this.parent[competencyId]);
+        }
+        return this.parent[competencyId];
+    }
+    public union(tailCompetencyId: number, headCompetencyId: number) {
+        const rootU = this.find(tailCompetencyId);
+        const rootV = this.find(headCompetencyId);
+        if (rootU !== rootV) {
+            if (this.rank[rootU] > this.rank[rootV]) {
+                this.parent[rootV] = rootU;
+            } else if (this.rank[rootU] < this.rank[rootV]) {
+                this.parent[rootU] = rootV;
+            } else {
+                this.parent[rootV] = rootU;
+                this.rank[rootU] += 1;
+            }
+        }
+    }
+}

@@ -1,0 +1,69 @@
+<!--
+    The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the exercise
+    page reads like the other student pages. `px-*` rather than `p-*`, so Bootstrap's !important spacing does not
+    overrule the class's vertical padding.
+-->
+<div #bar id="exercise-header" class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-2">
+    @if (showSidebarToggle() && isSidebarCollapsed()) {
+        <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+    }
+    @if (exerciseIcon(); as icon) {
+        <h5 class="mb-0 truncate">
+            <fa-icon [icon]="icon" />
+            {{ exercise().title }}
+        </h5>
+    }
+    <!--
+        What the exercise is due by, then how it is going: both read as part of the title rather than as controls, so
+        they follow it directly instead of sitting over with the buttons. A running quiz replaces the due date here -
+        the information boxes leave that slot to the clock for as long as it runs.
+    -->
+    @if (exercise().type === ExerciseType.QUIZ) {
+        <div #countdown data-testid="exercise-header-countdown" class="flex items-center shrink-0">
+            <jhi-quiz-exercise-countdown [info]="quizLiveHeaderInfo()" />
+        </div>
+    }
+    @if (showsPills()) {
+        <div #pills data-testid="exercise-header-pills" class="flex items-center shrink-0">
+            <jhi-exercise-headers-information
+                placement="titleBar"
+                [exercise]="exercise()"
+                [studentParticipation]="activeParticipation()"
+                [course]="exercise().course"
+                [isPractice]="participationMode() === 'practice'"
+                [quizPracticeInProgress]="quizPracticeInProgress()"
+                [quizLiveStatus]="quizLiveStatus()"
+                [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
+            />
+        </div>
+    }
+    <!--
+        The controls the bar always keeps. `ms-auto` holds them at the far end, which is also what leaves the title and
+        the pills beside it on the left. Their width is measured as space the title cannot have.
+    -->
+    <div #controls data-testid="exercise-header-controls" class="flex items-center gap-2 ms-auto shrink-0">
+        @if (exercise().type === ExerciseType.PROGRAMMING && activeParticipation()?.id) {
+            <jhi-programming-build-notifications [exercise]="exercise()" [participation]="activeParticipation()" />
+        }
+        <jhi-participation-mode-toggle
+            [mode]="participationMode()"
+            (modeChange)="participationMode.set($event)"
+            [hasPractice]="showPracticeMode()"
+            [hasGraded]="showGradedMode()"
+        />
+        <jhi-exercise-header-actions
+            [courseId]="courseId()"
+            [exercise]="exerciseForActions()"
+            [onSubmitExercise]="effectiveOnSubmitExercise()"
+            [onContinueExercise]="onContinueExercise()"
+            [onRestartPractice]="onRestartPractice()"
+            [submitDisabled]="submitDisabled()"
+            [submitLabel]="submitLabel()"
+            [quizPracticeAttemptFinished]="quizPracticeAttemptFinished()"
+            [plagiarismCaseInfo]="plagiarismCaseInfo()"
+            [participationMode]="participationMode()"
+            (newParticipation)="onNewParticipation($event)"
+            (participationModeChange)="participationMode.set($event)"
+        />
+    </div>
+</div>

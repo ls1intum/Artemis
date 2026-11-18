@@ -1,0 +1,78 @@
+@if (!isLoading() && exercise()) {
+    @let currentExercise = exercise()!;
+    <form name="exportForm" role="form" (ngSubmit)="exportSubmissions(currentExercise.id!)" #exportForm="ngForm">
+        <div class="p-4!">
+            <p
+                [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.question'"
+                [translateValues]="{ exerciseTitle: currentExercise.title, courseTitle: currentExercise.course?.title }"
+            >
+                Confirm export
+            </p>
+            <textarea
+                tumAetUiInput
+                [attr.aria-label]="'accessibility.participantIdentifiers' | artemisTranslate"
+                name="studentIds"
+                class="export-textarea"
+                [(ngModel)]="participantIdentifierList"
+                required
+                [disabled]="exportAllParticipants()"
+            ></textarea>
+            <!--
+      Only show download all checkbox for instructors & admins.
+      -->
+            @if (currentExercise.isAtLeastInstructor) {
+                <div class="inline-flex items-center gap-2">
+                    <label class="block font-medium mb-1">
+                        <tumaet-ui-checkbox class="accent-primary" name="allStudents" [(ngModel)]="exportAllParticipants" />
+                        <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students </strong>
+                    </label>
+                </div>
+            }
+            <ng-container>
+                <div class="inline-flex items-center gap-2">
+                    <label class="block font-medium mb-1">
+                        <tumaet-ui-checkbox class="accent-primary" name="filterLateSubmissions" [(ngModel)]="filterLateSubmissions" />
+                        <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions"></strong>
+                    </label>
+                </div>
+                <div class="mb-4!">
+                    <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title"
+                        >Date for filter late submissions (defaults to exercise due date if not set)</strong
+                    >
+                    <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip" />
+                    <tumaet-ui-date-picker
+                        inputId="filterLateSubmissionsDate"
+                        [hideLabelName]="true"
+                        [ariaLabel]="'artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title' | artemisTranslate"
+                        [value]="filterLateSubmissionsDate() ?? undefined"
+                        [disabled]="!filterLateSubmissions()"
+                        [shouldDisplayTimeZoneWarning]="false"
+                        (valueChange)="onFilterLateSubmissionsDateChange($event)"
+                        (inputValidityChange)="isFilterDateTextValid.set($event)"
+                    />
+                </div>
+            </ng-container>
+        </div>
+        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button
+                severity="secondary"
+                tumAetUiButton
+                type="submit"
+                [disabled]="(!participantIdentifierList() && !exportAllParticipants()) || exportInProgress() || hasInvalidFilterDate()"
+                class=""
+            >
+                @if (exportInProgress()) {
+                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                }
+                <span jhiTranslate="entity.action.export"></span>
+            </button>
+        </div>
+    </form>
+} @else {
+    <div class="flex justify-center mt-6! mb-6!">
+        <fa-icon [icon]="faCircleNotch" animation="spin" />
+    </div>
+}

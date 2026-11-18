@@ -1,0 +1,113 @@
+<div class="modeling-editor" [class.modeling-editor--readonly]="readOnly()">
+    @if (!readOnly()) {
+        <div
+            #editorFrame
+            class="modeling-editor__frame artemis-apollon-theme"
+            [class.modeling-editor__frame--tile]="tile()"
+            [class.modeling-editor__frame--fullscreen]="fullscreenActive()"
+            [class.apollon-fullscreen-frame]="fullscreenActive()"
+        >
+            <jhi-modeling-editor-help [(visible)]="helpVisible" />
+
+            <div #editorTopLeftRegion class="modeling-editor__top-left-region nopan nodrag nowheel">
+                @if (savedStatus() && !readOnly()) {
+                    <div
+                        class="modeling-editor__status-island apollon-glass"
+                        [class.modeling-editor__status-island--saved]="!savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--unsaved]="savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--saving]="savedStatus()?.isSaving"
+                        role="status"
+                        data-testid="modeling-editor-save-status"
+                        [attr.data-state]="saveState()"
+                    >
+                        @if (savedStatus()?.isSaving) {
+                            <fa-icon class="spin" [icon]="faCircleNotch" />
+                            <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
+                        } @else if (savedStatus()?.isChanged) {
+                            <fa-icon [icon]="faTimes" />
+                            <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
+                        } @else {
+                            <fa-icon [icon]="faCheck" />
+                            <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
+                        }
+                    </div>
+                }
+                <div class="modeling-editor__top-left apollon-glass">
+                    <ng-content select="[modelingEditorTopLeft]" />
+                </div>
+            </div>
+
+            <div
+                #editorActions
+                class="modeling-editor__actions apollon-glass apollon-chrome-cluster nopan nodrag nowheel"
+                role="group"
+                [attr.aria-label]="'artemisApp.modelingEditor.editorActions' | artemisTranslate"
+            >
+                @if (showHelpButton()) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        (click)="openHelp()"
+                        [attr.aria-label]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                        [title]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="farQuestionCircle" />
+                        <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
+                    </button>
+                }
+                @if (showFullscreenButton() && fullscreenSupported) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        data-testid="modeling-editor-fullscreen"
+                        (click)="toggleFullscreen()"
+                        [attr.aria-label]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                        [title]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                    >
+                        <fa-icon [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                        <span
+                            [jhiTranslate]="fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText'"
+                        ></span>
+                    </button>
+                }
+            </div>
+
+            <jhi-apollon-rail-disclosure
+                #editorProblemStatement
+                [label]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
+                [icon]="faProblemStatement"
+                testId="modeling-editor-problem-statement"
+                [(visible)]="problemStatementVisible"
+                [maxHeight]="problemStatementMaxHeight()"
+                [initialHeight]="480"
+                [hidden]="!fullscreenActive() || !problemStatement()?.trim()"
+                (resized)="scheduleChromePlacement()"
+            >
+                <div class="markdown-preview" [jhiMarkdown]="problemStatement() ?? ''"></div>
+            </jhi-apollon-rail-disclosure>
+
+            <div #editorBottomCenter class="modeling-editor__bottom-center nopan nodrag nowheel" [class.modeling-editor__bottom-center--elevated]="bottomCenterElevated()">
+                @if (withExplanation()) {
+                    <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
+                }
+                <ng-content select="[modelingEditorBottomCenter]" />
+            </div>
+
+            <div class="modeling-editor__canvas-shell">
+                <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
+            </div>
+        </div>
+    }
+    @if (readOnly()) {
+        <div class="readonly-diagram artemis-apollon-theme" [innerHtml]="readOnlySVG()"></div>
+    }
+
+    @if (withExplanation() && readOnly()) {
+        <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
+        <p class="markdown-preview" [jhiMarkdown]="explanation()"></p>
+    }
+</div>

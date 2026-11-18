@@ -1,0 +1,269 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { User } from 'app/account/user/user.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { By } from '@angular/platform-browser';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import dayjs from 'dayjs/esm';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+
+const user = { id: 1, name: 'Test User' } as User;
+
+const exam = {
+    id: 1,
+    title: 'ExamForTesting',
+    latestIndividualEndDate: dayjs().subtract(10, 'minutes'),
+} as Exam;
+
+const exerciseGroup = {
+    exam,
+    title: 'exercise group',
+} as ExerciseGroup;
+
+const programmingSubmission = {
+    id: 1,
+    type: SubmissionType.MANUAL,
+    commitHash: '123456789ab',
+} as ProgrammingSubmission;
+
+const programmingParticipation = {
+    id: 4,
+    student: user,
+    submissions: [programmingSubmission],
+    type: ParticipationType.PROGRAMMING,
+    participantIdentifier: 'student1',
+    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
+} as ProgrammingExerciseStudentParticipation;
+
+const programmingExercise = {
+    id: 4,
+    type: ExerciseType.PROGRAMMING,
+    studentParticipations: [programmingParticipation],
+    exerciseGroup,
+    projectKey: 'TEST',
+    dueDate: dayjs().subtract(5, 'minutes'),
+} as ProgrammingExercise;
+
+const feedbackReference = {
+    id: 1,
+    result: { id: 2 } as Result,
+    hasLongFeedback: false,
+} as Feedback;
+
+const feedback = {
+    type: 'Test',
+    name: 'artemisApp.result.detail.feedback',
+    title: 'artemisApp.result.detail.test.passedTest',
+    positive: true,
+    credits: 3,
+    feedbackReference,
+};
+
+const result = {
+    id: 89,
+    submission: {
+        participation: {
+            id: 55,
+            type: ParticipationType.PROGRAMMING,
+            participantIdentifier: 'student42',
+            repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+        },
+    },
+    feedbacks: [feedback],
+    assessmentType: AssessmentType.MANUAL,
+} as Result;
+
+describe('ProgrammingExamSummaryComponent', () => {
+    let component: ProgrammingExamSummaryComponent;
+    let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
+    let accountService: AccountService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideComponent(ProgrammingExamSummaryComponent, {
+                remove: { imports: [ProgrammingExerciseInstructionComponent] },
+                add: { imports: [MockComponent(ProgrammingExerciseInstructionComponent)] },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
+        component = fixture.componentInstance;
+        accountService = TestBed.inject(AccountService);
+
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        programmingSubmission.participation = programmingParticipation;
+        programmingParticipation.submissions = [programmingSubmission];
+        fixture.componentRef.setInput('participation', programmingParticipation);
+        component.submission.set(programmingSubmission);
+        fixture.componentRef.setInput('exam', exam);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize and set commit hash', () => {
+        fixture.detectChanges();
+
+        expect(component).toBeTruthy();
+        expect(component.commitHash()).toBe('123456789ab');
+    });
+
+    it('should show result if present and results are published', () => {
+        fixture.componentRef.setInput('isAfterResultsArePublished', true);
+        programmingSubmission.results = [result];
+        fixture.detectChanges();
+
+        expect(component.feedbackComponentParameters().exercise).toEqual(programmingExercise);
+        expect(component.feedbackComponentParameters().result).toEqual(result);
+
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).toBeTruthy();
+    });
+
+    it('should not show results if not yet published', () => {
+        fixture.componentRef.setInput('isAfterResultsArePublished', false);
+        programmingSubmission.results = [result];
+        fixture.detectChanges();
+
+        const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(feedbackComponent).not.toBeTruthy();
+    });
+
+    it('should display code button', () => {
+        fixture.detectChanges();
+
+        const codeButtonComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
+        expect(codeButtonComponent).toBeTruthy();
+    });
+
+    it("should request a participation token for the current user's participation", () => {
+        programmingParticipation.student!.login = 'student1';
+        accountService.userIdentity.set({ login: 'student1' } as User);
+        fixture.detectChanges();
+
+        const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id });
+    });
+
+    it("should request a repository token when inspecting another user's participation", () => {
+        programmingParticipation.student!.login = 'student1';
+        accountService.userIdentity.set({ login: 'instructor1' } as User);
+        fixture.detectChanges();
+
+        const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({
+            returnedTokenType: 'repository-token',
+            repositoryType: RepositoryType.USER,
+            participationId: programmingParticipation.id,
+        });
+    });
+
+    describe('layout', () => {
+        const getGrid = (): HTMLElement => fixture.nativeElement.querySelector('.grid');
+
+        it('should not render a hard-coded page heading above the code button', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('h1')).toBeNull();
+            expect(fixture.nativeElement.textContent).not.toContain('Programming exam summary');
+        });
+
+        it('should stack the columns by the width of its container instead of the viewport', () => {
+            fixture.detectChanges();
+
+            const grid = getGrid();
+            expect(grid.parentElement!.classList).toContain('@container');
+            expect(grid.classList).toContain('grid-cols-1');
+            expect(grid.classList).toContain('@4xl:grid-cols-3');
+            expect(grid.className).not.toContain('md:');
+            const [submissionColumn, problemStatementColumn] = Array.from(grid.children);
+            expect(submissionColumn.classList).toContain('@4xl:col-span-1');
+            expect(problemStatementColumn.classList).toContain('@4xl:col-span-2');
+        });
+
+        it('should render the section headings with the 16px semibold heading style', () => {
+            fixture.componentRef.setInput('isAfterResultsArePublished', true);
+            fixture.detectChanges();
+
+            const headings: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('h5'));
+            // 'Your Submission', 'Assessment' and 'Problem Statement'
+            expect(headings).toHaveLength(3);
+            headings.forEach((heading) => {
+                expect(heading.classList).toContain('text-base!');
+                expect(heading.classList).toContain('font-semibold!');
+            });
+            // the first heading sits in a flex column that already provides the gap to the code button
+            expect(headings[0].classList).toContain('m-0!');
+            expect(headings[0].parentElement!.classList).toContain('flex-col');
+            expect(headings[0].parentElement!.classList).toContain('gap-2');
+        });
+
+        it('should remove the horizontal padding of the problem statement markdown', () => {
+            fixture.componentRef.setInput('exercise', { ...programmingExercise, problemStatement: 'Write a program' } as ProgrammingExercise);
+            fixture.detectChanges();
+
+            const instructions = fixture.nativeElement.querySelector('jhi-programming-exercise-instructions');
+            expect(instructions).toBeTruthy();
+            expect(instructions.parentElement.className).toContain('instructions\\_\\_content\\_\\_markdown]:px-0!');
+        });
+
+        it('should render the complaint section as a block without margins that would create an empty line', () => {
+            fixture.componentRef.setInput('exercise', { ...programmingExercise, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+            fixture.componentRef.setInput('isAfterStudentReviewStart', true);
+            programmingSubmission.results = [result];
+            fixture.detectChanges();
+
+            const complaintView: HTMLElement = fixture.nativeElement.querySelector('jhi-complaint-student-view');
+            expect(complaintView).toBeTruthy();
+            expect(complaintView.classList).toContain('block');
+            expect(complaintView.classList).not.toContain('mt-2');
+            expect(complaintView.classList).not.toContain('mb-2');
+            expect(complaintView.classList).not.toContain('ml-4');
+        });
+    });
+
+    it.each([false, true])('should let the complaint section read the complaint as staff only in the instructor view (%s)', (instructorView) => {
+        fixture.componentRef.setInput('exercise', { ...programmingExercise, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+        fixture.componentRef.setInput('isAfterStudentReviewStart', true);
+        fixture.componentRef.setInput('instructorView', instructorView);
+        programmingSubmission.results = [result];
+        fixture.detectChanges();
+
+        const complaintView = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
+        expect(complaintView).not.toBeNull();
+        expect(complaintView.componentInstance.forStaff()).toBe(instructorView);
+    });
+});

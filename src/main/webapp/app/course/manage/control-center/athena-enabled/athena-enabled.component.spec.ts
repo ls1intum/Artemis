@@ -1,0 +1,182 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentRef } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AthenaEnabledComponent } from 'app/course/manage/control-center/athena-enabled/athena-enabled.component';
+import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockProvider } from 'ng-mocks';
+
+describe('AthenaEnabledComponent', () => {
+    let comp: AthenaEnabledComponent;
+    let componentRef: ComponentRef<AthenaEnabledComponent>;
+    let fixture: ComponentFixture<AthenaEnabledComponent>;
+    let athenaCourseConfigService: AthenaCourseConfigService;
+
+    const course = new Course();
+    course.id = 5;
+
+    const bothDisabled: AthenaCourseConfigDTO = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false };
+
+    function initWith(config: AthenaCourseConfigDTO) {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(config));
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [AthenaEnabledComponent, TranslatePipeMock],
+            providers: [provideRouter([]), MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(AthenaEnabledComponent);
+        comp = fixture.componentInstance;
+        componentRef = fixture.componentRef;
+        athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should load the course configuration on init', () => {
+        const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        expect(getSpy).toHaveBeenCalledExactlyOnceWith(5);
+        expect(comp.masterEnabled()).toBe(true);
+    });
+
+    it('should show disabled while the configuration is still loading', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        componentRef.setInput('course', course);
+
+        expect(comp.masterEnabled()).toBe(false);
+    });
+
+    it('should block the toggle until the configuration has loaded', () => {
+        const pending = new Subject<AthenaCourseConfigDTO>();
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(pending);
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        const disableButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('[data-testid="athena-enabled-disable"]');
+        expect(comp.loaded()).toBe(false);
+        expect(disableButton().disabled).toBe(true);
+
+        pending.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
+        fixture.detectChanges();
+
+        expect(comp.loaded()).toBe(true);
+        expect(disableButton().disabled).toBe(false);
+    });
+
+    it('should show an error instead of the toggle after a failed load', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        componentRef.setInput('course', course);
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(comp.loaded()).toBe(false);
+        expect(comp.loadFailed()).toBe(true);
+        expect(element.querySelector('[data-testid="athena-load-failed"]')?.textContent).toContain('artemisApp.course.athenaConfig.loadFailed');
+        expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeNull();
+        expect(element.querySelector('[data-testid="athena-configure-link"]')).toBeTruthy();
+    });
+
+    describe('setEnabled', () => {
+        it('should turn both features on when switched on', () => {
+            initWith(bothDisabled);
+            // setMasterEnabled saves grading before formative, so the first response must not already claim
+            // formative changed too - that would let its cross-feature merge make the second call a no-op.
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
+
+            comp.setEnabled(true);
+
+            expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: true });
+            expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: true });
+            expect(comp.masterEnabled()).toBe(true);
+        });
+
+        it('should turn both features off when switched off', () => {
+            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
+            const updateSpy = vi
+                .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+                .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: bothDisabled })));
+
+            comp.setEnabled(false);
+
+            expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: false });
+            expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: false });
+            expect(comp.masterEnabled()).toBe(false);
+        });
+
+        it('should do nothing when the course has no id', () => {
+            const courseWithoutId = new Course();
+            componentRef.setInput('course', courseWithoutId);
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');
+
+            comp.setEnabled(true);
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('settingsRoute', () => {
+        it('should return the correct route for the course settings page', () => {
+            componentRef.setInput('course', course);
+
+            expect(comp.settingsRoute()).toEqual(['/course-management', '5', 'athena-settings']);
+        });
+    });
+
+    describe('when the course changes', () => {
+        const otherCourse = new Course();
+        otherCourse.id = 6;
+
+        it('should load the configuration of the new course', () => {
+            initWith({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+
+            componentRef.setInput('course', otherCourse);
+            fixture.detectChanges();
+
+            expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(getSpy).toHaveBeenLastCalledWith(6);
+            expect(comp.masterEnabled()).toBe(false);
+        });
+    });
+
+    it('should render the toggle and the configure link', () => {
+        initWith(bothDisabled);
+
+        const element = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-configure-link"]')).toBeTruthy();
+    });
+
+    it('should save the switched state when the toggle button is clicked', () => {
+        initWith(bothDisabled);
+        const updateSpy = vi
+            .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+            .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: true } })));
+
+        fixture.nativeElement.querySelector('[data-testid="athena-enabled-enable"]').click();
+
+        expect(updateSpy).toHaveBeenCalledWith(5, { gradingFeedbackEnabled: true });
+        expect(updateSpy).toHaveBeenCalledWith(5, { formativeFeedbackEnabled: true });
+    });
+});

@@ -1,0 +1,142 @@
+@let currentCourseId = courseId();
+
+@if (currentCourseId !== undefined) {
+    <div *titleBarActions class="flex items-center gap-2">
+        @if (!hasNoTutorialGroups()) {
+            <tumaet-ui-search-field
+                class="w-40 lg:w-64"
+                size="small"
+                data-testid="tutorial-groups-search"
+                placeholder="artemisApp.pages.tutorialGroupsManagement.searchPlaceholder"
+                [value]="searchTerm()"
+                (valueChange)="onSearch($event)"
+            />
+        }
+        @if (configuration(); as tutorialGroupsConfiguration) {
+            @if (isAtLeastInstructor()) {
+                <a
+                    tumAetUiButton
+                    size="small"
+                    severity="warn"
+                    variant="outlined"
+                    data-testid="edit-configuration-btn"
+                    [tumAetUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'edit']"
+                >
+                    <fa-icon [icon]="faGear" />
+                    <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
+                </a>
+            }
+            @if (isAtLeastEditor()) {
+                <a
+                    tumAetUiButton
+                    size="small"
+                    severity="warn"
+                    variant="outlined"
+                    data-testid="free-periods-btn"
+                    [tumAetUiTooltip]="'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days']"
+                >
+                    <fa-icon [icon]="faUmbrellaBeach" />
+                    <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+                    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
+                </a>
+            }
+        }
+        @if (isAtLeastEditor()) {
+            <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+        }
+        @if (isAtLeastInstructor()) {
+            <jhi-tutorial-groups-export-button [courseId]="currentCourseId" (exportFinished)="loadTutorialGroups()" />
+        }
+        @if (isAtLeastEditor()) {
+            <a
+                tumAetUiButton
+                size="small"
+                data-testid="create-tutorial-group-btn"
+                [tumAetUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
+                [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
+            </a>
+        }
+    </div>
+
+    @if (hasNoTutorialGroups()) {
+        <tumaet-ui-empty-state
+            class="mt-12!"
+            data-testid="tutorial-groups-intro"
+            [icon]="faUsers"
+            [title]="'artemisApp.pages.tutorialGroupsManagement.noTutorialGroupsTitle' | artemisTranslate"
+            [description]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate"
+        >
+            <div tumAetUiEmptyStateActions class="flex flex-wrap items-center justify-center gap-2">
+                @if (isAtLeastEditor()) {
+                    <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        data-testid="empty-create-tutorial-group-btn"
+                        [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
+                    </a>
+                }
+            </div>
+        </tumaet-ui-empty-state>
+    } @else {
+        <tumaet-ui-table
+            data-testid="tutorial-groups-table"
+            [columns]="columns()"
+            [rows]="pagedRows()"
+            [totalRecords]="totalRecords()"
+            [trackBy]="trackByRow"
+            [rowActions]="rowActions"
+            [rowHighlighted]="isOwnGroup"
+            [loading]="isLoading()"
+            [showSearch]="false"
+            [striped]="true"
+            initialSortField="title"
+            emptyMessage="artemisApp.pages.tutorialGroupsManagement.noMatchingGroups"
+            (dataRequest)="onDataRequest($event)"
+        />
+    }
+    <ng-template #rowActions let-row>
+        <jhi-tutorial-group-row-buttons
+            [courseId]="currentCourseId"
+            [isAtLeastInstructor]="isAtLeastInstructor()"
+            [tutorialGroup]="row.group"
+            (tutorialGroupDeleted)="loadTutorialGroups()"
+        />
+    </ng-template>
+}
+
+<ng-template #titleColumn let-params>
+    <a class="font-semibold" [id]="'title-' + params.data.group.id" [routerLink]="['./', params.data.group.id]">{{ params.data.title }}</a>
+</ng-template>
+
+<ng-template #tutorColumn let-params>
+    <span>{{ params.data.tutor }}</span>
+</ng-template>
+
+<ng-template #utilizationColumn let-params>
+    <jhi-tutorial-group-utilization-indicator [tutorialGroup]="params.data.group" />
+</ng-template>
+
+<ng-template #registrationsColumn let-params>
+    <span>{{ params.data.registrations }} / {{ params.data.group.capacity ?? '–' }}</span>
+</ng-template>
+
+<ng-template #campusColumn let-params>
+    <span>{{ params.data.campusLabel }}</span>
+</ng-template>
+
+<ng-template #scheduleColumn let-params>
+    @let schedule = params.data.group.tutorialGroupSchedule;
+    @if (schedule) {
+        <!-- Only include the repetition frequency when it deviates from the default of once per week -->
+        <span>{{ schedule | meetingPattern: schedule.repetitionFrequency !== 1 }}</span>
+    }
+</ng-template>

@@ -1,0 +1,159 @@
+{
+  "tool": "RUBOCOP",
+  "issues": [
+    {
+      "filePath": "../assignment/Gemfile",
+      "startLine": 6,
+      "endLine": 6,
+      "startColumn": 3,
+      "endColumn": 26,
+      "rule": "Bundler/GemComment",
+      "category": "Bundler",
+      "message": "Missing gem description comment.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/Gemfile",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 1,
+      "endColumn": 20,
+      "rule": "Bundler/GemComment",
+      "category": "Bundler",
+      "message": "Missing gem description comment.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/client.rb",
+      "startLine": 10,
+      "endLine": 10,
+      "startColumn": 3,
+      "endColumn": 17,
+      "rule": "Style/ConstantVisibility",
+      "category": "Style",
+      "message": "Explicitly make `ITERATIONS` public or private using either `#public_constant` or `#private_constant`.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/client.rb",
+      "startLine": 11,
+      "endLine": 11,
+      "startColumn": 3,
+      "endColumn": 22,
+      "rule": "Style/ConstantVisibility",
+      "category": "Style",
+      "message": "Explicitly make `DATES_LENGTH_MIN` public or private using either `#public_constant` or `#private_constant`.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/client.rb",
+      "startLine": 12,
+      "endLine": 12,
+      "startColumn": 3,
+      "endColumn": 23,
+      "rule": "Style/ConstantVisibility",
+      "category": "Style",
+      "message": "Explicitly make `DATES_LENGTH_MAX` public or private using either `#public_constant` or `#private_constant`.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/client.rb",
+      "startLine": 16,
+      "endLine": 16,
+      "startColumn": 3,
+      "endColumn": 5,
+      "rule": "Metrics/MethodLength",
+      "category": "Metrics",
+      "message": "Method has too many lines. [12/10]",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/context.rb",
+      "startLine": 8,
+      "endLine": 8,
+      "startColumn": 5,
+      "endColumn": 34,
+      "rule": "Style/ImplicitRuntimeError",
+      "category": "Style",
+      "message": "Use `raise` with an explicit exception class and message, rather than just a message.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/context.rb",
+      "startLine": 8,
+      "endLine": 8,
+      "startColumn": 5,
+      "endColumn": 34,
+      "rule": "Style/MethodCallWithArgsParentheses",
+      "category": "Style",
+      "message": "Use parentheses for method calls with arguments.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/context.rb",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 5,
+      "endColumn": 25,
+      "rule": "Style/ImplicitRuntimeError",
+      "category": "Style",
+      "message": "Use `raise` with an explicit exception class and message, rather than just a message.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/context.rb",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 5,
+      "endColumn": 25,
+      "rule": "Style/MethodCallWithArgsParentheses",
+      "category": "Style",
+      "message": "Use parentheses for method calls with arguments.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/merge_sort.rb",
+      "startLine": 24,
+      "endLine": 24,
+      "startColumn": 3,
+      "endColumn": 5,
+      "rule": "Metrics/AbcSize",
+      "category": "Metrics",
+      "message": "Assignment Branch Condition size for merge is too high. [<18, 15, 12> 26.32/17]",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/merge_sort.rb",
+      "startLine": 24,
+      "endLine": 24,
+      "startColumn": 3,
+      "endColumn": 5,
+      "rule": "Metrics/MethodLength",
+      "category": "Metrics",
+      "message": "Method has too many lines. [27/10]",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/policy.rb",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 3,
+      "endColumn": 27,
+      "rule": "Style/ConstantVisibility",
+      "category": "Style",
+      "message": "Explicitly make `DATES_SIZE_THRESHOLD` public or private using either `#public_constant` or `#private_constant`.",
+      "priority": "note"
+    },
+    {
+      "filePath": "../assignment/src/policy.rb",
+      "startLine": 17,
+      "endLine": 17,
+      "startColumn": 5,
+      "endColumn": 24,
+      "rule": "Layout/MultilineAssignmentLayout",
+      "category": "Layout",
+      "message": "Right hand side of multi-line assignment is on the same line as the assignment operator `=`.",
+      "priority": "note"
+    }
+  ]
+}

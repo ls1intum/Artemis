@@ -1,0 +1,2 @@
+de.tum.cit.aet.artemis.core.util.junit_extensions.AwaitilityExtension
+de.tum.cit.aet.artemis.core.util.junit_extensions.ParallelLoggingExtension

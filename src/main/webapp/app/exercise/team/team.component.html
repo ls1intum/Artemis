@@ -1,0 +1,73 @@
+<div>
+    @if (exercise() && team()) {
+        <div class="flex">
+            <div class="mb-2">
+                <h2 class="flex items-baseline mb-2">
+                    <span>{{ exercise()!.title }} - {{ team()!.name }}</span
+                    ><code class="ms-2 team-short-name">{{ team()!.shortName }}</code>
+                </h2>
+                <div>
+                    <span class="inline-block">
+                        <span class="text-text-secondary font-bold">Tutor:</span>
+                        @if (isAdmin() && team()!.owner) {
+                            <a [routerLink]="['/admin', 'user-management', team()!.owner?.login]">{{ team()!.owner?.name }}</a>
+                        }
+                        @if (!isAdmin() && team()!.owner) {
+                            <a [href]="'mailto:' + team()!.owner!.email">{{ team()!.owner?.name }}</a>
+                        }
+                        @if (!team()!.owner) {
+                            <span class="font-bold" jhiTranslate="artemisApp.team.detail.noOwner"></span>
+                        }
+                    </span>
+                    <span class="inline-block ms-2">
+                        <span class="text-text-secondary font-bold">Created:</span>
+                        <span [tumAetUiTooltip]="team()!.createdDate | artemisDate" tumAetUiTooltipPosition="top" tooltipStyleClass="date-tooltip">
+                            {{ team()!.createdDate!.fromNow() }}
+                        </span>
+                        @if (isAdmin()) {
+                            <a [routerLink]="['/admin', 'user-management', team()!.createdBy]">({{ team()!.createdBy }})</a>
+                        }
+                    </span>
+                    @if (team()!.lastModifiedDate && team()!.lastModifiedDate!.isAfter(team()!.createdDate)) {
+                        <span class="inline-block ms-2">
+                            <span class="text-text-secondary font-bold">Last modified:</span>
+                            <span [tumAetUiTooltip]="team()!.lastModifiedDate | artemisDate" tumAetUiTooltipPosition="top" tooltipStyleClass="date-tooltip">
+                                {{ team()!.lastModifiedDate!.fromNow() }}
+                            </span>
+                            @if (isAdmin()) {
+                                <a [routerLink]="['/admin', 'user-management', team()!.lastModifiedBy]">({{ team()!.lastModifiedBy }})</a>
+                            }
+                        </span>
+                    }
+                </div>
+            </div>
+            @if (exercise()!.isAtLeastTutor) {
+                <div class="flex ms-auto">
+                    @if (exercise()!.isAtLeastInstructor || team()!.owner?.id === currentUser()?.id) {
+                        <jhi-team-update-button [exercise]="exercise()!" [team]="team()!" (save)="onTeamUpdate($event)" />
+                    }
+                    @if (exercise()!.isAtLeastInstructor) {
+                        <jhi-team-delete-button class="ms-1" [exercise]="exercise()!" [team]="team()!" (delete)="onTeamDelete()" />
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <jhi-table-view [cols]="studentsColumns" [vals]="team()?.students ?? []" [loading]="isLoading() || isTransitioning()" [options]="studentsTableOptions" />
+
+    @if (exercise() && team()) {
+        <h4 class="mt-6! flex items-baseline">
+            {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise()!.course!.title } }}
+            <code class="ms-2 team-short-name">{{ team()!.shortName }}</code>
+        </h4>
+        <jhi-team-participation-table
+            [overviewPurpose]="overviewPurpose"
+            [team]="team()!"
+            [course]="exercise()!.course!"
+            [exercise]="exercise()!"
+            [isAdmin]="isAdmin()"
+            [isTeamOwner]="isTeamOwner()"
+        />
+    }
+</div>

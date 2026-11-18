@@ -1,0 +1,56 @@
+{
+    "artemisApp": {
+        "organizationManagement": {
+            "title": "Organisationsverwaltung",
+            "name": "Name",
+            "shortName": "Kurzname",
+            "url": "URL",
+            "description": "Beschreibung",
+            "logoUrl": "Logo URL",
+            "users": "Nutzer:innen",
+            "courses": "Kurse",
+            "emailPattern": "E-Mail-Muster",
+            "delete": {
+                "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
+            },
+            "addLabel": "Organisation hinzufügen",
+            "addOrEditLabel": "Organisation hinzufügen oder bearbeiten",
+            "detail": {
+                "title": "Organisation"
+            },
+            "userSearch": {
+                "usersPerPage": "{{number}} Nutzer:innen pro Seite",
+                "showAllUsers": "Alle Nutzer:innen anzeigen",
+                "searchForUsers": "Nutzer:in zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
+                "searchNoResults": "Nutzer:in nicht gefunden",
+                "addUsersButton": "Nutzer:innen hinzufügen",
+                "removeFromOrganization": {
+                    "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
+                }
+            },
+            "addUserModal": {
+                "title": "Nutzer:innen zur Organisation hinzufügen"
+            },
+            "modalSelector": {
+                "select": "Auswählen",
+                "title": "Organisationen",
+                "noOrganizations": "Keine Organisationen verfügbar. ",
+                "manageOrganizations": "Organisationen verwalten"
+            },
+            "patternChangeWarning": "Beim Ändern des E-Mail-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
+        },
+        "organization": {
+            "updated": "Organisation aktualisiert!",
+            "deleted": "Organisation gelöscht!",
+            "created": "Organisation angelegt!"
+        },
+        "organizationRequest": {
+            "name": "Name",
+            "shortName": "Kurzname",
+            "emailPattern": "E-Mail-Muster"
+        },
+        "organizationUser": {
+            "deleted": "Nutzer:in aus Organisation entfernt!"
+        }
+    }
+}

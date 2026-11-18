@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "fileUploadAssessment": {
+            "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}",
+            "submissionFile": "Download Submission File",
+            "notFound": "We couldn't find any unassessed file upload submissions, please go back.",
+            "addFeedback": "Add new Feedback",
+            "assessInstruction": "Please click the \"Add new Feedback\" button.",
+            "assessInstructionWithDropOption": "Please click the \"Add new Feedback\" button or drag an assessment instruction and drop it here.",
+            "deleteAssessment": "Delete Assessment {{ index }} ?",
+            "dashboard": {
+                "heading": "Submissions and assessments of file upload exercise \"{{exerciseTitle}}\""
+            },
+            "error": {
+                "invalidAssessments": "Your assessments are not valid!",
+                "invalidScoreMustBeNumber": "The points field must be a number and cannot be empty!",
+                "invalidNeedScore": "Each Feedback item must contain points."
+            },
+            "messages": {
+                "lock": "You now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening others."
+            }
+        }
+    }
+}

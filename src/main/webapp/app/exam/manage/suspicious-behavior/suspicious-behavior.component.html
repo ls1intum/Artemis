@@ -1,0 +1,65 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0!">
+        {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
+    </h5>
+    <jhi-documentation-button [type]="documentationType" />
+</div>
+<p jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription"></p>
+<div class="flex items-center gap-2 mb-1">
+    <tumaet-ui-checkbox inputId="different-student-exams-same-ip" [(checked)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />
+    <label for="different-student-exams-same-ip" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress"></label>
+</div>
+<div class="flex items-center gap-2 mb-1">
+    <tumaet-ui-checkbox inputId="different-student-exams-same-fingerprints" [(checked)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked" />
+    <label for="different-student-exams-same-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint"></label>
+</div>
+<div class="flex items-center gap-2 mb-1">
+    <tumaet-ui-checkbox inputId="same-student-exam-different-ips" [(checked)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked" />
+    <label for="same-student-exam-different-ips" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress"></label>
+</div>
+<div class="flex items-center gap-2 mb-1">
+    <tumaet-ui-checkbox inputId="same-student-exam-different-fingerprints" [(checked)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked" />
+    <label for="same-student-exam-different-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint"></label>
+</div>
+<div class="flex items-center gap-2 mb-1">
+    <tumaet-ui-checkbox inputId="ip-outside-of-range" [(checked)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />
+    <label for="ip-outside-of-range" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange"></label>
+</div>
+@if (checkboxCriterionIPOutsideOfASpecificRangeChecked()) {
+    <div class="flex flex-col gap-1 w-full md:w-1/2 mb-6!">
+        <div class="flex items-center gap-2">
+            <label for="ip-subnet" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.subnet"></label>
+            <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp" />
+        </div>
+        <input tumAetUiInput type="text" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
+    </div>
+}
+<div class="my-6!">
+    <jhi-button
+        [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'"
+        [disabled]="!analyzeButtonEnabled()"
+        [isLoading]="analyzing()"
+        (onClick)="analyzeSessions()"
+    />
+</div>
+<div class="flex flex-col items-start">
+    @if (analyzed()) {
+        <p
+            jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number"
+            [translateValues]="{ numberOfSuspiciousSessions: suspiciousSessions()?.length }"
+        ></p>
+    }
+    @if (suspiciousSessions().length !== 0) {
+        <button tumAetUiButton type="button" (click)="goToSuspiciousSessions()" class="mb-12!">
+            <span id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view"></span>
+        </button>
+    }
+</div>
+<jhi-plagiarism-cases-overview
+    [exercises]="exercises()"
+    [plagiarismCasesPerExercise]="plagiarismCasesPerExercise()"
+    [plagiarismResultsPerExercise]="plagiarismResultsPerExercise()"
+    [anyPlagiarismCases]="anyPlagiarismCases()"
+    [courseId]="courseId()!"
+    [examId]="examId()!"
+/>

@@ -1,0 +1,302 @@
+package de.tum.cit.aet.artemis.lecture.repository;
+
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.persistence.LockModeType;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
+
+/**
+ * Spring Data JPA repository for the Attachment Unit entity.
+ */
+@Conditional(LectureEnabled.class)
+@Lazy
+@Repository
+public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<AttachmentVideoUnit, Long> {
+
+    @Query("""
+            SELECT lectureUnit
+            FROM Lecture lecture
+                LEFT JOIN lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH lectureUnit.attachment attachment
+            WHERE lecture.id = :lectureId
+                AND TYPE (lectureUnit) = AttachmentVideoUnit
+                AND attachment.attachmentType = :attachmentType
+            ORDER BY lectureUnit.lectureUnitOrder
+            """)
+    List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+
+    /**
+     * Find all attachment video units by lecture id and attachment type or throw if ist is empty.
+     * The list is sorted according to the order of units in the lecture.
+     *
+     * @param lectureId      the id of the lecture
+     * @param attachmentType the attachment type
+     * @return the list of all attachment video units with the given lecture id and attachment type
+     * @throws EntityNotFoundException if no results are found
+     */
+    @NonNull
+    default List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
+        List<AttachmentVideoUnit> attachmentVideoUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
+        if (attachmentVideoUnits.isEmpty()) {
+            throw new EntityNotFoundException("AttachmentVideoUnit");
+        }
+        return attachmentVideoUnits;
+    }
+
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.slides slides
+                LEFT JOIN FETCH attachmentVideoUnit.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithSlidesAndCompetenciesById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    default AttachmentVideoUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentVideoUnitId) {
+        return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
+    }
+
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+                JOIN FETCH attachmentVideoUnit.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithLectureAndCourseAndAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    /**
+     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet, newest courses first
+     * (the same order as {@link #findReconcileCourseIdsNewestFirst}). Used by the backfill scheduler to process legacy units
+     * that existed before the processing pipeline was deployed.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return list of unprocessed AttachmentVideoUnits
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            LEFT JOIN avu.attachment attachment
+            LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = avu.id
+            WHERE ps.id IS NULL
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
+                )
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC, avu.id
+            """)
+    List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Finds active attachment video units for which no Iris synchronization state exists yet.
+     * This supports a bounded rollout backfill for units created before retryable synchronization
+     * was introduced.
+     *
+     * <p>
+     * The attachment is joined explicitly rather than navigated to as {@code avu.attachment.link}, which is an implicit
+     * inner join: it dropped every unit without an attachment before the surrounding {@code OR} was evaluated, so a unit
+     * carrying only a video was never backfilled.
+     *
+     * <p>
+     * Only units whose content processing finished are considered. Pyris answers a synchronization for anything else
+     * with "lecture unit has not been ingested", so creating a state for one manufactures work that can only fail:
+     * before this condition existed, every eligible unit that had never been ingested was pushed once an hour for as
+     * long as its course stayed active. Reaching {@code DONE} is a good indication rather than a guarantee, since a
+     * unit whose course has Iris disabled also completes without being ingested; such a unit reports its
+     * synchronization as skipped instead of failing.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return attachment video units without an Iris synchronization state
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            LEFT JOIN avu.attachment attachment
+            LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
+            WHERE syncState.id IS NULL
+                AND EXISTS (
+                    SELECT 1 FROM LectureUnitProcessingState processingState
+                    WHERE processingState.lectureUnit.id = avu.id
+                        AND processingState.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+                )
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
+                )
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Find all non-test course ids, newest first: by end date and then start date, latest first, so running courses come
+     * before the ones that ended. Drives the ingestion reconciler's walk over all courses, including inactive and archived ones, so
+     * recent material is ingested before older material.
+     * <p>
+     * Deliberately not limited to courses that still hold attachment video units: the walk is also what garbage-collects a
+     * course's Iris rows through {@code deleteOrphanedIndexRows}, and a course whose last unit was deleted while Iris was
+     * unavailable still holds rows for it. Nor does it filter out tutorial lectures, whose rows are cleaned up the same way
+     * via {@link #findTutorialLectureUnitIdentities}; the per-unit reconcile loop excludes them from re-ingestion through
+     * {@link #findAllWithAttachmentByCourseId}.
+     *
+     * @return the ids of all non-test courses, newest first
+     */
+    @Query("""
+            SELECT c.id FROM Course c
+            WHERE c.testCourse = FALSE
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC
+            """)
+    List<Long> findReconcileCourseIdsNewestFirst();
+
+    /**
+     * Find every attachment video unit of a course with its attachment, lecture, and course fetched.
+     * Used by the ingestion reconciler, which computes content fingerprints (attachment link, video source)
+     * for all units of the walked course.
+     *
+     * @param courseId the ID of the course
+     * @return all attachment video units of the course
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+                LEFT JOIN FETCH avu.attachment
+                JOIN FETCH avu.lecture l
+                JOIN FETCH l.course c
+            WHERE c.id = :courseId
+                AND l.isTutorialLecture = FALSE
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findAllWithAttachmentByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * From the given ids, return those that still correspond to an existing attachment video unit.
+     * Used by the ingestion reconciler to batch its orphan check into a single query instead of one
+     * {@code existsById} per census row.
+     *
+     * @param ids candidate lecture unit ids
+     * @return the subset of ids that exist as attachment video units
+     */
+    @Query("""
+            SELECT avu.id FROM AttachmentVideoUnit avu
+            WHERE avu.id IN :ids
+            """)
+    Set<Long> findExistingIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * From the given ids, return the identities of those attachment video units whose lecture is a tutorial lecture.
+     * Used by the ingestion reconciler to delete the index rows of units whose lecture became a tutorial lecture after
+     * they were ingested: such a unit still exists, so the orphan check keeps it, and the per-unit loop excludes it.
+     * The identity comes from the database rather than the census, whose lecture id is missing when the index holds
+     * only chunks of the unit, and the deletion is scoped by lecture id.
+     *
+     * @param ids candidate lecture unit ids
+     * @return course, lecture, and unit ids of the given units that belong to a tutorial lecture
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, avu.id)
+            FROM AttachmentVideoUnit avu
+                JOIN avu.lecture l
+            WHERE avu.id IN :ids
+                AND l.isTutorialLecture = TRUE
+            """)
+    List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT unit FROM AttachmentVideoUnit unit WHERE unit.id = :attachmentVideoUnitId")
+    Optional<AttachmentVideoUnit> findForUpdateById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    @Modifying
+    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId")
+    void updateVideoSource(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("videoSource") String videoSource);
+
+    /**
+     * Changes the video URL of a unit if it is still the one an edit loaded, so the edit does not overwrite a video a TUM.Live upload attached meanwhile. The URLs
+     * are compared exactly in Java, as the database may ignore their letter case.
+     *
+     * @param attachmentVideoUnitId the unit
+     * @param expectedVideoSource   the URL the edit loaded, or null if it loaded none; a blank URL, which older saves stored for a removed link, counts as none
+     * @param videoSource           the new URL, or null
+     * @return whether it was written
+     */
+    @Transactional // ok because the unit is locked while its URL is compared and written
+    default boolean updateVideoSourceIfUnchanged(long attachmentVideoUnitId, String expectedVideoSource, String videoSource) {
+        Optional<AttachmentVideoUnit> unit = findForUpdateById(attachmentVideoUnitId);
+        if (unit.isEmpty()) {
+            return false;
+        }
+        String current = unit.get().getVideoSource();
+        boolean unchanged = expectedVideoSource == null ? current == null || current.isBlank() : expectedVideoSource.equals(current);
+        if (unchanged) {
+            updateVideoSource(attachmentVideoUnitId, videoSource);
+        }
+        return unchanged;
+    }
+
+    /**
+     * Saves the copy of a unit with the video URL the unit has now. The unit stays locked until the copy is saved, so a TUM.Live upload that replaces the unit's
+     * video either happens before and the copy gets the new URL, or after, when the cleanup of the old video finds the copy. A unit deleted meanwhile leaves the
+     * copy without video, as its deletion may have deleted the video in TUM.Live.
+     *
+     * @param copy         the new unit
+     * @param sourceUnitId the unit it copies
+     * @return the saved copy
+     */
+    @Transactional // ok because the unit is locked until its copy is saved
+    default AttachmentVideoUnit saveCopyWithCurrentVideoSource(AttachmentVideoUnit copy, long sourceUnitId) {
+        copy.setVideoSource(findForUpdateById(sourceUnitId).map(AttachmentVideoUnit::getVideoSource).orElse(null));
+        return save(copy);
+    }
+
+    /**
+     * The links of all lecture units, to find the TUM.Live lectures units still show. Attachment video units and online units keep their link in the same column.
+     * All of them, as a TUM.Live link has many spellings (letter case, leading zeros, percent-encoding) that only parsing it recognizes. Not distinct, as MySQL
+     * would treat links that differ only in letter case as one.
+     *
+     * @return the links
+     */
+    @Query(nativeQuery = true, value = "SELECT lecture_unit.source FROM lecture_unit WHERE lecture_unit.source IS NOT NULL")
+    List<String> findAllLectureUnitSources();
+}

@@ -1,0 +1,313 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
+import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { ChangeDetectorRef } from '@angular/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { provideHttpClient } from '@angular/common/http';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MenuHarness } from '@angular/aria/menu/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+
+/**
+ * Test suite for TextBlockFeedbackEditorComponent.
+ * Tests component creation, feedback editing, delete button behavior,
+ * keyboard events, grading instruction links, and assessment event tracking.
+ */
+describe('TextBlockFeedbackEditorComponent', () => {
+    let component: TextBlockFeedbackEditorComponent;
+    let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
+    let compiled: any;
+
+    const textBlock = { id: '1' } as TextBlock;
+
+    /**
+     * Re-applies the current (mutated) feedback to the signal input under a fresh object identity and runs
+     * change detection. Mutating the object held by a signal input in place does not notify the signal in
+     * Angular's zoneless reactivity model, so dependent template branches (e.g. the dismiss/confirm @if) would
+     * otherwise not re-render. Cloning preserves the mutated state while changing the reference.
+     */
+    function reapplyFeedback(): void {
+        const feedback = component.feedback();
+        const clone: Feedback = Object.assign(Object.create(Object.getPrototypeOf(feedback)), feedback);
+        fixture.componentRef.setInput('feedback', clone);
+        fixture.changeDetectorRef.detectChanges();
+    }
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            providers: [
+                MockProvider(ChangeDetectorRef),
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideTranslateService(),
+            ],
+        }).compileComponents();
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(TextBlockFeedbackEditorComponent);
+        component = fixture.componentInstance;
+        const feedback = Feedback.forText(textBlock);
+        fixture.componentRef.setInput('textBlock', textBlock);
+        fixture.componentRef.setInput('feedback', feedback);
+        compiled = fixture.debugElement.nativeElement;
+        fixture.detectChanges();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+
+        const textarea = compiled.querySelector('textarea');
+        expect(textarea).toBeTruthy();
+
+        const input = compiled.querySelector('input');
+        expect(input).toBeTruthy();
+    });
+
+    it('should show delete button for empty feedback only', () => {
+        let button = compiled.querySelector('#dismiss-icon');
+        let confirm = compiled.querySelector('#confirm-icon');
+        expect(button).toBeTruthy();
+        expect(confirm).toBeFalsy();
+
+        component.feedback().credits = 1;
+        reapplyFeedback();
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
+        expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
+
+        component.feedback().detailText = 'Lorem Ipsum';
+        reapplyFeedback();
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
+        expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
+
+        component.feedback().credits = 0;
+        reapplyFeedback();
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
+        expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
+
+        component.feedback().detailText = '';
+        reapplyFeedback();
+
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
+        expect(button).toBeTruthy();
+        expect(confirm).toBeFalsy();
+    });
+
+    it('should call escKeyup when keyEvent', () => {
+        component.feedback().credits = 0;
+        component.feedback().detailText = '';
+        vi.spyOn(component, 'escKeyup');
+        const event = new KeyboardEvent('keydown', {
+            key: 'Esc',
+            bubbles: true,
+        });
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        textarea.dispatchEvent(event);
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.escKeyup).toHaveBeenCalledOnce();
+    });
+
+    it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
+        // Set feedback credits to non-zero which requires confirmation
+        component.feedback().credits = 1;
+        fixture.changeDetectorRef.detectChanges();
+
+        // Verify confirm icon is displayed when feedback has credits
+        const confirmIcon = compiled.querySelector('#confirm-icon');
+        expect(confirmIcon).toBeTruthy();
+    });
+
+    it('should show link icon when feedback is associated with grading instruction', () => {
+        component.feedback().gradingInstruction = new GradingInstruction();
+        fixture.changeDetectorRef.detectChanges();
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        expect(linkIcon).toBeTruthy();
+    });
+
+    it('should not show link icon when feedback is not associated with grading instruction', () => {
+        component.feedback().gradingInstruction = undefined;
+        fixture.changeDetectorRef.detectChanges();
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
+        expect(linkIcon).toBeFalsy();
+    });
+
+    it('should send assessment event on dismiss button click', () => {
+        component.feedback().type = FeedbackType.MANUAL;
+        component.textBlock().type = TextBlockType.MANUAL;
+        //@ts-ignore
+        const sendAssessmentEvent = vi.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.dismiss();
+        fixture.changeDetectorRef.detectChanges();
+        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
+    });
+
+    it('should set correctionStatus of the feedback to undefined when the score changes', () => {
+        // given
+        component.feedback().correctionStatus = FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
+
+        // when
+        component.onScoreChange();
+
+        // then
+        expect(component.feedback().correctionStatus).toBeUndefined();
+    });
+
+    it('should set correctionStatus of the feedback to undefined on connection of feedback with the grading instruction', () => {
+        // given
+        component.feedback().correctionStatus = FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION;
+        //@ts-ignore
+        vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+
+        // when
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+        component.connectFeedbackWithInstruction(mockEvent);
+
+        // then
+        expect(component.feedback().correctionStatus).toBeUndefined();
+    });
+
+    it('should send assessment event and rewrite the prefix on the first edit of an accepted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
+        component.didChange();
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
+    });
+
+    it('should not send another assessment event on later edits of an already-adapted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
+        component.didChange();
+        component.didChange();
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should transition an accepted suggestion via connectFeedbackWithInstruction and send the assessment event once', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+
+        component.connectFeedbackWithInstruction(mockEvent);
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
+    });
+
+    it('should not send assessment event if feedback text is unchanged', () => {
+        component.feedback().text = 'Unchanged text';
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.didChange();
+        expect(typeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should render the grading instruction dropdown next to the feedback detail when criteria exist', () => {
+        const criterion = { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion;
+        fixture.componentRef.setInput('criteria', [criterion]);
+        fixture.detectChanges();
+
+        expect(compiled.querySelector('.unified-feedback-detail-row [data-testid="feedback-instruction-menu"]')).toBeTruthy();
+    });
+
+    it('should name each criterion group of the instruction menu, so equal instructions of different criteria stay distinguishable', async () => {
+        const instruction = (id: number) => ({ id, credits: 1, instructionDescription: 'Correct' }) as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [instruction(2)] } as GradingCriterion,
+            { id: 3, structuredGradingInstructions: [instruction(4)] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(2);
+        const groups = Array.from(document.querySelectorAll('tumaet-ui-menu [data-testid="feedback-instruction-group"]'));
+        expect(groups.map((group) => [group.getAttribute('role'), group.getAttribute('aria-label')])).toEqual([
+            ['group', 'Correctness'],
+            ['group', 'artemisApp.textAssessment.feedbackEditor.noTitle'],
+        ]);
+        expect(groups.map((group) => group.querySelectorAll('[tumAetUiMenuItem]').length)).toEqual([1, 1]);
+    });
+
+    it('should not wrap the instructions of a single criterion in a named group', async () => {
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(1);
+        expect(document.querySelectorAll('tumaet-ui-menu [role="group"]')).toHaveLength(0);
+    });
+
+    it('should update the assessment when a grading instruction is chosen from the menu', () => {
+        const instruction = { id: 2, credits: 1 } as GradingInstruction;
+        const changeSpy = vi.spyOn(component.feedbackChange, 'emit');
+
+        component.updateAssessmentWithDropdown(instruction);
+
+        expect(changeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().gradingInstruction).toEqual(instruction);
+        expect(component.feedback().credits).toBe(1);
+        expect(component.feedback().correctionStatus).toBeUndefined();
+    });
+
+    it('should colour a grading instruction by its credits', () => {
+        expect(component.getInstrColour({ credits: 1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
+        expect(component.getInstrColour({ credits: 0 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
+        expect(component.getInstrColour({ credits: -1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        // an instruction without a usable credit value keeps the default colour
+        expect(component.getInstrColour({ credits: undefined } as unknown as GradingInstruction)).toBeUndefined();
+    });
+});

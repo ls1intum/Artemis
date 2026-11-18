@@ -1,0 +1,85 @@
+package de.tum.cit.aet.artemis.core;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+
+class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final Logger log = LoggerFactory.getLogger(DatabaseQueryCountTest.class);
+
+    private static final String TEST_PREFIX = "databasequerycount";
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    private static final int NUMBER_OF_TUTORS = 1;
+
+    @BeforeEach
+    void setup() {
+        participantScoreScheduleService.shutdown();
+        userUtilService.addUsers(TEST_PREFIX, 2, NUMBER_OF_TUTORS, 0, 0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
+        // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
+        // TODO: add team exercises, do not make all quizzes active
+        // TODO: add 1. tutorial groups with a 2. tutorial group configuration, 3. competencies and 4. prerequisites and make sure those are not loaded in the database
+        var courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
+
+        assertThatDb(() -> {
+            log.info("Start courses for dashboard call for multiple courses");
+            var userCourses = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+            log.info("Finish courses for dashboard call for multiple courses");
+            return userCourses;
+        }).hasBeenCalledAtMostTimes(8);
+        // TODO: Hibernate 7 increased query count from 6 to 7-8 - investigate remaining extra queries in a follow-up
+        // 1 DB call to get the user from the DB
+        // 1 DB call to get all active courses
+        // 1 DB call to load all exercises
+        // 1 DB call to get all individual student participations with submissions and results
+        // 1 DB call to get all team student participations with submissions and results
+        // 1 DB call to get the active exams
+        // 1 optional DB call to get the amount of notifications inside the course.
+        // + additional queries from Hibernate 7 entity/collection loading changes
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamQueryCount() throws Exception {
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
+
+        // Measured, and pinned at the measured value so a new query fails the build rather than being absorbed by slack.
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(6);
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(2);
+    }
+
+    private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
+        return request.get("/api/exam/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/" + studentExam.getId()
+                + "/conduction", HttpStatus.OK, StudentExam.class);
+    }
+
+    private Void submitExam(StudentExam studentExam) throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + studentExam.getExam().getCourse().getId() + "/exams/" + studentExam.getExam().getId() + "/student-exams/submit",
+                studentExam, HttpStatus.OK, null);
+        return null;
+    }
+}

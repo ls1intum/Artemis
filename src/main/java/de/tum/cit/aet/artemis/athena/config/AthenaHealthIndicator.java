@@ -1,0 +1,105 @@
+package de.tum.cit.aet.artemis.athena.config;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+
+/**
+ * Service determining the health of the Athena service and its assessment modules.
+ */
+@Component
+@Lazy
+@Conditional(AthenaEnabled.class)
+public class AthenaHealthIndicator implements HealthIndicator {
+
+    private static final Logger log = LoggerFactory.getLogger(AthenaHealthIndicator.class);
+
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle 🔴
+
+    private static final String ATHENA_URL_KEY = "url";
+
+    private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
+
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    private final JsonMapper objectMapper;
+
+    @Value("${artemis.athena.url}")
+    private String athenaUrl;
+
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, JsonMapper objectMapper) {
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.objectMapper = objectMapper;
+    }
+
+    private record AthenaModuleHealth(String exerciseType, boolean healthy, String url) {
+    }
+
+    private static String moduleHealthToString(AthenaModuleHealth moduleHealth) {
+        var healthString = moduleHealth.healthy ? GREEN_CIRCLE : RED_CIRCLE;
+        healthString += " " + moduleHealth.url + " (" + moduleHealth.exerciseType + ")";
+        return healthString;
+    }
+
+    /**
+     * Ping Athena at /health and check if the service is available.
+     */
+    @Override
+    public Health health() {
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
+        ConnectorHealth health;
+        try {
+            // Read the response as a String and deserialize it here rather than letting RestTemplate bind it: this
+            // template is a plain new RestTemplate, so its Jackson converter holds a default mapper rather than the
+            // application one, and only the application mapper carries the Artemis defaults.
+            final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
+            final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
+            final var athenaStatus = healthResponse != null ? healthResponse.status() : null;
+
+            if (athenaStatus != null) {
+                additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, athenaStatus);
+                additionalInfo.putAll(getAdditionalInfoForModules(healthResponse));
+            }
+            else {
+                additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, "not available");
+            }
+            health = new ConnectorHealth("ok".equals(athenaStatus), additionalInfo);
+        }
+        catch (Exception ex) {
+            log.warn("Failed to check Athena health", ex);
+            health = new ConnectorHealth(false, additionalInfo, ex);
+        }
+
+        return health.asActuatorHealth();
+    }
+
+    /**
+     * Get additional information about the health of the assessment modules.
+     */
+    private Map<String, Object> getAdditionalInfoForModules(AthenaHealthResponse athenaHealthResponse) {
+        var additionalModuleInfo = new HashMap<String, Object>();
+        var modules = athenaHealthResponse.modules();
+        modules.forEach((moduleName, descriptionMap) -> {
+            var moduleHealth = new AthenaModuleHealth(descriptionMap.type(), descriptionMap.healthy(), descriptionMap.url());
+            additionalModuleInfo.put(moduleName, moduleHealthToString(moduleHealth));
+        });
+        return additionalModuleInfo;
+    }
+}

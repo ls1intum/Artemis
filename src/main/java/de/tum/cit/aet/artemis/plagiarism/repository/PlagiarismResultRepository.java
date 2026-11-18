@@ -1,0 +1,104 @@
+package de.tum.cit.aet.artemis.plagiarism.repository;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+
+/**
+ * Spring Data JPA repository for the PlagiarismResult entity.
+ */
+@Conditional(PlagiarismEnabled.class)
+@Lazy
+@Repository
+public interface PlagiarismResultRepository extends ArtemisJpaRepository<PlagiarismResult, Long> {
+
+    Optional<PlagiarismResult> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "comparisons", "comparisons.submissions" })
+    PlagiarismResult findPlagiarismResultById(long plagiarismResultId);
+
+    /**
+     * Finds the first plagiarism result by exercise ID, including its comparisons, ordered by last modified date in descending order.
+     * If no plagiarism result is found, this method returns null. This method avoids in-memory paging by retrieving the result directly from the database.
+     *
+     * @param exerciseId the ID of the exercise to find the plagiarism result for
+     * @return the first {@code PlagiarismResult} with comparisons, ordered by last modified date in descending order,
+     *         or null if no result is found
+     */
+    @Nullable
+    default PlagiarismResult findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+        var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
+        if (plagiarismResultIdOrEmpty.isEmpty()) {
+            return null;
+        }
+        var id = plagiarismResultIdOrEmpty.get().getId();
+        return findPlagiarismResultById(id);
+    }
+
+    /**
+     * Store the given PlagiarismResult in the database.
+     *
+     * @param result PlagiarismResult to store in the database.
+     * @return the saved result
+     */
+    default PlagiarismResult savePlagiarismResultAndRemovePrevious(PlagiarismResult result) {
+        Optional<PlagiarismResult> optionalPreviousResult = Optional
+                .ofNullable(findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
+        result = save(result);
+        optionalPreviousResult.ifPresent(this::delete);
+        return result;
+    }
+
+    /**
+     * prepare the result for sending it as JSON to the client by removing unnecessary values
+     *
+     * @param plagiarismResult the result for which a couple of related objects should be set to null
+     */
+    default void prepareResultForClient(PlagiarismResult plagiarismResult) {
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
+        }
+    }
+
+    /**
+     * Deletes all plagiarism results associated to the given exercise id
+     *
+     * @param exerciseId ID of exercise with plagiarism results that will be deleted.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deletePlagiarismResultsByExerciseId(Long exerciseId);
+
+    /**
+     * Deletes all plagiarism results associated to the given exercise id except the one with the given plagiarism result id
+     *
+     * @param plagiarismResultId ID of the plagiarism result that won't be deleted.
+     * @param exerciseId         ID of exercise with plagiarism results that will be deleted.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
+
+    /**
+     * Checks whether the plagiarism result with the given id belongs to the given exercise.
+     *
+     * @param plagiarismResultId ID of the plagiarism result
+     * @param exerciseId         ID of the exercise the result should belong to
+     * @return true if the plagiarism result exists and belongs to the exercise
+     */
+    boolean existsByIdAndExerciseId(long plagiarismResultId, long exerciseId);
+}

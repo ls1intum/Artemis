@@ -1,0 +1,158 @@
+<div class="markdown-preview visual-mode">
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.questionTitle"></h4>
+    <textarea
+        [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.questionTitle' | artemisTranslate"
+        id="mc-question"
+        tumAetUiInput
+        tumAetUiInputSize="small"
+        class="form-group-narrow w-full"
+        [(ngModel)]="question().text"
+        rows="5"
+        (input)="this.questionChanged.emit()"
+        placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
+    ></textarea>
+    <div class="form-group-narrow visual-question-hint">
+        <fa-icon
+            [icon]="faQuestionCircle"
+            class="me-1 text-(--text-body-secondary)"
+            [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate"
+        />
+        <input
+            [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate"
+            tumAetUiInput
+            tumAetUiInputSize="small"
+            class="min-w-0 flex-1"
+            [(ngModel)]="question().hint"
+            (input)="this.questionChanged.emit()"
+            placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate }}"
+        />
+    </div>
+    <div class="mb-4! visual-question-hint">
+        <fa-icon
+            [icon]="faExclamationCircle"
+            class="me-1 text-(--text-body-secondary)"
+            [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate"
+        />
+        <input
+            [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate"
+            tumAetUiInput
+            tumAetUiInputSize="small"
+            class="min-w-0 flex-1"
+            [(ngModel)]="question().explanation"
+            (input)="this.questionChanged.emit()"
+            placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
+        />
+    </div>
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.answersTitle"></h4>
+    @for (answerOption of question().answerOptions; track answerOption; let i = $index) {
+        <div id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
+            <div class="form-group-narrow visual-answer-question-container">
+                <div
+                    class="visual-answer"
+                    [ngClass]="answerOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'"
+                    (click)="toggleIsCorrect(answerOption)"
+                    #keyboardAction37
+                    [attr.role]="!(correctToggleDisabled() && !answerOption.isCorrect) ? 'button' : null"
+                    [attr.tabindex]="!(correctToggleDisabled() && !answerOption.isCorrect) ? 0 : null"
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.correctnessOfAnswer' | artemisTranslate: { number: i + 1 }"
+                    [attr.aria-pressed]="!(correctToggleDisabled() && !answerOption.isCorrect) ? answerOption.isCorrect : null"
+                    (keydown.enter)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
+                    (keydown.space)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
+                >
+                    <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
+                </div>
+                <input
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    [tumAetUiInputId]="'answer-option-' + i + '-text'"
+                    class="min-w-0 flex-1"
+                    [(ngModel)]="answerOption.text"
+                    (input)="this.questionChanged.emit()"
+                    placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
+                    aria-label="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
+                />
+                <div
+                    id="answer-option-{{ i }}-delete"
+                    class="visual-answer-delete-container"
+                    (click)="deleteAnswer(i)"
+                    #keyboardAction51
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.deleteAnswer' | artemisTranslate: { number: i + 1 }"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </div>
+                @if (reEvaluationInProgress() && !answerOption.invalid) {
+                    <button
+                        type="button"
+                        id="answer-option-{{ i }}-invalid"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        class="visual-answer-reset-container"
+                        (click)="setInvalid(i)"
+                    >
+                        <span class="sr-only">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.invalidateAnswer' | artemisTranslate: { number: i + 1 } }}</span>
+                        <fa-icon [icon]="faBan" />
+                    </button>
+                }
+                @if (reEvaluationInProgress()) {
+                    <button
+                        type="button"
+                        id="answer-option-{{ i }}-reset"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        class="visual-answer-reset-container"
+                        (click)="resetAnswer(i)"
+                    >
+                        <span class="sr-only">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.resetAnswer' | artemisTranslate: { number: i + 1 } }}</span>
+                        <fa-icon [icon]="faUndo" />
+                    </button>
+                }
+            </div>
+            <div class="form-group-narrow visual-question-hint">
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    class="me-1 text-(--text-body-secondary)"
+                    [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate"
+                />
+                <input
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate"
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    class="min-w-0 flex-1"
+                    [(ngModel)]="answerOption.hint"
+                    (input)="this.questionChanged.emit()"
+                    placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate }}"
+                />
+            </div>
+            <div class="visual-question-hint">
+                <fa-icon
+                    [icon]="faExclamationCircle"
+                    class="me-1 text-(--text-body-secondary)"
+                    [tumAetUiTooltip]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate"
+                />
+                <input
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate"
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    class="min-w-0 flex-1"
+                    [(ngModel)]="answerOption.explanation"
+                    (input)="this.questionChanged.emit()"
+                    placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
+                />
+            </div>
+        </div>
+    }
+    @if (!reEvaluationInProgress()) {
+        <button tumAetUiButton type="button" severity="success" data-testid="add-mc-answer-option" class="mt-2 w-full" (click)="addNewAnswer()">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
+        </button>
+    }
+</div>

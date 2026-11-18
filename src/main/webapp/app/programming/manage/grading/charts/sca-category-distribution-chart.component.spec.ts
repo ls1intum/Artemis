@@ -1,0 +1,197 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+
+describe('SCA category distribution chart', () => {
+    let component: ScaCategoryDistributionChartComponent;
+    let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
+
+    let instantSpy: ReturnType<typeof vi.spyOn>;
+    let routingStub: ReturnType<typeof vi.spyOn>;
+
+    const category1 = {
+        id: 1,
+        name: 'category1',
+        state: StaticCodeAnalysisCategoryState.Inactive,
+        penalty: 1,
+        maxPenalty: 1,
+    } as StaticCodeAnalysisCategory;
+
+    const category2 = {
+        id: 2,
+        name: 'category2',
+        state: StaticCodeAnalysisCategoryState.Feedback,
+        penalty: 2,
+        maxPenalty: 2,
+    } as StaticCodeAnalysisCategory;
+
+    const category3 = {
+        id: 3,
+        name: 'category3',
+        state: StaticCodeAnalysisCategoryState.Graded,
+        penalty: 3,
+        maxPenalty: 3,
+    } as StaticCodeAnalysisCategory;
+
+    const category4 = {
+        id: 4,
+        name: 'category4',
+        state: StaticCodeAnalysisCategoryState.Graded,
+        penalty: 3,
+        maxPenalty: 3,
+    } as StaticCodeAnalysisCategory;
+
+    const programmingExercerise = new ProgrammingExercise(undefined, undefined);
+    programmingExercerise.maxStaticCodeAnalysisPenalty = 9;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+
+        fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
+        component = fixture.componentInstance;
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
+
+        const translationService = TestBed.inject(TranslateService);
+        instantSpy = vi.spyOn(translationService, 'instant');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should process the categories correctly', () => {
+        fixture.componentRef.setInput('exercise', programmingExercerise);
+        fixture.componentRef.setInput('categories', [category1, category2, category3, category4]);
+
+        fixture.componentRef.setInput('categoryIssuesMap', {
+            category1: {
+                '0': 0,
+                '1': 1,
+            },
+            category4: {
+                '0': 0,
+                '1': 4,
+            },
+        } as CategoryIssuesMap);
+
+        fixture.detectChanges();
+
+        const categoryNames = ['category1', 'category2', 'category3', 'category4'];
+        const penalties = [0, 0, 50, 50];
+        expect(component.entries()[0].name).toBe('artemisApp.programmingAssessment.penalty');
+        penalties.forEach((penalty, index) => {
+            expect(component.entries()[0].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[0].series[index].value).toBe(penalty);
+        });
+
+        const issues = [20, 0, 0, 80];
+        expect(component.entries()[1].name).toBe('artemisApp.programmingAssessment.issues');
+        issues.forEach((penalty, index) => {
+            expect(component.entries()[1].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[1].series[index].value).toBe(penalty);
+        });
+
+        const deductions = [0, 0, 0, 100];
+        expect(component.entries()[2].name).toBe('artemisApp.programmingAssessment.deductions');
+        deductions.forEach((penalty, index) => {
+            expect(component.entries()[2].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[2].series[index].value).toBe(penalty);
+        });
+    });
+
+    it('should handle negative penalties', () => {
+        const negativeCategory = {
+            id: 5,
+            name: 'negative category',
+            state: StaticCodeAnalysisCategoryState.Graded,
+            penalty: -5,
+            maxPenalty: 1,
+        } as StaticCodeAnalysisCategory;
+
+        fixture.componentRef.setInput('exercise', programmingExercerise);
+        fixture.componentRef.setInput('categories', [negativeCategory]);
+
+        fixture.detectChanges();
+
+        expect(component.entries()[0].series[0].name).toBe('negative category');
+        expect(component.entries()[0].series[0].value).toBe(0);
+
+        expect(component.entries()[1].series[0].name).toBe('negative category');
+        expect(component.entries()[1].series[0].value).toBe(0);
+
+        expect(component.entries()[2].series[0].name).toBe('negative category');
+        expect(component.entries()[2].series[0].value).toBe(0);
+    });
+
+    it('should update the translation', () => {
+        const prefix = 'artemisApp.programmingAssessment.';
+        const labels = ['penalty', 'issues', 'deductions'];
+        component.entries.set([
+            { name: '', series: [] },
+            { name: '', series: [] },
+            { name: '', series: [] },
+        ]);
+        instantSpy.mockClear();
+
+        component.updateTranslations();
+
+        expect(instantSpy).toHaveBeenCalledTimes(3);
+        instantSpy.mock.calls.forEach((calls: unknown[], index: number) => {
+            expect(calls[0]).toBe(prefix.concat(labels[index]));
+            expect(component.entries()[index].name).toBe(prefix.concat(labels[index]));
+        });
+    });
+
+    describe('test chart interaction', () => {
+        let event: TumAetUiChartSelectEvent;
+        let emitStub: ReturnType<typeof vi.spyOn>;
+        beforeEach(() => (emitStub = vi.spyOn(component.scaCategoryFilter, 'emit').mockImplementation(() => {})));
+        afterEach(() => vi.restoreAllMocks());
+
+        it('should delegate the user correctly', () => {
+            programmingExercerise.course = { id: 7 };
+            programmingExercerise.id = 10;
+            fixture.componentRef.setInput('exercise', programmingExercerise);
+            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'participations'];
+            // a click that carries no penalty segment navigates to the participation page instead of filtering
+            event = { seriesIndex: 0, index: 0 };
+
+            component.onSelect(event);
+
+            expect(routingStub).toHaveBeenCalledWith(expectedUrl);
+        });
+
+        it('should emit the correct test case id', () => {
+            fixture.componentRef.setInput('exercise', programmingExercerise);
+            fixture.componentRef.setInput('categories', [category3]);
+            fixture.detectChanges();
+            // click the first segment of the penalty bar (bar index 0)
+            const { series } = component.chartData();
+            event = { seriesIndex: 0, index: 0, meta: series[0].meta?.[0] };
+
+            component.onSelect(event);
+
+            expect(emitStub).toHaveBeenCalledWith(category3.id);
+            expect(component.tableFiltered).toBe(true);
+        });
+
+        it('should reset the table correctly', () => {
+            component.tableFiltered = true;
+
+            component.resetTableFilter();
+
+            expect(emitStub).toHaveBeenCalledWith(-5);
+            expect(component.tableFiltered).toBe(false);
+        });
+    });
+});

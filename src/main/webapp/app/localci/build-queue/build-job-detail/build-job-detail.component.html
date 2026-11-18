@@ -1,0 +1,255 @@
+<div>
+    @if (!courseId()) {
+        <h5 *adminTitleBarTitle id="build-job-detail-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.detail.title"></h5>
+    }
+
+    @if (isLoading()) {
+        <div class="my-12! flex justify-center">
+            <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
+        </div>
+    }
+
+    @if (notFound()) {
+        <tumaet-ui-message severity="warn" class="mb-4! block" jhiTranslate="artemisApp.buildQueue.detail.notFound" />
+    }
+
+    @if (buildJob()) {
+        <!-- Status Section -->
+        <div class="mb-4! rounded-lg border p-6!">
+            <div class="flex items-center gap-4!">
+                <span
+                    [ngClass]="{
+                        'text-state-success': jobStatus() === 'SUCCESSFUL',
+                        'text-state-warning': jobStatus() === 'CANCELLED',
+                        'text-state-danger': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
+                        'text-primary': jobStatus() === 'BUILDING',
+                        'text-muted-color': jobStatus() === 'QUEUED',
+                    }"
+                >
+                    <fa-icon
+                        [icon]="
+                            jobStatus() === 'SUCCESSFUL'
+                                ? faCircleCheck
+                                : jobStatus() === 'CANCELLED'
+                                  ? faExclamationTriangle
+                                  : jobStatus() === 'BUILDING'
+                                    ? faSpinner
+                                    : jobStatus() === 'QUEUED'
+                                      ? faHourglass
+                                      : faExclamationCircle
+                        "
+                        [animation]="jobStatus() === 'BUILDING' ? 'spin' : undefined"
+                        size="2x"
+                    />
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h4 class="mb-0">{{ getJobName() }}</h4>
+                    <tumaet-ui-tag
+                        [value]="jobStatus()"
+                        [severity]="
+                            jobStatus() === 'SUCCESSFUL'
+                                ? 'success'
+                                : jobStatus() === 'CANCELLED'
+                                  ? 'warn'
+                                  : jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT'
+                                    ? 'danger'
+                                    : jobStatus() === 'BUILDING'
+                                      ? 'info'
+                                      : 'secondary'
+                        "
+                    />
+                    @if (jobStatus() === 'SUCCESSFUL' && getSubmissionResult()) {
+                        <span>
+                            <jhi-result [result]="getSubmissionResult()" [showUngradedResults]="true" [showBadge]="true" />
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="mb-4! rounded-lg border">
+            <div class="border-b px-6! py-2 font-semibold" jhiTranslate="artemisApp.buildQueue.detail.infoSection"></div>
+            <div class="p-6!">
+                <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                    <div>
+                        <dl>
+                            @if (getJobId()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.id"></dt>
+                                <dd>
+                                    <code>{{ getJobId() }}</code>
+                                </dd>
+                            }
+                            @if (getBuildAgentName()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></dt>
+                                <dd>
+                                    @if (isAdministrationView()) {
+                                        <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: getBuildAgentLinkName() }">
+                                            {{ getBuildAgentName() }}
+                                        </a>
+                                    } @else {
+                                        {{ getBuildAgentName() }}
+                                    }
+                                </dd>
+                            }
+                            @if (getJobCourseId()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></dt>
+                                <dd>
+                                    <a [routerLink]="['/course-management', getJobCourseId()]">{{ getJobCourseId() }}</a>
+                                </dd>
+                            }
+                            @if (getParticipationId()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.participationId"></dt>
+                                <dd>
+                                    @if (getExerciseId()) {
+                                        <a
+                                            [routerLink]="[
+                                                '/course-management',
+                                                getJobCourseId(),
+                                                'programming-exercises',
+                                                getExerciseId(),
+                                                'participations',
+                                                getParticipationId(),
+                                                'submissions',
+                                            ]"
+                                        >
+                                            {{ getParticipationId() }}
+                                        </a>
+                                    } @else {
+                                        {{ getParticipationId() }}
+                                    }
+                                </dd>
+                            }
+                        </dl>
+                    </div>
+                    <div>
+                        <dl>
+                            @if (getRepositoryName()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.repositoryName"></dt>
+                                <dd>{{ getRepositoryName() }}</dd>
+                            }
+                            @if (getRepositoryType()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.repositoryType"></dt>
+                                <dd>{{ getRepositoryType() }}</dd>
+                            }
+                            @if (getCommitHash()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"></dt>
+                                <dd>
+                                    @if (getTriggeredByPushTo() && getJobCourseId() && getExerciseId()) {
+                                        @if (
+                                            getTriggeredByPushTo() === TriggeredByPushTo.TEMPLATE ||
+                                            getTriggeredByPushTo() === TriggeredByPushTo.SOLUTION ||
+                                            getTriggeredByPushTo() === TriggeredByPushTo.TESTS
+                                        ) {
+                                            <a
+                                                [routerLink]="[
+                                                    '/course-management',
+                                                    getJobCourseId(),
+                                                    'programming-exercises',
+                                                    getExerciseId(),
+                                                    'repository',
+                                                    getTriggeredByPushTo(),
+                                                    'commit-history',
+                                                    getCommitHash(),
+                                                ]"
+                                            >
+                                                {{ getCommitHash()?.substring(0, 11) }}
+                                            </a>
+                                        } @else if (getTriggeredByPushTo() === TriggeredByPushTo.USER) {
+                                            <a
+                                                [routerLink]="[
+                                                    '/course-management',
+                                                    getJobCourseId(),
+                                                    'programming-exercises',
+                                                    getExerciseId(),
+                                                    'participations',
+                                                    getParticipationId(),
+                                                    'repository',
+                                                    'commit-history',
+                                                    getCommitHash(),
+                                                ]"
+                                            >
+                                                {{ getCommitHash()?.substring(0, 11) }}
+                                            </a>
+                                        } @else {
+                                            <code>{{ getCommitHash()?.substring(0, 11) }}</code>
+                                        }
+                                    } @else {
+                                        <code>{{ getCommitHash()?.substring(0, 11) }}</code>
+                                    }
+                                </dd>
+                            }
+                            @if (getPriority() !== undefined) {
+                                <dt>
+                                    <span jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
+                                    <jhi-help-icon text="artemisApp.buildQueue.buildJob.priorityTooltip" />
+                                </dt>
+                                <dd>{{ getPriority() }}</dd>
+                            }
+                            @if (getRetryCount() !== undefined && getRetryCount()! > 0) {
+                                <dt jhiTranslate="artemisApp.buildQueue.detail.retryCount"></dt>
+                                <dd>{{ getRetryCount() }}</dd>
+                            }
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timing Section -->
+        <div class="mb-4! rounded-lg border">
+            <div class="border-b px-6! py-2 font-semibold" jhiTranslate="artemisApp.buildQueue.detail.timingSection"></div>
+            <div class="p-6!">
+                <dl class="mb-0 grid grid-cols-[max-content_1fr] gap-x-6! gap-y-1">
+                    @if (getSubmissionDate()) {
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"></dt>
+                        <dd class="mb-0">{{ getSubmissionDate() | artemisDate: 'long' : true }}</dd>
+                    }
+                    @if (getBuildStartDate()) {
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"></dt>
+                        <dd class="mb-0">{{ getBuildStartDate() | artemisDate: 'long' : true }}</dd>
+                    }
+                    @if (queueWaitTime()) {
+                        <dt jhiTranslate="artemisApp.buildQueue.detail.queueWaitTime"></dt>
+                        <dd class="mb-0">{{ queueWaitTime() }}</dd>
+                    }
+                    @if (getBuildCompletionDate()) {
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></dt>
+                        <dd class="mb-0">{{ getBuildCompletionDate() | artemisDate: 'long' : true }}</dd>
+                    }
+                    @if (buildDuration() !== undefined) {
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.duration"></dt>
+                        <dd class="mb-0">{{ buildDuration() }}</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <!-- Build Logs Section -->
+        @if (isFinished()) {
+            <div class="mb-4! rounded-lg border">
+                <div class="flex items-center justify-between border-b px-6! py-2">
+                    <span class="font-semibold" jhiTranslate="artemisApp.buildQueue.detail.logsSection"></span>
+                    @if (buildLogs()) {
+                        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="downloadBuildLogs()">
+                            <fa-icon [icon]="faDownload" />
+                            <span class="ms-1" jhiTranslate="artemisApp.buildQueue.logs.download"></span>
+                        </tumaet-ui-button>
+                    }
+                </div>
+                <div class="p-6!">
+                    @if (isLoadingLogs()) {
+                        <div class="my-4! flex items-center justify-center">
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                            <span class="ms-2" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
+                        </div>
+                    } @else if (buildLogs()) {
+                        <pre class="build-logs-pre">{{ buildLogs() }}</pre>
+                    } @else {
+                        <p class="text-muted-color" jhiTranslate="artemisApp.buildQueue.logs.noLogs"></p>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

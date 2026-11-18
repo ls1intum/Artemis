@@ -1,0 +1,16 @@
+import { Component } from '@angular/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+@Component({
+    selector: 'jhi-test-run-ribbon',
+    template: `
+        <div class="box">
+            <div class="ribbon ribbon-rotate">
+                <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+            </div>
+        </div>
+    `,
+    styleUrls: ['../../../core/layouts/profiles/page-ribbon.scss'],
+    imports: [TranslateDirective],
+})
+export class TestRunRibbonComponent {}

@@ -1,0 +1,99 @@
+<div>
+    <div class="-mx-2 flex flex-wrap justify-between">
+        <div class="w-1/3 px-2">
+            <div class="-mx-2 flex flex-wrap items-center justify-start">
+                @if (predecessorLearningObject(); as predecessorLearningObject) {
+                    <div class="w-full px-2 md:w-auto">
+                        <button tumAetUiButton severity="secondary" id="previous-button" (click)="selectLearningObject(predecessorLearningObject, false)" type="button">
+                            <div class="me-1 w-[15px]">
+                                @if (isLoadingPredecessor()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faChevronLeft" />
+                                }
+                            </div>
+                            <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
+                        </button>
+                    </div>
+                    <span class="min-w-0 flex-1 truncate ps-4! text-(--text-body-secondary)">
+                        {{
+                            (predecessorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
+                                predecessorLearningObject.name
+                        }}
+                    </span>
+                }
+            </div>
+        </div>
+        <div class="w-1/3 px-2">
+            <button
+                type="button"
+                class="flex h-full w-full cursor-pointer flex-wrap items-center justify-center border-0 bg-transparent"
+                id="navigation-overview"
+                [tumAetUiPopoverTrigger]="navOverviewPopover"
+            >
+                @if (currentLearningObject()) {
+                    @if (currentLearningObject()?.repeatedTest) {
+                        <span
+                            class="w-full px-2 font-bold md:w-auto"
+                            jhiTranslate="artemisApp.learningPath.navigation.repeatedTest"
+                            [translateValues]="{ name: currentLearningObject()?.name }"
+                        ></span>
+                    } @else {
+                        <span class="w-full px-2 font-bold md:w-auto">
+                            {{ currentLearningObject()?.name }}
+                        </span>
+                    }
+                } @else {
+                    <span class="w-full px-2 font-bold md:w-auto" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
+                }
+                <fa-icon [icon]="faChevronDown" class="w-full pe-2 md:w-auto" />
+            </button>
+            <tumaet-ui-popover
+                #navOverviewPopover
+                padding="none"
+                [ariaLabel]="'artemisApp.learningPath.navigation.overview.title' | artemisTranslate"
+                (openChange)="setIsDropdownOpen($event)"
+            >
+                <div class="w-[500px] max-w-[90dvw]">
+                    @if (isDropdownOpen()) {
+                        <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverviewPopover.close()" [learningPathId]="learningPathId()" />
+                    }
+                </div>
+            </tumaet-ui-popover>
+        </div>
+        <div class="w-1/3 px-2">
+            <div class="-mx-2 flex flex-wrap items-center justify-end">
+                @if (successorLearningObject(); as successorLearningObject) {
+                    <span class="min-w-0 flex-1 truncate pe-4! text-end text-(--text-body-secondary)">
+                        {{
+                            (successorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
+                                successorLearningObject.name
+                        }}
+                    </span>
+                    <div class="w-full px-2 md:w-auto">
+                        <button tumAetUiButton severity="primary" id="next-button" (click)="selectLearningObject(successorLearningObject, true)" type="button">
+                            <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
+                            <div class="ms-1 w-[15px]">
+                                @if (isLoadingSuccessor()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faChevronRight" />
+                                }
+                            </div>
+                        </button>
+                    </div>
+                } @else if (currentLearningObject() && !successorLearningObject()) {
+                    <div class="w-full px-2 md:w-auto">
+                        <button tumAetUiButton severity="primary" id="complete-button" (click)="completeLearningPath()" type="button">
+                            <fa-icon [icon]="faFlag" />
+                            <span jhiTranslate="artemisApp.learningPath.navigation.completeButton"></span>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="-mx-4! my-4! h-0.5 bg-(--border-color)" role="progressbar" [attr.aria-valuenow]="learningPathProgress()" aria-valuemin="0" aria-valuemax="100">
+        <div class="h-full bg-(--primary)" data-testid="learning-path-progress-bar" [style.width.%]="learningPathProgress()"></div>
+    </div>
+</div>

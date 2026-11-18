@@ -1,0 +1,9 @@
+<div class="tumaet-ui-progress-bar-value" [attr.data-severity]="severity()" [style.width.%]="normalizedValue()">
+    <span class="tumaet-ui-progress-bar-label">
+        <ng-content>
+            @if (showValue() && normalizedValue() !== 0) {
+                {{ normalizedValue() }}{{ unit() }}
+            }
+        </ng-content>
+    </span>
+</div>

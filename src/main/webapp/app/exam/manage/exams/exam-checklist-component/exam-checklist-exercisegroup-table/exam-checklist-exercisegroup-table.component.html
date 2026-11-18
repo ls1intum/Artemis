@@ -1,0 +1,161 @@
+<table tumAetUiTable striped>
+    <thead>
+        <tr>
+            <th class="max-w-8">
+                <span>#</span>
+            </th>
+            <th class="whitespace-nowrap pe-6!">
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.exerciseStart"></span>
+            </th>
+            <th>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.points"></span>
+            </th>
+            <th class="max-w-8">
+                <span>#</span>
+            </th>
+            <th>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.variants"></span>
+            </th>
+            <th>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.points"></span>
+            </th>
+            <th>
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.numberParticipants"></span>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (quizExamMaxPoints() > 0) {
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                    <div class="flex">
+                        <div class="pe-2.5" [tumAetUiTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate" tumAetUiTooltipPlacement="right">
+                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" />
+                        </div>
+                        <span>Quiz Exam</span>
+                    </div>
+                </td>
+                <td>{{ quizExamMaxPoints() }}</td>
+                <td>{{ totalParticipants() }}</td>
+            </tr>
+        }
+        @for (column of exerciseGroupColumns(); track column; let i = $index) {
+            @if (column.noExercises) {
+                <tr [class.group-start]="i !== 0">
+                    <td class="max-w-8">
+                        @if (column.indexExerciseGroup) {
+                            <div>{{ column.indexExerciseGroup }}</div>
+                        }
+                    </td>
+                    <td class="max-w-25 font-bold">
+                        @if (column.exerciseGroupTitle) {
+                            <div>
+                                {{ column.exerciseGroupTitle }}
+                                <fa-icon tumAetUiTooltip="This exercise group does not contain any exercises!" [icon]="faExclamationTriangle" class="text-state-warning" />
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        <jhi-no-data />
+                    </td>
+                    <td class="variants-start">
+                        <jhi-no-data />
+                    </td>
+                    <td>
+                        <jhi-no-data />
+                    </td>
+                    <td>
+                        <jhi-no-data />
+                    </td>
+                    <td>
+                        <jhi-no-data />
+                    </td>
+                </tr>
+            } @else {
+                @for (variant of column.variants; track variant; let groupStart = $first) {
+                    <tr [class.group-start]="i !== 0 && groupStart">
+                        <td class="max-w-8">
+                            @if (groupStart) {
+                                <div>{{ i + 1 }}</div>
+                            }
+                        </td>
+                        <td class="max-w-25 font-bold">
+                            @if (groupStart) {
+                                <div>
+                                    {{ column.exerciseGroupTitle }}
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (groupStart) {
+                                @if (!column.exerciseGroupPointsEqual) {
+                                    <fa-icon
+                                        [tumAetUiTooltip]="'artemisApp.examManagement.checklist.textitems.pointsinexercisegroupnotequal' | artemisTranslate"
+                                        [icon]="faExclamationTriangle"
+                                        class="text-state-warning"
+                                    />
+                                } @else {
+                                    <span>{{ variant.exerciseMaxPoints }}</span>
+                                }
+                            }
+                        </td>
+                        <td class="max-w-8 variants-start">
+                            <span>{{ variant.indexExercise }}</span>
+                        </td>
+                        <td>
+                            @if (variant.exerciseTitle) {
+                                <div class="flex">
+                                    <div class="max-w-min pe-2.5" [tumAetUiTooltip]="getIconTooltip(variant.exerciseType) | artemisTranslate" tumAetUiTooltipPlacement="right">
+                                        <fa-icon [icon]="getIcon(variant.exerciseType)" />
+                                    </div>
+                                    <span>{{ variant.exerciseTitle }}</span>
+                                </div>
+                            } @else {
+                                <jhi-no-data />
+                            }
+                        </td>
+                        <td>
+                            @if (variant.exerciseMaxPoints) {
+                                <span>{{ variant.exerciseMaxPoints }}</span>
+                            } @else {
+                                <jhi-no-data />
+                            }
+                        </td>
+                        <td>
+                            @if (variant.exerciseNumberOfParticipations) {
+                                <span>{{ variant.exerciseNumberOfParticipations }}</span>
+                            } @else {
+                                <jhi-no-data />
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        }
+        <tr class="group-end">
+            <td></td>
+            <td class="font-bold">
+                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.totalPoints"></span>
+            </td>
+            <td class="font-bold">
+                @if (hasPointMismatch()) {
+                    <fa-icon
+                        [tumAetUiTooltip]="'artemisApp.examManagement.checklist.textitems.nototalpointsduetomismatch' | artemisTranslate"
+                        [icon]="faExclamationTriangle"
+                        class="text-state-warning"
+                    />
+                } @else {
+                    {{ totalPoints() }}
+                }
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,46 @@
+{
+    "artemisApp": {
+        "dragAndDropQuestion": {
+            "home": {
+                "title": "Drag And Drop Questions",
+                "createLabel": "Create a new Drag And Drop Question"
+            },
+            "created": "Created new Drag And Drop Question with identifier {{ param }}",
+            "updated": "Updated Drag And Drop Question with identifier {{ param }}",
+            "deleted": "Deleted Drag And Drop Question with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag And Drop Question {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag And Drop Question"
+            },
+            "backgroundFilePath": "Background File Path",
+            "dropLocations": "Drop Locations",
+            "dragItems": "Drag Items",
+            "correctMappings": "Correct Mappings",
+            "randomizeOrder": "Present Drag Items in Random Order",
+            "selectBackgroundPicture": "Select Background",
+            "upload": "Upload",
+            "uploading": "Uploading...",
+            "disabledPreviewTooltip": "To show a preview, please upload a background picture first.",
+            "uploadBackgroundInstructions": "Please upload a background picture.",
+            "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
+            "noBackgroundPicture": "No Background Picture",
+            "addDragItemsInstructions": "Add Drag Items using the buttons below.",
+            "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
+            "addDragItemPicture": "Add Picture Drag Item",
+            "addDragItemText": "Add Text Drag Item",
+            "cutImagesFromDropLocation": "Cut Images from Drop Locations",
+            "cutImagesFromDropLocationTip": "The background image will be modified. This cannot be undone.",
+            "studentInstructions": "Drag & Drop: Place the suitable items on the correct areas.",
+            "showingYourAnswer": "Your Submission:",
+            "showingSampleSolution": "Sample Solution:",
+            "changeBackgroundPicture": "Change Background",
+            "changeDragItemPicture": "Upload Picture for Drag Item Change",
+            "invalid": {
+                "dragItem": "Invalid Drag Item",
+                "dropLocation": "Invalid Drop Location"
+            }
+        }
+    }
+}

@@ -1,0 +1,785 @@
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { fromPairs, toPairs } from 'lodash-es';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
+import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
+import {
+    faAngleDoubleDown,
+    faAngleDoubleUp,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faFile,
+    faFolder,
+    faFolderOpen,
+    faListAlt,
+    faPlus,
+} from '@fortawesome/free-solid-svg-icons';
+import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserProblemStatementComponent } from './problem-statement/code-editor-file-browser-problem-statement.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
+import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
+import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import {
+    CommitState,
+    CreateFileChange,
+    DeleteFileChange,
+    EditorState,
+    FileBadge,
+    FileBadgeType,
+    FileChange,
+    FileType,
+    GitConflictState,
+    PROBLEM_STATEMENT_IDENTIFIER,
+    RenameFileChange,
+} from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
+import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+export type InteractableEvent = {
+    // Click event object; contains target information (used to blur the clicked header)
+    event: MouseEvent;
+    // Whether the collapsed element collapses horizontally (true) or vertically (false)
+    horizontal: boolean;
+};
+
+export interface FileTreeItem extends TreeItem<string> {
+    folder: File | string | undefined;
+    file: string;
+}
+
+@Component({
+    selector: 'jhi-code-editor-file-browser',
+    templateUrl: './code-editor-file-browser.component.html',
+    styleUrls: ['./code-editor-file-browser.scss'],
+    providers: [NgbModal],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorFileBrowserCreateNodeComponent,
+        TreeViewComponent,
+        CodeEditorStatusComponent,
+        CodeEditorFileBrowserProblemStatementComponent,
+        CodeEditorFileBrowserFolderComponent,
+        CodeEditorFileBrowserFileComponent,
+        ArtemisTranslatePipe,
+    ],
+})
+export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileDeleteDelegate {
+    modalService = inject(NgbModal);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private fileService = inject(CodeEditorFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+    private destroyRef = inject(DestroyRef);
+    CommitState = CommitState;
+    FileType = FileType;
+    constructor() {
+        // The handlers below read AND write repositoryFiles/filesTreeViewItem. They must run
+        // untracked: a tracked read of a signal the handler itself replaces (always with a fresh
+        // object) re-triggers the effect and spins forever. Only the explicitly read inputs are
+        // intended triggers. (Found via vitest workers pinned at 100% CPU in this exact cycle.)
+
+        // React to participation() signal changes
+        effect(() => {
+            const p = this.participation();
+            if (p !== undefined) {
+                untracked(() => this.initializeRepositoryFiles());
+            }
+        });
+
+        // React to showEditorInstructions and isProblemStatementVisible signal changes
+        effect(() => {
+            this.showEditorInstructions();
+            this.isProblemStatementVisible();
+            if (this.participation()) {
+                untracked(() => this.handleProblemStatementVisibility());
+            }
+        });
+
+        effect(() => {
+            const commitState = this.commitState();
+            const editorState = this.editorState();
+            const selectedFile = this.selectedFile();
+            const shouldInitialize =
+                (this.previousCommitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED) ||
+                (this.previousEditorState !== undefined && this.previousEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN);
+
+            if (shouldInitialize) {
+                untracked(() => this.initializeComponent());
+            } else if (selectedFile && selectedFile !== this.previousSelectedFile) {
+                this.renamingFile.set(undefined);
+                untracked(() => this.setupTreeview());
+            }
+
+            this.previousCommitState = commitState;
+            this.previousEditorState = editorState;
+            this.previousSelectedFile = selectedFile;
+        });
+    }
+
+    status = viewChild<CodeEditorStatusComponent>('status');
+    treeview = viewChild<TreeViewComponent<string>>('treeview');
+    participation = input<Participation>();
+    showEditorInstructions = input(true);
+    selectedFile = input<string | undefined>();
+    disableActions = input<boolean>(false);
+    displayOnly = input<boolean>(false);
+    unsavedFiles = input<string[]>([]);
+    errorFiles = input<string[]>([]);
+    editorState = input<EditorState>(EditorState.CLEAN);
+    commitState = input<CommitState>(CommitState.UNDEFINED);
+    isTutorAssessment = input<boolean>(false);
+    /**
+     * The full hash of the commit that is shown. If set, the files are read from exactly this commit and the repository status is not queried: the working copy on the server is
+     * shared with the student and may contain edits that were never submitted, so it must not influence what is shown for a submission.
+     */
+    commitId = input<string | undefined>(undefined);
+    highlightFileChanges = input<boolean>(false);
+    fileBadges = input<{ [path: string]: FileBadge[] }>({});
+    allowHiddenFiles = input<boolean>(false);
+
+    isProblemStatementVisible = input<boolean>(true);
+    showHeader = input<boolean>(true);
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
+
+    onToggleCollapse = output<InteractableEvent>();
+    onFileChange = output<[string[], FileChange, boolean?]>();
+    selectedFileChange = output<string | undefined>();
+    commitStateChange = output<CommitState>();
+    onError = output<string>();
+    repositoryFilesLoaded = output<void>();
+
+    readonly isLoadingFiles = signal(false);
+    isProblemStatementSelected = computed(() => this.selectedFile() === PROBLEM_STATEMENT_IDENTIFIER);
+    readonly repositoryFiles = signal<{ [fileName: string]: FileType }>(undefined!);
+    readonly repositoryFilesWithInformationAboutChange = signal<{ [fileName: string]: boolean } | undefined>(undefined);
+    readonly filesTreeViewItem = signal<TreeViewItem<string>[]>([]);
+    readonly compressFolders = signal(true);
+
+    readonly collapsed = signal(false);
+
+    renamingInput = viewChild<ElementRef>('renamingInput');
+    creatingInput = viewChild<ElementRef>('creatingInput');
+
+    // Triple: [filePath, fileName, fileType]
+    readonly renamingFile = signal<[string, string, FileType] | undefined>(undefined);
+    // Tuple: [filePath, fileType]
+    readonly creatingFile = signal<[string, FileType] | undefined>(undefined);
+
+    // On develop this was a value-less type annotation (`treeViewMaxHeight: 5000`), i.e. undefined at runtime, so the
+    // intended 5000 cap was never actually applied to the [maxHeight] binding. Kept undefined-at-runtime here (via the
+    // definite-assignment marker) to preserve that exact behavior; actually applying the cap is a follow-up change.
+    treeViewMaxHeight!: number;
+
+    gitConflictState?: GitConflictState;
+    conflictSubscription?: Subscription;
+
+    // Icons
+    faPlus = faPlus;
+    faFolderOpen = faFolderOpen;
+    faFolder = faFolder;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faCircleNotch = faCircleNotch;
+    faFile = faFile;
+    faListAlt = faListAlt;
+    faAngleDoubleUp = faAngleDoubleUp;
+    faAngleDoubleDown = faAngleDoubleDown;
+
+    private previousCommitState?: CommitState;
+    private previousEditorState?: EditorState;
+    private previousSelectedFile?: string;
+
+    ngOnInit(): void {
+        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
+            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
+            if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
+                this.selectedFileChange.emit(undefined);
+            }
+            this.gitConflictState = gitConflictState;
+        });
+
+        // Initial setup (kept so PS shows even before participation arrives)
+        this.initializeRepositoryFiles();
+    }
+
+    /**
+     * Initialize repositoryFiles with Problem Statement as a first-class file type
+     */
+    private initializeRepositoryFiles(): void {
+        if (!this.repositoryFiles()) {
+            this.repositoryFiles.set({});
+        }
+
+        // Add Problem Statement as a first-class file type. Only write when the entry is missing —
+        // re-publishing an unchanged map would emit a fresh object reference on every call, and a
+        // real repository file occupying the identifier must not be clobbered.
+        if (this.isProblemStatementVisible() && this.showEditorInstructions()) {
+            if (!this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]) {
+                this.repositoryFiles.update((files) => cloneWith(files, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
+            }
+        } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
+            this.repositoryFiles.update((files) => {
+                const updated = deepClone(files);
+                delete updated[PROBLEM_STATEMENT_IDENTIFIER];
+                return updated;
+            });
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.conflictSubscription?.unsubscribe();
+    }
+
+    /**
+     * Handle isProblemStatementVisible changes by adding/removing Problem Statement from repositoryFiles
+     */
+    private handleProblemStatementVisibility(): void {
+        // Ensure the map exists before we mutate / render
+        if (!this.repositoryFiles()) {
+            this.repositoryFiles.set({});
+        }
+
+        if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
+            if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
+                this.repositoryFiles.update((files) => {
+                    const updated = deepClone(files);
+                    delete updated[PROBLEM_STATEMENT_IDENTIFIER];
+                    return updated;
+                });
+            }
+            if (this.isProblemStatementSelected()) {
+                this.selectedFileChange.emit(undefined);
+            }
+        } else if (!(PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles())) {
+            this.repositoryFiles.update((files) => cloneWith(files, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
+        }
+
+        this.setupTreeview();
+    }
+
+    initializeComponent = () => {
+        let currentCommitState: CommitState;
+        this.isLoadingFiles.set(true);
+        // We need to make sure to not trigger multiple requests on the git repo at the same time.
+        // This is why we first wait until the repository state was checked and then load the files.
+        // A fixed commit is, by definition, a submitted state, so there is no working copy status to check (and no way to end up in a conflict).
+        const repositoryState$ = this.commitId() ? of(CommitState.CLEAN) : this.checkIfRepositoryIsClean();
+        repositoryState$
+            .pipe(
+                tap((commitState) => {
+                    currentCommitState = commitState;
+                    this.commitStateChange.emit(commitState);
+                }),
+                switchMap(() => {
+                    if (currentCommitState === CommitState.COULD_NOT_BE_RETRIEVED) {
+                        return throwError(() => new Error('couldNotBeRetrieved'));
+                    } else if (currentCommitState === CommitState.CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                        return throwError(() => new Error('repositoryInConflict'));
+                    }
+                    return this.loadFiles();
+                }),
+                tap((files) => {
+                    this.repositoryFiles.set(files);
+                    // Ensure Problem Statement is present if not in display-only mode
+                    this.initializeRepositoryFiles();
+                }),
+                switchMap(() => {
+                    if (this.isTutorAssessment() && this.highlightFileChanges()) {
+                        return this.loadFilesWithInformationAboutChange();
+                    } else {
+                        return of(undefined);
+                    }
+                }),
+                tap((filesWithInfoAboutChange) => {
+                    this.repositoryFilesWithInformationAboutChange.set(filesWithInfoAboutChange);
+                    this.setupTreeview();
+                    this.repositoryFilesLoaded.emit();
+                }),
+                finalize(() => {
+                    // Guarantee that the loading indicator is cleared even if an upstream error or cancellation happens.
+                    this.isLoadingFiles.set(false);
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                error: (error: Error) => {
+                    this.initializeRepositoryFiles();
+                    this.setupTreeview();
+                    this.onError.emit(error.message);
+                },
+            });
+    };
+
+    /**
+     * Calls the repository service to see if the repository has uncommitted changes
+     */
+    checkIfRepositoryIsClean = (): Observable<CommitState> => {
+        return this.repositoryService.getStatus().pipe(
+            rxMap((res) => {
+                // The server sends us the CommitState, however we need to type it here by finding it in the client commitStates.
+                const mappedCommitState = Object.values(CommitState).find((commitState) => commitState === res.repositoryStatus);
+                // This should not happen, but needs to be done so that the compiler is satisfied.
+                return mappedCommitState || CommitState.COULD_NOT_BE_RETRIEVED;
+            }),
+            catchError(() => of(CommitState.COULD_NOT_BE_RETRIEVED)),
+        );
+    };
+
+    /**
+     * Apply a file-tree change to the in-memory repository map and rebuild the tree view.
+     *
+     * @param fileChange The change to apply (create / rename / delete).
+     * @param isRemote   True when the change originates from a remote peer via the sync service.
+     *                   Forwarded as the optional third element of the onFileChange tuple so that
+     *                   the container can suppress side-effects that are only appropriate for
+     *                   local operations (e.g. auto-selecting a newly created file).
+     */
+    handleFileChange(fileChange: FileChange, isRemote = false) {
+        if (fileChange instanceof CreateFileChange) {
+            this.repositoryFiles.set(cloneWith(this.repositoryFiles(), { [fileChange.fileName]: fileChange.fileType }));
+        } else {
+            this.repositoryFiles.set(this.fileService.updateFileReferences(this.repositoryFiles(), fileChange));
+        }
+        this.setupTreeview();
+        this.onFileChange.emit([Object.keys(this.repositoryFiles()), fileChange, isRemote]);
+    }
+
+    /**
+     * Emitter function for when a file was deleted; notifies the parent component.
+     * Called after the server-side delete succeeds. handleFileChange() is a synchronous
+     * in-memory update (repositoryFiles map + tree rebuild) that cannot fail, so the
+     * subsequent emitFileDeleted() call is always reached safely.
+     * @param fileChange
+     */
+    onFileDeleted(fileChange: FileChange) {
+        this.handleFileChange(fileChange);
+        if (fileChange instanceof DeleteFileChange) {
+            this.fileSyncService()?.emitFileDeleted(fileChange.fileName, this.toSyncFileType(fileChange.fileType));
+        }
+    }
+
+    /**
+     * Callback function for when a node in the file tree view has been selected
+     * @param item Corresponding event object, holds the selected TreeViewItem
+     */
+    handleNodeSelected(item: TreeViewItem<string>) {
+        if (item && item.value !== this.selectedFile()) {
+            item.checked = true;
+            // If we had selected a file prior to this, we 'uncheck' it
+            if (this.selectedFile()) {
+                const priorFileSelection = findItemInList(this.filesTreeViewItem(), this.selectedFile());
+                // Avoid issues after file deletion
+                if (priorFileSelection) {
+                    priorFileSelection.checked = false;
+                }
+            }
+            // Inform parent editor component about the file selection change
+            this.selectedFileChange.emit(item.value);
+        }
+    }
+
+    toggleTreeCompress() {
+        this.compressFolders.update((value) => !value);
+        this.setupTreeview();
+    }
+
+    /**
+     * Process the file array, compress it and then transforms it to a TreeViewItem
+     */
+    setupTreeview() {
+        // nothing to render yet
+        if (!this.repositoryFiles()) {
+            this.filesTreeViewItem.set([]);
+            return;
+        }
+
+        const fileKeys = Object.keys(this.repositoryFiles()).sort((a, b) => {
+            if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
+            if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
+            return a.localeCompare(b);
+        });
+
+        let tree = this.buildTree(fileKeys);
+        if (this.compressFolders()) {
+            tree = tree.map(this.compressTree.bind(this));
+        }
+        this.filesTreeViewItem.set(this.transformTreeToTreeViewItem(tree));
+    }
+
+    /**
+     * Converts a parsed file tree to a TreeViewItem[] which will then be used by the Treeviewer
+     * @param tree File tree obtained by parsing the repository file list
+     */
+    transformTreeToTreeViewItem(tree: FileTreeItem[]): TreeViewItem<string>[] {
+        const treeViewItem = new Array<TreeViewItem<string>>();
+        for (const node of tree) {
+            treeViewItem.push(new TreeViewItem<string>(node));
+        }
+        return treeViewItem;
+    }
+
+    /**
+     * Parses the provided list of repository files
+     * @param files {array of strings} Filepath strings to process
+     * @param tree {array of objects} Current tree structure
+     * @param folder {string} Folder name
+     */
+    buildTree(files: string[], tree?: FileTreeItem[], folder?: string) {
+        /**
+         * Initialize tree if empty
+         */
+        tree = tree || [];
+
+        /**
+         * Loop through our file array
+         */
+        for (let file of files) {
+            // Remove leading and trailing spaces
+            file = file.replace(/^\/|\/$/g, '');
+            // Split file path by slashes
+            const fileSplit = file.split('/');
+            // Check if the first path part is already in our current tree
+            let node = tree.find((element) => element.text === fileSplit[0]);
+            // Path part doesn't exist => add it to tree
+            if (!node) {
+                node = {
+                    children: [],
+                    file: '',
+                    folder: '',
+                    value: '',
+                    text: fileSplit[0],
+                };
+                tree.push(node);
+            }
+
+            // Remove first path part from our file path
+            fileSplit.shift();
+
+            if (fileSplit.length > 0) {
+                // Directory node
+                node.checked = false;
+                // Recursive function call to process children
+                node.children = this.buildTree([fileSplit.join('/')], node.children as FileTreeItem[], folder ? folder + '/' + node.text : node.text);
+                node.folder = node.text;
+                node.value = folder ? `${folder}/${node.folder}` : node.folder;
+            } else {
+                // File node
+                node.folder = folder;
+                node.file = (folder ? folder + '/' : '') + node.text;
+                node.value = node.file;
+                node.checked = false;
+
+                // Currently, processed node selected?
+                if (node.file === this.selectedFile()) {
+                    folder = node.folder;
+                    node.checked = true;
+                }
+            }
+        }
+        return tree;
+    }
+
+    /**
+     * Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
+     * @param node Tree node
+     */
+    compressTree(node: FileTreeItem): FileTreeItem {
+        // The replacement nodes are built field by field rather than copied: compressTree already recurses, so copying
+        // the subtree at every level would be quadratic in the tree depth (a deep Java package chain is the common case).
+        // If the node has only one child and that child is a folder, we can compress the tree.
+        if (node.children && node.children.length === 1 && this.repositoryFiles()[node.children[0].value] === FileType.FOLDER) {
+            const onlyChild = node.children[0] as FileTreeItem;
+            return this.compressTree({
+                text: node.text + '/' + onlyChild.text,
+                value: onlyChild.value,
+                disabled: onlyChild.disabled,
+                checked: onlyChild.checked,
+                collapsed: onlyChild.collapsed,
+                children: onlyChild.children,
+                folder: node.folder,
+                file: node.file,
+            });
+        }
+        // If the node has children, we cannot compress it. However, we can try to compress its children.
+        else if (node.children) {
+            return {
+                text: node.text,
+                value: node.value,
+                disabled: node.disabled,
+                checked: node.checked,
+                collapsed: node.collapsed,
+                children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)),
+                folder: node.folder,
+                file: node.file,
+            };
+        }
+        // If the node has no children, there is nothing to compress.
+        else {
+            return node;
+        }
+    }
+
+    /**
+     * Calls the parent (editorComponent) toggleCollapse method
+     * @param event
+     */
+    toggleEditorCollapse(event: MouseEvent) {
+        this.collapsed.update((value) => !value);
+        this.onToggleCollapse.emit({ event, horizontal: true });
+    }
+
+    /**
+     * Rename the file (if new fileName is different from old fileName and new fileName is not empty)
+     * and emit the changes to the parent.
+     * After rename the state is exited.
+     **/
+    onRenameFile(event: string) {
+        const newFileNamePath = event;
+        // Take the actual file name if the packages are collapsed, otherwise take the name directly
+        const newFileName = newFileNamePath.split('/').pop() || newFileNamePath;
+        // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
+        if (!this.renamingFile()) {
+            return;
+        }
+        const [filePath, , fileType] = this.renamingFile()!;
+        const newFilePathSegments = filePath.split('/');
+        newFilePathSegments[newFilePathSegments.length - 1] = newFileName;
+        const newFilePath = newFilePathSegments.join('/');
+
+        if (Object.keys(this.repositoryFiles()).includes(newFilePath)) {
+            this.onError.emit('fileExists');
+            return;
+        } else if (!this.allowHiddenFiles() && !CodeEditorFileBrowserComponent.shouldDisplayFile(newFileName, fileType)) {
+            this.onError.emit('unsupportedFile');
+            return;
+        }
+
+        this.renameFile(filePath, newFileName)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                    this.fileSyncService()?.emitFileRenamed(filePath, newFilePath, this.toSyncFileType(fileType));
+                    this.renamingFile.set(undefined);
+                },
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
+    }
+
+    /**
+     * Enter rename file mode and focus the created input.
+     **/
+    setRenamingFile(item: TreeViewItem<string>) {
+        const fileType = this.repositoryFiles()[item.value];
+
+        // Guard against PROBLEM_STATEMENT rename - only allow FILE and FOLDER
+        if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
+            return;
+        }
+
+        this.renamingFile.set([item.value, item.text, fileType]);
+    }
+
+    /**
+     * Set renamingFile to undefined so that the input disappears.
+     **/
+    clearRenamingFile() {
+        this.renamingFile.set(undefined);
+    }
+
+    /**
+     * Create a file with the value of the creation input.
+     **/
+    onCreateFile(fileName: string) {
+        // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
+        if (!this.creatingFile()) {
+            return;
+        }
+        const [folderPath, fileType] = this.creatingFile()!;
+
+        if (!this.allowHiddenFiles() && !CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType)) {
+            this.onError.emit('unsupportedFile');
+            return;
+        } else if (Object.keys(this.repositoryFiles()).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
+            this.onError.emit('fileExists');
+            return;
+        }
+
+        const file = folderPath ? `${folderPath}/${fileName}` : fileName;
+        if (fileType === FileType.FILE) {
+            this.createFile(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FILE, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FILE');
+                        this.creatingFile.set(undefined);
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
+        } else {
+            this.createFolder(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FOLDER');
+                        this.creatingFile.set(undefined);
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
+        }
+    }
+
+    /**
+     * Enter rename file mode and focus the created input.
+     **/
+    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeViewItem<string>; fileType: FileType }) {
+        this.creatingFile.set([folder, fileType]);
+    }
+
+    setCreatingFileInRoot(fileType: FileType) {
+        this.creatingFile.set(['', fileType]);
+    }
+
+    /**
+     * Set creatingFile to undefined so that the input disappears.
+     **/
+    clearCreatingFile() {
+        this.creatingFile.set(undefined);
+    }
+
+    /**
+     * Load files from the participants' repository.
+     * Files that are not relevant for the conduction of the exercise are removed from result.
+     */
+    loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
+        return this.repositoryFileService.getRepositoryContent(undefined, this.commitId()).pipe(
+            rxMap((files) =>
+                fromPairs(
+                    toPairs(files)
+                        .filter(([fileName, fileType]) => this.allowHiddenFiles() || CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType))
+                        // Filter root folder
+                        .filter(([value]) => value),
+                ),
+            ),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
+        );
+    };
+
+    loadFilesWithInformationAboutChange(): Observable<{ [fileName: string]: boolean }> {
+        return this.repositoryFileService.getFilesWithInformationAboutChange(undefined, this.commitId()).pipe(
+            rxMap((files) =>
+                fromPairs(toPairs(files).filter(([filename]) => this.allowHiddenFiles() || CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))),
+            ),
+            catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
+        );
+    }
+
+    renameFile = (filePath: string, fileName: string): Observable<void> => {
+        return this.repositoryFileService.renameFile(filePath, fileName);
+    };
+
+    createFile = (fileName: string): Observable<void> => {
+        return this.repositoryFileService.createFile(fileName);
+    };
+
+    createFolder = (folderName: string): Observable<void> => {
+        return this.repositoryFileService.createFolder(folderName);
+    };
+
+    /**
+     * Opens a popup to delete the selected repository file
+     */
+    openDeleteFileModal(item: TreeViewItem<string>) {
+        const { value: filePath } = item;
+        const fileType = this.repositoryFiles()[filePath];
+        if (filePath && fileType !== FileType.PROBLEM_STATEMENT) {
+            const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.setInputs({
+                parent: this,
+                fileNameToDelete: filePath,
+                fileType,
+            });
+        }
+    }
+
+    /**
+     * Determines if the given file or folder should be displayed.
+     *
+     * Folders are only hidden if their name starts with a `.`, files are additionally hidden
+     * based on their file extension (see {@link shouldDisplayFileBasedOnExtension}).
+     * @param fileName The name of the file or folder.
+     * @param fileType The type of the file or folder.
+     */
+    private static shouldDisplayFile(fileName: string, fileType: FileType): boolean {
+        if (fileName.startsWith('.')) {
+            return false;
+        } else if (fileType === FileType.FOLDER) {
+            return true;
+        } else {
+            return CodeEditorFileBrowserComponent.shouldDisplayFileBasedOnExtension(fileName);
+        }
+    }
+
+    /**
+     * Determines if the file should be shown based on its file extension.
+     *
+     * E.g., text files like `SomeClass.java` are shown, binary files like `document.pdf` are not.
+     * @param fileName
+     */
+    private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
+        const fileSplit = fileName.split('.');
+        return fileSplit.length === 1 || TEXT_FILE_EXTENSIONS.includes(fileSplit.pop()!);
+    }
+
+    /**
+     * Aggregate the file badges for the given folder. The numbers of the badges are summed up.
+     * The folder badges will only be shown on collapsed folders (otherwise you can see the file badges already and we don't want to clutter the UI)
+     */
+    getFolderBadges(folder: TreeViewItem<string>): FileBadge[] {
+        if (!folder.collapsed) {
+            return []; // Only show folder badges on collapsed folders
+        }
+        const folderBadgesMap: Map<FileBadgeType, number> = new Map(); // Use a Map to preserve order
+        for (const [fileName, fileBadges] of Object.entries(this.fileBadges())) {
+            if (fileName.startsWith(folder.value)) {
+                // file is in folder
+                for (const fileBadge of fileBadges) {
+                    const folderBadgeCount = folderBadgesMap.get(fileBadge.type) ?? 0;
+                    folderBadgesMap.set(fileBadge.type, folderBadgeCount + fileBadge.count);
+                }
+            }
+        }
+        return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
+    }
+
+    /**
+     * Returns the badges for a single file, or an empty array when the file has none.
+     * `fileBadges` is keyed by file path and may not contain an entry for every tree item.
+     */
+    getFileBadges(item: TreeViewItem<string>): FileBadge[] {
+        return this.fileBadges()[item.value] ?? [];
+    }
+
+    private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {
+        return type === FileType.FILE ? 'FILE' : 'FOLDER';
+    }
+}

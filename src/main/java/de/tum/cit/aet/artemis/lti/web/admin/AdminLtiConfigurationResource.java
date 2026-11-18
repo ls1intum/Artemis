@@ -1,0 +1,196 @@
+package de.tum.cit.aet.artemis.lti.web.admin;
+
+import java.util.List;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+
+/**
+ * REST controller for managing LTI platform configurations.
+ * Handles administrative actions for LTI platforms, including configuration, deletion, and dynamic registration.
+ */
+@Lazy
+@FeatureUsage(UserFeature.LTI)
+@RestController
+@EnforceAdmin
+@RequestMapping("api/lti/admin/")
+@Conditional(LtiEnabled.class)
+public class AdminLtiConfigurationResource {
+
+    private static final String ENTITY_NAME = "lti-platform";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private static final Logger log = LoggerFactory.getLogger(AdminLtiConfigurationResource.class);
+
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final OAuth2JWKSService oAuth2JWKSService;
+
+    /**
+     * Constructor to initialize the controller with necessary services.
+     *
+     * @param ltiPlatformConfigurationRepository Repository for LTI platform configurations.
+     * @param ltiDynamicRegistrationService      Service for LTI dynamic registration.
+     * @param authCheckService                   Service for authorization checks.
+     */
+    public AdminLtiConfigurationResource(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, LtiDynamicRegistrationService ltiDynamicRegistrationService,
+            AuthorizationCheckService authCheckService, OAuth2JWKSService oAuth2JWKSService) {
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
+        this.authCheckService = authCheckService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
+    }
+
+    /**
+     * GET lti-platforms : Get all configured lti platforms
+     *
+     * @param pageable Pageable
+     * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
+     */
+    @GetMapping("lti-platforms")
+    public ResponseEntity<List<LtiPlatformConfigurationDTO>> getAllConfiguredLtiPlatforms(Pageable pageable) {
+        log.info("REST request to get all configured LTI platforms");
+        Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);
+        return new ResponseEntity<>(platformsPage.getContent().stream().map(LtiPlatformConfigurationDTO::of).toList(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Fetches LTI platform configuration based on the given platform ID.
+     * Returns {@code ResponseEntity} with status OK if found, or NOT_FOUND if no configuration exists.
+     *
+     * @param platformId The ID of the LTI platform to retrieve configuration for.
+     * @return a {@code ResponseEntity} with the platform configuration DTO and HTTP status.
+     */
+    @GetMapping("lti-platforms/{platformId}")
+    public ResponseEntity<LtiPlatformConfigurationDTO> getLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
+        log.debug("REST request to configured lti platform");
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
+        return new ResponseEntity<>(LtiPlatformConfigurationDTO.of(platform), HttpStatus.OK);
+    }
+
+    /**
+     * Deletes the LTI platform configuration for the given platform ID.
+     *
+     * @param platformId the ID of the platform configuration to delete.
+     * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
+     */
+    @DeleteMapping("lti-platforms/{platformId}")
+    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
+        log.debug("REST request to delete configured LTI platform");
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
+
+        ltiPlatformConfigurationRepository.delete(platform);
+        oAuth2JWKSService.updateKey(platform.getRegistrationId());
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId.toString())).build();
+    }
+
+    /**
+     * Updates an existing LTI platform configuration.
+     *
+     * @param updateDTO the LTI platform configuration update DTO containing the new values.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
+     *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
+     */
+    @PutMapping("lti-platforms")
+    public ResponseEntity<LtiPlatformConfigurationDTO> updateLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
+        log.debug("REST request to update configured LTI platform");
+
+        if (updateDTO.id() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Fetch the existing configuration from the database (this is the managed entity)
+        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(updateDTO.id());
+        if (!existingPlatform.getRegistrationId().equals(updateDTO.registrationId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Apply DTO values to the managed entity
+        updateDTO.applyTo(existingPlatform);
+
+        ltiPlatformConfigurationRepository.save(existingPlatform);
+
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(existingPlatform));
+    }
+
+    /**
+     * Adds a new LTI platform configuration.
+     *
+     * @param dto the LTI platform configuration DTO containing the new values.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
+     */
+    @PostMapping("lti-platforms")
+    public ResponseEntity<LtiPlatformConfigurationDTO> addLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO dto) {
+        log.debug("REST request to add new LTI platform");
+
+        LtiPlatformConfiguration platform = dto.toEntity();
+        String clientRegistrationId = "artemis-" + UUID.randomUUID();
+        platform.setRegistrationId(clientRegistrationId);
+
+        ltiPlatformConfigurationRepository.save(platform);
+        oAuth2JWKSService.updateKey(clientRegistrationId);
+
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(platform));
+    }
+
+    /**
+     * Handles the dynamic registration process for LTI 1.3 platforms. It uses the provided OpenID
+     * configuration and an optional registration token.
+     *
+     * @param openIdConfiguration The OpenID Connect discovery configuration URL.
+     * @param registrationToken   Optional token for the registration process.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the dynamic registration process was successful.
+     */
+    @PostMapping("lti13/dynamic-registration")
+    public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
+            @RequestParam(name = "registration_token", required = false) String registrationToken) {
+
+        authCheckService.checkIsAdminElseThrow(null);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);
+        return ResponseEntity.ok().build();
+    }
+
+}

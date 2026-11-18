@@ -1,0 +1,73 @@
+<div class="update-footer gap-6!">
+    <div class="text-start">
+        @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
+            <div class="flex items-center">
+                <div
+                    [tumAetUiTooltip]="
+                        areAuxiliaryRepositoriesValid()
+                            ? undefined
+                            : ('artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate)
+                    "
+                >
+                    <jhi-switch-edit-mode-button
+                        class="me-1"
+                        [isSimpleMode]="isSimpleMode()!"
+                        (switchEditMode)="onSwitchEditMode()"
+                        [buttonSize]="ButtonSize.SMALL"
+                        [disabled]="!areAuxiliaryRepositoriesValid()"
+                    />
+                </div>
+                <jhi-help-icon [text]="isSimpleMode() ? 'artemisApp.programmingExercise.home.advancedModeTooltip' : 'artemisApp.programmingExercise.home.simpleModeTooltip'" />
+            </div>
+        }
+    </div>
+    @if (!isCreation() && !isImport()) {
+        <jhi-exercise-update-notification class="w-full grow" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
+    }
+    <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
+    @if (invalidReasons().length) {
+        <ul [id]="invalidReasonsId" class="sr-only">
+            @for (reason of invalidReasons(); track $index) {
+                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+            }
+        </ul>
+    }
+    <div class="flex gap-2 text-end">
+        @if (isSaving()) {
+            <tumaet-ui-tag severity="secondary" size="sm" class="self-center" data-testid="form-footer-saving"><span jhiTranslate="entity.action.saving"></span></tumaet-ui-tag>
+        }
+        <button
+            [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            tumAetUiButton
+            type="button"
+            id="cancel-save"
+            severity="secondary"
+            size="small"
+            (click)="onCancel.emit()"
+        >
+            <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
+            <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button
+            tumAetUiButton
+            type="button"
+            id="save-entity"
+            [severity]="isImport() ? 'secondary' : 'primary'"
+            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            size="small"
+            [tumAetUiTooltip]="invalidReasonTexts()"
+            [tumAetUiTooltipDescribesHost]="false"
+            [attr.aria-label]="saveTitle() | artemisTranslate"
+            [attr.aria-disabled]="isSubmitDisabled()"
+            [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
+            (click)="onSave()"
+        >
+            @if (isSaving()) {
+                <fa-icon [fixedWidth]="true" [icon]="faSpinner" animation="spin" class="sm" />
+            } @else {
+                <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+            }
+            <span class="hidden sm:inline" [jhiTranslate]="saveTitle()"></span>
+        </button>
+    </div>
+</div>

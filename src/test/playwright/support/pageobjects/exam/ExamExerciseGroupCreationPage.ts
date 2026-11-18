@@ -1,0 +1,127 @@
+import { Page } from '@playwright/test';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
+import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
+import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
+import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
+import { generateUUID, getExamBuildAndTestAfterDueDate, readResponseJson } from '../../utils';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+
+export class ExamExerciseGroupCreationPage {
+    private readonly page: Page;
+    private readonly examAPIRequests: ExamAPIRequests;
+    private readonly exerciseAPIRequests: ExerciseAPIRequests;
+
+    constructor(page: Page, examAPIRequests: ExamAPIRequests, exerciseAPIRequests: ExerciseAPIRequests) {
+        this.page = page;
+        this.examAPIRequests = examAPIRequests;
+        this.exerciseAPIRequests = exerciseAPIRequests;
+    }
+
+    async typeTitle(title: string) {
+        const titleField = this.page.locator('#exam-group-edit-title');
+        await titleField.clear();
+        await titleField.fill(title);
+    }
+
+    async setMandatoryBox(checked: boolean) {
+        if (checked) {
+            await this.getMandatoryBoxLocator().check();
+        } else {
+            await this.getMandatoryBoxLocator().uncheck();
+        }
+    }
+
+    async isMandatoryBoxShouldBeChecked() {
+        await this.getMandatoryBoxLocator().isChecked();
+    }
+
+    private getMandatoryBoxLocator() {
+        return this.page.locator('#exam-group-edit-mandatory');
+    }
+
+    async clickSave(): Promise<ExerciseGroup> {
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
+        await this.page.locator('[data-testid="save-group"]').click();
+        const response = await responsePromise;
+        return readResponseJson(response);
+    }
+
+    async update() {
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
+        await this.page.locator('[data-testid="save-group"]').click();
+        await responsePromise;
+    }
+
+    async addGroupWithExercise(
+        exam: Exam,
+        exerciseType: ExerciseType,
+        additionalData: AdditionalData = {},
+        isMandatory?: boolean,
+        exerciseTemplate?: any,
+    ): Promise<PlaywrightExercise> {
+        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, isMandatory, exerciseTemplate);
+        let exercise = { ...response!, additionalData };
+        if (exerciseType == ExerciseType.QUIZ) {
+            const quiz = response as QuizExercise;
+            if (quiz.quizQuestions && quiz.quizQuestions.length > 0) {
+                additionalData!.quizExerciseID = quiz.quizQuestions[0].id;
+            }
+            exercise = { ...quiz, additionalData };
+        }
+
+        if (exerciseType === ExerciseType.PROGRAMMING && !additionalData.skipBuildResultCheck) {
+            const RETRY_NUMBER = 0;
+            await this.exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
+        }
+
+        return exercise;
+    }
+
+    async handleAddGroupWithExercise(
+        exam: Exam,
+        title: string,
+        exerciseType: ExerciseType,
+        additionalData: AdditionalData,
+        isMandatory?: boolean,
+        exerciseTemplate?: any,
+    ): Promise<Exercise | undefined> {
+        const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam, 'Group ' + generateUUID(), isMandatory);
+        let exercise: Exercise | undefined;
+        switch (exerciseType) {
+            case ExerciseType.TEXT:
+                exercise = await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title, exerciseTemplate);
+                break;
+            case ExerciseType.MODELING:
+                exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                exercise = await this.exerciseAPIRequests.createFileUploadExercise({ exerciseGroup }, title);
+                break;
+            case ExerciseType.QUIZ:
+                exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
+                break;
+            case ExerciseType.PROGRAMMING: {
+                const buildAndTestStudentSubmissionsAfterDueDate = getExamBuildAndTestAfterDueDate(exam);
+                exercise = await this.exerciseAPIRequests.createProgrammingExercise({
+                    exerciseGroup,
+                    title,
+                    assessmentType: additionalData.progExerciseAssessmentType,
+                    allowComplaintsForAutomaticAssessments: additionalData.allowComplaintsForAutomaticAssessments,
+                    programmingLanguage: additionalData.programmingLanguage,
+                    buildAndTestStudentSubmissionsAfterDueDate,
+                });
+                break;
+            }
+        }
+        // Ensure exerciseGroup is always attached to the returned exercise,
+        // as the server response may not include it
+        if (exercise && !exercise.exerciseGroup) {
+            exercise.exerciseGroup = exerciseGroup;
+        }
+        return exercise;
+    }
+}

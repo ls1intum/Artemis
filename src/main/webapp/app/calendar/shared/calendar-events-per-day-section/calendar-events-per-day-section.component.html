@@ -1,0 +1,41 @@
+<div class="frame">
+    <div class="info-column">
+        <div class="info-column-spacer"></div>
+        @for (timeLabel of timeLabels; track timeLabel) {
+            <div class="time-label">{{ timeLabel }}</div>
+        }
+    </div>
+    @for (day of days(); track day.id) {
+        <div class="event-column">
+            @for (index of zeroToTwentyFour; track index) {
+                <div class="hour-segment"></div>
+            }
+            @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                @let event = eventAndMetadata.event;
+                @let position = eventAndMetadata.position;
+                @let color = eventAndMetadata.color;
+                <div
+                    class="event"
+                    [style]="{
+                        'background-color': color,
+                        top: position.top + 'px',
+                        height: position.height + 'px',
+                        left: position.left + '%',
+                        width: position.width + '%',
+                    }"
+                    (click)="eventDetailPopover.open($event, event)"
+                    [attr.data-testid]="event.title"
+                    #keyboardAction17
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction17.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction17.click() : undefined"
+                >
+                    {{ event.title }}
+                </div>
+            }
+        </div>
+    }
+</div>
+<jhi-calendar-event-detail-popover-component #eventDetailPopover />

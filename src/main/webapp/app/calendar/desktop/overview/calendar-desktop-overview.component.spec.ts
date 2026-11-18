@@ -1,0 +1,260 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement, EmbeddedViewRef, getDebugNode, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
+import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
+import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
+import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+
+describe('CalendarDesktopOverviewComponent', () => {
+    let component: CalendarDesktopOverviewComponent;
+    let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
+    // The month and the controls are projected into the shell title bar, so they are not part of this component's own
+    // view. Render the registered templates to query them, and destroy the views afterwards.
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderProjected(which: 'title' | 'actions'): { element: DebugElement; view: EmbeddedViewRef<unknown> } {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = which === 'title' ? service.titleTemplate() : service.actionsTemplate();
+        expect(template, `the calendar does not project a title bar ${which} template`).toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        return { element: getDebugNode(view.rootNodes[0]) as DebugElement, view };
+    }
+
+    const calendarServiceMock = {
+        eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
+        loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
+        subscriptionToken: signal('testToken'),
+        loadSubscriptionToken: vi.fn().mockReturnValue(of([])),
+        includedEventFilterOptions: signal([
+            CalendarEventFilterOption.LectureEvents,
+            CalendarEventFilterOption.ExerciseEvents,
+            CalendarEventFilterOption.TutorialEvents,
+            CalendarEventFilterOption.ExamEvents,
+        ]),
+    };
+
+    const activatedRouteMock = {
+        parent: {
+            paramMap: of(new Map([['courseId', '42']])),
+        },
+    };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CalendarDesktopOverviewComponent,
+                CalendarDesktopWeekPresentationComponent,
+                CalendarDesktopMonthPresentationComponent,
+                FaIconComponent,
+                MockComponent(CalendarDayBadgeComponent),
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                { provide: CalendarService, useValue: calendarServiceMock },
+                { provide: ActivatedRoute, useValue: activatedRouteMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                // Normally provided by the calendar container, which holds the displayed period across a resize.
+                CalendarViewStateService,
+            ],
+        }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        translateService.use('en');
+
+        fixture = TestBed.createComponent(CalendarDesktopOverviewComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        projectedViews.splice(0).forEach((view) => view.destroy());
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should update weeks and months correctly', () => {
+        const initialFirstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+
+        const { element: actions } = renderProjected('actions');
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
+        const nextButton = actions.query(By.css('#next-button')).nativeElement;
+        const selectButton = actions.query(By.css('#presentation-select-button'));
+        expect(previousButton).toBeTruthy();
+        expect(nextButton).toBeTruthy();
+        expect(selectButton).toBeTruthy();
+
+        expect(component.presentation()).toBe('month');
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeFalsy();
+
+        previousButton.click();
+        fixture.detectChanges();
+        let firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        let firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
+        let expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.subtract(1, 'month');
+        let expectedFirstDayOfCurrentWeek = firstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBe(true);
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBe(true);
+
+        nextButton.click();
+        fixture.detectChanges();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBe(true);
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBe(true);
+
+        component.presentation.set('week');
+        fixture.detectChanges();
+        expect(component.presentation()).toBe('week');
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeFalsy();
+
+        nextButton.click();
+        fixture.detectChanges();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBe(true);
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBe(true);
+
+        previousButton.click();
+        fixture.detectChanges();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.startOf('isoWeek').isBefore(initialFirstDayOfCurrentMonth)
+            ? initialFirstDayOfCurrentMonth.subtract(1, 'month')
+            : initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBe(true);
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBe(true);
+    });
+
+    it('should navigate the period held by the shared view state, not one of its own', () => {
+        // The container recreates this component whenever the viewport crosses the mobile breakpoint, so a period
+        // kept in the component would be lost on every resize and the user thrown back to the current month.
+        const viewState = TestBed.inject(CalendarViewStateService);
+        const monthBefore = viewState.firstDateOfDisplayedMonth();
+
+        const { element: actions } = renderProjected('actions');
+        actions.query(By.css('#next-button')).nativeElement.click();
+        fixture.detectChanges();
+
+        expect(viewState.firstDateOfDisplayedMonth().isSame(monthBefore.add(1, 'month'), 'month')).toBeTruthy();
+        expect(component.firstDateOfCurrentMonth()).toBe(viewState.firstDateOfDisplayedMonth());
+    });
+
+    it('should go to today', () => {
+        expect(component).toBeTruthy();
+
+        const { element: actions } = renderProjected('actions');
+        const todayButton = actions.query(By.css('#today-button')).nativeElement;
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
+
+        expect(todayButton).toBeTruthy();
+        expect(previousButton).toBeTruthy();
+
+        previousButton.click();
+        previousButton.click();
+        fixture.detectChanges();
+
+        todayButton.click();
+        fixture.detectChanges();
+
+        const today = dayjs();
+        const expectedMonth = today.startOf('month');
+        const expectedWeek = today.startOf('isoWeek');
+
+        const actualMonth = component.firstDateOfCurrentMonth();
+        const actualWeek = component.firstDateOfCurrentWeek();
+
+        expect(actualMonth.isSame(expectedMonth, 'day')).toBe(true);
+        expect(actualWeek.isSame(expectedWeek, 'day')).toBe(true);
+    });
+
+    it('should display correct month description', () => {
+        const october = dayjs('2025-10-01');
+
+        component.firstDateOfCurrentMonth.set(october.startOf('month'));
+        component.firstDateOfCurrentWeek.set(october.startOf('isoWeek'));
+        component.presentation.set('month');
+        fixture.detectChanges();
+
+        const title = renderProjected('title');
+        const { element: actions } = renderProjected('actions');
+        // A manually created embedded view is not refreshed by `fixture.detectChanges()`, so refresh it explicitly.
+        const heading = () => {
+            title.view.detectChanges();
+            return (title.element.nativeElement as HTMLElement).textContent!.trim();
+        };
+
+        expect(heading()).toBe('October 2025');
+
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
+        previousButton.click();
+        fixture.detectChanges();
+        expect(heading()).toBe('September 2025');
+
+        const nextButton = actions.query(By.css('#next-button')).nativeElement;
+        nextButton.click();
+        fixture.detectChanges();
+        expect(heading()).toBe('October 2025');
+
+        component.presentation.set('week');
+        fixture.detectChanges();
+
+        expect(heading()).toContain('September | October 2025');
+
+        previousButton.click();
+        fixture.detectChanges();
+        expect(heading()).toBe('September 2025');
+
+        nextButton.click();
+        nextButton.click();
+        fixture.detectChanges();
+        expect(heading()).toBe('October 2025');
+    });
+
+    it('should open subscription popover when the subscribe button is clicked', () => {
+        const { element: actions } = renderProjected('actions');
+        const popoverDebugElement = actions.query(By.directive(CalendarSubscriptionPopoverComponent));
+        expect(popoverDebugElement).toBeTruthy();
+
+        const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
+        const openSpy = vi.spyOn(popover, 'open');
+
+        const subscribeButton = actions.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        expect(subscribeButton).toBeTruthy();
+
+        subscribeButton.click();
+        fixture.detectChanges();
+
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+});

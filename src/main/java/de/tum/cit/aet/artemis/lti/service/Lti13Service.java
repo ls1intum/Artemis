@@ -1,0 +1,626 @@
+package de.tum.cit.aet.artemis.lti.service;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.stereotype.Service;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import tools.jackson.core.JacksonException;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.Claims;
+import de.tum.cit.aet.artemis.lti.dto.Lti13AgsClaim;
+import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
+import de.tum.cit.aet.artemis.lti.dto.Scopes;
+import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+
+@Lazy
+@Service
+@Conditional(LtiEnabled.class)
+public class Lti13Service {
+
+    private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
+
+    private static final String LECTURE_PATH_PATTERN = "/courses/{courseId}/lectures/{lectureId}";
+
+    private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
+
+    private static final String IRIS_PATH_PATTERN = "/courses/{courseId}/iris";
+
+    /**
+     * Legacy Iris deep-link path. Deep links issued before the student course analytics dashboard was removed still
+     * point to {@code /courses/{courseId}/dashboard} in external LMSes. They must keep launching Iris, so the pattern
+     * stays recognized and legacy launch targets are normalized to {@link #IRIS_PATH_PATTERN} (see {@link #normalizeLegacyIrisTargetLink}).
+     */
+    private static final String IRIS_LEGACY_DASHBOARD_PATH_PATTERN = "/courses/{courseId}/dashboard";
+
+    private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
+
+    private static final String COURSE_PATH_PATTERN = "/courses/{courseId}/**";
+
+    private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
+
+    /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
+    private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
+
+    /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
+    private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
+
+    private final UserRepository userRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
+
+    private final CourseRepository courseRepository;
+
+    private final Lti13ResourceLaunchRepository launchRepository;
+
+    private final LtiService ltiService;
+
+    private final ResultGradeRepository resultGradeRepository;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    private final Lti13TokenRetriever tokenRetriever;
+
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    private final RestTemplate restTemplate;
+
+    private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
+            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, IRIS_LEGACY_DASHBOARD_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN,
+            DeepLinkingType.LECTURE);
+
+    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
+            CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultGradeRepository resultGradeRepository,
+            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.courseRepository = courseRepository;
+        this.ltiService = ltiService;
+        this.launchRepository = launchRepository;
+        this.resultGradeRepository = resultGradeRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.tokenRetriever = tokenRetriever;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.restTemplate = restTemplate;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
+    }
+
+    /**
+     * Performs an LTI 1.3 exercise launch with the LTI parameters contained in launchRequest.
+     * If the launch was successful the user is added to the target exercise group (e.g. the course).
+     *
+     * @param ltiIdToken           the id token for the user launching the request
+     * @param clientRegistrationId the clientRegistrationId of the source LMS
+     */
+    public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
+        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
+        Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
+        Optional<Lecture> targetLecture = getLectureFromTargetLink(targetLinkUrl);
+        Optional<Course> targetCourse = getCourseFromTargetLink(targetLinkUrl);
+
+        if (targetCourse.isEmpty()) {
+            String message = "No course to launch at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        }
+
+        Course course = targetCourse.get();
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findByCourseId(course.getId()).orElse(null);
+        if (!course.isOnlineCourse() || onlineCourseConfiguration == null) {
+            String message = "LTI is not configured for course with target link URL: " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
+        }
+
+        requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
+
+        // The email address identifies the person, so a launch without one is refused before an account is looked up or created
+        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !USABLE_EMAIL.matcher(ltiIdToken.getEmail()).matches()) {
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
+                .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
+
+        // Without an account for the email address there is nobody to sign in, and the derived login does not identify a person
+        if (optionalUsername.isEmpty() && onlineCourseConfiguration.isRequireExistingUser()) {
+            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
+        }
+
+        // The login of a newly created account is not always the derived one, so the account is looked up under the login it actually got.
+        String createdLogin = null;
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
+            Authentication authentication = ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
+                    ltiIdToken.getGivenName(), ltiIdToken.getFamilyName());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            createdLogin = authentication.getName();
+        }
+
+        String username = createdLogin != null ? createdLogin : optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
+        Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
+
+        if (targetExercise.isPresent()) {
+            Exercise exercise = targetExercise.get();
+            handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
+        }
+        else if (hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture)) {
+            handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
+        }
+        else {
+            log.error("No course content to launch at {}", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+    }
+
+    /**
+     * The target of a launch has to belong to the course whose configuration the launch refers to.
+     */
+    private static void requireTargetInCourse(Optional<Exercise> exercise, Optional<Lecture> lecture, Course course, String targetLinkUrl) {
+        boolean exerciseInCourse = exercise.map(target -> belongsToCourse(target, course)).orElse(true);
+        boolean lectureInCourse = lecture.map(target -> target.getCourse() != null && Objects.equals(target.getCourse().getId(), course.getId())).orElse(true);
+        if (!exerciseInCourse || !lectureInCourse) {
+            log.error("The target of the link {} does not belong to the launched course", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+    }
+
+    private static boolean belongsToCourse(Exercise exercise, Course course) {
+        // An exam exercise is not part of the course content that a platform links to, and is reached through the exam only.
+        if (exercise.isExamExercise()) {
+            return false;
+        }
+        Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return exerciseCourse != null && Objects.equals(exerciseCourse.getId(), course.getId());
+    }
+
+    /**
+     * Gets the username for the LTI user prefixed with the configured user prefix
+     *
+     * @param ltiIdToken                the token holding the launch information
+     * @param onlineCourseConfiguration the configuration for the online course
+     * @return the username for the LTI user
+     */
+    @NonNull
+    public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+        String username;
+
+        if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
+            username = ltiIdToken.getPreferredUsername();
+        }
+        else if (!StringUtils.isEmpty(ltiIdToken.getGivenName()) && !StringUtils.isEmpty(ltiIdToken.getFamilyName())) {
+            username = ltiIdToken.getGivenName() + ltiIdToken.getFamilyName();
+        }
+        else {
+            String userEmail = ltiIdToken.getEmail();
+            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
+        }
+        username = username.replace(" ", "");
+
+        // Every source of this value is external (a claim, the user's own name, the local part of their address) and the
+        // instructor-configured prefix is free text, so any of them may carry an uppercase letter. The callers look the
+        // account up by an exact match, so canonicalize here, at the one place the login is derived.
+        return User.canonicalLogin(onlineCourseConfiguration.getUserPrefix() + "_" + username);
+    }
+
+    private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
+        try {
+            return Lti13LaunchRequest.from(ltiIdToken, clientRegistrationId);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * This method is pinged on new exercise results. It sends a message to the related LTI 1.3 platforms with the new score.
+     *
+     * @param participation The exercise participation for which a new result is available
+     */
+    public void onNewResult(StudentParticipation participation) {
+        var exercise = participation.getExercise();
+        if (exercise == null) {
+            return;
+        }
+        var participationCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (participationCourse == null) {
+            return;
+        }
+        Course course = courseRepository.findByIdElseThrow(participationCourse.getId());
+
+        if (!course.isOnlineCourse()) {
+            log.error("Could not transmit score to external LMS for course {}:", course.getTitle());
+            return;
+        }
+
+        // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+        // to launch the exercise (for example multiple lms); for team participations, every student may have launches
+        List<LtiResourceLaunch> launches = participation.getStudents().stream()
+                .flatMap(student -> launchRepository.findByUserAndExercise(student, participation.getExercise()).stream()).toList();
+
+        if (launches.isEmpty()) {
+            return;
+        }
+
+        // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
+        Optional<Result> result = resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId());
+
+        if (result.isEmpty()) {
+            log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
+            return;
+        }
+
+        if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized
+            // legacy views so the LMS score comment keeps containing it (explicit exercise context, the
+            // loaded result graph is detached)
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), programmingExercise, false);
+        }
+
+        String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+        Double score = result.get().getScore();
+
+        launches.forEach(launch -> {
+            LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
+            ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
+            submitScore(launch, returnClient, concatenatedFeedbacks, score);
+        });
+    }
+
+    protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
+        String scoreLineItemUrl = getScoresUrl(launch.getScoreLineItemUrl());
+        if (scoreLineItemUrl == null) {
+            return;
+        }
+
+        String token = tokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
+
+        if (token == null) {
+            log.error("Could not transmit score to {}: missing token", clientRegistration.getClientId());
+            return;
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
+            headers.setBearerAuth(token);
+            String body = getScoreBody(launch.getSub(), comment, score);
+            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
+            restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
+            log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
+        }
+        catch (HttpClientErrorException | JacksonException e) {
+            String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
+            log.error(message);
+        }
+    }
+
+    private String getScoresUrl(String lineItemUrl) {
+        if (StringUtils.isEmpty(lineItemUrl)) {
+            return null;
+        }
+        StringBuilder builder = new StringBuilder(lineItemUrl);
+        int index = lineItemUrl.indexOf("?");
+        if (index == -1) {
+            return builder.append("/scores").toString();
+        }
+        return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
+    }
+
+    /**
+     * The body of an LTI 1.3 Assignment and Grading Services score publish request.
+     * It is deliberately not annotated with {@code @JsonInclude}: a missing comment or score is sent as {@code null}, as it always was.
+     *
+     * @param userId           the ID of the user on the platform
+     * @param timestamp        the time at which the score was given
+     * @param activityProgress the progress of the user on the activity
+     * @param gradingProgress  the progress of the grading
+     * @param comment          the feedback of the score
+     * @param scoreGiven       the score that was given
+     * @param scoreMaximum     the maximum score
+     */
+    private record ScorePublishRequest(String userId, String timestamp, String activityProgress, String gradingProgress, String comment, Double scoreGiven, double scoreMaximum) {
+    }
+
+    private String getScoreBody(String userId, String comment, Double score) {
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, new DateTime().toString(), "Submitted", "FullyGraded", comment, score, 100D);
+        return JsonObjectMapper.get().writeValueAsString(requestBody);
+    }
+
+    /**
+     * Helper method to extract an entity (e.g., Exercise, Lecture, Course) from a target link URL.
+     * This method handles the common logic of parsing the URL, matching the path pattern, extracting variables,
+     * and fetching the entity from the repository.
+     *
+     * @param <T>              The type of entity to extract (e.g., Exercise, Lecture, Course).
+     * @param targetLinkUrl    The target link URL to parse.
+     * @param pathPattern      The path pattern to match against (e.g., EXERCISE_PATH_PATTERN).
+     * @param repositoryFinder A function that takes the entity ID and returns an Optional<T> from the repository.
+     * @param entityName       The name of the entity (e.g., "exercise", "lecture", "course") for logging purposes.
+     * @return An Optional containing the entity if found, or an empty Optional otherwise.
+     */
+    private <T> Optional<T> extractEntityFromTargetLink(String targetLinkUrl, String pathPattern, Function<String, Optional<T>> repositoryFinder, String entityName) {
+        AntPathMatcher matcher = new AntPathMatcher();
+        String targetLinkPath;
+
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        if (!matcher.match(pathPattern, targetLinkPath)) {
+            log.info("Could not extract {} from target link: {}", entityName, targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, targetLinkPath);
+        String entityId = pathVariables.get(entityName.toLowerCase(Locale.ROOT) + "Id");
+
+        try {
+            return repositoryFinder.apply(entityId);
+        }
+        catch (Exception ex) {
+            log.info("Invalid {} ID in target link URL: {}", entityName, targetLinkUrl);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Retrieves an Optional of an Exercise referenced by the given target link URL.
+     * This method extracts the exercise ID from the URL using the pattern "/courses/{courseId}/exercises/{exerciseId}".
+     *
+     * @param targetLinkUrl The target link URL to retrieve an Exercise.
+     * @return An Optional containing the Exercise if found, or an empty Optional otherwise.
+     */
+    private Optional<Exercise> getExerciseFromTargetLink(String targetLinkUrl) {
+        return extractEntityFromTargetLink(targetLinkUrl, EXERCISE_PATH_PATTERN, exerciseId -> exerciseRepository.findById(Long.valueOf(exerciseId)), "exercise");
+    }
+
+    /**
+     * Retrieves an Optional of a Lecture referenced by the given target link URL.
+     * This method extracts the lecture ID from the URL using the pattern "/courses/{courseId}/lectures/{lectureId}".
+     *
+     * @param targetLinkUrl The target link URL to retrieve a Lecture.
+     * @return An Optional containing the Lecture if found, or an empty Optional otherwise.
+     */
+    public Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        return extractEntityFromTargetLink(targetLinkUrl, LECTURE_PATH_PATTERN, lectureId -> api.findById(Long.valueOf(lectureId)), "lecture");
+    }
+
+    /**
+     * Retrieves an Optional of a Course referenced by the given target link URL.
+     * This method extracts the course ID from the URL using the pattern "/courses/{courseId}/**".
+     *
+     * @param targetLinkUrl The target link URL to retrieve a Course.
+     * @return An Optional containing the Course if found, or an empty Optional otherwise.
+     */
+    public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
+        return extractEntityFromTargetLink(targetLinkUrl, COURSE_PATH_PATTERN, courseId -> courseRepository.findById(Long.valueOf(courseId)), "course");
+    }
+
+    /**
+     * Determines the type of content referenced by the target link URL.
+     * This method checks the URL path against predefined patterns to identify the type of content.
+     *
+     * @param targetLinkUrl The target link URL to check.
+     * @return The type of content referenced by the URL (e.g., COMPETENCY, LEARNING_PATH, IRIS, or UNKNOWN).
+     */
+    public DeepLinkingType getTargetLinkType(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+        String targetLinkPath;
+
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            throw new BadRequestAlertException("Malformed target link URL", "LTI", "ltiMalformedUrl");
+        }
+
+        for (Map.Entry<String, DeepLinkingType> entry : TARGET_LINK_PATTERNS.entrySet()) {
+            if (matcher.match(entry.getKey(), targetLinkPath)) {
+                return entry.getValue();
+            }
+        }
+
+        log.info("No specific content type detected in target link: {}", targetLinkUrl);
+        throw new BadRequestAlertException("Content type not found", "LTI", "ltiContentTypeNotFound");
+    }
+
+    /**
+     * Normalizes a legacy Iris deep-link target that still points to the removed course dashboard route
+     * ({@code /courses/{courseId}/dashboard}) to the current Iris route ({@code /courses/{courseId}/iris}). Deep links
+     * issued before the dashboard removal are persisted in external LMSes and must keep launching Iris. Non-legacy or
+     * malformed target links are returned unchanged.
+     *
+     * @param targetLinkUri the target link URI from the LTI launch
+     * @return the normalized target link URI, or the original one if it is not a legacy dashboard link
+     */
+    public String normalizeLegacyIrisTargetLink(String targetLinkUri) {
+        if (targetLinkUri == null) {
+            return null;
+        }
+        try {
+            URI uri = new URI(targetLinkUri);
+            String path = uri.getPath();
+            if (path != null && new AntPathMatcher().match(IRIS_LEGACY_DASHBOARD_PATH_PATTERN, path)) {
+                String normalizedPath = path.substring(0, path.length() - "/dashboard".length()) + "/iris";
+                return UriComponentsBuilder.fromUri(uri).replacePath(normalizedPath).build().toUriString();
+            }
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL while normalizing legacy Iris link: {}", targetLinkUri);
+        }
+        return targetLinkUri;
+    }
+
+    private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
+        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
+                launchRequest.deploymentId(), launchRequest.resourceLinkId());
+
+        LtiResourceLaunch launch = launchOpt.orElse(LtiResourceLaunch.from(launchRequest));
+
+        Lti13AgsClaim agsClaim = launchRequest.agsClaim();
+        // we do support LTI 1.3 Assigment and Grading Services SCORE publish service
+        if (agsClaim != null) {
+            launch.setScoreLineItemUrl(agsClaim.lineItem());
+        }
+
+        launch.setExercise(exercise);
+        launch.setUser(user);
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(launchRequest.clientRegistrationId());
+        ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
+
+        launchRepository.save(launch);
+    }
+
+    private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+        // The account is checked first: a refused launch must not leave an association behind that later results are published through.
+        try {
+            ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                    ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        }
+        catch (LtiAccountNotAcceptedException e) {
+            // An account that is not accepted from a launch leaves no association behind
+            throw e;
+        }
+        catch (LtiEmailAlreadyInUseException e) {
+            // The person has an account and signs in by hand. The launch is not repeated after the sign-in, so its association is kept as it always was.
+            createOrUpdateResourceLaunch(launchRequest, user, exercise);
+            throw e;
+        }
+
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
+
+        if (exercise != null) {
+            ltiService.onSuccessfulLtiAuthentication(user, exercise);
+        }
+    }
+
+    /**
+     * Build the response for the LTI launch.
+     *
+     * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response             the response to add the JWT cookie to
+     */
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
+    }
+
+    /**
+     * Builds a response indicating the need for successful login with the associated username.
+     *
+     * @param response   The HttpServletResponse object.
+     * @param ltiIdToken The OIDC ID token with the LTI email address.
+     */
+    public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+
+        if (optionalUsername.isPresent()) {
+            String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
+            response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
+        }
+        ltiService.prepareLogoutCookie(response);
+    }
+
+    private String getSanitizedUsername(String username) {
+        // Remove \r and LF \n characters to prevent HTTP response splitting
+        return LINE_BREAK.matcher(username).replaceAll("");
+    }
+
+    public boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
+        DeepLinkingType linkType = getTargetLinkType(targetLinkUrl);
+        return linkType == DeepLinkingType.COMPETENCY || linkType == DeepLinkingType.LEARNING_PATH || targetLecture.isPresent() || linkType == DeepLinkingType.IRIS;
+    }
+
+    /**
+     * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
+     *
+     * @param ltiIdToken           The ID token containing the deep linking information.
+     * @param clientRegistrationId The client registration ID associated with the LTI platform.
+     * @throws BadRequestAlertException if LTI is not configured.
+     */
+    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(clientRegistrationId);
+        if (ltiPlatformConfiguration.isEmpty()) {
+            throw new BadRequestAlertException("Configuration not found for this client registration ID:" + clientRegistrationId, "LTI", "ltiNotConfigured");
+        }
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getPreferredUsername(), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), true);
+    }
+}

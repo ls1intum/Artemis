@@ -1,0 +1,20 @@
+<div class="table-editable-field flex flex-wrap items-center">
+    <input
+        [id]="id()"
+        tumAetUiInput
+        class="table-editable-field__input w-[calc(100%-0.25rem)]!"
+        data-testid="table-editable-field-input"
+        (blur)="sendValueUpdate($event)"
+        (keyup.enter)="sendValueUpdate($event)"
+        [required]="isRequired()"
+        [pattern]="pattern() ?? '.*'"
+        [(ngModel)]="inputValue"
+        type="text"
+        #editingInput="ngModel"
+    />
+    @for (error of editingInput.errors! | keyvalue | removekeys: ['required']; track error) {
+        @if (editingInput.invalid && (editingInput.dirty || editingInput.touched)) {
+            <tumaet-ui-message class="w-full" severity="error" [text]="translationBase() + '.' + error.key | artemisTranslate" />
+        }
+    }
+</div>

@@ -1,0 +1,182 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+import { orderBy } from 'lodash-es';
+import { Observable, Subscription } from 'rxjs';
+import { map, throttleTime } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    selector: 'jhi-team-students-online-list',
+    templateUrl: './team-students-online-list.component.html',
+    styleUrls: ['./team-students-online-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [TumAetUiButtonDirective, NgClass, FaIconComponent, TumAetUiTooltipDirective],
+})
+export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private websocketService = inject(WebsocketService);
+
+    readonly SHOW_TYPING_DURATION = 2000; // ms
+    readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
+
+    readonly typing$ = input<Observable<string> | undefined>(undefined);
+    readonly participation = input.required<StudentParticipation>();
+
+    currentUser?: User;
+    onlineTeamStudents: OnlineTeamStudent[] = [];
+    typingTeamStudents: OnlineTeamStudent[] = [];
+    websocketTopic!: string; // set in setupOnlineTeamStudentsReceiver() (from ngOnInit) before any read
+    private websocketSubscription?: Subscription;
+    private typingSubscription?: Subscription;
+
+    // Icons
+    faCircle = faCircle;
+    faHistory = faHistory;
+
+    /**
+     * Subscribes to the websocket topic "team" for the given participation
+     *
+     * The current list of online team members is sent upon subscribing, however, this message cannot be received yet by the
+     * client sometimes and thus the list is explicitly requested once more after a short timeout to cover those cases.
+     */
+    ngOnInit(): void {
+        void this.accountService.identity().then((user: User | undefined) => {
+            this.currentUser = user;
+            this.setupOnlineTeamStudentsReceiver();
+            this.setupTypingIndicatorSender();
+        });
+    }
+
+    private setupOnlineTeamStudentsReceiver() {
+        this.websocketTopic = this.buildWebsocketTopic();
+        this.websocketSubscription = this.websocketService
+            .subscribe<OnlineTeamStudent[]>(this.websocketTopic)
+            .pipe(map(this.convertOnlineTeamStudentsFromServer))
+            .subscribe({
+                next: (students: OnlineTeamStudent[]) => {
+                    this.onlineTeamStudents = students;
+                    this.computeTypingTeamStudents();
+                },
+                error: (error: unknown) => captureException(error),
+            });
+        setTimeout(() => {
+            this.websocketService.send<object>(this.buildSendDestination('/trigger'), {});
+        }, 700);
+    }
+
+    private setupTypingIndicatorSender() {
+        const typing$ = this.typing$();
+        if (typing$) {
+            this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
+                next: () => this.websocketService.send<object>(this.buildSendDestination('/typing'), {}),
+                error: (error: unknown) => captureException(error),
+            });
+        }
+    }
+
+    /**
+     * Life cycle hook to indicate component destruction is done
+     */
+    ngOnDestroy(): void {
+        this.websocketSubscription?.unsubscribe();
+        this.typingSubscription?.unsubscribe();
+    }
+
+    get team(): Team {
+        return this.participation().team!;
+    }
+
+    /**
+     * @return list of team members (1. current user, x. other users sorted alphabetically by full name)
+     */
+    get studentList(): User[] {
+        return [...(this.self ? [this.self] : []), ...orderBy(this.otherStudents, ['name'])];
+    }
+
+    get self(): User | undefined {
+        return this.team.students?.find(this.isSelf);
+    }
+
+    get otherStudents(): User[] {
+        return this.team.students?.filter(this.isOther) || [];
+    }
+
+    isSelf = (user: User): boolean => {
+        return user.id === this.currentUser?.id;
+    };
+
+    isOther = (user: User): boolean => {
+        return !this.isSelf(user);
+    };
+
+    isOnline = (user: User): boolean => {
+        return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    lastActionDate = (user: User): dayjs.Dayjs | undefined => {
+        return this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login!)?.lastActionDate;
+    };
+
+    isTyping = (user: User): boolean => {
+        return this.typingTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    /**
+     * Computes which of the online team members are currently typing
+     *
+     * Typing students are those online students whose {lastTypingDate} is more recent than {SHOW_TYPING_DURATION} ms ago.
+     * If there are any typing students, find the timestamp of the earliest expiration of the typing state among them.
+     * Then, schedule another computation for that timestamp.
+     */
+    private computeTypingTeamStudents() {
+        this.typingTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
+            return Boolean(student.lastTypingDate?.isAfter(dayjs().subtract(this.SHOW_TYPING_DURATION, 'ms')));
+        });
+        if (this.typingTeamStudents.length > 0) {
+            const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
+            const minTypingDate = dayjs.min(lastTypingDates);
+            if (minTypingDate) {
+                const earliestExpiration = minTypingDate.add(this.SHOW_TYPING_DURATION, 'ms');
+                const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
+                setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
+            }
+        }
+    }
+
+    private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
+        // The server may send null dates (never typed/acted); the accessors and templates handle that. The array
+        // cast (on the map result, not an object literal — so it satisfies consistent-type-assertions) keeps the
+        // stream typed as OnlineTeamStudent[] the way it was before strictFunctionTypes enforced the callback variance.
+        return students.map((student) =>
+            cloneWith(student, {
+                lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
+            }),
+        ) as OnlineTeamStudent[];
+    }
+
+    /**
+     * Topic for updates on online status of team members (needs to match ExerciseWebsocketTopics.TEAM_ONLINE_STUDENTS)
+     */
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team`;
+    }
+
+    /**
+     * Destination for messages to the server (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team${path}`;
+    }
+}

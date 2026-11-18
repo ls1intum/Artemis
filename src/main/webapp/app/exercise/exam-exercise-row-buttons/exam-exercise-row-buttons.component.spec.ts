@@ -1,0 +1,432 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Course } from 'app/course/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import dayjs from 'dayjs/esm';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { MockProvider } from 'ng-mocks';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+
+const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
+    fixture.componentRef.setInput('exercise', exercise);
+};
+
+describe('ExamExerciseRowButtonsComponent', () => {
+    const course = { id: 3 } as Course;
+    let exam: Exam;
+
+    let modelingExerciseService: ModelingExerciseService;
+    let textExerciseService: TextExerciseService;
+    let quizExerciseService: QuizExerciseService;
+    let fileUploadExerciseService: FileUploadExerciseService;
+    let programmingExerciseService: ProgrammingExerciseService;
+
+    const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
+    const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
+    const quizExercise = { id: 345, type: ExerciseType.QUIZ } as QuizExercise;
+    const fileUploadExercise = { id: 456, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
+    const programmingExercise = {
+        id: 963,
+        type: ExerciseType.PROGRAMMING,
+        programmingLanguage: ProgrammingLanguage.JAVA,
+        projectType: ProjectType.PLAIN_GRADLE,
+    } as ProgrammingExercise;
+    const loadedQuiz = { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise;
+
+    let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteModelingExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteQuizExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteFileUploadExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteProgrammingExerciseStub: ReturnType<typeof vi.spyOn>;
+    let quizExerciseServiceFindStub: ReturnType<typeof vi.spyOn>;
+
+    let onDeleteExerciseEmitSpy: ReturnType<typeof vi.spyOn>;
+    let quizExerciseExportSpy: ReturnType<typeof vi.spyOn>;
+
+    let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
+    let component: ExamExerciseRowButtonsComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamExerciseRowButtonsComponent],
+            providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
+                MockProvider(TextExerciseService),
+                MockProvider(FileUploadExerciseService),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(ModelingExerciseService),
+                MockProvider(QuizExerciseService),
+                MockProvider(ExerciseService),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: () => of({ canCreateVariant: true }) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(EventManager),
+            ],
+        })
+            .overrideTemplate(ExamExerciseRowButtonsComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
+        component = fixture.componentInstance;
+        textExerciseService = TestBed.inject(TextExerciseService);
+        modelingExerciseService = TestBed.inject(ModelingExerciseService);
+        fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        exam = { id: 4 } as Exam;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('exerciseGroupId', 5);
+
+        deleteTextExerciseStub = vi.spyOn(textExerciseService, 'delete');
+        deleteModelingExerciseStub = vi.spyOn(modelingExerciseService, 'delete');
+        deleteQuizExerciseStub = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise');
+        deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
+        deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
+        quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'findForExam');
+        onDeleteExerciseEmitSpy = vi.spyOn(component.onDeleteExercise, 'emit');
+        quizExerciseExportSpy = vi.spyOn(quizExerciseService, 'exportQuiz');
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    describe('isExamOver', () => {
+        it('should return true if over', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));
+            expect(component.isExamOver()).toBe(true);
+        });
+        it('should return false if not yet over', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+            expect(component.isExamOver()).toBe(false);
+        });
+        it('should return false if endDate is undefined', () => {
+            expect(component.isExamOver()).toBe(false);
+        });
+    });
+    describe('hasExamStarted', () => {
+        it('should return true if started', () => {
+            exam.startDate = dayjs().subtract(1, 'hours');
+            expect(component.hasExamStarted()).toBe(true);
+        });
+        it('should return false if not yet started', () => {
+            exam.startDate = dayjs().add(1, 'hours');
+            expect(component.hasExamStarted()).toBe(false);
+        });
+        it('should return false if startDate is undefined', () => {
+            expect(component.hasExamStarted()).toBe(false);
+        });
+    });
+    describe('mainActions', () => {
+        /** The shared course fixture with the given rights, detached so a test cannot leak into the next one. */
+        const courseWith = (roles: { editor?: boolean; instructor?: boolean }): Course => {
+            const copy = deepClone(course);
+            copy.isAtLeastEditor = roles.editor;
+            copy.isAtLeastInstructor = roles.instructor;
+            return copy;
+        };
+
+        const exerciseWith = <T extends Exercise>(exercise: T, changes: { teamMode?: boolean; testRunParticipationsExist?: boolean }): T => {
+            const copy = deepClone(exercise);
+            copy.teamMode = changes.teamMode;
+            copy.testRunParticipationsExist = changes.testRunParticipationsExist;
+            return copy;
+        };
+
+        const idsFor = (exercise: Exercise, roles: { editor?: boolean; instructor?: boolean } = {}): string[] => {
+            fixture.componentRef.setInput('course', courseWith(roles));
+            setExerciseInput(fixture, exercise);
+            TestBed.tick();
+            return component.mainActions().map((action) => action.id);
+        };
+
+        it('offers participations and delete only to instructors', () => {
+            const asInstructor = idsFor(textExercise, { instructor: true, editor: true });
+            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'delete']));
+
+            const asEditor = idsFor(textExercise, { instructor: false, editor: true });
+            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'delete']));
+        });
+
+        it('adds grading and edit-in-editor only for programming exercises with editor rights', () => {
+            expect(idsFor(programmingExercise, { editor: true })).toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+            expect(idsFor(programmingExercise, { editor: false })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+            expect(idsFor(textExercise, { editor: true })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+        });
+
+        it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
+            expect(idsFor(programmingExercise, { editor: true })).not.toContain('create-variant-ai');
+
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
+            fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exam', exam);
+            fixture.componentRef.setInput('exerciseGroupId', 5);
+            TestBed.tick();
+            expect(idsFor(programmingExercise, { editor: true })).toContain('create-variant-ai');
+            component.mainActions().find((action) => action.id === 'create-variant-ai')!.onClick!();
+            expect(component.aiVariantModalVisible()).toBe(true);
+            expect(idsFor(programmingExercise, { editor: false })).not.toContain('create-variant-ai');
+        });
+
+        it('adds example submissions for text and modeling but not for quiz, programming or file upload', () => {
+            expect(idsFor(textExercise, { editor: true })).toContain('examples');
+            expect(idsFor(modelingExercise, { editor: true })).toContain('examples');
+            for (const exercise of [quizExercise, programmingExercise, fileUploadExercise]) {
+                expect(idsFor(exercise, { editor: true })).not.toContain('examples');
+            }
+        });
+
+        it('adds quiz statistics, preview and solution, and a teams action for team exercises', () => {
+            const quizIds = idsFor(quizExercise, { editor: true, instructor: true });
+            expect(quizIds).toEqual(expect.arrayContaining(['statistics', 'preview', 'solution']));
+
+            expect(idsFor(exerciseWith(textExercise, { teamMode: true }), { instructor: true })).toContain('teams');
+            expect(idsFor(textExercise, { instructor: true })).not.toContain('teams');
+        });
+
+        it('swaps the quiz edit action for re-evaluate once the exam is over', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+            const during = idsFor(quizExercise, { editor: true, instructor: true });
+            expect(during).toContain('edit');
+            expect(during).not.toContain('re-evaluate');
+
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));
+            const after = idsFor(quizExercise, { editor: true, instructor: true });
+            expect(after).toContain('re-evaluate');
+            expect(after).not.toContain('edit');
+        });
+
+        it('disables the quiz edit action with an explanation once the exam has started', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().add(1, 'hours') } as Exam);
+            setExerciseInput(fixture, quizExercise);
+            fixture.componentRef.setInput('course', courseWith({ editor: true }));
+            const beforeStart = component.mainActions().find((action) => action.id === 'edit');
+            expect(beforeStart!.disabled).toBe(false);
+            expect(beforeStart!.disabledTooltip).toBeUndefined();
+
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().subtract(1, 'hours') } as Exam);
+            const afterStart = component.mainActions().find((action) => action.id === 'edit');
+            expect(afterStart!.disabled).toBe(true);
+            expect(afterStart!.disabledTooltip).toBe('artemisApp.examManagement.exerciseGroup.editNotPossibleExamStarted');
+        });
+
+        it('wires the delete action to the type-specific service and the repo checks for programming', () => {
+            deleteProgrammingExerciseStub.mockReturnValue(of({} as any));
+            expect(idsFor(programmingExercise, { instructor: true })).toContain('delete');
+
+            const deleteAction = component.mainActions().find((action) => action.id === 'delete')!;
+            expect(deleteAction.delete!.deleteQuestion).toBe('artemisApp.programmingExercise.delete.question');
+            deleteAction.delete!.onDelete({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledWith(programmingExercise.id, true, false);
+
+            deleteTextExerciseStub.mockReturnValue(of({} as any));
+            idsFor(textExercise, { instructor: true });
+            const textDelete = component.mainActions().find((action) => action.id === 'delete')!;
+            expect(textDelete.delete!.deleteQuestion).toBe('artemisApp.exercise.delete.question');
+            textDelete.delete!.onDelete({});
+            expect(deleteTextExerciseStub).toHaveBeenCalledWith(textExercise.id);
+        });
+
+        it('shows the test-run warning only for a quiz with test-run participations before the exam ends', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+            setExerciseInput(fixture, exerciseWith(quizExercise, { testRunParticipationsExist: true }));
+            expect(component['showTestRunWarning']()).toBe(true);
+
+            setExerciseInput(fixture, exerciseWith(quizExercise, { testRunParticipationsExist: false }));
+            expect(component['showTestRunWarning']()).toBe(false);
+
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));
+            setExerciseInput(fixture, exerciseWith(quizExercise, { testRunParticipationsExist: true }));
+            expect(component['showTestRunWarning']()).toBe(false);
+        });
+    });
+
+    describe('reacts to the exam start and end passing', () => {
+        beforeEach(() => vi.useFakeTimers());
+        afterEach(() => vi.useRealTimers());
+
+        const editAction = () => component.mainActions().find((action) => action.id === 'edit');
+
+        it('disables the quiz edit action when the start date passes while the page stays open', () => {
+            fixture.componentRef.setInput('course', { id: 3, isAtLeastEditor: true } as Course);
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().add(5, 'minutes') } as Exam);
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(2, 'hours'));
+            setExerciseInput(fixture, quizExercise);
+            fixture.detectChanges();
+
+            expect(editAction()!.disabled).toBe(false);
+
+            vi.advanceTimersByTime(6 * 60 * 1000);
+            fixture.detectChanges();
+
+            expect(editAction()!.disabled).toBe(true);
+        });
+
+        it('swaps edit for re-evaluate when the end date passes while the page stays open', () => {
+            fixture.componentRef.setInput('course', { id: 3, isAtLeastEditor: true, isAtLeastInstructor: true } as Course);
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().subtract(2, 'hours') } as Exam);
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(5, 'minutes'));
+            setExerciseInput(fixture, quizExercise);
+            fixture.detectChanges();
+
+            expect(component.mainActions().map((action) => action.id)).toContain('edit');
+
+            vi.advanceTimersByTime(6 * 60 * 1000);
+            fixture.detectChanges();
+
+            const ids = component.mainActions().map((action) => action.id);
+            expect(ids).toContain('re-evaluate');
+            expect(ids).not.toContain('edit');
+        });
+    });
+
+    describe('deleteExercise', () => {
+        describe('deleteTextExercise', () => {
+            it('should deleteTextExercise', () => {
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+            });
+            it('should keep the exercise when the background deletion failed', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+            it('should ask the table to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+                const unknownEmitSpy = vi.spyOn(component.deletionOutcomeUnknown, 'emit');
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(unknownEmitSpy).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+            it('should handle error for textexercise', () => {
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
+                deleteTextExerciseStub.mockReturnValue(throwError(() => error));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+        });
+        describe('deleteModelingExercise', () => {
+            it('should deleteModelingExercise', () => {
+                deleteModelingExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, modelingExercise);
+                component.deleteExercise();
+                expect(deleteModelingExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+            });
+            it('should handle error for modelingexercise', () => {
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
+                deleteModelingExerciseStub.mockReturnValue(throwError(() => error));
+                setExerciseInput(fixture, modelingExercise);
+                component.deleteExercise();
+                expect(deleteModelingExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+        });
+        describe('deleteFileUploadExercise', () => {
+            it('should deleteFileUploadExercise', () => {
+                deleteFileUploadExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, fileUploadExercise);
+                component.deleteExercise();
+                expect(deleteFileUploadExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+            });
+            it('should handle error for fileupload exercise', () => {
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
+                deleteFileUploadExerciseStub.mockReturnValue(throwError(() => error));
+                setExerciseInput(fixture, fileUploadExercise);
+                component.deleteExercise();
+                expect(deleteFileUploadExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+        });
+        describe('should deleteQuizExercise', () => {
+            it('should deleteQuizExercise', () => {
+                deleteQuizExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, quizExercise);
+                component.deleteExercise();
+                expect(deleteQuizExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+            });
+            it('should handle error for quizexercise', () => {
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
+                deleteQuizExerciseStub.mockReturnValue(throwError(() => error));
+                setExerciseInput(fixture, quizExercise);
+                component.deleteExercise();
+                expect(deleteQuizExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+        });
+    });
+    describe('deleteProgrammingExercise', () => {
+        it('should deleteProgrammingExercise', () => {
+            deleteProgrammingExerciseStub.mockReturnValue(of({}));
+            setExerciseInput(fixture, programmingExercise);
+            component.deleteProgrammingExercise({});
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledOnce();
+            expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+        });
+        it('should handle error for programmingExercise', () => {
+            const error = { message: 'error occurred!' } as HttpErrorResponse;
+            deleteProgrammingExerciseStub.mockReturnValue(throwError(() => error));
+            setExerciseInput(fixture, programmingExercise);
+            component.deleteProgrammingExercise({});
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledOnce();
+            expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+        });
+    });
+    describe('exportQuizById', () => {
+        it('should export Quiz, exportAll true', () => {
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
+            setExerciseInput(fixture, quizExercise);
+            component.exportQuizById(true);
+            expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
+            expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
+        });
+        it('should export Quiz, exportAll false', () => {
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
+            setExerciseInput(fixture, quizExercise);
+            component.exportQuizById(false);
+            expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
+            expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, false, quizExercise.title);
+        });
+    });
+});

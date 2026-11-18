@@ -1,0 +1,24 @@
+<div *titleBarTitle>
+    <h5 class="m-0" jhiTranslate="artemisApp.repository.vcsAccessLog.title"></h5>
+</div>
+
+<jhi-table-view [cols]="columns()" [vals]="rows()" [loading]="loading()" [options]="tableOptions" [tableActions]="buildAgentFilterTemplate() ?? null" />
+
+<ng-template #timestampTemplate let-cell>
+    <span class="whitespace-nowrap">{{ cell.data.timestamp | artemisDate: 'long' : true }}</span>
+</ng-template>
+
+<ng-template #commitHashTemplate let-cell>
+    <span class="select-all whitespace-nowrap font-mono text-sm">{{ cell.data.commitHash }}</span>
+</ng-template>
+
+<ng-template #buildAgentFilter>
+    <label class="ms-auto flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap">
+        <tumaet-ui-toggle-switch
+            data-testid="include-build-agents-toggle"
+            [ariaLabel]="'artemisApp.repository.vcsAccessLog.includeBuildAgents' | artemisTranslate"
+            (changed)="includeBuildAgents.set($event)"
+        />
+        <span jhiTranslate="artemisApp.repository.vcsAccessLog.includeBuildAgents"></span>
+    </label>
+</ng-template>

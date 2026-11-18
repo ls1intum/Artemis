@@ -1,0 +1,356 @@
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
+import { toQuizQuestion, toSubmittedAnswer, toSubmittedAnswerFromLiveClient } from 'app/quiz/shared/util/generated-quiz-question.util';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { EMPTY, filter, map, switchMap } from 'rxjs';
+import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
+import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
+import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { QuizQuestionTraining } from 'app/openapi/model/quiz-question-training';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+
+/**
+ * A loaded training question. The question is converted once, when its page arrives: appending a later page must keep
+ * the instance the question components render, or a short-answer question rebuilds its inputs while a student types.
+ */
+interface TrainingQuestion {
+    question: QuizQuestion;
+    isRated?: boolean;
+}
+
+@Component({
+    selector: 'jhi-course-training-quiz',
+    imports: [
+        MultipleChoiceQuestionComponent,
+        ShortAnswerQuestionComponent,
+        DragAndDropQuestionComponent,
+        ButtonComponent,
+        TranslateDirective,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        ArtemisTranslatePipe,
+    ],
+    templateUrl: './course-training-quiz.component.html',
+})
+export class CourseTrainingQuizComponent {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private quizTrainingApi = inject(QuizTrainingApi);
+    private alertService = inject(AlertService);
+    private courseService = inject(CourseManagementService);
+
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+
+    currentIndex = signal(0);
+
+    // Pagination options
+    page = signal(0);
+    size = 20;
+    totalItems = signal(0);
+    allLoadedQuestions = signal<TrainingQuestion[]>([]);
+    hasNext = signal(false);
+
+    // Reactive chain for loading quiz questions based on the current route
+    paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    courseId = computed(() => this.paramsSignal()?.['courseId']);
+    courseSignal = toSignal(
+        this.route.parent!.params.pipe(
+            map((p) => p['courseId'] as number | undefined),
+            filter((id): id is number => id !== undefined),
+            switchMap((id) => this.courseService.find(id)),
+            map((res) => res.body ?? undefined),
+        ),
+        { initialValue: undefined },
+    );
+    course = computed(() => this.courseSignal());
+    questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
+    nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && this.hasNext());
+
+    submittedAnswer!: SubmittedAnswer; // populated by applySelection() before onSubmit() reads it
+    readonly showingResult = signal(false);
+    readonly submitted = signal(false);
+    readonly questionScores = signal<number>(0);
+    readonly selectedAnswerOptions = signal<AnswerOption[]>([]);
+    readonly dragAndDropMappings = signal<DragAndDropMapping[]>([]);
+    readonly shortAnswerSubmittedTexts = signal<ShortAnswerSubmittedText[]>([]);
+    previousRatedStatus = true;
+    readonly showUnratedConfirmation = signal(false);
+    questionIds: number[] = [];
+    isNewSession = true;
+
+    /**
+     * checks if the current question is the last question
+     */
+    isLastQuestion = computed(() => {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
+            return true;
+        }
+        return this.currentIndex() === this.allLoadedQuestions().length - 1;
+    });
+
+    /**
+     * gets the current question
+     */
+    currentQuestion = computed(() => {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
+            return undefined;
+        }
+        return questions[this.currentIndex()].question;
+    });
+
+    isRated = computed(() => {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
+            return false;
+        }
+        return questions[this.currentIndex()].isRated;
+    });
+
+    constructor() {
+        effect(() => {
+            const id = this.courseId();
+            if (id && this.page() === 0) {
+                this.loadQuestions();
+            }
+        });
+
+        effect(() => {
+            const questionStatus = this.isRated();
+            if (questionStatus !== undefined) {
+                this.checkRatingStatusChange();
+            }
+        });
+
+        effect(() => {
+            if (this.nextPage()) {
+                this.loadNextPage();
+            }
+        });
+    }
+
+    /**
+     * loads questions for the current page
+     */
+    loadQuestions(): void {
+        if (!this.courseId()) {
+            return;
+        }
+
+        this.quizTrainingApi.getQuizQuestionsForPractice(this.courseId(), this.isNewSession, this.questionIds, this.page(), this.size).subscribe({
+            next: (res: HttpResponse<QuizQuestionTraining[]>) => {
+                this.hasNext.set(res.headers.get('X-Has-Next') === 'true');
+
+                if (this.page() === 0 && res.body?.length) {
+                    this.questionIds = res.body[0].questionIds ?? [];
+                    this.isNewSession = res.body[0].isNewSession ?? false;
+                }
+
+                const loadedQuestions = (res.body ?? []).map((training) => ({ question: toQuizQuestion(training.quizQuestionWithSolutionDTO), isRated: training.isRated }));
+                if (this.page() === 0) {
+                    this.allLoadedQuestions.set(loadedQuestions);
+                } else {
+                    this.allLoadedQuestions.update((current) => [...current, ...loadedQuestions]);
+                }
+
+                if (this.allLoadedQuestions().length > 0 && this.currentIndex() === 0) {
+                    this.initQuestion(this.currentQuestion()!);
+                }
+            },
+        });
+    }
+
+    /**
+     * loads the next page of questions
+     */
+    loadNextPage(): void {
+        if (!this.hasNext()) {
+            return;
+        }
+        this.page.update((page) => page + 1);
+        this.loadQuestions();
+    }
+
+    /**
+     * increments the current question index or navigates to the course practice page if the last question is reached
+     */
+    nextQuestion(): void {
+        const questions = this.allLoadedQuestions();
+        if (this.currentIndex() < questions.length - 1) {
+            this.currentIndex.update((index) => index + 1);
+            const question = this.currentQuestion();
+            if (question) {
+                this.initQuestion(question);
+            }
+        }
+    }
+
+    checkRatingStatusChange(): void {
+        const currentIsRated = this.isRated();
+
+        if (this.previousRatedStatus && currentIsRated === false) {
+            this.showUnratedConfirmation.set(true);
+        }
+
+        this.previousRatedStatus = currentIsRated ?? false;
+    }
+
+    /**
+     * initializes a new question with default values
+     * @param question
+     */
+    initQuestion(question: QuizQuestion): void {
+        this.showingResult.set(false);
+        this.submitted.set(false);
+        this.checkRatingStatusChange();
+        if (question) {
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    this.selectedAnswerOptions.set([]);
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    this.dragAndDropMappings.set([]);
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    this.shortAnswerSubmittedTexts.set([]);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * applies the current selection to the trainingAnswer object
+     */
+    applySelection() {
+        const question = this.currentQuestion();
+        if (!question) {
+            return;
+        }
+
+        switch (question.type) {
+            case QuizQuestionType.MULTIPLE_CHOICE: {
+                const answerOptions = this.selectedAnswerOptions();
+                const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+                mcSubmittedAnswer.quizQuestion = question;
+                mcSubmittedAnswer.selectedOptions = answerOptions;
+                this.submittedAnswer = mcSubmittedAnswer;
+                break;
+            }
+            case QuizQuestionType.DRAG_AND_DROP: {
+                const mappings = this.dragAndDropMappings();
+                const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
+                ddSubmittedAnswer.quizQuestion = question;
+                ddSubmittedAnswer.mappings = mappings;
+                this.submittedAnswer = ddSubmittedAnswer;
+                break;
+            }
+            case QuizQuestionType.SHORT_ANSWER: {
+                const submittedTexts = this.shortAnswerSubmittedTexts();
+                const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+                saSubmittedAnswer.quizQuestion = question;
+                saSubmittedAnswer.submittedTexts = submittedTexts;
+                this.submittedAnswer = saSubmittedAnswer;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Submits the quiz for practice
+     */
+    onSubmit() {
+        const questionId = this.currentQuestion()?.id;
+        if (!questionId) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'No questionId found',
+            });
+            return;
+        }
+        this.applySelection();
+        this.quizTrainingApi.submitForTraining(this.courseId(), questionId, this.isRated() ?? false, toSubmittedAnswerFromLiveClient(this.submittedAnswer)).subscribe({
+            next: (evaluatedAnswer: SubmittedAnswerAfterEvaluation) => this.onSubmitSuccess(evaluatedAnswer),
+            error: (error: HttpErrorResponse) => this.onSubmitError(error),
+        });
+    }
+
+    onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
+        this.submitted.set(true);
+        this.showingResult.set(true);
+
+        this.questionScores.set(roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course()));
+
+        // update UI with the evaluated answer
+        this.applyEvaluatedAnswer(evaluatedAnswer);
+    }
+
+    /**
+     * Callback function for handling error when submitting
+     */
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.message;
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
+    }
+
+    /**
+     * Applies the evaluated answer to the current question
+     */
+    applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
+        const question = this.currentQuestion();
+        if (!question) return;
+
+        const answer = toSubmittedAnswer(evaluatedAnswer);
+        switch (question.type) {
+            case QuizQuestionType.MULTIPLE_CHOICE:
+                this.selectedAnswerOptions.set((answer as MultipleChoiceSubmittedAnswer).selectedOptions ?? []);
+                break;
+            case QuizQuestionType.DRAG_AND_DROP:
+                this.dragAndDropMappings.set((answer as DragAndDropSubmittedAnswer).mappings ?? []);
+                break;
+            case QuizQuestionType.SHORT_ANSWER:
+                this.shortAnswerSubmittedTexts.set((answer as ShortAnswerSubmittedAnswer).submittedTexts ?? []);
+                break;
+        }
+    }
+
+    /**
+     * navigates to the course practice page
+     */
+    navigateToTraining(): void {
+        void this.router.navigate(['courses', this.courseId(), 'training']);
+    }
+
+    confirmUnratedPractice(): void {
+        this.showUnratedConfirmation.set(false);
+    }
+
+    cancelUnratedPractice(): void {
+        this.showUnratedConfirmation.set(false);
+        this.navigateToTraining();
+    }
+}

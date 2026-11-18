@@ -1,0 +1,52 @@
+<div class="mx-auto w-full max-w-7xl -mt-2 px-0!">
+    <div class="min-w-0">
+        @if (textExercise()) {
+            <div>
+                <jhi-exercise-detail-header [exercise]="textExercise()" [documentationType]="documentationType" />
+                @if (course(); as courseValue) {
+                    <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="textExercise()" />
+                }
+                @if (!textExercise().releaseDate || dayjs(textExercise().releaseDate).isBefore(dayjs())) {
+                    <div class="mt-6!">
+                        <jhi-exercise-detail-statistics
+                            [exercise]="textExercise()"
+                            [doughnutStats]="doughnutStats()"
+                            [exerciseType]="ExerciseType.TEXT"
+                            class="flex justify-around"
+                        />
+                    </div>
+                }
+                @if (detailOverviewSections()) {
+                    <ng-template #competencyActions>
+                        @if (textExercise().isAtLeastInstructor && !isExamExercise()) {
+                            <jhi-atlas-orchestration-trigger [exercise]="textExercise()" [showLabel]="true" />
+                        }
+                    </ng-template>
+                    <jhi-detail-overview-list
+                        [footerSection]="
+                            course() && textExercise().isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined
+                        "
+                        [sections]="detailOverviewSections()"
+                        [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }"
+                    />
+                }
+                <ng-template #administrationActions>
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="configuration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="textExercise()"
+                        />
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="administration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="textExercise()"
+                        />
+                    }
+                </ng-template>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,190 @@
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
+import { RouterLink } from '@angular/router';
+
+// Each preview translation interpolates one specific field; thread answers use the reply, not the parent post.
+const MARKDOWN_PREVIEW_PARAMETERS: Partial<Record<string, string>> = {
+    newPostNotification: 'postMarkdownContent',
+    newAnswerNotification: 'replyMarkdownContent',
+    irisResponseNeedsReviewNotification: 'replyMarkdownContent',
+    newMentionNotification: 'postMarkdownContent',
+    newAnnouncementNotification: 'postMarkdownContent',
+    newCpcPlagiarismCaseNotification: 'postMarkdownContent',
+    newPlagiarismCaseNotification: 'postMarkdownContent',
+};
+
+/**
+ * Component for displaying a single course notification.
+ * Renders notification content, metadata, and handles interaction events.
+ * Supports various display modes through input properties.
+ */
+@Component({
+    selector: 'jhi-course-notification',
+    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, ArtemisTranslatePipe, CommonModule, RouterLink],
+    templateUrl: './course-notification.component.html',
+    styleUrls: ['./course-notification.component.scss'],
+    // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
+    // child can be made block-level in fluid mode, giving `width: 100%` a definite containing block.
+    host: { '[class.fluid]': 'fluid()' },
+})
+export class CourseNotificationComponent {
+    private readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+
+    readonly onCloseClicked = output<void>();
+
+    readonly courseNotification = input.required<CourseNotification>();
+    readonly isUnseen = input<boolean>(false);
+    readonly isShowClose = input<boolean>(false);
+    readonly isHideTime = input<boolean>(false);
+    readonly isRedirectToUrl = input<boolean>(false);
+    readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
+    // When true, the card fills the available width and grows in height (used in the overview
+    // overlay). The transient popup toast keeps the default fixed size.
+    readonly fluid = input<boolean>(false);
+
+    protected readonly faIcon = signal<IconDefinition>(undefined!);
+    protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);
+    protected readonly notificationType = signal<string>(undefined!);
+    protected readonly notificationContentKey = signal<string>(undefined!);
+    protected readonly notificationInitialized = signal<boolean>(false);
+    protected readonly notificationUrl = signal<{ link: string[]; queryParams: Record<string, string> }>(undefined!);
+    protected readonly notificationTimeTranslationKey = signal<string>(undefined!);
+    protected readonly notificationTimeTranslationParameters = signal<{ [key: string]: unknown }>(undefined!);
+
+    // Icons
+    protected faTimes = faTimes;
+
+    // Needed for communication notifications
+    protected readonly isShowProfilePicture = signal<boolean>(false);
+    protected readonly authorName = signal<string | undefined>(undefined);
+    protected readonly authorId = signal<number | undefined>(undefined);
+    protected readonly authorImageUrl = signal<string | undefined>(undefined);
+    protected readonly isAuthorBot = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const notification = this.courseNotification();
+            untracked(() => {
+                void this.initializeNotification(notification);
+            });
+        });
+    }
+
+    /**
+     * Builds the translation parameters and metadata signals for the given notification. Markdown-valued
+     * parameters are rendered and reduced to plain text via the lazily-loaded markdown pipeline, so this
+     * runs asynchronously (the pipeline is no longer part of the eager bundle).
+     */
+    private async initializeNotification(notification: CourseNotification): Promise<void> {
+        // Do not keep rendering the previous notification while markdown parameters for a replacement input are
+        // still being converted asynchronously.
+        this.notificationInitialized.set(false);
+        this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
+        // For translations, we pass all parameters and the course name and id so they can automatically be used.
+        const notificationParameters: { [key: string]: unknown } = {
+            courseName: notification.courseTitle,
+            courseId: notification.courseId,
+        };
+        // Interpolation is by name, so every value of the payload is offered to the translation. The payload is a
+        // record of the notification type, so the names are the ones that type declares rather than whatever a map held.
+        let hasNotificationText = false;
+        for (const [key, value] of Object.entries(notification.payload ?? {})) {
+            if (key === CourseNotificationService.NOTIFICATION_TEXT_PARAMETER && typeof value === 'string') {
+                // The translation directive escapes interpolation values when rendering HTML.
+                notificationParameters[key] = value;
+                hasNotificationText = value.trim() !== '';
+            } else if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                notificationParameters[key] = value;
+            } else {
+                // The markdown pipeline sanitizes HTML via DOMPurify. Extract decoded text so entities are not
+                // escaped twice when the translation directive renders it. If the lazy chunk fails, pass the raw
+                // value to the directive, which also escapes it as text.
+                try {
+                    const sanitized = await renderPostingMarkdownToHtml(value.toString());
+                    notificationParameters[key] = new DOMParser().parseFromString(sanitized, 'text/html').body.textContent ?? '';
+                } catch {
+                    notificationParameters[key] = value.toString();
+                }
+            }
+        }
+        // A newer notification may have arrived while awaiting the lazy markdown render; discard this stale run.
+        if (this.courseNotification() !== notification) {
+            return;
+        }
+        this.notificationParameters.set(notificationParameters);
+        this.notificationType.set(notification.notificationType!);
+        // A notification carrying a message of its editor shows that message, otherwise the generic content of its type.
+        const previewParameter = MARKDOWN_PREVIEW_PARAMETERS[notification.notificationType ?? ''];
+        const preview = previewParameter ? notificationParameters[previewParameter] : undefined;
+        // Forwarded-only posts have no wrapper text, and empty values are omitted by the server. Do not leave
+        // an interpolation token (or a blank card body) visible when the preview is missing or renders to no text.
+        this.notificationContentKey.set(
+            previewParameter && (typeof preview !== 'string' || !preview.trim())
+                ? 'artemisApp.courseNotification.messagePreviewUnavailable'
+                : `artemisApp.courseNotification.${notification.notificationType}.${hasNotificationText ? 'contentWithNotificationText' : 'content'}`,
+        );
+        this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
+        this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
+        this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));
+        if ('authorName' in notificationParameters && 'authorImageUrl' in notificationParameters && 'authorId' in notificationParameters) {
+            this.authorName.set(notificationParameters.authorName as string);
+            this.authorId.set(notificationParameters.authorId as number);
+            this.authorImageUrl.set(notificationParameters.authorImageUrl as string);
+            this.isAuthorBot.set(notificationParameters.authorIsBot === true);
+            this.isShowProfilePicture.set(true);
+        } else if ('replyAuthorName' in notificationParameters && 'replyImageUrl' in notificationParameters && 'replyAuthorId' in notificationParameters) {
+            this.authorName.set(notificationParameters.replyAuthorName as string);
+            this.authorId.set(notificationParameters.replyAuthorId as number);
+            this.authorImageUrl.set(notificationParameters.replyImageUrl as string);
+            this.isAuthorBot.set(notificationParameters.replyIsBot === true);
+            this.isShowProfilePicture.set(true);
+        } else {
+            this.isAuthorBot.set(false);
+            this.isShowProfilePicture.set(false);
+        }
+        this.notificationInitialized.set(true);
+    }
+
+    /**
+     * Handles the close button click event.
+     * Emits an event to notify parent components.
+     */
+    protected closeClicked() {
+        this.onCloseClicked.emit();
+    }
+
+    /**
+     * Parses an url to an object that can be interpreted by a routerLink
+     * @param url The url to parse as a string
+     * @return An object that can be interpreted by a routerLink
+     */
+    private parseUrlToRouterObject(url: string): { link: string[]; queryParams: Record<string, string> } {
+        if (url === undefined) {
+            return { link: [''], queryParams: {} };
+        }
+
+        const [path, queryString] = url.split('?');
+        const queryParams: Record<string, string> = {};
+
+        if (queryString) {
+            queryString.split('&').forEach((param) => {
+                const [key, value] = param.split('=');
+                queryParams[key] = decodeURIComponent(value || '');
+            });
+        }
+
+        return { link: [path], queryParams };
+    }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+}

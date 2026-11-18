@@ -1,0 +1,190 @@
+<div class="plagiarism-inspector">
+    <div class="plagiarism-header">
+        <div class="plagiarism-header-top">
+            <div class="plagiarism-header-top-left">
+                <h4
+                    class="plagiarism-page-title font-medium!"
+                    (click)="showOptions = !showOptions"
+                    [class.active]="showOptions"
+                    [attr.aria-expanded]="showOptions"
+                    #keyboardAction5
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
+                >
+                    <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight" />
+                    <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
+                </h4>
+                <div class="plagiarism-warning">
+                    <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution" />
+                    <span jhiTranslate="artemisApp.plagiarism.caution"></span>
+                </div>
+            </div>
+            <div class="plagiarism-header-top-right">
+                @if (chartFilterApplied()) {
+                    <button type="button" tumAetUiButton severity="info" class="check-plagiarism" (click)="resetFilter()">
+                        <span jhiTranslate="artemisApp.plagiarism.resetFilter"></span>
+                    </button>
+                }
+                <button
+                    type="button"
+                    tumAetUiButton
+                    [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
+                    class="check-plagiarism"
+                    (click)="checkPlagiarism()"
+                    [forceDisabled]="detectionInProgress()"
+                >
+                    <span jhiTranslate="{{ plagiarismResult() ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
+                </button>
+                <tumaet-ui-dialog [(visible)]="cleanUpModalVisible" dismissableMask size="small" [header]="'artemisApp.plagiarism.cleanUp.confirmDialog.title' | artemisTranslate">
+                    <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question"></p>
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
+                            inputId="deleteAllPlagiarismComparisons"
+                            [checked]="deleteAllPlagiarismComparisons()"
+                            (changed)="toggleDeleteAllPlagiarismComparisons()"
+                        />
+                        <label for="deleteAllPlagiarismComparisons" class="cursor-pointer" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
+                    </div>
+                    @if (deleteAllPlagiarismComparisons()) {
+                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-state-warning"></p>
+                    }
+                    <ng-template #footer>
+                        <button type="button" tumAetUiButton severity="danger" (click)="confirmCleanUp()">
+                            <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
+                        </button>
+                    </ng-template>
+                </tumaet-ui-dialog>
+                @if (exercise().isAtLeastInstructor && plagiarismResult()) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="danger"
+                        [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
+                        class="check-plagiarism"
+                        (click)="openCleanUpModal()"
+                        [forceDisabled]="detectionInProgress()"
+                    >
+                        <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
+                    </button>
+                }
+                @if (plagiarismResult()) {
+                    <button type="button" tumAetUiButton severity="secondary" id="download-plagiarism" [tumAetUiMenuTrigger]="downloadMenu">
+                        <span>Download</span>
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                    <ng-template #downloadMenu>
+                        <tumaet-ui-menu aria-labelledby="download-plagiarism">
+                            <button type="button" tumAetUiMenuItem (triggered)="downloadPlagiarismResultsJson()">JSON</button>
+                            <button type="button" tumAetUiMenuItem (triggered)="downloadPlagiarismResultsCsv()">CSV</button>
+                        </tumaet-ui-menu>
+                    </ng-template>
+                }
+            </div>
+        </div>
+        <div class="plagiarism-header-options" [hidden]="!showOptions">
+            <div class="plagiarism-option">
+                <label class="plagiarism-option-label" for="plagiarism-similarity-threshold" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></label>
+                <span
+                    class="plagiarism-option-help"
+                    tabindex="0"
+                    [tumAetUiTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"
+                    tumAetUiTooltipPlacement="bottom"
+                >
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
+                <input tumAetUiInput type="number" required class="w-40" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
+            </div>
+            <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="enableMinimumScore" [(ngModel)]="enableMinimumScore" />
+                    <label for="enableMinimumScore" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></label>
+                </div>
+                <span
+                    class="plagiarism-option-help"
+                    tabindex="0"
+                    [tumAetUiTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"
+                    tumAetUiTooltipPlacement="bottom"
+                >
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
+                <input
+                    tumAetUiInput
+                    [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
+                    required
+                    type="number"
+                    [disabled]="!enableMinimumScore"
+                    class="w-40"
+                    min="0"
+                    max="100"
+                    id="plagiarism-minimum-score"
+                    [(ngModel)]="minimumScore"
+                />
+            </div>
+            <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="enableMinimumSize" [(ngModel)]="enableMinimumSize" />
+                    <label for="enableMinimumSize" class="plagiarism-option-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
+                </div>
+                <span class="plagiarism-option-help" tabindex="0" [tumAetUiTooltip]="getMinimumSizeTooltip() | artemisTranslate" tumAetUiTooltipPlacement="bottom">
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
+                <input
+                    tumAetUiInput
+                    [attr.aria-label]="getMinimumSizeLabel() | artemisTranslate"
+                    required
+                    type="number"
+                    [disabled]="!enableMinimumSize"
+                    class="w-40"
+                    min="0"
+                    max="100"
+                    id="plagiarism-minimum-size"
+                    [(ngModel)]="minimumSize"
+                />
+            </div>
+            @if (isProgrammingExercise()) {
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="generateJPlagReport" [(ngModel)]="generateJPlagReport" />
+                    <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport"></label>
+                </div>
+            }
+        </div>
+    </div>
+    @if (plagiarismResult(); as plagiarismResult) {
+        @if (!detectionInProgress()) {
+            <div class="plagiarism-body">
+                <jhi-plagiarism-sidebar
+                    [showRunDetails]="showRunDetails()"
+                    (showRunDetailsChange)="showSimilarityDistribution($event)"
+                    [comparisons]="visibleComparisons()"
+                    [offset]="sidebarOffset()"
+                    (selectIndex)="selectComparisonWithID($event)"
+                    [activeID]="selectedComparisonId()"
+                    [casesFiltered]="chartFilterApplied()"
+                />
+                <jhi-plagiarism-details [hidden]="showRunDetails()" [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined" [exercise]="exercise()" />
+                <jhi-plagiarism-run-details
+                    [hidden]="!showRunDetails()"
+                    [plagiarismResult]="plagiarismResult"
+                    [plagiarismResultStats]="plagiarismResultStats()"
+                    (similaritySelected)="filterByChart($event)"
+                />
+            </div>
+        }
+    }
+    @if (!plagiarismResult() || detectionInProgress()) {
+        <div class="plagiarism-empty">
+            @if (detectionInProgress()) {
+                <div class="flex flex-col">
+                    <tumaet-ui-progress-spinner class="mb-1 self-center" [ariaLabel]="'loading' | artemisTranslate" />
+                    <p>{{ detectionInProgressMessage() }}</p>
+                </div>
+            }
+            @if (!detectionInProgress()) {
+                <span class="plagiarism-empty-label" jhiTranslate="artemisApp.plagiarism.empty"></span>
+            }
+        </div>
+    }
+</div>

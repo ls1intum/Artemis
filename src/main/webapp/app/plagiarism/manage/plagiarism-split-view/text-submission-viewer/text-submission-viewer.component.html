@@ -1,0 +1,42 @@
+<jhi-split-pane-header
+    [files]="files()"
+    [isLockFilesEnabled]="this.isLockFilesEnabled()"
+    [fileSelectedSubject]="fileSelectedSubject()"
+    (selectFile)="handleFileSelect($event)"
+    [showFilesSubject]="showFilesSubject()"
+    [dropdownHoverSubject]="dropdownHoverSubject()"
+    studentLogin="{{ plagiarismSubmission()?.studentLogin }}"
+/>
+@if (cannotLoadFiles()) {
+    <div class="text-submission-viewer text-state-warning">
+        <div class="text-submission-viewer-warning">
+            <fa-icon [icon]="faExclamationTriangle" class="icon" />
+            <span jhiTranslate="artemisApp.plagiarism.cannotLoadFiles"></span>
+        </div>
+    </div>
+}
+@if (!loading() && !binaryFile()!! && !cannotLoadFiles()) {
+    <div class="text-submission-viewer" [innerHTML]="fileContent() || ' '" [ngClass]="{ 'no-file': !fileContent(), 'is-code': isProgrammingExercise() }">
+        <span jhiTranslate="artemisApp.plagiarism.noFileSelected"></span>
+    </div>
+}
+@if (loading() && !cannotLoadFiles()) {
+    <div class="plagiarism-submission-loader">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+}
+@if (binaryFile() && !cannotLoadFiles()) {
+    <div class="binaryFileDialogue">
+        <span class="me-1" jhiTranslate="artemisApp.plagiarism.binaryFileNotRendered"></span>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="text"
+            size="small"
+            class="p-0!"
+            (click)="downloadCurrentFile()"
+            jhiTranslate="entity.action.download"
+        ></button>
+    </div>
+}

@@ -1,0 +1,364 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { take } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+
+describe('Participation Service', () => {
+    let service: ParticipationService;
+    let httpMock: HttpTestingController;
+    let currentDate: dayjs.Dayjs;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                LocalStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+            ],
+        });
+        service = TestBed.inject(ParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
+        currentDate = dayjs();
+    });
+
+    it('should find an element', () => {
+        const returnedFromService: StudentParticipationDTO = {
+            id: 123,
+            initializationDate: currentDate.toISOString(),
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            submissions: [
+                {
+                    id: 456,
+                    submissionExerciseType: SubmissionExerciseType.TEXT,
+                    results: [{ id: 789, rated: true }],
+                },
+            ],
+        };
+        service
+            .find(123)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toBeInstanceOf(StudentParticipation);
+                expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
+                expect(resp.body?.submissions?.[0].participation).toBe(resp.body);
+                expect(resp.body?.submissions?.[0].results?.[0].submission).toBe(resp.body?.submissions?.[0]);
+            });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('should cleanup build plan', () => {
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.id = 123;
+        service.cleanupBuildPlan(participation).subscribe((resp) => {
+            expect(resp.body).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+            expect(resp.body?.initializationState).toBe(InitializationState.INACTIVE);
+            expect((resp.body as ProgrammingExerciseStudentParticipation).buildPlanId).toBeUndefined();
+        });
+        const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body).toBeNull();
+        req.flush({ id: 123, initializationState: InitializationState.INACTIVE, testRun: false, type: ParticipationType.PROGRAMMING });
+    });
+
+    it('should merge student participations for programming exercises', () => {
+        const participation1: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUri: 'repo-url',
+            buildPlanId: 'build-plan-id',
+            student: { id: 1, login: 'student1', internal: true },
+            team: { id: 1, name: 'team1' },
+
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
+        };
+
+        const participation2: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUri: 'repo-url-1',
+            buildPlanId: 'build-plan-id-1',
+            student: { id: 2, login: 'student2', internal: true },
+
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
+        };
+
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
+        expect(mergedParticipation?.team!.id).toEqual(participation1.team!.id);
+        expect(mergedParticipation?.team!.name).toEqual(participation1.team!.name);
+        expect(mergedParticipation?.id).toEqual(participation1.id);
+        expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
+        mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    });
+
+    it('should not merge practice participation for programming exercises', () => {
+        const participation1: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUri: 'repo-url',
+            buildPlanId: 'build-plan-id',
+            student: { id: 1, login: 'student1', internal: true },
+
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
+            testRun: true,
+        };
+
+        const participation2: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUri: 'repo-url-1',
+            buildPlanId: 'build-plan-id-1',
+            student: { id: 2, login: 'student2', internal: true },
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
+        };
+
+        const mergedParticipations = service.mergeStudentParticipations([participation1, participation2]);
+        expect(mergedParticipations).toHaveLength(2);
+        expect(mergedParticipations[0]).toEqual(participation2);
+        expect(mergedParticipations[1]).toEqual(participation1);
+    });
+
+    it('should merge student participations', () => {
+        const participation1: StudentParticipation = {
+            id: 1,
+            type: ParticipationType.STUDENT,
+            student: { id: 1, login: 'student1', internal: true },
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
+        };
+
+        const participation2: StudentParticipation = {
+            id: 2,
+            type: ParticipationType.STUDENT,
+            student: { id: 2, login: 'student2', internal: true },
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
+        };
+
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
+        expect(mergedParticipation?.id).toEqual(participation1.id);
+        expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
+        mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    });
+
+    it('should update a Participation', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 1;
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.id = 2;
+        participation.presentationScore = 1;
+
+        const returnedFromService: StudentParticipationDTO = {
+            id: participation.id,
+            repositoryUri: 'repository-uri',
+            buildPlanId: 'build-plan-id',
+            initializationState: InitializationState.INITIALIZED,
+            initializationDate: currentDate.toISOString(),
+            presentationScore: 1,
+            testRun: false,
+            type: ParticipationType.PROGRAMMING,
+        };
+
+        service
+            .update(exercise, participation)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+                expect(resp.body?.presentationScore).toBe(1);
+                expect((resp.body as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+                expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
+            });
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+    });
+
+    it('should delete a Participation', () => {
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBe(true));
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+    });
+
+    it('should get build job ids for participation results', () => {
+        let resultGetBuildJobId: any;
+        const resultIdToBuildJobIdMap: { [key: string]: boolean } = { '1': true, '2': false };
+        const returnedFromService = resultIdToBuildJobIdMap;
+        const expected = { ...returnedFromService };
+
+        service
+            .getBuildJobIdsForResultsOfParticipation(1)
+            .pipe(take(1))
+            .subscribe((resp) => (resultGetBuildJobId = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(resultGetBuildJobId).toEqual(expected);
+    });
+
+    describe('searchParticipations', () => {
+        const baseSearch = {
+            page: 0,
+            pageSize: 50,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'participationId',
+            searchTerm: '',
+        };
+
+        it('should use the exam page route with the same filters and conversion', () => {
+            let result: PageableResult<ParticipationManagementDTO> | undefined;
+            service.searchParticipations(42, baseSearch, 'exam').subscribe((page) => (result = page));
+            const request = httpMock.expectOne((r) => r.method === 'GET');
+            expect(request.request.params.get('pageSize')).toBe('50');
+            request.flush([{ participationId: 1, completionDate: '2026-01-01T10:00:00Z' }], { headers: { 'X-Total-Count': '7' } });
+            expect(request.request.url).toBe('api/exercise/exercises/42/participations/page/for-exam');
+            expect(result?.totalElements).toBe(7);
+            expect(dayjs.isDayjs(result?.content[0].completionDate)).toBe(true);
+        });
+
+        it('should GET paginated participations and convert date fields', () => {
+            const isoDate = '2024-06-01T10:00:00Z';
+            const serverDto = {
+                participationId: 1,
+                initializationDate: isoDate,
+                individualDueDate: isoDate,
+                completionDate: isoDate,
+                correctionRoundResults: [
+                    { resultId: 2, correctionRound: 0, completionDate: isoDate },
+                    { resultId: 3, correctionRound: 1 },
+                ],
+            };
+
+            let result: any;
+            service.searchParticipations(42, baseSearch).subscribe((r) => (result = r));
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/42/participations/page');
+            expect(req.request.method).toBe('GET');
+            req.flush([serverDto], { headers: { 'X-Total-Count': '1' } });
+
+            expect(result.totalElements).toBe(1);
+            expect(dayjs.isDayjs(result.content[0].initializationDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].individualDueDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].completionDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].correctionRoundResults[0].completionDate)).toBe(true);
+            expect(result.content[0].correctionRoundResults[0].completionDate.toISOString()).toBe(isoDate.replace('Z', '.000Z'));
+            expect(result.content[0].correctionRoundResults[1].completionDate).toBeUndefined();
+        });
+
+        it('should include filterProp in params when provided', () => {
+            service.searchParticipations(1, { ...baseSearch, filterProp: 'Failed' }).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
+            expect(req.request.params.get('filterProp')).toBe('Failed');
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+        });
+
+        it('should not include filterProp or scoreRange params when absent', () => {
+            service.searchParticipations(1, baseSearch).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
+            expect(req.request.params.has('filterProp')).toBe(false);
+            expect(req.request.params.has('scoreRangeLower')).toBe(false);
+            expect(req.request.params.has('scoreRangeUpper')).toBe(false);
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+        });
+
+        it('should include scoreRange params when provided', () => {
+            service.searchParticipations(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
+            expect(req.request.params.get('filterProp')).toBe('Successful');
+            expect(req.request.params.get('scoreRangeLower')).toBe('60');
+            expect(req.request.params.get('scoreRangeUpper')).toBe('80');
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+        });
+    });
+
+    describe('getParticipationNamesForExport', () => {
+        it('should GET participation names for export', () => {
+            const exportDto = { participantName: 'Alice', participantIdentifier: 'alice' };
+
+            let result: any;
+            service.getParticipationNamesForExport(3).subscribe((r) => (result = r));
+
+            const req = httpMock.expectOne('api/exercise/exercises/3/participations/names');
+            expect(req.request.method).toBe('GET');
+            req.flush([exportDto]);
+
+            expect(result).toEqual([exportDto]);
+        });
+    });
+
+    describe('updateIndividualDueDates', () => {
+        it('should PUT individual due dates as DTOs', () => {
+            const exercise: Exercise = {
+                id: 5,
+                type: ExerciseType.TEXT,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const participation: StudentParticipation = { id: 10, individualDueDate: dayjs('2024-12-31') };
+
+            service.updateIndividualDueDates(exercise, [participation]).subscribe();
+
+            const req = httpMock.expectOne('api/exercise/exercises/5/participations/update-individual-due-date');
+            expect(req.request.method).toBe('PUT');
+            expect(req.request.body[0].id).toBe(10);
+            expect(req.request.body[0].exerciseId).toBe(5);
+            req.flush([]);
+        });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+    it('keeps ordinary and test-run student work separate with participant display identifiers', () => {
+        const original: StudentParticipation = { id: 7, type: ParticipationType.STUDENT, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] };
+        const practice: StudentParticipation = {
+            id: 9,
+            type: ParticipationType.STUDENT,
+            testRun: true,
+            participantName: 'Practice',
+            participantIdentifier: 'practice',
+            submissions: [{ id: 10 }],
+        };
+        const merged = service.mergeStudentParticipations([original, practice]);
+        expect(merged).toHaveLength(2);
+        expect(merged[0]).toMatchObject({ id: 7, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] });
+        expect(merged[1]).toMatchObject({ id: 9, testRun: true, participantName: 'Practice', participantIdentifier: 'practice', submissions: [{ id: 10 }] });
+        expect(merged[0].submissions?.[0].participation).toBe(merged[0]);
+        expect(merged[1].submissions?.[0].participation).toBe(merged[1]);
+    });
+});

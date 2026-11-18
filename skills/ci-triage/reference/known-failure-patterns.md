@@ -1,0 +1,262 @@
+# Known CI failure patterns
+
+Each entry gives the symptom, the tell that distinguishes it from a real defect, and what to do.
+If a failure does not match anything here, treat it as real.
+
+## Server Tests: "Timeout has been exceeded" with no test failures
+
+**Symptom.** Server Tests (PostgreSQL) is red. The log ends with a Gradle timeout message. Grepping
+the log for `FAILED` finds nothing, or finds only unrelated noise.
+
+**Tell.** The failure count is zero and the job duration is at the backstop. `gradle/test.gradle`
+sets a hard `timeout = Duration.ofMinutes(70)` on the test task, inside a job whose own
+`timeout-minutes` is 80 (`.github/workflows/ci-test.yml`). The Gradle timeout exists so a hang
+fails as a real failure rather than the opaque `cancelled` a job timeout produces. That means a run
+that was merely slow, not hung, fails the same way a hang does.
+
+**What to do.** This is a healthy run killed by the backstop, usually on a loaded runner. Re-run
+the whole job. Do not go looking for the failing test, there isn't one. Duration is the reliable
+signal here; grepping for failures actively misleads.
+
+## One ArchUnit violation, two red jobs
+
+**Symptom.** Both Server Code Style and Server Tests are red.
+
+**Tell.** Server Code Style runs `./gradlew test -DincludeTags='ArchitectureTest' -x webapp`
+(`.github/workflows/ci-quality.yml`), and the same architecture tests also run as part of the full
+Server Tests suite. A single violation therefore fails both.
+
+**What to do.** Fix the one violation. Do not treat the two red jobs as two problems. Reproduce
+locally with the architecture-only command above, which takes a fraction of the full suite's time.
+
+## No CI runs at all
+
+**Symptom.** The pull request shows no checks. It looks exactly like GitHub dropped the event.
+
+**Tell.** Check whether the pull request can merge before anything else:
+
+```bash
+gh pr view <pr-number> --json mergeable,mergeStateStatus
+```
+
+A `CONFLICTING` pull request starts no `pull_request` workflow run at all.
+
+**What to do.** Resolve the conflicts. Re-running and re-dispatching will not help while the branch
+conflicts. Note that a stacked pull request has a base other than develop, so check `baseRefName`
+before merging develop into it, or you create exactly this state.
+
+## Latest PR run is pending behind an obsolete E2E run
+
+**Symptom.** The latest CI run is `pending` with no jobs, while an older revision of the same PR
+is still running or waiting for an E2E runner.
+
+**Tell.** Compare both runs' `head_sha` values with the current PR head. Both share the umbrella's
+`ci-pr-<number>` concurrency group. A job-level `always()` in the older workflow can keep its E2E
+job alive despite `cancel-in-progress`, holding the group and delaying the current revision.
+
+**What to do.** Verify that the blocking run belongs to the same PR and has been superseded before
+cancelling it. If ordinary cancellation does not stop it, use GitHub's force-cancel endpoint:
+
+```bash
+gh api --method POST repos/ls1intum/Artemis/actions/runs/<obsolete-run-id>/force-cancel
+```
+
+Confirm that the old run is completed/cancelled and that jobs appear on the current run. A rerun
+of the pending revision is unnecessary. In workflow changes, use job-level `!cancelled()` for
+phases and reporters that must evaluate failed or skipped dependencies. Preserve explicit result
+checks and bounded step-level cleanup; do not replace the condition with implicit `success()`.
+See the [workflow cancellation policy](../../../.github/workflows/README.md#cancellation-of-superseded-pull-request-runs).
+
+## Checks never appear after a push
+
+**Symptom.** A push landed, the branch is not conflicting, and still nothing starts.
+
+**Tell.** The `synchronize` event was dropped. Nothing in the run list corresponds to the new SHA.
+
+**What to do.** Dispatch manually:
+
+```bash
+gh workflow run ci.yml --ref <branch>
+```
+
+Note that a `workflow_dispatch` run is not a valid event for every job. Jobs that key off the
+pull-request event behave differently or fail under a manual dispatch, so read the result with that
+in mind rather than treating a dispatch-only failure as a branch problem.
+
+## A counted gate trips on an unrelated change
+
+**Symptom.** A check complains about a count or a threshold rather than about the code that
+changed.
+
+**Tell.** Several gates in this repository count things repository-wide and compare against a
+recorded limit that develop already sits at. Adding one more of the counted thing fails the gate no
+matter how good the change is:
+
+- **Large classes.** A class pushed past the size limit fails the gate. Extract a service rather
+  than raising the number.
+- **Bean instantiations** (`.github/workflows/ci-bean-instantiations.yml`). Adding a
+  `@Configuration` or a new bean can trip it. The failure is reported from a step whose name does
+  not mention counting, which makes it hard to recognise.
+- **Query Quality Check** (`.github/workflows/ci-quality.yml`). A new `@EntityGraph` with more
+  fetch paths than the baseline allows fails. Reuse an existing counted method where possible;
+  `supporting_scripts/find_slow_queries.py` is the local check.
+
+**What to do.** Decide deliberately whether to restructure the change or to raise the threshold,
+and say which you chose and why. Raising a limit silently is how these gates stopped being useful
+elsewhere.
+
+## Server Tests flakiness
+
+**Symptom.** Server Tests fails on a test unrelated to the change, and passes on re-run.
+
+**Tell.** The suite is genuinely flaky under load on shared runners. Recurring shapes include
+sanitizer timeouts in the local CI build path, scheduling-sensitive assertions, and occasional
+database process failures.
+
+**What to do.** A full re-run is the correct response, once. If the same test fails twice, it is
+not flakiness. Do not add a retry or extend a timeout to paper over it.
+
+## A single runner producing impossible git errors
+
+**Symptom.** Errors such as `bad tree object` that make no sense for the branch, always on the same
+runner.
+
+**Tell.** The failure follows the runner, not the change. Re-running lands on a different runner
+and passes.
+
+**What to do.** This is a corrupted checkout cache on that runner, not a repository problem. Report
+the runner so its cache can be purged, and re-run.
+
+## E2E failures that exist on develop
+
+**Symptom.** A Playwright spec fails and looks unrelated to the change.
+
+**Tell.** The same spec also fails on develop. Pull request runs and develop runs do not use the
+same topology, so a failure that reproduces only in one of them is expected rather than surprising.
+
+**What to do.** Compare against develop and against other open pull requests before attributing the
+failure to the branch. See `skills/e2e-pr-check/SKILL.md` for how to run a targeted local check.
+
+## E2E image revision does not match the run
+
+**Symptom.** E2E behavior contradicts the checked-out source, or image verification fails before
+the containers start.
+
+**Tell.** Compare the run's source SHA with the `docker-tag` artifact and the image's
+`org.opencontainers.image.revision` label. Concurrent builds can overwrite `develop` and `pr-*`
+aliases while an older run waits for a runner.
+
+**What to do.** Keep E2E on the producing build's `sha-<full-commit>` tag and retain the revision
+check in `verify-image-revision.sh`. A mismatch is an artifact identity failure; changing test
+expectations cannot fix it.
+
+## E2E global setup fails before any tests run
+
+**Symptom.** The report contains zero test cases and setup reports an unavailable server.
+
+**Tell.** Read the readiness diagnostics for the base URL and every `MULTI_NODE_URLS` member.
+An available login page or one healthy node does not establish readiness of every load-balanced
+core node. A setup failure is not an empty test selection.
+
+**What to do.** Preserve healthy Compose prerequisites and the bounded readiness gate before
+authentication. Inspect the unavailable node's startup log. For failures inside the test runner,
+compare `collection-*.json` with `completion-*.json` in its execution evidence artifact: only a
+successful collection can establish an empty project, and execution must finish every selected
+case without global errors. A nonzero process exit remains a failure even when JUnit contains
+no failing cases or the optional reporter also fails. `runner-status.env` separates completed
+assertion failures from infrastructure failures; missing status or an infrastructure failure
+blocks the overall gate even if another test has known-flaky history.
+
+## Exam cleanup returns 403 after a test timeout
+
+**Symptom.** Exam assertions or setup time out, then teardown cannot delete the exam.
+
+**Tell.** A pending student login can finish after teardown's admin login when both share the
+page's cookie jar. The delete then runs as the student. More delete retries do not change its
+identity.
+
+**What to do.** Use `adminExamAPIRequests` for exam setup and cleanup. Its authenticated API
+context has its own cookie jar and verifies the administrator's identity. Remove irrelevant
+build-result waits from rendering-only fixtures; retain build completion checks where the test
+actually asserts on a result.
+
+## Multi-node E2E timeouts after the broker reaches its disk limit
+
+**Symptom.** Saves, results, collaboration or dialogs time out across unrelated specs, and cluster
+formation reports no node connected to the websocket broker.
+
+**Tell.** Before the assertion failures, the server's `StompBrokerRelayMessageHandler` logs
+`AMQ229119` with disk usage beyond `<max-disk-usage>`. ActiveMQ blocks producers at 90% usage;
+reconnecting cannot restore message delivery while the filesystem remains full.
+
+**What to do.** Inspect Docker disk usage on the dedicated E2E runner. Setup removes unused
+Artemis-labelled application images older than 24 hours and verifies space below the broker limit
+plus 10 GiB for the run. Low space triggers eviction of unused default-builder cache until
+that reserve is met, retaining a 512 MB cache floor, then a fresh filesystem check. If cleanup or
+that check fails, reclaim space or expand the runner disk. No E2E tests ran if setup failed; missing test
+timers and reports should not add secondary errors, while the required gate still blocks.
+Do not raise the broker's disk threshold, retry the assertions, or prune unrelated machines.
+Registry image deletion does not reclaim a runner's local Docker storage.
+
+## Helios is unavailable or rejects the E2E credential
+
+**Symptom.** The log warns that Helios flakiness history is unavailable, for example with HTTP 401.
+Failed tests are classified as `unknown` and the final verdict uses the Playwright result.
+
+**Tell.** Passing tests, including tests recovered by Playwright's existing retries, still pass.
+Failures after retries remain blocking without being labelled confirmed regressions. A known-flaky
+failure in another phase cannot exonerate an unknown failure. Phase 2 does not start after an unknown
+Phase 1 failure.
+
+**What to do.** Inspect the failing tests and the matching base-branch run, as usual. Restore the
+Helios service or correct `HELIOS_REPO_SECRET` to regain history-based classification; the suite
+can run without it. Do not treat missing history as evidence of either flakiness or a regression.
+
+## E2E job red although Playwright reports 0 failed
+
+**Symptom.** The E2E job on develop is red and "Report E2E Overall Status" says "E2E infrastructure
+failure", yet the log's `E2E counts:` line shows `0 failed`.
+
+**Tell.** `gh run view <run-id> --json jobs` shows the failing step is not the test step but
+`E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. A later checkout can
+also fail with `EACCES` on the generated `.reporter-failed` marker in the Playwright report directory.
+The Playwright container runs as root against a bind-mounted checkout, so newly created report directories and
+nested artifacts can belong to root rather than the host runner user.
+
+**What to do.** Fix ownership at the producer, in `run-tests.sh`, not the teardown. Its exit trap
+restores `test-reports` and `test-results` to the script directory's owner when running as root,
+including after test failure or an INT/TERM signal. Reporter markers must remain available for
+`execute.sh` to read and remove. Successful restoration preserves the test exit code; failed
+restoration returns infrastructure exit code 2, which cannot match a healthy runner verdict.
+Do not add `|| true` to the teardown: it would hide the next real teardown failure.
+
+A forcibly killed container can bypass that exit trap. The same self-hosted large runners
+also execute server and client jobs, so those jobs and full server reporting restore ownership
+of only the generated Playwright result and report directories before checkout, as E2E jobs do.
+Recovery is best-effort; checkout remains authoritative and still fails on any unrepaired
+permission problem. Keep checkout cleanup enabled and do not recursively change the whole workspace.
+
+## E2E spec flaky only on develop's multi-node stack
+
+**Symptom.** A spec that touches a file written by one request and read by another (a download, an
+export) times out or returns 500 on develop but passes on a pull request and locally.
+
+**Tell.** The server log of one node has a `NoSuchFileException` for a path that another node
+wrote. Pull requests run one node, and `run-e2e-tests-local-multinode-fast.sh` runs its nodes from
+one working directory, so neither can show it. nginx round-robins, so it is flaky, not constant.
+
+**What to do.** Reproduce it on the container topology with
+`run-e2e-tests-local-multinode.sh --filter "<test name>"`, which uses CI's compose file. The folder
+the file lives in has to be a volume shared by the nodes; compare with the test-server compose files.
+
+## Documentation maintenance cannot publish its link report
+
+**Symptom.** The external-link check succeeds as a reporting step, but opening or updating its issue fails with
+`Body is too long (maximum is 65536 characters)`.
+
+**Tell.** Root-relative site links reported as `Cannot resolve root-relative link` indicate a missing absolute
+`--root-dir`: Lychee resolves those links before applying its HTTP(S) scheme filter.
+
+**What to do.** Preserve the workflow's documentation root and `limit-issue-body.cjs` call. The limiter links oversized
+issues to the complete report in the run logs. Classify actual external 404s separately from private-repository links,
+transient test-server outages and timeouts; do not rewrite working site links or suppress those failures wholesale.

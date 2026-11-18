@@ -1,0 +1,1036 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
+import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { QuizExerciseService } from '../service/quiz-exercise.service';
+import { EXERCISE_FOR_IMPORT_FROM_FILE } from 'app/exercise/import/import-from-file-navigation';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
+import { Duration } from '../interfaces/quiz-exercise-interfaces';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DifficultyLevel, Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { round } from 'app/foundation/util/utils';
+import { onError } from 'app/foundation/util/global.utils';
+import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
+import {
+    faArrowLeft,
+    faCircleNotch,
+    faClock,
+    faExclamationTriangle,
+    faFloppyDisk,
+    faGear,
+    faGraduationCap,
+    faPaperPlane,
+    faPlus,
+    faQuestionCircle,
+    faWandMagicSparkles,
+    faWrench,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
+import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
+import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
+
+/** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
+const MAX_TIMEOUT_DELAY = 2_147_483_647;
+
+@Component({
+    selector: 'jhi-quiz-exercise-detail',
+    templateUrl: './quiz-exercise-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil, TumAetUiConfirmationService],
+    styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        TumAetUiButtonDirective,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormsModule,
+        ExerciseTitleChannelNameComponent,
+        HelpIconComponent,
+        CategorySelectorComponent,
+        CompetencySelectionComponent,
+        QuizQuestionListEditComponent,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        RouterLink,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiMessageComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        ExerciseGroupDateNoticeComponent,
+        ExerciseGroupTimelineLockComponent,
+        QuizAiGenerationModalComponent,
+        JsonPipe,
+        TumAetUiSelectComponent,
+    ],
+})
+export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private router = inject(Router);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private calendarService = inject(CalendarService);
+    private location = inject(Location);
+    private profileService = inject(ProfileService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+    private destroyRef = inject(DestroyRef);
+
+    readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
+    private readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+
+    /** Follow child signals directly: existing titles can arrive after the quiz validity was cached. */
+    private readonly titleChannelInvalidReasons = computed<ValidationReason[]>(() => {
+        const titleChannelName = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        const reasons: ValidationReason[] = [];
+        if (titleChannelName?.isTitleDisallowed()) {
+            reasons.push({ translateKey: 'artemisApp.exercise.form.title.disallowedValue', translateValues: {} });
+        }
+        if (titleChannelName?.isChannelFieldDisplayed() && !titleChannelName.channelName()) {
+            reasons.push({ translateKey: 'artemisApp.exercise.form.channelName.empty', translateValues: {} });
+        }
+        return reasons;
+    });
+
+    /**
+     * Whether a date field holds text that is not a date. A picker keeps its last valid date while its text is not one,
+     * so the quiz would otherwise be saved with a date the field shows as invalid. Only the text counts here: the pickers
+     * a date error is shown on are invalid for a reason that has its own validation.
+     */
+    readonly hasInvalidDateText = computed(() => this.datePickers().some((picker) => !picker.invalid() && !picker.isValid()));
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    aiGenerationModalVisible = false;
+
+    // Global refinement FAB
+    isRefinementFabOpen = signal(false);
+    isGlobalRefining = signal(false);
+    globalRefinementPrompt = signal('');
+    courseCompetenciesCount = signal(0);
+    private globalRefinementSubscription?: Subscription;
+
+    course?: Course;
+    exerciseGroup?: ExerciseGroup;
+    courseRepository!: CourseManagementService; // aliased to the injected courseService in ngOnInit()
+    notificationText?: string;
+
+    /** Constants for 'Add existing questions' and 'Import file' features **/
+    showExistingQuestions = false;
+
+    exams: Exam[] = [];
+
+    courses: Course[] = [];
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: QuizQuestion[] = [];
+    existingQuestions: QuizQuestion[] = [];
+    importFile?: File;
+    importFileName = '';
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
+
+    /** Duration object **/
+    duration = new Duration(0, 0);
+
+    /** Status constants **/
+    readonly isSaving = signal(false);
+    scheduleQuizStart = false;
+
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
+
+    /** Route params **/
+    examId?: number;
+    readonly courseId = signal<number | undefined>(undefined);
+
+    // Icons
+    faPlus = faPlus;
+    faXmark = faXmark;
+    faArrowLeft = faArrowLeft;
+    faWrench = faWrench;
+    faWandMagicSparkles = faWandMagicSparkles;
+    faPaperPlane = faPaperPlane;
+    faGear = faGear;
+    faClock = faClock;
+    faGraduationCap = faGraduationCap;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    faFloppyDisk = faFloppyDisk;
+    faCircleNotch = faCircleNotch;
+
+    override readonly QuizMode = QuizMode;
+    readonly documentationType: DocumentationType = 'Quiz';
+
+    readonly quizModeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.synchronized'), value: QuizMode.SYNCHRONIZED },
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.batched'), value: QuizMode.BATCHED },
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.individual'), value: QuizMode.INDIVIDUAL },
+        ];
+    });
+
+    readonly difficultyOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null, colorClass: undefined },
+            { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY, colorClass: 'easy' },
+            { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM, colorClass: 'medium' },
+            { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD, colorClass: 'hard' },
+        ];
+    });
+
+    readonly scoreOptionsCourse = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreYes'), value: IncludedInOverallScore.INCLUDED_COMPLETELY },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreBonus'), value: IncludedInOverallScore.INCLUDED_AS_BONUS },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreNo'), value: IncludedInOverallScore.NOT_INCLUDED },
+        ];
+    });
+
+    readonly scoreOptionsExam = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreYes'), value: IncludedInOverallScore.INCLUDED_COMPLETELY },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreBonus'), value: IncludedInOverallScore.INCLUDED_AS_BONUS },
+        ];
+    });
+
+    readonly randomizeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.exercise.yes'), value: true },
+            { label: this.translateService.instant('artemisApp.exercise.no'), value: false },
+        ];
+    });
+
+    override readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    override readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+
+    /**
+     * Initialize variables and load course and quiz from server.
+     */
+    constructor() {
+        super();
+        this.destroyRef.onDestroy(() => clearTimeout(this.savedQuizStartTimer));
+    }
+
+    ngOnInit(): void {
+        /** Initialize local constants **/
+        this.showExistingQuestions = false;
+        this.quizExercises = [];
+        this.allExistingQuestions = [];
+        this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        this.searchQueryText = '';
+        this.dndFilterEnabled = true;
+        this.mcqFilterEnabled = true;
+        this.shortAnswerFilterEnabled = true;
+        this.notificationText = undefined;
+
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.examId && groupId) {
+            this.isExamMode.set(true);
+        }
+
+        if (this.router.url.includes('/import')) {
+            this.isImport.set(true);
+        }
+        // A quiz read from a file arrives on the route of a new quiz and is then saved like an imported one.
+        const quizFromFile: QuizExercise | undefined = history.state?.[EXERCISE_FOR_IMPORT_FROM_FILE];
+        if (!quizId && quizFromFile) {
+            quizFromFile.quizQuestions ??= [];
+            this.quizExercise.set(quizFromFile);
+            this.isImport.set(true);
+        }
+
+        /** Query the courseService for the participationId given by the params */
+        if (this.courseId()) {
+            this.courseService.findForManagement(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
+                this.course = response.body!;
+                // Load exerciseGroup and set exam mode
+                if (this.isExamMode()) {
+                    this.exerciseGroupService.find(this.courseId()!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                        // Make sure to call init if we didn't receive an id => new quiz-exercise
+                        this.exerciseGroup = groupResponse.body || undefined;
+                        if (!quizId) {
+                            this.init();
+                        } else if (this.quizExercise()) {
+                            this.quizExercise().exerciseGroup = this.exerciseGroup;
+                            this.savedEntity.exerciseGroup = this.exerciseGroup;
+                            // Re-set the same reference so the in-place mutation renders: the signal is declared with
+                            // `equal: () => false`. No copy, so the questions the child editors hold stay the same objects.
+                            this.quizExercise.set(this.quizExercise());
+                        }
+                    });
+                } else {
+                    // Make sure to call init if we didn't receive an id => new quiz-exercise
+                    if (!quizId) {
+                        this.init();
+                    } else if (this.quizExercise()) {
+                        this.quizExercise().course = this.course;
+                        this.savedEntity.course = this.course;
+                        // Re-set the same reference so the in-place mutation renders (see above).
+                        this.quizExercise.set(this.quizExercise());
+                    }
+                }
+            });
+        }
+        if (quizId) {
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(quizId) : this.quizExerciseService.find(quizId)).subscribe((quiz) => {
+                quiz.quizQuestions ??= [];
+                this.quizExercise.set(quiz);
+                this.init();
+                if (this.testRunExistsAndShouldNotBeIgnored()) {
+                    this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
+                }
+            });
+        }
+
+        // TODO: we should try to avoid calling this.init() above more than once
+        this.courseRepository = this.courseService;
+    }
+
+    /**
+     * Initializes and returns a new quiz exercise
+     */
+    initializeNewQuizExercise(): QuizExercise {
+        const newQuiz = new QuizExercise(undefined, undefined);
+        newQuiz.title = '';
+        newQuiz.duration = 600;
+        newQuiz.releaseDate = dayjs();
+        newQuiz.randomizeQuestionOrder = true;
+        newQuiz.quizQuestions = [];
+        newQuiz.quizMode = QuizMode.SYNCHRONIZED;
+        newQuiz.allowedNumberOfAttempts = 1;
+        newQuiz.isEditable = true;
+        this.prepareEntity(newQuiz);
+        return newQuiz;
+    }
+
+    /**
+     * Initializes local constants and prepares the QuizExercise entity
+     */
+    init(): void {
+        if (!this.quizExercise()) {
+            this.quizExercise.set(this.initializeNewQuizExercise());
+        } else {
+            this.prepareEntity(this.quizExercise());
+            this.quizExercise().isEditable = isQuizEditable(this.quizExercise());
+        }
+
+        if (this.isImport()) {
+            resetQuizForImport(this.quizExercise());
+        }
+
+        if (this.isExamMode()) {
+            resetQuizForExam(this.quizExercise());
+            this.quizExercise().course = undefined;
+            if (!this.quizExercise().exerciseGroup || this.isImport()) {
+                this.quizExercise().exerciseGroup = this.exerciseGroup;
+            }
+        } else {
+            this.quizExercise().exerciseGroup = undefined;
+            if (!this.quizExercise().course || this.isImport()) {
+                this.quizExercise().course = this.course;
+            }
+        }
+
+        if (!this.isExamMode()) {
+            this.exerciseCategories.set(this.quizExercise().categories || []);
+            this.courseService.findAllCategoriesOfCourse(this.courseId()!).subscribe({
+                next: (response: HttpResponse<string[]>) => {
+                    this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!));
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        }
+        // Exam exercises cannot be not included into the total score
+        if (this.isExamMode() && this.quizExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            this.quizExercise().includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        }
+        this.scheduleQuizStart = (this.quizExercise().quizBatches?.length ?? 0) > 0;
+        this.updateDuration();
+        this.exerciseService.validateDate(this.quizExercise());
+
+        // Assign savedEntity to identify local changes
+        this.savedEntity = this.quizExercise().id && !this.isImport() ? deepClone(this.quizExercise()) : new QuizExercise(undefined, undefined);
+        this.watchSavedQuizStart();
+
+        this.cacheValidation();
+    }
+
+    openAiGenerationModal(): void {
+        this.aiGenerationModalVisible = true;
+    }
+
+    canShowAiGenerationButton(): boolean {
+        return this.hyperionEnabled && !this.isImport() && !this.isExamMode() && !!this.courseId() && !!this.quizExercise()?.isEditable;
+    }
+
+    /**
+     * Returns true when the global refinement FAB should be shown:
+     * Hyperion must be active, the quiz must be editable
+     * and contain at least one multiple-choice question.
+     */
+    get hasMcQuestionsForRefinement(): boolean {
+        return (
+            this.hyperionEnabled &&
+            !this.isImport() &&
+            !this.isExamMode() &&
+            !!this.quizExercise()?.isEditable &&
+            (this.quizExercise()?.quizQuestions?.some((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) ?? false)
+        );
+    }
+
+    /** Submits the global refinement on Enter, but allows Shift+Enter to insert a newline. */
+    onGlobalRefinementEnterKey(event: Event): void {
+        if (!(event as KeyboardEvent).shiftKey) {
+            event.preventDefault();
+            this.submitGlobalRefinement();
+        }
+    }
+
+    /** Cancels any running global refinement request and hides the refinement FAB. */
+    closeRefinementFab(): void {
+        this.globalRefinementSubscription?.unsubscribe();
+        this.globalRefinementSubscription = undefined;
+        this.isGlobalRefining.set(false);
+        this.globalRefinementPrompt.set('');
+        this.isRefinementFabOpen.set(false);
+    }
+
+    /**
+     * Submits the global refinement prompt to Hyperion for all multiple-choice questions in the quiz.
+     * On success, applies refined content to each question via the list-edit child component.
+     */
+    submitGlobalRefinement(): void {
+        const prompt = this.globalRefinementPrompt().trim();
+        this.quizQuestionListEditComponent().parseAllQuestions();
+        const mcQuestions = (this.quizExercise()?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
+        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId()) {
+            return;
+        }
+        this.isGlobalRefining.set(true);
+        this.globalRefinementSubscription = this.quizAiGenerationService
+            .refineAllMultipleChoiceQuestions(this.courseId()!, mcQuestions, prompt)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGlobalRefining.set(false)),
+            )
+            .subscribe({
+                next: ({ results, previousSnapshots }) => {
+                    const failedCount = mcQuestions.length - results.size;
+                    if (failedCount > 0) {
+                        this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
+                    }
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results, previousSnapshots);
+                    this.globalRefinementPrompt.set('');
+                    this.isRefinementFabOpen.set(false);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.refinementFailed');
+                },
+            });
+    }
+
+    appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
+        if (!generatedQuestions.length) {
+            return;
+        }
+
+        const existingQuestions = this.quizExercise().quizQuestions ?? [];
+        const existingQuestionCount = existingQuestions.length;
+        const mappedQuestions = generatedQuestions.map((generatedQuestion, index) =>
+            this.convertGeneratedQuestionToQuizQuestion(generatedQuestion, existingQuestionCount + index + 1),
+        );
+        // Reassign the array to ensure OnPush children receive a new input reference.
+        this.quizExercise().quizQuestions = [...existingQuestions, ...mappedQuestions];
+        this.handleQuestionChanged();
+    }
+
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.exerciseService.validateDate(this.quizExercise());
+        const dueDate = this.quizExercise().quizMode === QuizMode.SYNCHRONIZED ? undefined : this.quizExercise().dueDate;
+        this.quizExercise()?.quizBatches?.forEach((batch) => {
+            // validate release < start and start + duration > due
+            const startTime = dayjs(batch.startTime);
+            const endTime = startTime.add(dayjs.duration(this.quizExercise().duration ?? 0, 'seconds'));
+            batch.startTimeError = startTime.isBefore(this.quizExercise().releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
+        });
+    }
+
+    override cacheValidation() {
+        if (this.quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
+            this.quizExercise().dueDate = undefined; // Due date is calculated on server side
+            if (this.scheduleQuizStart) {
+                if ((this.quizExercise().quizBatches?.length ?? 0) !== 1) {
+                    this.quizExercise().quizBatches = [this.quizExercise().quizBatches?.[0] ?? new QuizBatch()];
+                }
+            } else {
+                if ((this.quizExercise().quizBatches?.length ?? 0) !== 0) {
+                    this.quizExercise().quizBatches = [];
+                }
+            }
+        }
+
+        this.validateDate();
+        return super.cacheValidation();
+    }
+
+    onReleaseDateChange(date: dayjs.Dayjs | undefined) {
+        this.quizExercise().releaseDate = date;
+        this.cacheValidation();
+    }
+
+    onDueDateChange(date: dayjs.Dayjs | undefined) {
+        this.quizExercise().dueDate = date;
+        this.cacheValidation();
+    }
+
+    onBatchStartTimeChange(batch: QuizBatch, date: dayjs.Dayjs | undefined) {
+        batch.startTime = date;
+        this.cacheValidation();
+    }
+
+    /**
+     * Update the categories and overwrite the cache, overwrites existing categories
+     * @param categories the new categories
+     */
+    updateCategories(categories: ExerciseCategory[]) {
+        this.quizExercise().categories = categories;
+        this.exerciseCategories.set(categories);
+        this.cacheValidation();
+    }
+
+    /**
+     * Determine which dropdown to display depending on the relationship between start time, end time, and current time
+     * @returns {string} Name of the dropdown to show
+     */
+    get showDropdown(): string {
+        if (!this.quizExercise() || !this.quizExercise().quizStarted || this.isImport()) {
+            return 'isVisibleBeforeStart';
+        } else if (this.quizExercise().quizEnded) {
+            return 'isOpenForPractice';
+        } else {
+            return 'active';
+        }
+    }
+
+    /**
+     * Returns whether pending changes are present, preventing a deactivation.
+     */
+    canDeactivate(): boolean {
+        if (!this.quizExercise()?.isEditable) {
+            return true;
+        }
+        return !this.pendingChangesCache();
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
+    }
+
+    /**
+     * Iterates over the questions of the quizExercise and calculates the sum of all question scores
+     */
+    calculateMaxExerciseScore(): number {
+        let scoreSum = 0;
+        this.quizExercise().quizQuestions?.forEach((question) => (scoreSum += question.points!));
+        return scoreSum;
+    }
+
+    /**
+     * Remove question from the quiz
+     * @param questionToDelete {QuizQuestion} the question to remove
+     */
+    deleteQuestion(questionToDelete: QuizQuestion): void {
+        this.quizExercise().quizQuestions = this.quizExercise().quizQuestions?.filter((question) => question !== questionToDelete);
+        this.cacheValidation();
+    }
+
+    checkItemCountDragAndDrop(dragAndDropQuestions: DragAndDropQuestion[]): boolean {
+        if (!dragAndDropQuestions) return false;
+        return dragAndDropQuestions?.some((dragAndDropQuestion) => {
+            const numberOfDropLocations = dragAndDropQuestion.dropLocations?.length ?? 1;
+            const numberOfDragItems = dragAndDropQuestion.dragItems?.length ?? 1;
+            const numberOfCorrectMappings = dragAndDropQuestion.correctMappings?.length ?? 1;
+            // Magic number is 13 * 13 * 13
+            return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
+        });
+    }
+
+    checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
+        if (!shortAnswerQuestions) return false;
+        return shortAnswerQuestions?.some((shortAnswerQuestion) => {
+            const numberOfCorrectMappings = shortAnswerQuestion.correctMappings?.length ?? 1;
+            const numberOfSpots = shortAnswerQuestion.spots?.length ?? 1;
+            const numberOfSolutions = shortAnswerQuestion.solutions?.length ?? 1;
+            // Magic number is 13 * 13 * 13
+            return numberOfCorrectMappings * numberOfSpots * numberOfSolutions > 2197;
+        });
+    }
+
+    /** Target of the save button's aria-describedby; the tooltip text is mirrored under this id. */
+    protected readonly saveReasonsId = 'quiz-save-invalid-reasons';
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick() {
+        if (!this.isSaveDisabled()) {
+            this.validateItemLimit();
+        }
+    }
+
+    validateItemLimit() {
+        const dragAndDropQuestions = this.quizExercise().quizQuestions?.filter((question) => {
+            return question.type === this.DRAG_AND_DROP;
+        });
+
+        const shortAnswerQuestions = this.quizExercise().quizQuestions?.filter((question) => {
+            return question.type === this.SHORT_ANSWER;
+        });
+
+        const dragAndDropItemsExceedLimit = this.checkItemCountDragAndDrop(dragAndDropQuestions as DragAndDropQuestion[]);
+        const shortAnswerItemsExceedLimit = this.checkItemCountShortAnswer(shortAnswerQuestions as ShortAnswerQuestion[]);
+
+        if (dragAndDropItemsExceedLimit || shortAnswerItemsExceedLimit) {
+            this.confirmationService.confirm({
+                header: this.translateService.instant('artemisApp.quizWarning.title'),
+                message: `${this.translateService.instant('artemisApp.quizWarning.question')}: ${this.translateService.instant('artemisApp.quizWarning.description')}`,
+                icon: faExclamationTriangle,
+                acceptLabel: this.translateService.instant('artemisApp.quizWarning.confirmButton'),
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                accept: () => this.save(),
+            });
+        } else {
+            this.save();
+        }
+    }
+
+    /**
+     * Save the quiz to the server and invoke callback functions depending on result
+     */
+    save(): void {
+        if (this.hasSavedQuizStarted || !this.pendingChangesCache() || !this.quizIsValid() || this.titleChannelInvalidReasons().length > 0) {
+            return;
+        }
+
+        Exercise.sanitize(this.quizExercise());
+        const filesMap = this.quizQuestionListEditComponent().fileMap;
+        const files = new Map<string, Blob>();
+        filesMap.forEach((value, key) => {
+            files.set(key, value.file);
+        });
+
+        this.isSaving.set(true);
+        this.quizQuestionListEditComponent().parseAllQuestions();
+        if (this.quizExercise().id !== undefined) {
+            this.quizExerciseService.update(this.quizExercise().id!, this.quizExercise(), files, this.notificationText || undefined).subscribe({
+                next: (updatedQuizExercise) => {
+                    this.notificationText = undefined;
+                    this.onSaveSuccess(updatedQuizExercise, false);
+                },
+                error: (error) => this.onSaveError(error),
+            });
+        } else {
+            if (this.isImport()) {
+                if (this.exerciseGroup) {
+                    this.quizExercise().exerciseGroup = this.exerciseGroup;
+                } else {
+                    this.quizExercise().course = this.course;
+                }
+            }
+            this.quizExerciseService.create(this.quizExercise(), files).subscribe({
+                next: (createdQuizExercise) => this.onSaveSuccess(createdQuizExercise, true),
+                error: (error) => this.onSaveError(error),
+            });
+        }
+    }
+
+    /**
+     * Callback function for when the save succeeds
+     * Terminates the saving process and assign the returned quizExercise to the local entities
+     * @param quizExercise Saved quizExercise entity
+     * @param isCreate Flag if the quizExercise was created or updated
+     */
+    private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
+        this.isSaving.set(false);
+        this.pendingChangesCache.set(false);
+        this.quizQuestionListEditComponent().fileMap.clear();
+
+        if (this.isImport()) {
+            this.calendarService.reloadEvents();
+            this.previousState();
+            return;
+        }
+
+        // The DTO response serializes mapping items as separate object copies from the
+        // question's item arrays. Reconcile so mapping.dragItem IS the same reference as
+        // dragItems[i], enabling identity-based matching in the edit components.
+        this.reconcileMappingReferences(quizExercise);
+        this.prepareEntity(quizExercise);
+        quizExercise.quizQuestions ??= [];
+        this.quizExercise.set(quizExercise);
+        // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
+        // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
+        // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.
+        this.quizExercise().isEditable = this.quizExercise().isEditable ?? isQuizEditable(this.quizExercise());
+        this.exerciseService.validateDate(this.quizExercise());
+        this.savedEntity = deepClone(this.quizExercise());
+        this.watchSavedQuizStart();
+
+        if (isCreate) {
+            // Update the browser URL from /new to /<id>/edit without Angular navigation.
+            // The component stays alive with the POST response data which includes all entity data.
+            const editUrl = this.router.url.replace('/new', `/${quizExercise.id}/edit`);
+            this.location.replaceState(editUrl);
+        }
+        this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Callback function for when the save fails
+     */
+    private onSaveError = (errorRes?: HttpErrorResponse): void => {
+        if (errorRes?.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        }
+        this.alertService.error('artemisApp.quizExercise.saveError');
+        this.isSaving.set(false);
+    };
+
+    /**
+     * Makes sure the entity is well-formed and its fields are of the correct types
+     * @param quizExercise {QuizExercise} exercise which will be prepared
+     */
+    prepareEntity(quizExercise: QuizExercise): void {
+        if (!this.isExamMode()) {
+            quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
+            quizExercise.duration = Number(quizExercise.duration);
+            quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        }
+        // The server sends a batch start time as an ISO string, while the date picker needs a dayjs object.
+        quizExercise.quizBatches?.forEach((batch) => (batch.startTime = convertDateFromServer(batch.startTime)));
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
+            }
+        }
+    }
+
+    /**
+     * Reconciles mapping references in DnD and SA questions so that mapping.dragItem / mapping.dropLocation /
+     * mapping.solution / mapping.spot point to the SAME object instances as the question's item arrays.
+     * This is needed because DTO responses serialize mappings with separate copies of the referenced items.
+     */
+    private reconcileMappingReferences(quizExercise: QuizExercise): void {
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                const dnd = question as DragAndDropQuestion;
+                const dragItemById = new Map((dnd.dragItems ?? []).filter((di) => di.id).map((di) => [di.id!, di]));
+                const dropLocationById = new Map((dnd.dropLocations ?? []).filter((dl) => dl.id).map((dl) => [dl.id!, dl]));
+                for (const mapping of dnd.correctMappings ?? []) {
+                    if (mapping.dragItem?.id) mapping.dragItem = dragItemById.get(mapping.dragItem.id) ?? mapping.dragItem;
+                    if (mapping.dropLocation?.id) mapping.dropLocation = dropLocationById.get(mapping.dropLocation.id) ?? mapping.dropLocation;
+                }
+            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                const sa = question as ShortAnswerQuestion;
+                const solutionById = new Map((sa.solutions ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                const spotById = new Map((sa.spots ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                for (const mapping of sa.correctMappings ?? []) {
+                    if (mapping.solution?.id) mapping.solution = solutionById.get(mapping.solution.id) ?? mapping.solution;
+                    if (mapping.spot?.id) mapping.spot = spotById.get(mapping.spot.id) ?? mapping.spot;
+                }
+            }
+        }
+    }
+
+    /**
+     * Reach to changes of duration inputs by updating model and ui
+     */
+    onDurationChange(): void {
+        if (!this.isExamMode()) {
+            const duration = dayjs
+                .duration(this.duration.hours ?? 0, 'hours')
+                .add(this.duration.minutes ?? 0, 'minutes')
+                .add(this.duration.seconds ?? 0, 'seconds');
+            this.quizExercise().duration = Math.max(round(duration.asSeconds()), 0);
+            this.cacheValidation();
+        } else if (this.quizExercise().releaseDate && this.quizExercise().dueDate) {
+            const duration = dayjs(this.quizExercise().dueDate).diff(this.quizExercise().releaseDate, 's');
+            this.quizExercise().duration = round(duration);
+            this.updateDuration();
+            this.cacheValidation();
+        }
+    }
+
+    /**
+     * Update ui to current value of duration
+     */
+    updateDuration(): void {
+        const duration = dayjs.duration(Math.max(this.quizExercise().duration ?? 0, 0), 'seconds');
+        // when input fields are empty do not update their values
+        if (this.duration.hours !== undefined) {
+            this.duration.hours = Math.floor(duration.asHours());
+        }
+        if (this.duration.minutes !== undefined) {
+            this.duration.minutes = duration.minutes();
+        }
+        if (this.duration.seconds !== undefined) {
+            this.duration.seconds = duration.seconds();
+        }
+    }
+
+    /**
+     * Navigate back to the overview
+     */
+    previousState(): void {
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise());
+    }
+
+    navigateBack(): void {
+        this.previousState();
+    }
+
+    get reEvaluateUrl(): string[] {
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.isExamMode()) {
+            return [
+                '/course-management',
+                String(this.courseId()),
+                'exams',
+                String(this.examId),
+                'exercise-groups',
+                String(groupId),
+                'quiz-exercises',
+                String(this.quizExercise()?.id),
+                're-evaluate',
+            ];
+        }
+        return ['/course-management', String(this.courseId()), 'quiz-exercises', String(this.quizExercise()?.id), 're-evaluate'];
+    }
+
+    /**
+     * Check if the saved quiz has started
+     * @return {boolean} true if the saved quiz has started, otherwise false
+     */
+    get hasSavedQuizStarted(): boolean {
+        return !!(this.savedEntity && this.savedEntity.quizBatches && this.savedEntity.quizBatches.some((batch) => dayjs(batch.startTime).isBefore(dayjs())));
+    }
+
+    /** Signal mirror of {@link hasSavedQuizStarted}, so the reason for a blocked save can depend on the clock. */
+    private readonly savedQuizStarted = signal(false);
+    private savedQuizStartTimer?: ReturnType<typeof setTimeout>;
+
+    /**
+     * Re-arms the tick that flips {@link savedQuizStarted} at the earliest saved batch start still ahead of us.
+     * Called wherever savedEntity is replaced, since a plain field cannot notify on its own.
+     */
+    private watchSavedQuizStart(): void {
+        clearTimeout(this.savedQuizStartTimer);
+        this.savedQuizStarted.set(this.hasSavedQuizStarted);
+        if (this.savedQuizStarted()) {
+            return;
+        }
+        const now = dayjs();
+        const upcomingStarts = (this.savedEntity?.quizBatches ?? []).map((batch) => dayjs(batch.startTime)).filter((start) => start.isValid() && start.isAfter(now));
+        if (!upcomingStarts.length) {
+            return;
+        }
+        const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest), upcomingStarts[0]);
+        // setTimeout truncates its delay to a signed 32-bit int, so anything past ~24.8 days would fire at once and
+        // declare the quiz started weeks early. Sleep in chunks and re-arm until the start time is actually reached.
+        const delay = Math.min(nextStart.diff(now) + 1, MAX_TIMEOUT_DELAY);
+        this.savedQuizStartTimer = setTimeout(() => this.watchSavedQuizStart(), delay);
+    }
+
+    includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
+        this.quizExercise().includedInOverallScore = includedInOverallScore;
+        this.cacheValidation();
+    }
+
+    override computeInvalidReasons(): ValidationReason[] {
+        const invalidReasons = new Array<ValidationReason>();
+        if (!this.quizExercise()) {
+            return [];
+        }
+        // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
+        // isValidQuiz() ignores the date flags even though isSaveDisabled() honours them, so without these the
+        // save button can disable with nothing to explain it.
+        if (this.quizExercise().dueDateError) {
+            invalidReasons.push({ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} });
+        }
+        if (this.hasErrorInQuizBatches()) {
+            invalidReasons.push({
+                translateKey:
+                    this.quizExercise().quizMode === QuizMode.SYNCHRONIZED ? 'artemisApp.quizExercise.startTimeErrorSynchronized' : 'artemisApp.quizExercise.startTimeError',
+                translateValues: {},
+            });
+        }
+        return super.computeInvalidReasons().concat(invalidReasons);
+    }
+
+    isSaveDisabled(): boolean {
+        return (
+            this.isSaving() ||
+            !this.pendingChangesCache() ||
+            !this.quizIsValid() ||
+            this.titleChannelInvalidReasons().length > 0 ||
+            this.hasSavedQuizStarted ||
+            !this.quizExercise().isEditable ||
+            this.quizExercise().dueDateError ||
+            this.hasErrorInQuizBatches() ||
+            this.hasInvalidDateText()
+        );
+    }
+
+    /**
+     * Set while the quiz cannot be edited at all; takes precedence over the validation reasons.
+     * Depends on {@link savedQuizStarted} rather than {@link hasSavedQuizStarted}, so the explanation appears the
+     * moment a saved batch starts under an open editor instead of only after the next edit.
+     */
+    readonly uneditableReason = computed<string>(() => {
+        this.currentLocale();
+        const quizExercise = this.quizExercise();
+        if (!quizExercise || (quizExercise.isEditable && !this.savedQuizStarted())) {
+            return '';
+        }
+        return quizExercise.quizEnded
+            ? this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd')
+            : this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+    });
+
+    /** Everything blocking the save button that can be put into words; empty when nothing is wrong. */
+    readonly saveBlockedReasons = computed<string[]>(() => {
+        const uneditableReason = this.uneditableReason();
+        if (uneditableReason) {
+            return [uneditableReason];
+        }
+        const reasons = this.invalidReasonTexts().concat(translateValidationReasons(this.titleChannelInvalidReasons(), this.translateService));
+        if (this.hasInvalidDateText()) {
+            this.currentLocale();
+            return reasons.concat(this.translateService.instant('entity.dateMissingOrNotValidGeneric'));
+        }
+        return reasons;
+    });
+
+    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.saveBlockedReasons().length);
+
+    hasErrorInQuizBatches(): boolean {
+        return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);
+    }
+
+    handleQuestionChanged() {
+        this.cacheValidation();
+    }
+
+    private convertGeneratedQuestionToQuizQuestion(generatedQuestion: GeneratedQuestion, questionNumber: number): MultipleChoiceQuestion {
+        const question = new MultipleChoiceQuestion();
+        question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
+        question.text = generatedQuestion.questionText;
+        question.hint = generatedQuestion.hint;
+        question.explanation = generatedQuestion.explanation;
+        question.points = 1;
+        question.randomizeOrder = true;
+        question.scoringType = ScoringType.ALL_OR_NOTHING;
+        question.singleChoice = this.isSingleChoiceType(generatedQuestion.type);
+        question.answerOptions = generatedQuestion.options.map((generatedOption) => {
+            const answerOption = new AnswerOption();
+            answerOption.text = generatedOption.text;
+            answerOption.isCorrect = generatedOption.correct;
+            answerOption.hint = generatedOption.hint;
+            answerOption.explanation = generatedOption.explanation;
+            return answerOption;
+        });
+        question.hasCorrectOption = question.answerOptions.some((answerOption) => !!answerOption.isCorrect);
+        return question;
+    }
+
+    private isSingleChoiceType(type: GeneratedQuestionType): boolean {
+        return type === 'single-choice' || type === 'true-false';
+    }
+}

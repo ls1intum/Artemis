@@ -1,0 +1,8 @@
+@if (isFailed()) {
+    <div class="chat-status-bar open">
+        <div class="display error" role="alert">
+            <fa-icon [icon]="faCircleXmark" />
+            <div>{{ errorMessage() }}</div>
+        </div>
+    </div>
+}

@@ -1,0 +1,114 @@
+package de.tum.cit.aet.artemis.iris;
+
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO.CompetencyRecommendationDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyGenerationStatusDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+
+class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
+
+    private static final String TEST_PREFIX = "iriscompetencyintegration";
+
+    @Autowired
+    IrisCompetencyGenerationService irisCompetencyGenerationService;
+
+    private Course course;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        activateIrisGlobally();
+        activateIrisFor(course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void generateCompetencies_asEditor_shouldSucceed() throws Exception {
+        String courseDescription = "Cool course description";
+        var currentCompetencies = List.of(new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND));
+
+        // Expect that a request is sent to Pyris having the following characteristics
+        irisRequestMockProvider.mockRunCompetencyExtractionResponseAnd(dto -> {
+            var token = dto.execution().settings().authenticationToken();
+            assertThat(token).isNotNull();
+            assertThat(dto.courseDescription()).contains(courseDescription);
+            assertThat(dto.currentCompetencies()).isEqualTo(currentCompetencies);
+            assertThat(dto.taxonomyOptions()).isNotEmpty();
+            assertThat(dto.maxN()).isPositive();
+        });
+
+        // Send a request to the Artemis server as if the user had clicked the button in the UI
+        var requestBody = new CompetencyGenerationRequestDTO(courseDescription,
+                List.of(new CompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND)));
+        request.postWithoutResponseBody("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.ACCEPTED);
+
+        PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
+        List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
+
+        // In the real system, this would be triggered by Pyris via a REST call to the Artemis server
+        String jobId = "testJobId";
+        String userLogin = TEST_PREFIX + "editor1";
+        CompetencyExtractionJob job = new CompetencyExtractionJob(jobId, course.getId(), userUtilService.getUserByLogin(userLogin).getId());
+        irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(PyrisRunState.FINISHED, null, recommendations, null));
+
+        ArgumentCaptor<IrisCompetencyGenerationStatusDTO> argumentCaptor = ArgumentCaptor.forClass(IrisCompetencyGenerationStatusDTO.class);
+        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), userTopic("/topic/iris/competencies/" + course.getId()),
+                argumentCaptor.capture());
+
+        List<IrisCompetencyGenerationStatusDTO> allValues = argumentCaptor.getAllValues();
+        assertThat(allValues.get(0).runState()).isEqualTo(PyrisRunState.RUNNING);
+        assertThat(allValues.get(0).result()).isNull();
+        assertThat(allValues.get(1).runState()).isEqualTo(PyrisRunState.FINISHED);
+        assertThat(allValues.get(1).result()).isEqualTo(recommendations);
+        assertThat(JsonObjectMapper.get().writeValueAsString(allValues.get(1))).doesNotContain("tokens");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void generateCompetencies_withNullCurrentCompetency_shouldReturnBadRequest() throws Exception {
+        String requestBody = "{\"courseDescription\":\"Cool course description\",\"currentCompetencies\":[null]}";
+
+        request.postStringWithoutLocation("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAll_asStudent_shouldReturnForbidden() throws Exception {
+        testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testAll_asTutor_shouldReturnForbidden() throws Exception {
+        testAllPreAuthorize();
+    }
+
+    void testAllPreAuthorize() throws Exception {
+        var requestBody = new CompetencyGenerationRequestDTO("a", List.of());
+        request.post("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.FORBIDDEN);
+    }
+}

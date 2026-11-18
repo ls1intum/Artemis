@@ -1,0 +1,356 @@
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { UpperCasePipe } from '@angular/common';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import dayjs from 'dayjs/esm';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation, ParticipationType, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
+import { addPublicFilePrefix } from 'app/app.constants';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { omit } from 'lodash-es';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { FileService } from 'app/foundation/service/file.service';
+import { firstValueFrom, map } from 'rxjs';
+
+@Component({
+    selector: 'jhi-file-upload-submission',
+    templateUrl: './file-upload-submission.component.html',
+    imports: [
+        ResizeableContainerComponent,
+        TumAetUiTagComponent,
+        TranslateDirective,
+        ExerciseActionButtonComponent,
+        UnifiedFeedbackComponent,
+        RatingComponent,
+        ComplaintsStudentViewComponent,
+        FaIconComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        MarkdownDirective,
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class FileUploadSubmissionComponent implements ComponentCanDeactivate, ExerciseSubmission {
+    private route = inject(ActivatedRoute);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private alertService = inject(AlertService);
+    private fileService = inject(FileService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private accountService = inject(AccountService);
+
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
+    readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+    readonly viewingPurpose = input<EditorViewingPurpose>('owner');
+    readonly participationId = input<number>();
+    readonly expandProblemStatement = input(true);
+    readonly showProblemStatement = input(true);
+    readonly displayedInExamSummary = input(false);
+
+    readonly inputExercise = input<FileUploadExercise>();
+    readonly inputSubmission = input<FileUploadSubmission>();
+    readonly inputParticipation = input<StudentParticipation>();
+
+    submission = signal<FileUploadSubmission | undefined>(undefined);
+    fileUploadExercise = signal<FileUploadExercise | undefined>(undefined);
+    participation = signal<StudentParticipation | undefined>(undefined);
+    result = signal<Result | undefined>(undefined);
+    submissionFile = signal<File | undefined>(undefined);
+
+    // Derived state via computed signals
+    resultWithComplaint = computed(() => getFirstResultWithComplaint(this.submission()));
+    course = computed(() => getCourseFromExercise(this.fileUploadExercise()));
+    examMode = computed(() => !!this.fileUploadExercise()?.exerciseGroup);
+
+    submittedFileName = computed(() => {
+        const filePath = this.submission()?.filePath;
+        return filePath ? (filePath.split('/').pop() ?? '') : '';
+    });
+
+    submittedFileExtension = computed(() => {
+        const fileName = this.submittedFileName();
+        return fileName ? (fileName.split('.').pop() ?? '') : '';
+    });
+
+    isAfterAssessmentDueDate = computed(() => {
+        const exercise = this.fileUploadExercise();
+        return !exercise?.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate);
+    });
+
+    isLate = computed(() => {
+        const exercise = this.fileUploadExercise();
+        const participation = this.participation();
+        return !!(
+            exercise &&
+            exercise.dueDate &&
+            participation?.initializationDate &&
+            dayjs(participation.initializationDate).isAfter(getExerciseDueDate(exercise, participation))
+        );
+    });
+
+    acceptedFileExtensions = computed(() => {
+        return (
+            this.fileUploadExercise()
+                ?.filePattern?.split(',')
+                .map((extension) => `.${extension}`)
+                .join(',') ?? ''
+        );
+    });
+
+    isOwnerOfParticipation = signal(false);
+    isSaving = signal(false);
+
+    // Converted Getters to Computed
+    unreferencedFeedback = computed(() => {
+        const result = this.result();
+        if (result?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(result.feedbacks);
+            return getManualUnreferencedFeedback(result.feedbacks);
+        }
+        return undefined;
+    });
+
+    isActive = computed(() => {
+        const exercise = this.fileUploadExercise();
+        const participation = this.participation();
+        return !this.examMode() && !!exercise && !!participation && !hasExerciseDueDatePassed(exercise, participation);
+    });
+
+    faDownload = faDownload;
+
+    // Icons
+    farListAlt = faListAlt;
+
+    private routeParticipationId = toSignal(this.route.params.pipe(map((params) => Number(params['participationId']))));
+
+    constructor() {
+        effect((onCleanup) => {
+            // Priority: Input values -> Route values
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            } else {
+                // Check direct input ID (signal) or route ID (signal)
+                const pId = this.participationId() ?? this.routeParticipationId();
+                if (pId && !Number.isNaN(pId)) {
+                    const sub = this.fileUploadSubmissionService.getDataForFileUploadEditor(pId, this.viewingPurpose()).subscribe({
+                        next: (submission: FileUploadSubmission) => {
+                            this.handleDataLoad(submission);
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                    onCleanup(() => sub.unsubscribe());
+                } else if (pId && Number.isNaN(pId)) {
+                    // Should be handled better, but alert is side effect
+                    // We avoid alerting inside effect loop unless guarded
+                }
+            }
+        });
+    }
+
+    private handleDataLoad(submission: FileUploadSubmission) {
+        const participation = submission.participation;
+        if (!this.isFileUploadParticipation(participation)) {
+            return;
+        }
+        const exercise = getExercise(participation);
+        if (!this.isFileUploadExercise(exercise)) {
+            return;
+        }
+
+        const tmpResult = getLatestSubmissionResult(submission);
+
+        // reconnect participation <--> submission
+        participation.submissions = [omit(submission, 'participation')];
+
+        this.submission.set(submission);
+        this.result.set(tmpResult);
+        this.fileUploadExercise.set(exercise);
+        exercise.studentParticipations = [participation];
+        this.participation.set(participation);
+
+        if (this.submission()?.submitted) {
+            this.setSubmittedFile();
+        }
+        this.isOwnerOfParticipation.set(this.isOwnerOfFileUploadParticipation(participation));
+    }
+
+    private isFileUploadParticipation(participation: Participation | undefined): participation is FileUploadParticipation {
+        return participation?.type === ParticipationType.STUDENT;
+    }
+
+    private isFileUploadExercise(exercise: Exercise | undefined): exercise is FileUploadExercise {
+        return exercise?.type === ExerciseType.FILE_UPLOAD;
+    }
+
+    private isOwnerOfFileUploadParticipation(participation: FileUploadParticipation): boolean {
+        if (typeof participation.isOwner === 'boolean') {
+            return participation.isOwner;
+        }
+        if (participation.student || participation.team?.students) {
+            return this.accountService.isOwnerOfParticipation(participation);
+        }
+        return false;
+    }
+
+    private inputValuesArePresent(): boolean {
+        // Signals are tracked here
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
+    }
+
+    private setupComponentWithInputValues() {
+        const exercise = this.inputExercise();
+        if (exercise) {
+            this.fileUploadExercise.set(exercise);
+        }
+        const submission = this.inputSubmission();
+        if (submission) {
+            if (submission.filePath && !submission.filePathUrl) {
+                submission.filePathUrl = addPublicFilePrefix(submission.filePath);
+            }
+            this.submission.set(submission);
+        }
+        const participation = this.inputParticipation();
+        if (participation) {
+            this.participation.set(participation);
+        }
+
+        if (this.submission()?.submitted) {
+            this.setSubmittedFile();
+        }
+    }
+
+    /**
+     * Uploads a submission file and submits File Upload Exercise
+     */
+    async submitExercise() {
+        if (this.isSaving()) {
+            return;
+        }
+
+        const file = this.submissionFile();
+        const submission = this.submission();
+        const currentExercise = this.fileUploadExercise();
+
+        if (!submission || !file || !currentExercise || !currentExercise.id) {
+            return;
+        }
+        this.isSaving.set(true);
+
+        try {
+            const res = await firstValueFrom(this.fileUploadSubmissionService.update(submission, currentExercise.id, file));
+            const newSubmission = res.body;
+
+            if (newSubmission) {
+                this.submission.set(newSubmission);
+                const participation = newSubmission.participation;
+                if (this.isFileUploadParticipation(participation)) {
+                    participation.submissions = [newSubmission];
+                    this.participationWebsocketService.addParticipation(participation, currentExercise);
+                    this.participation.set(participation);
+                    this.fileUploadExercise.update((exercise) => {
+                        if (exercise) {
+                            exercise.studentParticipations = [participation];
+                        }
+                        return exercise;
+                    });
+                }
+
+                this.result.set(getLatestSubmissionResult(newSubmission));
+                this.setSubmittedFile();
+                if (this.isActive()) {
+                    this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
+                } else {
+                    this.alertService.warning('artemisApp.fileUploadExercise.submitDueDateMissed');
+                }
+            }
+        } catch (error: unknown) {
+            this.submission.update((sub) => {
+                if (sub) sub.submitted = false;
+                return sub;
+            });
+            let serverError: string | null = null;
+            if (error instanceof HttpErrorResponse) {
+                serverError = error.headers?.get('X-artemisApp-error');
+            }
+
+            if (serverError) {
+                this.alertService.error(serverError, { fileName: file.name });
+            } else {
+                this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
+            }
+            const fileInput = this.fileInput();
+            if (fileInput && fileInput.nativeElement) {
+                fileInput.nativeElement.value = '';
+            }
+            this.submissionFile.set(undefined);
+        } finally {
+            this.isSaving.set(false);
+        }
+    }
+
+    /**
+     * Sets file submission for exercise
+     */
+    setFileSubmissionForExercise(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        if (target.files && target.files.length) {
+            const fileList: FileList = target.files;
+            const submissionFile = fileList[0];
+            const exercise = this.fileUploadExercise();
+            const allowedFileExtensions = exercise?.filePattern?.split(',') ?? [];
+
+            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension.trim()))) {
+                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+            } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
+                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+            } else {
+                this.submissionFile.set(submissionFile);
+            }
+        }
+    }
+
+    private setSubmittedFile() {
+        this.submissionFile.set(undefined);
+    }
+
+    downloadFile(filePath: string) {
+        this.fileService.downloadFile(filePath);
+    }
+
+    /**
+     * Returns false if user selected a file, but didn't submit the exercise, true otherwise.
+     */
+    canDeactivate(): boolean {
+        const submission = this.submission();
+        return !(submission && !submission.submitted && this.submissionFile());
+    }
+}

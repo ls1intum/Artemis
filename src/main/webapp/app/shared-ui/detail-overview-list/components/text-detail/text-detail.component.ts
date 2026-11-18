@@ -1,0 +1,12 @@
+import { Component, input } from '@angular/core';
+import type { TextDetail } from 'app/shared-ui/detail-overview-list/detail.model';
+import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
+
+@Component({
+    selector: 'jhi-text-detail',
+    templateUrl: 'text-detail.component.html',
+    imports: [NoDataComponent],
+})
+export class TextDetailComponent {
+    detail = input.required<TextDetail>();
+}

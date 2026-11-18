@@ -1,0 +1,233 @@
+@if (isRegistrationEnabled()) {
+    <div>
+        <div class="flex justify-center">
+            <div class="w-full md:w-2/3">
+                <h1 jhiTranslate="register.title"></h1>
+                @if (success()) {
+                    <tumaet-ui-message severity="success">
+                        <span jhiTranslate="register.messages.success"><strong>Registration saved!</strong> Please check your email for confirmation.</span>
+                    </tumaet-ui-message>
+                }
+                @if (error()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.fail"><strong>Registration failed!</strong> Please try again later.</span>
+                    </tumaet-ui-message>
+                }
+                @if (errorUserExists()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.userExists"><strong>Login name already registered!</strong> Please choose another one.</span>
+                    </tumaet-ui-message>
+                }
+                @if (errorEmailExists()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</span>
+                    </tumaet-ui-message>
+                }
+                @if (errorEmailNotAllowed()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.emailNotAllowed"
+                            ><strong>This email address is not allowed.</strong> Please use one of the allowed email addresses.</span
+                        >
+                    </tumaet-ui-message>
+                }
+                @if (errorAccountRegistrationBlocked()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="register.messages.error.blocked"><strong>Account Registration blocked! </strong> Please try again later.</span>
+                    </tumaet-ui-message>
+                }
+                @if (doNotMatch()) {
+                    <tumaet-ui-message severity="error">
+                        <span jhiTranslate="global.messages.error.dontmatch"></span>
+                    </tumaet-ui-message>
+                }
+            </div>
+        </div>
+        <div class="flex justify-center">
+            <div class="w-full md:w-2/3">
+                @if (!success()) {
+                    <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
+                        <tumaet-ui-form-field class="mb-4!" controlId="firstName" required>
+                            <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
+                            <input
+                                aria-labelledby="firstName-label"
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                id="firstName"
+                                name="firstName"
+                                autocomplete="given-name"
+                                placeholder="{{ 'global.form.firstname.placeholder' | artemisTranslate }}"
+                                formControlName="firstName"
+                                required
+                            />
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-form-field class="mb-4!" controlId="lastName" required>
+                            <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
+                            <input
+                                aria-labelledby="lastName-label"
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                id="lastName"
+                                name="lastName"
+                                autocomplete="family-name"
+                                placeholder="{{ 'global.form.lastname.placeholder' | artemisTranslate }}"
+                                formControlName="lastName"
+                                required
+                            />
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-form-field
+                            class="mb-4!"
+                            controlId="login"
+                            required
+                            [invalid]="registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)"
+                        >
+                            <span id="login-label" tumAetUiFormFieldLabel jhiTranslate="register.form.login"></span>
+                            <input
+                                aria-labelledby="login-label"
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                id="login"
+                                name="login"
+                                autocomplete="username"
+                                placeholder="{{ 'register.form.login.placeholder' | artemisTranslate }}"
+                                formControlName="login"
+                                #login
+                                required
+                            />
+                            <ng-container tumAetUiFormFieldError>
+                                @if (registerForm.controls.login.errors?.required) {
+                                    <small jhiTranslate="register.messages.validate.login.required"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.minlength) {
+                                    <small jhiTranslate="register.messages.validate.login.minlength" [translateValues]="{ min: USERNAME_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.maxlength) {
+                                    <small jhiTranslate="register.messages.validate.login.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.login.errors?.pattern) {
+                                    <small jhiTranslate="register.messages.validate.login.pattern"></small>
+                                }
+                            </ng-container>
+                        </tumaet-ui-form-field>
+                        @if (allowedEmailPatternReadable()) {
+                            <div class="mb-4!">
+                                <strong jhiTranslate="global.form.email.pattern"></strong>
+                                {{ allowedEmailPatternReadable() }}
+                            </div>
+                        }
+                        <tumaet-ui-form-field
+                            class="mb-4!"
+                            controlId="email"
+                            required
+                            [invalid]="registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)"
+                        >
+                            <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
+                            <input
+                                aria-labelledby="email-label"
+                                type="email"
+                                tumAetUiInput
+                                class="w-full"
+                                id="email"
+                                name="email"
+                                autocomplete="email"
+                                placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
+                                formControlName="email"
+                                required
+                            />
+                            <ng-container tumAetUiFormFieldError>
+                                @if (registerForm.controls.email.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.email.required"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.email) {
+                                    <small jhiTranslate="global.messages.validate.email.invalid"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.email.minlength"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.email.maxlength"></small>
+                                }
+                                @if (registerForm.controls.email.errors?.emailNotAllowed) {
+                                    <small jhiTranslate="global.messages.validate.email.notAllowed"></small>
+                                }
+                            </ng-container>
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-form-field
+                            class="mb-4!"
+                            controlId="password"
+                            required
+                            [invalid]="registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)"
+                        >
+                            <span id="password-label" tumAetUiFormFieldLabel jhiTranslate="global.form.newpassword"></span>
+                            <input
+                                aria-labelledby="password-label"
+                                type="password"
+                                tumAetUiInput
+                                class="w-full"
+                                id="password"
+                                name="password"
+                                autocomplete="new-password"
+                                placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
+                                formControlName="password"
+                                required
+                            />
+                            <ng-container tumAetUiFormFieldError>
+                                @if (registerForm.controls.password.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.required"></small>
+                                }
+                                @if (registerForm.controls.password.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.minlength" [translateValues]="{ min: PASSWORD_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.password.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.maxlength" [translateValues]="{ max: PASSWORD_MAX_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.password.errors?.maxbytes) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.maxbytes" [translateValues]="{ max: PASSWORD_MAX_BYTES }"></small>
+                                }
+                            </ng-container>
+                            <jhi-password-strength-bar [passwordToCheck]="registerForm.controls.password.value" />
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-form-field
+                            class="mb-4!"
+                            controlId="confirmPassword"
+                            required
+                            [invalid]="
+                                registerForm.controls.confirmPassword.invalid && (registerForm.controls.confirmPassword.dirty || registerForm.controls.confirmPassword.touched)
+                            "
+                        >
+                            <span id="confirmPassword-label" tumAetUiFormFieldLabel jhiTranslate="global.form.confirmpassword"></span>
+                            <input
+                                aria-labelledby="confirmPassword-label"
+                                type="password"
+                                tumAetUiInput
+                                class="w-full"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                autocomplete="new-password"
+                                placeholder="{{ 'global.form.confirmpassword.placeholder' | artemisTranslate }}"
+                                formControlName="confirmPassword"
+                                required
+                            />
+                            <ng-container tumAetUiFormFieldError>
+                                @if (registerForm.controls.confirmPassword.errors?.required) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.required"></small>
+                                }
+                                @if (registerForm.controls.confirmPassword.errors?.minlength) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.minlength" [translateValues]="{ min: PASSWORD_MIN_LENGTH }"></small>
+                                }
+                                @if (registerForm.controls.confirmPassword.errors?.maxlength) {
+                                    <small jhiTranslate="global.messages.validate.confirmpassword.maxlength" [translateValues]="{ max: PASSWORD_MAX_LENGTH }"></small>
+                                }
+                            </ng-container>
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-button type="submit" [disabled]="registerForm.invalid || registerForm.pending">
+                            <span jhiTranslate="register.form.button"></span>
+                        </tumaet-ui-button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}

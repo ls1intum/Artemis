@@ -1,0 +1,530 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture/lecture.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { PdfUploadTarget } from 'app/lecture/manage/pdf-upload-target-dialog/pdf-upload-target-dialog.component';
+import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+describe('Lecture', () => {
+    let lectureComponentFixture: ComponentFixture<LectureComponent>;
+    let lectureComponent: LectureComponent;
+    let lectureService: LectureService;
+    let profileService: ProfileService;
+
+    let pastLecture: Lecture;
+    let pastLecture2: Lecture;
+    let currentLecture: Lecture;
+    let currentLecture2: Lecture;
+    let currentLecture3: Lecture;
+    let futureLecture: Lecture;
+    let futureLecture2: Lecture;
+    let unspecifiedLecture: Lecture;
+    let lectureToIngest: Lecture;
+
+    beforeEach(async () => {
+        const lastWeek = dayjs().subtract(1, 'week');
+        const yesterday = dayjs().subtract(1, 'day');
+        const tomorrow = dayjs().add(1, 'day');
+        const nextWeek = dayjs().add(1, 'week');
+
+        pastLecture = new Lecture();
+        pastLecture.id = 6;
+        pastLecture.endDate = yesterday;
+        pastLecture.title = 'introduction to Computer Science';
+
+        pastLecture2 = new Lecture();
+        pastLecture2.id = 7;
+        pastLecture2.startDate = lastWeek;
+        pastLecture2.endDate = yesterday;
+        pastLecture2.title = 'Data Structures';
+
+        currentLecture = new Lecture();
+        currentLecture.id = 4;
+        currentLecture.startDate = yesterday;
+        currentLecture.endDate = tomorrow;
+        currentLecture.title = 'Algorithms';
+
+        currentLecture2 = new Lecture();
+        currentLecture2.id = 5;
+        currentLecture2.startDate = yesterday;
+        currentLecture2.title = 'operating Systems';
+
+        currentLecture3 = new Lecture();
+        currentLecture3.id = 3;
+        currentLecture3.endDate = tomorrow;
+        currentLecture3.title = 'computer Networks';
+
+        futureLecture = new Lecture();
+        futureLecture.id = 2;
+        futureLecture.startDate = tomorrow;
+        futureLecture.title = 'Database Systems';
+
+        futureLecture2 = new Lecture();
+        futureLecture2.id = 8;
+        futureLecture2.startDate = tomorrow;
+        futureLecture2.endDate = nextWeek;
+        futureLecture2.title = 'Artificial Intelligence';
+
+        unspecifiedLecture = new Lecture();
+        unspecifiedLecture.id = 1;
+        unspecifiedLecture.title = 'machine Learning';
+
+        lectureToIngest = new Lecture();
+        lectureToIngest.id = 1;
+        lectureToIngest.title = 'machine Learning';
+        lectureToIngest.course = new Course();
+        lectureToIngest.course.id = 99;
+
+        const profileInfo = {
+            activeProfiles: [],
+        } as unknown as ProfileInfo;
+
+        await TestBed.configureTestingModule({
+            imports: [
+                FaIconComponent,
+                LectureComponent,
+                MockPipe(ArtemisTranslatePipe, (key: string) => key),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(DocumentationButtonComponent),
+                MockDirective(TranslateDirective),
+                MockRouterLinkDirective,
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useValue: new MockProfileService() },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({
+                                courseId: '1',
+                            }),
+                        },
+                    },
+                },
+                MockProvider(LectureService, {
+                    findAllByCourseId: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    import: (_courseId, lectureId) => {
+                        return of(
+                            new HttpResponse({
+                                body: { id: lectureId, course: { id: _courseId } } as Lecture,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    delete: () => {
+                        return of(new HttpResponse<void>({ status: 200 }));
+                    },
+                    create: () => {
+                        return of(
+                            new HttpResponse({
+                                body: { id: 999, course: { id: 1 } } as Lecture,
+                                status: 201,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(IrisSettingsService),
+                MockProvider(AttachmentVideoUnitService),
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        lectureComponentFixture = TestBed.createComponent(LectureComponent);
+        lectureComponent = lectureComponentFixture.componentInstance;
+        lectureService = TestBed.inject(LectureService);
+        profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should fetch lectures when initialized', async () => {
+        const findAllSpy = vi.spyOn(lectureService, 'findAllByCourseId');
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        expect(findAllSpy).toHaveBeenCalledOnce();
+        expect(findAllSpy).toHaveBeenCalledWith(1);
+        expect(lectureComponent.lectures()).toHaveLength(8);
+    });
+
+    it('should show the actions of a lecture in one row and leave out the description', async () => {
+        pastLecture.description = 'Long **markdown** description';
+        pastLecture.isAtLeastEditor = true;
+        pastLecture.isAtLeastInstructor = true;
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponentFixture.detectChanges();
+
+        const row: HTMLElement = lectureComponentFixture.nativeElement.querySelector(`#lecture-${pastLecture.id}`);
+        const actions = row.querySelector('[data-testid="lecture-actions"]')!;
+        expect([...actions.children].map((action) => action.getAttribute('id') ?? action.getAttribute('data-testid') ?? action.tagName.toLowerCase())).toEqual([
+            'units',
+            'a',
+            'delete-lecture',
+        ]);
+        expect(row.querySelectorAll('td')).toHaveLength(5);
+        // The labels are hidden on narrow screens, so the links carry their names for screen readers.
+        expect(row.querySelector('#units')!.getAttribute('aria-label')).toBe('entity.action.units');
+        expect(row.querySelectorAll('[data-testid="lecture-actions"] a')[1].getAttribute('aria-label')).toBe('entity.action.edit');
+        expect(row.textContent).not.toContain('description');
+    });
+
+    it('should delete lecture', async () => {
+        const deleteSpy = vi.spyOn(lectureService, 'delete');
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.deleteLecture(pastLecture.id!);
+        await lectureComponentFixture.whenStable();
+
+        expect(deleteSpy).toHaveBeenCalledOnce();
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, false);
+        expect(lectureComponent.lectures()).toHaveLength(7);
+        expect(lectureComponent.lectures()).not.toContain(pastLecture);
+        expect(lectureComponent.filteredLectures()).toEqual(lectureComponent.lectures());
+    });
+
+    it('passes the answer about TUM.Live videos on when deleting a lecture', async () => {
+        const deleteSpy = vi.spyOn(lectureService, 'delete');
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        lectureComponent.deleteLecture(pastLecture.id!, { deleteTumLiveRecordings: true });
+
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, true);
+    });
+
+    it('reports a failed lookup of the uploaded TUM.Live videos instead of acting as if there were none', async () => {
+        vi.spyOn(TestBed.inject(TumLiveUploadService), 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        lectureComponent.ngOnInit();
+        await lectureComponentFixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Deleting a lecture then asks about its videos in TUM.Live, since it is not known which lectures have some.
+        expect(lectureComponent.tumLiveUploadsUnknown()).toBe(true);
+    });
+
+    it('should import lecture', async () => {
+        const importSpy = vi.spyOn(lectureService, 'import');
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.openImportModal();
+
+        expect(lectureComponent.isImportDialogVisible()).toBe(true);
+
+        // Emit the result from the dialog
+        lectureComponent.importLecture({ id: 123 } as Lecture);
+        await lectureComponentFixture.whenStable();
+
+        expect(importSpy).toHaveBeenCalledOnce();
+        expect(importSpy).toHaveBeenCalledWith(1, 123);
+        expect(lectureComponent.lectures()).toHaveLength(9);
+    });
+
+    it('should show all lectures sorted', async () => {
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        // No filters selected
+        lectureComponent.toggleFilters([]);
+
+        const filteredLectures = lectureComponent.filteredLectures();
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining(lectureComponent.lectures()));
+        expect(lectureComponent.filteredLectures().map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+
+        // Apply all filters
+        lectureComponent.toggleFilters([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
+        expect(lectureComponent.activeFilters.size).toBe(4);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining(lectureComponent.lectures()));
+
+        // Check that no filters is equal to all filters
+        expect(lectureComponent.filteredLectures()).toEqual(filteredLectures);
+    });
+
+    it('should filter for past lectures', async () => {
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.toggleFilters([LectureDateFilter.PAST]);
+        expect(lectureComponent.filteredLectures()).toHaveLength(2);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([pastLecture, pastLecture2]));
+    });
+
+    it('should filter for current lectures', async () => {
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.toggleFilters([LectureDateFilter.CURRENT]);
+        expect(lectureComponent.filteredLectures()).toHaveLength(3);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([currentLecture, currentLecture2, currentLecture3]));
+    });
+
+    it('should filter for future lectures', async () => {
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
+        expect(lectureComponent.filteredLectures()).toHaveLength(2);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([futureLecture, futureLecture2]));
+    });
+
+    it('should filter for lectures without dates', async () => {
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.toggleFilters([LectureDateFilter.UNSPECIFIED]);
+        expect(lectureComponent.filteredLectures()).toHaveLength(1);
+        expect(lectureComponent.filteredLectures()).toContainEqual(unspecifiedLecture);
+    });
+
+    it('should return lecture id from trackId', () => {
+        const lecture = new Lecture();
+        lecture.id = 42;
+
+        const result = lectureComponent.trackId(0, lecture);
+
+        expect(result).toBe(42);
+    });
+
+    it('should navigate to lecture creation page with existing lectures state', async () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        lectureComponent.navigateToLectureCreationPage();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 'new'], {
+            state: { existingLectures: lectureComponent.lectures() },
+        });
+    });
+
+    it('should handle error when deleting lecture fails', async () => {
+        const errorMessage = 'Delete failed';
+        vi.spyOn(lectureService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        const initialLectureCount = lectureComponent.lectures().length;
+
+        // Subscribe to dialogError$ to capture the error
+        let capturedError = '';
+        lectureComponent.dialogError$.subscribe((error) => (capturedError = error));
+
+        lectureComponent.deleteLecture(pastLecture.id!);
+        await lectureComponentFixture.whenStable();
+
+        expect(lectureComponent.lectures()).toHaveLength(initialLectureCount);
+        expect(capturedError).toBeTruthy();
+    });
+
+    it('should handle import modal dismissal gracefully', async () => {
+        const importSpy = vi.spyOn(lectureService, 'import');
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.openImportModal();
+
+        // Emit undefined (dismissed)
+        lectureComponent.isImportDialogVisible.set(false);
+        await lectureComponentFixture.whenStable();
+
+        expect(importSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle import error', async () => {
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        // Use status 400 because onError explicitly skips 500 errors
+        vi.spyOn(lectureService, 'import').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponent.openImportModal();
+
+        lectureComponent.importLecture({ id: 123 } as Lecture);
+        await lectureComponentFixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+    });
+
+    it('should handle error when loading lectures fails', async () => {
+        // Set up error mock before triggering ngOnInit
+        // Use status 400 because onError explicitly skips 500 errors
+        vi.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        // Manually trigger ngOnInit to use the error mock
+        lectureComponent.ngOnInit();
+        await lectureComponentFixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+    });
+
+    describe('PDF drop zone functionality', () => {
+        let attachmentVideoUnitService: AttachmentVideoUnitService;
+        let alertService: AlertService;
+        let router: Router;
+
+        beforeEach(async () => {
+            attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            alertService = TestBed.inject(AlertService);
+            router = TestBed.inject(Router);
+            lectureComponentFixture.detectChanges();
+            await lectureComponentFixture.whenStable();
+        });
+
+        function pdf(name: string): File {
+            return new File(['content'], name, { type: 'application/pdf' });
+        }
+
+        function unitReleasedAt(releaseDate?: string): HttpResponse<AttachmentVideoUnit> {
+            const unit = new AttachmentVideoUnit();
+            unit.id = 1;
+            unit.releaseDate = releaseDate ? dayjs(releaseDate) : undefined;
+            return new HttpResponse({ body: unit, status: 201 });
+        }
+
+        async function dropAndChoose(files: File[], target: PdfUploadTarget): Promise<void> {
+            lectureComponent.onPdfFilesDropped(files);
+            lectureComponent.onPdfUploadTargetSelected(target);
+            await lectureComponentFixture.whenStable();
+        }
+
+        it('should ask where the dropped files go', () => {
+            const files = [pdf('test.pdf')];
+
+            lectureComponent.onPdfFilesDropped(files);
+
+            expect(lectureComponent.droppedPdfFiles()).toBe(files);
+            expect(lectureComponent.isPdfUploadTargetDialogVisible()).toBe(true);
+        });
+
+        it('should not upload anything before a target is chosen', () => {
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+
+            lectureComponent.onPdfFilesDropped([pdf('test.pdf')]);
+            lectureComponent.isPdfUploadTargetDialogVisible.set(false);
+
+            expect(createSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create a lecture with the units and confirm it in the editor', async () => {
+            const createdLecture = new Lecture();
+            createdLecture.id = 999;
+            createdLecture.title = 'New Lecture';
+            createdLecture.course = { id: 1 } as Course;
+            vi.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: createdLecture, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(unitReleasedAt('2026-10-01T08:00:00.000Z')));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            await dropAndChoose([pdf('Chapter_01.pdf')], { targetType: 'new', newLectureTitle: 'New Lecture' });
+
+            expect(lectureService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Lecture', course: expect.objectContaining({ id: 1 }) }));
+            expect(attachmentVideoUnitService.createAttachmentVideoUnitFromFile).toHaveBeenCalledOnce();
+            // The editor confirms the upload in place of a toast that disappears before it is read.
+            expect(successSpy).not.toHaveBeenCalled();
+            const confirmation: PdfUploadConfirmation = { lectureCreated: true, fileNames: ['Chapter_01.pdf'], releaseDate: '2026-10-01T08:00:00.000Z' };
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 999, 'edit'], { state: { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation } });
+            expect(lectureComponent.isUploadingPdfs()).toBe(false);
+        });
+
+        it('should add the units to an existing lecture and confirm them in the editor', async () => {
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(unitReleasedAt()));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            await dropAndChoose([pdf('Chapter_01.pdf')], { targetType: 'existing', lectureId: 42 });
+
+            const confirmation: PdfUploadConfirmation = { lectureCreated: false, fileNames: ['Chapter_01.pdf'], releaseDate: undefined };
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 42, 'edit'], { state: { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation } });
+            expect(lectureComponent.isUploadingPdfs()).toBe(false);
+        });
+
+        it('should create one unit per file and confirm the earliest release date', async () => {
+            const createSpy = vi
+                .spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile')
+                .mockReturnValueOnce(of(unitReleasedAt('2026-10-03T08:00:00.000Z')))
+                .mockReturnValueOnce(of(unitReleasedAt('2026-10-01T08:00:00.000Z')))
+                .mockReturnValueOnce(of(unitReleasedAt()));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            await dropAndChoose([pdf('file1.pdf'), pdf('file2.pdf'), pdf('file3.pdf')], { targetType: 'existing', lectureId: 42 });
+
+            expect(createSpy).toHaveBeenCalledTimes(3);
+            const confirmation: PdfUploadConfirmation = { lectureCreated: false, fileNames: ['file1.pdf', 'file2.pdf', 'file3.pdf'], releaseDate: '2026-10-01T08:00:00.000Z' };
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 42, 'edit'], { state: { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: confirmation } });
+        });
+
+        it('should stop uploading when creating the lecture fails', async () => {
+            // Use status 400 because onError explicitly skips 500 errors
+            vi.spyOn(lectureService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            await dropAndChoose([pdf('test.pdf')], { targetType: 'new', newLectureTitle: 'New Lecture' });
+
+            expect(lectureComponent.isUploadingPdfs()).toBe(false);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should stop uploading when creating a unit fails', async () => {
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            await dropAndChoose([pdf('test.pdf')], { targetType: 'existing', lectureId: 42 });
+
+            expect(lectureComponent.isUploadingPdfs()).toBe(false);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should upload each file to the chosen lecture', async () => {
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(unitReleasedAt()));
+            const pdfFile = pdf('Chapter_01_Introduction.pdf');
+
+            await dropAndChoose([pdfFile], { targetType: 'existing', lectureId: 42 });
+
+            expect(createSpy).toHaveBeenCalledWith(42, pdfFile);
+        });
+    });
+});

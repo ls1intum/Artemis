@@ -1,0 +1,419 @@
+{
+    "artemisApp": {
+        "errors": {
+            "scheduleOverlapsWithSession": "The schedule overlaps with the following sessions: {{ sessions }}",
+            "sessionOverlapsWithSession": "The session overlaps with the following sessions: {{ sessions }}"
+        },
+        "generic": {
+            "more": "More...",
+            "offline": "Offline",
+            "online": "Online",
+            "repetitions": {
+                "everyWeek": "Every week",
+                "everyNWeeks": "Every {{ n }} weeks"
+            },
+            "timeZone": "Time Zone: {{ timeZone }}"
+        },
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Tutorials",
+                "title": "Title",
+                "campus": "Campus",
+                "teachingAssistant": "Tutor",
+                "registrationsWithCapacity": "Registrations / Capacity",
+                "channelReverse": "Channel of the tutorial group {{ title }}",
+                "utilization": "Utilization",
+                "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
+                "averageAttendance": "Average attendance: {{ averageAttendance }}",
+                "room": "Room",
+                "schedule": "Schedule",
+                "noAttendanceRecorded": "No attendance recorded yet."
+            },
+            "tutorialFreePeriod": {
+                "startDate": "Start Date",
+                "endDate": "End Date",
+                "reason": "Reason"
+            }
+        },
+        "forms": {
+            "tutorialFreePeriodForm": {
+                "timeFrame": {
+                    "label": "Time frame",
+                    "periodWithinDay": "Free Period within a Day",
+                    "period": "Free Period",
+                    "day": "Free Day"
+                },
+                "dateInput": {
+                    "label": "Date",
+                    "labelStart": "Start Date",
+                    "labelEnd": "End Date",
+                    "labelStartTime": "Start Time",
+                    "labelEndTime": "End Time",
+                    "invalidEndDateError": "The end date of the tutorial free period needs to be after the start date!"
+                },
+                "reasonInput": {
+                    "label": "Reason for no sessions on this day",
+                    "placeholder": "National Holiday",
+                    "maxLengthValidationError": "Reason is limited to {{ max }} characters!"
+                }
+            },
+            "configurationForm": {
+                "hero": {
+                    "title": "Tutorial Group Configuration",
+                    "description": "Default settings applied to every tutorial group in this course."
+                },
+                "timeZoneInput": {
+                    "label": "Tutorial Group Time Zone",
+                    "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
+                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                    "invalidTimeZone": "Please select a valid time zone from the list of suggestions."
+                },
+                "periodInput": {
+                    "label": "Tutorial Group Period",
+                    "explanation": "The period in which the tutorial groups occur in the semester. This will the default schedule of every tutorial group. It can be overridden by individual schedules. For example, if you enter '01-01-2020 - 01-06-2020' here, all tutorial groups will have a default schedule from '01-01-2020 - 01-06-2020' by default. You can change this later for individual tutorial groups.",
+                    "requiredValidationError": "You need to select a period!",
+                    "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
+                    "invalidRangeError": "Period must be a valid date range"
+                },
+                "useTutorialGroupChannelsInput": {
+                    "label": "Use Artemis managed Tutorial Group Channels",
+                    "channelDeletionWarning": "You have disabled the use of Artemis managed tutorial group channels. All channels that were created by Artemis will be deleted. Are you sure you want to do this?",
+                    "explanation": "If enabled, Artemis will create a dedicated channel for each tutorial group in the 'Communication' section of the course. The channel can still be managed manually, but Artemis automatically performs some common management tasks. Artemis will automatically add and remove students from the channel when they register or unregister for the tutorial group. The assigned tutor of the tutorial group will be made a moderator of the channel. The channel will be deleted when the tutorial group is deleted. It can not be deleted manually. This option can be changed later."
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "intro": "Welcome to the tutorial group management page! It allows you to manage online and offline weekly tutorial groups. Start by either importing tutorial groups from a CSV file or by creating a new tutorial group manually.",
+                "noTutorialGroupsTitle": "No tutorial groups yet",
+                "title": "Tutorial Groups Management",
+                "freePeriodsButtons": "Holidays",
+                "creatTutorialGroupButton": "Create New Tutorial Group",
+                "editConfigurationButton": "Edit Global Configuration",
+                "configurationRequiredForTutor": "Tutorial group management is only available after an instructor has configured tutorial groups for this course.",
+                "notAuthorized": "You are not authorized to access the tutorial group management of this course.",
+                "deleteDialog": {
+                    "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
+                    "confirm": "Please enter the title of the tutorial group to confirm."
+                },
+                "searchPlaceholder": "Search…",
+                "noMatchingGroups": "No tutorial group matches your search.",
+                "actions": {
+                    "import": "Import",
+                    "export": "Export",
+                    "create": "Create"
+                }
+            },
+            "checklist": {
+                "title": "Tutorial Group Checklist",
+                "explanation": "Before you can start using the tutorial groups feature, you must perform some configuration steps",
+                "heroTitle": "Set up tutorial groups",
+                "timeZone": "The course has a time zone configured",
+                "timeZoneExplanation": "The course needs a time zone configured so that the tutorial groups can be scheduled correctly according to that time zone.",
+                "configurationExplanation": "The course needs a course wide configuration for the tutorial groups. This configuration contains default settings for all tutorial groups.",
+                "configuration": "The course has a tutorial group configuration",
+                "createConfiguration": "Create Configuration",
+                "continueToManagement": "Continue"
+            },
+            "tutorialGroupRegistrations": {
+                "title": "Tutorial Registrations",
+                "searchFieldPlaceholder": "Search by Name or Login",
+                "importButtonLabel": "Import",
+                "exportButtonLabel": "Export",
+                "addStudentsButtonLabel": "Add Students",
+                "removeStudentButton": {
+                    "confirmationDialogue": {
+                        "header": "Confirm Removal",
+                        "message": "Do you really want to remove this student from registrations?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registration Number",
+                    "deregister": "Deregister"
+                },
+                "importModal": {
+                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. If the file contains more then the required columns, they will be discarded automatically. Here an example for a valid .csv file:",
+                    "explanationHeader": "Import Students",
+                    "confirmImportHeader": "Confirm Import",
+                    "importResultsHeader": "Import Results",
+                    "chooseFileButtonLabel": "Choose File",
+                    "invalidFileEntriesAlert": "The chosen file contains entries that do not have at least one of the required fields.",
+                    "noFileEntriesAlert": "The chosen file contains no entries.",
+                    "confirmationText": "Please have a look at the contents of the parsed .csv file and confirm their correctness. After your confirmation, Artemis will verify that the users exists and register them for the group. Artemis parsed the following:",
+                    "backToExplanationButtonLabel": "Back",
+                    "importButtonLabel": "Import",
+                    "importErrorAlert": "Something went wrong while importing the students. Please try again.",
+                    "finishButtonLabel": "Finish",
+                    "restartButtonLabel": "Restart",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Only a subset of students could be registered. The logins/registration numbers highlighted in red could not be matched to any existing users:",
+                        "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:",
+                        "allStudentsRegistered": "All students were registered."
+                    },
+                    "tableHeader": {
+                        "login": "Login",
+                        "registrationNumber": "Registration Number"
+                    }
+                },
+                "registerModal": {
+                    "header": "Register Students",
+                    "registerAllButtonLabel": "Register All",
+                    "cancelButtonLabel": "Cancel",
+                    "registerErrorAlert": "Something went wrong while registering the students. Please try again."
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "An error occured while loading search results. Please try again.",
+                    "noResultsText": "No Students Found."
+                }
+            },
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Edit Tutorial Group",
+                    "create": "Create Tutorial Group"
+                },
+                "sectionTitle": {
+                    "generalInformation": "General Information",
+                    "defineSessionPlan": "Define Session Schedule"
+                },
+                "inputLabel": {
+                    "title": "Title",
+                    "tutor": "Tutor",
+                    "language": "Language",
+                    "languageAutocompleteHeader": "input new or reuse existing:",
+                    "mode": "Mode",
+                    "campus": "Campus",
+                    "capacity": "Capacity",
+                    "additionalInformation": "Additional Information",
+                    "firstSessionStart": "First Session Start",
+                    "firstSessionEnd": "First Session End",
+                    "repetitionFrequency": "Repetition Frequency",
+                    "repetitionFrequencyPrefix": "every ",
+                    "repetitionFrequencySuffix": " week(s)",
+                    "tutorialPeriodEnd": "Tutorial Period End",
+                    "location": "Location"
+                },
+                "placeholder": {
+                    "title": "e.g. Tue 14:00 Group 3",
+                    "tutor": "Select a tutor",
+                    "language": "e.g. English",
+                    "mode": "Select a mode",
+                    "campus": "e.g. Garching",
+                    "capacity": "e.g. 30",
+                    "additionalInformation": "e.g. Bring your laptop",
+                    "location": "e.g. Room 00.08.038"
+                },
+                "validationError": {
+                    "titleContent": "Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.",
+                    "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",
+                    "campusLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "languageRequired": "Please choose a language.",
+                    "languageLength": "Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "additionalInformationLength": "Additional information must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "firstSessionStartRequired": "Please choose a date.",
+                    "firstSessionStartInvalid": "Please enter a valid date and time.",
+                    "firstSessionEndRequired": "Please choose a date.",
+                    "firstSessionEndInvalid": "Please enter a valid date and time.",
+                    "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",
+                    "firstSessionEndNotOnSameDayAsStart": "The end of the first session must be on the same day as its start.",
+                    "teachingPeriodRequired": "Please choose a date.",
+                    "tutorialPeriodEndInvalid": "Please enter a valid date.",
+                    "teachingPeriodNotAfterFirstSessionStart": "The end of the teaching period must be after the first session's start.",
+                    "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "The end of the teaching period must be at most 2 years after the first session's start.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
+                    "tutorRequired": "Please choose a tutor.",
+                    "locationRequired": "Please choose a location.",
+                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "noChanges": "Make a change before saving."
+                },
+                "networkError": {
+                    "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
+                    "createGroup": "Something went wrong while creating the tutorial group. Please try again.",
+                    "fetchSchedule": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.",
+                    "fetchLanguages": "Something went wrong while loading the languages that this course already uses. Please refresh the page if you wish to be proposed already used languages while selecting the language for this group."
+                },
+                "confirmSaveDialog": {
+                    "header": "Save Group?",
+                    "message": "You changed the schedule. Saving updates the sessions to match it: sessions that still occur keep their recorded attendance, and sessions that no longer occur are removed.",
+                    "acceptButtonLabel": "Save and Update"
+                }
+            },
+            "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor",
+                    "generalInfoCardTitle": "General Information",
+                    "averageAttendanceCardTitle": "Attendance",
+                    "nextSessionCardTitle": "Next Session"
+                },
+                "language": "Language:",
+                "capacity": "Capacity:",
+                "mode": "Mode:",
+                "campus": "Campus:",
+                "status": "Status:",
+                "statusChipLabel": {
+                    "regular": "Regular",
+                    "cancelled": "Cancelled",
+                    "rescheduled": "Rescheduled",
+                    "relocated": "Relocated"
+                },
+                "date": "Date:",
+                "time": "Time:",
+                "location": "Location:",
+                "title": "Tutorial Group Detail",
+                "sessionsListTitle": "Sessions",
+                "sessionsEmptyTitle": "No sessions to show",
+                "sessionsEmptyDescription": "Create the first session of this tutorial group.",
+                "sessionListOptionLabel": {
+                    "allSessions": "All",
+                    "futureSessions": "Future"
+                },
+                "currentTutorialLectureLinkLabel": "Current Lesson",
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Group Channel",
+                "registrationsLinkLabel": "Registrations",
+                "newSessionButtonLabel": "Create Session",
+                "confirmationDialog": {
+                    "deleteGroup": {
+                        "header": "Delete Group?",
+                        "message": "Do you really want to delete this tutorial group? This action can not be reversed!"
+                    },
+                    "deleteSession": {
+                        "header": "Delete Session?",
+                        "message": "Do you really want to delete this session?"
+                    }
+                },
+                "sessionTableColumnTitle": {
+                    "date": "Date",
+                    "time": "Time",
+                    "location": "Location",
+                    "attendance": "Attendance",
+                    "status": "Status",
+                    "actions": "Actions"
+                },
+                "sessionTableActionTooltipLabel": {
+                    "edit": "Edit",
+                    "cancel": "Cancel",
+                    "activate": "Undo Cancellation",
+                    "delete": "Delete"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "No data available",
+                    "noUpcomingSession": "No upcoming session"
+                },
+                "pieChartCategoryLabel": {
+                    "attended": "Attended",
+                    "notAttended": "Not Attended"
+                },
+                "networkError": {
+                    "deleteGroup": "Error while deleting group. Please try again.",
+                    "deleteSession": "Error while deleting session. Please try again.",
+                    "cancelSession": "Something went wrong while cancelling the session. Please try again.",
+                    "activateSession": "Something went wrong while undoing the cancellation. Please try again.",
+                    "updateSession": "Something went wrong while updating the session. Please try again.",
+                    "createSession": "Something went wrong while creating the session. Please try again.",
+                    "createOneToOneChat": "Error while creating tutor chat. Please try again."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Create Session",
+                        "edit": "Edit Session"
+                    },
+                    "inputLabels": {
+                        "date": "Date",
+                        "startTime": "Start Time",
+                        "endTime": "End Time",
+                        "location": "Location",
+                        "attendance": "Attendance"
+                    },
+                    "validationError": {
+                        "dateInvalid": "Please enter a valid date.",
+                        "dateRequired": "Please choose a date.",
+                        "startTimeRequired": "Please choose a start time.",
+                        "endTimeRequired": "Please choose an end time.",
+                        "endTimeNotAfterStartTime": "The end time must be after the start time.",
+                        "locationRequired": "Please choose a location.",
+                        "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
+                    }
+                }
+            },
+            "tutorialFreePeriodsManagement": {
+                "title": "Holidays",
+                "explanation": "Define course wide days on which no tutorial group sessions take place.",
+                "allHolidays": "All holidays",
+                "addHoliday": "Add holiday",
+                "loadFailed": "The holidays could not be loaded.",
+                "retry": "Try again",
+                "editHoliday": "Edit holiday",
+                "wholeDay": "Whole day",
+                "noHolidays": "No holidays yet.",
+                "sessionsCancelled": "{{ count }} sessions",
+                "pastHidden": "{{ count }} holidays in the past are hidden from the upcoming filter.",
+                "filter": {
+                    "upcoming": "Upcoming",
+                    "all": "All"
+                },
+                "calendar": {
+                    "today": "Today",
+                    "previousMonth": "Previous month",
+                    "nextMonth": "Next month",
+                    "sessionsShort": "{{ count }} sess.",
+                    "fromTime": "from {{ time }}",
+                    "untilTime": "until {{ time }}",
+                    "addHolidayOn": "Add a holiday on {{ date }}"
+                },
+                "form": {
+                    "from": "From",
+                    "to": "To",
+                    "create": "Create",
+                    "reason": "Reason",
+                    "reasonPlaceholder": "e.g. Christmas holidays",
+                    "invalidRange": "The end must be after the start.",
+                    "overlapsHoliday": "This overlaps with \"{{ reason }}\". Two holidays cannot cover the same time, because a cancelled session names one of them as its reason.",
+                    "overlapsExistingHoliday": "This holiday overlaps one that was added in the meantime. The page has been refreshed; please pick a time it does not cover.",
+                    "sessionsWillBeCancelled": "{{ count }} sessions in this period will be cancelled."
+                },
+                "deleteDialog": {
+                    "header": "Delete holiday",
+                    "question": "Are you sure you want to delete the holiday {{ reason }}?",
+                    "multiDayQuestion": "{{ reason }} covers {{ count }} days and is stored as one holiday, so deleting it removes every one of them. Delete it?"
+                },
+                "editHolidayNamed": "Edit {{ reason }}",
+                "deleteHolidayNamed": "Delete {{ reason }}"
+            },
+            "createOrEditTutorialFreePeriodTitle": {
+                "create": "Create free day",
+                "edit": "Edit free day"
+            },
+            "tutorialGroupSessionManagement": {
+                "title": "Tutorial Group Session Management"
+            },
+            "createTutorialGroupsConfiguration": {
+                "title": "Create global Tutorial Groups Configuration"
+            },
+            "editTutorialGroupsConfiguration": {
+                "title": "Edit global Tutorial Groups Configuration"
+            }
+        },
+        "services": {
+            "tutorialGroupCourseAndGroupService": {
+                "networkError": {
+                    "fetchGroup": "Something went wrong while refreshing the state of the tutorial group. Please try again by refreshing the page.",
+                    "fetchCourse": "Something went wrong while refreshing the state of the course. Please try again by refreshing the page."
+                }
+            },
+            "tutorialGroupTutorService": {
+                "networkError": {
+                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page."
+                }
+            },
+            "tutorialGroupRegisteredStudentsService": {
+                "networkError": {
+                    "deregisterStudent": "Something went wrong while deregistering the student. Please try again.",
+                    "fetchRegisteredStudents": "Something went wrong while fetching the registered students. Please try again"
+                }
+            }
+        }
+    }
+}

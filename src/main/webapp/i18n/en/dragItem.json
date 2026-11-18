@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "dragItem": {
+            "home": {
+                "title": "Drag Items",
+                "createLabel": "Create a new Drag Item"
+            },
+            "created": "Created new Drag Item with identifier {{ param }}",
+            "updated": "Updated Drag Item with identifier {{ param }}",
+            "deleted": "Deleted Drag Item with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag Item {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag Item"
+            },
+            "pictureFilePath": "Picture File Path",
+            "text": "Text",
+            "correctScore": "Correct Score",
+            "incorrectScore": "Incorrect Score",
+            "correctLocation": "Correct Location",
+            "question": "Question"
+        }
+    }
+}

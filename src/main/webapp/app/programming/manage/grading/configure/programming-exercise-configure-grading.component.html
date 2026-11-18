@@ -1,0 +1,221 @@
+<ng-template #tabTemplate let-type="type" let-translation="translation">
+    <div
+        class="tab-item"
+        (click)="selectTab(type)"
+        [ngClass]="activeTab() === type ? 'active' : ''"
+        [attr.aria-pressed]="activeTab() === type"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
+        <b [jhiTranslate]="translation"></b>
+    </div>
+</ng-template>
+<div>
+    <div class="d-flex align-content-center mb-2">
+        <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
+    </div>
+    @if (!isLoading()) {
+        <div class="top-bar">
+            <div class="d-flex align-items-center">
+                <ng-container *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }" />
+                @if (programmingExercise.staticCodeAnalysisEnabled) {
+                    <ng-container
+                        *ngTemplateOutlet="tabTemplate; context: { type: 'code-analysis', translation: 'artemisApp.programmingExercise.configureGrading.categories.titleHeader' }"
+                    />
+                }
+                <ng-container *ngTemplateOutlet="tabTemplate; context: { type: 'submission-policy', translation: 'artemisApp.programmingExercise.submissionPolicy.title' }" />
+                @if (programmingExercise.isAtLeastEditor) {
+                    <ng-container
+                        *ngTemplateOutlet="
+                            tabTemplate;
+                            context: { type: 'feedback-analysis', translation: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader' }
+                        "
+                    />
+                }
+            </div>
+            <ng-template>
+                <div></div>
+            </ng-template>
+            <div class="d-flex align-items-center">
+                @if (activeTab() === 'test-cases' || activeTab() === 'code-analysis') {
+                    <jhi-programming-exercise-configure-grading-status
+                        [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults()"
+                        [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
+                        [hasUnsavedCategoryChanges]="!!changedCategoryIds().length"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig()"
+                    />
+                }
+                @if (programmingExercise.isAtLeastInstructor && activeTab() !== 'feedback-analysis') {
+                    <jhi-programming-exercise-configure-grading-actions
+                        [exercise]="programmingExercise"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig()"
+                        [isSaving]="isSaving()"
+                    />
+                }
+            </div>
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (activeTab() === 'submission-policy') {
+                <div>
+                    <jhi-programming-exercise-grading-submission-policy-configuration-actions
+                        [exercise]="programmingExercise"
+                        [isSaving]="isSaving()"
+                        [hadPolicyBefore]="hadPolicyBefore()"
+                        [formInvalid]="policyUpdate.invalid"
+                        (onUpdate)="updateSubmissionPolicy()"
+                        (onToggle)="toggleSubmissionPolicy()"
+                    />
+                    <jhi-submission-policy-update #policyUpdate [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!" />
+                    @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy !== undefined) {
+                        <p-message severity="info">
+                            <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation"></span>
+                        </p-message>
+                    }
+                </div>
+            }
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (activeTab() === 'test-cases') {
+                <div>
+                    <div class="grading-table-layout">
+                        <div class="col-7">
+                            <jhi-programming-exercise-grading-tasks-table
+                                [exercise]="programmingExercise"
+                                [course]="course()"
+                                [gradingStatisticsObservable]="gradingStatisticsObservable()"
+                            />
+                        </div>
+                        <div class="col-5">
+                            <h2 class="mb-5 fw-medium">
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
+                                @if (!!changedTestCaseIds().length) {
+                                    <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
+                                }
+                            </h2>
+                            <jhi-test-case-distribution-chart
+                                [testCases]="filteredTestCasesForCharts()"
+                                [testCaseStatsMap]="gradingStatistics()?.testCaseStatsMap"
+                                [totalParticipations]="gradingStatistics()?.numParticipations"
+                                [exercise]="programmingExercise"
+                                (testCaseColorsChange)="testCaseColors = $event"
+                                (testCaseRowFilter)="filterByChart($event, chartFilterType.TEST_CASES)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (activeTab() === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled) {
+                <div>
+                    <div class="grading-table-layout">
+                        <div class="col-7">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title"></h2>
+                                <jhi-programming-exercise-grading-table-actions
+                                    [exercise]="programmingExercise"
+                                    [hasUnsavedChanges]="!!changedCategoryIds().length"
+                                    [isSaving]="isSaving()"
+                                    [activeTab]="activeTab()"
+                                    (onReset)="resetCategories()"
+                                    (onSave)="saveCategories()"
+                                    (onCategoryImport)="importCategories($event)"
+                                />
+                            </div>
+                            <jhi-table-view
+                                id="codeAnalysisTable"
+                                [cols]="codeAnalysisColumns()"
+                                [vals]="staticCodeAnalysisCategoriesForTable()"
+                                [options]="codeAnalysisTableOptions"
+                            />
+                        </div>
+                        <div class="col-5">
+                            <h2 class="mb-5 fw-medium">
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
+                                @if (!!changedCategoryIds().length) {
+                                    <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
+                                }
+                            </h2>
+                            <jhi-sca-category-distribution-chart
+                                [categories]="staticCodeAnalysisCategoriesForCharts()"
+                                [categoryIssuesMap]="gradingStatistics()?.categoryIssuesMap"
+                                [exercise]="programmingExercise"
+                                (categoryColorsChange)="categoryColors = $event"
+                                (scaCategoryFilter)="filterByChart($event, chartFilterType.CATEGORIES)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (programmingExercise.isAtLeastEditor && activeTab() === 'feedback-analysis' && programmingExercise.title && programmingExercise.id && course().id) {
+                <jhi-feedback-analysis
+                    [exerciseTitle]="programmingExercise.title"
+                    [exerciseId]="programmingExercise.id"
+                    [exerciseDueDate]="programmingExercise.dueDate"
+                    [courseId]="course().id!"
+                    [isCommunicationEnabled]="isCommunicationEnabled(course())"
+                />
+            }
+        </div>
+    }
+</div>
+
+<!-- Code analysis category cell templates -->
+<ng-template #categoryTemplate let-cell>
+    <fa-icon [icon]="faSquare" [style.color]="categoryColors[cell.data.name] || 'white'" class="me-2" />
+    {{ cell.data.name }}
+</ng-template>
+
+<ng-template #stateTemplate let-cell>
+    <select
+        [id]="cell.data.id + '-state'"
+        [ngModel]="cell.data.state"
+        class="p-1 form-select"
+        (change)="updateEditedCategoryField(cell.data, EditableField.STATE)(getEventValue($event))"
+    >
+        @for (s of categoryStateList; track s) {
+            <option [value]="s.value">{{ s.name }}</option>
+        }
+    </select>
+</ng-template>
+
+<ng-template #penaltyTemplate let-cell>
+    @if (cell.data.state === CategoryState.Graded) {
+        <jhi-table-editable-field [id]="cell.data.id + '-penalty'" [value]="cell.data.penalty" [onValueUpdate]="updateEditedCategoryField(cell.data, EditableField.PENALTY)" />
+    }
+    @if (cell.data.state === CategoryState.Feedback) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+    }
+    @if (cell.data.state === CategoryState.Inactive) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+    }
+</ng-template>
+
+<ng-template #maxPenaltyTemplate let-cell>
+    @if (cell.data.state === CategoryState.Graded) {
+        <jhi-table-editable-field
+            [id]="cell.data.id + '-maxpenalty'"
+            [value]="cell.data.maxPenalty"
+            [onValueUpdate]="updateEditedCategoryField(cell.data, EditableField.MAX_PENALTY)"
+        />
+    }
+    @if (cell.data.state === CategoryState.Feedback) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+    }
+    @if (cell.data.state === CategoryState.Inactive) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+    }
+</ng-template>
+
+<ng-template #detectedIssuesTemplate let-cell>
+    <jhi-category-issues-chart
+        [category]="cell.data"
+        [issuesMap]="getIssuesMap(cell.data.name)"
+        [totalStudents]="gradingStatistics()?.numParticipations || 0"
+        [maxNumberOfIssues]="maxIssuesPerCategory()"
+    />
+</ng-template>

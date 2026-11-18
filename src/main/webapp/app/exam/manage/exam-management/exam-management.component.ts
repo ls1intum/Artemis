@@ -1,0 +1,160 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/exam-management-navigation-sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
+
+@Component({
+    selector: 'jhi-exam-management',
+    templateUrl: './exam-management.component.html',
+    styleUrls: ['./exam-management.component.scss'],
+    imports: [
+        ExamManagementNavigationSidebarComponent,
+        CourseSidebarToggleButtonComponent,
+        RouterOutlet,
+        RouterLink,
+        NgTemplateOutlet,
+        FaIconComponent,
+        ExamModeBadgeComponent,
+        CdkScrollable,
+    ],
+})
+export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    public courseTitleBarService = inject(CourseTitleBarService);
+
+    protected readonly ExamMode = ExamMode;
+
+    private routerSubscription?: Subscription;
+    private eventSubscriber?: Subscription;
+    private deletionSubscriber?: Subscription;
+
+    readonly documentationType: DocumentationType = 'Exams';
+
+    readonly faChevronRight = faChevronRight;
+
+    readonly course = signal<Course>(undefined!);
+    readonly exams = signal<Exam[]>(undefined!);
+
+    // SidebarView requirements
+    readonly isCollapsed = signal<boolean>(false);
+
+    // exam that is currently in view
+    readonly currentExam = signal<Exam | undefined>(undefined);
+
+    toggleSidebar(): void {
+        this.isCollapsed.update((state) => !state);
+    }
+
+    /**
+     * Initialize the course and all exams when this view is initialized.
+     * Subscribes to 'examListModification' event.
+     */
+    ngOnInit(): void {
+        this.courseService.findForManagement(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+            next: (res: HttpResponse<Course>) => {
+                this.course.set(res.body!);
+                this.loadAllExamsForCourse();
+                this.registerChangeInExams();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+
+        this.routerSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+            this.updateCurrentExam();
+        });
+        this.updateCurrentExam();
+    }
+
+    /**
+     * unsubscribe on component destruction
+     */
+    ngOnDestroy() {
+        if (this.eventSubscriber !== undefined) {
+            this.eventManager.destroy(this.eventSubscriber);
+        }
+        if (this.deletionSubscriber !== undefined) {
+            this.eventManager.destroy(this.deletionSubscriber);
+        }
+        this.routerSubscription?.unsubscribe();
+    }
+
+    private updateCurrentExam(): void {
+        let child = this.route.snapshot;
+        while (child.firstChild) {
+            child = child.firstChild;
+        }
+        const examId = Number(child.paramMap.get('examId'));
+
+        // Do not set the current exam to the source exam when importing
+        const isExamImport = this.route.snapshot.firstChild?.routeConfig?.path === 'import/:examId';
+        if (examId && !isExamImport) {
+            const exam = this.exams()?.find((e) => e.id === examId);
+            this.currentExam.set(exam);
+        } else {
+            this.currentExam.set(undefined);
+        }
+    }
+
+    /**
+     * Load all exams for a course.
+     */
+    loadAllExamsForCourse() {
+        this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
+            next: (res: HttpResponse<Exam[]>) => {
+                this.exams.set(res.body!);
+                this.updateCurrentExam();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    /**
+     * Subscribes to 'examListModification' events, which read the exams from the server again, and to the event of a deleted exam,
+     * which removes that exam right away.
+     */
+    registerChangeInExams() {
+        this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
+            this.loadAllExamsForCourse();
+        });
+        this.deletionSubscriber = this.eventManager.subscribe(EXAM_DELETED_EVENT, (event) => {
+            const content = typeof event === 'string' ? undefined : (event.content as ExamDeletedEventContent | undefined);
+            if (content?.examId !== undefined) {
+                this.removeDeletedExam(content.examId);
+            }
+        });
+    }
+
+    /**
+     * Drops a deleted exam from the list without waiting for the server. The list is shared with the overview, which a deletion navigates to
+     * in the same moment: with the exam still in it, the overview would ask for the statistics of an exam that does not exist any more.
+     */
+    private removeDeletedExam(examId: number): void {
+        this.exams.update((exams) => exams?.filter((exam) => exam.id !== examId));
+        this.updateCurrentExam();
+    }
+}

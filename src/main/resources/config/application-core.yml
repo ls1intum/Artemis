@@ -1,0 +1,99 @@
+artemis:
+    aiworker:
+        enabled: false
+    atlas:
+        enabled: true
+        atlasllm:
+            enabled: false
+    deimos:
+        enabled: false
+    hyperion:
+        enabled: false
+    iris:
+        enabled: false
+    exam:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
+    modeling:
+        enabled: true
+    fileupload:
+        enabled: true
+    lecture:
+        enabled: true
+    sharing:
+        enabled: false
+        # the shared common secret
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes)
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
+
+    tutorialgroup:
+        enabled: true
+    lti:
+        enabled: false
+    athena:
+        enabled: false # Set this to true to enable the Athena module for LLM-based feedback suggestions; requires the athena service to be reachable via artemis.athena.url
+    apollon:
+        enabled: false # Set this to true to enable the Apollon module for UML diagram PDF export; requires the apollon conversion service to be reachable via artemis.apollon.conversion-service-url
+    user-management:
+        ldap:
+            enabled: false # Set this to true to enable LDAP-based user synchronization (artemis.user-management.ldap.url etc.)
+        saml2:
+            enabled: false # Set this to true to enable SAML2 single sign-on; requires the saml2 and spring.security.saml2 blocks (see application-saml2.yml.example)
+        oidc:
+            enabled: false # Set this to true to enable OIDC single sign-on;
+        passkey:
+            enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+            require-for-administrator-features: false # if true, administrators must be signed in with a super-admin-approved passkey before any endpoint grants them administrator access
+            ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
+            token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
+            # relying-party-id: ""  # Optional: override the WebAuthn Relying Party ID (defaults to the hostname from server.url). Needed when a reverse proxy serves a different hostname.
+            # additional-allowed-origins: []  # Optional: extra origins allowed for WebAuthn passkey authentication, e.g. when a reverse proxy serves a different URL than server.url.
+spring:
+    liquibase:
+        enabled: true
+    autoconfigure:
+        # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
+        # They can be included once they are processed
+        exclude:
+          # Important: Keep in sync with application-buildagent.yml (except build agent specific exclusions)
+          - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
+          # Note: DataSourcePoolMetricsAutoConfiguration is NOT excluded — it registers hikaricp.connections.* gauges for the admin metrics page
+          - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
+    cloud:
+        loadbalancer:
+            cache:
+                enabled: true
+
+management:
+    endpoint:
+        health:
+            show-details: when_authorized
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
+            probes:
+                enabled: true
+            cache:
+                # The health endpoint is public, so every liveness probe runs every indicator. One of them, Weaviate,
+                # asks a remote server whether it is ready and took 1.7 s per call on a 2000 student benchmark - 272 s
+                # of request time on a single node in ten minutes, for an answer that had not changed. Serving repeated
+                # probes from this cache leaves detection well inside a minute, which is shorter than the consecutive
+                # failures an alert waits for anyway. Note this covers unauthenticated callers, which is what probes
+                # and the status page are; a signed-in admin opening the health page always gets a fresh answer.
+                time-to-live: 30s
+        artemismetrics:
+            access: read_only
+    metrics:
+        enable:
+            http: true
+            jvm: true
+            logback: true
+            process: true
+            system: true

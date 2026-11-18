@@ -1,0 +1,303 @@
+package de.tum.cit.aet.artemis.iris.service.session;
+
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+
+/**
+ * Service for managing Iris tutor suggestion sessions.
+ * <p>
+ * This service is responsible for handling the business logic of Iris tutor suggestion sessions.
+ * </p>
+ */
+@Service
+@Conditional(IrisEnabled.class)
+@Lazy
+public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionService<IrisTutorSuggestionSession> {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisTutorSuggestionSessionService.class);
+
+    private final IrisSessionRepository irisSessionRepository;
+
+    private final IrisChatWebsocketService irisChatWebsocketService;
+
+    private final IrisRateLimitService rateLimitService;
+
+    private final PyrisPipelineService pyrisPipelineService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final IrisSettingsService irisSettingsService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final PyrisDTOService pyrisDTOService;
+
+    private final PostRepository postRepository;
+
+    private final IrisMessageService irisMessageService;
+
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
+    public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository, JsonMapper objectMapper,
+            IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository,
+            PyrisJobService pyrisJobService) {
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService, pyrisJobService);
+        this.irisSessionRepository = irisSessionRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.rateLimitService = rateLimitService;
+        this.pyrisPipelineService = pyrisPipelineService;
+        this.authCheckService = authCheckService;
+        this.irisSettingsService = irisSettingsService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.pyrisDTOService = pyrisDTOService;
+        this.postRepository = postRepository;
+        this.irisMessageService = irisMessageService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        builder.withCourse(courseOfPostElseThrow(post, session.getId()).getId());
+    }
+
+    private static Course courseOfPostElseThrow(Post post, Long sessionId) {
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + sessionId);
+        }
+        return course;
+    }
+
+    @Override
+    public void sendOverWebsocket(IrisTutorSuggestionSession session, IrisMessage message) {
+        irisChatWebsocketService.sendMessage(session, message, null, null);
+    }
+
+    @Override
+    public void requestAndHandleResponse(IrisTutorSuggestionSession irisSession) {
+        requestAndHandleResponse(irisSession, Optional.empty());
+    }
+
+    /**
+     * Requests and handles the response from the Pyris pipeline for the given session.
+     *
+     * @param session The IrisTutorSuggestionSession to handle
+     * @param event   Optional event to pass to the Pyris pipeline
+     */
+    public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
+        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+
+        var course = courseOfPostElseThrow(post, chatSession.getId());
+
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
+            throw new ConflictException("Tutor Suggestions are not enabled for this course", "Iris", "irisDisabled");
+        }
+        var variant = settings.variant().jsonValue();
+        var supportLevel = settings.supportLevel().jsonValue();
+
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        rateLimitService.checkRateLimitElseThrow(chatSession, user);
+
+        var conversation = post.getConversation();
+        if (conversation == null) {
+            throw new IllegalStateException("Conversation not found for session " + chatSession.getId());
+        }
+
+        if (conversation instanceof Channel channel) {
+            Optional<Long> lectureIdOptional = Optional.empty();
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
+            Optional<PyrisSubmissionDTO> submissionDTOOptional = Optional.empty();
+            Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
+
+            var lecture = channel.getLecture();
+            if (lecture != null) {
+                lectureIdOptional = Optional.of(lecture.getId());
+            }
+            var exercise = channel.getExercise();
+            if (exercise != null) {
+                switch (exercise.getExerciseType()) {
+                    case PROGRAMMING -> {
+                        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        var latestSubmission = getLatestSubmissionIfExists(programmingExercise, user);
+                        PyrisSubmissionDTO pyrisSubmissionDTO = latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null);
+                        PyrisProgrammingExerciseDTO pyrisProgrammingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
+                        if (pyrisSubmissionDTO != null) {
+                            submissionDTOOptional = Optional.of(pyrisSubmissionDTO);
+                        }
+                        programmingExerciseDTOOptional = Optional.of(pyrisProgrammingExerciseDTO);
+                    }
+                    case TEXT -> {
+                        TextExercise textExercise = (TextExercise) exercise;
+                        textExerciseDTOOptional = Optional.of(PyrisTextExerciseDTO.of(textExercise));
+                    }
+                }
+            }
+            pyrisPipelineService.executeTutorSuggestionPipeline(variant, supportLevel, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
+                    programmingExerciseDTOOptional, post);
+        }
+    }
+
+    @Override
+    public void checkRateLimit(User user, IrisTutorSuggestionSession session) {
+        rateLimitService.checkRateLimitElseThrow(session, user);
+    }
+
+    @Override
+    public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
+        if (user == null) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseOfPostElseThrow(post, irisSession.getId()), user);
+        if (irisSession.getUserId() != user.getId()) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
+    }
+
+    @Override
+    public void checkIrisEnabledFor(IrisTutorSuggestionSession irisSession) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        var course = post.getCoursePostingBelongsTo();
+        if (course != null) {
+            irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+        }
+    }
+
+    /**
+     * Handles tutor suggestion job status updates.
+     *
+     * @param job          The job to handle
+     * @param statusUpdate The status update to handle
+     * @return The updated job, or {@code null} if the session no longer exists
+     */
+    @Nullable
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
+        var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris tutor suggestion job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
+        IrisMessage savedMessage;
+        IrisMessage savedArtifact;
+        if (statusUpdate.artifact() != null || statusUpdate.result() != null) {
+            if (statusUpdate.artifact() != null) {
+                var artifact = new IrisMessage();
+                artifact.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
+                savedArtifact = irisMessageService.saveMessage(artifact, session, IrisMessageSender.ARTIFACT);
+                irisChatWebsocketService.sendMessage(session, savedArtifact, PyrisRunState.RUNNING, statusUpdate.error());
+            }
+            else {
+                savedArtifact = null;
+            }
+            if (statusUpdate.result() != null && !statusUpdate.result().isEmpty()) {
+                var message = new IrisMessage();
+                message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+                savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+                irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error());
+            }
+            else {
+                savedMessage = null;
+            }
+        }
+        else {
+            savedMessage = null;
+            savedArtifact = null;
+            irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), null, null, statusUpdate.tokens(), null, null);
+        }
+
+        AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
+        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
+            if (savedMessage != null || savedArtifact != null) {
+                var messageId = savedArtifact != null ? savedArtifact.getId() : savedMessage.getId();
+                // generated message is first sent and generated trace is saved
+                var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+                    builder.withIrisMessageID(messageId).withUser(session.getUserId());
+                    this.setLLMTokenUsageParameters(builder, session);
+                    return builder;
+                });
+
+                updatedJob.set(job.withTraceId(llmTokenUsageTrace.getId()));
+            }
+            else {
+                // interaction suggestion is sent and appended to the generated trace if it exists
+                Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById)
+                        .ifPresentOrElse(trace -> llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace), () -> {
+                            var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
+                                builder.withUser(session.getUserId());
+                                this.setLLMTokenUsageParameters(builder, session);
+                                return builder;
+                            });
+
+                            updatedJob.set(job.withTraceId(llmTokenUsage.getId()));
+                        });
+            }
+        }
+
+        return updatedJob.get();
+    }
+}

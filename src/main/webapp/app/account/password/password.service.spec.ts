@@ -1,0 +1,49 @@
+/**
+ * Vitest tests for PasswordService.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
+import { PasswordService } from 'app/account/password/password.service';
+import { HttpClient } from '@angular/common/http';
+
+describe('PasswordService', () => {
+    let passwordService: PasswordService;
+    let httpService: HttpClient;
+    let postStub: ReturnType<typeof vi.spyOn>;
+
+    const postURL = 'api/account/change-password';
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            providers: [{ provide: HttpClient, useClass: MockHttpService }],
+        });
+        await TestBed.compileComponents();
+
+        passwordService = TestBed.inject(PasswordService);
+        httpService = TestBed.inject(HttpClient);
+        postStub = vi.spyOn(httpService, 'post');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should set a new password for the current user', () => {
+        const newPassword = 'newPassword';
+        const currentPassword = 'currentPassword';
+
+        passwordService.changePassword(newPassword, currentPassword).subscribe();
+
+        expect(postStub).toHaveBeenCalledOnce();
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword, revokeCredentials: undefined });
+    });
+
+    it('should pass on which other credentials to revoke', () => {
+        const revokeCredentials = { passkeys: true, sshKeys: false, vcsAccessTokens: true };
+
+        passwordService.changePassword('newPassword', 'currentPassword', revokeCredentials).subscribe();
+
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword: 'currentPassword', newPassword: 'newPassword', revokeCredentials });
+    });
+});

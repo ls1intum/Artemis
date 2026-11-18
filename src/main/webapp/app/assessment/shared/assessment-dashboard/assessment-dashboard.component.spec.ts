@@ -1,0 +1,502 @@
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
+import { Observable, of, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { User } from 'app/account/user/user.model';
+import { SortService } from 'app/foundation/service/sort.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
+import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
+
+describe('AssessmentDashboardComponent', () => {
+    let comp: AssessmentDashboardComponent;
+    let fixture: ComponentFixture<AssessmentDashboardComponent>;
+
+    let examManagementService: ExamManagementService;
+    let getExamWithInterestingExercisesForAssessmentDashboardStub: MockInstance;
+    let getStatsForExamAssessmentDashboardStub: MockInstance;
+
+    let courseManagementService: CourseManagementService;
+    let getCourseWithInterestingExercisesForTutorsStub: MockInstance;
+    let getStatsForTutorsStub: MockInstance;
+
+    let sortService: SortService;
+
+    const programmingExercise = {
+        id: 16,
+        type: ExerciseType.PROGRAMMING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
+    } as ProgrammingExercise;
+    const programmingExerciseComplaintsOnAutomaticAssessment = {
+        id: 21,
+        type: ExerciseType.PROGRAMMING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        allowComplaintsForAutomaticAssessments: true,
+        secondCorrectionEnabled: false,
+        numberOfOpenComplaints: 0,
+        numberOfOpenMoreFeedbackRequests: 0,
+        // Normally only a small fraction of submissions is assessed by hand and accounted
+        numberOfSubmissions: {
+            inTime: 1234,
+            late: 0,
+        },
+        totalNumberOfAssessments: 12,
+    } as ProgrammingExercise;
+    const modelingExercise = {
+        id: 17,
+        type: ExerciseType.MODELING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    } as ModelingExercise;
+    const textExercise = {
+        id: 18,
+        type: ExerciseType.TEXT,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
+    } as TextExercise;
+    const fileUploadExercise = {
+        id: 19,
+        type: ExerciseType.FILE_UPLOAD,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
+        numberOfSubmissions: { inTime: 5, late: 0 },
+        numberOfAssessmentsOfCorrectionRounds: [{ inTime: 5, late: 0 }],
+        totalNumberOfAssessments: 5,
+        numberOfOpenComplaints: 0,
+        numberOfOpenMoreFeedbackRequests: 0,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
+    } as FileUploadExercise;
+
+    const course = {
+        id: 10,
+        isAtLeastInstructor: true,
+        exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise],
+    } as Course;
+    const exerciseGroup1 = { id: 141, exercises: [programmingExercise, modelingExercise] } as ExerciseGroup;
+    const exerciseGroup2 = { id: 142, exercises: [textExercise, fileUploadExercise] } as ExerciseGroup;
+    const exam = { id: 20, exerciseGroups: [exerciseGroup1, exerciseGroup2], course: { id: 10 } } as Exam;
+
+    const numberOfAssessmentsOfCorrectionRounds = [{ inTime: 1, late: 1 } as DueDateStat, { inTime: 8, late: 0 } as DueDateStat];
+    const tutorLeaderboardEntries = [] as TutorLeaderboardElement[];
+    const courseTutorStats = {
+        numberOfSubmissions: { inTime: 5, late: 0 } as DueDateStat,
+        totalNumberOfAssessments: 3,
+        numberOfAssessmentsOfCorrectionRounds,
+        numberOfComplaints: 0,
+        numberOfMoreFeedbackRequests: 0,
+        numberOfOpenMoreFeedbackRequests: 0,
+        numberOfAssessmentLocks: 2,
+        tutorLeaderboardEntries,
+        numberOfStudents: 5,
+        numberOfAutomaticAssistedAssessments: { inTime: 0, late: 0 },
+        numberOfOpenComplaints: 0,
+        totalNumberOfAssessmentLocks: 2,
+    } as StatsForDashboard;
+
+    const route = {
+        snapshot: {
+            paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+            url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+        },
+    } as any as ActivatedRoute;
+
+    beforeEach(() => {
+        return TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AssessmentDashboardComponent);
+                comp = fixture.componentInstance;
+
+                courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                sortService = TestBed.inject(SortService);
+
+                getExamWithInterestingExercisesForAssessmentDashboardStub = vi
+                    .spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard')
+                    .mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
+                getStatsForExamAssessmentDashboardStub = vi
+                    .spyOn(examManagementService, 'getStatsForExamAssessmentDashboard')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+
+                getCourseWithInterestingExercisesForTutorsStub = vi
+                    .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
+                    .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
+                const accountService = TestBed.inject(AccountService);
+                vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
+                getStatsForTutorsStub = vi
+                    .spyOn(courseManagementService, 'getStatsForTutors')
+                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+            });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should init component correctly for exam', () => {
+        comp.ngOnInit();
+
+        expect(comp.isExamMode()).toBe(true);
+        expect(comp.courseId()).toBe(10);
+        expect(comp.examId()).toBe(20);
+        expect(comp.isTestRun()).toBe(false);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+        expect(comp.exam()).toEqual(exam);
+        expect(comp.hideFinishedExercises()).toBe(false);
+        expect(comp.allExercises()).toHaveLength(4);
+        expect(comp.currentlyShownExercises()).toHaveLength(4);
+    });
+
+    it('should init component correctly for course', () => {
+        const newRoute = {
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: course.id }),
+                url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+            },
+        } as any as ActivatedRoute;
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = newRoute.snapshot;
+
+        comp.ngOnInit();
+
+        expect(comp.isExamMode()).toBe(false);
+        expect(comp.courseId()).toBe(10);
+        expect(comp.examId()).toBe(0);
+        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(comp.course()).toEqual(Course.from(course));
+        expect(comp.allExercises()).toHaveLength(5);
+        expect(comp.currentlyShownExercises()).toHaveLength(4);
+    });
+
+    it('should filter finished exercises with no correction rounds without throwing', () => {
+        const finishedExercise = { ...fileUploadExercise, numberOfAssessmentsOfCorrectionRounds: [] };
+        const unfinishedExercise = { ...finishedExercise, id: 20, totalNumberOfAssessments: 4 };
+        comp.allExercises.set([finishedExercise, unfinishedExercise]);
+
+        comp.hideFinishedExercises.set(true);
+        comp.updateExercises();
+
+        expect(comp.currentlyShownExercises()).toEqual([unfinishedExercise]);
+    });
+
+    it('should update exercises when finished exercises are filtered', () => {
+        comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
+        comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);
+        comp.triggerFinishedExercises(); // should now show all exercises
+        expect(comp.currentlyShownExercises()).toEqual([
+            programmingExercise,
+            programmingExerciseComplaintsOnAutomaticAssessment,
+            textExercise,
+            modelingExercise,
+            fileUploadExercise,
+        ]);
+        comp.triggerFinishedExercises(); // should no longer show fileUploadExercise
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, textExercise, modelingExercise]);
+    });
+
+    it('should update exercises when optional exercises are filtered', () => {
+        comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
+        comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);
+        comp.triggerOptionalExercises();
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, modelingExercise]);
+        comp.triggerOptionalExercises();
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, textExercise, modelingExercise]);
+    });
+
+    it('should sort rows', () => {
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
+        comp.currentlyShownExercises.set([textExercise]);
+        comp.exercisesSortingPredicate.set('assessmentDueDate');
+        comp.exercisesReverseOrder.set(false);
+
+        comp.sortRows();
+
+        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
+        expect(sortServiceSpy).toHaveBeenCalledWith([textExercise], 'assessmentDueDate', false);
+    });
+
+    describe('getAssessmentDashboardLinkForExercise', () => {
+        beforeEach(() => {
+            comp.courseId.set(course.id!);
+            comp.examId.set(exam.id!);
+        });
+
+        it('should getAssessmentDashboardLinkForExercise for exam', () => {
+            comp.isExamMode.set(true);
+            const link = ['/course-management', comp.courseId().toString(), 'exams', comp.examId().toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
+        });
+
+        it('should getAssessmentDashboardLinkForExercise for exam and testrun', () => {
+            comp.isExamMode.set(true);
+            comp.isTestRun.set(true);
+            const link = ['/course-management', comp.courseId().toString(), 'exams', comp.examId().toString(), 'test-assessment-dashboard', fileUploadExercise.id!.toString()];
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
+        });
+
+        it('should getAssessmentDashboardLinkForExercise for course', () => {
+            comp.isExamMode.set(false);
+            const link = ['/course-management', comp.courseId().toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
+            expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
+        });
+    });
+
+    describe('tutor issues', () => {
+        describe('on ngOnInit', () => {
+            it('compute issues if not in exam mode', () => {
+                // given
+                const newRoute = {
+                    snapshot: {
+                        paramMap: convertToParamMap({ courseId: course.id }),
+                        url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+                    },
+                } as any as ActivatedRoute;
+                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+                activatedRoute.snapshot = newRoute.snapshot;
+
+                comp.tutor.set(new User(1));
+
+                const stats = new StatsForDashboard();
+                stats.numberOfRatings = 2;
+                stats.tutorLeaderboardEntries = [
+                    {
+                        userId: 1,
+                        numberOfAssessments: 100,
+                        numberOfTutorComplaints: 1,
+                        numberOfTutorMoreFeedbackRequests: 0,
+                        averageRating: 1,
+                        averageScore: 60,
+                        numberOfTutorRatings: 1,
+                        hasIssuesWithPerformance: false,
+                    } as TutorLeaderboardElement,
+                    {
+                        userId: 2,
+                        numberOfAssessments: 5,
+                        numberOfTutorComplaints: 5,
+                        numberOfTutorMoreFeedbackRequests: 0,
+                        averageRating: 5,
+                        averageScore: 80,
+                        numberOfTutorRatings: 1,
+                        hasIssuesWithPerformance: false,
+                    } as TutorLeaderboardElement,
+                    {
+                        userId: 3,
+                        numberOfAssessments: 1,
+                        numberOfTutorComplaints: 0,
+                        numberOfTutorMoreFeedbackRequests: 0,
+                        averageRating: 0,
+                        averageScore: 10,
+                        numberOfTutorRatings: 0,
+                        hasIssuesWithPerformance: false,
+                    } as TutorLeaderboardElement,
+                ];
+                getStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ status: 200, body: stats })));
+
+                // when
+                comp.ngOnInit();
+
+                // then
+                expect(comp.tutorIssues()).toHaveLength(4);
+                expect(comp.stats().tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
+                expect(comp.stats().tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints, score
+                expect(comp.stats().tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(true); // score
+            });
+        });
+
+        describe('tutor issue checkers', () => {
+            const tutorId = 1;
+            const tutorName = 'TutorA';
+
+            describe('rating checker', () => {
+                it('tutors value is significantly less than the course average value', () => {
+                    const ratingsCount = 1;
+                    const tutorAverageValue = 2.25;
+                    const courseAverageValue = 4;
+                    const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueRatingChecker(1, 3, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                });
+            });
+
+            describe('score checker', () => {
+                it('tutors value is significantly less than the course average value', () => {
+                    const submissionsCount = 5;
+                    const tutorAverageValue = 40;
+                    const courseAverageValue = 80;
+                    const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueScoreChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
+                    const ratingCheckerD = new TutorIssueScoreChecker(1, 96.009, 80, tutorName, tutorId);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
+                });
+            });
+
+            describe('complaints checker', () => {
+                it('tutors value is significantly bigger than the course average value', () => {
+                    const submissionsCount = 5;
+                    const tutorAverageValue = 14;
+                    const courseAverageValue = 10;
+                    const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
+                });
+
+                it('tutors value is within allowed range', () => {
+                    const ratingCheckerA = new TutorIssueComplaintsChecker(1, 0, 0, tutorName, tutorId);
+                    const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
+                    const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
+                    const ratingCheckerD = new TutorIssueComplaintsChecker(1, 12.001, 10, tutorName, tutorId);
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
+                });
+            });
+        });
+    });
+
+    it('asQuizExercise should cast exercise to QuizExercise', () => {
+        const quizExercise = new QuizExercise(undefined, undefined);
+        expect(comp.asQuizExercise(quizExercise)).toBeInstanceOf(QuizExercise);
+        expect(comp.asQuizExercise(textExercise)).not.toBeInstanceOf(QuizExercise);
+    });
+
+    describe('Deimos batch trigger', () => {
+        let deimosService: DeimosService;
+        let alertService: AlertService;
+        const selection = { from: dayjs('2026-01-01T00:00:00Z'), to: dayjs('2026-01-08T00:00:00Z') } as DeimosDateRangeSelection;
+
+        beforeEach(() => {
+            deimosService = TestBed.inject(DeimosService);
+            alertService = TestBed.inject(AlertService);
+            comp.courseId.set(course.id!);
+        });
+
+        it('should open the Deimos date range modal with a default seven-day window', () => {
+            const openSpy = vi.fn();
+            (comp as any).deimosDateRangeModal = () => ({ open: openSpy });
+
+            comp.openDeimosBatchDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            const [from, to] = openSpy.mock.calls[0];
+            expect(to.diff(from, 'day')).toBe(7);
+        });
+
+        it('should not fail when opening the dialog before the modal is available', () => {
+            (comp as any).deimosDateRangeModal = () => undefined;
+
+            expect(() => comp.openDeimosBatchDialog()).not.toThrow();
+        });
+
+        it('should trigger the course batch and show a success alert', () => {
+            const triggerSpy = vi.spyOn(deimosService, 'triggerCourseBatch').mockReturnValue(of({ runId: 'run-1', status: 'ACCEPTED' }));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(triggerSpy).toHaveBeenCalledWith(course.id, selection.from, selection.to);
+            expect(successSpy).toHaveBeenCalledOnce();
+            expect((comp as any).deimosSubmitting()).toBe(false);
+        });
+
+        it('should show an error alert when the course batch fails', () => {
+            vi.spyOn(deimosService, 'triggerCourseBatch').mockReturnValue(throwError(() => new Error('failed')));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect((comp as any).deimosSubmitting()).toBe(false);
+        });
+
+        it('should not trigger a batch when no course is set', () => {
+            comp.courseId.set(0);
+            const triggerSpy = vi.spyOn(deimosService, 'triggerCourseBatch');
+
+            comp.triggerCourseDeimosBatch(selection);
+
+            expect(triggerSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should show waiting notice and not load dashboard when tutor accesses running exam', () => {
+        const activatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = {
+            paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+            url: [{ path: 'course-management' }, { path: '10' }, { path: 'assessment-dashboard' }] as any,
+        } as any;
+
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(
+            of({ body: { latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO }) as Observable<HttpResponse<ExamInformationDTO>>,
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.examNotFinished()).toBe(true);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).not.toHaveBeenCalled();
+        expect(fixture.debugElement.nativeElement.querySelector('#assessment-not-possible-yet')).not.toBeNull();
+    });
+});

@@ -1,0 +1,41 @@
+<div class="flex h-full min-h-96 flex-col">
+    <div class="flex items-center justify-between gap-2 py-4!">
+        <span class="text-xl font-semibold" jhiTranslate="artemisApp.courseCompetency.relations.modalTitle"></span>
+        <button
+            tumAetUiButton
+            type="button"
+            severity="secondary"
+            variant="text"
+            rounded
+            class="size-8 shrink-0 p-0"
+            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            data-testid="close-button"
+            cdkFocusInitial
+            (click)="closeModal()"
+        >
+            <fa-icon [icon]="closeIcon" />
+        </button>
+    </div>
+    @if (isLoading()) {
+        <div class="m-4! flex justify-center">
+            <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
+        </div>
+    } @else {
+        <div class="shrink-0 pb-4!">
+            <jhi-course-competency-relation-form
+                [(selectedRelationId)]="selectedRelationId"
+                [courseId]="courseId()"
+                [(relations)]="relations"
+                [courseCompetencies]="courseCompetencies()"
+            />
+        </div>
+        <div class="min-h-0 grow">
+            <jhi-course-competencies-relation-graph
+                [(selectedRelationId)]="selectedRelationId"
+                [relations]="relations()"
+                [courseCompetencies]="courseCompetencies()"
+                (onCourseCompetencySelection)="selectCourseCompetency($event)"
+            />
+        </div>
+    }
+</div>

@@ -1,0 +1,9 @@
+@if (warning(); as warning) {
+    <span [tumAetUiTooltip]="warning | artemisTranslate" [attr.aria-label]="warning | artemisTranslate" role="img" tabindex="0">
+        <fa-icon
+            [attr.id]="participationType() === ProgrammingExerciseParticipationType.TEMPLATE ? 'instructor-status-template' : 'instructor-status-solution'"
+            [icon]="faExclamationTriangle"
+            class="text-state-warning"
+        />
+    </span>
+}

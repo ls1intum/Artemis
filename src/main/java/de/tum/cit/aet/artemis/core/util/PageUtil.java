@@ -1,0 +1,138 @@
+package de.tum.cit.aet.artemis.core.util;
+
+import java.util.Map;
+
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
+
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+
+public class PageUtil {
+
+    /**
+     * Enum of column name maps for different entities. Maps column (client) to attribute (persistence entity) <br/>
+     * Each map contains only the columns for which we want to allow a pageable search.
+     */
+    public enum ColumnMapping {
+
+        // @formatter:off
+        COMPETENCY(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        COURSE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "SHORT_NAME", "shortName",
+            "SEMESTER", "semester"
+        )),
+        EXAM(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "EXAM_MODE", "examMode"
+        )),
+        EXERCISE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "PROGRAMMING_LANGUAGE", "programmingLanguage",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exerciseGroup.exam.title"
+        )),
+        GRADING_SCALE(Map.of(
+            "ID", "id",
+            "COURSE_TITLE", "course.title",
+            "EXAM_TITLE", "exam.title"
+        )),
+        LEARNING_PATH(Map.of(
+            "ID", "id",
+            "USER_LOGIN", "user.login",
+            "USER_NAME", "user.lastName",
+            "PROGRESS", "progress"
+        )),
+        LECTURE(Map.of(
+            "ID", "id",
+            "TITLE", "title",
+            "COURSE_TITLE", "course.title",
+            "SEMESTER", "course.semester"
+        )),
+        STUDENT_PARTICIPATION(Map.of(
+            "ID", "id",
+            "STUDENT_NAME", "student.firstName"
+        )),
+        BUILD_JOB(Map.of(
+            "id", "id",
+            "name", "name",
+            "build_completion_date", "buildCompletionDate"
+        )),
+        FEEDBACK_ANALYSIS(Map.of(
+            "count", "COUNT(f.id)",
+            "detailTexts", "MIN(m.text)",
+            // MIN(...) is equivalent under the query's GROUP BY tc.testName and routes the sort through
+            // JpaSort.unsafe, so Spring Data cannot prefix the join alias with the root alias
+            "testCaseName", "MIN(tc.testName)",
+            "taskName", """
+                    COALESCE((
+                    SELECT MAX(t.taskName)
+                    FROM ProgrammingExerciseTask t
+                    JOIN t.testCases tct
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
+                ), '')"""
+        ));
+        // @formatter:on
+
+        private final Map<String, String> columnNameMap;
+
+        ColumnMapping(Map<String, String> columnNameMap) {
+            this.columnNameMap = columnNameMap;
+        }
+
+        public Map<String, String> getColumnNameMap() {
+            return columnNameMap;
+        }
+
+        public String getMappedColumnName(String columnName) {
+            return columnNameMap.get(columnName);
+        }
+    }
+
+    /**
+     * Creates a default {@link PageRequest} based on the provided {@link PageableSearchDTO} and {@link ColumnMapping}.
+     * This method maps the sorted column name from the provided search DTO using the column mapping,
+     * applies the appropriate sorting order (ascending or descending), and constructs a {@link PageRequest}
+     * with pagination and sorting information.
+     *
+     * <p>
+     * If the mapped column name contains a "COUNT(" expression, this method treats it as an unsafe sort expression
+     * and uses {@link JpaSort} to apply sorting directly to the database column.
+     * </p>
+     *
+     * @param search        The {@link PageableSearchDTO} containing pagination and sorting parameters (e.g., page number, page size, sorted column, and sorting order).
+     * @param columnMapping The {@link ColumnMapping} object used to map the sorted column name from the DTO to the actual database column.
+     * @return A {@link PageRequest} object containing the pagination and sorting options based on the search and column mapping.
+     * @throws BadRequestAlertException if the page is below 1, the page size is below 1, or the sorted column is missing or unknown for the mapping.
+     * @throws NullPointerException     if the search or columnMapping parameters are null.
+     */
+    @NonNull
+    public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
+        if (search.getPage() < 1 || search.getPageSize() < 1) {
+            throw new BadRequestAlertException("The page and the page size of a search must be at least 1", "pageableSearch", "invalidPage");
+        }
+        String sortedColumn = search.getSortedColumn();
+        String mappedColumn = sortedColumn == null ? null : columnMapping.getMappedColumnName(sortedColumn);
+        if (mappedColumn == null) {
+            throw new BadRequestAlertException("The sorted column of a search is missing or not supported", "pageableSearch", "invalidSortedColumn");
+        }
+
+        var sortOptions = mappedColumn.contains("(") ? JpaSort.unsafe(mappedColumn) : Sort.by(mappedColumn);
+
+        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
+        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
+    }
+}

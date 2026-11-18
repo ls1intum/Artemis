@@ -1,0 +1,85 @@
+<div class="quiz-statistic-footer">
+    <div class="mx-auto h-full w-full px-3! sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1140px] 2xl:max-w-[1320px]">
+        <div class="edit-quiz-footer-content flex h-full flex-wrap items-center">
+            <div class="flex min-w-0 flex-1 basis-0 items-center justify-center">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="secondary"
+                    size="small"
+                    [tumAetUiMenuTrigger]="statisticMenu"
+                    [tumAetUiMenuPosition]="menuAbovePositions"
+                    [disabled]="!quizExercise()"
+                >
+                    <fa-icon [icon]="farListAlt" />
+                    <span jhiTranslate="artemisApp.showStatistic.chooseStatistic"></span>
+                    <fa-icon [icon]="faChevronDown" size="xs" aria-hidden="true" />
+                </button>
+                <ng-template #statisticMenu>
+                    @if (statisticBaseUrl(); as baseUrl) {
+                        <tumaet-ui-menu [attr.aria-label]="'artemisApp.showStatistic.chooseStatistic' | artemisTranslate">
+                            <a tumAetUiMenuItem [routerLink]="baseUrl + '/quiz-point-statistic'" jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
+                                >Point Distribution</a
+                            >
+                            <a tumAetUiMenuItem [routerLink]="baseUrl + '/quiz-statistic'" jhiTranslate="artemisApp.showStatistic.quizStatisticTitle">Quiz Statistic</a>
+                            @for (question of quizExercise().quizQuestions; track question; let i = $index) {
+                                @if (questionStatisticSegment(question); as segment) {
+                                    <a tumAetUiMenuItem [routerLink]="baseUrl + '/' + segment + '/' + question.id"> {{ i + 1 }}. {{ question.title || '' | truncate }} </a>
+                                }
+                            }
+                        </tumaet-ui-menu>
+                    }
+                </ng-template>
+            </div>
+            @if (isQuizPointStatistic()) {
+                <div id="remaining-time" class="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center">
+                    @if (waitingForQuizStart()) {
+                        <div>
+                            <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
+                        </div>
+                    }
+                    @if (!waitingForQuizStart()) {
+                        <div>
+                            <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                            <span
+                                id="remaining-time-value"
+                                [ngClass]="{
+                                    'time-critical': remainingTimeSeconds() < 60 || remainingTimeSeconds() < quizExercise().duration! / 4,
+                                    'time-warning': remainingTimeSeconds() < 120 || remainingTimeSeconds() < quizExercise().duration! / 2,
+                                }"
+                            >
+                                {{ remainingTimeText() }}
+                            </span>
+                        </div>
+                    }
+                    @if (waitingForQuizStart() || remainingTimeSeconds() >= 0) {
+                        <jhi-connection-status />
+                    }
+                </div>
+            }
+            <div class="flex min-w-0 flex-1 basis-0 items-center justify-center">
+                @if (quizExercise()) {
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            (click)="previousStatistic()"
+                            jhiTranslate="artemisApp.showStatistic.previousStatistic"
+                            tumAetUiButton
+                            severity="secondary"
+                            size="small"
+                        ></button>
+                        <button
+                            type="button"
+                            (click)="nextStatistic()"
+                            jhiTranslate="artemisApp.showStatistic.nextStatistic"
+                            tumAetUiButton
+                            severity="secondary"
+                            size="small"
+                        ></button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="quiz-statistic-footer-spacer" data-testid="quiz-statistic-footer-spacer" aria-hidden="true"></div>

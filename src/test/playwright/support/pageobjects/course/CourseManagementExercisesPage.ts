@@ -1,0 +1,290 @@
+import { Download, Page } from '@playwright/test';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
+import { expect } from '@playwright/test';
+import { finishDeletionProgress } from '../DeletionProgressDialog';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+
+/**
+ * A class which encapsulates UI selectors and actions for the course management exercises page.
+ */
+export class CourseManagementExercisesPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    getExercise(exerciseID: number) {
+        return this.page.locator(`#exercise-card-${exerciseID}`);
+    }
+
+    /**
+     * Clicks a row action, resolving it whether it is inline or collapsed into the row's ellipsis overflow menu.
+     * @param exerciseID the exercise whose row to act on
+     * @param actionId the action id from `exercise-actions.component.ts` (e.g. `delete`, `edit`, `participations`)
+     */
+    private async clickRowAction(exerciseID: number, actionId: string) {
+        const row = this.getExercise(exerciseID);
+        await row.waitFor({ state: 'attached' });
+        const inlineAction = row.locator(`[data-testid="exercise-action-${actionId}"]`);
+        if (await inlineAction.isVisible()) {
+            await inlineAction.click();
+            return;
+        }
+        // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
+        await row.locator('.action-more').click();
+        await this.page.locator('.tumaet-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
+    }
+
+    /**
+     * Opens the exercise create/import modal via the toolbar button and selects the exercise-type card for the given
+     * type. Mode is `create` or `import`; the type is the {@link ExerciseType} enum value (e.g. `file-upload`, `text`).
+     */
+    private async selectExerciseTypeCard(mode: 'create' | 'import', type: string) {
+        await this.page.getByTestId(`${mode}-exercise-button`).click();
+        const urlBeforeSelection = this.page.url();
+        await this.page.getByTestId(`${mode}-${type}-exercise`).click();
+        if (mode === 'create') {
+            // Selecting a create card closes the dialog and navigates. Closing the dialog is not evidence that the
+            // navigation happened: a route whose lazily loaded chunk fails to fetch used to leave the page exactly
+            // here, with the click delivered, the dialog closed and nothing else. Assert the navigation started, so
+            // that case reports itself instead of surfacing as an unexplained waitForURL timeout in the caller.
+            await expect(this.page, `selecting the ${type} card closed the dialog but the page never left ${urlBeforeSelection}`).not.toHaveURL(urlBeforeSelection, {
+                timeout: 30000,
+            });
+        }
+    }
+
+    async clickDeleteExercise(exerciseID: number) {
+        await this.clickRowAction(exerciseID, 'delete');
+    }
+
+    /**
+     * Opens the "Create Variant with AI" wizard for the given exercise (the `create-variant-ai` row action,
+     * shown to at-least-editors). Resolves the action whether it is inline or collapsed into the overflow menu.
+     */
+    async openCreateVariantWithAi(exerciseID: number) {
+        await this.waitForExerciseCardAttached(exerciseID);
+        await this.clickRowAction(exerciseID, 'create-variant-ai');
+    }
+
+    async clickExampleSubmissionsButton() {
+        await this.page.locator('[data-testid="example-submissions-button"]').click();
+    }
+
+    getExerciseTitle(exerciseTitle: string) {
+        return this.page.locator('dl', { hasText: 'Title' }).getByText(exerciseTitle);
+    }
+
+    /**
+     * Confirms the delete dialog of the exercise row and follows the deletion: the server accepts it with 202 and deletes in the
+     * background, which the progress dialog reports. Returns once the deletion finished and the result was dismissed.
+     */
+    private async deleteExerciseViaRowAction(exercise: Exercise, deleteUrlBase: string) {
+        await this.clickRowAction(exercise.id!, 'delete');
+        await this.page.locator('#confirm-entity-name').fill(exercise.title!);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(deleteUrlBase) && resp.request().method() === 'DELETE');
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
+        expect((await responsePromise).status(), 'the server accepts the deletion and runs it in the background').toBe(202);
+        await finishDeletionProgress(this.page);
+    }
+
+    async deleteTextExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, TEXT_EXERCISE_BASE);
+    }
+
+    async deleteModelingExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, MODELING_EXERCISE_BASE);
+    }
+
+    async deleteQuizExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, QUIZ_EXERCISE_BASE);
+    }
+
+    async deleteProgrammingExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, PROGRAMMING_EXERCISE_BASE);
+        // The list reloads when the deletion finished. If the card is still rendered, reload once to force a fresh render, and assert
+        // again afterwards so a card that is really still there surfaces as a test failure instead of being swallowed.
+        try {
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
+        } catch {
+            await this.page.reload();
+            await this.page.waitForLoadState('domcontentloaded');
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
+        }
+    }
+
+    async deleteFileUploadExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, UPLOAD_EXERCISE_BASE);
+    }
+
+    async createProgrammingExercise() {
+        await this.selectExerciseTypeCard('create', 'programming');
+    }
+
+    async createModelingExercise() {
+        await this.selectExerciseTypeCard('create', 'modeling');
+    }
+
+    async createTextExercise() {
+        await this.selectExerciseTypeCard('create', 'text');
+    }
+
+    async createQuizExercise() {
+        await this.selectExerciseTypeCard('create', 'quiz');
+    }
+
+    async createFileUploadExercise() {
+        await this.selectExerciseTypeCard('create', 'file-upload');
+    }
+
+    async importProgrammingExercise() {
+        await this.selectExerciseTypeCard('import', 'programming');
+    }
+
+    async importModelingExercise() {
+        await this.selectExerciseTypeCard('import', 'modeling');
+    }
+
+    async importTextExercise() {
+        await this.selectExerciseTypeCard('import', 'text');
+    }
+
+    async importQuizExercise() {
+        await this.selectExerciseTypeCard('import', 'quiz');
+    }
+
+    /**
+     * Downloads an exercise of the course through the Export tab of the Manage Exercises dialog.
+     * @param type the exercise type as it appears in the card test ids, for example 'text'
+     * @param exerciseId the id of the exercise to export
+     * @returns the downloaded zip file
+     */
+    async exportExercise(type: string, exerciseId: number): Promise<Download> {
+        await this.page.getByTestId('export-exercise-button').click();
+        await this.page.getByTestId(`export-${type}-exercise`).click();
+        const downloadPromise = this.page.waitForEvent('download');
+        await this.page.getByTestId(`export-exercise-${exerciseId}`).click();
+        return downloadPromise;
+    }
+
+    /**
+     * Imports an exported exercise through Import, From file, which opens the editor of a new exercise.
+     * @param type the exercise type as it appears in the card test ids, for example 'text'
+     * @param filePath the path of the exported zip file
+     */
+    async importExerciseFromFile(type: string, filePath: string) {
+        await this.selectExerciseTypeCard('import', type);
+        await this.page.getByTestId('import-from-file-tab').click();
+        await this.page.getByTestId('import-from-file-input').setInputFiles(filePath);
+        await this.page.getByTestId('upload-exercise-btn').click();
+    }
+
+    async clickImportExercise(exerciseID: number) {
+        // Search by ID to handle pagination when many exercises exist
+        const searchInput = this.page.locator('input[name="searchExcercise"]');
+        await searchInput.fill(String(exerciseID));
+        await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
+    }
+
+    /** Starts the quiz through its row action, inline or in the row's overflow menu. */
+    async startQuiz(quizID: number) {
+        await this.clickRowAction(quizID, 'start-quiz');
+    }
+
+    /** Ends the quiz through its row action, inline or in the row's overflow menu, and confirms the end-now dialog. */
+    async endQuiz(quizExercise: QuizExercise) {
+        await this.clickRowAction(quizExercise.id!, 'end-quiz');
+        await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
+        // Wait for the end-now request to actually complete before returning. Otherwise a follow-up step (e.g. a student
+        // loading the exercise to practice) can race the in-flight end-now and observe the quiz as still "Waiting for
+        // Start", with no Practice option — the root cause of the practice-mode flake.
+        const endResponse = this.page.waitForResponse(
+            (resp) => resp.url().includes(`/quiz-exercises/${quizExercise.id}/end-now`) && resp.request().method() === 'PUT' && resp.ok(),
+            { timeout: 20000 },
+        );
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
+        await endResponse;
+    }
+
+    async shouldContainExerciseWithName(exerciseID: number) {
+        const exerciseElement = this.getExercise(exerciseID);
+        await exerciseElement.scrollIntoViewIfNeeded();
+        await expect(exerciseElement).toBeVisible();
+    }
+
+    async openExerciseParticipations(exerciseId: number) {
+        await this.waitForExerciseCardAttached(exerciseId);
+        await this.clickRowAction(exerciseId, 'participations');
+    }
+
+    /**
+     * Opens the edit form of the given exercise from the exercises list.
+     * <p>
+     * Robust against the multi-node "freshly-created exercise not yet visible on the routed node" race: waits for the
+     * exercise's Edit link in short bursts, reloading the list (which re-issues the exercise-list GET) between attempts.
+     * Without this, clicking the Edit link of a card that only a reload would surface auto-waits until the whole test
+     * times out. The per-attempt timeouts are kept short so the total stays within the fast-test budget.
+     *
+     * @param exerciseId - The ID of the exercise to edit.
+     */
+    async openExerciseEditForm(exerciseId: number): Promise<void> {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                await this.getExercise(exerciseId).waitFor({ state: 'visible', timeout: 10_000 });
+                await this.clickRowAction(exerciseId, 'edit');
+                return;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+                // The freshly-created exercise card has not surfaced on the routed node yet — re-issue the list GET.
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+        }
+    }
+
+    async openQuizExerciseDetailsPage(exerciseId: number) {
+        await Promise.all([
+            this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`),
+            this.getExercise(exerciseId).getByTestId('exercise-row-title').getByRole('link').click(),
+        ]);
+    }
+
+    getModelingExerciseTitle(exerciseID: number) {
+        return this.getExercise(exerciseID).getByTestId('exercise-row-title');
+    }
+
+    getModelingExerciseMaxPoints(exerciseID: number) {
+        return this.getExercise(exerciseID).getByTestId('exercise-row-points');
+    }
+
+    async openExerciseTeams(exerciseId: number) {
+        await this.waitForExerciseCardAttached(exerciseId);
+        await this.clickRowAction(exerciseId, 'teams');
+    }
+
+    /**
+     * Wait for the given exercise card to be attached, reloading once if necessary.
+     * Under heavy parallel multi-node load, the exercise-list GET that the page issues
+     * on first render occasionally returns an empty list right after a sibling create —
+     * the freshly-created exercise has not yet become visible through the routed node
+     * (eventual visibility across the load-balancer + caches). A single reload re-issues
+     * the GET and reliably surfaces the card on the second attempt.
+     */
+    private async waitForExerciseCardAttached(exerciseId: number): Promise<void> {
+        const card = this.getExercise(exerciseId);
+        const attachedWithin = async (timeout: number): Promise<boolean> =>
+            card
+                .waitFor({ state: 'attached', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (await attachedWithin(15_000)) {
+            return;
+        }
+        await this.page.reload();
+        await this.page.waitForLoadState('load');
+        await card.waitFor({ state: 'attached', timeout: 60_000 });
+    }
+}

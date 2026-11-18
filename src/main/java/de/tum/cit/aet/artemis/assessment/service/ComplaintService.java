@@ -1,0 +1,454 @@
+package de.tum.cit.aet.artemis.assessment.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+
+/**
+ * Service for managing complaints.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ComplaintService {
+
+    private static final String ENTITY_NAME = "complaint";
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final UserRepository userRepository;
+
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final TeamRepository teamRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
+            Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, TeamRepository teamRepository, ExerciseRepository exerciseRepository) {
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.resultRepository = resultRepository;
+        this.examRepositoryApi = examRepositoryApi;
+        this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
+        this.exerciseRepository = exerciseRepository;
+    }
+
+    /**
+     * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
+     * whether the user still enough complaints left. For exam exercises, the review period is checked on the exam of the exercise the result belongs to.
+     *
+     * @param complaintRequest the complaint to create
+     * @param principal        the current Principal
+     * @return the saved complaint
+     */
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Principal principal) {
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
+                .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getSubmission().getParticipation();
+        Participant participant = studentParticipation.getParticipant(); // Team or Student
+
+        // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
+        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
+
+        Long courseId = course.getId();
+
+        // Check whether the complaint text limit is exceeded
+        int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
+        if (maxLength < complaintRequest.complaintText().length()) {
+            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
+                    "exceededComplaintTextLimit");
+        }
+
+        if (originalResult.isAthenaBased()) {
+            throw new BadRequestAlertException(
+                    "Cannot submit " + (complaintRequest.complaintType() == ComplaintType.COMPLAINT ? "a complaint" : "a more feedback request") + " for preliminary AI feedback.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackAthena");
+        }
+
+        // checking if it is allowed to create a complaint
+        if (studentParticipation.getExercise().isExamExercise()) {
+            final Exam exam = studentParticipation.getExercise().getExam();
+            final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
+            boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
+            if (!examTestRun && !isTimeOfComplaintValid(exam)) {
+                throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
+            }
+        }
+        else {
+            switch (complaintRequest.complaintType()) {
+                case COMPLAINT -> {
+                    long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+                    long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
+                    if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
+                        throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
+                                ENTITY_NAME, "tooManyComplaints");
+                    }
+                }
+                case MORE_FEEDBACK -> {
+                    if (!course.getRequestMoreFeedbackEnabled()) {
+                        throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.",
+                                ENTITY_NAME, "moreFeedbackRequestsDisabled");
+                    }
+                }
+            }
+            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaintRequest.complaintType());
+        }
+
+        if (studentParticipation.getParticipant() instanceof Team team) {
+            studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+        }
+
+        if (!studentParticipation.isOwnedBy(principal.getName())) {
+            throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
+        }
+
+        originalResult.setHasComplaint(true);
+        // When a student complains, a tutor has to manually correct the submission, so it is no longer automatic
+        if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            // An automatic result holds no correction round, but a manual one has to: the tutor opens the complaint through the result of round 0,
+            // and a manual result without a round is found by nobody, so the submission would be handed out without any result at all.
+            originalResult.setCorrectionRound(0);
+        }
+        Complaint complaint = new Complaint();
+        complaint.setComplaintText(complaintRequest.complaintText());
+        complaint.setComplaintType(complaintRequest.complaintType());
+        complaint.setSubmittedTime(ZonedDateTime.now());
+        complaint.setParticipant(participant);
+        complaint.setResult(originalResult);
+        resultRepository.save(originalResult);
+
+        return complaintRepository.save(complaint);
+    }
+
+    /**
+     * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
+     * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
+     *
+     * @param participant the participant (student or team)
+     * @param courseId    the id of the course
+     * @return the number of unaccepted complaints
+     */
+    public long countUnacceptedComplaintsByParticipantAndCourseId(Participant participant, long courseId) {
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return 0L;
+        }
+        if (participant instanceof User) {
+            return complaintRepository.countUnacceptedComplaintsByStudentIdAndExerciseIds(participant.getId(), exerciseIds);
+        }
+        else if (participant instanceof Team team) {
+            return complaintRepository.countUnacceptedComplaintsByTeamShortNameAndExerciseIds(team.getShortName(), exerciseIds);
+        }
+        else {
+            throw new Error("Unknown participant type");
+        }
+    }
+
+    /**
+     * Counts the number of complaints for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of complaints
+     */
+    public long countComplaintsByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
+        return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+    }
+
+    /**
+     * Counts the number of more feedback requests for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of more feedback requests
+     */
+    public long countMoreFeedbackRequestsByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
+        return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+    }
+
+    /**
+     * Counts the number of responses to complaints for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of responses
+     */
+    public long countComplaintResponsesByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
+        return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+    }
+
+    /**
+     * Counts the number of responses to feedback requests for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of responses
+     */
+    public long countMoreFeedbackRequestResponsesByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
+        return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+    }
+
+    /**
+     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
+     *
+     * @param examMode  should be set to ignore the test run submissions
+     * @param exercises the exercises for which the numbers of unevaluated complaints should be calculated
+     */
+    public void calculateNrOfOpenComplaints(Set<Exercise> exercises, boolean examMode) {
+        if (exercises.isEmpty()) {
+            return;
+        }
+        List<ExerciseMapEntryDTO> numberOfComplaintsOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfComplaintResponsesOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfMoreFeedbackRequestsOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfMoreFeedbackResponsesOfExercise = List.of();
+
+        Set<Long> exerciseIds = exercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        // only invoke the query for non empty exercise sets to avoid performance issues
+        if (!exerciseIds.isEmpty()) {
+
+            if (examMode) {
+                numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(exerciseIds, ComplaintType.COMPLAINT);
+                numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(exerciseIds,
+                        ComplaintType.COMPLAINT);
+                numberOfMoreFeedbackRequestsOfExercise = new ArrayList<>();
+                numberOfMoreFeedbackResponsesOfExercise = new ArrayList<>();
+            }
+            else {
+                numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+                numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+
+                numberOfMoreFeedbackRequestsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+                numberOfMoreFeedbackResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds,
+                        ComplaintType.MORE_FEEDBACK);
+            }
+        }
+        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream()
+                .collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream()
+                .collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        exercises.forEach(exercise -> {
+            exercise.setNumberOfOpenComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L) - numberOfComplaintResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L));
+
+            exercise.setNumberOfOpenMoreFeedbackRequests(
+                    numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L) - numberOfMoreFeedbackResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L));
+        });
+    }
+
+    /**
+     * Get all complaints for a course.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId instead of joining through submission -> participation -> exercise.
+     *
+     * @param courseId the id of the course
+     * @return list of complaints for the course
+     */
+    public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByExerciseIdIn(exerciseIds);
+    }
+
+    /**
+     * Get all complaints for an exam.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId instead of joining through submission -> participation -> exercise -> exerciseGroup -> exam.
+     *
+     * @param examId the id of the exam
+     * @return list of complaints for the exam
+     */
+    public List<Complaint> getAllComplaintsByExamId(Long examId) {
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        Set<Long> exerciseIds = api.findExerciseIdsByExamId(examId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByExerciseIdIn(exerciseIds);
+    }
+
+    /**
+     * Get all complaints for a course made by a specific tutor (assessor).
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
+     *
+     * @param courseId the id of the course
+     * @param tutorId  the id of the tutor
+     * @return list of complaints for the course and tutor
+     */
+    public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
+        Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
+        if (exerciseIds.isEmpty()) {
+            return List.of();
+        }
+        return complaintRepository.findAllByResult_Assessor_IdAndExerciseIdIn(tutorId, exerciseIds);
+    }
+
+    /**
+     * Get all complaints for an exercise.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
+     *
+     * @param exerciseId the id of the exercise
+     * @return list of complaints for the exercise
+     */
+    public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
+        return complaintRepository.findAllByExerciseIdIn(Set.of(exerciseId));
+    }
+
+    /**
+     * Returns the maximum allowed number of complaints per participant in a course (differentiates between individual and team complaints)
+     *
+     * @param course      Course for which to evaluate
+     * @param participant Participant for which to evaluate
+     * @return max complaints
+     */
+    public Integer getMaxComplaintsPerParticipant(Course course, Participant participant) {
+        return participant instanceof Team ? course.getMaxTeamComplaints() : course.getMaxComplaints();
+    }
+
+    /**
+     * Get all complaints for an exercise made by a specific tutor (assessor).
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
+     *
+     * @param exerciseId the id of the exercise
+     * @param tutorId    the id of the tutor
+     * @return list of complaints for the exercise and tutor
+     */
+    public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
+        return complaintRepository.findAllByResult_Assessor_IdAndExerciseId(tutorId, exerciseId);
+    }
+
+    /**
+     * This function checks whether the student is allowed to submit a complaint / more feedback request or not.
+     * This is allowed within the corresponding number of days set in the course after the student received the result.
+     * This starts from the latest of these three points in time: Completion date of result, due date, assessment due date of exercise
+     *
+     * @param result               the result for which a complaint should be filed
+     * @param exercise             the exercise where the student wants to complain
+     * @param studentParticipation StudentParticipation the participation which might contain an individual due date
+     * @param course               the course specifying the number of available days for the complaint
+     * @param type                 specifies if this is an actual complaint or a more feedback request
+     */
+    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
+            ComplaintType type) {
+        int maxDays = switch (type) {
+            case COMPLAINT -> course.getMaxComplaintTimeDays();
+            case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
+        };
+
+        if (result.getCompletionDate() == null) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
+        }
+        if (!result.isRated() && !exercise.getAllowComplaintsForAutomaticAssessments()) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
+                    + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
+        }
+
+        final ZonedDateTime complaintStartDate = getComplaintStartDate(exercise, studentParticipation, result);
+        boolean isTimeValid = ZonedDateTime.now().isBefore(complaintStartDate.plusDays(maxDays));
+
+        if (!isTimeValid) {
+            String timeForComplaint = switch (maxDays) {
+                case 1 -> "one day";
+                case 7 -> "one week";
+                default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
+            };
+            String message = "You cannot " + (type == ComplaintType.COMPLAINT ? "submit a complaint" : "request more feedback") + " for a result that is older than "
+                    + timeForComplaint + ".";
+            throw new BadRequestAlertException(message, ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
+        }
+    }
+
+    /**
+     * Obtains the time when the complaint period starts.
+     * <p>
+     * Assumes the {@link Result#getCompletionDate()} to be present.
+     *
+     * @param exercise             The exercise for which complaints can be submitted.
+     * @param studentParticipation The participation for which a complaint should be submitted.
+     * @param result               The result which the complaint is about.
+     * @return The time from which submitting a complaint is possible.
+     */
+    private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
+        final List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
+        possibleComplaintStartDates.add(result.getCompletionDate());
+
+        final Optional<ZonedDateTime> relevantDueDate = Optional.ofNullable(studentParticipation).flatMap(ExerciseDateService::getDueDate);
+        relevantDueDate.ifPresent(possibleComplaintStartDates::add);
+
+        if (exercise.getAssessmentDueDate() != null) {
+            possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
+        }
+
+        return possibleComplaintStartDates.stream().max(Comparator.naturalOrder())
+                .orElseThrow(() -> new NoSuchElementException("Expected at least the result completion date to be present."));
+    }
+
+    /**
+     * This function checks whether the student is allowed to submit a complaint or not for Exams. Submitting a complaint is allowed within the student exam review period.
+     * This period is defined by {@link Exam#getExamStudentReviewStart()} and {@link Exam#getExamStudentReviewEnd()}
+     */
+    private static boolean isTimeOfComplaintValid(Exam exam) {
+        if (exam.getExamStudentReviewStart() != null && exam.getExamStudentReviewEnd() != null) {
+            return exam.getExamStudentReviewStart().isBefore(ZonedDateTime.now()) && exam.getExamStudentReviewEnd().isAfter(ZonedDateTime.now());
+        }
+        return false;
+    }
+}

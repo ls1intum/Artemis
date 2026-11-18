@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "DiagramType": {
+            "null": "",
+            "undefined": "",
+            "ClassDiagram": "Klassendiagramm",
+            "ObjectDiagram": "Objektdiagramm",
+            "ActivityDiagram": "Aktivitätsdiagramm",
+            "UseCaseDiagram": "Anwendungsfalldiagramm",
+            "CommunicationDiagram": "Kommunikationsdiagramm",
+            "ComponentDiagram": "Komponentendiagramm",
+            "DeploymentDiagram": "Verteilungsdiagramm",
+            "PetriNet": "Petri-Netz",
+            "SyntaxTree": "Syntaxbaum",
+            "Flowchart": "Flussdiagramm",
+            "BPMN": "BPMN",
+            "Sfc": "Ablaufsprache"
+        }
+    }
+}

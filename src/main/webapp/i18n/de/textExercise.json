@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "textExercise": {
+            "home": {
+                "title": "Textaufgabe",
+                "createLabel": "Textaufgabe erstellen",
+                "editLabel": "Textaufgabe bearbeiten",
+                "importLabel": "Textaufgabe importieren"
+            },
+            "submitButton": {
+                "create": "Erstellen",
+                "import": "Importieren",
+                "save": "Speichern"
+            },
+            "wordCount": "Anzahl der Wörter: {{ count }}",
+            "characterCount": "Anzahl der Zeichen: {{ count }}",
+            "created": "Textaufgabe mit ID {{ param }} erstellt",
+            "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
+            "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
+            "detail": {
+                "title": "Textaufgabe"
+            },
+            "sampleSolution": "Beispiellösung",
+            "exampleSubmissions": "Beispielabgabe",
+            "assessedSubmission": "Deine bewertete Abgabe",
+            "assessedSubmissionInstructor": "Die bewertete Abgabe",
+            "submission": "Abgabe",
+            "assessmentPending": "Bewertung ausstehend",
+            "createExampleSubmissions": "Beispielabgabe erstellen",
+            "checkPlagiarism": "Plagiatsprüfung",
+            "saveSuccessful": "Deine Antwort wurde erfolgreich gespeichert!",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "tutorEffortStatistics": {
+                "title": "Tutor Aufwand Statistik",
+                "titleDescription": "Verteilung des Tutor-Aufwands: Zeigt wie viele Tutor:innen wie viele Minuten damit verbracht haben, Abgaben dieser Aufgabe zu korrigieren. Das Intervall, das den Median dieser Verteilung beinhaltet, ist in dunkelblau gekennzeichnet, falls mindestens ein/e Tutor:in in dieses Intervall fällt.",
+                "numberOfSubmissionsAssessed": "Anzahl der bewerteten Einreichungen",
+                "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
+                "averageTime": "Bewertungsgeschwindigkeit (Einreichungen/Minuten)",
+                "effortMedian": "Median des Aufwands (Minuten)",
+                "noData": "Für diese Übung sind derzeit keine Datensätze vorhanden. Bitte versuche es später noch einmal.",
+                "minutes": "Minuten",
+                "tutors": "Tutor:innen",
+                "multipleTutors": "Tutor:innen korrigierten",
+                "singleTutor": "Tutor:in korrigierte",
+                "forMinutes": "{{ interval }} Minuten",
+                "medianOfSubmissions": "Median der # bewerteten Abgaben: {{ median }}",
+                "numberOfTutorsInvolved": "Anzahl der beteiligten Tutor:innen"
+            }
+        }
+    }
+}

@@ -1,0 +1,394 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { take } from 'rxjs/operators';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextAssessmentEvent } from 'app/text/shared/entities/text-assesment-event.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
+import { firstValueFrom, of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+/**
+ * Test suite for TextAssessment Service.
+ * Tests assessment CRUD operations, complaint handling, example assessments,
+ * feedback data retrieval, and student participation resolvers.
+ */
+describe('TextAssessment Service', () => {
+    let service: TextAssessmentService;
+    let httpMock: HttpTestingController;
+    const textSubmission = new TextSubmission();
+    let actualResponse: any;
+
+    const mockResponse: any = {
+        id: 1,
+        submissions: [
+            {
+                id: 1,
+                type: 'MANUAL',
+                results: [
+                    {
+                        id: 6,
+                        feedbacks: [
+                            {
+                                id: 6,
+                                reference: '8c8d2463ec548efca05e66423bee537b6357e880',
+                                type: 'MANUAL',
+                            },
+                        ],
+                        assessmentType: 'MANUAL',
+                    },
+                ],
+                blocks: [
+                    {
+                        id: '8c8d2463ec548efca05e66423bee537b6357e880',
+                        text: 'Test',
+                    },
+                ],
+            },
+        ],
+    };
+
+    const result = mockResponse.submissions[0].results[0] as Result;
+
+    const exercise = {
+        id: 20,
+        type: ExerciseType.TEXT,
+        assessmentType: AssessmentType.MANUAL,
+        course: { id: 123, isAtLeastInstructor: true } as Course,
+    } as TextExercise;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+        service = TestBed.inject(TextAssessmentService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('should fetch the complete example bundle only for explicit instructor management', () => {
+        service.getExampleResult(7, 8, 'instructor').subscribe((result) => {
+            expect(result.id).toBe(3);
+            expect(result.submission?.id).toBe(8);
+        });
+        const request = httpMock.expectOne((r) => r.method === 'GET');
+        request.flush({ id: 3, feedbacks: [{ id: 4, credits: 2 }], submission: { id: 8, text: 'Example', blocks: [] } });
+        expect(request.request.url).toBe('api/text/exercises/7/submissions/8/example-result/for-instructor');
+    });
+
+    it('should save an assessment', async () => {
+        const participationId = 1;
+
+        service
+            .save(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp.body));
+        const req = httpMock.expectOne({
+            url: `api/text/participations/${1}/results/${6}/text-assessment`,
+            method: 'PUT',
+        });
+        req.flush(result);
+
+        expect(actualResponse).toEqual(result);
+    });
+
+    it('should save example assessment', async () => {
+        service
+            .saveExampleAssessment(exercise.id!, mockResponse.id, result.feedbacks!, mockResponse.submissions[0].blocks)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp.body));
+
+        const req = httpMock.expectOne({
+            url: `api/text/exercises/${exercise.id}/example-submissions/${mockResponse.id}/example-text-assessment`,
+            method: 'PUT',
+        });
+        req.flush(result);
+
+        expect(actualResponse).toEqual(result);
+    });
+
+    it('should submit an assessment', async () => {
+        const participationId = 1;
+
+        service
+            .submit(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp.body));
+        const req = httpMock.expectOne({
+            url: `api/text/participations/${1}/results/${6}/submit-text-assessment`,
+            method: 'POST',
+        });
+        req.flush(result);
+
+        expect(actualResponse).toEqual(result);
+    });
+
+    it('should update assessment after complaint', () => {
+        const feedbacks = result.feedbacks!;
+        const textBlocks = mockResponse.submissions[0].blocks;
+        const complaintResponse = new ComplaintResponse();
+        const participationId = 1;
+
+        service
+            .updateAssessmentAfterComplaint(feedbacks, textBlocks, complaintResponse, mockResponse.submissions[0].id, participationId)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp.body));
+
+        const req = httpMock.expectOne({
+            url: `api/text/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
+            method: 'PUT',
+        });
+        req.flush(result);
+
+        expect(actualResponse).toEqual(result);
+    });
+
+    it('should cancel assessment', () => {
+        const participationId = 1;
+        const submissionId = 1;
+
+        service
+            .cancelAssessment(participationId, submissionId)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp));
+        const req = httpMock.expectOne({
+            url: `api/text/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
+            method: 'POST',
+        });
+        req.flush(result);
+
+        expect(actualResponse).toEqual(result);
+    });
+
+    it('should delete assessment', () => {
+        const participationId = 1;
+        const submissionId = 18;
+
+        service
+            .deleteAssessment(participationId, submissionId, result.id!)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp));
+        const req = httpMock.expectOne({
+            url: `api/text/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
+            method: 'DELETE',
+        });
+        req.flush(result);
+
+        httpMock.verify();
+    });
+
+    it('should delete example assessment', () => {
+        const exerciseId = 10;
+        const submissionId = 9;
+
+        service
+            .deleteExampleAssessment(exerciseId, submissionId)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp));
+        const req = httpMock.expectOne({
+            url: `api/text/exercises/${exerciseId}/example-submissions/${submissionId}/example-text-assessment/feedback`,
+            method: 'DELETE',
+        });
+        req.flush(result);
+
+        httpMock.verify();
+    });
+
+    it('should send assessment event to analytics', () => {
+        const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
+        service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
+            expect(response.status).toBe(200);
+        });
+        const mockRequest = httpMock.expectOne({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
+        mockRequest.flush(mockResponse);
+    });
+
+    it('should get feedback data for submission', () => {
+        const submissionId = 42;
+        service
+            .getFeedbackDataForExerciseSubmission(submissionId)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
+
+        const req = httpMock.expectOne({
+            url: `api/text/text-submissions/${submissionId}/for-assessment?correction-round=0`,
+            method: 'GET',
+        });
+        req.flush(mockResponse);
+    });
+
+    it('should get feedback data with resultId set', () => {
+        const submissionId = 42;
+        const resultId = result.id;
+
+        service
+            .getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
+
+        const req = httpMock.expectOne({
+            url: `api/text/text-submissions/${submissionId}/for-assessment?resultId=6`,
+            method: 'GET',
+        });
+        req.flush(mockResponse);
+    });
+
+    it('should get example result for defined exercise and submission', () => {
+        service
+            .getExampleResult(exercise.id!, mockResponse.submissions[0].id)
+            .pipe(take(1))
+            .subscribe((resp) => (actualResponse = resp));
+        const req = httpMock.expectOne({
+            url: `api/text/exercises/${exercise.id}/submissions/${mockResponse.submissions[0].id}/example-result`,
+            method: 'GET',
+        });
+        req.flush(mockResponse);
+        expect(actualResponse).toEqual(mockResponse);
+    });
+
+    it('should get number of tutors involved in assessment', () => {
+        const responseNumberOfTutors = 5;
+        service
+            .getNumberOfTutorsInvolvedInAssessment(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
+
+        const req = httpMock.expectOne({
+            url: `api/text/event-insights/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            method: 'GET',
+        });
+        req.flush(responseNumberOfTutors);
+    });
+
+    it('should match blocks with feedbacks', () => {
+        const blocks = mockResponse.submissions[0].blocks;
+        const feedbacks = result.feedbacks!;
+
+        const expected = [new TextBlockRef(blocks[0], feedbacks[0])];
+        const actual = TextAssessmentService.matchBlocksWithFeedbacks(blocks, feedbacks);
+        expect(actual).toStrictEqual(expected);
+    });
+
+    it('should resolve new StudentParticipations for TextSubmissionAssessmentComponent', () => {
+        const resolver = TestBed.inject(NewStudentParticipationResolver);
+        const textSubmissionService = TestBed.inject(TextSubmissionService);
+        const newStudentParticipationStub = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
+
+        const snapshot = {
+            paramMap: convertToParamMap({ exerciseId: 1 }),
+            // A round the fallback would not produce, so that the assertion below really pins the parameter being read.
+            // The key has to be the one the url uses, and the value a string: `correctionRound: 0` reads the same but is
+            // neither, so it silently exercised the absent-parameter path instead.
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        resolver.resolve(snapshot);
+
+        expect(newStudentParticipationStub).toHaveBeenCalledOnce();
+        expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 1);
+    });
+
+    it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
+        const resolver = TestBed.inject(StudentParticipationResolver);
+        const studentParticipationSpy = vi.spyOn(service, 'getFeedbackDataForExerciseSubmission');
+
+        const snapshot = {
+            paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        resolver.resolve(snapshot);
+
+        expect(studentParticipationSpy).toHaveBeenCalledOnce();
+        // A named result identifies its own round, so this branch deliberately passes no round even though the url has one.
+        expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
+    });
+
+    it.each([
+        [
+            'NewStudentParticipationResolver',
+            () => TestBed.inject(NewStudentParticipationResolver),
+            () => vi.spyOn(TestBed.inject(TextSubmissionService), 'getSubmissionWithoutAssessment'),
+        ],
+        ['StudentParticipationResolver', () => TestBed.inject(StudentParticipationResolver), () => vi.spyOn(service, 'getFeedbackDataForExerciseSubmission')],
+    ])('should hand the "assessment is not possible yet" reason to the assessment page instead of swallowing it (%s)', async (_name, injectResolver, spyOnLoad) => {
+        // Without the reason the page cannot tell an empty exercise apart from a still-running exam and would claim
+        // that the submission was not found, contradicting the explanation the server sent.
+        const error = new HttpErrorResponse({
+            status: 403,
+            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+        });
+        spyOnLoad().mockReturnValue(throwError(() => error));
+        const snapshot = {
+            paramMap: convertToParamMap({ exerciseId: 1, submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(injectResolver().resolve(snapshot));
+
+        expect(routeData.participation).toBeUndefined();
+        expect(routeData.assessmentNotPossibleYet).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+    });
+
+    it('should not report any reason for an ordinary load failure', async () => {
+        vi.spyOn(service, 'getFeedbackDataForExerciseSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const snapshot = {
+            paramMap: convertToParamMap({ submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(TestBed.inject(StudentParticipationResolver).resolve(snapshot));
+
+        // The round is reported even for a failed load, so the page can say which round it could not open.
+        expect(routeData).toEqual({ assessmentNotPossibleYet: undefined, correctionRound: 0 });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+    it('converts nested dates and applies exercise access rights after resolving a complaint', () => {
+        const access = vi.spyOn(TestBed.inject(AccountService), 'setAccessRightsForExercise');
+        service.updateAssessmentAfterComplaint([], [], new ComplaintResponse(), 8, 9).subscribe((response) => {
+            expect(response.body?.completionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            const participation = response.body?.submission?.participation;
+            expect(response.body?.submission?.submissionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(participation?.initializationDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(participation?.individualDueDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(access).toHaveBeenCalledWith(participation?.exercise);
+        });
+        httpMock.expectOne({ method: 'PUT', url: 'api/text/participations/9/submissions/8/text-assessment-after-complaint' }).flush({
+            id: 7,
+            completionDate: '2026-10-25T08:00:00Z',
+            submission: {
+                id: 8,
+                submissionDate: '2026-10-25T08:00:00Z',
+                participation: {
+                    id: 9,
+                    initializationDate: '2026-10-25T08:00:00Z',
+                    individualDueDate: '2026-10-25T08:00:00Z',
+                    exercise: { id: 20, type: ExerciseType.TEXT },
+                },
+            },
+        });
+    });
+});

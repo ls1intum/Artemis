@@ -1,0 +1,67 @@
+---
+id: learning-analytics
+title: Learning Analytics
+sidebar_label: Learning Analytics
+last_reviewed: 2026-11-03
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import courseStatistics from './assets/learning-analytics/course-statistics.png';
+import exerciseStatistics from './assets/learning-analytics/exercise-statistics.png';
+
+Artemis measures how a course is going: how many students are active, how much they submit, and how they score
+against the average. Students see their own position in the cohort; instructors see the cohort.
+
+<Callout variant={CalloutVariant.info}>
+
+  Artemis calculates these figures on request and shows instructors aggregates only, so no individual student can be
+  followed through the learning analytics.
+
+</Callout>
+
+## Figures on the Course Page
+
+The course page in the course management carries the headline figures, below the quick actions: **Total Assessments**
+as a fraction of the submissions waiting, **Total Complaints** and **More Feedback Requests** with how many have been
+answered, **Average Student Score** in both points and percent, and **Total LLM Cost** where AI features are in use.
+Beside them, **Active students** plots participation week by week over the last four weeks, the last eight, or the
+whole course.
+
+Each of those figures is a link, so a number that looks wrong leads straight to the page that explains it.
+
+## Course Statistics
+
+**Statistics** in the course management opens the full set: the average score of each exercise, submissions, active
+students, and more, one chart under another.
+
+<Image src={courseStatistics} alt="Course statistics with the Average Score chart: one bar per exercise, colored by performing third, and the course average" size={ImageSize.large} caption="Course statistics" />
+
+The **Average Score** chart ranks the exercises by their average and colors them in three groups: the lowest third
+of *exercises* red, the middle third grey, the best third green. It is a comparison between exercises, not a
+statement about how the students divide up, so an exercise that is out of line with the rest of the course is visible
+without reading the numbers. **Filter** limits the chart to particular exercise types.
+
+Every other chart on the page is drawn over a period you choose with **Day**, **Week**, **Month**, **Quarter** and
+**Year**; **Week** is what the page opens on, and the arrows either side step through the periods.
+**Active students** counts the students who submitted at least once in the week concerned, so a fall in that line is a
+fall in participation rather than in marks.
+
+## Exercise Statistics
+
+Each exercise has the same treatment on its own scale: **Average Score**, **Participation Rate**, **Resolved Posts**,
+and the distribution of scores across the cohort. Click one of the average-score bars on the course statistics, or
+**Statistics** on the exercise itself.
+
+<Image src={exerciseStatistics} alt="Exercise statistics with the average score, the participation rate and the score distribution" size={ImageSize.large} caption="Statistics for a single exercise" />
+
+The score distribution is worth reading before you set the next exercise. It shows where the cohort clustered, how
+wide the spread is, and whether anyone is stranded at either end — but only that. What a cluster or a gap means is not
+in the chart: read some of the submissions behind it before concluding anything about what was understood.
+
+## Related
+
+Competencies turn these measurements into something a student can act on. See
+[Adaptive Learning](/instructor/analytics/adaptive-learning) for how competencies are defined and linked to material.

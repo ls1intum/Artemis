@@ -1,0 +1,138 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import { Subscription } from 'rxjs';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextExerciseService } from '../text-exercise/service/text-exercise.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import dayjs from 'dayjs/esm';
+import { Course } from 'app/course/shared/entities/course.model';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewSection } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import {
+    getExerciseGeneralDetailsSection,
+    getExerciseGradingDefaultDetails,
+    getExerciseGradingInstructionsCriteriaDetails,
+    getExerciseMarkdownSolution,
+    getExerciseModeDetailSection,
+    getExerciseProblemDetailSection,
+} from 'app/exercise/util/utils';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+
+@Component({
+    selector: 'jhi-text-exercise-detail',
+    templateUrl: './text-exercise-detail.component.html',
+    imports: [
+        ExerciseDetailHeaderComponent,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
+})
+export class TextExerciseDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private eventManager = inject(EventManager);
+    private artemisMarkdownService = inject(ArtemisMarkdownService);
+    private textExerciseService = inject(TextExerciseService);
+    private statisticsService = inject(StatisticsService);
+
+    readonly documentationType: DocumentationType = 'Text';
+
+    readonly AssessmentType = AssessmentType;
+    readonly ExerciseType = ExerciseType;
+    readonly dayjs = dayjs;
+
+    readonly textExercise = signal<TextExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isExamExercise = signal<boolean>(false);
+    formattedProblemStatement: SafeHtml | null = null;
+    formattedExampleSolution: SafeHtml | null = null;
+    formattedGradingInstructions: SafeHtml | null = null;
+
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
+
+    private subscription?: Subscription;
+    private eventSubscriber!: Subscription; // set in ngOnInit() via registerChangeInTextExercises(); destroy() requires a non-optional Subscription
+
+    /**
+     * Loads the text exercise and subscribes to changes of it on component initialization.
+     */
+    ngOnInit() {
+        this.subscription = this.route.params.subscribe((params) => {
+            this.load(params['exerciseId']);
+        });
+        this.registerChangeInTextExercises();
+    }
+
+    /**
+     * Requests the text exercise referenced by the given exerciseId.
+     * @param exerciseId of the text exercise of type {number}
+     */
+    load(exerciseId: number) {
+        (isExamExerciseRoute(this.route.snapshot) ? this.textExerciseService.findForExam(exerciseId) : this.textExerciseService.find(exerciseId)).subscribe(
+            (textExerciseResponse: HttpResponse<TextExercise>) => {
+                this.textExercise.set(textExerciseResponse.body!);
+                this.isExamExercise.set(!!this.textExercise().exerciseGroup);
+                this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
+
+                this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
+                this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
+                this.detailOverviewSections.set(this.getExerciseDetailSections());
+            },
+        );
+        this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats.set(statistics);
+        });
+    }
+
+    getExerciseDetailSections(): DetailOverviewSection[] {
+        const exercise = this.textExercise();
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise());
+        const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
+        const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
+        return [
+            generalSection,
+            modeSection,
+            problemSection,
+            solutionSection,
+            {
+                headline: 'artemisApp.exercise.sections.grading',
+                details: [...defaultGradingDetails, ...gradingInstructionsCriteriaDetails],
+            },
+        ];
+    }
+
+    /**
+     * Unsubscribe from changes of text exercise on destruction of component.
+     */
+    ngOnDestroy() {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
+        this.eventManager.destroy(this.eventSubscriber);
+    }
+
+    /**
+     * Subscribe to changes of the text exercise.
+     */
+    registerChangeInTextExercises() {
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise().id!));
+    }
+}

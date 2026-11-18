@@ -1,0 +1,330 @@
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
+import { CourseManagementService } from '../services/course-management.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { OnboardingGeneralSettingsComponent } from './pages/onboarding-general-settings.component';
+import { OnboardingEnrollmentComponent } from './pages/onboarding-enrollment.component';
+import { OnboardingCommunicationComponent } from './pages/onboarding-communication.component';
+import { OnboardingAssessmentAiComponent } from './pages/onboarding-assessment-ai.component';
+import { OnboardingExploreComponent } from './pages/onboarding-explore.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChartLine, faCheck, faChevronLeft, faChevronRight, faCog, faComments, faRocket, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
+
+@Component({
+    selector: 'jhi-course-onboarding',
+    templateUrl: './course-onboarding.component.html',
+    styleUrls: ['./course-onboarding.component.scss'],
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        OnboardingGeneralSettingsComponent,
+        OnboardingEnrollmentComponent,
+        OnboardingCommunicationComponent,
+        OnboardingAssessmentAiComponent,
+        OnboardingExploreComponent,
+    ],
+})
+export class CourseOnboardingComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
+
+    readonly activeStep = signal(0);
+    readonly isSaving = signal(false);
+    readonly course = signal<Course>(new Course());
+    /** False while a date picker of the general settings holds text that is not a date; the course keeps the last valid date then. */
+    readonly generalSettingsDateTextValid = signal(true);
+    /** False while a date picker of the enrollment step holds text that is not a date; the course keeps the last valid date then. */
+    readonly enrollmentDateTextValid = signal(true);
+
+    readonly stepKeys = ['generalSettings', 'enrollment', 'communication', 'assessment', 'explore'];
+    readonly totalSteps = this.stepKeys.length;
+
+    protected readonly stepIcons = [faCog, faUserPlus, faComments, faChartLine, faRocket];
+    protected readonly faChevronLeft = faChevronLeft;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faCheck = faCheck;
+    protected readonly faRocket = faRocket;
+
+    readonly isLastStep = computed(() => this.activeStep() === this.totalSteps - 1);
+    readonly isFirstStep = computed(() => this.activeStep() === 0);
+    readonly canFinish = computed(() => this.activeStep() === this.totalSteps - 2);
+
+    ngOnInit() {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const step = parseInt(params['step'], 10);
+            if (!isNaN(step) && step >= 0 && step < this.totalSteps) {
+                this.showStep(step);
+            }
+        });
+        this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
+            if (course) {
+                this.course.set(course);
+            }
+        });
+    }
+
+    nextStep() {
+        if (this.activeStep() < this.totalSteps - 1) {
+            if (!this.validateCurrentStep()) {
+                return;
+            }
+            this.saveAndAdvance();
+        }
+    }
+
+    previousStep() {
+        if (this.activeStep() > 0) {
+            this.saveAndNavigate(this.activeStep() - 1);
+        }
+    }
+
+    goToStep(index: number) {
+        if (index !== this.activeStep() && !this.isSaving()) {
+            if (index > this.activeStep() && !this.validateCurrentStep()) {
+                return;
+            }
+            this.saveAndNavigate(index);
+        }
+    }
+
+    finishSetup() {
+        if (!this.validateCurrentStep()) {
+            return;
+        }
+        const current = this.course();
+        current.onboardingDone = true;
+        if (!current.id) {
+            return;
+        }
+        this.isSaving.set(true);
+        this.courseManagementService.update(current.id, current).subscribe({
+            next: (response) => {
+                this.isSaving.set(false);
+                if (response.body) {
+                    this.course.set(response.body);
+                }
+                const lastStep = this.totalSteps - 1;
+                this.showStep(lastStep);
+                this.updateStepUrl(lastStep);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSaving.set(false);
+                current.onboardingDone = false;
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    goToCourse() {
+        const current = this.course();
+        if (!current.id) {
+            return;
+        }
+        if (!current.onboardingDone) {
+            current.onboardingDone = true;
+            this.courseManagementService.update(current.id, current).subscribe({
+                next: () => void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
+                error: (error: HttpErrorResponse) => {
+                    current.onboardingDone = false;
+                    onError(this.alertService, error);
+                },
+            });
+        } else {
+            void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+        }
+    }
+
+    onCourseUpdated(updatedCourse: Course) {
+        this.course.set(updatedCourse);
+    }
+
+    validateCurrentStep(): boolean {
+        const current = this.course();
+        const step = this.activeStep();
+
+        switch (step) {
+            case 0: {
+                // General Settings: startDate, endDate and semester are mandatory, and startDate must be before endDate.
+                // The course arrives here already validated by the create endpoint, but the date pickers and the
+                // semester select stay editable in the wizard, so a value set on create can still be cleared here.
+                // A picker whose text is not a date still reports its last valid date, which would be saved silently.
+                if (!this.isDateTextValid()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+                    return false;
+                }
+                if (!current.startDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateRequired');
+                    return false;
+                }
+                if (!current.endDate) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.endDateRequired');
+                    return false;
+                }
+                // Strictly before, matching Course.validateStartAndEndDate() on the server: equal dates are rejected
+                // there, so accepting them here would only move the failure to the save request.
+                if (!dayjs(current.startDate).isBefore(dayjs(current.endDate))) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
+                    return false;
+                }
+                if (!current.semester?.trim()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.semesterRequired');
+                    return false;
+                }
+                break;
+            }
+            case 1: {
+                // The same applies to the enrollment pickers, which are only counted while they are shown.
+                if (!this.isDateTextValid()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+                    return false;
+                }
+                if (!current.enrollmentEnabled) {
+                    break;
+                }
+                if (current.enrollmentStartDate && current.enrollmentEndDate) {
+                    if (!dayjs(current.enrollmentStartDate).isBefore(dayjs(current.enrollmentEndDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentStartDateBeforeEndDate');
+                        return false;
+                    }
+                    if (!current.startDate || !current.endDate) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentRequiresCourseDates');
+                        return false;
+                    }
+                    if (dayjs(current.enrollmentEndDate).isAfter(dayjs(current.endDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentEndDateBeforeCourseEndDate');
+                        return false;
+                    }
+                }
+                if (current.unenrollmentEnabled && current.unenrollmentEndDate) {
+                    if (!current.enrollmentStartDate || !current.enrollmentEndDate) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentRequiresEnrollmentDates');
+                        return false;
+                    }
+                    if (!dayjs(current.enrollmentEndDate).isBefore(dayjs(current.unenrollmentEndDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentAfterEnrollmentEnd');
+                        return false;
+                    }
+                    if (current.endDate && dayjs(current.unenrollmentEndDate).isAfter(dayjs(current.endDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentBeforeCourseEndDate');
+                        return false;
+                    }
+                }
+                break;
+            }
+            case 3: {
+                // Assessment: accuracyOfScores 0-5, maxPoints > 0
+                if (current.accuracyOfScores !== undefined && (current.accuracyOfScores < 0 || current.accuracyOfScores > 5)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.accuracyOfScoresRange');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints <= 0) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
+                    return false;
+                }
+                break;
+            }
+        }
+        return true;
+    }
+
+    /** Whether the date pickers of the current step hold only dates, as far as the step reports it. */
+    private isDateTextValid(): boolean {
+        switch (this.activeStep()) {
+            case 0:
+                return this.generalSettingsDateTextValid();
+            case 1:
+                return this.enrollmentDateTextValid();
+            default:
+                return true;
+        }
+    }
+
+    /** Shows a step. Its pickers are created anew then, so what the previous step reported about its text does not apply. */
+    private showStep(step: number) {
+        if (step !== this.activeStep()) {
+            this.generalSettingsDateTextValid.set(true);
+            this.enrollmentDateTextValid.set(true);
+        }
+        this.activeStep.set(step);
+    }
+
+    private saveAndAdvance() {
+        const current = this.course();
+        if (!current.id) {
+            const newStep = this.activeStep() + 1;
+            this.showStep(newStep);
+            this.updateStepUrl(newStep);
+            return;
+        }
+        this.isSaving.set(true);
+        this.courseManagementService.update(current.id, current).subscribe({
+            next: (response) => {
+                this.isSaving.set(false);
+                if (response.body) {
+                    this.course.set(response.body);
+                }
+                const newStep = this.activeStep() + 1;
+                this.showStep(newStep);
+                this.updateStepUrl(newStep);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSaving.set(false);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    private saveAndNavigate(targetStep: number) {
+        // The pickers of the current step keep their last valid date while their text is not a date, and that date is what
+        // would be saved here. A step that is left without saving has nothing to protect.
+        const current = this.course();
+        if (!current.id) {
+            this.showStep(targetStep);
+            this.updateStepUrl(targetStep);
+            return;
+        }
+        if (!this.isDateTextValid()) {
+            this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+            return;
+        }
+        this.isSaving.set(true);
+        this.courseManagementService.update(current.id, current).subscribe({
+            next: (response) => {
+                this.isSaving.set(false);
+                if (response.body) {
+                    this.course.set(response.body);
+                }
+                this.showStep(targetStep);
+                this.updateStepUrl(targetStep);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSaving.set(false);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    private updateStepUrl(step: number) {
+        void this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
+}

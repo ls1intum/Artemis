@@ -1,0 +1,31 @@
+import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
+import { OnlineEditorPage } from './OnlineEditorPage';
+import { Commands } from '../../../commands';
+import { expect } from '@playwright/test';
+
+/**
+ * A class which encapsulates UI selectors and actions for a programming exercise feedback page.
+ */
+export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
+    override async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
+        await Commands.reloadUntilFound(this.page, this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR));
+        await super.shouldShowAdditionalFeedback(points, feedbackText);
+    }
+
+    async shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
+        await editorPage.openFileWithName(exerciseID, filename);
+        const feedbackElement = await this.findVisibleInlineFeedback();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points })).toBeVisible();
+    }
+
+    private async findVisibleInlineFeedback() {
+        // The direct conversion of the cy.get() with should('be.visible') to Playwright.
+        // Playwright handles visibility checks differently, so the check is incorporated into the expect statement.
+        // Note: Playwright's visibility checks are more strict than Cypress's.
+        // If the element's visibility varies dynamically, you may need to adjust the logic.
+        const feedbackElement = this.page.getByTestId('code-editor-inline-feedback');
+        await expect(feedbackElement).toBeVisible();
+        return feedbackElement;
+    }
+}

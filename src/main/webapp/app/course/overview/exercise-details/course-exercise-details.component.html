@@ -1,0 +1,55 @@
+@if (exercise) {
+    <div id="course-exercise-details" class="d-flex flex-column h-100 overflow-hidden">
+        <jhi-exercise-header
+            [exercise]="exercise"
+            [courseId]="courseId"
+            [studentParticipation]="gradedStudentParticipation()"
+            [practiceParticipation]="practiceStudentParticipation()"
+            [submissionPolicy]="submissionPolicy()"
+            [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
+            [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
+            [onRestartPractice]="restartPractice"
+            [submitDisabled]="quizSubmitDisabledForMode()"
+            [submitLabel]="splitPanel()?.quizSubmitTitle() ?? 'entity.action.submit'"
+            [quizPracticeAttemptFinished]="splitPanel()?.quizPracticeAttemptFinished() ?? false"
+            [plagiarismCaseInfo]="plagiarismCaseInfo()"
+            [participationMode]="participationMode()"
+            [athenaEnabled]="athenaEnabled"
+            [quizLiveHeaderInfo]="splitPanel()?.quizLiveHeaderInfo()"
+            [showSidebarToggle]="showSidebarToggle()"
+            [isSidebarCollapsed]="isSidebarCollapsed()"
+            [isViewingSubmission]="isViewingSubmission()"
+            [onContinueToLatest]="continueToLatest"
+            (participationModeChange)="participationMode.set($event)"
+            (newParticipation)="onNewParticipation($event)"
+            (toggleSidebar)="toggleSidebar()"
+            (showsPillsChange)="titleBarShowsPills.set($event)"
+        />
+
+        <jhi-programming-exercise-build-window-notice [exercise]="exercise" [participation]="activeParticipation()" [practiceMode]="participationMode() === 'practice'" />
+
+        <jhi-exercise-split-panel
+            class="flex-fill overflow-hidden"
+            [exercise]="exercise"
+            [participationMode]="participationMode()"
+            [studentParticipation]="activeParticipation()"
+            [irisEnabled]="irisEnabled() && irisChatEnabled()"
+            [courseId]="courseId"
+            [gradedStudentParticipation]="gradedStudentParticipation()"
+            [practiceParticipation]="practiceStudentParticipation()"
+            [plagiarismCaseInfo]="plagiarismCaseInfo()"
+            [latestRatedResult]="latestRatedResult()"
+            [resultWithComplaint]="resultWithComplaint()"
+            [allowComplaintsForAutomaticAssessments]="allowComplaintsForAutomaticAssessments()"
+            [exampleSolutionInfo]="exampleSolutionInfo()"
+            [submissionPolicy]="submissionPolicy()"
+            [athenaEnabled]="athenaEnabled"
+            [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
+            [titleBarShowsPills]="titleBarShowsPills()"
+            (quizSubmitted)="onQuizSubmitted($event)"
+            (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
+            (quizPracticeParticipationChanged)="onNewParticipation($event)"
+            (liveQuizResultParticipation)="onNewParticipation($event)"
+        />
+    </div>
+}

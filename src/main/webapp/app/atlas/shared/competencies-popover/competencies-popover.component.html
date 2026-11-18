@@ -1,0 +1,24 @@
+<button tumAetUiButton size="small" type="button" class="w-full" [tumAetUiPopoverTrigger]="competenciesPopover">
+    <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+</button>
+<tumaet-ui-popover #competenciesPopover [ariaLabel]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate">
+    <div class="max-w-[min(1000px,90dvw)]">
+        <div class="mb-2 font-bold" jhiTranslate="artemisApp.competency.competencyPopover.connectedCompetencies"></div>
+        @if (competencyLinks()?.length) {
+            <div>
+                <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
+                <ul class="m-0! mt-2! flex list-none flex-col divide-y divide-solid divide-(--border-color) rounded-md border border-solid border-(--border-color) p-0!">
+                    @for (competencyLink of competencyLinks(); track competencyLink) {
+                        @if (competencyLink.competency?.title) {
+                            <li>
+                                <a class="block px-4! py-2" [routerLink]="navigationArray()" (click)="competenciesPopover.close()">{{ competencyLink.competency!.title }}</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        } @else {
+            <a [routerLink]="navigationArray()" (click)="competenciesPopover.close()" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
+        }
+    </div>
+</tumaet-ui-popover>

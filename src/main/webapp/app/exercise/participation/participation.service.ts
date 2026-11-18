@@ -1,0 +1,315 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { createRequestOption } from 'app/foundation/util/request.util';
+import { PageableResult, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import dayjs from 'dayjs/esm';
+import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+
+export type EntityResponseType = HttpResponse<StudentParticipation>;
+export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
+
+/**
+ * DTO for updating a participation's presentation score.
+ */
+export interface ParticipationUpdateDTO {
+    id: number;
+    exerciseId: number;
+    presentationScore?: number;
+}
+
+/**
+ * DTO for updating a participation's individual due date.
+ */
+export interface ParticipationDueDateUpdateDTO {
+    id: number;
+    exerciseId: number;
+    individualDueDate?: string;
+}
+
+/**
+ * Request options that are appended as query parameters when deleting a participation.
+ */
+export interface ParticipationDeleteOptions {
+    deleteBuildPlan?: boolean;
+    deleteRepository?: boolean;
+}
+
+@Service()
+export class ParticipationService {
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
+    private accountService = inject(AccountService);
+
+    public resourceUrl = 'api/exercise/participations';
+
+    update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
+        // Create DTO with only the fields needed for updating presentation score
+        const dto: ParticipationUpdateDTO = {
+            id: participation.id!,
+            exerciseId: exercise.id!,
+            presentationScore: participation.presentationScore,
+        };
+        return this.http
+            .put<StudentParticipationDTO>(`api/exercise/exercises/${exercise.id}/participations`, dto, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
+    }
+
+    updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
+        const dtos = participations.map((participation) => this.toDueDateUpdateDTO(participation, exercise.id!));
+        return this.http
+            .put<StudentParticipationDTO[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, dtos, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOArrayResponseType(res)));
+    }
+
+    private toDueDateUpdateDTO(participation: StudentParticipation, exerciseId: number): ParticipationDueDateUpdateDTO {
+        return {
+            id: participation.id!,
+            exerciseId: exerciseId,
+            individualDueDate: convertDateFromClient(participation.individualDueDate),
+        };
+    }
+
+    find(participationId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<StudentParticipationDTO>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
+    }
+
+    searchParticipations(exerciseId: number, search: ParticipationSearch, kind: 'course' | 'exam' = 'course'): Observable<PageableResult<ParticipationManagementDTO>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            params['filterProp'] = search.filterProp;
+        }
+        if (search.scoreRangeLower !== undefined) {
+            params['scoreRangeLower'] = search.scoreRangeLower;
+        }
+        if (search.scoreRangeUpper !== undefined) {
+            params['scoreRangeUpper'] = search.scoreRangeUpper;
+        }
+        return this.http
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
+                    const content = res.body ?? [];
+                    content.forEach((dto) => {
+                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
+                        dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.correctionRoundResults?.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
+    }
+
+    getParticipationNamesForExport(exerciseId: number): Observable<ParticipationNameExportDTO[]> {
+        return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
+    }
+
+    delete(participationId: number, req?: ParticipationDeleteOptions): Observable<HttpResponse<void>> {
+        const options = createRequestOption(req);
+        return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
+    }
+
+    cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
+        return this.http
+            .put<StudentParticipationDTO>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, null, { observe: 'response' })
+            .pipe(map((res) => this.processParticipationDTOResponseType(res)));
+    }
+
+    shouldPreferPractice(exercise?: Exercise): boolean {
+        return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
+    }
+
+    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
+        return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
+    }
+
+    protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            ParticipationService.convertParticipationDatesFromServer(res.body);
+            res.body.submissions = this.submissionService.convertSubmissionArrayDatesFromServer(res.body.submissions);
+            res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise);
+        }
+        return res;
+    }
+
+    protected convertParticipationResponseArrayDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation: StudentParticipation) => {
+                ParticipationService.convertParticipationDatesFromServer(participation);
+            });
+        }
+        return res;
+    }
+
+    /**
+     * Converts the dates that are part of the participation into a usable format.
+     *
+     * Does not convert dates in dependant attributes (e.g. results, submissions)!
+     * @param participation for which the dates should be converted into the dayjs format.
+     */
+    public static convertParticipationDatesFromServer(participation?: Participation) {
+        if (participation) {
+            participation.initializationDate = convertDateFromServer(participation.initializationDate);
+            participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
+            if (participation.exercise) {
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
+            }
+        }
+        return participation;
+    }
+
+    public static convertParticipationArrayDatesFromServer(participations?: StudentParticipation[]) {
+        const convertedParticipations: StudentParticipation[] = [];
+        if (participations?.length) {
+            participations.forEach((participation: StudentParticipation) => {
+                convertedParticipations.push(ParticipationService.convertParticipationDatesFromServer(participation)!);
+            });
+        }
+        return convertedParticipations;
+    }
+
+    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation[] {
+        const mergedParticipations: StudentParticipation[] = [];
+
+        if (participations?.length) {
+            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
+            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
+
+            if (participations[0].type === ParticipationType.STUDENT) {
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
+            } else if (participations[0].type === ParticipationType.PROGRAMMING) {
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
+            }
+        }
+        return mergedParticipations;
+    }
+
+    private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
+        const combinedParticipation = new ProgrammingExerciseStudentParticipation();
+        if (participations?.length) {
+            combinedParticipation.repositoryUri = participations[0].repositoryUri;
+            combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
+            this.mergeResultsAndSubmissions(combinedParticipation, participations);
+        }
+        return combinedParticipation;
+    }
+
+    private mergeResultsAndSubmissions(combinedParticipation: StudentParticipation, participations: StudentParticipation[]) {
+        combinedParticipation.id = participations[0].id;
+        combinedParticipation.initializationState = participations[0].initializationState;
+        combinedParticipation.initializationDate = participations[0].initializationDate;
+        combinedParticipation.individualDueDate = participations[0].individualDueDate;
+        combinedParticipation.presentationScore = participations[0].presentationScore;
+        combinedParticipation.exercise = participations[0].exercise;
+        combinedParticipation.type = participations[0].type;
+        combinedParticipation.testRun = participations[0].testRun;
+
+        if (participations[0].student) {
+            combinedParticipation.student = participations[0].student;
+        }
+        if (participations[0].team) {
+            combinedParticipation.team = participations[0].team;
+        }
+        if (participations[0].participantIdentifier) {
+            combinedParticipation.participantIdentifier = participations[0].participantIdentifier;
+        }
+        if (participations[0].participantName) {
+            combinedParticipation.participantName = participations[0].participantName;
+        }
+
+        participations.forEach((participation) => {
+            if (participation.submissions) {
+                combinedParticipation.submissions = combinedParticipation.submissions
+                    ? combinedParticipation.submissions.concat(participation.submissions)
+                    : participation.submissions;
+            }
+        });
+
+        // make sure that results and submissions are connected with the participation because some components need this
+        if (combinedParticipation.submissions?.length) {
+            combinedParticipation.submissions.forEach((submission) => {
+                submission.participation = combinedParticipation;
+            });
+        }
+    }
+
+    public getSpecificStudentParticipation(studentParticipations: StudentParticipation[], testRun: boolean): StudentParticipation | undefined {
+        return studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
+    }
+
+    /**
+     * This method bundles recurring conversion steps for Participation EntityArrayResponses.
+     * @param participationRes
+     */
+    private processParticipationDTOArrayResponseType(participationRes: HttpResponse<StudentParticipationDTO[]>): EntityArrayResponseType {
+        const convertedResponse = participationRes.clone({ body: participationRes.body?.map(fromStudentParticipationDTO) ?? null });
+        this.setAccessRightsParticipationEntityArrayResponseType(convertedResponse);
+        return convertedResponse;
+    }
+
+    private processParticipationDTOResponseType(participationRes: HttpResponse<StudentParticipationDTO>): EntityResponseType {
+        const convertedResponse = participationRes.clone({ body: participationRes.body ? fromStudentParticipationDTO(participationRes.body) : null });
+        this.setAccessRightsParticipationEntityResponseType(convertedResponse);
+        return convertedResponse;
+    }
+
+    private setAccessRightsParticipationEntityResponseType(res: EntityResponseType): EntityResponseType {
+        if (res.body?.exercise) {
+            this.accountService.setAccessRightsForExercise(res.body.exercise);
+        }
+        return res;
+    }
+
+    private setAccessRightsParticipationEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation) => {
+                if (participation.exercise) {
+                    this.accountService.setAccessRightsForExercise(participation.exercise);
+                }
+            });
+        }
+        return res;
+    }
+}

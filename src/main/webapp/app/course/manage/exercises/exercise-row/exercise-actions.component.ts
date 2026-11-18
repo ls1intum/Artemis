@@ -1,0 +1,511 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, Subject, finalize, take } from 'rxjs';
+import {
+    faChartBar,
+    faClipboardList,
+    faCode,
+    faEye,
+    faLightbulb,
+    faListAlt,
+    faPencilAlt,
+    faPlayCircle,
+    faRedo,
+    faRobot,
+    faStopCircle,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
+import { QuizExerciseLifecycleService, canEndQuiz, canManageQuizBatches, canSetQuizVisible, canStartQuiz } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
+import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
+import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
+import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration, variantGenerationBlocker } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+
+/**
+ * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and
+ * renders it through the shared {@link ExerciseActionBarComponent}, which owns the collapsing-row/ellipsis-menu
+ * behavior. The quiz lifecycle buttons are the only always-visible content and are projected into the bar's
+ * reserved-content slot.
+ */
+@Component({
+    selector: 'jhi-exercise-actions',
+    templateUrl: './exercise-actions.component.html',
+    imports: [ExerciseActionBarComponent, QuizExerciseLifecycleButtonsComponent, ExerciseVariantAiModalWizardComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ExerciseActionsComponent {
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
+    private readonly capabilityRequests = inject(GenerationCapabilityRequestsService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
+    private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
+    private readonly eventManager = inject(EventManager);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly quizExerciseLifecycleService = inject(QuizExerciseLifecycleService);
+
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
+
+    readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
+    /** Emitted when it is not known how a deletion ended; the parent reloads its exercises instead of removing the row. */
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
+    /**
+     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
+     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
+     */
+    readonly quizActionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
+
+    private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    private readonly programmingGenerationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+    private readonly aiVariantSupported = computed(() => {
+        const exercise = this.exercise();
+        return (
+            this.hyperionEnabled &&
+            (exercise.isAtLeastEditor ?? false) &&
+            supportsAiVariantGeneration(exercise) &&
+            (exercise.type !== ExerciseType.PROGRAMMING || this.programmingGenerationEnabled)
+        );
+    });
+    private readonly variantPreflightPending = signal(false);
+    /** Set while a start, show now or end request runs: its response is built from the quiz at click time, so a second one would race it. */
+    private readonly lifecyclePending = signal(false);
+    /**
+     * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
+     * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
+     */
+    private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
+
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
+
+    /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
+    protected readonly aiVariantModalVisible = signal(false);
+
+    /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
+    readonly quizExercise = computed<QuizExercise | undefined>(() => {
+        const ex = this.exercise();
+        return ex.type === ExerciseType.QUIZ ? ex : undefined;
+    });
+
+    /**
+     * True when the quiz shows its batch menu, the only lifecycle control that is not a row action (it opens its own
+     * popover). Used to show/hide the reserved content and its separator.
+     */
+    readonly hasQuizButtons = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return !!quiz && canManageQuizBatches(quiz);
+    });
+
+    readonly deletionSummary = computed<Observable<EntitySummaryCategory[]>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    /**
+     * Cleanup checkboxes for the delete dialog: on external CI, programming exercises offer an opt-out for deleting
+     * repositories and build plans. Hidden under LocalCI, where the request omits the flags and the server decides.
+     */
+    readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
+
+    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
+    readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
+        const course = this.course();
+        return {
+            courseTitle: course?.title,
+            courseType: this.translateService.instant(course?.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
+        };
+    });
+
+    /**
+     * Regular actions in original display order: Teams → Participations → type-specific → Create Variant
+     * with AI → Edit → Delete.
+     */
+    readonly mainActions = computed<ActionItem[]>(() => {
+        const ex = this.exercise();
+        const cid = this.courseId();
+        const seg = getExerciseUrlSegment(ex.type);
+        const items: ActionItem[] = [];
+
+        const quiz = this.quizExercise();
+        if (quiz) {
+            items.push(...this.quizLifecycleActions(quiz));
+        }
+        if (ex.mode === ExerciseMode.TEAM) {
+            items.push({
+                id: 'teams',
+                labelKey: 'artemisApp.exercise.teams',
+                icon: faUsers,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
+            });
+        }
+        items.push({
+            id: 'participations',
+            labelKey: 'artemisApp.exercise.participations',
+            icon: faListAlt,
+            severity: 'primary',
+            kind: 'link',
+            link: ['/course-management', cid, seg, ex.id!, 'participations'],
+        });
+        if (ex.type === ExerciseType.QUIZ) {
+            const q = ex as QuizExercise;
+            items.push({
+                id: 'statistics',
+                labelKey: 'artemisApp.quizExercise.statistics',
+                icon: faChartBar,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'quiz-point-statistic'],
+            });
+            items.push({
+                id: 'preview',
+                labelKey: 'artemisApp.quizExercise.preview',
+                icon: faEye,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'preview'],
+            });
+            items.push({
+                id: 'solution',
+                labelKey: 'artemisApp.quizExercise.solution',
+                icon: faLightbulb,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'solution'],
+            });
+            if (q.quizEnded && ex.isAtLeastInstructor) {
+                items.push({
+                    id: 're-evaluate',
+                    labelKey: 'entity.action.re-evaluate',
+                    icon: faRedo,
+                    severity: 'secondary',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 're-evaluate'],
+                });
+            }
+        }
+        // Both example-submission routes are IS_AT_LEAST_EDITOR, so tutors would only hit an access denial.
+        if (ex.isAtLeastEditor && (ex.type === ExerciseType.MODELING || ex.type === ExerciseType.TEXT)) {
+            items.push({
+                id: 'examples',
+                labelKey: 'entity.action.exampleSubmissions',
+                icon: faClipboardList,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
+            });
+        }
+        // Repository eligibility is checked on click, not once for every row rendered in the course table.
+        if (this.aiVariantSupported()) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                severity: 'secondary',
+                kind: 'button',
+                disabled: this.variantPreflightPending() || undefined,
+                onClick: () => this.openAiVariantWizard(),
+            });
+        }
+        // Programming-only actions stay visible but go inert while the feature toggle is off.
+        const programmingDisabled = ex.type === ExerciseType.PROGRAMMING && !this.programmingEnabled();
+        // Editing requires editor rights, so tutors must not see the edit controls.
+        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
+            items.push({
+                id: 'edit-in-editor',
+                labelKey: 'entity.action.editInEditor',
+                icon: faCode,
+                severity: 'secondary',
+                kind: 'link',
+                link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
+                disabled: programmingDisabled || undefined,
+                disabledTooltip: programmingDisabled ? 'artemisApp.exerciseManagement.programmingFeatureDisabled' : undefined,
+            });
+        }
+        if (ex.isAtLeastEditor) {
+            if (ex.type !== ExerciseType.QUIZ) {
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faPencilAlt,
+                    severity: 'warn',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                });
+            } else {
+                const q2 = ex as QuizExercise;
+                // Prefer the server-supplied isEditable (set by loadQuizBatches); until it arrives, check client-side.
+                const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
+                const editDisabled = !editable || !!q2.quizEnded;
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faPencilAlt,
+                    severity: 'warn',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                    disabled: editDisabled || undefined,
+                    disabledTooltip: q2.quizEnded
+                        ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
+                        : !editable && q2.status === QuizStatus.ACTIVE
+                          ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
+                          : !editable
+                            ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
+                            : undefined,
+                });
+            }
+        }
+        if (ex.isAtLeastInstructor) {
+            items.push({
+                id: 'delete',
+                labelKey: 'entity.action.delete',
+                icon: faTrash,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: programmingDisabled || undefined,
+                disabledTooltip: programmingDisabled ? 'artemisApp.exerciseManagement.programmingFeatureDisabled' : undefined,
+                delete: {
+                    entityTitle: ex.title ?? '',
+                    entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
+                    deleteQuestion: 'artemisApp.exercise.delete.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    translateValues: this.deleteTranslateValues(),
+                    additionalChecks: this.deleteAdditionalChecks(),
+                    dialogError: this.dialogError$,
+                    onDelete: (event) => this.onDelete(event),
+                },
+            });
+        }
+        return items;
+    });
+
+    private openAiVariantWizard(): void {
+        const exercise = this.exercise();
+        if (!exercise.id || !this.aiVariantSupported() || this.variantPreflightPending() || this.aiVariantModalVisible()) return;
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            this.aiVariantModalVisible.set(true);
+            return;
+        }
+        this.variantPreflightPending.set(true);
+        this.capabilityRequests
+            .describe(exercise.id)
+            .pipe(
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.variantPreflightPending.set(false)),
+            )
+            .subscribe({
+                next: (capabilities) => {
+                    if (this.exercise().id !== exercise.id || !this.aiVariantSupported()) return;
+                    const blocker = variantGenerationBlocker(this.exercise(), capabilities);
+                    if (blocker) this.alertService.warning(blocker);
+                    else this.aiVariantModalVisible.set(true);
+                },
+                error: () => {
+                    if (this.exercise().id === exercise.id && this.aiVariantSupported()) {
+                        this.alertService.warning('artemisApp.hyperion.generation.blocker.capabilitiesUnavailable');
+                    }
+                },
+            });
+    }
+
+    /**
+     * Start, make visible and end the quiz as row actions: labelled like the other actions and folded into the menu when
+     * the row runs out of width. They go inert, with an explanation, for quizzes in a variant group.
+     */
+    private quizLifecycleActions(quiz: QuizExercise): ActionItem[] {
+        const inVariantGroup = !!quiz.exerciseVariantGroup;
+        const disabledTooltip = inVariantGroup ? 'artemisApp.quizExercise.actionDisabledInGroup' : undefined;
+        const pending = this.lifecyclePending();
+        const track = (action: Observable<QuizExercise>) => {
+            this.lifecyclePending.set(true);
+            return action.pipe(
+                finalize(() => this.lifecyclePending.set(false)),
+                takeUntilDestroyed(this.destroyRef),
+            );
+        };
+        const run = (action: Observable<QuizExercise>) =>
+            track(action).subscribe({
+                next: (updated) => this.onQuizLifecycleUpdate(updated),
+                error: (error: HttpErrorResponse) => {
+                    this.alertService.error(error.headers.get('X-artemisApp-error')!);
+                    this.onQuizReload();
+                },
+            });
+        const items: ActionItem[] = [];
+        if (canStartQuiz(quiz)) {
+            items.push({
+                id: 'start-quiz',
+                labelKey: 'artemisApp.quizExercise.startQuiz',
+                icon: faPlayCircle,
+                severity: 'success',
+                kind: 'button',
+                disabled: pending || undefined,
+                onClick: () => run(this.quizExerciseLifecycleService.startQuiz(this.quizExercise()!)),
+            });
+        }
+        if (canSetQuizVisible(quiz)) {
+            items.push({
+                id: 'set-visible',
+                labelKey: 'artemisApp.quizExercise.showNow',
+                icon: faEye,
+                severity: 'warn',
+                kind: 'button',
+                disabled: inVariantGroup || pending || undefined,
+                disabledTooltip,
+                onClick: () => run(this.quizExerciseLifecycleService.setVisible(this.quizExercise()!)),
+            });
+        }
+        if (canEndQuiz(quiz)) {
+            items.push({
+                id: 'end-quiz',
+                labelKey: 'artemisApp.quizExercise.endQuiz',
+                icon: faStopCircle,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: inVariantGroup || pending || undefined,
+                disabledTooltip,
+                delete: {
+                    actionType: ActionType.EndNow,
+                    entityTitle: quiz.title ?? '',
+                    deleteQuestion: 'artemisApp.quizExercise.endNow.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    dialogError: this.dialogError$,
+                    onDelete: () =>
+                        track(this.quizExerciseLifecycleService.endQuiz(this.quizExercise()!)).subscribe({
+                            next: (updated) => {
+                                this.onQuizLifecycleUpdate(updated);
+                                this.dialogErrorSource.next('');
+                            },
+                            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        }),
+                },
+            });
+        }
+        return items;
+    }
+
+    /**
+     * Relays an optimistic quiz update to the parent, recomputing the client-derived `status` / `quizStarted` flags first
+     * so the action buttons reflect the new state immediately.
+     */
+    protected onQuizLifecycleUpdate(quiz: QuizExercise): void {
+        quiz.status = this.quizExerciseService.getStatus(quiz);
+        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+        this.exerciseUpdated.emit(quiz);
+    }
+
+    /**
+     * Re-fetches the quiz when the lifecycle component asks for a reload (e.g. after a failed mutation reverted the
+     * optimistic state), since the stale local copy would keep offering an action the server just rejected.
+     */
+    protected onQuizReload(): void {
+        const exerciseId = this.exercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.quizExerciseService
+            .find(exerciseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (quiz) => {
+                    quiz.status = this.quizExerciseService.getStatus(quiz);
+                    quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                    this.exerciseUpdated.emit(quiz);
+                },
+                error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
+            });
+    }
+
+    protected onDelete(event: { [key: string]: boolean }): void {
+        const exercise = this.exercise();
+        const exerciseId = exercise.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const finish = (obs: Observable<unknown>, evtName: string) =>
+            this.entityDeletionService.delete(exerciseDeletionTarget(exercise), obs).subscribe({
+                next: (progress) => {
+                    if (isDeletionCompleted(progress)) {
+                        this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+                        // Notify the parent so the deleted exercise is removed from the view without a page refresh.
+                        this.exerciseDeleted.emit(exercise);
+                    } else if (isDeletionOutcomeUnknown(progress)) {
+                        // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                        this.eventManager.broadcast({ name: evtName, content: 'Refresh after an unknown deletion outcome' });
+                        this.exerciseDeletionOutcomeUnknown.emit();
+                    }
+                    // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                    this.dialogErrorSource.next('');
+                },
+                error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
+            });
+
+        switch (exercise.type) {
+            case ExerciseType.TEXT:
+                finish(this.textExerciseService.delete(exerciseId), 'textExerciseListModification');
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                finish(this.fileUploadExerciseService.delete(exerciseId), 'fileUploadExerciseListModification');
+                break;
+            case ExerciseType.QUIZ:
+                finish(this.quizExerciseDeletionApi.deleteQuizExercise(exerciseId), 'quizExerciseListModification');
+                break;
+            case ExerciseType.MODELING:
+                finish(this.modelingExerciseService.delete(exerciseId), 'modelingExerciseListModification');
+                break;
+            case ExerciseType.PROGRAMMING:
+                finish(
+                    this.programmingExerciseService.delete(exerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+                    'programmingExerciseListModification',
+                );
+                break;
+        }
+    }
+}

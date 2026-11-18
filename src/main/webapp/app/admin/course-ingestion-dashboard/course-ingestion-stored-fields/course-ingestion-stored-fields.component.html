@@ -1,0 +1,18 @@
+@if (fields().length > 0) {
+    <div class="overflow-x-auto">
+        <table tumAetUiTable size="small" data-testid="stored-fields">
+            <tbody>
+                @for (field of fields(); track field.key) {
+                    <tr>
+                        <th scope="row" class="font-mono text-xs font-normal text-start align-top whitespace-nowrap w-1 px-2 py-1.5 text-text border-b border-border">
+                            {{ field.key }}
+                        </th>
+                        <td class="text-xs break-words whitespace-pre-wrap">{{ field.value }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+} @else {
+    <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noFields"></p>
+}

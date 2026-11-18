@@ -1,0 +1,37 @@
+apply plugin: "war"
+
+bootWar {
+    mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
+    includes = ["WEB-INF/**", "META-INF/**"]
+    webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
+    manifest {
+        attributes("Implementation-Title": "Artemis",
+                   "Implementation-Version": version)
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+// Command for production build: ./gradlew -Pprod -Pwar clean bootWar
+
+war {
+    webAppDirectory = file("build/resources/main/static/")
+    includes = ["WEB-INF/**", "META-INF/**"]
+    webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
+    enabled = true
+    archiveExtension = "war.original"
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jar {
+    enabled = false
+}
+
+def assertNoticeInWar = { File war ->
+    def found = zipTree(war).matching { include 'META-INF/NOTICE' }.files
+    if (found.empty) {
+        throw new GradleException('META-INF/NOTICE is missing inside the built WAR. This file is needed to satisfy dependency licensing requirements!')
+    }
+}
+
+tasks.named('bootWar').configure {
+    doLast { assertNoticeInWar(archiveFile.get().asFile) }
+}

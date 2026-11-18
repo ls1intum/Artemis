@@ -1,0 +1,45 @@
+<tumaet-ui-dialog
+    [(visible)]="isDialogVisible"
+    [header]="modalTitle | artemisTranslate"
+    size="large"
+    [dismissableMask]="true"
+    [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    (hidden)="resetFormGroup()"
+>
+    @if (isDialogVisible()) {
+        <form [formGroup]="formGroup" (ngSubmit)="confirm()" class="min-w-0" data-testid="post-create-edit-form">
+            @if (editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting()?.conversation)?.isAnnouncementChannel) {
+                <div class="mb-4! rounded-md bg-state-warning/10 p-3! text-state-warning" jhiTranslate="artemisApp.communication.post.announcementHint"></div>
+            }
+            <div class="mb-4!">
+                <div class="mb-1 flex items-center gap-1">
+                    <label for="post-title" jhiTranslate="artemisApp.communication.post.title">Title</label>
+                    <jhi-help-icon text="artemisApp.communication.post.titleTooltip" />
+                </div>
+                <input id="post-title" formControlName="title" type="text" tumAetUiInput name="title" class="w-full" data-testid="post-title" />
+            </div>
+            <div class="mb-1 min-w-0">
+                <div class="mb-1 flex items-center gap-1">
+                    <span jhiTranslate="artemisApp.communication.post.content"></span>
+                    <jhi-help-icon text="artemisApp.communication.post.contentTooltip" />
+                </div>
+                <jhi-posting-markdown-editor
+                    formControlName="content"
+                    [draftIdentity]="'post:' + (posting()?.id ?? 'new')"
+                    [maxContentLength]="maxContentLength"
+                    [suppressNewlineOnEnter]="false"
+                    [isButtonLoading]="isLoading()"
+                    [isFormGroupValid]="formGroup.valid"
+                    [editType]="editType"
+                />
+            </div>
+            @if (editType === EditType.UPDATE) {
+                <div class="mt-4! flex justify-end">
+                    <button type="submit" tumAetUiButton size="small" [disabled]="isLoading() || !formGroup.valid" id="save" data-testid="save-post">
+                        {{ 'artemisApp.conversationsLayout.saveMessage' | artemisTranslate }}
+                    </button>
+                </div>
+            }
+        </form>
+    }
+</tumaet-ui-dialog>

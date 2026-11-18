@@ -1,0 +1,575 @@
+package de.tum.cit.aet.artemis.assessment.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.TaskRejectedException;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.ResultListener;
+import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+
+/**
+ * Scheduled service for the calculation of the participant scores.
+ * Note: Only active on the main instance with "scheduling" profile.
+ * <p>
+ * The approach is two-sided, to make the participant scores eventually consistent within seconds without overloading the database.
+ * Using a listener on the {@link Result} entity, changes are detected and forwarded (via the broker if not on the main instance) to this service.
+ * This method is fast, but not 100% reliable. For example, network outages could cause this service to miss result updates.
+ * Therefore, a cron job regularly checks for invalid participant scores and updates them.
+ * In all cases, using asynchronous scheduled tasks speeds up all requests that modify results.
+ *
+ * @see ResultListener
+ */
+@Lazy
+@Service
+@Profile(PROFILE_CORE_AND_SCHEDULING)
+public class ParticipantScoreScheduleService {
+
+    public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+
+    private static final Logger log = LoggerFactory.getLogger(ParticipantScoreScheduleService.class);
+
+    private final TaskScheduler scheduler;
+
+    private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+
+    /**
+     * Striped locks to prevent concurrent executeTask calls for the same exercise+participant from creating duplicate participant scores.
+     * Using a fixed number of lock stripes avoids unbounded memory growth while still providing per-key synchronization.
+     */
+    private static final int NUM_LOCK_STRIPES = 32;
+
+    private final Object[] lockStripes = IntStream.range(0, NUM_LOCK_STRIPES).mapToObj(i -> new Object()).toArray();
+
+    private Optional<Instant> lastScheduledRun = Optional.empty();
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final ParticipantScoreRepository participantScoreRepository;
+
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final UserRepository userRepository;
+
+    private final TeamRepository teamRepository;
+
+    /**
+     * Determines if the scheduled service is running or not. Use startup() and shutdown() to modify this value accordingly.
+     * It should only be necessary in tests to deactivate the service
+     */
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+
+    /**
+     * Set when the service is shut down, so that the delayed startup task cannot reactivate it: the scheduler still runs delayed tasks after its shutdown.
+     * Guarded by {@link #lifecycleLock}.
+     */
+    private boolean shutDown = false;
+
+    /**
+     * Makes the shutdown check and the activation in the delayed startup task atomic with respect to {@link #shutdown()}.
+     */
+    private final Object lifecycleLock = new Object();
+
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
+        this.scheduler = scheduler;
+        this.competencyProgressApi = competencyProgressApi;
+        this.participantScoreRepository = participantScoreRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.resultRepository = resultRepository;
+        this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
+    }
+
+    /**
+     * Whether the results of the given participation contribute to a participant score.
+     * <p>
+     * A participant score is keyed by the exercise and the id of its participant, and the exercise mode decides whether that id is read as a user or as a team. A student who
+     * practices a team exercise on their own has a participation that belongs to the student, so its participant id would be read as a team id and could update, replace or delete
+     * the score of an unrelated team. The team exercise keeps the scores of its teams only, so such a participation has none.
+     *
+     * @param participation the participation a result belongs to
+     * @return true if participant score updates have to be scheduled for results of the participation
+     */
+    public static boolean hasParticipantScore(StudentParticipation participation) {
+        Participant participant = participation.getParticipant();
+        if (participant == null) {
+            return false;
+        }
+        // only a practice participation can belong to a student in a team exercise, so a regular result does not need to look at the exercise
+        return !(participant instanceof User && participation.isPracticeMode() && participation.getExercise().isTeamMode());
+    }
+
+    /**
+     * Check if the scheduler has tasks to be executed or is idle.
+     *
+     * @return true if the scheduler is idle, false otherwise
+     */
+    public boolean isIdle() {
+        if (!isRunning.get()) {
+            return true;
+        }
+        return scheduledTasks.isEmpty();
+    }
+
+    /**
+     * Schedule all outdated participant scores when the service is started.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
+    @PostConstruct
+    public void startup() {
+        scheduler.schedule(() -> {
+            synchronized (lifecycleLock) {
+                if (shutDown) {
+                    return;
+                }
+                isRunning.set(true);
+            }
+            try {
+                // this should never prevent the application start of Artemis
+                scheduleTasks();
+            }
+            catch (Exception ex) {
+                log.error("Cannot schedule participant score service", ex);
+            }
+        }, Instant.now().plusSeconds(PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC));
+    }
+
+    public void activate() {
+        isRunning.set(true);
+    }
+
+    /**
+     * Before shutdown, cancel all running or scheduled tasks.
+     */
+    @PreDestroy
+    public void shutdown() {
+        synchronized (lifecycleLock) {
+            shutDown = true;
+            isRunning.set(false);
+        }
+        // Stop all running tasks, we will reschedule them on startup again
+        scheduledTasks.values().forEach(future -> future.cancel(true));
+        scheduledTasks.clear();
+    }
+
+    /**
+     * Every minute, query for modified results and schedule a task to update the participant scores.
+     * This is used as a fallback in case Result updates are lost for any reason.
+     * We schedule all results that were created/updated since the last run of the cron job.
+     * Additionally, we schedule all participant scores that are outdated/invalid.
+     */
+    // TODO: could be converted to TaskScheduler, but tests depend on this implementation at the moment. See QuizScheduleService for reference
+    @Scheduled(cron = "0 * * * * *")
+    protected void scheduleTasks() {
+        log.debug("Schedule tasks to process...");
+        // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
+        SecurityUtils.setSystemAuthorizationObject();
+        if (isRunning.get()) {
+            try {
+                executeScheduledTasks();
+            }
+            catch (TaskRejectedException e) {
+                // The scheduler only rejects tasks once it is shut down: it stops when the application context closes, before this bean is destroyed and
+                // isRunning is reset. The tasks are scheduled again on the next startup
+                log.debug("Skipped scheduling participant score updates because the task scheduler is shut down: {}", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Schedule all results that were created/updated since the last run of the cron job.
+     * Additionally, we schedule all participant scores that are outdated/invalid.
+     */
+    public void executeScheduledTasks() {
+        if (!isRunning.get()) {
+            log.debug("Cannot execute scheduled tasks, because the service is not running");
+            return;
+        }
+        // Find all results that were added after the last run (on startup: last time we modified a participant score)
+        var latestRun = lastScheduledRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
+        // Update last run time before we continue with time-consuming operations
+        lastScheduledRun = Optional.of(Instant.now());
+
+        var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
+        resultsToProcess.forEach(result -> {
+            // Provider request state is not an assessment and must not refresh score or competency recency.
+            if (result.isAthenaBased() && !Boolean.TRUE.equals(result.isSuccessful())) {
+                return;
+            }
+            var submission = result.getSubmission();
+            if (submission != null && submission.getParticipation() instanceof StudentParticipation studentParticipation && hasParticipantScore(studentParticipation)) {
+                var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
+                scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
+            }
+        });
+
+        // Find all outdated participant scores where the last result is null (because it was deleted)
+        var participantScoresToProcess = participantScoreRepository.findAllOutdated();
+        participantScoresToProcess
+                .forEach(participantScore -> scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null));
+
+        log.debug("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
+    }
+
+    /**
+     * Schedule a task to update the participant score for the given combination of exercise and participant.
+     *
+     * @param exerciseId          the id of the exercise
+     * @param participantId       the id of the participant (user or team, determined by the exercise)
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
+     */
+    public void scheduleTask(@NonNull Long exerciseId, @NonNull Long participantId, Long resultIdToBeDeleted) {
+        if (!isRunning.get()) {
+            log.debug("Cannot schedule task, because the service is not running");
+            return;
+        }
+        scheduleTask(exerciseId, participantId, Instant.now(), resultIdToBeDeleted);
+    }
+
+    /**
+     * Schedule a task to update the participant score for the given combination of exercise and participant.
+     *
+     * @param exerciseId          the id of the exercise
+     * @param participantId       the id of the participant (user or team, determined by the exercise)
+     * @param resultLastModified  the last modified date of the result that triggered the update
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
+     */
+    private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
+        final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
+        var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
+        scheduledTasks.compute(participantScoreId, (key, existingTask) -> {
+            // Do not interrupt a task that is already running: the interrupt closes the socket of the JDBC connection it is using.
+            // A running task finishes, and the new task waits for it on the lock stripe. As the running task may have read the results
+            // before the one that triggered the new task, the new task then has to recompute even if the score looks up-to-date.
+            // Whether the task was still pending or already running cannot be told apart afterwards (cancel(false) also succeeds for a
+            // running task), so the new task recomputes whenever it replaces a task that had not finished.
+            boolean supersedesUnfinishedTask = existingTask != null && !existingTask.isDone();
+            if (existingTask != null) {
+                existingTask.cancel(false);
+            }
+            // Capture this task's own future so executeTask() can remove exactly this map entry when it finishes
+            // (see the compare-and-remove in executeTask's finally block). The reference is populated synchronously
+            // right after scheduling, well before DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS elapses.
+            AtomicReference<ScheduledFuture<?>> ownFuture = new AtomicReference<>();
+            ScheduledFuture<?> future = scheduler.schedule(
+                    () -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, supersedesUnfinishedTask, ownFuture.get()),
+                    schedulingTime.toInstant());
+            ownFuture.set(future);
+            return future;
+        });
+        log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
+    }
+
+    /**
+     * Execute the task to update the participant score for the given combination of exercise and participant.
+     *
+     * @param exerciseId          the id of the exercise
+     * @param participantId       the id of the participant (user or team, determined by the exercise)
+     * @param resultLastModified  the last modified date of the result that triggered the update
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
+     * @param forceRecompute      whether to recompute even if the score was updated after the result, because this task superseded an unfinished one
+     * @param thisTask            this invocation's own scheduled future, used to remove exactly this map entry when done
+     */
+    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, boolean forceRecompute, ScheduledFuture<?> thisTask) {
+        final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
+        // Synchronize per exercise+participant to prevent concurrent tasks from creating duplicate participant scores.
+        // This can happen when a task is already running while a new one is scheduled, as a running task is not interrupted.
+        synchronized (lockStripes[Math.floorMod(participantScoreId.hashCode(), NUM_LOCK_STRIPES)]) {
+            long start = System.currentTimeMillis();
+            log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+            try {
+                // Runs from a ScheduledFuture, which the async executors do not wrap, so the thread may still carry
+                // the previous task. Install the system principal rather than inherit it.
+                SecurityUtils.setSystemAuthorizationObject();
+
+                var exercise = exerciseRepository.findById(exerciseId).orElse(null);
+                if (exercise == null) {
+                    // If the exercise was deleted, we can delete all participant scores for it as well and skip
+                    log.debug("Exercise {} no longer exists, deleting all participant scores for it.", exerciseId);
+                    participantScoreRepository.deleteAllByExerciseId(exerciseId);
+                    return;
+                }
+
+                Participant participant;
+                Optional<ParticipantScore> participantScore;
+                if (exercise.isTeamMode()) {
+                    // Fetch the team and its score for the given exercise
+                    participant = teamRepository.findWithStudentsById(participantId).orElse(null);
+                    if (participant == null) {
+                        // If the team was deleted, we can delete all participant scores for it as well and skip
+                        log.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);
+                        teamScoreRepository.deleteAllByTeamId(participantId);
+                        return;
+                    }
+                    participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
+                }
+                else {
+                    // Fetch the student and its score for the given exercise
+                    participant = userRepository.findById(participantId).orElse(null);
+                    if (participant == null) {
+                        // If the user was deleted, we can delete all participant scores for it as well and skip
+                        log.debug("User {} no longer exists, deleting all participant scores for them.", participantId);
+                        studentScoreRepository.deleteAllByUserId(participantId);
+                        return;
+                    }
+                    participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
+                }
+
+                if (participantScore.isPresent()) {
+                    var lastModified = participantScore.get().getLastModifiedDate();
+                    if (!forceRecompute && lastModified != null && lastModified.isAfter(resultLastModified)) {
+                        // The participant score was already updated after the last modified date of the result that initiated this task
+                        // We assume we already processed the result with the last task that ran and therefore skip the processing
+                        log.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
+                        return;
+                    }
+                }
+                else {
+                    if (resultIdToBeDeleted != null) {
+                        // A participant score for this exercise/participant combination does not exist and this task was triggered because a result will be deleted
+                        // It is very likely that the whole participation or exercise is about to be deleted and their participant scores were already removed
+                        // We do not need to do anything in that case
+                        log.debug("Result {} will be deleted and participant score for its participation is already gone, skipping.", resultIdToBeDeleted);
+                        return;
+                    }
+                }
+
+                // Either use the existing participant score or create a new one
+                var score = participantScore.orElseGet(() -> {
+                    switch (participant) {
+                        case Team team -> {
+                            var teamScore = new TeamScore();
+                            teamScore.setTeam(team);
+                            teamScore.setExercise(exercise);
+                            return teamScore;
+                        }
+                        case User user -> {
+                            var studentScore = new StudentScore();
+                            studentScore.setUser(user);
+                            studentScore.setExercise(exercise);
+                            return studentScore;
+                        }
+                        default -> throw new IllegalArgumentException("Unknown participant type: " + participant);
+                    }
+                });
+
+                // Now do the heavy lifting and calculate the latest score based on all results for this exercise
+                // The result that is about to be deleted is excluded from the calculation
+                if (resultIdToBeDeleted != null) {
+                    updateParticipantScore(score, resultIdToBeDeleted);
+                }
+                else {
+                    updateParticipantScore(score);
+                }
+
+                // Update the progress for competencies linked to this exercise
+                Participant scoreParticipant = score.getParticipant();
+                if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                    scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+                }
+                Participant finalScoreParticipant = scoreParticipant;
+                competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectSync(score.getExercise(), finalScoreParticipant.getParticipants()));
+            }
+            catch (Exception e) {
+                log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
+            }
+            finally {
+                // Compare-and-remove: if scheduleTask() replaced this entry with a newer task while this one was
+                // running (a running task is not interrupted, see scheduleTask()), only that
+                // newer task's own invocation may remove the entry. Removing unconditionally here would let a
+                // superseded task evict a newer, not-yet-run task from the map, making isIdle() report true while
+                // the corresponding participant score is still stale.
+                scheduledTasks.remove(participantScoreId, thisTask);
+            }
+            long end = System.currentTimeMillis();
+            log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
+        }
+    }
+
+    /**
+     * Updates the given participant score by fetching the last (rated) results from the database.
+     * If both no result and no rated result is found, the participant score is deleted.
+     *
+     * @param participantScore  The participant score to update (with the exercise eager loaded)
+     * @param resultIdsToIgnore A list of result ids to ignore when calculating the score
+     */
+    private void updateParticipantScore(ParticipantScore participantScore, Long... resultIdsToIgnore) {
+        var lastRatedResult = getLastRatedResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
+        setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
+
+        var lastResult = getLastResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
+        setLastAttributes(participantScore, lastResult, participantScore.getExercise());
+
+        // Persist the changes or delete the participant score if it is not needed anymore
+        if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
+            if (participantScore.getId() != null) {
+                // Delete the participant score if it exists in the database
+                participantScoreRepository.delete(participantScore);
+                log.debug("Deleted participant score {}.", participantScore.getId());
+            }
+        }
+        else {
+            participantScoreRepository.save(participantScore);
+            log.debug("Updated participant score {}.", participantScore.getId());
+        }
+    }
+
+    /**
+     * Get the result that can replace the currently set last result for a participant score
+     *
+     * @param participantScore  the participant score to update (user/team and exercise must be set)
+     * @param resultIdsToIgnore a list of ids to ignore when fetching the last result
+     * @return optional of new result
+     * @author Stefan Waldhauser
+     */
+    private Optional<Result> getLastResultForParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+        // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
+        Optional<Result> resultOrdered;
+        if (participantScore instanceof StudentScore studentScore) {
+            resultOrdered = resultRepository
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+        }
+        else if (participantScore instanceof TeamScore teamScore) {
+            resultOrdered = resultRepository
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+        }
+        else {
+            return Optional.empty();
+        }
+        return resultOrdered;
+    }
+
+    /**
+     * Get the result that can replace the currently set last rated result for a participant score
+     *
+     * @param participantScore  the participant score to update (user/team and exercise must be set)
+     * @param resultIdsToIgnore a list of ids to ignore when fetching the last rated result
+     * @return optional of new result
+     * @author Stefan Waldhauser
+     */
+    private Optional<Result> getLastRatedResultForParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+        // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
+        Optional<Result> ratedResultsOrdered;
+        if (participantScore instanceof StudentScore studentScore) {
+            ratedResultsOrdered = resultRepository
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+        }
+        else if (participantScore instanceof TeamScore teamScore) {
+            ratedResultsOrdered = resultRepository
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
+        }
+        else {
+            return Optional.empty();
+        }
+        return ratedResultsOrdered;
+    }
+
+    /**
+     * @author Stefan Waldhauser
+     */
+    private void setLastAttributes(ParticipantScore associatedParticipantScore, Result newLastResult, Exercise exercise) {
+        associatedParticipantScore.setLastResult(newLastResult);
+        if (newLastResult == null) {
+            associatedParticipantScore.setLastScore(null);
+            associatedParticipantScore.setLastPoints(null);
+        }
+        else {
+            associatedParticipantScore.setLastScore(newLastResult.getScore());
+            associatedParticipantScore.setLastPoints(calculatePoints(newLastResult, exercise));
+        }
+    }
+
+    /**
+     * @author Stefan Waldhauser
+     */
+    private void setLastRatedAttributes(ParticipantScore associatedParticipantScore, Result newLastRatedResult, Exercise exercise) {
+        associatedParticipantScore.setLastRatedResult(newLastRatedResult);
+        if (newLastRatedResult == null) {
+            associatedParticipantScore.setLastRatedScore(null);
+            associatedParticipantScore.setLastRatedPoints(null);
+        }
+        else {
+            associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
+            associatedParticipantScore.setLastRatedPoints(calculatePoints(newLastRatedResult, exercise));
+        }
+    }
+
+    @Nullable
+    private Double calculatePoints(Result result, Exercise exercise) {
+        Double score = result.getScore();
+        Double maxPoints = exercise.getMaxPoints();
+        if (score == null || maxPoints == null) {
+            return null;
+        }
+        return RoundingUtil.roundScoreSpecifiedByCourseSettings(score * 0.01 * maxPoints, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
+    }
+
+    /**
+     * Each participant score can be uniquely identified by the combination of exercise id and participant id.
+     *
+     * @param exerciseId    the id of the exercise
+     * @param participantId the id of the participant (user or team, depending on the exercise's setting)
+     */
+    public record ParticipantScoreId(Long exerciseId, Long participantId) {
+    }
+}

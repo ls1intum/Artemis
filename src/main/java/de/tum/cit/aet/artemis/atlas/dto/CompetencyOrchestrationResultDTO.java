@@ -1,0 +1,119 @@
+package de.tum.cit.aet.artemis.atlas.dto;
+
+import java.util.List;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * Outcome of an Atlas orchestrator run.
+ * <p>
+ * {@code processedCount} is server-internal bookkeeping and never serialized: the number of changed learning
+ * objects that actually reached the orchestrator prompt. It is {@code null} when no prompt was built (for
+ * example a preparation failure or a no-op), in which case the automatic scheduler falls back to the size of
+ * the claimed batch. Units dropped before the prompt (blank learning text, failed extraction) are excluded, so
+ * the completion toast never reports them as processed.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason,
+        @JsonIgnore @Nullable Integer processedCount) {
+
+    public CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+        this(status, summary, appliedActions, failureReason, null);
+    }
+
+    /**
+     * Returns a copy of this result that records how many changed learning objects reached the orchestrator prompt.
+     *
+     * @param count the number of exercises and lecture units rendered into the prompt
+     * @return a copy carrying the processed count
+     */
+    public CompetencyOrchestrationResultDTO withProcessedCount(int count) {
+        return new CompetencyOrchestrationResultDTO(status, summary, appliedActions, failureReason, count);
+    }
+
+    public CompetencyOrchestrationResultDTO {
+        appliedActions = appliedActions == null ? List.of() : List.copyOf(appliedActions);
+        if (status == Status.SUCCESS && summary.isBlank()) {
+            throw new IllegalArgumentException("summary must not be blank when status is SUCCESS");
+        }
+        if (status == Status.FAILED && failureReason == null) {
+            throw new IllegalArgumentException("failureReason must be set when status is FAILED");
+        }
+        if (status != Status.FAILED && status != Status.PARTIAL && failureReason != null) {
+            throw new IllegalArgumentException("failureReason must be null unless status is FAILED or PARTIAL");
+        }
+    }
+
+    public enum Status {
+        SUCCESS, PARTIAL, FAILED, IN_PROGRESS, NO_OP
+    }
+
+    /**
+     * Distinguishes the ways a run can fail without forcing the controller to parse a message
+     * string. Drives the HTTP status code returned by {@link de.tum.cit.aet.artemis.atlas.web.CompetencyOrchestrationResource}.
+     */
+    public enum FailureReason {
+        /** No {@code ChatClient} bean is configured (Atlas chat disabled or misconfigured) — surfaced as 503. */
+        NO_CHAT_CLIENT,
+        /** The LLM call itself threw — surfaced as 502. */
+        LLM_ERROR,
+        /** The shared tool-call budget was exhausted; terminal, not automatically retried. */
+        TOOL_CALL_LIMIT_EXCEEDED,
+        /** Missing or unverified terminal completion; retained for instructor review without automatic replay. */
+        INCOMPLETE_ORCHESTRATION,
+        /**
+         * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
+         * template rendering, tool-index assembly) — surfaced as 500.
+         */
+        INTERNAL_ERROR,
+        /**
+         * The exercise the orchestrator was triggered for is not a course exercise (currently:
+         * exam exercises). Mutating competencies for an exam exercise would silently affect the
+         * underlying course's competencies, which is never what the instructor wants —
+         * surfaced as 422.
+         */
+        UNSUPPORTED_EXERCISE,
+        /**
+         * The requested learning object cannot be orchestrated, for example an exercise-backed,
+         * missing, or non-course lecture unit — surfaced as 422.
+         */
+        UNSUPPORTED_LEARNING_OBJECT
+    }
+
+    /**
+     * The run completed and the orchestrator verified its terminal outcome. An empty
+     * {@code appliedActions} list means the run inspected the changed content and found nothing to
+     * change; unlike {@link #noOp(String)}, the claimed exercises were processed.
+     */
+    public static CompetencyOrchestrationResultDTO success(String summary, List<AppliedActionDTO> appliedActions) {
+        return new CompetencyOrchestrationResultDTO(Status.SUCCESS, summary, appliedActions, null);
+    }
+
+    /**
+     * The LLM run failed but had already committed at least one mutation; the caller needs the
+     * audit trail so the partial change can be reviewed/reverted.
+     */
+    public static CompetencyOrchestrationResultDTO partial(String summary, List<AppliedActionDTO> appliedActions, FailureReason failureReason) {
+        return new CompetencyOrchestrationResultDTO(Status.PARTIAL, summary, appliedActions, failureReason);
+    }
+
+    public static CompetencyOrchestrationResultDTO failed(String summary, FailureReason failureReason) {
+        return new CompetencyOrchestrationResultDTO(Status.FAILED, summary, List.of(), failureReason);
+    }
+
+    public static CompetencyOrchestrationResultDTO inProgress(String summary) {
+        return new CompetencyOrchestrationResultDTO(Status.IN_PROGRESS, summary, List.of(), null);
+    }
+
+    /**
+     * The run completed without anything to do: every claimed learning object resolved to nothing
+     * applicable or extractable. No competencies were touched.
+     */
+    public static CompetencyOrchestrationResultDTO noOp(String summary) {
+        return new CompetencyOrchestrationResultDTO(Status.NO_OP, summary, List.of(), null);
+    }
+}

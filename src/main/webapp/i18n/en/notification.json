@@ -1,0 +1,401 @@
+{
+    "artemisApp": {
+        "notification": {
+            "notifications": "Notifications",
+            "expandPopup": "Expand notifications",
+            "collapsePopup": "Collapse notifications",
+            "noNotifications": "No notifications available",
+            "title": "Title",
+            "text": "Text",
+            "notificationDate": "Notification Date",
+            "unexpectedError": "An unexpected error occurred. Please reload the page.",
+            "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
+            "by": "by",
+            "allLoaded": "No further notifications available.",
+            "liveExamExerciseUpdateNotification": "Updated Exam Exercise Problem Statement!",
+            "showAllSavedNotifications": "Show all saved notifications",
+            "hideAllCurrentlyDisplayedNotifications": "Hide all currently displayed notifications",
+            "target": {
+                "newAnswer": "View reply",
+                "newAnswerPost": "View reply",
+                "newPost": "View post",
+                "newQuestion": "View post",
+                "exerciseCreated": "View exercise",
+                "exerciseUpdated": "View exercise",
+                "attachmentUpdated": "View lecture"
+            }
+        },
+        "systemNotification": {
+            "systemNotification": "System notification",
+            "systemNotifications": "System notifications",
+            "title": "Title",
+            "text": "Text",
+            "type": "Type",
+            "expireDate": "Expiration Date",
+            "notificationDate": "Notification Date",
+            "active": "Active",
+            "expired": "Expired",
+            "scheduled": "Scheduled",
+            "createLabel": "Create a new system notification",
+            "createOrEditLabel": "Create or edit a system notification",
+            "delete": {
+                "question": "Are you sure you want to delete the system notification <strong>{{ title }}</strong>?"
+            },
+            "created": "Created new system notification with identifier {{ param }}",
+            "updated": "Updated system notification with identifier {{ param }}",
+            "deleted": "Deleted system notification with identifier {{ param }}",
+            "sendMaintenanceEmail": "Announce maintenance to all instructors via email",
+            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses.",
+            "titleMaxlength": "The notification title must not exceed 255 characters.",
+            "textMaxlength": "The notification text must not exceed 2000 characters."
+        },
+        "groupNotification": {
+            "title": {
+                "attachmentChange": "Attachment updated",
+                "exerciseReleased": "Exercise released",
+                "exercisePractice": "Exercise open for practice",
+                "quizExerciseStarted": "Quiz started",
+                "liveExamExerciseUpdate": "Live exam exercise update",
+                "exerciseUpdated": "Exercise updated",
+                "programmingTestCasesChanged": "Test cases for programming exercise changed",
+                "newManualFeedbackRequest": "A new manual feedback request has been submitted",
+                "duplicateTestCase": "Duplicate test case was found.",
+                "repositoryLocks": "Repository permissions changed",
+                "buildRun": "Build run update",
+                "newExercisePost": "New exercise message",
+                "newLecturePost": "New lecture message",
+                "newCoursePost": "New course-wide message",
+                "newExamPost": "New exam message",
+                "newAnnouncementPost": "New announcement",
+                "newReplyForExercisePost": "New reply for exercise message",
+                "newReplyForLecturePost": "New reply for lecture message",
+                "newReplyForExamPost": "New reply for exam message",
+                "newReplyForCoursePost": "New reply for course-wide message",
+                "courseArchiveStarted": "Course archival started",
+                "courseArchiveFinished": "Course archival finished",
+                "courseArchiveFailed": "Course archival failed",
+                "examArchiveStarted": "Exam archival started",
+                "examArchiveFinished": "Exam archival finished",
+                "examArchiveFailed": "Exam archival failed"
+            },
+            "text": {
+                "attachmentChange": "The attachment \"{{ placeholderValues.1 }}\" of \"{{ placeholderValues.2 }}\" in the course \"{{ placeholderValues.0 }}\" was updated.",
+                "exerciseReleased": "A new exercise \"{{ placeholderValues.1 }}\" got released.",
+                "exercisePractice": "The exercise \"{{ placeholderValues.1 }}\" is now open for practice.",
+                "quizExerciseStarted": "The quiz \"{{ placeholderValues.1 }}\" just started.",
+                "liveExamExerciseUpdate": "The exam Exercise \"{{ placeholderValues.1 }}\" got updated.",
+                "exerciseUpdated": "The exercise \"{{ placeholderValues.1 }}\" in course \"{{ placeholderValues.0 }}\" got updated.",
+                "programmingTestCasesChanged": "The test cases of the programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" were updated. The students' submissions should be rebuilt and tested in order to create new results.",
+                "newManualFeedbackRequest": "The programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" has a new manual feedback request. Please assess the feedback before the due date.",
+                "newExercisePost": "The exercise \"{{ placeholderValues.5 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",
+                "newLecturePost": "The lecture \"{{ placeholderValues.5 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",
+                "newCoursePost": "The course \"{{ placeholderValues.0 }}\" got a new course-wide post: \"{{ placeholderValues.2 }}\"",
+                "newAnnouncementPost": "The course \"{{ placeholderValues.0 }}\" got a new announcement: \"{{ placeholderValues.2 }}\"",
+                "newReplyForExercisePost": "A post from {{ placeholderValues.4 }} regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "A post from {{ placeholderValues.4 }} regarding lecture \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "A course-wide post from {{ placeholderValues.4 }} in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "courseArchiveStarted": "The course \"{{ placeholderValues.0 }}\" is being archived.",
+                "courseArchiveFinishedWithoutErrors": "The course \"{{ placeholderValues.0 }}\" has been archived.",
+                "courseArchiveFinishedWithErrors": "The course \"{{ placeholderValues.0 }}\" has been archived. Some exercises couldn't be included in the archive:<br/><br/> {{ placeholderValues.1 }}",
+                "courseArchiveFailed": "There was a problem archiving course \"{{ placeholderValues.0 }}\": <br/><br/>",
+                "examArchiveStarted": "The exam \"{{ placeholderValues.1 }}\" is being archived.",
+                "examArchiveFinishedWithoutErrors": "The exam \"{{ placeholderValues.1 }}\" has been archived.",
+                "examArchiveFinishedWithErrors": "The exam \"{{ placeholderValues.1 }}\" has been archived. Some exercises couldn't be included in the archive:<br/><br/> {{ placeholderValues.1 }}",
+                "examArchiveFailed": "There was a problem archiving exam \"{{ placeholderValues.1 }}\": <br/><br/> {{ placeholderValues.2 }}"
+            }
+        },
+        "singleUserNotification": {
+            "title": {
+                "exerciseSubmissionAssessed": "Exercise Submission Assessed",
+                "fileSubmissionSuccessful": "File submission successful",
+                "newPlagiarismCaseStudent": "New plagiarism case",
+                "newPlagiarismCaseStudentSignificantSimilarity": "New significant similarity",
+                "plagiarismCaseVerdictStudent": "Verdict for your plagiarism case",
+                "plagiarismCaseReply": "Reply from Student on Plagiarism Case",
+                "tutorialGroupRegistrationStudent": "You have been registered to a tutorial group",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from a tutorial group",
+                "tutorialGroupRegistrationTutor": "A student has been registered to your tutorial group",
+                "tutorialGroupDeregistrationTutor": "A student has been deregistered from your tutorial group",
+                "tutorialGroupMultipleRegistrationTutor": "Multiple students have been registered to your tutorial group",
+                "tutorialGroupAssigned": "You have been assigned to lead a tutorial group",
+                "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group",
+                "messageReply": "New message reply in conversation",
+                "mentionedInMessage": "You were mentioned",
+                "deleteChannel": "Channel deleted",
+                "removeUserChannel": "You have been removed from a channel",
+                "addUserChannel": "You have been added to a channel",
+                "removeUserGroupChat": "You have been removed from a group chat",
+                "addUserGroupChat": "You have been added to a group chat",
+                "createGroupChat": "New group chat",
+                "dataExportCreated": "Data export created",
+                "dataExportFailed": "Data export failed",
+                "sshKeyAdded": "New SSH key added",
+                "sshKeyExpiresSoon": "SSH key will expire soon",
+                "sshKeyHasExpired": "SSH key has expired",
+                "vcsAccessTokenAdded": "New VCS access token added",
+                "vcsAccessTokenExpired": "VCS access token has expired",
+                "vcsAccessTokenExpiresSoon": "VCS access token will expire soon"
+            },
+            "text": {
+                "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "Your post regarding lecture \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "Your post in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "exerciseSubmissionAssessed": "Your submission for the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" in the course \"{{ placeholderValues.0 }}\" has been assessed.",
+                "fileSubmissionSuccessful": "Your file for the exercise \"{{ placeholderValues.1 }}\" was successfully submitted.",
+                "newPlagiarismCaseStudent": "New plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",
+                "newPlagiarismCaseStudentSignificantSimilarity": "New significant similarity concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",
+                "plagiarismCaseVerdictStudent": "Your plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" has a verdict.",
+                "plagiarismCaseReply": "The plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" got a reply.",
+                "tutorialGroupRegistrationStudent": "You have been registered to the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupRegistrationTutor": "The student {{ placeholderValues.1 }} has been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupDeregistrationTutor": "The student {{ placeholderValues.1 }} has been deregistered from your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} students have been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "channelMessageReply": "A message in \"{{ placeholderValues.7 }}\" in course \"{{ placeholderValues.0 }}\" got a new reply: {{ placeholderValues.4 }}",
+                "messageReply": "A message in course \"{{ placeholderValues.0 }}\" got a new reply: {{ placeholderValues.4 }}",
+                "deleteChannel": "{{ placeholderValues.1 }} channel has been deleted by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserChannel": "You have been removed from channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "addUserChannel": "You have been added to channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "dataExportCreated": "Your data export has been created and can be downloaded.",
+                "dataExportFailed": "Your data export could not be created. Please try again later.",
+                "sshKeyAdded": "You have successfully added a new SSH key",
+                "sshKeyExpiresSoon": "Your SSH key with the label \"{{ placeholderValues.0 }}\" will expire on {{ placeholderValues.1 }}.",
+                "sshKeyHasExpired": "Your SSH key with the label \"{{ placeholderValues.0 }}\" has expired on {{ placeholderValues.1 }}.",
+                "vcsAccessTokenAdded": "You have successfully added a new VCS access token",
+                "vcsAccessTokenExpired": "Your personal version control access token has expired.",
+                "vcsAccessTokenExpiresSoon": "Your personal version control access token will expire in one week."
+            }
+        },
+        "tutorialGroupNotification": {
+            "title": {
+                "tutorialGroupDeleted": "Tutorial Group deleted",
+                "tutorialGroupUpdated": "Tutorial Group updated"
+            },
+            "text": {
+                "tutorialGroupDeleted": "The tutorial group {{ placeholderValues.1 }} has been deleted.",
+                "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.1 }} has been updated."
+            }
+        },
+        "conversationNotification": {
+            "title": {
+                "newMessage": "New message"
+            },
+            "text": {
+                "newMessageChannel": "New message in channel \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageGroupChat": "New message in group chat in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageDirect": "New direct message in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
+            }
+        },
+        "courseNotification": {
+            "messagePreviewUnavailable": "No message preview available.",
+            "newPostNotification": {
+                "title": "New message",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New message"
+            },
+            "newAnswerNotification": {
+                "title": "New thread answer",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "New thread answer"
+            },
+            "irisResponseNeedsReviewNotification": {
+                "title": "Iris reply needs review",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Iris reply needs review"
+            },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatic competency update",
+                "content": "Automatic competency update after changes to {{exerciseCount}} learning object(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "settingsTitle": "Automatic competency updates (instructors)"
+            },
+            "newMentionNotification": {
+                "title": "You were mentioned",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "You were mentioned"
+            },
+            "newAnnouncementNotification": {
+                "title": "New announcement",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New announcement"
+            },
+            "newExerciseNotification": {
+                "title": "New exercise",
+                "content": "{{exerciseTitle}} has been released.",
+                "settingsTitle": "New exercise"
+            },
+            "exerciseOpenForPracticeNotification": {
+                "title": "Exercise open for practice",
+                "content": "{{exerciseTitle}} is now open for practice.",
+                "settingsTitle": "Exercise open for practice"
+            },
+            "exerciseAssessedNotification": {
+                "title": "Exercise assessed",
+                "content": "{{exerciseTitle}} has been assessed.",
+                "settingsTitle": "Exercise assessed"
+            },
+            "exerciseUpdatedNotification": {
+                "title": "Exercise updated",
+                "content": "{{exerciseTitle}} was updated.",
+                "contentWithNotificationText": "{{exerciseTitle}}: {{notificationText}}",
+                "settingsTitle": "Exercise updated"
+            },
+            "quizExerciseStartedNotification": {
+                "title": "Quiz exercise started",
+                "content": "{{exerciseTitle}} just started.",
+                "settingsTitle": "Quiz exercise started"
+            },
+            "attachmentChangedNotification": {
+                "title": "Attachment changed",
+                "content": "An attachment in {{unitName}} changed.",
+                "contentWithNotificationText": "{{unitName}}: {{notificationText}}",
+                "settingsTitle": "Attachment changed"
+            },
+            "newManualFeedbackRequestNotification": {
+                "title": "Feedback requested",
+                "content": "Feedback was requested in {{exerciseTitle}}.",
+                "settingsTitle": "Feedback requested"
+            },
+            "duplicateTestCaseNotification": {
+                "title": "Test duplicate warning",
+                "content": "There is a duplicate test in {{exerciseTitle}}.",
+                "settingsTitle": "Test duplicate warning"
+            },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "New similarity",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New similarity"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "New plagiarism case",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New plagiarism case"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build update",
+                "content": "There is a new update in a build in {{exerciseTitle}}.",
+                "settingsTitle": "Build update"
+            },
+            "programmingTestCasesChangedNotification": {
+                "title": "Test cases changed",
+                "content": "Test cases changed in {{exerciseTitle}}.",
+                "settingsTitle": "Test cases changed"
+            },
+            "plagiarismCaseVerdictNotification": {
+                "title": "Plagiarism verdict",
+                "content": "New plagiarism verdict in {{exerciseTitle}}.",
+                "settingsTitle": "Plagiarism verdict"
+            },
+            "channelDeletedNotification": {
+                "title": "Channel deleted",
+                "content": "{{channelName}} was deleted in {{courseName}}.",
+                "settingsTitle": "Channel deleted"
+            },
+            "addedToChannelNotification": {
+                "title": "Added to channel",
+                "content": "You were added to {{channelName}} in {{courseName}}.",
+                "settingsTitle": "Added to channel"
+            },
+            "removedFromChannelNotification": {
+                "title": "Removed from channel",
+                "content": "You were removed from {{channelName}} in {{courseName}}.",
+                "settingsTitle": "Removed from channel"
+            },
+            "tutorialGroupAssignedNotification": {
+                "title": "Tutorial assigned",
+                "content": "You were assigned to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial assigned"
+            },
+            "tutorialGroupUnassignedNotification": {
+                "title": "Tutorial unassigned",
+                "content": "You were unassigned from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial unassigned"
+            },
+            "registeredToTutorialGroupNotification": {
+                "title": "Tutorial registration",
+                "content": "You were registered to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial registration"
+            },
+            "deregisteredFromTutorialGroupNotification": {
+                "title": "Tutorial deregistration",
+                "content": "You were deregistered from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial deregistration"
+            },
+            "tutorialGroupDeletedNotification": {
+                "title": "Tutorial deleted",
+                "content": "Tutorial group {{groupTitle}} was deleted.",
+                "settingsTitle": "Tutorial deleted"
+            },
+            "irisResponseNotification": {
+                "title": "Iris responded - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris response"
+            },
+            "temporal": {
+                "now": "Now",
+                "oneHourAgo": "1 hour ago.",
+                "hoursAgo": "{{hours}} hours ago.",
+                "today": "{{hour}}:{{minute}}",
+                "yesterday": "Yesterday, {{hour}}:{{minute}}",
+                "thisWeek": "{{day}}, {{hour}}:{{minute}}",
+                "date": "{{date}}"
+            },
+            "weekdays": {
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            },
+            "overview": {
+                "title": "Course Notifications",
+                "emptyTitle": "All done!",
+                "settingsTooltip": "Go to settings",
+                "archiveAllTooltip": "Clear all notifications",
+                "markAllAsRead": "Mark all as Read",
+                "emptyMessage": "Currently there are no notifications for this category."
+            },
+            "category": {
+                "general": "General",
+                "communication": "Communication",
+                "iris_review": "Iris Review"
+            },
+            "setting": {
+                "headline": "Course Notifications"
+            },
+            "channel": {
+                "email": "E-Mail",
+                "webapp": "Webapp",
+                "push": "Push"
+            },
+            "popup": {
+                "collapseToggle": "Collapse"
+            },
+            "preset": {
+                "dropdown": "Preference",
+                "defaultUserCourseNotificationSettingPreset": {
+                    "title": "Default",
+                    "description": "Receive only essential notifications."
+                },
+                "ignoreUserCourseNotificationSettingPreset": {
+                    "title": "Ignore all",
+                    "description": "Receive no notifications."
+                },
+                "allActivityUserCourseNotificationSettingPreset": {
+                    "title": "All activity",
+                    "description": "Receive all notifications."
+                },
+                "customUserCourseNotificationSettingPreset": {
+                    "title": "Custom",
+                    "description": "Set the settings to your specific needs. You may always change this."
+                }
+            }
+        }
+    }
+}

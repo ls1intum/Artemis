@@ -1,0 +1,99 @@
+---
+id: telemetry
+title: Telemetry
+sidebar_label: Telemetry
+last_reviewed: 2026-11-03
+---
+
+Artemis reports installation configuration to help the maintainer team understand deployments,
+support their configurations, and plan improvements. Set `artemis.telemetry.enabled: false`
+to disable reporting.
+
+## Startup reporting
+
+Only the node with both `core` and `scheduling` profiles reports telemetry. Configure exactly
+one scheduling node per installation. It sends one report **ten minutes after the application
+becomes ready**, allowing other nodes and build agents to connect. Counts are collected when
+the report is sent. Restarting another core node or a build agent does not produce a report, and shutting down the
+scheduling node before the delay expires cancels its pending report.
+
+Development servers and servers configured with `info.testServer: true` do not send telemetry.
+Artemis does not detect test servers on its own, so set the flag explicitly on every test installation.
+
+The collector identifies each installation by its URL and keeps a separate startup history.
+Repeated delivery of the same startup identifier does not add duplicate entries. The latest
+startup supplies the current installation snapshot, even if an older report arrives later.
+
+## Required configuration
+
+Every production core node refuses to start unless these properties contain meaningful values,
+independently of telemetry settings. Development servers, test servers (`info.testServer: true`), and
+dedicated build agents start without them:
+
+- `info.operatorName`: the organization operating Artemis.
+- `info.operatorAdminName`: the administrator's name.
+- `info.universityName`: the university, school, or institution using Artemis.
+
+Empty, whitespace-only, and known template values such as `Admin`, `Some Artemis Operator`,
+`Your University`, and angle-bracket placeholders are rejected. The error lists the settings
+to correct. Disabling telemetry does not bypass this startup check.
+The About page displays the values that are set.
+The university and operator are independent; neither is inferred from the other.
+
+`artemis.telemetry.sendAdminDetails: false` omits the administrator's name and contact email
+from transmission. It does not bypass local configuration validation or hide the administrator name from the About page.
+
+```yaml
+artemis:
+    telemetry:
+        enabled: true
+        sendAdminDetails: false
+        destination: https://telemetry.artemis.cit.tum.de
+
+info:
+    testServer: false
+    operatorName: <organization operating Artemis>
+    universityName: <university or institution>
+    operatorAdminName: <administrator name>
+    contact: <administrator email address>
+```
+
+## Reported information
+
+| Field | Meaning |
+| --- | --- |
+| `version`, `serverUrl`, `operator`, `universityName` | Installation version, URL, operator and institution |
+| `profiles` | Active Spring profiles on the scheduling node |
+| `ciSystem`, `versionControlSystem`, `distributedDataProvider`, `websocketBroker` | The CI system, version control system and middleware of the installation, see [below](#ci-system-and-middleware) |
+| `moduleFeatures` | Enabled module features resolved from Artemis configuration; these are not measurements of user activity |
+| `numberOfNodes` | Core Artemis nodes with recent registry heartbeats |
+| `buildAgentCount` | Connected build agents, including paused agents and core nodes that also build |
+| `isMultiNode` | Whether more than one core node is connected |
+| `dataSource` | The database in use, `postgresql` or `mysql`. Any JDBC URL that does not start with `jdbc:mysql` is reported as `postgresql` |
+| `isProductionInstance`, `isTestServer`, `isLocalLLMDeploymentEnabled` | Deployment configuration |
+| `startupId`, `startedAt` | Identifier and start time of this startup of the scheduling node's application |
+| `adminName`, `contact` | Administrator details, only when `sendAdminDetails` is enabled |
+
+Dedicated build agents are counted separately from core nodes. A node with both roles contributes
+to both counts. Missing connectivity information is omitted rather than reported as zero;
+without LocalCI, the build-agent count is zero. Ten minutes allows discovery to settle, but the
+report describes the observed topology at that time, not a guarantee that all configured nodes
+are healthy. The collector records its own receipt time separately from `startedAt`.
+
+## CI system and middleware
+
+Newer Artemis versions report which systems an installation runs. The maintainers use these values to decide which
+integrations to keep supporting, for example before removing Jenkins or MySQL in Artemis 11.
+
+| Field | Values | Derived from |
+| --- | --- | --- |
+| `ciSystem` | `localci`, `jenkins`, `none` | The `localci` and `jenkins` profiles of the scheduling node. `none` means neither is active, for example an installation without programming exercises. |
+| `versionControlSystem` | `localvc`, `none` | The `localvc` profile of the scheduling node |
+| `distributedDataProvider` | `hazelcast`, `redis`, `local` | `artemis.distributed-data.provider`, or the superseded `artemis.continuous-integration.data-store`. Hazelcast is the default. |
+| `websocketBroker` | `external`, `simple` | `external` when `spring.websocket.broker.addresses` contains at least one valid address, so that websocket messages are relayed to a broker such as ActiveMQ Artemis. `simple` is the in-memory broker of a single node. |
+
+`dataSource` reports `postgresql` or `mysql` and `buildAgentCount` the number of connected build agents, which is `0` without
+LocalCI. Reports of older Artemis versions do not contain the four fields above, and the collector keeps them unknown.
+
+Only the scheduling node reports, so the values describe that node. Dedicated build agent nodes do not report; they are
+visible only through `buildAgentCount`.

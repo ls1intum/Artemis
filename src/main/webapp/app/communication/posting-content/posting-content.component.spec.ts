@@ -1,0 +1,647 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PostingMarkdownComponent, postingReferencePlaceholder } from 'app/communication/posting-content/posting-markdown/posting-markdown.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/communication.util';
+import { Observable, of } from 'rxjs';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    communicationCourse,
+    communicationCoursePosts,
+    communicationExercisePosts,
+    communicationGeneralCourseWidePosts,
+    communicationLecturePosts,
+} from 'test/helpers/sample/communication-sample-data';
+import { Params } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('PostingContentComponent', () => {
+    let component: PostingContentComponent;
+    let fixture: ComponentFixture<PostingContentComponent>;
+    let communicationService: CommunicationService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                PostingContentComponent,
+                MockComponent(PostingMarkdownComponent),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: CommunicationService, useClass: MockCommunicationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+
+        fixture = TestBed.createComponent(PostingContentComponent);
+        component = fixture.componentInstance;
+        communicationService = TestBed.inject(CommunicationService);
+    });
+
+    it.each([
+        '> [link](https://a.com/\n> "#123")',
+        '> <a\n> href="https://a.com/#123">link</a>',
+        '$\\text{#123}$',
+        '$$\\text{#123}$$',
+
+        '&#169;',
+        '&#xA9;',
+        '&amp;#169;',
+        '&#38;#169;',
+        '&#x26;#169;',
+        '\\&#169;',
+        '\\#123',
+        '`#123`',
+        '``#123 ` literal``',
+        '```\n#123\n```',
+        '~~~ts\n#123\n~~~',
+        '```\n#123',
+        '    #123',
+        '> ```\n> #123\n> ```',
+        '- item\n\n  ```\n  #123\n  ```',
+        '`[user]Anna(anna)[/user]`',
+        '`![image](image.png)`',
+    ])('keeps literal Markdown out of reference splitting: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        expect(component.getPatternMatches()).toEqual([]);
+    });
+
+    it.each([
+        '> `#9` then #9',
+        'a | b | c\n---|---|---\n![text | extra](file.png) | #9',
+        '&noEntity;#9',
+
+        'a | b\n---|---\n`unclosed | #9`',
+        'a | b\n---|---\na\\|b | #9',
+        'Copyright &#169; and #9',
+        '`#123` and #9',
+        '``#123 ` literal`` and #9',
+        '```\n#123\n```\n\n#9',
+        '~~~\n#123\n~~~\n\n#9',
+        '> `#123` and #9',
+        '- `#123` and #9',
+        '😀\r\n\r\n`#123` and #9',
+    ])('retains real references and source offsets beside literal content: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        const startIndex = source.lastIndexOf('#9');
+        expect(component.getPatternMatches()).toEqual([{ startIndex, endIndex: startIndex + 2, referenceType: ReferenceType.POST }]);
+    });
+
+    it.each(['\\[user]#9(a)[/user] #10', '\\![#9](url) #10', 'a | b\n---|---\n\\![#9](url) | #10'])('maps nested candidates after an escaped outer reference: %s', (source) => {
+        fixture.componentRef.setInput('content', source);
+        expect(component.getPatternMatches()).toEqual([
+            { startIndex: source.indexOf('#9'), endIndex: source.indexOf('#9') + 2, referenceType: ReferenceType.POST },
+            { startIndex: source.indexOf('#10'), endIndex: source.indexOf('#10') + 3, referenceType: ReferenceType.POST },
+        ]);
+    });
+
+    it('should set course and posts for course on initialization', async () => {
+        component.ngOnInit();
+        await fixture.whenStable();
+        expect(component.currentlyLoadedPosts).toEqual(communicationCoursePosts);
+    });
+
+    it('should calculate correct pattern matches for content without reference', () => {
+        fixture.componentRef.setInput('content', 'I do not want to reference a Post.');
+        expect(component.getPatternMatches()).toEqual([]);
+        fixture.componentRef.setInput('content', 'I do not want to reference a Post - #yolo.');
+        expect(component.getPatternMatches()).toEqual([]);
+        fixture.componentRef.setInput('content', '##I do not want to reference a Post.');
+        expect(component.getPatternMatches()).toEqual([]);
+        fixture.componentRef.setInput('content', '## 1. do not want to reference a Post.');
+        expect(component.getPatternMatches()).toEqual([]);
+    });
+
+    it('should calculate correct pattern matches for content with one post reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference #4!');
+        const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with post references', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference #4 and #10 in my posting content.');
+        const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
+        const secondMatch = { startIndex: 30, endIndex: 33, referenceType: ReferenceType.POST } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch, secondMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one file upload exercise reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [file-upload](courses/1/exercises/1)File Upload Exercise[/file-upload]!');
+        const firstMatch = {
+            startIndex: 23,
+            endIndex: 93,
+            referenceType: ReferenceType.FILE_UPLOAD,
+        } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one modeling exercise reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [modeling](courses/1/exercises/1)Modeling Exercise[/modeling]!');
+        const firstMatch = { startIndex: 23, endIndex: 84, referenceType: ReferenceType.MODELING } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one quiz exercise reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [quiz](courses/1/exercises/1)Quiz Exercise[/quiz]!');
+        const firstMatch = { startIndex: 23, endIndex: 72, referenceType: ReferenceType.QUIZ } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one programming exercise reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [programming](courses/1/exercises/1)Programming Exercise[/programming]!');
+        const firstMatch = {
+            startIndex: 23,
+            endIndex: 93,
+            referenceType: ReferenceType.PROGRAMMING,
+        } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one text exercise reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [text](courses/1/exercises/1)Text Exercise[/text]!');
+        const firstMatch = { startIndex: 23, endIndex: 72, referenceType: ReferenceType.TEXT } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one lecture reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [lecture](courses/1/lectures/1)Lecture[/lecture]!');
+        const firstMatch = { startIndex: 23, endIndex: 71, referenceType: ReferenceType.LECTURE } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one attachment reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [attachment](attachmentPath/attachment.pdf)PDF File[/attachment]!');
+        const firstMatch = {
+            startIndex: 23,
+            endIndex: 87,
+            referenceType: ReferenceType.ATTACHMENT,
+        } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one user reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [user]name(login)[/user]!');
+        const firstMatch = { startIndex: 23, endIndex: 47, referenceType: ReferenceType.USER } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should calculate correct pattern matches for content with one channel reference', () => {
+        fixture.componentRef.setInput('content', 'I do want to reference [channel]test(1)[/channel]!');
+        const firstMatch = { startIndex: 23, endIndex: 49, referenceType: ReferenceType.CHANNEL } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should display undo delete prompt when isDeleted is set to true', () => {
+        fixture.componentRef.setInput('isDeleted', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.posting-content-undo-delete')).not.toBeNull();
+        fixture.componentRef.setInput('isDeleted', false);
+    });
+
+    it('should calculate correct pattern matches for content with post, multiple exercise, lecture and attachment references', () => {
+        fixture.componentRef.setInput(
+            'content',
+            'I do want to reference #4, #10, ' +
+                '[file-upload](courses/1/exercises/1)File Upload Exercise[/file-upload], ' +
+                '[modeling](courses/1/exercises/1)Modeling Exercise[/modeling], ' +
+                '[quiz](courses/1/exercises/1)Quiz Exercise[/quiz], ' +
+                '[programming](courses/1/exercises/1)Programming Exercise[/programming], ' +
+                '[text](courses/1/exercises/1)Text Exercise[/text], ' +
+                '[lecture](courses/1/lectures/1)Lecture[/lecture], and ' +
+                '[attachment](attachmentPath/attachment.pdf)PDF File[/attachment] in my posting content' +
+                '[user]name(login)[/user]! ' +
+                'Check [channel]test(1)[/channel], as well!',
+        );
+
+        const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
+        const secondMatch = { startIndex: 27, endIndex: 30, referenceType: ReferenceType.POST } as PatternMatch;
+        const thirdMatch = {
+            startIndex: 32,
+            endIndex: 102,
+            referenceType: ReferenceType.FILE_UPLOAD,
+        } as PatternMatch;
+        const fourthMatch = {
+            startIndex: 104,
+            endIndex: 165,
+            referenceType: ReferenceType.MODELING,
+        } as PatternMatch;
+        const fifthMatch = { startIndex: 167, endIndex: 216, referenceType: ReferenceType.QUIZ } as PatternMatch;
+        const sixthMatch = {
+            startIndex: 218,
+            endIndex: 288,
+            referenceType: ReferenceType.PROGRAMMING,
+        } as PatternMatch;
+        const seventhMatch = { startIndex: 290, endIndex: 339, referenceType: ReferenceType.TEXT } as PatternMatch;
+        const eightMatch = { startIndex: 341, endIndex: 389, referenceType: ReferenceType.LECTURE } as PatternMatch;
+        const ninthMatch = {
+            startIndex: 395,
+            endIndex: 459,
+            referenceType: ReferenceType.ATTACHMENT,
+        } as PatternMatch;
+        const tenthMatch = { startIndex: 481, endIndex: 505, referenceType: ReferenceType.USER } as PatternMatch;
+        const eleventhMath = {
+            startIndex: 513,
+            endIndex: 539,
+            referenceType: ReferenceType.CHANNEL,
+        } as PatternMatch;
+
+        expect(component.getPatternMatches()).toEqual([
+            firstMatch,
+            secondMatch,
+            thirdMatch,
+            fourthMatch,
+            fifthMatch,
+            sixthMatch,
+            seventhMatch,
+            eightMatch,
+            ninthMatch,
+            tenthMatch,
+            eleventhMath,
+        ]);
+    });
+
+    describe('Computing posting content parts', () => {
+        it('should not include a reference and render the content unchanged for empty patternMatches', () => {
+            fixture.componentRef.setInput('content', 'I do not want to reference a Post.');
+            component.computePostingContentParts([]);
+            expect(component.postingContentParts()).toEqual([]);
+            expect(component.postingMarkdown()).toBe('I do not want to reference a Post.');
+        });
+
+        it('should include content before and reference as well as a linked reference within an exercise context', async () => {
+            // currently loaded posts will be set to a list of posts having an exercise context -> simulating being at an exercise page
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationExercisePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.currentlyLoadedPosts).toEqual(communicationExercisePosts);
+            // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
+            // i.e. being shown in the detail view of the discussion section on the current exercise page
+            const idOfExercisePostToReference = component.currentlyLoadedPosts[0].id!;
+            fixture.componentRef.setInput('content', `I want to reference #${idOfExercisePostToReference} in the same exercise context.`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfExercisePostToReference}` },
+                    referenceStr: `#${idOfExercisePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as unknown as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' in the same exercise context.');
+        });
+
+        it('should include content before and reference as well as a linked reference within a lecture context', async () => {
+            // currently loaded posts will be set to a list of posts having a lecture context -> simulating being at a lecture page
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.currentlyLoadedPosts).toEqual(communicationLecturePosts);
+            // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
+            // i.e. being shown in the detail view of the discussion section on the current lecture page
+            const idOfLecturePostToReference = component.currentlyLoadedPosts[0].id!;
+            fixture.componentRef.setInput('content', `I want to reference #${idOfLecturePostToReference} in the same lecture context.`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfLecturePostToReference}` },
+                    referenceStr: `#${idOfLecturePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' in the same lecture context.');
+        });
+
+        it('should include content before and reference as well as a linked reference within the course discussion overview', async () => {
+            // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.currentlyLoadedPosts).toEqual(communicationGeneralCourseWidePosts);
+            // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
+            // i.e. being shown in the detail view of the course overview
+            const idOfGeneralCourseWidePost = component.currentlyLoadedPosts[0].id!;
+            fixture.componentRef.setInput(
+                'content',
+                `I want to reference #${idOfGeneralCourseWidePost} with course-wide context while currently being at course discussion overview.`,
+            );
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfGeneralCourseWidePost}` },
+                    referenceStr: `#${idOfGeneralCourseWidePost}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with course-wide context while currently being at course discussion overview.',
+            );
+        });
+
+        it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', async () => {
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
+            // and rather being queried for in the course overview
+            const idOfLecturePostToReference = communicationLecturePosts[0].id!;
+            fixture.componentRef.setInput(
+                'content',
+                `I want to reference #${idOfLecturePostToReference} with lecture context while currently being at the course discussion overview.`,
+            );
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfLecturePostToReference}` },
+                    referenceStr: `#${idOfLecturePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with lecture context while currently being at the course discussion overview.',
+            );
+        });
+
+        it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', async () => {
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationGeneralCourseWidePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
+            // and rather being queried for in the course overview
+            const idOfExercisePostToReference = communicationExercisePosts[0].id!;
+            fixture.componentRef.setInput(
+                'content',
+                `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at the course discussion overview.`,
+            );
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfExercisePostToReference}` },
+                    referenceStr: `#${idOfExercisePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with exercise context while currently being at the course discussion overview.',
+            );
+        });
+
+        it('should compute parts when referencing a post with course-wide context while being at a lecture page', async () => {
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
+            // and rather being queried for in the course overview
+            const idOfCourseWidePostToReference = communicationGeneralCourseWidePosts[0].id!;
+            fixture.componentRef.setInput('content', `I want to reference #${idOfCourseWidePostToReference} with course-wide context while currently being at a lecture page.`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfCourseWidePostToReference}` },
+                    referenceStr: `#${idOfCourseWidePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe(
+                'I want to reference ' + postingReferencePlaceholder(0) + ' with course-wide context while currently being at a lecture page.',
+            );
+        });
+
+        it('should compute parts when referencing a post with lecture context while being at a lecture page', async () => {
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(of(communicationLecturePosts) as Observable<Post[]>);
+            component.ngOnInit();
+            await fixture.whenStable();
+            // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
+            // and rather being queried for in the course overview
+            const idOfExercisePostToReference = communicationExercisePosts[0].id!;
+            fixture.componentRef.setInput('content', `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at a lecture page.`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses', communicationCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfExercisePostToReference}` },
+                    referenceStr: `#${idOfExercisePostToReference}`,
+                    referenceType: ReferenceType.POST,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + ' with exercise context while currently being at a lecture page.');
+        });
+
+        it('should compute parts when referencing a file upload exercise', () => {
+            fixture.componentRef.setInput('content', `I want to reference [file-upload]File Upload Exercise(courses/1/exercises/1)[/file-upload].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/exercises/1'],
+                    referenceStr: `File Upload Exercise`,
+                    referenceType: ReferenceType.FILE_UPLOAD,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a modeling exercise', () => {
+            fixture.componentRef.setInput('content', `I want to reference [modeling]Modeling Exercise(courses/1/exercises/1)[/modeling].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/exercises/1'],
+                    referenceStr: `Modeling Exercise`,
+                    referenceType: ReferenceType.MODELING,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a quiz exercise', () => {
+            fixture.componentRef.setInput('content', `I want to reference [quiz]Quiz Exercise(courses/1/exercises/1)[/quiz].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/exercises/1'],
+                    referenceStr: `Quiz Exercise`,
+                    referenceType: ReferenceType.QUIZ,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a programming exercise', () => {
+            fixture.componentRef.setInput('content', `I want to reference [programming]Programming Exercise(courses/1/exercises/1)[/programming].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/exercises/1'],
+                    referenceStr: `Programming Exercise`,
+                    referenceType: ReferenceType.PROGRAMMING,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a text exercise', () => {
+            fixture.componentRef.setInput('content', `I want to reference [text]Text Exercise(courses/1/exercises/1)[/text].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/exercises/1'],
+                    referenceStr: `Text Exercise`,
+                    referenceType: ReferenceType.TEXT,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a lecture', () => {
+            fixture.componentRef.setInput('content', `I want to reference [lecture]Lecture 1(courses/1/lectures/1)[/lecture].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['courses/1/lectures/1'],
+                    referenceStr: `Lecture 1`,
+                    referenceType: ReferenceType.LECTURE,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing an attachment', () => {
+            fixture.componentRef.setInput('content', `I want to reference [attachment]PDF File(attachmentPath/attachment.pdf)[/attachment].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/core/files/attachments/';
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: `PDF File`,
+                    referenceType: ReferenceType.ATTACHMENT,
+                    attachmentToReference: attachmentDirectory + 'attachmentPath/attachment.pdf',
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing an lecture unit', () => {
+            fixture.componentRef.setInput('content', `I want to reference [lecture-unit]PDF File lecture unit(attachmentPath/attachmentUnit.pdf)[/lecture-unit].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/core/files/attachments/';
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: `PDF File lecture unit`,
+                    referenceType: ReferenceType.ATTACHMENT_UNITS,
+                    attachmentToReference: attachmentDirectory + 'attachmentPath/attachmentUnit.pdf',
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a single slide', () => {
+            fixture.componentRef.setInput('content', `I want to reference [slide]PDF File Slide 7(slides/attachment-unit/123/slide/9)[/slide].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            // the attachment directory that is removed when showing the text in edit mode
+            const attachmentDirectory = 'api/core/files/attachments/';
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: `PDF File Slide 7`,
+                    referenceType: ReferenceType.SLIDE,
+                    slideToReference: attachmentDirectory + 'slides/attachment-unit/123/slide/9',
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a user', () => {
+            fixture.componentRef.setInput('content', `This message is important for [user]Test(test_login)[/user].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: `Test`,
+                    referenceType: ReferenceType.USER,
+                    queryParams: { referenceUserLogin: 'test_login' } as Params,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('This message is important for ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a faq', () => {
+            fixture.componentRef.setInput('content', `I want to reference [faq]faq(/courses/1/faq?faqId=45)[/faq].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    linkToReference: ['/courses/1/faq'],
+                    referenceStr: `faq`,
+                    referenceType: ReferenceType.FAQ,
+                    queryParams: { faqId: '45' },
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('I want to reference ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should compute parts when referencing a channel', () => {
+            fixture.componentRef.setInput('content', `This topic belongs to [channel]test(1)[/channel].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: 1 } as Params,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('This topic belongs to ' + postingReferencePlaceholder(0) + '.');
+        });
+
+        it('should set channelID undefined if referenced a channel id is not a number', () => {
+            fixture.componentRef.setInput('content', `This topic belongs to [channel]test(abc)[/channel].`);
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts()).toEqual([
+                {
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: undefined } as Params,
+                } as PostingContentPart,
+            ]);
+            expect(component.postingMarkdown()).toBe('This topic belongs to ' + postingReferencePlaceholder(0) + '.');
+        });
+    });
+});

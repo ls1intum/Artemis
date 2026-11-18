@@ -1,0 +1,567 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { SortService } from 'app/foundation/service/sort.service';
+import dayjs from 'dayjs/esm';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { InformationBox, InformationBoxComponent, InformationBoxLayout } from 'app/shared-ui/information-box/information-box.component';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
+
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+
+/**
+ * Live, quiz-specific information shown in the exercise header during a live or practice quiz participation,
+ * replacing the dedicated quiz header row that used to sit above the questions.
+ */
+export interface QuizLiveHeaderInfo {
+    /** Whether the live remaining-time countdown should be shown (quiz running, not yet submitted). */
+    showRemainingTime: boolean;
+    /** Humanized remaining-time text, e.g. "12 min 30 s". */
+    remainingTimeText?: string;
+    /** State color name of the remaining time (e.g. 'warning', 'danger'); undefined for the default color. */
+    remainingTimeColor?: string;
+    /** Whether the "results available" date should be shown (after submit / once time is up). */
+    showResultsAvailable: boolean;
+    resultsAvailableDate?: dayjs.Dayjs;
+    /** Whether the quiz's total duration should be shown (waiting to start, before the countdown begins). */
+    showDuration?: boolean;
+    /** Humanized duration text, e.g. "45min". */
+    durationText?: string;
+}
+
+/** Field-wise equality for {@link QuizLiveHeaderInfo}, used as the signal's `equal` so the per-tick rebuild only notifies when a displayed value changes. */
+export function quizLiveHeaderInfoEqual(a: QuizLiveHeaderInfo | undefined, b: QuizLiveHeaderInfo | undefined): boolean {
+    if (a === b) {
+        return true;
+    }
+    if (!a || !b) {
+        return false;
+    }
+    return (
+        a.showRemainingTime === b.showRemainingTime &&
+        a.remainingTimeText === b.remainingTimeText &&
+        a.remainingTimeColor === b.remainingTimeColor &&
+        a.showResultsAvailable === b.showResultsAvailable &&
+        (a.resultsAvailableDate === b.resultsAvailableDate || (!!a.resultsAvailableDate && !!b.resultsAvailableDate && a.resultsAvailableDate.isSame(b.resultsAvailableDate))) &&
+        a.showDuration === b.showDuration &&
+        a.durationText === b.durationText
+    );
+}
+
+/**
+ * Where an instance of the information boxes renders, which decides which boxes it shows.
+ *
+ * `panel` is the full set, above the problem statement. `titleBar` is only the pair the exercise title bar takes over
+ * when it has the room for them — the submission due date and the status — laid out as one-line boxes beside the
+ * buttons, the way the quiz countdown already sits there.
+ */
+export type InformationPlacement = 'panel' | 'titleBar';
+
+@Component({
+    selector: 'jhi-exercise-headers-information',
+    templateUrl: './exercise-headers-information.component.html',
+    imports: [
+        TumAetUiTooltipDirective,
+        SubmissionResultStatusComponent,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
+        ExerciseCategoriesComponent,
+        ArtemisDatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisTranslatePipe,
+        CommonModule,
+        ResultHistoryDropdownComponent,
+    ],
+    /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
+    We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
+    will not be projected into their specific slot of the "InformationBoxComponent" component.*/
+    preserveWhitespaces: false,
+})
+export class ExerciseHeadersInformationComponent {
+    private sortService = inject(SortService);
+    private serverDateService = inject(ArtemisServerDateService);
+
+    /** Captured once: the server time used as the reference point for all relative/absolute date displays. */
+    private readonly now = this.serverDateService.now();
+
+    readonly resultHistoryDropdown = viewChild(ResultHistoryDropdownComponent);
+
+    readonly viewingSubmissionChange = output<boolean>();
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly dayjs = dayjs;
+
+    readonly exercise = input.required<Exercise>();
+    readonly studentParticipation = input<StudentParticipation>();
+    /** Explicitly provided course; falls back to the exercise's own course via {@link resolvedCourse}. */
+    readonly course = input<Course>();
+    readonly submissionPolicy = input<SubmissionPolicy>();
+    readonly isPractice = input<boolean>(false);
+    /**
+     * Whether the result-history trigger reacts to hover and click. False where the header is a read-only preview (e.g.
+     * the variant cards), keeping the tooltip and results popover inert without an outside style override.
+     */
+    readonly interactive = input<boolean>(true);
+    /**
+     * Whether the dates an enclosing timeline governs are shown: the start date, the submission due date (with the
+     * live-quiz countdown that stands in for it) and the assessment due date. False on the variant cards of an
+     * exercise group, whose server-side timeline overwrites those three on every member
+     * ({@code ExerciseVariantGroupService#applyGroupTimeline}), so the group header states them once instead of once
+     * per card. Two dates are not covered, because neither is the group's to state: the complaint due date, derived
+     * per student from that student's last result, and a participation's individual due date (see
+     * {@link hasIndividualDueDate}).
+     */
+    readonly showSharedTimelineDates = input<boolean>(true);
+    /** True while a fresh practice quiz attempt is in progress, so result-derived boxes show the in-progress state instead of the previous attempt's result. */
+    readonly quizPracticeInProgress = input<boolean>(false);
+    readonly athenaEnabled = input<boolean>(false);
+    readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+    /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
+    /** Live quiz info to render as extra header boxes; undefined for non-quiz exercises or outside a live/practice participation. */
+    readonly quizLiveHeaderInfo = input<QuizLiveHeaderInfo>();
+    /** See {@link InformationPlacement}. */
+    readonly placement = input<InformationPlacement>('panel');
+    /**
+     * Whether the title bar is currently rendering the pills itself, in which case the panel leaves them out rather
+     * than stating the same two facts twice on one screen. Only the `panel` placement reads this.
+     */
+    readonly titleBarShowsPills = input<boolean>(false);
+
+    /**
+     * Test hook for the row, one per placement. Both instances are mounted at once whenever the bar shows the pills, so
+     * a shared hook would match twice and every Playwright assertion using it would fail on strict mode. The status
+     * itself carries `exercise-status` in either placement, since it is only ever rendered by one of them.
+     */
+    protected readonly rootTestId = computed<string>(() => (this.placement() === 'titleBar' ? 'exercise-title-bar-information' : 'exercise-headers-information'));
+
+    /** How each box arranges itself: stacked in the panel, one line in the title bar so it sits at the bar's height. */
+    protected readonly boxLayout = computed<InformationBoxLayout>(() => (this.placement() === 'titleBar' ? 'inline' : 'stacked'));
+
+    /** Text color class of a relative date: the state color for 'danger', 'warning', 'success' and 'info', the inherited color otherwise. */
+    protected timeAgoColorClass(color: string | undefined): string {
+        switch (color) {
+            case 'danger':
+                return 'text-state-danger';
+            case 'warning':
+                return 'text-state-warning';
+            case 'success':
+                return 'text-state-success';
+            case 'info':
+                return 'text-state-info';
+            default:
+                return '';
+        }
+    }
+
+    /** Course resolved from the explicit input, falling back to the exercise's own course. */
+    readonly resolvedCourse = computed<Course | undefined>(() => this.course() ?? getCourseFromExercise(this.exercise()));
+
+    readonly dueDate = computed<dayjs.Dayjs | undefined>(() => getExerciseDueDate(this.exercise(), this.studentParticipation()));
+
+    /**
+     * Whether the shown due date comes from the participation's individual due date rather than from the exercise.
+     * Such an extension is granted per student, so no enclosing group timeline governs it and it stays visible even
+     * when {@link showSharedTimelineDates} suppresses the group-governed dates.
+     */
+    private readonly hasIndividualDueDate = computed<boolean>(() => this.studentParticipation()?.individualDueDate !== undefined && this.exercise().dueDate !== undefined);
+
+    private readonly allResults = computed<Result[]>(() => getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
+
+    /** Results across all submissions, sorted by id descending (newest first). The updated participation by the websocket is not guaranteed to be sorted. */
+    readonly sortedHistoryResults = computed<Result[]>(() => {
+        // Copy before sorting: allResults() is a shared memoized array and sortByProperty sorts in place.
+        const results = Array.from(this.allResults());
+        this.sortService.sortByProperty(results, 'id', false);
+        return results;
+    });
+
+    readonly numberOfSubmissions = computed<number>(() => countSubmissions(this.studentParticipation()));
+
+    /** The previous result currently selected in the result-history dropdown, or undefined when the latest result is shown. */
+    readonly displayedResult = signal<Result | undefined>(undefined);
+
+    /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
+    private readonly latestResult = computed<Result | undefined>(() => {
+        const results = this.sortedHistoryResults();
+        // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
+        return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
+    });
+
+    /** The result the header reflects: the one selected in the history dropdown, falling back to the latest. */
+    readonly relevantResult = computed<Result | undefined>(() => this.displayedResult() ?? this.latestResult());
+
+    readonly achievedPoints = computed<number>(() => {
+        const relevantResult = this.quizPracticeInProgress() ? undefined : this.relevantResult();
+        if (relevantResult?.score === undefined) {
+            return 0;
+        }
+        return roundValueSpecifiedByCourseSettings((relevantResult.score * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
+    });
+
+    readonly currentFeedbackRequestCount = computed<number>(
+        () => this.allResults().filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true).length,
+    );
+
+    readonly individualComplaintDueDate = computed<dayjs.Dayjs | undefined>(() => {
+        const course = this.resolvedCourse();
+        if (!course?.maxComplaintTimeDays) {
+            return undefined;
+        }
+        return ComplaintService.getIndividualComplaintDueDate(this.exercise(), course.maxComplaintTimeDays, this.allResults().last(), this.studentParticipation());
+    });
+
+    /**
+     * The submission due date box, or undefined when there is none to show. Held apart from the other due dates
+     * because it is one of the two boxes the title bar takes over; the assessment and complaint due dates stay in the
+     * panel either way.
+     *
+     * A running quiz shows its remaining time in the title bar, so there is no due date box while it runs: the clock
+     * takes that slot. While the quiz participation component hasn't mounted yet, `quizLiveHeaderInfo` is still
+     * undefined; the box is skipped for that brief window too, otherwise the due date flashes before the clock appears
+     * (the exercise's own due date is known immediately, the quiz info lags behind it).
+     *
+     * Under an enclosing group timeline ({@link showSharedTimelineDates}) none of that applies: the group header
+     * states the shared deadline, leaving only a per-student extension for this to show.
+     */
+    readonly submissionDueItem = computed<InformationBox | undefined>(() => {
+        if (!this.showSharedTimelineDates()) {
+            // A variant card's group header states the shared deadline once, so only a per-student extension belongs
+            // here. The quiz guards below cannot apply to it: a variant card never runs a live quiz.
+            return this.hasIndividualDueDate() ? this.getDueDateItem() : undefined;
+        }
+        const quizInfo = this.quizLiveHeaderInfo();
+        const titleBarShowsQuizTime = !!(quizInfo?.showRemainingTime || quizInfo?.showDuration);
+        if (titleBarShowsQuizTime || (this.exercise().type === ExerciseType.QUIZ && quizInfo === undefined)) {
+            return undefined;
+        }
+        return this.getDueDateItem();
+    });
+
+    /**
+     * The boxes the title bar renders when it has the room: the submission due date, when there is one, and the
+     * status. This is the whole set for the `titleBar` placement, and exactly what the panel drops in return.
+     */
+    readonly titleBarPillItems = computed<InformationBox[]>(() => {
+        const items: InformationBox[] = [];
+        const dueDateItem = this.submissionDueItem();
+        if (dueDateItem) {
+            items.push(dueDateItem);
+        }
+        items.push(this.getSubmissionStatusItem());
+        return items;
+    });
+
+    /** All header information boxes, in display order: the generic exercise boxes first, then the live quiz boxes last. */
+    readonly informationBoxItems = computed<InformationBox[]>(() => {
+        if (this.placement() === 'titleBar') {
+            return this.titleBarPillItems();
+        }
+        // The two pills are the title bar's when it shows them, so the panel states each fact once, not twice.
+        const panelShowsPills = !this.titleBarShowsPills();
+        const items: InformationBox[] = [...this.getPointsItems()];
+        const dueDateItem = this.submissionDueItem();
+        if (panelShowsPills && dueDateItem) {
+            items.push(dueDateItem);
+        }
+        items.push(...this.getAssessmentAndComplaintDueItems());
+        const startDateItem = this.showSharedTimelineDates() ? this.getStartDateItem() : undefined;
+        if (startDateItem) {
+            items.push(startDateItem);
+        }
+        if (panelShowsPills) {
+            items.push(this.getSubmissionStatusItem());
+        }
+        const submissionPolicyItem = this.getSubmissionPolicyItemIfActive();
+        if (submissionPolicyItem) {
+            items.push(submissionPolicyItem);
+        }
+        const staticCodeAnalysisItem = this.getStaticCodeAnalysisItemIfEnabled();
+        if (staticCodeAnalysisItem) {
+            items.push(staticCodeAnalysisItem);
+        }
+        const aiFeedbackItem = this.getAiFeedbackItemIfEnabled();
+        if (aiFeedbackItem) {
+            items.push(aiFeedbackItem);
+        }
+        const difficultyItem = this.getDifficultyItem();
+        if (difficultyItem) {
+            items.push(difficultyItem);
+        }
+        const categoryItem = this.getCategoryItem();
+        if (categoryItem) {
+            items.push(categoryItem);
+        }
+        items.push(...this.getQuizLiveInfoItems());
+        return items;
+    });
+
+    getPointsItems(): InformationBox[] {
+        const { maxPoints, bonusPoints } = this.exercise();
+        if (!maxPoints) {
+            return [];
+        }
+        const achievedPoints = this.achievedPoints();
+        if (bonusPoints) {
+            let achievedBonusPoints = 0;
+            // If the student has more points than the max points, the bonus points are calculated
+            if (achievedPoints > maxPoints) {
+                achievedBonusPoints = roundValueSpecifiedByCourseSettings(achievedPoints - maxPoints, this.resolvedCourse());
+            }
+            return [this.getPointsItem('points', maxPoints, achievedPoints - achievedBonusPoints), this.getPointsItem('bonus', bonusPoints, achievedBonusPoints)];
+        }
+        return [this.getPointsItem('points', maxPoints, achievedPoints)];
+    }
+
+    /** The due dates that follow the submission deadline. They stay in the panel wherever the submission due date goes. */
+    getAssessmentAndComplaintDueItems(): InformationBox[] {
+        const items: InformationBox[] = [];
+        const exercise = this.exercise();
+        // If the due date is in the past and the assessment due date is in the future, show the assessment due date
+        if (this.showSharedTimelineDates() && this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
+            items.push({
+                title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
+                content: {
+                    type: 'dateTime',
+                    value: exercise.assessmentDueDate,
+                },
+                isContentComponent: true,
+                tooltip: 'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip',
+                tooltipParams: { date: exercise.assessmentDueDate.format('lll') },
+            });
+        }
+        // If the assessment due date is in the past and the complaint due date is in the future, show the complaint due date
+        const complaintDueDate = this.individualComplaintDueDate();
+        if (exercise.assessmentDueDate?.isBefore(this.now) && complaintDueDate?.isAfter(this.now)) {
+            items.push({
+                title: 'artemisApp.courseOverview.exerciseDetails.complaintDue',
+                content: {
+                    type: 'dateTime',
+                    value: complaintDueDate,
+                },
+                isContentComponent: true,
+                tooltip: 'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip',
+                tooltipParams: { date: complaintDueDate.format('lll') },
+            });
+        }
+        return items;
+    }
+
+    getDueDateItem(): InformationBox | undefined {
+        const dueDate = this.dueDate();
+        if (!dueDate) {
+            return undefined;
+        }
+        const isDueDateInThePast = dueDate.isBefore(this.now);
+        // If the due date is less than a day away, the color change to red
+        const dueDateStatusBadge = dueDate.isBetween(this.now, this.now.add(1, 'day')) ? 'danger' : 'body-color';
+        // If the due date is less than a week away, text is displayed relatively e.g. 'in 2 days'
+        const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(dueDate, this.now);
+
+        if (isDueDateInThePast) {
+            return {
+                title: 'artemisApp.courseOverview.exerciseDetails.submissionDueOver',
+                content: {
+                    type: 'dateTime',
+                    value: dueDate,
+                },
+                isContentComponent: true,
+            };
+        }
+
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
+            content: {
+                type: shouldDisplayDueDateRelative ? 'timeAgo' : 'dateTime',
+                value: dueDate,
+            },
+            isContentComponent: true,
+            tooltip: shouldDisplayDueDateRelative ? 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' : undefined,
+            contentColor: dueDateStatusBadge,
+            tooltipParams: { date: dueDate.format('lll') },
+        };
+    }
+
+    getStartDateItem(): InformationBox | undefined {
+        const startDate = this.exercise().startDate;
+        if (!startDate || !this.now.isBefore(startDate)) {
+            return undefined;
+        }
+        // If the start date is less than a week away, text is displayed relatively e.g. 'in 2 days'
+        const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(startDate, this.now);
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.startDate',
+            content: {
+                type: shouldDisplayStartDateRelative ? 'timeAgo' : 'dateTime',
+                value: startDate,
+            },
+            isContentComponent: true,
+            tooltip: shouldDisplayStartDateRelative ? 'artemisApp.exerciseActions.startExerciseBeforeStartDate' : undefined,
+        };
+    }
+
+    getDifficultyItem(): InformationBox | undefined {
+        const difficulty = this.exercise().difficulty;
+        if (!difficulty) {
+            return undefined;
+        }
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
+            content: {
+                type: 'difficultyLevel',
+                value: difficulty,
+            },
+            isContentComponent: true,
+        };
+    }
+
+    getSubmissionStatusItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.status',
+            content: {
+                type: 'submissionStatus',
+                value: this.exercise(),
+            },
+            isContentComponent: true,
+        };
+    }
+
+    getCategoryItem(): InformationBox | undefined {
+        const exercise = this.exercise();
+        const notReleased = exercise.releaseDate?.isAfter(this.now);
+        if (notReleased || exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || exercise.categories?.length) {
+            return {
+                title: 'artemisApp.courseOverview.exerciseDetails.categories',
+                content: {
+                    type: 'categories',
+                    value: exercise,
+                },
+                isContentComponent: true,
+            };
+        }
+        return undefined;
+    }
+
+    getSubmissionPolicyItemIfActive(): InformationBox | undefined {
+        const submissionPolicy = this.submissionPolicy();
+        return submissionPolicy?.active && submissionPolicy?.submissionLimit ? this.getSubmissionPolicyItem() : undefined;
+    }
+
+    getSubmissionPolicyItem(): InformationBox {
+        const submissionPolicy = this.submissionPolicy();
+        return {
+            title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+            content: {
+                type: 'string',
+                value: `${this.numberOfSubmissions()} /  ${submissionPolicy?.submissionLimit}`,
+            },
+            contentColor: submissionPolicy?.submissionLimit ? this.getSubmissionColor() : 'body-color',
+            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy?.type + '.tooltip',
+            tooltipParams: { points: submissionPolicy?.exceedingPenalty?.toString() },
+        };
+    }
+
+    getSubmissionColor(numberOfSubmissions: number = this.numberOfSubmissions(), submissionLimit: number | undefined = this.submissionPolicy()?.submissionLimit): string {
+        // default color should be 'body-color', thats why the default submissionsLeft is 2
+        const submissionsLeft = submissionLimit ? submissionLimit - numberOfSubmissions : 2;
+        let submissionColor = 'body-color';
+        if (submissionsLeft === 1) submissionColor = 'warning';
+        // 0 submissions left or limit is already reached
+        else if (submissionsLeft <= 0) submissionColor = 'danger';
+        return submissionColor;
+    }
+
+    getPointsItem(title: string, maxPoints: number, achievedPoints: number): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.' + title,
+            content: {
+                type: 'string',
+                value: `${achievedPoints} / ${maxPoints}`,
+            },
+        };
+    }
+
+    getStaticCodeAnalysisItemIfEnabled(): InformationBox | undefined {
+        const exercise = this.exercise();
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).staticCodeAnalysisEnabled ? this.getStaticCodeAnalysisItem() : undefined;
+    }
+
+    getStaticCodeAnalysisItem(): InformationBox {
+        // Unlike the achieved points, which only count rated results, the code issues reflect the latest build whether
+        // it is rated or not, so this falls back to the latest result rather than to relevantResult().
+        const issueCount = (this.displayedResult() ?? this.sortedHistoryResults().first())?.codeIssueCount ?? 0;
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
+            content: {
+                type: 'string',
+                value: `${issueCount}`,
+            },
+            contentColor: issueCount > 0 ? 'warning' : 'success',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.codeIssuesTooltip',
+        };
+    }
+
+    getAiFeedbackItemIfEnabled(): InformationBox | undefined {
+        return this.athenaEnabled() && this.resolvedCourse()?.athenaFormativeFeedbackEnabled && this.isFeedbackRequestEligibleExerciseType() ? this.getAiFeedbackItem() : undefined;
+    }
+
+    /** Mirrors the exercise-type/assessment-type eligibility used to show the feedback-request action itself, so the quota box isn't shown for exercise types (e.g. file-upload, quiz) that don't support feedback requests. */
+    isFeedbackRequestEligibleExerciseType(): boolean {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
+            return false;
+        }
+        return exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
+    }
+
+    getAiFeedbackItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests',
+            content: {
+                type: 'string',
+                value: `${this.currentFeedbackRequestCount()} / ${this.feedbackRequestLimit()}`,
+            },
+            contentColor: this.currentFeedbackRequestCount() >= this.feedbackRequestLimit() ? 'danger' : 'warning',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
+        };
+    }
+
+    getQuizLiveInfoItems(): InformationBox[] {
+        const info = this.quizLiveHeaderInfo();
+        if (!info) {
+            return [];
+        }
+        const items: InformationBox[] = [];
+        if (info.showResultsAvailable && info.resultsAvailableDate) {
+            items.push({
+                title: 'artemisApp.quizExercise.resultsAvailable',
+                content: {
+                    type: 'dateTime',
+                    value: info.resultsAvailableDate,
+                },
+                isContentComponent: true,
+            });
+        }
+        return items;
+    }
+}

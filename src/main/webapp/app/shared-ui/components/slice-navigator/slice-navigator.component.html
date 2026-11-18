@@ -1,0 +1,25 @@
+<div class="flex gap-2">
+    <tumaet-ui-button
+        severity="secondary"
+        variant="text"
+        size="small"
+        data-testid="slice-navigator-previous"
+        [icon]="faChevronLeft"
+        [disabled]="previousDisabled()"
+        [tumAetUiTooltip]="'entity.action.previous' | artemisTranslate"
+        [ariaLabel]="'entity.action.previous' | artemisTranslate"
+        (clicked)="previousPage()"
+    />
+
+    <tumaet-ui-button
+        severity="secondary"
+        variant="text"
+        size="small"
+        data-testid="slice-navigator-next"
+        [icon]="faChevronRight"
+        [disabled]="nextDisabled()"
+        [tumAetUiTooltip]="'entity.action.next' | artemisTranslate"
+        [ariaLabel]="'entity.action.next' | artemisTranslate"
+        (clicked)="nextPage()"
+    />
+</div>

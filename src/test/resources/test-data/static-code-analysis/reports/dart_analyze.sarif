@@ -1,0 +1,66 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "dart analyze",
+          "version": "1",
+          "informationUri": "https://dart.dev/tools/dart-analyze",
+          "rules": [
+            {
+              "id": "empty_statements",
+              "helpUri": "https://dart.dev/diagnostics/empty_statements",
+              "properties": {
+                "type": "LINT"
+              }
+            }
+          ]
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "analyze_sarif",
+            "semanticVersion": "0.0.1",
+            "informationUri": "https://github.com/ls1intum/dart_analyze_sarif"
+          }
+        }
+      },
+      "originalUriBaseIds": {
+        "SRCROOT": {
+          "uri": "file:///home/user/bust/"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "empty_statements",
+          "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "Unnecessary empty statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/bust.dart",
+                  "uriBaseId": "SRCROOT"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 3,
+                  "endLine": 2,
+                  "endColumn": 4,
+                  "charOffset": 20,
+                  "charLength": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

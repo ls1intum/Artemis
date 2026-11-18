@@ -1,0 +1,44 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpContextToken, HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { AccountService } from 'app/core/auth/account.service';
+
+export interface HttpErrorEvent extends EventWithContent<HttpErrorResponse> {
+    requestMethod?: string;
+}
+
+/**
+ * Set on a request whose caller shows its failure itself, next to the thing that failed, so no error alert pops up for it as well.
+ */
+export const SKIP_HTTP_ERROR_ALERT = new HttpContextToken<boolean>(() => false);
+
+@Injectable()
+export class ErrorHandlerInterceptor implements HttpInterceptor {
+    private eventManager = inject(EventManager);
+    private accountService = inject(AccountService);
+
+    /**
+     * Identifies and handles a given HTTP request. If the request's error status is not 401 while the user is not
+     * authenticated, the httpError is broadcasted to the observer.
+     * @param request The outgoing request object to handle.
+     * @param next The next interceptor in the chain, or the server
+     * if no interceptors remain in the chain.
+     * @returns An observable of the event stream.
+     */
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+        return next.handle(request).pipe(
+            tap({
+                error: (err: unknown) => {
+                    if (err instanceof HttpErrorResponse && !request.context?.get(SKIP_HTTP_ERROR_ALERT)) {
+                        if (!(err.status === 401 && !this.accountService.isAuthenticated())) {
+                            const event: HttpErrorEvent = { name: 'artemisApp.httpError', content: err, requestMethod: request.method };
+                            this.eventManager.broadcast(event);
+                        }
+                    }
+                },
+            }),
+        );
+    }
+}

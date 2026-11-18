@@ -1,0 +1,110 @@
+{
+  "version": "2.1.0",
+  "$schema": "http://json.schemastore.org/sarif-2.1.0-rtm.5",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "ESLint",
+          "informationUri": "https://eslint.org",
+          "rules": [
+            {
+              "id": "no-debugger",
+              "helpUri": "https://eslint.org/docs/latest/rules/no-debugger",
+              "properties": {},
+              "shortDescription": {
+                "text": "Disallow the use of `debugger`"
+              }
+            },
+            {
+              "id": "no-empty",
+              "helpUri": "https://eslint.org/docs/latest/rules/no-empty",
+              "properties": {},
+              "shortDescription": {
+                "text": "Disallow empty block statements"
+              }
+            }
+          ],
+          "version": "9.20.1"
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "file:///var/tmp/testing-dir/assignment/src/bubblesort.js"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///var/tmp/testing-dir/assignment/src/client.js"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///var/tmp/testing-dir/assignment/src/context.js"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///var/tmp/testing-dir/assignment/src/mergesort.js"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///var/tmp/testing-dir/assignment/src/policy.js"
+          }
+        }
+      ],
+      "results": [
+        {
+          "level": "error",
+          "message": {
+            "text": "Unexpected 'debugger' statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/src/client.js",
+                  "index": 1
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 9,
+                  "endLine": 21,
+                  "endColumn": 18
+                }
+              }
+            }
+          ],
+          "ruleId": "no-debugger",
+          "ruleIndex": 0
+        },
+        {
+          "level": "error",
+          "message": {
+            "text": "Empty block statement."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/src/client.js",
+                  "index": 1
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 9,
+                  "endLine": 34,
+                  "endColumn": 11
+                }
+              }
+            }
+          ],
+          "ruleId": "no-empty",
+          "ruleIndex": 1
+        }
+      ]
+    }
+  ]
+}

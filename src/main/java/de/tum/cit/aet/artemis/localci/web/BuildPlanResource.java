@@ -1,0 +1,90 @@
+package de.tum.cit.aet.artemis.localci.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanRequestDTO;
+import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+
+// REMOVE_IN_ARTEMIS_11 (Jenkins): only active with the jenkins profile, remove the whole controller
+@Profile(PROFILE_JENKINS)
+@Lazy
+@FeatureUsage(UserFeature.PROGRAMMING_BUILD_CONFIGURATION)
+@RestController
+@RequestMapping("api/localci/")
+public class BuildPlanResource {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildPlanResource.class);
+
+    private final BuildPlanRepository buildPlanRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    public BuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingTriggerService programmingTriggerService) {
+        this.buildPlanRepository = buildPlanRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingTriggerService = programmingTriggerService;
+    }
+
+    /**
+     * Returns the build plan for a given programming exercise.
+     *
+     * @param exerciseId the exercise for which the build plan should be retrieved
+     * @return the build plan stored in the database
+     */
+    @GetMapping("programming-exercises/{exerciseId}/build-plan/for-editor")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<BuildPlanDTO> getBuildPlanForEditor(@PathVariable Long exerciseId) {
+        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
+
+        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
+
+        return ResponseEntity.ok().body(BuildPlanDTO.of(buildPlan));
+    }
+
+    /**
+     * Updates the build plan for the given exercise.
+     * <p>
+     * Triggers a template and solution build to give feedback if the new build plan works as expected.
+     *
+     * @param exerciseId The exercise for which the build plan should be updated.
+     * @param buildPlan  The new build plan script for the exercise.
+     * @return The updated build plan.
+     */
+    @PutMapping("programming-exercises/{exerciseId}/build-plan")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<BuildPlanDTO> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
+        log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
+
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.buildPlan(), programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+
+        programmingTriggerService.triggerTemplateAndSolutionBuild(programmingExercise.getId());
+
+        return ResponseEntity.ok(BuildPlanDTO.of(createdBuildPlan));
+    }
+}

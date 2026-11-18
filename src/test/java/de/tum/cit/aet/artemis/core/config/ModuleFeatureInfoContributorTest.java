@@ -1,0 +1,175 @@
+package de.tum.cit.aet.artemis.core.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.actuate.info.Info;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+
+/**
+ * Test for {@link ModuleFeatureInfoContributor}.
+ */
+class ModuleFeatureInfoContributorTest {
+
+    private final Environment mockEnv = mock(Environment.class);
+
+    // @formatter:off
+    private static final List<String> modulePropertyNames = List.of(
+        Constants.ATLAS_ENABLED_PROPERTY_NAME,
+        Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
+        Constants.HYPERION_ENABLED_PROPERTY_NAME,
+        Constants.AIWORKER_ENABLED_PROPERTY_NAME,
+        Constants.DEIMOS_ENABLED_PROPERTY_NAME,
+        Constants.EXAM_ENABLED_PROPERTY_NAME,
+        Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
+        Constants.TEXT_ENABLED_PROPERTY_NAME,
+        Constants.MODELING_ENABLED_PROPERTY_NAME,
+        Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME,
+        Constants.LECTURE_ENABLED_PROPERTY_NAME,
+        Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME,
+        Constants.PASSKEY_ENABLED_PROPERTY_NAME,
+        Constants.SHARING_ENABLED_PROPERTY_NAME,
+        Constants.THEIA_ENABLED_PROPERTY_NAME,
+        Constants.IRIS_ENABLED_PROPERTY_NAME,
+        Constants.LTI_ENABLED_PROPERTY_NAME,
+        Constants.ATHENA_ENABLED_PROPERTY_NAME,
+        Constants.APOLLON_ENABLED_PROPERTY_NAME,
+        Constants.LDAP_ENABLED_PROPERTY_NAME,
+        Constants.SAML2_ENABLED_PROPERTY_NAME,
+        Constants.WEAVIATE_ENABLED_PROPERTY_NAME,
+        Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME
+    );
+    // @formatter:on
+
+    // @formatter:off
+    private static final List<String> moduleFeatures = List.of(
+        Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_ATLASLLM,
+        Constants.MODULE_FEATURE_HYPERION,
+        Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+        Constants.MODULE_FEATURE_AIWORKER,
+        Constants.MODULE_FEATURE_DEIMOS,
+        Constants.MODULE_FEATURE_EXAM,
+        Constants.MODULE_FEATURE_PLAGIARISM,
+        Constants.MODULE_FEATURE_TEXT,
+        Constants.MODULE_FEATURE_MODELING,
+        Constants.MODULE_FEATURE_FILEUPLOAD,
+        Constants.MODULE_FEATURE_LECTURE,
+        Constants.MODULE_FEATURE_TUTORIALGROUP,
+        Constants.FEATURE_PASSKEY,
+        Constants.MODULE_FEATURE_SHARING,
+        Constants.MODULE_FEATURE_THEIA,
+        Constants.MODULE_FEATURE_IRIS,
+        Constants.MODULE_FEATURE_LTI,
+        Constants.MODULE_FEATURE_ATHENA,
+        Constants.MODULE_FEATURE_APOLLON,
+        Constants.MODULE_FEATURE_LDAP,
+        Constants.MODULE_FEATURE_SAML2,
+        Constants.MODULE_FEATURE_GLOBAL_SEARCH,
+        Constants.MODULE_FEATURE_AGENT_ACCESS
+    );
+    // @formatter:on
+
+    @Test
+    void testEnabledContribution() {
+        testContribution(true, false, moduleFeatures);
+    }
+
+    @Test
+    void testDisabledContribution() {
+        testContribution(false, false, List.of());
+    }
+
+    @Test
+    void testPasskeyAdminEnabled() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, true);
+        }
+        mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
+
+        Info.Builder builder = new Info.Builder();
+        contributor.contribute(builder);
+        Info info = builder.build();
+
+        var activeModuleFeatures = info.get(ACTIVE_MODULE_FEATURES);
+        assertThat(activeModuleFeatures).isInstanceOf(List.class);
+
+        var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
+        var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
+
+        // Should include all features plus passkey-admin
+        var expectedFeatures = new java.util.ArrayList<>(moduleFeatures);
+        expectedFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+        assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedFeatures);
+    }
+
+    @Test
+    void testAiWorkerIsReportedWithoutHyperion() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, false);
+        }
+        mockProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, false);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        Info.Builder builder = new Info.Builder();
+        new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
+
+        assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactly(Constants.MODULE_FEATURE_AIWORKER);
+    }
+
+    @Test
+    void testGenerationReportsAiWorkerWithoutSeparateOptIn() {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, false);
+        }
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+
+        Info.Builder builder = new Info.Builder();
+        new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
+
+        assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactlyInAnyOrder(Constants.MODULE_FEATURE_HYPERION,
+                Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, Constants.MODULE_FEATURE_AIWORKER);
+    }
+
+    private void testContribution(boolean propertyEnabled, boolean passkeyAdminRequired, List<String> expectedReportFeatures) {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, propertyEnabled);
+        }
+        mockProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, passkeyAdminRequired);
+        mockProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, propertyEnabled);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(propertyEnabled);
+
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
+
+        Info.Builder builder = new Info.Builder();
+        contributor.contribute(builder);
+        Info info = builder.build();
+
+        var activeModuleFeatures = info.get(ACTIVE_MODULE_FEATURES);
+        assertThat(activeModuleFeatures).isInstanceOf(List.class);
+
+        var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
+        var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
+        assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
+    }
+
+    private void mockProperty(String key, Boolean value) {
+        when(mockEnv.getProperty(key, Boolean.class)).thenReturn(value);
+        // Also mock the 3-argument version with default value for properties like passkey-admin
+        when(mockEnv.getProperty(key, Boolean.class, false)).thenReturn(value);
+    }
+}

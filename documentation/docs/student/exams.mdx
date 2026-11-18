@@ -1,0 +1,58 @@
+---
+id: exams
+title: Exams
+sidebar_label: Exams
+last_reviewed: 2026-11-03
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import examReloadAlert from './assets/exams/reload.png';
+
+Artemis runs exams in the browser. You work through the exercises inside a fixed window of time, hand in, and later
+see your results and your grade in the same place.
+
+| Page | Description |
+|------|-------------|
+| [Take an Exam](/student/exams/take-an-exam) | Finding your exam, the welcome screen, working through it, and handing in |
+| [Exercises in an Exam](/student/exams/exercises-in-an-exam) | What each exercise type looks like, and how each one is submitted |
+| [After the Exam](/student/exams/after-the-exam) | Your summary, complaints, example solutions and grades |
+
+## Before You Start
+
+You need a stable internet connection — a wired one if you have the choice — and a current browser. Chromium-based
+browsers such as Chrome and Edge get the most testing.
+
+If your exam contains programming exercises, check with your instructor whether you are expected to work in the
+browser, in your own editor, or either. If you may use your own machine you need the toolchain for the exercise's
+language installed and working *before* the exam, along with a Git client. Most editors have one built in. Setting
+up repository access, including SSH keys, is described under
+[Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle) — do it in advance, not on the day.
+
+## What Happens If Your Connection Drops
+
+Artemis tolerates a short outage. Text, quiz and modeling exercises keep working while you are offline, though you
+may see warnings that your work cannot be saved; when the connection returns, Artemis saves it. Your work is saved
+every 30 seconds and whenever you move between exercises.
+
+Programming exercises are different, because they need the server. In the online editor you have to submit
+explicitly, and if you work in your own editor you need a connection to clone at the start and to push at the end.
+
+<Callout variant={CalloutVariant.danger}>
+
+  You must be online and submitted before the working time plus the grace period runs out. An exam that is never
+  submitted is not graded.
+
+</Callout>
+
+## Two Rules Worth Following
+
+**Do not reload the page.** Reloading returns you to the welcome screen, where you have to enter your name and
+confirm the rules again. Reload only if something has broken in a way nothing else fixes.
+
+**Work in one tab.** Two tabs on the same exam cause your work to be saved out of order, and the pattern is
+recorded as suspicious behaviour that your instructors will look into. Other Artemis tabs are fine, as long as only
+one of them has the exam open.
+
+<Image src={examReloadAlert} alt="Warning shown after reloading during an exam" size={ImageSize.large} caption="Reloading during an exam produces a warning" />

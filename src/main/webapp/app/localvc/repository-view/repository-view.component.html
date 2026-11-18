@@ -1,0 +1,85 @@
+<ng-container>
+    @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
+        <jhi-code-editor-container
+            [isProblemStatementVisible]="false"
+            [showInlineFeedback]="showInlineFeedback()"
+            [editable]="false"
+            [buildable]="false"
+            [participation]="participation()"
+            [showEditorInstructions]="showEditorInstructions"
+            [allowHiddenFiles]="true"
+            [isTutorAssessment]="true"
+            [readOnlyManualFeedback]="true"
+            [course]="getCourseFromExercise(exercise())"
+        >
+            <div editorTitle>
+                <h1 jhiTranslate="artemisApp.repository.source"></h1>
+            </div>
+            <div class="flex ps-4!" editorTitleActions>
+                @if (resultHasInlineFeedback()) {
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY_OUTLINE"
+                        [title]="'artemisApp.repository.toggleInlineFeedback.' + (showInlineFeedback() ? 'hide' : 'show')"
+                        (onClick)="showInlineFeedback.set(!showInlineFeedback())"
+                    />
+                }
+            </div>
+            <div editorToolbar class="flex flex-wrap items-center justify-end gap-2">
+                @if (result()) {
+                    <jhi-result [result]="result()" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise()" class="pe-5!" />
+                }
+                @if (routeCommitHistory()) {
+                    <a tumAetUiButton size="small" severity="secondary" [routerLink]="routeCommitHistory()">
+                        <fa-icon [icon]="faClockRotateLeft" />
+                        <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
+                    </a>
+                }
+                @if (vcsAccessLogRoute() && enableVcsAccessLog() && allowVcsAccessLog()) {
+                    <a tumAetUiButton size="small" severity="secondary" [routerLink]="vcsAccessLogRoute()">
+                        <fa-icon [icon]="faClockRotateLeft" />
+                        <span jhiTranslate="artemisApp.repository.vcsAccessLog.openVcsAccessLog"></span>
+                    </a>
+                }
+
+                @if (exercise()?.allowOfflineIde) {
+                    <jhi-code-button
+                        [disabled]="!!exercise()!.loading"
+                        [programmingLanguage]="exercise()?.programmingLanguage"
+                        [allowOnlineIde]="exercise()?.allowOnlineIde ?? false"
+                        [exerciseId]="exercise().id!"
+                        [repositoryUri]="repositoryUri()"
+                        [repositoryViewLink]="[]"
+                        [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
+                        size="small"
+                        severity="secondary"
+                    />
+                }
+
+                @if (exercise()?.id) {
+                    @if (repositoryType() === 'USER') {
+                        <jhi-programming-exercise-student-repo-download
+                            [buttonSize]="ButtonSize.SMALL"
+                            [exerciseId]="exercise()!.id!"
+                            [participationId]="participation().id!"
+                            [audience]="ownsParticipation() ? 'owner' : exercise().isAtLeastInstructor ? 'instructor' : 'tutor'"
+                        />
+                    } @else {
+                        <jhi-programming-exercise-instructor-repo-download
+                            [repositoryType]="repositoryType()"
+                            [exerciseId]="exercise()!.id!"
+                            [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
+                            [buttonSize]="ButtonSize.SMALL"
+                        />
+                    }
+                }
+            </div>
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                [exercise]="exercise()"
+                [participation]="participation()"
+                [personalParticipation]="true"
+                class="instructions-wrapper__content flex-auto p-0"
+            />
+        </jhi-code-editor-container>
+    }
+</ng-container>

@@ -1,0 +1,9 @@
+@if (highlightDifferences()) {
+    <div class="text-center">
+        @if (feedback().copiedFeedbackId) {
+            <tumaet-ui-tag severity="info" [value]="'artemisApp.assessment.diffView.correctionRoundDiffFirst' | artemisTranslate" />
+        } @else {
+            <tumaet-ui-tag severity="warn" [value]="'artemisApp.assessment.diffView.correctionRoundDiffSecond' | artemisTranslate" />
+        }
+    </div>
+}

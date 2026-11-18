@@ -1,0 +1,28 @@
+{
+    "projectManagers": [
+        {
+            "fullName": "Stephan Krusche",
+            "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
+            "role": "projectManager",
+            "website": "https://aet.cit.tum.de/people/krusche"
+        },
+        {
+            "fullName": "Patrick Bassner",
+            "photoDirectory": "public/images/about/Patrick_Bassner.jpg",
+            "role": "projectManager",
+            "website": "https://aet.cit.tum.de/people/bassner"
+        },
+        {
+            "fullName": "Matthias Linhuber",
+            "photoDirectory": "public/images/about/Matthias_Linhuber.jpg",
+            "role": "projectManager",
+            "website": "https://aet.cit.tum.de/people/linhuber"
+        },
+        {
+            "fullName": "Maximilian Sölch",
+            "photoDirectory": "public/images/about/Maximilian_Soelch.jpg",
+            "role": "projectManager",
+            "website": "https://aet.cit.tum.de/people/soelch"
+        }
+    ]
+}

@@ -1,0 +1,41 @@
+<div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
+    <div
+        class="video-column"
+        #videoColumn
+        jhiResizable
+        [resizableEdges]="{ right: '.resizer-handle' }"
+        [resizableConstraints]="resizableConstraints"
+        [resizableApplyInlineSize]="false"
+        [resizableHandleOutsideHost]="true"
+        (resizeStart)="onResizeStart()"
+        (resizeMove)="onVideoColumnResize($event)"
+        (resizeEnd)="onResizeEnd()"
+    >
+        <youtube-player
+            [videoId]="videoId()"
+            [disableCookies]="true"
+            [disablePlaceholder]="true"
+            [playerVars]="playerVars"
+            [startSeconds]="startSeconds()"
+            (ready)="onPlayerReady($event)"
+            (stateChange)="onStateChange($event)"
+            (error)="onPlayerError($event)"
+        />
+    </div>
+    <!-- Resizer divider sits between the video and transcript columns (not over the video). The directive resolves
+         this handle through resizableHandleOutsideHost, mirroring the previous interact.js between-columns divider. -->
+    <button
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        size="small"
+        type="button"
+        class="resizer-handle panel-divider-x"
+        #resizerHandle
+        (dblclick)="resetSplitRatio()"
+        (keydown.enter)="resetSplitRatio()"
+        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+    ></button>
+    <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
+</div>

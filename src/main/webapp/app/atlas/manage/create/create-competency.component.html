@@ -1,0 +1,13 @@
+@if (isLoading()) {
+    <div class="flex justify-center">
+        <tumaet-ui-progress-spinner [style.width.rem]="2" [style.height.rem]="2" [ariaLabel]="'loading' | artemisTranslate" />
+    </div>
+} @else {
+    <div class="mx-auto w-full px-2 min-[576px]:max-w-[540px] min-[768px]:max-w-[720px] min-[992px]:max-w-[960px] min-[1200px]:max-w-[1140px] min-[1400px]:max-w-[1320px]">
+        <div class="flex items-center">
+            <h3 jhiTranslate="artemisApp.competency.create.title"></h3>
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
+        <jhi-competency-form [isEditMode]="false" (formSubmitted)="createCompetency($event)" [courseId]="courseId" [competency]="competencyToCreate" />
+    </div>
+}

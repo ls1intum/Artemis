@@ -1,0 +1,96 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TutorialGroupsImportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
+describe('TutorialGroupsImportButtonComponent', () => {
+    let component: TutorialGroupsImportButtonComponent;
+    let fixture: ComponentFixture<TutorialGroupsImportButtonComponent>;
+    const exampleCourseId = 1;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TutorialGroupsImportButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorialGroupsImportButtonComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', exampleCourseId);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should open the import dialog when the button is clicked', () => {
+        const importDialog = component.importDialog();
+        expect(importDialog).toBeDefined();
+        const openSpy = vi.spyOn(importDialog!, 'open');
+        const openDialogSpy = vi.spyOn(component, 'openTutorialGroupImportDialog');
+
+        const importButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
+        importButton.click();
+
+        fixture.detectChanges();
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show warning dialog when import is completed', () => {
+        expect(component.warningDialogVisible()).toBe(false);
+        component.onImportCompleted();
+        expect(component.warningDialogVisible()).toBe(true);
+    });
+
+    it('should render the completion warning and emit refresh only from its close action', async () => {
+        const finished = vi.spyOn(component.importFinished, 'emit');
+        component.onImportCompleted();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const dialog = document.querySelector('[role="dialog"]')!;
+        expect(dialog.textContent).toContain('artemisApp.tutorialGroupImportDialog.finishedWarning');
+        const close = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button')).find((button) => button.textContent?.includes('entity.action.close'))!;
+        close.click();
+        fixture.detectChanges();
+        expect(component.warningDialogVisible()).toBe(false);
+        expect(finished).toHaveBeenCalledOnce();
+    });
+
+    it('should restore the import trigger after the import finish action opens the completion warning', async () => {
+        const trigger = fixture.nativeElement.querySelector('[data-testid="tutorial-groups-import-open"]') as HTMLButtonElement;
+        trigger.focus();
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.importDialog()!.isImportDone.set(true);
+        fixture.detectChanges();
+        const finish = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-finish"]')!;
+        finish.focus();
+        finish.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const closeWarning = document.querySelector<HTMLButtonElement>('[data-testid="tutorial-groups-import-warning-close"]')!;
+        closeWarning.focus();
+        closeWarning.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('should close warning dialog and emit importFinished when closeWarningDialog is called', () => {
+        const importFinishedSpy = vi.spyOn(component.importFinished, 'emit');
+        component.warningDialogVisible.set(true);
+
+        component.closeWarningDialog();
+
+        expect(component.warningDialogVisible()).toBe(false);
+        expect(importFinishedSpy).toHaveBeenCalledOnce();
+    });
+});

@@ -1,0 +1,301 @@
+---
+id: quiz-exercise
+title: Quiz Exercise
+sidebar_label: Quiz Exercise
+last_reviewed: 2026-11-06
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
+import createAQuizForm from './assets/quiz/create-a-quiz-form.png';
+import exerciseInList from './assets/quiz/course-dashboard-exercise-quiz.png';
+import exerciseDetailsQuiz from './assets/quiz/exercise-details-quiz.png';
+import multipleChoiceQuestion from './assets/quiz/multiple-choice-question.png';
+import dragAndDropQuestion from './assets/quiz/drag-and-drop-question.png';
+import apollonDiagrams from './assets/quiz/apollon-diagrams.png';
+import apollonForm from './assets/quiz/Apollon-form.png';
+import apollonEditor from './assets/quiz/apollon-editor.png';
+import shortAnswerQuestion from './assets/quiz/short-answer-question.png';
+import existingQuestion from './assets/quiz/existing-question.png';
+import footer from './assets/quiz/footer.png';
+import importListQuizzes from './assets/quiz/import-list-quizzes.png';
+import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
+import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
+import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
+
+A quiz exercise is marked the moment it closes: every question type Artemis offers has a machine-checkable
+answer, so students see their score without waiting for anybody to read their work. That makes quizzes the one
+exercise type that scales to any cohort size at no marking cost, and the one where the wording of a question has to
+carry all the precision, because no assessor is there to interpret a near-miss.
+
+Four question types are available:
+
+- **Multiple choice** — several options, one or more of them correct.
+- **Drag and drop** — students drag items onto a background image.
+- **Apollon drag and drop** — the same, onto a UML diagram built in the [Apollon editor](https://github.com/ls1intum/Apollon).
+- **Short answer** — students type into gaps in a text.
+
+## Create the Exercise
+
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **Quiz** opens the quiz editor.
+
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
+
+The editor has two cards. **Quiz Settings** holds everything about the quiz as a whole, and **Questions** holds the
+questions themselves. **Max Points**, in the corner of the settings card, is the sum of the questions' points rather
+than something you set.
+
+<Image src={createAQuizForm} alt="Quiz Settings card of the quiz editor" size={ImageSize.large} caption="Quiz Settings" />
+
+**General** carries the **Title**, the **Channel Name** of the communication channel Artemis opens for the quiz, and
+its **Categories**, alongside three choices:
+
+- **Difficulty** — **No Level**, **Easy**, **Medium** or **Hard**.
+- **Include in Course Score Calculation** — **Yes** counts the points toward the course score, **Bonus** counts
+  them as bonus points, **No** leaves them out.
+- **Present Questions in Random Order** — whether every student sees the questions in the same order.
+
+**Schedule & Mode** decides when the quiz runs and how students reach it:
+
+- **Duration** is the working time, in hours, minutes and seconds. It starts when a student begins, not when the
+  quiz becomes visible.
+- **Batch Mode** decides how many opportunities there are. **Synchronized** runs the quiz once for everybody at a
+  time you start. **Batched** lets you open it several times, each batch reached with a password. **Individual**
+  lets each student take it whenever they like while it is released.
+- **Visible from** is when students can see that the quiz exists, and **Due Date** is when it stops being available.
+
+## Question Types
+
+### Add Multiple-Choice Question
+
+This kind of question is composed of a problem statement with multiple options.
+
+<Image src={multipleChoiceQuestion} alt="Editor of a multiple-choice question with its scoring type, the markdown input and the options" size={ImageSize.large} caption="Multiple-Choice Question Editor" />
+
+- **Short question title**: Provide a short title (mandatory)
+- **Points**: Assign the value points for this question
+- **Scoring type**:
+  - All or Nothing
+  - Proportional with Penalty
+  - Proportional without Penalty
+- **Present answer options in random order**
+- **Single Choice Mode**: When there is just one correct option. This disables the Scoring type (resp. sets it to All or Nothing)
+- **Edit View**: Enables the text editor to write the quiz statement and its options, hints and explanations
+- **Edit bar**: When the edit view is enabled, the format bar provides:
+  - Style to the statement text
+  - Correct Options `[correct]`
+  - Incorrect Options `[wrong]`
+  - Explanations `[exp]`
+  - Hints `[hint]`
+- **Preview View**: Enables the student view
+- **Visual View**: This view shows the question from the Edit view as a rendered question. The different parts of the question are editable and answer options can be added and removed. It is possible to toggle between the Visual and the Edit view at all times and changes to the question will be respected
+
+<TumLiveVideo src="26851" title="Creating Quiz Exercises" height={400} />
+
+<Callout variant={CalloutVariant.info}>
+
+  The Visual view provides an intuitive interface for creating quiz questions. You can switch between Visual and Edit views while maintaining all your changes.
+
+</Callout>
+
+#### Generate Multiple-Choice Questions with AI
+
+<Callout variant={CalloutVariant.info}>
+
+  This feature requires the [Hyperion module](/admin/hyperion) to be enabled on the Artemis instance.
+
+</Callout>
+
+In the quiz editor, click **Generate with AI** to open the AI generation dialog. It generates Multiple-Choice questions (single-choice, multiple-choice, or true/false) that can be added to the quiz after review.
+
+<Image src={aiGenerationModal} alt="AI Quiz Generation Dialog" size={ImageSize.large} caption="AI Generation Dialog in Competency-Graph Mode" />
+
+To generate the questions, first choose a **generation mode**:
+- **Free topic**: Enter a topic in a free-text field to generate questions about it
+- **From competencies**: Select one or more course competencies instead of typing a topic. Generation draws directly on the selected competencies together with the lecture content and exercises already linked to them, so questions reflect the material that students are actually expected to learn. Link exercises and lectures to competencies to include them. This mode requires the Atlas module to be enabled, and it appears in the dialog only for courses that additionally have competencies configured.
+
+Then configure:
+- **Optional prompt**: Additional instructions, constraints, or expectations that take priority over the defaults
+- **Language**: English or German
+- **Number of questions**: 1–10
+- **Question type**: Restrict generation to specific question types
+- **Difficulty**: A slider from 0 (easy) to 100 (hard)
+
+Generated questions appear in a preview list and may include Markdown formatting (e.g. bold text, inline code, code blocks) as well as hints and explanations. Click **Add to quiz** to insert the selected questions into the quiz editor, where they can be edited like any other question, or refined with AI as described in [Refine Multiple-Choice Questions with AI](#refine-multiple-choice-questions-with-ai).
+
+<Callout variant={CalloutVariant.info}>
+
+  For the underlying architecture (prompt templates, competency-graph context assembly, output validation), see [Quiz Question Generation & Refinement](/developer/hyperion/quiz-generation) in the developer documentation.
+
+</Callout>
+
+### Add Drag-and-Drop Question
+
+This kind of question is composed of a problem statement, a background image, and drag and drop options.
+
+<Image src={dragAndDropQuestion} alt="Editor of a drag and drop question with the background picture, the drop locations and the drag items" size={ImageSize.large} caption="Drag-and-Drop Question Editor" />
+
+- **Short question title**: Provide a short title
+- **Points**: Assign the value points for this question
+- **Scoring type**:
+  - All or Nothing
+  - Proportional with Penalty
+  - Proportional without Penalty
+- **Present Drag Items in Random order**
+- **Edit View**: Enables the text editor to write the question statement with explanations and hints
+- **Edit bar**: When the edit view is enabled, the format bar provides:
+  - Style to the statement text
+  - Explanations `[exp]`
+  - Hints `[hint]`
+- **Upload Background**: To select and upload the background from the PC files to drag and drop the options over it
+- **Add Drag Items**:
+  - Text items: Choose **Add Text Drag Item** and enter text with a maximum valid length of 255 characters per item. A live counter shows the current length as `current/255` in the bottom-right corner of the text field. Exactly 255 characters are allowed. You can type or paste more than 255 characters, but the counter turns red, a validation message appears, and saving or re-evaluating is blocked until the item is shortened. Existing or imported oversized items must also be shortened. The server enforces the same limit for quiz creation, updates, and re-evaluation.
+  - Image items: Can be uploaded from the PC files
+- **Preview View**: Enables the student view
+
+### Add Apollon Drag-and-Drop Question
+
+A drag-and-drop question can be generated from a UML diagram instead of a picture: Artemis cuts the diagram's
+elements out as drag items and leaves their places as drop locations. **Add Apollon Drag-And-Drop Question** opens
+the **Apollon Diagrams** dialog, which lists the diagrams the course already has.
+
+<Image src={apollonDiagrams} alt="Dialog listing the course's Apollon diagrams" size={ImageSize.large} caption="The course's Apollon diagrams" />
+
+**Create a new Apollon Diagram** opens the form for a new one, which asks for a title and the diagram type:
+
+<Image src={apollonForm} alt="Form for a new Apollon diagram" size={ImageSize.medium} caption="Creating a diagram" />
+
+- Supported Diagram Types
+  - Class Diagram
+  - Activity Diagram
+  - Object Diagram
+  - Use Case Diagram
+  - Communication Diagram
+  - Component Diagram
+  - Deployment Diagram
+  - Petri Net
+  - Syntax Tree
+  - Flowchart
+
+**Open** on a diagram opens it in the Apollon editor, where the palette on the left holds the components its
+diagram type offers.
+
+<Image src={apollonEditor} alt="Apollon editor with a class diagram in it" size={ImageSize.large} caption="Editing a diagram" />
+
+### Add Short-Answer Question
+
+This kind of question is composed of a statement and spots to fill them out by typing the answers.
+
+<Image src={shortAnswerQuestion} alt="Editor of a short-answer question" size={ImageSize.large} caption="Short-Answer Question Editor" />
+
+- **Short question title**: Provide a short title
+- **Points**: Assign the value points for this question
+- **Scoring type**:
+  - All or Nothing
+  - Proportional with Penalty
+  - Proportional without Penalty
+- **Match Letter Case**
+- **Match Answers Exactly**: This option moves the match slider to 100%
+- **Add Spot Option**: To add the spot between the text to be filled out
+- **Add Answer Option**: To provide the answer for each spot
+- **Text View**: Enables the text editor to write and edit the question statement
+- **Visual View**: Enables the student view
+
+## Manage Quizzes
+
+### Refine Multiple-Choice Questions with AI
+
+<Callout variant={CalloutVariant.info}>
+
+  This feature requires the [Hyperion module](/admin/hyperion) to be enabled on the Artemis instance.
+
+</Callout>
+
+Existing Multiple-Choice questions (including AI-generated and manually created ones) can be refined with a natural-language instruction instead of being edited by hand. Questions can be refined individually or in bulk.
+
+**Per-question refinement**: Click the wand icon in a Multiple-Choice question's header to open an inline refinement panel, enter an instruction (e.g. "make this harder", "add a hint"), and submit. The question updates in place, and a "Changes made" card summarizes what the AI changed. The card includes a restore control that reverts the question to its state before the most recent refinement.
+
+<Image src={aiRefinementPanel} alt="Per-Question Refinement Panel" size={ImageSize.large} caption="Per-Question Refinement Panel with Changes Made Summary" />
+
+**Bulk refinement**: While editing a quiz that contains at least one Multiple-Choice question, a floating wand button applies a single shared instruction to every Multiple-Choice question in the quiz at once, for example, "translate all questions to German" to localize the entire quiz in one step.
+
+<Image src={aiBulkRefinement} alt="Bulk Refinement" size={ImageSize.large} caption="Quiz-wide bulk refinement: the floating action button (top) opens the shared-instruction input (bottom)." />
+
+### Add Existing Questions
+
+This option allows to import existing questions from other quiz exercises, courses, exams and files.
+
+<Image src={existingQuestion} alt="Dialog to add questions of an existing quiz, with the course chosen and the list of its questions" size={ImageSize.large} caption="Import Existing Questions" />
+
+**Add Selected Questions**, at the end of the list, brings every question you ticked into the quiz.
+
+To look at a question before you tick it, use the eye button in the **Preview** column of its row.
+It shows the question the way students see it. **Add This Question** in the preview ticks it for the import, and **Close** leaves the selection unchanged.
+
+### Errors and Warnings
+
+The footer of the creation form collects everything that would stop the quiz working: errors that prevent saving,
+and warnings about questions that will save but probably do not do what you meant.
+
+<Image src={footer} alt="Footer of the quiz creation form showing errors and warnings" size={ImageSize.medium} caption="Errors and warnings on the creation form" />
+
+### Import a Quiz
+
+The **Import** tab of the **Manage Exercises** dialog, with **Quiz** picked, lists the quizzes available to copy.
+
+<Image src={importListQuizzes} alt="Dialog listing the quizzes available to import" size={ImageSize.medium} caption="Choosing a quiz to import" />
+
+**Import** on one of them opens the quiz editor with its questions already in place, where every setting can be changed exactly as when creating a quiz from scratch.
+
+The eye button next to **Import** replaces the list with a preview of the quiz, showing its total points, its duration and all of its questions, so you can compare versions from different years or courses first.
+The preview has its own **Import** button, which does the same as **Import** in the list. **Back to list**, or the Escape key, returns to the list with your search and page unchanged. The title and both buttons stay in view while you scroll through the questions.
+
+### Export a Quiz
+
+The **Export** tab of the same dialog downloads a whole quiz, with its settings, questions and drag-and-drop images,
+as a ZIP file. **From file** on the **Import** tab reads it back, on this or another Artemis instance; see
+[Moving an Exercise Between Courses](/instructor/exercises/intro#moving-an-exercise-between-courses).
+
+To reuse single questions instead, **Export** on the quiz's detail page writes its questions to a JSON file, which the
+**From a file** tab of **Add Existing Questions** reads back.
+
+<Callout variant={CalloutVariant.info}>
+
+  <strong>Note:</strong> Artemis uses an npm package called <a href="https://www.npmjs.com/package/@tumaet/apollon">Apollon</a> as its modeling editor. It has a standalone version which can be accessed via <a href="https://apollon.ase.in.tum.de/">apollon.ase.in.tum.de</a>. The standalone version is free to use without the necessity of creating an account and offers additional features, including sharing and exporting diagrams. For more information, visit <a href="https://github.com/ls1intum/Apollon_standalone">Apollon Standalone</a>.
+
+</Callout>
+
+## Manage the Exercise
+
+The quiz appears on the course's exercise list. Beside the actions every exercise has, a quiz row carries a
+lifecycle button — **Start** while the quiz is waiting, **End** while it is running — and, behind the overflow menu,
+**Statistics**, **Preview** and **Solution**. **Re-evaluate** appears there once the quiz has ended.
+
+<Image src={exerciseInList} alt="Course exercise list with the actions available on a quiz" size={ImageSize.large} caption="The quiz on the course's exercise list" />
+
+Select the quiz title to open its details. The header shows the saved title and exercise type, while **General**
+contains the **Exercise ID**. Section links scroll through the saved settings on the same page, keeping all
+sections available to browser search.
+
+The detail action bar groups **Participations**, **Statistics**, **Preview** and **Solution** separately from the
+editing actions. **Edit** is available before the quiz ends and is disabled while editing is unsafe. After the quiz
+ends, instructors see **Re-evaluate**, and **Evaluate quiz** appears when evaluation is available. **Create Variant**
+appears alongside these actions for supported quizzes when Hyperion is enabled and you have Editor access.
+Editors export all questions through **More actions → Export**. Course quizzes retain their lifecycle controls
+below the action bar; instructors find **Reset** and **Delete** in **Exercise administration** at the bottom,
+with their confirmations.
+
+<Image src={exerciseDetailsQuiz} alt="Quiz details with navigation, re-evaluation, variant creation and section links" size={ImageSize.large} caption="The quiz's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
+
+## What Students See
+
+Students open the quiz, answer the questions and get their score the moment it closes — see
+[Quiz Exercise](/student/exercises/quiz-exercise) on the student pages.

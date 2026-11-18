@@ -1,0 +1,329 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@Service
+public class LectureUnitService {
+
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final LectureRepository lectureRepository;
+
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    private final FileService fileService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
+
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            Optional<LectureContentProcessingApi> contentProcessingApi, ApplicationEventPublisher applicationEventPublisher) {
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureRepository = lectureRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.fileService = fileService;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRepositoryApi = competencyRepositoryApi;
+        this.competencyRelationApi = competencyRelationApi;
+        this.contentProcessingApi = contentProcessingApi;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /**
+     * Publishes an event after learning-relevant lecture unit content has changed.
+     *
+     * @param lectureUnit the created or updated lecture unit
+     */
+    public void publishContentChangedEvent(LectureUnit lectureUnit) {
+        applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(lectureUnit));
+    }
+
+    /**
+     * Set the completion status of the lecture unit for the give user
+     * If the user completed the unit and completion status already exists, nothing happens
+     *
+     * @param lectureUnit The lecture unit for which set the completion flag
+     * @param user        The user that completed/uncompleted the lecture unit
+     * @param completed   True if the lecture unit was completed, false otherwise
+     */
+    public void setLectureUnitCompletion(@NonNull LectureUnit lectureUnit, @NonNull User user, boolean completed) {
+        Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
+        if (completed) {
+            if (existingCompletion.isEmpty()) {
+                LectureUnitCompletion completion = createLectureUnitCompletion(lectureUnit, user);
+                try {
+                    // Flush, so that the asynchronous mastery calculation uses the correct completion status
+                    lectureUnitCompletionRepository.saveAndFlush(completion);
+                }
+                catch (DataIntegrityViolationException e) {
+                    // In rare instances the completion status might already exist if this method runs in parallel.
+                    // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+                }
+            }
+        }
+        else {
+            existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
+        }
+    }
+
+    /**
+     * Set the completion status of all passed lecture units for the give user
+     * If the user completed the unit and completion status already exists, nothing happens
+     *
+     * @param <T>          The type of the concrete lecture unit
+     * @param lectureUnits List of all lecture units for which to set the completion flag
+     * @param user         The user that completed/uncompleted the lecture unit
+     * @param completed    True if the lecture unit was completed, false otherwise
+     */
+    public <T extends LectureUnit> void setCompletedForAllLectureUnits(List<T> lectureUnits, @NonNull User user, boolean completed) {
+        var existingCompletion = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        if (!completed) {
+            lectureUnitCompletionRepository.deleteAll(existingCompletion);
+            return;
+        }
+        // make lectureUnits modifiable
+        List<LectureUnit> completedLectureUnits = new ArrayList<>(lectureUnits);
+
+        // remove existing completions
+        if (!existingCompletion.isEmpty()) {
+            for (var completion : existingCompletion) {
+                completedLectureUnits.remove(completion.getLectureUnit());
+            }
+        }
+
+        var completions = completedLectureUnits.stream().map(unit -> createLectureUnitCompletion(unit, user)).toList();
+
+        try {
+            lectureUnitCompletionRepository.saveAll(completions);
+        }
+        catch (DataIntegrityViolationException e) {
+            // In rare instances the completion status might already exist if this method runs in parallel.
+            // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+        }
+    }
+
+    private static LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
+        // Create a completion status for this lecture unit (only if it does not exist)
+        LectureUnitCompletion completion = new LectureUnitCompletion();
+        completion.setLectureUnit(lectureUnit);
+        completion.setUser(user);
+        completion.setCompletedAt(ZonedDateTime.now());
+        return completion;
+    }
+
+    /**
+     * Deletes a lecture unit correctly in the database.
+     * Also cancels any ongoing content processing jobs (Pyris ingestion).
+     * <p>
+     * Note: The processing state is automatically deleted by database CASCADE DELETE
+     * when the lecture unit is deleted.
+     *
+     * @param lectureUnit lecture unit to delete
+     */
+    public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
+        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
+
+        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            // Cancel ongoing processing and delete from Pyris vector database
+            // Processing state deletion is handled by DB cascade when lecture unit is deleted
+            contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
+
+            if (attachmentVideoUnit.getAttachment() != null) {
+                // Empty for an attachment that links to a document hosted elsewhere: there is nothing of ours to delete, and the filename such a link ends in may well be one
+                // an unrelated attachment stores.
+                attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> fileService.schedulePathForDeletion(location.path(), 5));
+            }
+        }
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());
+        // Creating a new list of lecture units without the one we want to remove
+        lecture.removeLectureUnitById(lectureUnit.getId());
+        lectureRepository.save(lecture);
+
+        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
+            // update associated competency progress objects
+            competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty()));
+        }
+    }
+
+    /**
+     * Link the competency to a set of lecture units.
+     * Note: Since we use CascadeType.REMOVE only (not PERSIST), links must be saved explicitly.
+     *
+     * @param competency       The competency to be linked
+     * @param lectureUnitLinks New set of lecture unit links to associate with the competency
+     */
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
+        if (competencyRelationApi.isEmpty()) {
+            return;
+        }
+        lectureUnitLinks.forEach(link -> link.setCompetency(competency));
+        // Save links explicitly since cascade does not include PERSIST
+        competencyRelationApi.get().saveAllLectureUnitLinks(lectureUnitLinks);
+    }
+
+    /**
+     * Disconnects the competency exercise links from the exercise before the cycle is broken by the deserialization.
+     * NOTE: this is a workaround for a Jackson/Hibernate issue with bidirectional relationships and lazy loading.
+     * Ideally, we convert entities to DTOs before sending them to the client.
+     *
+     * @param lectureUnit The lecture unit to disconnect the competency links
+     */
+    public void disconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        if (lectureUnit.getCompetencyLinks() != null && Hibernate.isInitialized(lectureUnit.getCompetencyLinks())) {
+            lectureUnit.getCompetencyLinks().forEach(link -> {
+                // avoid circular references
+                link.setLectureUnit(null);
+                link.getCompetency().setLectureUnitLinks(null);
+            });
+        }
+    }
+
+    /**
+     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to reconnect the competency links
+     */
+    public void reconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(lectureUnit));
+    }
+
+    /**
+     * Saves the exercise and links it to the competencies.
+     *
+     * @param lectureUnit  the lecture unit to save
+     * @param saveFunction function to save the exercise
+     * @param <T>          type of the lecture unit
+     * @return saved exercise
+     */
+    public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
+        // persist lecture Unit before linking it to the competency
+        Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
+        lectureUnit.setCompetencyLinks(new HashSet<>());
+
+        T savedLectureUnit = saveFunction.apply(lectureUnit);
+
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
+            savedLectureUnit.setCompetencyLinks(links);
+            reconnectCompetencyLectureUnitLinks(savedLectureUnit);
+            competencyRelationApi.ifPresent(api -> savedLectureUnit.setCompetencyLinks(new HashSet<>(api.saveAllLectureUnitLinks(links))));
+        }
+
+        return savedLectureUnit;
+    }
+
+    /**
+     * Update the competency links of an existing text unit based on the provided DTO.
+     * Supports removing links, updating weights of existing ones, and adding new links.
+     * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
+     * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
+     *
+     * Competencies can only be linked if they belong to the course of the lecture unit.
+     *
+     * @param dto      the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
+     * @param entity   the existing DB entity to update
+     * @param courseId the id of the course of the lecture unit
+     * @throws BadRequestAlertException if a linked competency belongs to another course
+     */
+    // TODO: duplicated code, try to unify with ExerciseService.updateCompetencyLinks
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity, long courseId) {
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        if (dto.competencyLinks() == null) {
+            // null means "not provided" — do not change existing links (PATCH semantics)
+            // This is consistent with ExerciseService.updateCompetencyLinks
+            return;
+        }
+        if (dto.competencyLinks().isEmpty()) {
+            // empty set means "remove all" — clear existing links
+            entity.getCompetencyLinks().clear();
+        }
+        else {
+            // 1) Existing links indexed by competency id
+            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+
+            // 2) New state of links (reusing existing ones where possible)
+            Set<CompetencyLectureUnitLink> updatedLinks = new HashSet<>();
+
+            // TODO: think about optimizing this by loading all new competencies in a single query
+            for (var dtoLink : dto.competencyLinks()) {
+                long competencyId = dtoLink.competency().id();
+                double weight = dtoLink.weight();
+
+                var existingLink = existingLinksByCompetencyId.get(competencyId);
+                if (existingLink != null) {
+                    // reuse managed entity, just update the weight
+                    existingLink.setWeight(weight);
+                    updatedLinks.add(existingLink);
+                }
+                else {
+                    // no existing link → create a new one
+                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    if (competency.getCourse() == null || competency.getCourse().getId() != courseId) {
+                        throw new BadRequestAlertException("The competency does not belong to the course of the lecture unit", "lectureUnit", "competencyCourseMismatch");
+                    }
+                    var newLink = new CompetencyLectureUnitLink(competency, entity, weight);
+
+                    updatedLinks.add(newLink);
+                }
+            }
+
+            // 3) Replace the contents of the managed collection, NOT the collection itself
+            entity.getCompetencyLinks().clear();
+            entity.getCompetencyLinks().addAll(updatedLinks);
+        }
+    }
+
+}

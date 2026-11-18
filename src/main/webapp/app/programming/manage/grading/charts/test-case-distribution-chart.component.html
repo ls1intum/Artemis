@@ -1,0 +1,46 @@
+<div>
+    <div>
+        <div class="d-flex justify-content-between">
+            <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title"></h4>
+            @if (tableFiltered) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    (click)="resetTableFilter()"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
+                ></button>
+            }
+        </div>
+        <p>
+            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.sumOfTestWeights' | artemisTranslate }}
+            {{ totalWeight() }}
+        </p>
+        <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
+    </div>
+    <div class="chart bg-light">
+        <tumaet-ui-bar-chart
+            [labels]="weightChartData().labels"
+            [series]="weightChartData().series"
+            [config]="weightChartConfig()"
+            interactive
+            (dataSelect)="onSelectWeight($event)"
+            [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate"
+        />
+    </div>
+    <div class="mt-4">
+        <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title"></h4>
+        <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
+    </div>
+    <div class="points-chart bg-light">
+        <tumaet-ui-bar-chart
+            [labels]="pointsChartData().labels"
+            [series]="pointsChartData().series"
+            [config]="pointsChartConfig()"
+            interactive
+            (dataSelect)="onSelectPoints()"
+            [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate"
+        />
+    </div>
+</div>

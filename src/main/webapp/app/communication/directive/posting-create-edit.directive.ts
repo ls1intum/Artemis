@@ -1,0 +1,94 @@
+import { Observable } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Directive, OnInit, effect, inject, model, output, signal, untracked } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { PostingEditType } from 'app/communication/communication.util';
+
+// Note: this number should be the same as in Posting.java
+export const MAX_CONTENT_LENGTH = 5000;
+
+@Directive()
+export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit {
+    protected communicationService = inject(CommunicationService);
+    protected formBuilder = inject(FormBuilder);
+
+    readonly posting = model<T>();
+    readonly onCreate = output<T>();
+    readonly isModalOpen = output<void>();
+
+    readonly isLoading = signal(false);
+    maxContentLength = MAX_CONTENT_LENGTH;
+    content = '';
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
+
+    readonly EditType = PostingEditType;
+
+    constructor() {
+        effect(() => {
+            this.posting();
+            untracked(() => this.onPostingChanged());
+        });
+    }
+
+    get editType(): PostingEditType {
+        return this.posting()?.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
+    }
+
+    /**
+     * on initialization: sets the content, and the modal title (edit or create)
+     */
+    ngOnInit(): void {
+        this.content = this.posting()?.content ?? '';
+    }
+
+    /**
+     * Called when the posting signal changes. Override in subclasses and call super.
+     */
+    protected onPostingChanged(): void {
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
+        this.content = posting.content ?? '';
+        this.resetFormGroup();
+    }
+
+    /**
+     * checks if the form group is valid, changes the clicked button to indicate a loading process,
+     * set the input content (updated or new; of post and answer post) delegates to the corresponding method
+     */
+    confirm(): void {
+        if (this.isLoading()) return;
+        if (this.formGroup.valid) {
+            this.isLoading.set(true);
+            if (this.editType === PostingEditType.UPDATE) {
+                this.updatePosting();
+            } else if (this.editType === PostingEditType.CREATE) {
+                this.createPosting();
+            }
+        }
+    }
+
+    /** Sends an independent form payload and leaves success cleanup ordering to the editor. */
+    protected submitPosting(request: (payload: T) => Observable<T>, onSuccess: (posting: T) => void): void {
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading.set(false);
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        request(payload).subscribe({
+            next: onSuccess,
+            error: () => this.isLoading.set(false),
+        });
+    }
+
+    abstract resetFormGroup(): void;
+
+    abstract createPosting(): void;
+
+    abstract updatePosting(): void;
+}

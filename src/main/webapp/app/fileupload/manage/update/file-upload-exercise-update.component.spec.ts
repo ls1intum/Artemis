@@ -1,0 +1,1107 @@
+/**
+ * Vitest tests for FileUploadExerciseUpdateComponent.
+ *
+ * vi.mock('monaco-editor') is required because MonacoTextEditorAdapter has static initializers
+ * that run before the path alias mock can take effect. vi.mock hoists to file top.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('monaco-editor', () => ({
+    editor: { create: () => ({}), createModel: () => ({}), defineTheme: () => {}, setTheme: () => {} },
+    languages: { register: () => {}, setMonarchTokensProvider: () => {}, setLanguageConfiguration: () => {}, registerCompletionItemProvider: () => ({ dispose: () => {} }) },
+    Range: class {
+        constructor(
+            public startLineNumber: number,
+            public startColumn: number,
+            public endLineNumber: number,
+            public endColumn: number,
+        ) {}
+    },
+    Position: class {
+        constructor(
+            public lineNumber: number,
+            public column: number,
+        ) {}
+    },
+    KeyCode: {
+        Backspace: 1,
+        Tab: 2,
+        Enter: 3,
+        Escape: 9,
+        Delete: 10,
+        KeyA: 31,
+        KeyB: 32,
+        KeyC: 33,
+        KeyD: 34,
+        KeyE: 35,
+        KeyF: 36,
+        KeyG: 37,
+        KeyH: 38,
+        KeyI: 39,
+        KeyJ: 40,
+        KeyK: 41,
+        KeyL: 42,
+        KeyM: 43,
+        KeyN: 44,
+        KeyO: 45,
+        KeyP: 46,
+        KeyQ: 47,
+        KeyR: 48,
+        KeyS: 49,
+        KeyT: 50,
+        KeyU: 51,
+        KeyV: 52,
+        KeyW: 53,
+        KeyX: 54,
+        KeyY: 55,
+        KeyZ: 56,
+    },
+    KeyMod: { CtrlCmd: 2048, Shift: 1024, Alt: 512, WinCtrl: 256 },
+    MarkerSeverity: { Error: 8, Warning: 4, Info: 2, Hint: 1 },
+    Uri: { parse: (s: string) => ({ toString: () => s }) },
+}));
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { NgForm } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { provideTranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { TumAetUiDialogService, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
+
+import 'app/foundation/util/array.extension';
+
+import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+import { FileUploadExerciseUpdateComponent } from './file-upload-exercise-update.component';
+import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { EditType } from 'app/exercise/util/exercise.utils';
+
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+
+import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+// NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
+// which causes static initializers to run before mocks are applied.
+import { Component, forwardRef, input, output, signal, viewChild } from '@angular/core';
+
+// Mock component to replace MarkdownEditorMonacoComponent without importing the real one
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '', standalone: true })
+class MockMarkdownEditorMonacoComponent {
+    markdown = input<string>('');
+    domainActions = input<unknown[]>([]);
+}
+
+// Stub for TitleChannelNameComponent to satisfy viewChild.required
+@Component({ selector: 'jhi-title-channel-name', template: '', standalone: true })
+class StubTitleChannelNameComponent {
+    isValid = signal(true);
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
+}
+
+// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild.required properly.
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
+@Component({
+    selector: 'jhi-exercise-title-channel-name',
+    template: '<jhi-title-channel-name />',
+    standalone: true,
+    imports: [StubTitleChannelNameComponent],
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
+})
+class StubExerciseTitleChannelNameComponent {
+    exercise = input<FileUploadExercise | undefined>();
+    titlePattern = input<string>('');
+    minTitleLength = input<number>(0);
+    isExamMode = input<boolean>(false);
+    isImport = input<boolean>(false);
+    hideTitleLabel = input<boolean>(false);
+    course = input<Course>();
+    isEditFieldDisplayedRecord = input<Record<string, boolean>>();
+    courseId = input<number>();
+    onTitleChange = output<string>();
+    onChannelNameChange = output<string>();
+    exerciseChange = output<FileUploadExercise>();
+    readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
+}
+
+describe('FileUploadExerciseUpdateComponent', () => {
+    let component: FileUploadExerciseUpdateComponent;
+    let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
+    let fileUploadExerciseService: FileUploadExerciseService;
+    let alertService: AlertService;
+    let navigationService: ArtemisNavigationUtilService;
+    let calendarService: CalendarService;
+
+    let routeData$: BehaviorSubject<Data>;
+    let routeUrl$: BehaviorSubject<UrlSegment[]>;
+    let routeParams$: BehaviorSubject<Params>;
+
+    const createCourse = (id = 123): Course => {
+        const course = new Course();
+        course.id = id;
+        return course;
+    };
+
+    const createExercise = (course?: Course, exerciseGroup?: ExerciseGroup): FileUploadExercise => {
+        const exercise = new FileUploadExercise(course, exerciseGroup);
+        exercise.id = undefined;
+        exercise.title = 'Test Exercise';
+        exercise.filePattern = 'pdf,png';
+        exercise.channelName = 'test-channel';
+        return exercise;
+    };
+
+    const createExistingExercise = (): FileUploadExercise => {
+        const exercise = createExercise(createCourse());
+        exercise.id = 456;
+        return exercise;
+    };
+
+    beforeEach(async () => {
+        routeData$ = new BehaviorSubject<Data>({ fileUploadExercise: createExercise(createCourse()) });
+        routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 123 });
+
+        await TestBed.configureTestingModule({
+            imports: [FileUploadExerciseUpdateComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideRouter([]),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        data: routeData$.asObservable(),
+                        url: routeUrl$.asObservable(),
+                        params: routeParams$.asObservable(),
+                    },
+                },
+                {
+                    provide: TumAetUiDialogService,
+                    useValue: {
+                        open: vi.fn(),
+                        hasOpenDialogs: vi.fn().mockReturnValue(false),
+                    },
+                },
+                {
+                    provide: CourseManagementService,
+                    useValue: {
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
+                    },
+                },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        validateDate: vi.fn(),
+                        convertExerciseCategoriesAsStringFromServer: vi.fn().mockReturnValue([]),
+                    },
+                },
+                {
+                    provide: ArtemisNavigationUtilService,
+                    useValue: {
+                        navigateBackFromExerciseUpdate: vi.fn(),
+                        navigateForwardFromExerciseUpdateOrCreation: vi.fn(),
+                    },
+                },
+                {
+                    provide: ExerciseUpdateWarningService,
+                    useValue: {
+                        checkForExerciseUpdateWarning: vi.fn().mockReturnValue(of(undefined)),
+                        checkExerciseBeforeUpdate: vi.fn().mockResolvedValue(undefined),
+                    },
+                },
+                {
+                    provide: ExerciseGroupService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() }))),
+                    },
+                },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        reloadEvents: vi.fn(),
+                    },
+                },
+                provideTranslateService(),
+            ],
+        })
+            .overrideComponent(FileUploadExerciseUpdateComponent, {
+                set: {
+                    imports: [
+                        FormsModule,
+                        PointsInputComponent,
+                        MockDirective(TranslateDirective),
+                        TumAetUiInputDirective,
+                        TumAetUiMessageComponent,
+                        ArtemisTranslatePipe,
+                        StubExerciseTitleChannelNameComponent,
+                        MockComponent(TeamConfigFormGroupComponent),
+                        MockComponent(IncludedInOverallScorePickerComponent),
+                        MockComponent(PresentationScoreComponent),
+                        MockComponent(GradingInstructionsDetailsComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(FormStatusBarComponent),
+                        MockComponent(FormFooterComponent),
+                        MockComponent(CategorySelectorComponent),
+                        MockComponent(DifficultyPickerComponent),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(CompetencySelectionComponent),
+                        MockMarkdownEditorMonacoComponent,
+                        ExerciseGroupTimelineLockStubComponent,
+                        ExerciseTimelineComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        alertService = TestBed.inject(AlertService);
+        navigationService = TestBed.inject(ArtemisNavigationUtilService);
+        calendarService = TestBed.inject(CalendarService);
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+        if (fixture) {
+            fixture.destroy();
+        }
+    });
+
+    describe('initialization', () => {
+        it('should load exercise from route data', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.fileUploadExercise()).toBeDefined();
+        });
+
+        it('should render one timeline containing all exercise dates', async () => {
+            const exercise = createExercise(createCourse());
+            exercise.releaseDate = dayjs().add(1, 'hour');
+            exercise.startDate = dayjs().add(2, 'hours');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
+
+            expect(timelines).toHaveLength(1);
+            expect(timeline.releaseDate()).toBe(exercise.releaseDate);
+            expect(timeline.startDate()).toBe(exercise.startDate);
+            expect(timeline.dueDate()).toBe(exercise.dueDate);
+            expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+            expect(timeline.exampleSolutionPublicationDate()).toBe(exercise.exampleSolutionPublicationDate);
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+            exercise.exampleSolution = 'Example solution';
+            fixture.detectChanges();
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
+        });
+
+        it('should render the group date notice first in the grading controls', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+            variantLock.locked = () => true;
+            const openModalSpy = vi.spyOn(variantLock, 'openModal');
+            fixture.detectChanges();
+
+            const gradingOptions = fixture.debugElement.query(By.css('.grading-options'));
+            const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+            expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-4!');
+
+            (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should forward the timeline reasons and mark the grading section invalid', async () => {
+            const exercise = createExercise(createCourse());
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            component.timelineStatus.set({
+                valid: false,
+                empty: false,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+            });
+
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+            expect(component.formStatusSections().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid).toBe(false);
+        });
+
+        it('should set isExamMode to true for exam exercises', async () => {
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isExamMode()).toBe(true);
+        });
+
+        it('should set isExamMode to false for course exercises', async () => {
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isExamMode()).toBe(false);
+        });
+
+        it('should set isImport to true for import route', async () => {
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isImport()).toBe(true);
+        });
+
+        it('should load existing categories for course exercises', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const categories = ['category1', 'category2'];
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categories })));
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenCalled();
+        });
+
+        it('should populate existingCategories signal with converted categories', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const exerciseService = TestBed.inject(ExerciseService);
+            const rawCategories = ['category1', 'category2'];
+            const convertedCategories = [new ExerciseCategory('category1', '#1abc9c'), new ExerciseCategory('category2', '#3498db')];
+
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: rawCategories })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(convertedCategories);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(exerciseService.convertExerciseCategoriesAsStringFromServer).toHaveBeenCalledWith(rawCategories);
+            expect(component.existingCategories()).toEqual(convertedCategories);
+        });
+
+        it('should not load existing categories for exam exercises', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse');
+
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseService.findAllCategoriesOfCourse).not.toHaveBeenCalled();
+        });
+
+        it('should load existing categories when editing an existing exercise', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const exerciseService = TestBed.inject(ExerciseService);
+            const rawCategories = ['existing-cat1', 'existing-cat2'];
+            const convertedCategories = [new ExerciseCategory('existing-cat1', '#1abc9c'), new ExerciseCategory('existing-cat2', '#3498db')];
+
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: rawCategories })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(convertedCategories);
+
+            const existingExercise = createExistingExercise();
+            existingExercise.categories = [new ExerciseCategory('assigned-cat', '#e74c3c')];
+            routeData$.next({ fileUploadExercise: existingExercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenCalledWith(123);
+            expect(component.existingCategories()).toEqual(convertedCategories);
+            expect(component.exerciseCategories()).toEqual([new ExerciseCategory('assigned-cat', '#e74c3c')]);
+        });
+
+        it('should handle error when loading existing categories', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(alertSpy).toHaveBeenCalledWith('error.http.400');
+        });
+
+        it('should set isSaving to false on init', async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isSaving()).toBe(false);
+        });
+    });
+
+    describe('save - new exercise', () => {
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call create service for new exercise', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.create).toHaveBeenCalled();
+        });
+
+        it('should refresh calendar after successful creation', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(calendarService.reloadEvents).toHaveBeenCalled();
+        });
+
+        it('should navigate forward after successful creation', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(navigationService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalled();
+        });
+
+        it('should set isSaving to false after save completes', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(component.isSaving()).toBe(false);
+        });
+    });
+
+    describe('save - existing exercise', () => {
+        beforeEach(async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call update service for existing exercise', async () => {
+            const updatedExercise = component.fileUploadExercise();
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.update).toHaveBeenCalled();
+        });
+
+        it('should refresh calendar after successful update', async () => {
+            const updatedExercise = component.fileUploadExercise();
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+
+            await component.save();
+
+            expect(calendarService.reloadEvents).toHaveBeenCalled();
+        });
+    });
+
+    describe('save - import', () => {
+        beforeEach(async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call import service for import', async () => {
+            const importedExercise = Object.assign({}, component.fileUploadExercise(), { id: 999 });
+            vi.spyOn(fileUploadExerciseService, 'import').mockReturnValue(of(new HttpResponse({ body: importedExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.import).toHaveBeenCalled();
+        });
+    });
+
+    describe('save - error handling', () => {
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should show error alert on save failure', async () => {
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+            await component.save();
+
+            expect(alertSpy).toHaveBeenCalled();
+        });
+
+        it('should set isSaving to false on error', async () => {
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            await component.save();
+
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should show error title from error response', async () => {
+            const errorResponse = new HttpErrorResponse({
+                error: { title: 'Error Title', message: 'Error Message', params: {} },
+            });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => errorResponse));
+            const alertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+            await component.save();
+
+            expect(alertSpy).toHaveBeenCalledWith('Error Title', 'Error Message', {});
+        });
+    });
+
+    describe('previousState', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should navigate back from exercise update', () => {
+            component.previousState();
+
+            expect(navigationService.navigateBackFromExerciseUpdate).toHaveBeenCalledWith(component.fileUploadExercise());
+        });
+    });
+
+    describe('updateCategories', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should update exercise categories', () => {
+            const categories = [new ExerciseCategory('cat1', undefined), new ExerciseCategory('cat2', undefined)];
+
+            component.updateCategories(categories);
+
+            expect(component.fileUploadExercise().categories).toEqual(categories);
+            expect(component.exerciseCategories()).toEqual(categories);
+        });
+    });
+
+    describe('editType', () => {
+        it('should return IMPORT when isImport is true', async () => {
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.IMPORT);
+        });
+
+        it('should return CREATE for new exercise', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.CREATE);
+        });
+
+        it('should return UPDATE for existing exercise', async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.UPDATE);
+        });
+    });
+
+    describe('import mode handling', () => {
+        it('should clear dates when importing course to course', async () => {
+            const exercise = createExistingExercise();
+            exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
+            exercise.dueDate = dayjs();
+            exercise.assessmentDueDate = dayjs();
+            exercise.exampleSolutionPublicationDate = dayjs();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isImport()).toBe(true);
+            expect(component.fileUploadExercise().releaseDate).toBeUndefined();
+            expect(component.fileUploadExercise().startDate).toBeUndefined();
+            expect(component.fileUploadExercise().dueDate).toBeUndefined();
+            expect(component.fileUploadExercise().assessmentDueDate).toBeUndefined();
+            expect(component.fileUploadExercise().exampleSolutionPublicationDate).toBeUndefined();
+        });
+
+        it('should reset the imported exercise once, not again for every edit made afterwards', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            routeData$.next({ fileUploadExercise: createExistingExercise() });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
+
+            const dueDate = dayjs().add(1, 'day');
+            fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance.dueDate.set(dueDate);
+            component.exerciseState.patch('maxPoints', 5);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // Running the import handling again would have reset the dates and loaded the course once more.
+            expect(component.fileUploadExercise().dueDate).toBe(dueDate);
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
+        });
+
+        it('should load exercise group when importing to exam', async () => {
+            const exerciseGroupService = TestBed.inject(ExerciseGroupService);
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123, examId: 456, exerciseGroupId: 789 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(exerciseGroupService.find).toHaveBeenCalled();
+        });
+    });
+
+    describe('exam mode settings', () => {
+        it('should set individual mode for exam exercises', async () => {
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isExamMode()).toBe(true);
+        });
+    });
+
+    describe('bonus points when the score no longer includes them', () => {
+        const bonusInput = () => fixture.debugElement.query(By.css('#field_bonusPoints'));
+        const formIsInvalid = () => fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm).form.invalid;
+        const footerIsDisabled = () => fixture.debugElement.query(By.directive(FormFooterComponent)).componentInstance.isDisabled();
+        const gradingSectionIsValid = () => component.formStatusSections().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
+
+        /** Switches the score mode the way the picker does: it emits the new mode. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
+            picker.componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        async function renderIncludedExercise(): Promise<void> {
+            const exercise = new FileUploadExercise(createCourse(), undefined);
+            exercise.id = 1;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            // Everything else the form requires, so the only thing that can hold it invalid is the bonus field.
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.filePattern = 'png,pdf';
+            routeData$.next({ fileUploadExercise: exercise });
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should take the out of range value with the field, rather than leaving the form invalid over it', async () => {
+            await renderIncludedExercise();
+            expect(bonusInput()).not.toBeNull();
+
+            // Out of range by the input's own max, which is what keeps the form invalid.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(formIsInvalid()).toBe(true);
+
+            // The score stops including bonus points, so the field goes - and its verdict has to go with it. Hidden
+            // instead of removed, the control stayed registered and Save refused to submit over a value the reader
+            // could no longer see, with nothing in its tooltip to say why.
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            expect(bonusInput()).toBeNull();
+            expect(formIsInvalid()).toBe(false);
+            expect(footerIsDisabled()).toBe(false);
+        });
+
+        it('should not call the grading section invalid just because the field is absent', async () => {
+            await renderIncludedExercise();
+            // Started from invalid on purpose: asserting "valid" against a baseline that is already valid passes
+            // whether or not anything recomputed when the field went.
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(gradingSectionIsValid()).toBe(false);
+
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // Nothing is wrong: the field is gone because the score does not include bonus points, and Save agrees.
+            expect(gradingSectionIsValid()).toBe(true);
+            expect(footerIsDisabled()).toBe(false);
+        });
+
+        it('should keep following the field after it is rebuilt, not the one it first saw', async () => {
+            await renderIncludedExercise();
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+
+            // Back again: a brand new control, which the wiring done once at view init would never have heard from.
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(bonusInput()).not.toBeNull();
+            expect(gradingSectionIsValid()).toBe(true);
+
+            const input: HTMLInputElement = bonusInput().nativeElement;
+            input.value = '99999';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(gradingSectionIsValid()).toBe(false);
+        });
+    });
+
+    describe('invalidReasons', () => {
+        let course: Course;
+        let titleChannelName: StubTitleChannelNameComponent;
+
+        const filledInExercise = () => {
+            const exercise = new FileUploadExercise(course, undefined);
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            exercise.filePattern = 'png,pdf';
+            return exercise;
+        };
+        const reasonKeys = () => component.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => component.formStatusSections().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
+
+        async function render(exercise: FileUploadExercise) {
+            routeData$.next({ fileUploadExercise: exercise });
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            titleChannelName = fixture.debugElement.query(By.directive(StubTitleChannelNameComponent)).componentInstance;
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            component.invalidReasons();
+            component.formStatusSections();
+        }
+
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
+        });
+
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new FileUploadExercise(course, undefined));
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
+            expect(reasonKeys()).toContain('artemisApp.fileUploadExercise.form.filePattern.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', async () => {
+            await render(filledInExercise());
+
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should report a title shorter than the minimum length', async () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab';
+            await render(exercise);
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
+        });
+
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
+
+            titleChannelName.isTitleDisallowed.set(true);
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should require a channel name only while the channel field is displayed', async () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
+
+            titleChannelName.isChannelFieldDisplayed.set(false);
+
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
+
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
+            const exercise = filledInExercise();
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_points', '10');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the file pattern as it is typed, in the reasons and in the grading section it is entered in', async () => {
+            await render(filledInExercise());
+
+            await typeInto('#field_filePattern', 'p');
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: 2 } }]);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_filePattern', '');
+            expect(reasonKeys()).toEqual(['artemisApp.fileUploadExercise.form.filePattern.undefined']);
+
+            await typeInto('#field_filePattern', 'pdf');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+            expect(component.fileUploadExercise().filePattern).toBe('pdf');
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig = fixture.debugElement.query(By.directive(TeamConfigFormGroupComponent)).componentInstance as TeamConfigFormGroupComponent;
+            const exercise = component.fileUploadExercise();
+
+            exercise.mode = ExerciseMode.TEAM;
+            exercise.teamAssignmentConfig = undefined;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required', 'artemisApp.exercise.form.maxTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            component.fileUploadExercise().title = 'ab';
+            titleComponent.exerciseChange.emit(component.fileUploadExercise());
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            await typeInto('#field_points', '7');
+            await typeInto('#field_filePattern', 'zip');
+
+            expect(component.fileUploadExercise()).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.filePattern).toBe('zip');
+        });
+    });
+});

@@ -1,0 +1,1320 @@
+package de.tum.cit.aet.artemis.localvc.service;
+
+import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+
+import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.ThrowingConsumer;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+
+/**
+ * This class contains integration tests for edge cases pertaining to the local VC system.
+ */
+class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final String TEST_PREFIX = "localvcint";
+
+    // Measured baselines for one authenticated git request; a clone or a push is two of these. Upper bounds, so a new
+    // query fails the build.
+    //
+    // The participation-token counts are the ones that matter for exam load: that is what students use. Password
+    // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
+    // writes an audit event and stamps the last login date. It is measured too so that path cannot rot unnoticed.
+    // Each count below includes one query for the personal VCS access token, which lives in user_vcs_access_token and is
+    // compared before the other credentials. Raising any of these numbers means a new query on the git authentication path,
+    // which is exactly what this test exists to catch, so establish where it comes from before changing them.
+    private static final int GIT_AUTH_QUERY_COUNT = 9;
+
+    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 9;
+
+    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 6;
+
+    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 6;
+
+    private static final ReentrantLock RATE_LIMIT_SERVICE_SWAP_LOCK = new ReentrantLock();
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private ProxyManager<String> rateLimitProxyManager;
+
+    private LocalVCTestRepository assignmentRepository;
+
+    private LocalVCTestRepository templateRepository;
+
+    private LocalVCTestRepository solutionRepository;
+
+    private LocalVCTestRepository testsRepository;
+
+    @BeforeEach
+    void initRepositories() throws Exception {
+        // Create assignment repository
+        assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
+
+        // Create and wire base repositories using the shared helper
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        templateRepository = baseRepositories.templateRepository();
+        solutionRepository = baseRepositories.solutionRepository();
+        testsRepository = baseRepositories.testsRepository();
+    }
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @AfterEach
+    void removeRepositories() throws IOException {
+        assignmentRepository.deleteWorkingCopy();
+        templateRepository.deleteWorkingCopy();
+        solutionRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
+        // The helpers above register every repository they hand out, so clear that registry as well instead of letting it grow for the lifetime of the thread.
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+    }
+
+    @Test
+    void testFetchPush_repositoryDoesNotExist() throws IOException, GitAPIException, URISyntaxException {
+        // Create a new repository, delete the remote repository and try to fetch and push to the remote repository.
+        String projectKey = "SOMEPROJECTKEY";
+        String repositorySlug = "some-repository-slug";
+        // Create the repository under the same project key the assertions below use, so that deleting it is what makes them fail.
+        LocalVCTestRepository someRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
+
+        // Delete the remote repository.
+        someRepository.bareRepository().close();
+        try {
+            RepositoryExportTestUtil.safeDeleteDirectory(someRepository.bareRepositoryPath());
+        }
+        catch (Exception exception) {
+            // JGit creates a lock file in each repository that could cause deletion problems.
+            if (exception.getMessage().contains("gc.log.lock")) {
+                return;
+            }
+            throw exception;
+        }
+
+        // Try to fetch from the remote repository.
+        localVCLocalCITestService.testFetchThrowsException(someRepository.workingCopy(), student1Login, USER_PASSWORD, projectKey, repositorySlug, InvalidRemoteException.class,
+                "");
+
+        // Try to push to the remote repository.
+        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, NOT_FOUND);
+
+        // Cleanup
+        someRepository.deleteWorkingCopy();
+    }
+
+    /**
+     * Guards the git authentication and authorization path, which runs on every git request and is therefore the
+     * highest-frequency database consumer of an exam.
+     * <p>
+     * The service method is called directly rather than through a real git fetch because the embedded git server handles
+     * the request on its own thread, where the thread-local query interceptor would count nothing.
+     * <p>
+     * Measured baseline. It used to be eight queries higher: the user was loaded without its authorities and course
+     * roles, so every one of the four course-role checks on this path both re-read the whole user row (through
+     * AuthorizationCheckService#loadUserIfNeeded, because User#authorities is lazy) and issued its own EXISTS query.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The case the exam simulation actually drives: a participation-scoped token belonging to the repository's own
+     * student. Password authentication takes a different and more expensive route (it reaches the authentication
+     * manager, which re-reads the user, writes an audit event and stamps the last login date), so it is not
+     * representative of exam load.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of the participation-token fetch above.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of {@link #testAuthenticateAndAuthorizeGitRequestQueryCount}. A push authorizes as WRITE,
+     * which additionally resolves whether the participation is locked; measured, that lands on the same count as a
+     * fetch, so both paths are pinned at the same number.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_PUSH_AUTH_QUERY_COUNT);
+    }
+
+    @Test
+    void testFetchPush_usingVcsAccessToken() {
+        var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student, programmingParticipation.getId());
+        var token = participationVcsAccessToken.getVcsAccessToken();
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Fetch from and push to the remote repository with participation VCS access token
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Fetch from and push to the remote repository with user VCS access token
+        var studentWithToken = userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Try to fetch and push, when token is removed and re-added, which makes the previous token invalid
+        userUtilService.deleteUserVcsAccessToken(studentWithToken);
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+        // Try to fetch and push with removed participation
+        localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
+        localVCLocalCITestService.deleteParticipation(programmingParticipation);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testFetchPush_wrongCredentials() throws InvalidNameException {
+        var student1 = new LdapUserDto().login(getTestPrefix() + "student1");
+        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+
+        var fakeUser = new LdapUserDto().login(localVCBaseUsername);
+        fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
+
+        doReturn(Optional.of(student1)).when(ldapUserService).findByLogin(student1.getLogin());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByLogin(localVCBaseUsername);
+
+        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+        // Try to access with the wrong password.
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+
+        // Try to access without a password.
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testFetchPush_programmingExerciseDoesNotExist() throws GitAPIException, IOException, URISyntaxException {
+        // Create a repository for an exercise that does not exist.
+        String projectKey = "SOMEPROJECTKEY";
+        String repositorySlug = "someprojectkey-some-repository-slug";
+        LocalVCTestRepository someRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, repositorySlug);
+
+        localVCLocalCITestService.testFetchReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+
+        // Cleanup
+        someRepository.deleteWorkingCopy();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFetchPush_offlineIDENotAllowed() {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExerciseRepository.save(programmingExercise);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopy(), student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+
+        // Teaching assistants and higher should still be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopy(), tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopy(), instructor1Login, projectKey1, assignmentRepositorySlug);
+    }
+
+    @Test
+    void testFetchPush_assignmentRepository_student_noParticipation() throws GitAPIException, IOException, URISyntaxException {
+        // Create a new repository, but don't create a participation for student2.
+        String repositorySlug = projectKey1.toLowerCase(Locale.ROOT) + "-" + student2Login;
+        LocalVCTestRepository student2Repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, repositorySlug);
+
+        localVCLocalCITestService.testFetchReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(student2Repository.workingCopy(), student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+
+        // Cleanup
+        student2Repository.deleteWorkingCopy();
+    }
+
+    @Test
+    void testFetchPush_templateRepository_noParticipation() {
+        // Remove the template participation from the programming exercise.
+        programmingExercise.setTemplateParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
+        templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
+
+        // Instructors should still be able to access the template repository even if the participation record is missing.
+        // Authorization is based on the user's course role, not on the existence of a participation.
+        localVCLocalCITestService.testFetchSuccessful(templateRepository.workingCopy(), instructor1Login, projectKey1, templateRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(templateRepository.workingCopy(), instructor1Login, projectKey1, templateRepositorySlug);
+    }
+
+    @Test
+    void testFetchPush_solutionRepository_noParticipation() {
+        // Remove the solution participation from the programming exercise.
+        programmingExercise.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
+        solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
+
+        // Instructors should still be able to access the solution repository even if the participation record is missing.
+        // Authorization is based on the user's course role, not on the existence of a participation.
+        localVCLocalCITestService.testFetchSuccessful(solutionRepository.workingCopy(), instructor1Login, projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(solutionRepository.workingCopy(), instructor1Login, projectKey1, solutionRepositorySlug);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserTriesToDeleteBranch() throws GitAPIException, URISyntaxException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // ":" prefix in the refspec means delete the branch in the remote repository.
+        RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot delete a branch.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentTriesToForcePush() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
+
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+    }
+
+    // TODO add test for force push over ssh, which should work
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testInstructorTriesToForcePushOverHttp() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        String assignmentRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, testsRepositorySlug);
+
+        // Force push to assignment repository is allowed for instructors
+        RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
+
+        // Force push to template repository is allowed for instructors
+        remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to solution repository is allowed for instructors
+        remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        // Force push to rests repository is allowed for instructors
+        remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+    }
+
+    private RemoteRefUpdate setupAndTryForcePush(LocalVCTestRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
+            throws Exception {
+
+        // Create a second local repository and push a file from there
+        Path tempDirectory = tempFileUtilService.createTempDirectory(tempPath, "tempDirectory");
+        Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
+        localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
+        localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
+
+        // Commit a file to the original local repository
+        localVCLocalCITestService.commitFile(originalRepository.workingCopyPath(), originalRepository.workingCopy(), "second-test.txt");
+
+        // Try to push normally, should fail because the remote already contains work that does not exist locally
+        PushResult pushResultNormal = originalRepository.workingCopy().push().setRemote(repositoryUri).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
+
+        // Force push from the original local repository
+        PushResult pushResultForce = originalRepository.workingCopy().push().setForce(true).setRemote(repositoryUri).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
+
+        // Cleanup
+        secondLocalGit.close();
+        RepositoryExportTestUtil.safeDeleteDirectory(tempDirectory);
+
+        return remoteRefUpdate;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Users cannot create new branches.
+        assignmentRepository.workingCopy().branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        // The branch holds a commit that the repository does not have yet
+        assignmentRepository.workingCopy().checkout().setName("new-branch").call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "new-branch-file.txt");
+        ObjectId newCommit = assignmentRepository.workingCopy().getRepository().resolve("refs/heads/new-branch");
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+        assertNothingOfThePushIsStored(newCommit);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPushWithWrongPasswordStoresNothingAndCreatesNoPlaceForTheObjects() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "rejected-before-the-receipt.txt");
+        ObjectId commit = assignmentRepository.workingCopy().getRepository().resolve("HEAD");
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, "wrong-" + USER_PASSWORD, projectKey1, assignmentRepositorySlug);
+
+        assertThatExceptionOfType(GitAPIException.class).isThrownBy(
+                () -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).call());
+
+        assertNothingOfThePushIsStored(commit);
+    }
+
+    /**
+     * A push that is rejected leaves nothing in the repository: neither the objects it sent nor a place for them.
+     */
+    private void assertNothingOfThePushIsStored(ObjectId commit) throws IOException {
+        assertThat(assignmentRepository.bareRepository().getRepository().getObjectDatabase().has(commit)).as("the objects of a rejected push are not stored").isFalse();
+        try (var entries = Files.list(assignmentRepository.bareRepositoryPath())) {
+            assertThat(entries.map(entry -> entry.getFileName().toString())).as("the place of the push is removed").noneMatch(name -> name.startsWith("incoming-"));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserPushesSeveralRefsAtOnce() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        String sideBranch = "side-branch";
+        assignmentRepository.workingCopy().branchCreate().setName(sideBranch).setStartPoint("refs/heads/" + defaultBranch).call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "second-test.txt");
+        Map<String, String> branchesBeforePush = remoteBranches(repositoryUri);
+
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch), new RefSpec("refs/heads/" + sideBranch + ":refs/heads/" + sideBranch))
+                .call().iterator().next();
+
+        assertThat(pushResult.getRemoteUpdates()).as("every ref of the push is rejected, not only the one the hook looks at first").hasSize(2).allSatisfy(update -> {
+            assertThat(update.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+            assertThat(update.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+        });
+        // Comparing the whole ref state catches the bug whichever of the two commands the push happens to send first: one of them used to be applied unchecked, which
+        // either created the side branch or moved the default branch.
+        assertThat(remoteBranches(repositoryUri)).as("a rejected push leaves the repository on the server exactly as it was").isEqualTo(branchesBeforePush);
+    }
+
+    private Map<String, String> remoteBranches(String repositoryUri) throws GitAPIException {
+        return Git.lsRemoteRepository().setRemote(repositoryUri).setHeads(true).call().stream().collect(Collectors.toMap(Ref::getName, ref -> ref.getObjectId().name()));
+    }
+
+    void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(regex);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+        await().until(() -> assignmentRepository.bareRepositoryPath().toFile().exists());
+        await().until(() -> assignmentRepository.workingCopyPath().toFile().exists());
+
+        assignmentRepository.workingCopy().branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+
+        if (shouldSucceed) {
+            assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        else {
+            assertThat(remoteRefUpdate.getStatus()).isNotEqualTo(RemoteRefUpdate.Status.OK);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
+        customBranchTestHelper(true, "^new-branch$", true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
+        customBranchTestHelper(true, "^old-branch$", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
+        customBranchTestHelper(false, ".*", false);
+    }
+
+    @Test
+    void testRepositoryFolderName() {
+        // we specifically choose logins containing "git" to test it does not accidentally get replaced
+        String login1 = "ab123git";
+        String login2 = "git123ab";
+
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
+
+        // assert that the URIs are correct
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString())
+                .isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2 + ".git");
+
+        // assert that the folder names are correct
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase(Locale.ROOT) + "-" + login2);
+    }
+
+    // --- Security tests: authentication and authorization for git operations ---
+    // These tests directly exercise LocalVCServletService.authenticateAndAuthorizeGitRequest
+    // with MockHttpServletRequest to verify every branch in the authentication and authorization flow.
+
+    // == Authentication tests: verifying credential validation ==
+
+    @Test
+    void testFetch_nonExistentUser_isRejected() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    @Test
+    void testPush_nonExistentUser_isRejected() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+    }
+
+    @Test
+    void testFetch_noAuthorizationHeader_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    /**
+     * A git client that sends a valid username but an empty password (e.g. a remote URL with the username baked in and no credential helper / access token supplying a password)
+     * must be reported as a missing credential, not as a password-length violation. This is the most common cause of "Failed login attempt ... password has to be at least ..."
+     * noise in production, where the external identity provider's own policy already rules out genuinely too-short passwords.
+     */
+    @Test
+    void testFetch_emptyPassword_reportsNoPasswordProvided() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, "");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("No password provided");
+    }
+
+    /**
+     * A non-empty but too-short password is a genuine credential issue (as opposed to a missing one) and must still be reported with the length-policy message, so that it is
+     * logged
+     * at warn rather than being downgraded to the debug level used for empty-credential probes.
+     */
+    @Test
+    void testFetch_tooShortPassword_reportsLengthPolicy() {
+        String tooShortPassword = "a".repeat(PASSWORD_MIN_LENGTH - 1);
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, tooShortPassword);
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("at least " + PASSWORD_MIN_LENGTH + " characters long");
+    }
+
+    /**
+     * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level by sending
+     * real HTTP requests to dumb-protocol endpoints (/HEAD, /objects/info/packs).
+     * These paths bypass our authentication filters entirely (they are served by JGit's
+     * AsIsFileService), so we disable them via {@code setAsIsFileService(AsIsFileService.DISABLED)}
+     * in ArtemisGitServletService. Without this, anyone could clone repositories anonymously.
+     */
+    @Test
+    void testDumbHttpProtocol_isDisabledInServlet() throws Exception {
+        // Send real HTTP requests to dumb-protocol endpoints on the running server.
+        // These must return non-200 (JGit returns 403 when AsIsFileService is DISABLED).
+        var headUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD").toURL();
+        var headConnection = (java.net.HttpURLConnection) headUrl.openConnection();
+        headConnection.setRequestMethod("GET");
+        assertThat(headConnection.getResponseCode()).as("Dumb HTTP /HEAD endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        headConnection.disconnect();
+
+        var packsUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/objects/info/packs").toURL();
+        var packsConnection = (java.net.HttpURLConnection) packsUrl.openConnection();
+        packsConnection.setRequestMethod("GET");
+        assertThat(packsConnection.getResponseCode()).as("Dumb HTTP /objects/info/packs endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        packsConnection.disconnect();
+    }
+
+    /**
+     * The shared credential shortcut is unreachable on a node that runs local CI, whatever is configured.
+     * <p>
+     * {@code LocalVCBuildAgentCredentialsValidator} already refuses to start such a node with a credential pair set, so
+     * this is the second half of the same guarantee: even a pair that arrives by some other route opens nothing. Every
+     * build job here carries a token covering its own assignment, test, solution and auxiliary repositories, so no
+     * Artemis build agent has a use for a credential that opens every repository in the installation.
+     * <p>
+     * The pair still works on a local VC node without local CI, which is the Jenkins with LocalVC setup; that case is
+     * covered by {@code LocalVCBuildAgentCredentialsValidatorTest} rather than here, because this test context runs
+     * local CI.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false,
+                () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitPassword", "buildjob_password",
+                                () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                                        .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
+    }
+
+    /**
+     * Build agent credentials must be refused once the build agents authenticate with an ssh key. They never present
+     * this credential pair then, so accepting it would leave a repository-wide read shortcut open that nothing uses.
+     * <p>
+     * The test context enables ssh for build agents, which is what makes this the ambient configuration here.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_isRejectedWhenBuildAgentsUseSsh() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        // Falls through to normal user authentication, where "buildjob_user" is not a real user
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    /**
+     * Build agent credentials must NOT bypass authentication for WRITE (push) operations.
+     * The build agent check only applies to RepositoryActionType.READ.
+     */
+    @Test
+    void testPush_buildAgentCredentials_isRejected() throws Throwable {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "buildjob_user", "buildjob_password");
+
+        // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
+        // ssh configuration of the test context closes the shortcut for every action anyway.
+        // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
+    }
+
+    // == Authorization tests: student access to staff repositories ==
+    // Covers checkAccessToStaffRepository: student (not TA) + staff repo type → throws
+
+    @Test
+    void testFetch_studentAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testFetch_studentAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("exercise");
+    }
+
+    @Test
+    void testFetch_studentAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("tests");
+    }
+
+    @Test
+    void testPush_studentAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testPush_studentAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("exercise");
+    }
+
+    @Test
+    void testPush_studentAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("tests");
+    }
+
+    // Verify /info/refs endpoint applies the same rules (consistent across all URL paths)
+
+    @Test
+    void testFetch_studentAccessesSolutionRepoViaInfoRefs_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/info/refs", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testFetch_studentAccessesTemplateRepoViaInfoRefs_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("exercise");
+    }
+
+    // == Authorization tests: TA access to staff repositories ==
+    // Covers checkAccessToStaffRepository: TA + READ → succeeds, TA + WRITE → throws
+
+    @Test
+    void testFetch_tutorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testFetch_tutorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testFetch_tutorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_tutorAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    @Test
+    void testPush_tutorAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    @Test
+    void testPush_tutorAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    // == Authorization tests: instructor/editor access to staff repositories ==
+    // Covers checkAccessToStaffRepository: editor+ → succeeds for both READ and WRITE
+
+    @Test
+    void testFetch_instructorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    @Test
+    void testFetch_instructorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    @Test
+    void testFetch_instructorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/info/refs", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    // == Consistency: all URL patterns are authenticated the same way ==
+
+    @Test
+    void testFetch_nonExistentUser_isRejectedOnInfoRefs() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    @Test
+    void testPush_nonExistentUser_isRejectedOnInfoRefs() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+    }
+
+    /**
+     * Creates a MockHttpServletRequest with Basic authentication for git endpoints.
+     */
+    private MockHttpServletRequest createGitRequest(String requestUri, String username, String password) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(requestUri);
+        request.setRemoteAddr("127.0.0.1");
+        String credentials = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + credentials);
+        return request;
+    }
+
+    /**
+     * Like {@link #createGitRequest(String, String, String)}, coming from the given client address. The servlet container concludes the address of the peer, which is what
+     * the git authentication limits.
+     */
+    private MockHttpServletRequest createGitRequest(String requestUri, String username, String password, String clientAddress) {
+        MockHttpServletRequest request = createGitRequest(requestUri, username, password);
+        request.setRemoteAddr(clientAddress);
+        return request;
+    }
+
+    @Test
+    void testFilesLargerThan10MbAreRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        Path largeFile = assignmentRepository.workingCopyPath().resolve("large-file.txt");
+        FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
+
+        assignmentRepository.workingCopy().add().addFilepattern("large-file.txt").call();
+        ObjectId largeCommit = GitService.commit(assignmentRepository.workingCopy()).setMessage("Add large file").call().getId();
+
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
+        // the content is examined after its objects were received, and they are removed right away
+        assertNothingOfThePushIsStored(largeCommit);
+    }
+
+    @Test
+    void testStudentRepositoryLargerThan20MbIsRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Every file is below the limit for a single file, but together they are larger than a student repository may be.
+        for (int i = 0; i < 5; i++) {
+            Path file = assignmentRepository.workingCopyPath().resolve("data" + i + ".txt");
+            FileUtils.writeByteArrayToFile(file.toFile(), new byte[5 * 1024 * 1024]);
+        }
+        assignmentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(assignmentRepository.workingCopy()).setMessage("Add data files").call();
+
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).contains("limit is 20 MB").contains("Download them during the build instead")
+                .contains("write-code-and-tests#keep-repositories-small");
+    }
+
+    @Test
+    void testFetch_expiredUserVcsAccessToken_isRejected() throws InvalidNameException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        // Set a VCS access token with an expiry date in the past
+        String expiredToken = "vcpat-expired-token-that-is-exactly-50chars-long12";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, expiredToken, ZonedDateTime.now().minusDays(1));
+
+        // Expired token fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, expiredToken, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testFetch_userVcsAccessTokenWithNullExpiry_isRejected() throws InvalidNameException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        // Set a VCS access token with null expiry date
+        String token = "vcpat-null-expiry-token-exactly-50chars-long-here1";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, null);
+
+        // Null expiry date fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopy(), student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testAuthHeader_basicWithoutPayload_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // "Basic" without Base64 payload
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
+    }
+
+    @Test
+    void testAuthHeader_nonBasicScheme_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Bearer scheme instead of Basic
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer sometoken");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
+    }
+
+    @Test
+    void testAuthHeader_base64WithoutColon_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Base64-encoded string without colon separator
+        String encoded = Base64.getEncoder().encodeToString("usernameonly".getBytes());
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Missing colon");
+    }
+
+    @Test
+    void testAuthHeader_invalidBase64_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Invalid Base64 string
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic !!!not-base64!!!");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid Base64");
+    }
+
+    @Test
+    void testGetHttpStatusForException_rateLimitExceeded() {
+        int status = localVCServletService.getHttpStatusForException(new RateLimitExceededException(60), "/some-repo");
+        assertThat(status).isEqualTo(429);
+    }
+
+    @Test
+    void testGetHttpStatusForException_unknownException() {
+        int status = localVCServletService.getHttpStatusForException(new RuntimeException("unexpected"), "/some-repo");
+        assertThat(status).isEqualTo(500);
+    }
+
+    /**
+     * The git servlet runs outside Spring MVC, so the ExceptionTranslator never turns a rate limit rejection into a 429
+     * there: the fetch and push filters have to answer it themselves, or the exception leaves the servlet uncaught.
+     * <p>
+     * Rate limiting is switched off for the shared test context, so a limiting service is swapped into the servlet
+     * service for this test only. It exempts loopback, where every other test's git request comes from, and limits
+     * the documentation address of this test, so concurrently running tests are unaffected. The requests come from loopback, a proxy that the
+     * servlet container believes (server.forward-headers-strategy: native), so it takes the documentation address from X-Forwarded-For as the address of the peer.
+     * The address is fresh on every run: the buckets live in the shared context, and LocalVCSshIntegrationTest runs
+     * this test a second time, possibly concurrently: the swap is serialized so that neither run restores the other's
+     * limiting service instead of the original.
+     */
+    @Test
+    void testGitRequestsOverAuthenticationRateLimitAreAnsweredWith429() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(1, clientAddress -> {
+            try (HttpClient client = HttpClient.newHttpClient()) {
+                String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+                String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+
+                // A handshake with a wrong password keeps the only token, so the rejections below come from the limit.
+                String wrongAuthorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":wrong-" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", wrongAuthorizationHeader, clientAddress).statusCode()).isEqualTo(401);
+
+                for (String service : List.of("git-upload-pack", "git-receive-pack")) {
+                    HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader, clientAddress);
+                    assertThat(response.statusCode()).as("status for %s", service).isEqualTo(429);
+                    assertThat(response.headers().firstValueAsLong(HttpHeaders.RETRY_AFTER).orElse(0)).as("Retry-After for %s", service).isPositive();
+                }
+
+                // A request that skips the handshake and sends the password straight to the transfer endpoint is limited as well.
+                for (String service : List.of("git-upload-pack", "git-receive-pack")) {
+                    HttpRequest transfer = HttpRequest.newBuilder(URI.create(repositoryUrl + "/" + service)).header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                            .header("X-Forwarded-For", clientAddress).POST(HttpRequest.BodyPublishers.noBody()).build();
+                    assertThat(client.send(transfer, HttpResponse.BodyHandlers.ofString()).statusCode()).as("transfer status for %s", service).isEqualTo(429);
+                }
+            }
+        });
+    }
+
+    /**
+     * A regular clone or push is several requests with the same credentials. Their correct password gives back what each of them spent, so the limit stays a bound on
+     * guessing and does not shrink the number of operations a client may run. Wrong passwords keep their tokens until the budget is spent.
+     */
+    @Test
+    void testCorrectPasswordsDoNotUseUpTheAuthenticationBudget() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(2, clientAddress -> {
+            String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
+            String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
+
+            // more operations than the budget holds: every handshake and every transfer request with the correct password goes through
+            for (int operation = 0; operation < 4; operation++) {
+                localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+                for (int i = 0; i < 3; i++) {
+                    localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+                }
+            }
+
+            // two wrong passwords spend the budget, at the handshake as well as on a transfer request that skips it
+            for (String uri : List.of(handshakeUri, transferUri)) {
+                assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                        .authenticateAndAuthorizeGitRequest(createGitRequest(uri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            }
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * A data transfer request that skips the handshake is answered as a failed login for every wrong password and spends one token for it, until the budget is
+     * spent and the requests are refused with the rate limit answer.
+     */
+    @Test
+    void testWrongPasswordOnDataTransferRequestsSpendsAuthenticationTokens() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(2, clientAddress -> {
+            String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
+            String wrongPassword = "wrong-" + USER_PASSWORD;
+
+            for (int attempt = 0; attempt < 2; attempt++) {
+                assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                        .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, wrongPassword, clientAddress), RepositoryActionType.READ));
+            }
+
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, wrongPassword, clientAddress), RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * A header sent by the client does not choose the budget: two requests of the same peer address share one budget, whatever X-Forwarded-For says.
+     */
+    @Test
+    void testClientSuppliedForwardingHeaderDoesNotChangeTheAuthenticationBudget() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(1, clientAddress -> {
+            String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
+            // a wrong password keeps its token, so the first request uses up the budget of one
+            MockHttpServletRequest first = createGitRequest(handshakeUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress);
+            first.addHeader("X-Forwarded-For", "203.0.113.1");
+            MockHttpServletRequest second = createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress);
+            second.addHeader("X-Forwarded-For", "203.0.113.2");
+
+            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(first, RepositoryActionType.READ));
+
+            assertThatExceptionOfType(RateLimitExceededException.class)
+                    .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(second, RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * Wrong passwords reduce the budget and correct ones give back what they spent, so a bound on guessing stays a bound whatever correct requests are mixed in.
+     */
+    @Test
+    void testCorrectPasswordGivesBackItsTokenAndWrongPasswordsKeepTheirs() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(3, clientAddress -> {
+            String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
+            String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
+
+            // a correct password gives back the token that its handshake spent
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            // a wrong password keeps its token: two are left
+            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            // correct passwords give theirs back, however many there are
+            for (int i = 0; i < 5; i++) {
+                localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            }
+            // the last two tokens go to wrong passwords, and nothing is left for the next request, correct password or not
+            for (int i = 0; i < 2; i++) {
+                assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                        .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            }
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * Where the allowance is a single token, a clone or push still completes: the handshake gives its token back when the password is correct, so the transfer requests
+     * that follow it find one. A wrong password keeps the token, and the next request is refused.
+     */
+    @Test
+    void testHandshakeAndTransferCompleteWithASingleToken() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(1, clientAddress -> {
+            String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
+            String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
+
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+
+            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * Runs the action with a limiting rate limit service in the git servlet service. The action receives a fresh documentation address, which the requests of the
+     * action present as the address of their peer, so buckets of earlier runs do not matter.
+     */
+    private void runWithAuthenticationRateLimit(int requestsPerMinute, ThrowingConsumer<String> action) throws Exception {
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setGitAuthenticationRequestsPerMinute(requestsPerMinute);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        RATE_LIMIT_SERVICE_SWAP_LOCK.lock();
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try {
+            String clientAddress = "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(1, 0x10000)) + ":"
+                    + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x10000));
+            action.accept(clientAddress);
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+            RATE_LIMIT_SERVICE_SWAP_LOCK.unlock();
+        }
+    }
+
+    /**
+     * Git has a bucket of its own, separate from the logins. A lecture hall behind one address that pushes at a deadline used to
+     * use up the allowance that the logins of everyone on that address depend on. Here the login bucket allows one request and
+     * the git bucket many, and several handshakes from the same address all go through, so a handshake no longer draws on the login bucket.
+     * The swap of the rate limit service is the one of the test above.
+     */
+    @Test
+    void testGitHandshakesDoNotUseUpTheLoginBudget() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setGitAuthenticationRequestsPerMinute(100);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        RATE_LIMIT_SERVICE_SWAP_LOCK.lock();
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+            String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+            String clientAddress = "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(1, 0x10000)) + ":"
+                    + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x10000));
+
+            for (int handshake = 1; handshake <= 3; handshake++) {
+                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader, clientAddress).statusCode()).as("status of handshake %d", handshake)
+                        .isEqualTo(200);
+            }
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+            RATE_LIMIT_SERVICE_SWAP_LOCK.unlock();
+        }
+    }
+
+    private static HttpResponse<String> sendInfoRefs(HttpClient client, String repositoryUrl, String service, String authorizationHeader, String clientAddress)
+            throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(repositoryUrl + "/info/refs?service=" + service)).header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .header("X-Forwarded-For", clientAddress).GET().build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void setupLdapToRejectAuth(String login) throws InvalidNameException {
+        var ldapUser = new LdapUserDto().login(login);
+        String cn = login.replace(TEST_PREFIX, "");
+        ldapUser.setUid(new LdapName("cn=" + cn + ",ou=test,o=lab"));
+        doReturn(Optional.of(ldapUser)).when(ldapUserService).findByLogin(login);
+        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+    }
+}

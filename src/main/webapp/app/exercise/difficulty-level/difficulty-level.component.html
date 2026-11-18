@@ -1,0 +1,11 @@
+<div id="difficulty-level" class="inline-flex gap-1" [tumAetUiTooltip]="coloredDifficultyLevel().label">
+    @for (color of coloredDifficultyLevel().color; track $index) {
+        <div
+            class="skill-bar first:rounded-s last:rounded-e"
+            [class.bg-state-success]="color === 'success'"
+            [class.bg-state-warning]="color === 'warning'"
+            [class.bg-state-danger]="color === 'danger'"
+            [class.bg-surface-sunken]="color === 'body'"
+        ></div>
+    }
+</div>

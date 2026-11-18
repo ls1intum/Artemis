@@ -1,0 +1,267 @@
+---
+id: extensions-setup
+title: Setup of Extension Services
+sidebar_label: Extensions Setup
+last_reviewed: 2026-11-17
+---
+
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../src/components/Image/Image';
+import sharingHealth1 from './assets/sharing/sharing_health1.png';
+import sharingHealth2 from './assets/sharing/sharing_health2.png';
+import Callout from '../../src/components/Callout/Callout';
+
+This section describes the required setup for various extension services that can be used to activate additional functionality in your Artemis instance.
+
+## EduTelligence Suite
+
+EduTelligence is a comprehensive suite of AI-powered microservices designed to enhance Artemis with intelligent features. Some of the AI-powered services that integrate with Artemis are now part of this unified suite.
+
+**Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
+
+**Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
+
+## EduTelligence / Iris
+
+Iris is the AI-powered virtual tutor integrated into Artemis. It is backed by **Pyris**, a FastAPI service from the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. The Artemis-side configuration below is all that is required in this file; full Pyris deployment instructions live in the Iris admin documentation.
+
+### Configure Artemis
+
+In your `application-artemis.yml` (or your deployment-specific override), enable Iris and point it at your running Pyris instance:
+
+```yaml
+artemis:
+    iris:
+        enabled: true
+        url: https://pyris.your-domain.com # Or http://localhost:8000 for local development
+        secret-token: your-shared-secret # Must match the token configured in Pyris
+```
+
+Pyris is called by the core nodes, and Pyris and the Weaviate instance behind it work together. Run them on the private network, use a separate Pyris for every installation that holds real data, and give every installation its own
+secret. See the [Network Model](/admin/production-setup/network-model#extension-services).
+
+Optionally, configure per-user rate limiting:
+
+```yaml
+artemis:
+    iris:
+        ratelimit:
+            default-limit: 100 # Max requests per user (-1 for unlimited)
+            default-timeframe-hours: 3 # Time window for the limit
+```
+
+### Deploying Pyris and managing Iris
+
+For Pyris deployment and configuration, refer to the <a href="https://ls1intum.github.io/edutelligence/iris/">Iris admin documentation</a>. For the Artemis request, callback, WebSocket, ingestion, search, and memory boundaries, see the [AI Pipelines catalog](../developer/ai-pipelines#iris-and-pyris); service-owned execution and retrieval details are documented in the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system) and [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline).
+
+### Global search (Weaviate)
+
+Artemis's keyword and semantic search feature (global search) uses Weaviate independently of Iris. For full setup instructions — deploying Weaviate, choosing an embedding strategy, configuring Artemis, and operating the instance — see the [Global Search & Weaviate Setup](./global-search-weaviate) admin page.
+
+## Athena Service
+
+Athena is an EduTelligence assessment service that Artemis uses for configured feedback-suggestion modules and related assessment workflows. To enable Athena, special configuration is required. The [AI Pipelines catalog](../developer/ai-pipelines#athena) describes the Artemis-side selection, forwarding, scheduling, and repository-export boundaries; the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/) documents the service-owned module contract.
+
+<Callout variant={CalloutVariant.info}>
+
+Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+
+</Callout>
+
+### Enable Athena
+
+Set the Athena module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+
+```yaml
+artemis:
+    athena:
+        enabled: true
+```
+
+### Configure the Athena boundary
+
+Configure the Athena endpoint and shared secret in the active deployment-specific configuration. Artemis discovers available modules from Athena; exercise configuration selects an allowed module rather than using a static per-type module mapping.
+
+```yaml
+artemis:
+    athena:
+        url: https://<athena-service>
+        secret: <shared-secret>
+```
+
+Use a deployment-managed shared secret that is unique to your installation, for example `openssl rand -hex 32`, and configure the same value in Athena.
+Without a secret, Artemis neither sends requests to Athena nor answers its repository requests.
+Under the `prod` profile, Artemis refuses to start with the Athena module enabled when the secret is empty, is one of the example values shipped with Artemis, or starts with `CHANGE_ME`.
+The example environment files under `deployment/docker/artemis/config` carry such a placeholder on purpose.
+For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
+
+## Other Extension Services
+
+### Text Assessment Analytics Service
+
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+
+1. Adding new feedback on a manually selected block
+2. Adding new feedback on an automatically selected block
+3. Deleting a feedback
+4. Clicking to resolve feedback conflicts
+5. Clicking to view origin submission of automatically generated feedback
+6. Hovering over the text assessment feedback impact warning
+7. Editing/Discarding an automatically generated feedback
+8. Clicking the Submit button when assessing a text submission
+9. Clicking the Assess Next button when assessing a text submission
+
+These events are tracked by attaching a POST call to the respective DOM elements on the client side. The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table. This feature is disabled by default. We can enable it by modifying the configuration in the file: `src/main/resources/config/application-artemis.yml` like so:
+
+```yaml
+info:
+    textAssessmentAnalyticsEnabled: true
+```
+
+### Apollon Service
+
+<a href="https://github.com/ls1intum/Apollon_converter">Apollon Converter</a> is needed to convert models from their JSON representation to PDF. Special configuration is required:
+
+#### Enable Apollon
+
+Set the Apollon module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+
+```yaml
+artemis:
+    apollon:
+        enabled: true
+```
+
+#### Configure API Endpoints
+
+The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. Add its endpoint to the same active deployment-specific override used above:
+
+```yaml
+artemis:
+    apollon:
+        conversion-service-url: http://localhost:8080
+```
+
+### Hermes Service
+
+Push notifications for the mobile Android and iOS clients rely on the <a href="https://github.com/ls1intum/Hermes">Hermes</a> service. To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
+
+#### Configure and start Hermes
+
+To run Hermes, you need to clone the <a href="https://github.com/ls1intum/Hermes">repository</a> and replace the placeholders within the `docker-compose` file.
+
+The following environment variables need to be updated for push notifications to Apple devices:
+
+- `APNS_CERTIFICATE_PATH`: String - Path to the APNs certificate .p12 file as described <a href="https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns">here</a>
+- `APNS_CERTIFICATE_PWD`: String - The APNS certificate password
+- `APNS_PROD_ENVIRONMENT`: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore, the `<APNS_Key>.p12` needs to be mounted into the Docker under the above specified path.
+
+To run the services for Android support the following environment variable is required:
+
+- `GOOGLE_APPLICATION_CREDENTIALS`: String - Path to the firebase.json
+
+Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
+
+To run both APNS and Firebase, configure the environment variables for both.
+
+To start Hermes, run the `docker compose up` command in the folder where the `docker-compose` file is located.
+
+#### Artemis Configuration
+
+The Hermes service is running on a dedicated machine and is addressed via HTTPS. We need to extend the Artemis configuration in the file `src/main/resources/config/application-artemis.yml` like:
+
+```yaml
+artemis:
+    # ...
+    push-notification-relay: <url>
+```
+
+### Hyperion Service
+
+<Callout variant={CalloutVariant.info}>
+
+This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+
+</Callout>
+
+### Setup Guide for Exchange with the Sharing Platform
+
+#### Background
+
+<a href="https://search.sharing-codeability.uibk.ac.at/">Sharing Platform</a> is an open platform for sharing teaching materials related to programming. It is operated by the
+<a href="https://www.uibk.ac.at/en/">University of Innsbruck</a>. While primarily designed as an open exchange platform, it also provides features such as private group exchanges
+and the ability to restrict public access to certain content, such as the solution repository of an Artemis exercise.
+
+For more details, visit <a href="https://search.sharing-codeability.uibk.ac.at/">help menu</a> of the sharing platform.
+
+To facilitate the exchange of programming exercises among instructors, the sharing platform offers a connector to Artemis, enabling any Artemis instance to integrate with the platform for seamless sharing.
+
+The Sharing Platform is open source. The source code can be found at https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform.
+
+#### Prerequisites
+
+To connect to the sharing platform, you need an API key. To request one, contact the platform maintainers at `artemis-support-informatik@uibk.ac.at` and provide the URL of your active Artemis instance.
+
+**Important:** Sharing only works if your Artemis instance is accessible on the internet. If making your instance publicly available is not an option, the maintainers can provide a list of required Artemis URLs that must be accessible to the sharing platform.
+
+#### Configuration
+
+Once you receive your API key, you should add it to the configuration file **`application-core.yml`** or your `.env` file:
+
+**Option 1: application-core.yml**
+
+```yaml
+artemis:
+    sharing:
+        enabled: true
+        # Shared common secret
+        apikey: <your API Key>
+        serverurl: https://search.sharing-codeability.uibk.ac.at/
+        actionname: Export to Artemis@myUniversity
+```
+
+**Option 2: .env file for Docker initialization**
+
+```bash
+ARTEMIS_SHARING_ENABLED=true
+ARTEMIS_SHARING_SERVERURL=https://search.sharing-codeability.uibk.ac.at/
+ARTEMIS_SHARING_APIKEY=<Enter your API Key here>
+ARTEMIS_SHARING_ACTIONNAME=Export to Artemis@<Enter an ID here>
+```
+
+Once configured, restart your Artemis instance.
+
+#### Instructor Access Requirements
+
+For instructors to exchange programming exercises, they need an account on the sharing platform. They can register using one of the following methods:
+
+- **EduID Authentication**: The simplest way is through <a href="https://www.aco.net/federation.html">EduID (Austria)</a> or <a href="https://doku.tid.dfn.de/de:aai:eduid:start">EduID (Germany)</a>. Forward the necessary connection details to the sharing platform maintainers.
+- **GitLab-Based Registration**: If EduID is not an option, users can register via the sharing platform's GitLab instance. However, for security reasons, self-registration is restricted to certain email domains. To enable access, forward the desired domains to the maintainers for approval.
+
+#### Troubleshooting
+
+To assist in troubleshooting, the **sharing profile** includes an additional health indicator, accessible via the **`Administration -> Monitoring -> Health`** menu.
+
+<Image src={sharingHealth1} alt={'Sharing health indicator 1'} size={ImageSize.medium} />
+
+Under **Details**, you will typically find the following entries:
+
+<Image src={sharingHealth2} alt={'Sharing health indicator 2'} size={ImageSize.medium} />
+
+- The **first entry** is an initialization request sent after startup.
+- The **second entry** reflects the subsequent receipt of the connector configuration from the sharing platform.
+- Additional entries represent regular configuration polling requests from the sharing platform.
+
+The **Details** log stores the last 10 entries.
+
+If the health status is not **`up`**, check the error message in the details. If the issue is unclear, feel free to contact the sharing platform maintainers for support.
+
+#### Conclusion
+
+Once everything is set up correctly, you should see the **Export to Sharing** button in the **Programming Exercise Details** dialog in Artemis.
+
+Similarly, an **Export to Artemis** button should appear on the sharing platform for any programming exercise available there.
+
+Before testing the import and export functionality, refer to the user documentation for further details.

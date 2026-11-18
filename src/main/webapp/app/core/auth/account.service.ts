@@ -1,0 +1,519 @@
+import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
+import { Course } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import dayjs from 'dayjs/esm';
+import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+
+type CourseRole = 'STUDENT' | 'TEACHING_ASSISTANT' | 'EDITOR' | 'INSTRUCTOR';
+
+const COURSE_ROLE_LEVEL: Record<CourseRole, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+
+/** The course role that stands for each of the authorities that are not global; the users with a higher role are covered by the authority lists. */
+const COURSE_ROLE_OF_AUTHORITY: Partial<Record<Authority, CourseRole>> = {
+    [Authority.TUTOR]: 'TEACHING_ASSISTANT',
+    [Authority.EDITOR]: 'EDITOR',
+    [Authority.INSTRUCTOR]: 'INSTRUCTOR',
+};
+
+function isAtLeastCourseRole(role: string, minimum: CourseRole): boolean {
+    return (COURSE_ROLE_LEVEL[role as CourseRole] ?? -1) >= COURSE_ROLE_LEVEL[minimum];
+}
+
+export interface IAccountService {
+    save: (account: User) => Observable<UpdateBasicInformationResponseDTO>;
+    authenticate: (identity?: User) => void;
+    hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
+    hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
+    hasAdministratorAccess: () => boolean;
+    identity: (force?: boolean) => Promise<User | undefined>;
+    isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
+    isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastEditorInCourse: (course: Course) => boolean;
+    isAtLeastEditorInCourseWithId: (courseId?: number) => boolean;
+    isAtLeastEditorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastInstructorInCourse: (course: Course) => boolean;
+    isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
+    isAdmin: Signal<boolean>;
+    isSuperAdmin: Signal<boolean>;
+    isAtLeastTutor: Signal<boolean>;
+    isAuthenticated: () => boolean;
+    getAuthenticationState: () => Observable<User | undefined>;
+    getImageUrl: () => string | undefined;
+}
+
+@Service()
+export class AccountService implements IAccountService {
+    private readonly translateService = inject(TranslateService);
+    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly http = inject(HttpClient);
+    private readonly websocketService = inject(WebsocketService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly profileService = inject(ProfileService);
+
+    // cached value of the user to avoid unnecessary requests to the server
+    userIdentity = signal<User | undefined>(undefined);
+    private authenticationState = new BehaviorSubject<User | undefined>(undefined);
+    private prefilledUsernameValue?: string;
+
+    readonly authenticated = computed(() => !!this.userIdentity());
+    readonly isAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN));
+    readonly isSuperAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
+    readonly isAtLeastTutor = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
+
+    readonly askToSetupPasskey = computed(() => this.userIdentity()?.askToSetupPasskey ?? false);
+    readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.loggedInWithPasskey ?? false);
+    readonly isPasskeySuperAdminApproved = computed(() => this.userIdentity()?.passkeySuperAdminApproved ?? false);
+    readonly isUserLoggedInWithApprovedPasskey = computed(() => {
+        return this.isLoggedInWithPasskey() && this.isPasskeySuperAdminApproved();
+    });
+
+    constructor() {
+        effect(() => {
+            this.handleSideEffectsWhenUserLogsInOrOut();
+        });
+    }
+
+    private handleSideEffectsWhenUserLogsInOrOut(): void {
+        const isAuthenticated = this.authenticated();
+        // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
+        const user = isAuthenticated ? untracked(() => this.userIdentity()) : undefined;
+        this.authenticationState.next(user);
+
+        // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
+        if (user) {
+            this.websocketService.connect();
+            this.featureToggleService.subscribeFeatureToggleUpdates();
+        } else {
+            if (this.websocketService.isConnected()) {
+                this.websocketService.disconnect();
+            }
+            this.featureToggleService.unsubscribeFeatureToggleUpdates();
+        }
+    }
+
+    private fetch(): Observable<HttpResponse<User>> {
+        return this.http.get<User>('api/core/public/account', { observe: 'response' });
+    }
+
+    /**
+     * Saves the basic account information (name, language and the requested email address).
+     * A changed email address of an internal user is not applied here: the server creates a pending request,
+     * returns it and mails a confirmation link to the current and to the new address.
+     * The caller shows failures inline, so no global error alert is raised.
+     */
+    save(user: User): Observable<UpdateBasicInformationResponseDTO> {
+        return this.http.put<UpdateBasicInformationResponseDTO>('api/account/basic-information', user, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+    }
+
+    /**
+     * Loads the pending email change request of the signed-in account.
+     * @returns the pending request, or undefined when there is none (the server answers 204)
+     */
+    getPendingEmailChange(): Observable<PendingEmailChangeDTO | undefined> {
+        return this.http.get<PendingEmailChangeDTO | null>('api/account/pending-email-change').pipe(map((pendingEmailChange) => pendingEmailChange ?? undefined));
+    }
+
+    /** Cancels the pending email change request. Cancelling when nothing is pending is not an error. */
+    cancelPendingEmailChange(): Observable<void> {
+        return this.http.delete<void>('api/account/pending-email-change');
+    }
+
+    /**
+     * Mails new confirmation links to both addresses of the pending email change request.
+     * Earlier confirmations are reset and the validity restarts. The caller shows failures inline.
+     */
+    resendPendingEmailChange(): Observable<PendingEmailChangeDTO> {
+        return this.http.post<PendingEmailChangeDTO>('api/account/pending-email-change/resend', undefined, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+    }
+
+    authenticate(identity?: User) {
+        this.userIdentity.set(identity);
+    }
+
+    hasAnyAuthority(authorities: readonly Authority[]): Promise<boolean> {
+        return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
+    }
+
+    /**
+     * Whether the user has one of the authorities. Only the student, administrator and super administrator authorities are global. The tutor, editor and
+     * instructor authorities stand for a role in at least one course, so they are answered from the course roles of the user, and an authority that an
+     * older server still sends for them is ignored.
+     */
+    hasAnyAuthorityDirect(authorities: readonly Authority[]): boolean {
+        const identity = this.userIdentity();
+        if (!this.authenticated() || !identity?.authorities) {
+            return false;
+        }
+
+        return authorities.some((authority) => {
+            const courseRole = COURSE_ROLE_OF_AUTHORITY[authority];
+            return courseRole ? this.hasCourseRoleAtLeastInAnyCourse(courseRole) : identity.authorities!.includes(authority);
+        });
+    }
+
+    identity(force?: boolean): Promise<User | undefined> {
+        if (force) {
+            this.userIdentity.set(undefined);
+        }
+
+        // check and see if we have retrieved the userIdentity data from the server.
+        // if we have, reuse it by immediately resolving
+        if (this.userIdentity()) {
+            return Promise.resolve(this.userIdentity());
+        }
+
+        // retrieve the userIdentity data from the server, update the identity object, and then resolve.
+        return lastValueFrom(
+            this.fetch().pipe(
+                map((response: HttpResponse<User>) => {
+                    const user = response.body!;
+                    if (user) {
+                        this.userIdentity.set(user);
+
+                        // After retrieve the account info, the language will be changed to
+                        // the user's preferred language configured in the account setting
+                        const langKey = this.userIdentity()?.langKey || this.sessionStorageService.retrieve<string>('locale');
+                        if (langKey) {
+                            this.translateService.use(langKey);
+                        }
+                    } else {
+                        this.userIdentity.set(undefined);
+                    }
+                    return this.userIdentity();
+                }),
+                catchError(() => {
+                    this.userIdentity.set(undefined);
+                    return of(undefined);
+                }),
+            ),
+        );
+    }
+
+    /**
+     * checks if the currently logged-in user is at least tutor in the given course
+     * @param course
+     */
+    isAtLeastTutorInCourse(course?: Course): boolean {
+        return this.isAtLeastTutorInCourseWithId(course?.id);
+    }
+
+    isAtLeastTutorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAdministratorAccess()) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
+    }
+
+    /**
+     * checks if the currently logged-in user is at least editor in the given course
+     * @param course
+     */
+    isAtLeastEditorInCourse(course?: Course): boolean {
+        return this.isAtLeastEditorInCourseWithId(course?.id);
+    }
+
+    isAtLeastEditorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAdministratorAccess()) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
+    }
+
+    /**
+     * checks if the currently logged-in user is at least instructor in the given course
+     * @param course
+     */
+    isAtLeastInstructorInCourse(course?: Course): boolean {
+        return this.isAtLeastInstructorInCourseWithId(course?.id);
+    }
+
+    isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
+        if (this.hasAdministratorAccess()) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
+    }
+
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: CourseRole): boolean {
+        if (!courseId || !this.authenticated()) {
+            return false;
+        }
+        const entry = this.userIdentity()?.courseRoles?.find((r) => r.courseId === courseId);
+        return !!entry && entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole));
+    }
+
+    private hasCourseRoleAtLeastInAnyCourse(minimumRole: CourseRole): boolean {
+        return !!this.userIdentity()?.courseRoles?.some((entry) => entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole)));
+    }
+
+    /**
+     * checks if the currently logged-in user is at least tutor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastTutorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastTutorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * checks if the currently logged-in user is at least editor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastEditorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastEditorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * checks if the currently logged-in user is at least instructor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastInstructorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastInstructorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * Whether the user may use editor features that are not bound to a course, as the server decides for editor endpoints:
+     * an editor or instructor, or an administrator whose session grants the administrator rights.
+     */
+    hasEditorAccess(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]) || this.hasAdministratorAccess();
+    }
+
+    /**
+     * Whether the user may create personal access tokens for agent access, as the server decides: an editor or instructor of at least one course who is not
+     * an administrator.
+     */
+    mayCreateAgentTokens(): boolean {
+        return !this.isAdmin() && this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]);
+    }
+
+    /**
+     * Whether administrators have to sign in with a passkey that a super administrator approved before they may use
+     * administrator features.
+     */
+    isPasskeyRequiredForAdministratorFeatures(): boolean {
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+    }
+
+    /**
+     * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
+     * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
+     */
+    hasAdministratorAccess(): boolean {
+        return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
+    }
+
+    isAuthenticated(): boolean {
+        return this.authenticated();
+    }
+
+    getAuthenticationState(): Observable<User | undefined> {
+        return this.authenticationState.asObservable().pipe(
+            // We don't want to emit here e.g. [undefined, undefined] as it is still the same information [logged out, logged out].
+            distinctUntilChanged(),
+        );
+    }
+
+    setAccessRightsForExerciseAndReferencedCourse(exercise: Exercise) {
+        this.setAccessRightsForExercise(exercise);
+        const course = getCourseFromExercise(exercise);
+        if (course) {
+            this.setAccessRightsForCourse(course);
+        }
+    }
+
+    setAccessRightsForCourseAndReferencedExercises(course: Course) {
+        this.setAccessRightsForCourse(course);
+        if (course.exercises) {
+            course.exercises.forEach((exercise: Exercise) => this.setAccessRightsForExercise(exercise));
+        }
+    }
+
+    setAccessRightsForExercise(exercise: Exercise) {
+        exercise.isAtLeastTutor = this.isAtLeastTutorForExercise(exercise);
+        exercise.isAtLeastEditor = this.isAtLeastEditorForExercise(exercise);
+        exercise.isAtLeastInstructor = this.isAtLeastInstructorForExercise(exercise);
+    }
+
+    setAccessRightsForCourse(course: Course) {
+        course.isAtLeastTutor = this.isAtLeastTutorInCourse(course);
+        course.isAtLeastEditor = this.isAtLeastEditorInCourse(course);
+        course.isAtLeastInstructor = this.isAtLeastInstructorInCourse(course);
+    }
+
+    /**
+     * Checks whether current user is owner of the participation or whether they are part of the team
+     *
+     * @param participation - Participation that is checked
+     */
+    isOwnerOfParticipation(participation: StudentParticipation): boolean {
+        if (participation.student) {
+            return this.userIdentity()?.login === participation.student.login;
+        } else if (participation.team?.students) {
+            return participation.team.students.some((student) => this.userIdentity()?.login === student.login);
+        }
+        throw new Error('Participation does not have any owners');
+    }
+
+    /**
+     * Returns the image url of the user or undefined.
+     *
+     * Returns undefined if the user is not authenticated or the user does not have an image.
+     */
+    getImageUrl() {
+        return this.isAuthenticated() && this.userIdentity() ? addPublicFilePrefix(this.userIdentity()!.imageUrl) : undefined;
+    }
+
+    setImageUrl(url: string | undefined) {
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification and (under zoneless change detection) nothing re-renders — the
+            // account picture would not refresh after upload / edit / delete.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.imageUrl = url;
+            return updatedUserIdentity;
+        });
+    }
+
+    /**
+     * Sets a new language key for the current user
+     *
+     * @param languageKey The new languageKey
+     */
+    updateLanguage(languageKey: string): Observable<void> {
+        return this.http.post<void>('api/core/public/account/change-language', languageKey);
+    }
+
+    /**
+     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log-out.
+     *
+     * @returns the prefilled username
+     */
+    getAndClearPrefilledUsername(): string | undefined {
+        const prefilledUsername = this.prefilledUsernameValue;
+        this.prefilledUsernameValue = undefined;
+        return prefilledUsername;
+    }
+
+    /**
+     * Sets the prefilled username
+     *
+     * @param prefilledUsername The new prefilled username
+     */
+    setPrefilledUsername(prefilledUsername: string) {
+        this.prefilledUsernameValue = prefilledUsername;
+    }
+
+    /**
+     * Sends a request to the server to delete the user's current vcsAccessToken
+     */
+    deleteUserVcsAccessToken(): Observable<void> {
+        return this.http.delete<void>('api/account/user-vcs-access-token');
+    }
+
+    /**
+     * Sends a request to the server to create a new vcsAccessToken for the user
+     *
+     * @param expiryDate The expiry date which should get set for the vcsAccessToken
+     */
+    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
+        const params = new HttpParams().set('expiryDate', expiryDate);
+        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
+    }
+
+    /**
+     * Sends a request to the server to obtain the VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token is requested
+     */
+    getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.get<string>('api/account/participation-vcs-access-token', {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
+    }
+
+    /**
+     * Sends a request to the server, to create a VCS access token for a specific participation.
+     * Users can use this access token to clone the repository belonging to a participation.
+     *
+     * @param participationId The participation for which the VCS access token should get created
+     */
+    createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
+        const params = new HttpParams().set('participationId', participationId);
+        return this.http.put<string>('api/account/participation-vcs-access-token', null, {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
+    }
+
+    /**
+     * Sets LLMSelectionDecisionDate to current timestamp locally if the users accepted the conditions or actively declined,
+     * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
+     */
+    setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
+        this.applyLLMSelectionDecision(accepted, dayjs());
+    }
+
+    /**
+     * Restores a previously captured decision verbatim, including "no decision made yet" ({@code undefined}) and an
+     * absent timestamp. Used to roll back an optimistic update whose persistence failed; unlike
+     * {@link setUserLLMSelectionDecision} it must never stamp the current time, because that would claim the user
+     * decided just now.
+     */
+    restoreUserLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
+        this.applyLLMSelectionDecision(accepted, timestamp);
+    }
+
+    private applyLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification. deepClone (not Object.assign) because User carries a Day.js
+            // date — see deep-clone.util.ts. Mirrors setImageUrl.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
+        });
+    }
+
+    /**
+     * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
+     * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
+     */
+    getToolToken(tool: string): Observable<string> {
+        return this.http.post<string>('api/account/tool-token', null, {
+            params: { tool: tool },
+            responseType: 'text' as 'json',
+        });
+    }
+}

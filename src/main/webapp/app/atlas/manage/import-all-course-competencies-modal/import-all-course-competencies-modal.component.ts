@@ -1,0 +1,86 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+
+import { PagingService } from 'app/exercise/services/paging.service';
+import { Column } from 'app/shared-ui/import/import.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import {
+    CourseCompetencyImportSettings,
+    ImportCourseCompetenciesSettingsComponent,
+} from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
+import { CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
+import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
+import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+const tableColumns: Column<Course>[] = [
+    {
+        name: 'TITLE',
+        getProperty: (entity: Course) => entity.title,
+    },
+    {
+        name: 'SHORT_NAME',
+        getProperty: (entity: Course) => entity.shortName,
+    },
+    {
+        name: 'SEMESTER',
+        getProperty: (entity: Course) => entity.semester,
+    },
+];
+
+export interface ImportAllCourseCompetenciesResult {
+    course: Course;
+    courseCompetencyImportOptions: CourseCompetencyImportOptionsDTO;
+}
+
+export interface ImportAllCourseCompetenciesModalData {
+    courseId: number;
+}
+
+@Component({
+    selector: 'jhi-import-all-course-competencies-modal',
+    imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent],
+    providers: [
+        {
+            provide: PagingService,
+            useClass: CourseForImportDTOPagingService,
+        },
+    ],
+    templateUrl: './import-all-course-competencies-modal.component.html',
+})
+export class ImportAllCourseCompetenciesModalComponent {
+    private readonly dialogRef = inject<TumAetUiDialogRef<ImportAllCourseCompetenciesResult>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<ImportAllCourseCompetenciesModalData>>(TumAetUiDialogConfig, { optional: true });
+    private readonly alertService = inject(AlertService);
+
+    protected readonly tableColumns = tableColumns;
+
+    readonly courseId = signal<number>(0);
+    readonly disabledIds = computed(() => [+this.courseId()]);
+
+    importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
+    /** False while the reference date field holds text that is not a date; the settings keep the last valid date then. */
+    readonly referenceDateTextValid = signal(true);
+
+    constructor() {
+        const data = this.dialogConfig?.data;
+        if (data) {
+            this.courseId.set(data.courseId);
+        }
+    }
+
+    public selectCourse(course: Course): void {
+        if (!this.referenceDateTextValid()) {
+            // The server shifts the dates of the imported resources by this reference date, so a stale one must not be sent.
+            this.alertService.error('artemisApp.courseCompetency.importSettings.referenceDateTextInvalid');
+            return;
+        }
+        const importOptions = cloneWith(this.importSettings(), { sourceCourseId: course.id });
+        const courseCompetencyImportOptions = importOptions as CourseCompetencyImportOptionsDTO;
+        this.dialogRef.close({
+            course,
+            courseCompetencyImportOptions,
+        });
+    }
+}

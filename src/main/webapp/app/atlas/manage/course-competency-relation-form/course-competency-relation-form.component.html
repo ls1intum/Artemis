@@ -1,0 +1,85 @@
+<div class="course-competency-relation-form-container p-4!">
+    <div class="flex items-end gap-2">
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="tail"
+            [label]="'artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
+        >
+            <tumaet-ui-select
+                name="tail"
+                optionLabel="title"
+                optionValue="id"
+                [options]="courseCompetencies()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption' | artemisTranslate"
+                [ngModel]="tailCompetencyId()"
+                (ngModelChange)="selectTailCourseCompetency($event)"
+            />
+        </tumaet-ui-form-field>
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="type"
+            [label]="'artemisApp.courseCompetency.relations.form.relationTypeLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
+        >
+            <tumaet-ui-select
+                name="type"
+                optionLabel="label"
+                optionValue="value"
+                [options]="relationTypeOptions()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.relationTypeDefaultOption' | artemisTranslate"
+                [ngModel]="relationType()"
+                (ngModelChange)="relationType.set($event)"
+            />
+        </tumaet-ui-form-field>
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="head"
+            [label]="'artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
+        >
+            <tumaet-ui-select
+                name="head"
+                optionLabel="title"
+                optionValue="id"
+                [options]="headOptions()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption' | artemisTranslate"
+                [ngModel]="headCompetencyId()"
+                (ngModelChange)="selectHeadCourseCompetency($event)"
+            />
+        </tumaet-ui-form-field>
+        <div class="flex w-1/4 shrink-0 justify-end gap-2">
+            @if (exactRelationAlreadyExists()) {
+                <button tumAetUiButton type="button" severity="danger" (click)="deleteRelation()">
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.deleteRelationButtonLabel"></span>
+                </button>
+            } @else if (relationAlreadyExists()) {
+                <button tumAetUiButton type="button" severity="info" (click)="updateRelation()" [disabled]="showCircularDependencyError()">
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.updateRelationButtonLabel"></span>
+                </button>
+            } @else {
+                <button
+                    tumAetUiButton
+                    type="button"
+                    severity="primary"
+                    (click)="createRelation()"
+                    [disabled]="showCircularDependencyError() || !tailCompetencyId() || !headCompetencyId() || !relationType()"
+                >
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.createRelationButtonLabel"></span>
+                </button>
+            }
+        </div>
+    </div>
+    @if (showCircularDependencyError()) {
+        <small class="mt-2 block text-state-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
+    }
+</div>

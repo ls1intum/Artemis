@@ -1,0 +1,71 @@
+@if (!supportsFormattedContent()) {
+    <p class="mb-2 text-xs text-muted-color" data-testid="unsupported-message-formatting">{{ 'artemisApp.communication.formattedEditor.unsupported' | artemisTranslate }}</p>
+    @if (!isUpdating()) {
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            data-testid="discard-unsupported-message-draft"
+            [disabled]="isButtonLoading()"
+            (click)="discardUnsupportedDraft()"
+        >
+            {{ 'artemisApp.communication.formattedEditor.discardDraft' | artemisTranslate }}
+        </button>
+    }
+} @else if (effectiveCourseId(); as courseId) {
+    <jhi-message-editor
+        [content]="content() ?? ''"
+        (contentChange)="updateField($event)"
+        (uploadingChange)="formattedUploadStateChanged($event)"
+        [courseId]="courseId"
+        [conversation]="effectiveConversation()"
+        [conversationName]="conversationName()"
+        [reply]="isReply()"
+        [editing]="isUpdating()"
+        [draftIdentity]="draftIdentity()"
+        [suppressNewlineOnEnter]="suppressNewlineOnEnter()"
+    />
+}
+<!-- Footer controls keep their native Enter activation without triggering the parent composer's Enter-to-send handler. -->
+<div class="mt-2 flex flex-wrap items-center justify-end gap-2">
+    @if (showCloseButton()) {
+        <button
+            severity="secondary"
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="text"
+            data-testid="close-message-editor"
+            (keydown.enter)="$event.stopPropagation()"
+            (click)="closeEditor.emit()"
+        >
+            {{ 'artemisApp.communication.cancel' | artemisTranslate }}
+        </button>
+    }
+    @if (!isUpdating()) {
+        <jhi-redirect-to-iris-button
+            (keydown.enter)="$event.stopPropagation()"
+            [question]="content()"
+            [course]="course()"
+            [buttonLoading]="isButtonLoading()"
+            [disabled]="isButtonLoading() || uploadingFormattedAttachment() || !supportsFormattedContent() || !isFormGroupValid()"
+        />
+        <button
+            type="submit"
+            tumAetUiButton
+            size="small"
+            data-testid="send-formatted-message"
+            (keydown.enter)="$event.stopPropagation()"
+            [disabled]="isButtonLoading() || uploadingFormattedAttachment() || !supportsFormattedContent() || !isFormGroupValid()"
+        >
+            {{ 'artemisApp.conversationsLayout.sendMessage' | artemisTranslate }}
+        </button>
+    }
+</div>
+@if (isInputLengthDisplayed() || (content()?.length ?? 0) > maxContentLength()!) {
+    <p class="mt-1 mb-0 text-end text-xs" data-testid="message-content-length" [class.text-state-danger]="(content()?.length ?? 0) > maxContentLength()!">
+        {{ content()?.length ?? 0 }} / {{ maxContentLength() }}
+    </p>
+}

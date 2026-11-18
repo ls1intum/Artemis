@@ -1,0 +1,35 @@
+<button
+    #importButton
+    tumAetUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    type="button"
+    id="importDialogButton"
+    data-testid="tutorial-groups-import-open"
+    [tumAetUiTooltip]="'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate"
+    (click)="openTutorialGroupImportDialog($event)"
+>
+    <fa-icon [icon]="faFileImport" />
+    <!-- sr-only below md keeps the icon-only button named; the tooltip carries the full wording -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.import"></span>
+</button>
+
+<jhi-tutorial-groups-import-dialog #importDialog [courseId]="courseId()" (importCompleted)="onImportCompleted()" />
+
+<tumaet-ui-dialog
+    data-testid="tutorial-groups-import-warning"
+    [header]="'artemisApp.tutorialGroupImportDialog.warning' | artemisTranslate"
+    [visible]="warningDialogVisible()"
+    [closable]="true"
+    (visibleChange)="warningDialogVisible.set($event)"
+    (hidden)="restoreImportFocus()"
+    size="small"
+>
+    <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
+    <ng-template #footer>
+        <button tumAetUiButton size="small" severity="secondary" type="button" (click)="closeWarningDialog()" data-testid="tutorial-groups-import-warning-close">
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

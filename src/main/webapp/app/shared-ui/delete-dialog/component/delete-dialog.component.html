@@ -1,0 +1,148 @@
+<form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
+    <div class="dialog-content">
+        <p [jhiTranslate]="deleteQuestion()" [translateValues]="translateValues()">
+            <span jhiTranslate="entity.action.deleteQuestion"></span>
+        </p>
+
+        @if (entitySummaryTitle()) {
+            <div class="mb-2"><span [jhiTranslate]="entitySummaryTitle()!"></span></div>
+        }
+        @if (isLoadingSummary()) {
+            <div class="summary-loading-container">
+                <!-- Inline, because the kit sets the spinner's 100px size in unlayered component styles that a Tailwind utility cannot override. -->
+                <tumaet-ui-progress-spinner [style.width.rem]="1.5" [style.height.rem]="1.5" [ariaLabel]="'loading' | artemisTranslate" />
+                <span class="ms-2" jhiTranslate="loading"></span>
+            </div>
+        } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
+            @if (hasLargeCount()) {
+                <p class="mb-2! font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span jhiTranslate="entity.delete.summary.largeCountWarning"></span>
+                </p>
+            }
+            <div class="entity-summary-table">
+                <table tumAetUiTable size="small">
+                    <tbody>
+                        @for (category of categorizedEntitySummary()!; track category.titleKey; let categoryIndex = $index) {
+                            <tr class="category-header-row">
+                                <th [id]="summaryId + '-category-' + categoryIndex" [attr.colspan]="summaryColumnCount()" class="category-header-cell">
+                                    <span [jhiTranslate]="category.titleKey"></span>
+                                </th>
+                            </tr>
+                            @for (pair of getItemPairs(category.items); track pair[0].labelKey; let pairIndex = $index) {
+                                <tr class="summary-item-row">
+                                    <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'" class="item-label-cell">
+                                        <span [jhiTranslate]="pair[0].labelKey"></span>
+                                    </th>
+                                    <td
+                                        headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-0"
+                                        class="item-value-cell"
+                                        [class.font-bold]="pair[0].highlight"
+                                        [class.text-state-danger]="pair[0].highlight"
+                                    >
+                                        {{ pair[0].value }}
+                                    </td>
+                                    @if (pair[1]) {
+                                        <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-1'" class="item-label-cell">
+                                            <span [jhiTranslate]="pair[1].labelKey"></span>
+                                        </th>
+                                        <td
+                                            headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-1"
+                                            class="item-value-cell"
+                                            [class.font-bold]="pair[1].highlight"
+                                            [class.text-state-danger]="pair[1].highlight"
+                                        >
+                                            {{ pair[1].value }}
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        } @else if (entitySummary() && objectKeys(entitySummary()!).length > 0) {
+            <div class="entity-summary-table">
+                <table tumAetUiTable size="small">
+                    <tbody>
+                        @let summary = entitySummary()!;
+                        @for (summaryKey of objectKeys(summary); track summaryKey) {
+                            @if (summary[summaryKey] !== undefined) {
+                                <tr class="summary-item-row">
+                                    <th scope="row" class="item-label-cell">
+                                        <span [jhiTranslate]="summaryKey"></span>
+                                    </th>
+                                    <td class="item-value-cell">{{ summary[summaryKey] }}</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (additionalChecks()) {
+            <div class="additional-checks">
+                @for (checkKey of objectKeys(additionalChecks()!); track checkKey; let i = $index) {
+                    @if (additionalChecks()![checkKey]) {
+                        <div class="check-item">
+                            <tumaet-ui-checkbox [inputId]="'additional-check-' + i" [(ngModel)]="additionalChecksValues[checkKey]" [name]="'checkbox-' + i" />
+                            <label [for]="'additional-check-' + i" class="check-label text-state-danger">
+                                {{ additionalChecks()![checkKey] | artemisTranslate }}
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+        }
+        @if (deleteConfirmationText() && (!requireConfirmationOnlyForAdditionalChecks() || isAnyAdditionalCheckSelected)) {
+            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText()" [entityName]="entityTitle()" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
+        }
+    </div>
+
+    <div class="dialog-footer">
+        <button tumAetUiButton type="button" severity="secondary" (click)="clear()" [disabled]="submitDisabled()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button
+            tumAetUiButton
+            id="delete"
+            type="submit"
+            [severity]="buttonType() === ButtonType.ERROR ? 'danger' : 'primary'"
+            [disabled]="deleteForm.invalid || submitDisabled()"
+            data-testid="delete-dialog-confirm-button"
+        >
+            @switch (actionType()) {
+                @case (actionTypes.Delete) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                }
+                @case (actionTypes.Reset) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faUndo" class="me-1" />
+                    <span jhiTranslate="entity.action.reset"></span>
+                }
+                @case (actionTypes.Cleanup) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
+                    <span jhiTranslate="entity.action.cleanup"></span>
+                }
+                @case (actionTypes.Remove) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
+                    <span jhiTranslate="entity.action.remove"></span>
+                }
+                @case (actionTypes.Unlink) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
+                    <span jhiTranslate="entity.action.unlink"></span>
+                }
+                @case (actionTypes.NoButtonTextDelete) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                }
+                @case (actionTypes.EndNow) {
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
+                    <span jhiTranslate="entity.action.endNow"></span>
+                }
+                @default {}
+            }
+        </button>
+    </div>
+</form>

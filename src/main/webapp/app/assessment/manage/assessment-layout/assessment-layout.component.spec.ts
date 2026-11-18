@@ -1,0 +1,150 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
+import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
+import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Result } from '../../../exercise/shared/entities/result/result.model';
+import { AssessmentNote } from '../../shared/entities/assessment-note.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+
+describe('AssessmentLayoutComponent', () => {
+    let component: AssessmentLayoutComponent;
+    let fixture: ComponentFixture<AssessmentLayoutComponent>;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                MockDirective(TumAetUiTooltipDirective),
+                MockComponent(ComplaintsForTutorComponent),
+                FaIconComponent,
+                AssessmentLayoutComponent,
+                AssessmentHeaderComponent,
+                AssessmentNoteComponent,
+                MockComponent(AssessmentWarningComponent),
+                MockDirective(TranslateDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
+            ],
+            providers: [
+                MockProvider(TextAssessmentAnalytics),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AssessmentLayoutComponent);
+                component = fixture.componentInstance;
+                fixture.componentRef.setInput('isLoading', false);
+                fixture.componentRef.setInput('isTeamMode', false);
+                fixture.componentRef.setInput('isAssessor', true);
+                fixture.componentRef.setInput('exerciseDashboardLink', []);
+                fixture.componentRef.setInput('canOverride', false);
+                fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
+                fixture.detectChanges();
+            });
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should include jhi-assessment-header', () => {
+        const assessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent));
+        expect(assessmentHeaderComponent).toBeTruthy();
+    });
+
+    it('should include jhi-assessment-note when submission exists', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).not.toBeNull();
+    });
+
+    it('should not include jhi-assessment-note when no submission exists', () => {
+        fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
+    it('should let a specialized workspace place the assessment note itself', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.componentRef.setInput('showAssessmentNote', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
+    it('should hide jhi-assessment-note when submission is cleared after navigating to next submission', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.changeDetectorRef.detectChanges();
+
+        let assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).not.toBeNull();
+
+        fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
+    it('should include jhi-complaints-for-tutor-form', () => {
+        let complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
+        expect(complaintsForTutorComponent).toBeFalsy();
+
+        fixture.componentRef.setInput('complaint', new Complaint());
+        fixture.changeDetectorRef.detectChanges();
+        complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
+        expect(complaintsForTutorComponent).toBeTruthy();
+    });
+
+    it('should set assessment note for result', () => {
+        const mockResult = new Result();
+        const mockAssessmentNote = { note: 'Test assessment note' } as AssessmentNote;
+        fixture.componentRef.setInput('result', () => mockResult);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.setAssessmentNoteForResult(mockAssessmentNote);
+        expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);
+    });
+    describe('complaint section', () => {
+        const complaint = { id: 1, complaintType: ComplaintType.COMPLAINT } as Complaint;
+
+        it('should show the hint banner and the complaint form by default', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+        });
+
+        it('should drop the hint banner together with the form when the page places the complaint itself', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.componentRef.setInput('showComplaintSection', false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        });
+    });
+});

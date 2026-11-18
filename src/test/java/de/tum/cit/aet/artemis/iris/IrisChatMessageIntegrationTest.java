@@ -1,0 +1,1825 @@
+package de.tum.cit.aet.artemis.iris;
+
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
+import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
+import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
+import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.suggestionsDTO;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.LinkedMultiValueMap;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+
+/**
+ * Integration tests for the Iris chat <em>message</em> lifecycle across all chat modes: posting a
+ * user message → Pyris pipeline execution → websocket frames, message history retrieval, helpful
+ * rating, resend, rate limiting, session title updates, and mode-specific behaviours (programming
+ * uncommitted-files, tutor suggestions, MCQ content classification).
+ *
+ * <p>
+ * Session-lifecycle tests (create / getCurrent / delete / overview) live in
+ * {@link IrisChatSessionResourceTest}; this class covers only message-level behaviour.
+ */
+class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
+
+    private static final String TEST_PREFIX = "irismessageintegration";
+
+    @Autowired
+    private IrisMessageService irisMessageService;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private IrisSessionRepository irisSessionRepository;
+
+    @Autowired
+    private IrisChatSessionRepository irisChatSessionRepository;
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private IrisAdminDashboardRepository irisAdminDashboardRepository;
+
+    @Autowired
+    private IrisSessionService irisSessionService;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
+
+    private AtomicBoolean pipelineDone;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @BeforeEach
+    void initMessageTestState() {
+        pipelineDone = new AtomicBoolean(false);
+    }
+
+    // =========================================================================
+    // Mode-uniform message flow (parametrized across the four chat modes)
+    // =========================================================================
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_forwardsPyrisResponseViaWebsocket(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        messageToSend.setMessageDifferentiator(1453);
+
+        mockChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_sendsThePlainRunIdButNeverTheCallbackTokenToTheClient() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        var sentSettings = new AtomicReference<PyrisPipelineExecutionSettingsDTO>();
+
+        mockChatResponse(dto -> {
+            sentSettings.set(dto.settings());
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var settings = sentSettings.get();
+        assertThat(settings.runId()).isNotBlank();
+        assertThat(settings.authenticationToken()).isNotBlank().isNotEqualTo(settings.runId());
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyMessageWasSentOverWebsocket(user.getLogin(), String.valueOf(session.getId()),
+                payload -> payload instanceof IrisChatWebsocketDTO dto && dto.message() == null && settings.runId().equals(dto.runId()) && dto.runState() == RUNNING);
+        assertNoWebsocketPayloadContains(settings.authenticationToken());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusCallback_withThePlainRunIdAsCredential_isRejected() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String runId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        var headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + runId);
+
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + runId + "/status", new PyrisChatStatusUpdateDTO("Injected", FINISHED, null, null, null, null),
+                HttpStatus.FORBIDDEN, headers);
+
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        assertThat(pyrisJobService.getJob(runId)).as("a rejected callback leaves the run alone").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusCallback_withAnotherRunsToken_isRejected() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String runA = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        String runB = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + runB + "/status", new PyrisChatStatusUpdateDTO("Injected", FINISHED, null, null, null, null),
+                HttpStatus.CONFLICT, pyrisCallbackCredentials(runA).headers());
+
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_forwardsCustomInstructionsToPyris(IrisChatMode mode) throws Exception {
+        String customInstructions = "Please focus on clarity.";
+        var courseSettings = irisSettingsService.getSettingsForCourse(course);
+        configureCourseSettings(course, customInstructions, courseSettings.variant());
+
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+        mockChatResponse(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(customInstructions);
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+    }
+
+    /**
+     * A Pyris version from before the Memiris removal still sends the memory lists on its callbacks. Artemis no longer reads
+     * them, but must still accept the callback and deliver the answer.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_acceptsLegacyMemoryFieldsInPyrisCallback() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+        mockChatResponse(dto -> {
+            var callback = pyrisCallbackCredentials(dto.settings().authenticationToken());
+            ObjectNode body = JsonObjectMapper.get().valueToTree(new PyrisChatStatusUpdateDTO("Hello World", FINISHED, null, null, null, null));
+            body.putArray("accessedMemories").addObject().put("id", "m1").put("title", "Memory").put("content", "Content");
+            body.putArray("createdMemories").addObject().put("id", "m2").put("title", "Memory").put("content", "Content");
+            assertThatNoException().isThrownBy(() -> request.postStringWithoutLocation("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status", body.toString(),
+                    HttpStatus.OK, callback.headers()));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_forwardsCommandMarkerInChatHistoryToPyris() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        String markerJson = "{\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42,\"lectureUnitName\":\"Intro\",\"page\":3}}";
+        IrisMessage marker = new IrisMessage();
+        IrisJsonMessageContent markerContent = new IrisJsonMessageContent();
+        markerContent.setJsonContent(markerJson);
+        marker.addContent(markerContent);
+        irisMessageService.saveMessage(marker, session, IrisMessageSender.COMMAND);
+
+        mockChatResponse(dto -> {
+            var commandMessage = dto.chatHistory().stream().filter(message -> message.sender() == IrisMessageSender.COMMAND).findFirst().orElseThrow();
+            assertThat(commandMessage.contents()).hasSize(1);
+            // COMMAND markers travel as the JSON they are stored as; Pyris builds the note the LLM reads from it.
+            assertThat(((PyrisJsonMessageContentDTO) commandMessage.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendTwoMessages_persistsBothUserAndLlmMessages(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", FINISHED, null, null)));
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", FINISHED, null, null)));
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+
+        // Under the run-state protocol each chat run produces exactly three websocket sends to the user:
+        // (1) the echoed user message (IrisChatSessionService#sendOverWebsocket),
+        // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
+        // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
+        // Three sends per run, six for the two messages this test drives.
+        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + session.getId()), any());
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void sendMessage_returns403WhenNotSessionOwner(IrisChatMode mode) throws Exception {
+        IrisChatSession otherUsersSession = createSessionForUser(mode, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(otherUsersSession);
+        request.postWithoutResponseBody(messagesUrl(otherUsersSession), messageToSend, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_returns400WhenContentEmpty(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage messageWithoutContent = IrisMessageFactory.createIrisMessageForSession(session);
+        request.postWithoutResponseBody(messagesUrl(session), messageWithoutContent, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMessages_returnsAllMessagesForSession(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage m1 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        IrisMessage m2 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+        IrisMessage m3 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        IrisMessage m4 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
+
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(m1.getId(), m2.getId(), m3.getId(), m4.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMessages_leavesOutConversationSummaries() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage question = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        IrisMessage answer = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + answer.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+        IrisMessage followUp = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
+
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactly(question.getId(), answer.getId(), followUp.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void concurrentSavesToTheSameSessionKeepEveryMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        int writers = 4;
+        var loaded = new CountDownLatch(writers);
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(writers);
+        try {
+            var futures = new ArrayList<Future<IrisMessage>>();
+            for (int i = 0; i < writers; i++) {
+                futures.add(executor.submit(() -> {
+                    // Every writer holds its OWN session instance, loaded before any of them appends: exactly the
+                    // shape of the race, where a normal chat request and a proactive callback both carry the same
+                    // message list. saveMessage merges the whole aggregate with orphanRemoval, so an unserialized
+                    // writer deletes the row another writer has just committed.
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    loaded.countDown();
+                    start.await();
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.LLM);
+                }));
+            }
+            // Opening the gate before every writer has its own copy would let the scheduler run them one after
+            // another, each loading a list the previous one had already committed into - the very interleaving that
+            // cannot lose a message, so the test would pass with the regression in place.
+            assertThat(loaded.await(30, TimeUnit.SECONDS)).as("every writer must hold its own session before any of them appends").isTrue();
+            start.countDown();
+            for (var future : futures) {
+                assertThat(future.get(30, TimeUnit.SECONDS)).as("every concurrent append must succeed").isNotNull();
+            }
+        }
+        finally {
+            // Also on the failure path: a writer parked on the gate would otherwise keep the pool alive.
+            start.countDown();
+            executor.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("no concurrently committed message may be dropped by another writer's stale collection").hasSize(writers);
+        assertListIndicesAreContiguous(reloaded.getId(), writers);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void contextSwitchHoldsTheSessionLockAcrossItsContextUpdate() throws Exception {
+        // applyContextChange appends the CTXSWAP marker and then writes the new context. Both happen under one
+        // session write lock, and the marker append allocates its list index under that same lock. If the lock were
+        // released in between (the append committing on its own), a chat append committing in that gap would claim
+        // the index the marker already took. Run a stream of appends against the session while the switch runs and
+        // assert none of them is lost.
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        int appends = 6;
+        var appender = Executors.newSingleThreadExecutor();
+        try {
+            // Keep the Future and await it rather than a latch: a throwing append would otherwise leave its exception
+            // inside the discarded Future, and the failure would surface as a 60-second timeout with no cause.
+            var appendsDone = appender.submit(() -> {
+                for (int i = 0; i < appends; i++) {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }
+                return null;
+            });
+            irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), user);
+            appendsDone.get(60, TimeUnit.SECONDS);
+        }
+        finally {
+            appender.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        // every plain append plus the single CTXSWAP marker
+        assertThat(reloaded.getMessages()).as("the context switch must not orphan-remove a concurrently appended message").hasSize(appends + 1);
+        assertListIndicesAreContiguous(reloaded.getId(), appends + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void appendInsideAnOuterTransactionDoesNotDropAConcurrentlyCommittedMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var outer = new TransactionTemplate(transactionManager);
+
+        outer.execute(status -> {
+            // Pre-load the session WITH its messages inside the outer transaction: the shape revealAmbient produces,
+            // where the session is resolved before the append. From here the persistence context manages a collection
+            // that no later query re-reads.
+            var managed = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+            assertThat(managed.getMessages()).isEmpty();
+
+            // Meanwhile a separate transaction commits a message for the same session.
+            var concurrent = Executors.newSingleThreadExecutor();
+            try {
+                concurrent.submit(() -> {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }).get(30, TimeUnit.SECONDS);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("the concurrent append must succeed", e);
+            }
+            finally {
+                concurrent.shutdownNow();
+            }
+
+            // Append through the stale managed instance. An append that merged the aggregate would write back a
+            // collection that never saw the concurrent row, and orphanRemoval would delete it.
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(managed), managed, IrisMessageSender.LLM);
+            return null;
+        });
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("the concurrently committed message must survive an append made from an already-managed session").hasSize(2);
+        assertListIndicesAreContiguous(reloaded.getId(), 2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void appendRollsBackTheRowAndItsListIndexTogether() {
+        // The append inserts the row and writes its list index in two statements, so a caller's rollback has to take
+        // both rather than leave a row behind whose index nothing set.
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var outer = new TransactionTemplate(transactionManager);
+
+        outer.executeWithoutResult(status -> {
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+            status.setRollbackOnly();
+        });
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).as("the rolled back append must leave no row behind").isEmpty();
+    }
+
+    /** Counting messages is not enough: two appends on the same index leave a list of the same length. */
+    private void assertListIndicesAreContiguous(long sessionId, int expectedCount) {
+        var indices = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId).getMessages().stream().map(message -> irisMessageRepository.findListIndex(message.getId()))
+                .flatMap(Optional::stream).toList();
+        assertThat(indices).as("every appended message must hold its own list index").containsExactlyInAnyOrderElementsOf(IntStream.range(0, expectedCount).boxed().toList());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_persistsHelpfulTrue(IrisChatMode mode) throws Exception {
+        assertHelpfulRatingPersisted(mode, true);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_persistsHelpfulFalse(IrisChatMode mode) throws Exception {
+        assertHelpfulRatingPersisted(mode, false);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_persistsHelpfulNull(IrisChatMode mode) throws Exception {
+        assertHelpfulRatingPersisted(mode, null);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_returns400WhenMessageSenderIsUser(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        request.putWithResponseBody(helpfulUrl(session, userMessage), true, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_returns409WhenMessageBelongsToDifferentSession(IrisChatMode mode) throws Exception {
+        IrisChatSession session1 = createSessionForUser(mode, "student1");
+        IrisChatSession session2 = createSessionForUser(mode, "student2");
+        IrisMessage message = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session1), session1, IrisMessageSender.USER);
+        request.putWithResponseBody(helpfulUrl(session2, message), true, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_persistsDismissed() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage proactive = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        proactive.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        proactive = irisMessageService.saveMessage(proactive, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, proactive), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        var reloaded = irisMessageRepository.findById(proactive.getId()).orElseThrow();
+        assertThat(reloaded.getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_returns400WhenMessageIsIntermediate() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage intermediateMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        intermediateMessage.setIntermediate(true);
+        IrisMessage savedMessage = irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(helpfulUrl(session, savedMessage), true, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenTheEpisodeRowCarriesNoExerciseBinding() throws Exception {
+        // A row with an episode but no exercise binding exists only on databases that ran this feature branch before
+        // the binding was added. The episode-wide queries filter on the binding, so they see neither this row nor its
+        // siblings: writing row-scoped anyway would let two rows of one episode carry different outcomes, and the
+        // history replayed to Pyris would contradict itself. The write is refused instead of guessed.
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage unbound = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        unbound.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        unbound.setProactiveEpisodeId("ep-unbound");
+        IrisMessage saved = irisMessageService.saveMessage(unbound, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, saved), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisMessageRepository.findById(saved.getId()).orElseThrow().getProactiveOutcome()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenMessageNotProactive() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage plainLlm = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, plainLlm), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ratingAggregates_excludeIntermediateLlmMessages() {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        Instant from = Instant.now().minusSeconds(5);
+
+        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
+
+        // A final (non-intermediate) helpful LLM answer must be counted by the rating aggregates.
+        IrisMessage finalMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        finalMessage.setHelpful(true);
+        irisMessageService.saveMessage(finalMessage, session, IrisMessageSender.LLM);
+
+        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
+        assertThat(thumbsUpAfterFinal).isEqualTo(thumbsUpBaseline + 1);
+        assertThat(totalAfterFinal).isEqualTo(totalBaseline + 1);
+
+        // An intermediate helpful LLM message must not inflate the numerator or the denominator.
+        IrisMessage intermediateMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        intermediateMessage.setHelpful(true);
+        intermediateMessage.setIntermediate(true);
+        irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
+
+        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(thumbsUpAfterFinal);
+        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(totalAfterFinal);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_reprocessesExistingUserMessage(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 2);
+
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), statusDTO(RUNNING), messageDTO("Hello World"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_allowsATrailingConversationSummary() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        // A run whose answer failed can still report a finished compaction, which is stored after the unanswered user message.
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + userMessage.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsAMessageOfAnotherSessionForAnEmptySession() throws Exception {
+        IrisChatSession emptySession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisChatSession otherUsersSession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student2");
+        IrisMessage otherUsersMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(otherUsersSession), otherUsersSession,
+                IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(emptySession) + "/" + otherUsersMessage.getId() + "/resend", null, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(emptySession.getId()).getMessages()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsOversizedClientId() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend?clientId=" + "x".repeat(65), null, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_updatesSessionTitleWhenPyrisReturnsOne(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        final String expectedTitle = "New chat";
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, expectedTitle, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getTitle()).isEqualTo(expectedTitle);
+    }
+
+    // Each mode uses a different session owner so that LLM-message counts from earlier parametrized
+    // invocations don't trip the rate limit on the first POST of the next invocation.
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    void sendMessage_returns429WhenRateLimitReached(IrisChatMode mode) throws Exception {
+        String ownerLogin = switch (mode) {
+            case COURSE_CHAT -> "student1";
+            case LECTURE_CHAT -> "student2";
+            case TEXT_EXERCISE_CHAT -> "student3";
+            case PROGRAMMING_EXERCISE_CHAT -> "tutor1";
+            default -> throw new IllegalArgumentException(mode + " is not a chat-session mode");
+        };
+        userUtilService.changeUser(TEST_PREFIX + ownerLogin);
+
+        // Purge prior sessions (and their LLM messages) so this user's rate-limit count starts at 0.
+        long ownerId = userUtilService.getUserByLogin(TEST_PREFIX + ownerLogin).getId();
+        irisChatSessionRepository.deleteAll(irisChatSessionRepository.findAll().stream().filter(s -> s.getUserId() == ownerId).toList());
+
+        IrisChatSession session = createSessionForUser(mode, ownerLogin);
+        IrisMessage first = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        IrisMessage second = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        configureCourseRateLimit(course, 1, 10);
+        try {
+            request.postWithoutResponseBody(messagesUrl(session), first, HttpStatus.CREATED);
+            await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 2);
+            request.postWithoutResponseBody(messagesUrl(session), second, HttpStatus.TOO_MANY_REQUESTS);
+            IrisMessage saved = irisMessageService.saveMessage(second, session, IrisMessageSender.USER);
+            request.postWithoutResponseBody(messagesUrl(session) + "/" + saved.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
+
+            User user = userTestRepository.findByIdElseThrow(session.getUserId());
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(first.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
+        }
+        finally {
+            configureCourseRateLimit(course, null, null);
+        }
+    }
+
+    // =========================================================================
+    // Entity-deletion cascade: removing the owning exercise or lecture must also remove any
+    // Iris chat sessions (and their messages) referencing it. The unified iris_session schema
+    // stores entity_id as a plain long with no FK, so cleanup happens explicitly in the
+    // exercise/lecture deletion services via IrisChatSessionApi.
+    // =========================================================================
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "TEXT_EXERCISE_CHAT", "LECTURE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteOwningEntity_cascadesSessionsAndMessages(IrisChatMode mode) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "instructor1");
+        irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        String url = switch (mode) {
+            case TEXT_EXERCISE_CHAT -> "/api/text/text-exercises/" + textExercise.getId();
+            case LECTURE_CHAT -> "/api/lecture/lectures/" + lecture.getId();
+            default -> throw new IllegalArgumentException("Unsupported mode: " + mode);
+        };
+        if (mode == IrisChatMode.TEXT_EXERCISE_CHAT) {
+            // an exercise is deleted in the background
+            request.delete(url, HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
+        }
+        else {
+            request.delete(url, HttpStatus.OK);
+        }
+
+        assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PyrisRunState.class, names = { "RUNNING", "FINISHED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusUpdateForDeletedSession_isDroppedAndRemovesJob(PyrisRunState runState) throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        // a result on the terminal update, none on the intermediate one, so both session loads are covered
+        String result = runState == FINISHED ? "Hello World" : null;
+        sendStatus(jobId, result, runState, null, null);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void partialStatusUpdateForDeletedSession_isDroppedAndRemovesJob() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, callback.headers());
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
+    }
+
+    // =========================================================================
+    // Citation service — only invoked for lecture and text exercise chats
+    // =========================================================================
+
+    @Nested
+    class CitationService {
+
+        @ParameterizedTest
+        @EnumSource(value = IrisChatMode.class, names = { "LECTURE_CHAT", "TEXT_EXERCISE_CHAT" })
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendOneMessage_invokesCitationService(IrisChatMode mode) throws Exception {
+            IrisChatSession session = createSessionForUser(mode, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            mockChatResponse(dto -> {
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            verify(irisCitationService).resolveCitationInfo(any());
+        }
+    }
+
+    // =========================================================================
+    // Programming-exercise-specific behaviour: team exercises, uncommitted files,
+    // repository-aware message DTOs, deletion cascade.
+    // =========================================================================
+
+    @Nested
+    class ProgrammingExerciseChat {
+
+        private ProgrammingExercise teamExercise;
+
+        private ProgrammingExerciseStudentParticipation soloParticipation;
+
+        private ProgrammingExerciseStudentParticipation teamParticipation;
+
+        @BeforeEach
+        void setupProgrammingRepositories() throws GitAPIException, IOException, URISyntaxException {
+            // The base fixture's programming exercise is a bare bean without template/solution
+            // participations. Replace it with a fully-provisioned exercise so the chat pipeline can
+            // be exercised end-to-end (repository URIs, submissions, LocalVC repos).
+            programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, ProgrammingLanguage.JAVA, "ProgrammingSolo", "SOLOEXC", null);
+            activateIrisFor(programmingExercise);
+            soloParticipation = provisionProgrammingRepositories(programmingExercise);
+
+            teamExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, ProgrammingLanguage.JAVA, "ProgrammingTeam", "TEAMEXC", null);
+            teamExercise.setMode(ExerciseMode.TEAM);
+            programmingExerciseRepository.save(teamExercise);
+
+            Team team = new Team();
+            team.setName("Team 1");
+            team.setShortName("team1");
+            team.setExercise(teamExercise);
+            team.setStudents(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), userUtilService.getUserByLogin(TEST_PREFIX + "student3")));
+            team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+            Team savedTeam = teamRepository.save(team);
+
+            teamParticipation = provisionProgrammingRepositoriesForTeam(teamExercise, savedTeam);
+            activateIrisFor(teamExercise);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void sendOneMessage_worksForTeamExercise() throws Exception {
+            long submissionId = teamParticipation.getSubmissions().iterator().next().getId();
+            IrisChatSession session = createProgrammingSession(teamExercise, "student2");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(dto -> {
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+                pipelineDone.set(true);
+            }, submissionId);
+
+            request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            User user = userTestRepository.findByIdElseThrow(session.getUserId());
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING),
+                    messageDTO("Hello World"));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendOneMessage_forwardsSubmissionIdToPyris() throws Exception {
+            long submissionId = soloParticipation.getSubmissions().iterator().next().getId();
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(_ -> pipelineDone.set(true), submissionId);
+
+            request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void createMessage_acceptsUncommittedFilesInRequestDto() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { /* uncommitted */ }", "src/Utils.java", "public class Utils { }");
+
+            mockChatResponse(dto -> {
+                if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
+                    assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
+                }
+            });
+
+            IrisMessageRequestDTO requestDto = buildTextRequestDto(session, uncommittedFiles);
+            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            assertThat(response.id()).isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void createMessage_worksWithoutUncommittedFiles() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            mockChatResponse(_ -> {
+            });
+
+            IrisMessageRequestDTO requestDto = buildTextRequestDto(session, Map.of());
+            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            assertThat(response.id()).isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void createMessage_preservesJsonContentPayload() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            mockChatResponse(_ -> {
+            });
+
+            IrisMessage source = new IrisMessage();
+            source.addContent(IrisJsonMessageContent.ofJson("{\"k1\":\"v1\",\"k2\":\"v2\",\"k3\":\"v3\"}"));
+            List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
+            IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null, null);
+
+            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+
+            assertThat(response.content()).hasSize(1);
+            assertThat(response.content().getFirst().type()).isEqualTo("json");
+            assertThat(response.content().getFirst().attributes()).isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void requestMessageFromIris_passesUncommittedFilesThroughToPyrisDto() {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+            Map<String, String> uncommittedFiles = Map.of("src/Main.java", "public class Main { }");
+            mockChatResponse(dto -> {
+                if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
+                    assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
+                }
+            });
+
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null);
+
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void requestMessageFromIris_backwardCompatibleOverloadWorks() {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+            mockChatResponse(_ -> {
+            });
+
+            irisSessionService.requestMessageFromIris(session);
+
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void deleteProgrammingExercise_cascadesSessionsAndMessages() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "instructor1");
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+            String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
+            request.delete(url, HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+
+            assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        }
+
+        private IrisMessageRequestDTO buildTextRequestDto(IrisChatSession session, Map<String, String> uncommittedFiles) {
+            IrisMessage source = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+            List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+            return new IrisMessageRequestDTO(contentDtos, source.getMessageDifferentiator(), uncommittedFiles, null, null);
+        }
+
+        private ProgrammingExerciseStudentParticipation provisionProgrammingRepositories(ProgrammingExercise exercise) throws GitAPIException, IOException, URISyntaxException {
+            String projectKey = exercise.getProjectKey();
+            exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
+            programmingExerciseRepository.save(exercise);
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
+
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+            TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
+            templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
+            templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+            SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
+            solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
+            solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "student1";
+            ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
+                    TEST_PREFIX + "student1");
+            participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
+            studentParticipation.setBranch(defaultBranch);
+            programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
+
+            return studentParticipation;
+        }
+
+        private ProgrammingExerciseStudentParticipation provisionProgrammingRepositoriesForTeam(ProgrammingExercise exercise, Team team)
+                throws GitAPIException, IOException, URISyntaxException {
+            String projectKey = exercise.getProjectKey();
+            exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+            exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
+            programmingExerciseRepository.save(exercise);
+            ProgrammingExercise reloaded = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
+
+            String templateSlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
+            TemplateProgrammingExerciseParticipation templateParticipation = reloaded.getTemplateParticipation();
+            templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateSlug + ".git");
+            templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+            String solutionSlug = projectKey.toLowerCase(Locale.ROOT) + "-solution";
+            SolutionProgrammingExerciseParticipation solutionParticipation = reloaded.getSolutionParticipation();
+            solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionSlug + ".git");
+            solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+            String assignmentSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + TEST_PREFIX + "team1";
+            ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(reloaded, team);
+            participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
+            studentParticipation.setBranch(defaultBranch);
+            programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+            localVCLocalCITestService.createRepository(projectKey, templateSlug);
+            localVCLocalCITestService.createRepository(projectKey, projectKey.toLowerCase(Locale.ROOT) + "-tests");
+            localVCLocalCITestService.createRepository(projectKey, solutionSlug);
+            localVCLocalCITestService.createRepository(projectKey, assignmentSlug);
+            localVCLocalCITestService.verifyRepositoryFoldersExist(reloaded, localVCBasePath);
+
+            return studentParticipation;
+        }
+
+        private IrisChatSession createProgrammingSession(ProgrammingExercise exercise, String studentLogin) {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + studentLogin);
+            return irisChatSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(exercise, user));
+        }
+    }
+
+    // =========================================================================
+    // Tutor suggestions: Pyris returns suggestion strings that are forwarded as
+    // a suggestionsDTO websocket frame rather than as a message reply.
+    // =========================================================================
+
+    @Nested
+    class TutorSuggestions {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void pyrisSuggestionsAreForwardedOverWebsocket() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            mockChatResponse(dto -> {
+                List<String> suggestions = List.of("suggestion1", "suggestion2", "suggestion3");
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, FINISHED, null, suggestions));
+                pipelineDone.set(true);
+            });
+
+            request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            User user = userTestRepository.findByIdElseThrow(session.getUserId());
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING),
+                    suggestionsDTO("suggestion1", "suggestion2", "suggestion3"));
+        }
+    }
+
+    // =========================================================================
+    // MCQ / JSON content classification: Pyris may return plain text, MCQ JSON,
+    // mixed text+JSON, or malformed MCQ; the server must classify and persist
+    // each case correctly. These tests exercise the classification layer
+    // through the normal programming-exercise message pipeline.
+    // =========================================================================
+
+    @Nested
+    class McqAndJsonContent {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void mcqJsonIsStoredAsJsonContent() throws Exception {
+            String mcqJson = """
+                    {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""";
+
+            var content = sendAndGetLlmResponseContent(mcqJson).getFirst();
+
+            assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) content).getContentAsString()).get("type").asString()).isEqualTo("mcq");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void plainTextIsStoredAsTextContent() throws Exception {
+            var content = sendAndGetLlmResponseContent("Just a text response").getFirst();
+            assertThat(content).isInstanceOf(IrisTextMessageContent.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void nonMcqJsonIsStoredAsTextContent() throws Exception {
+            var content = sendAndGetLlmResponseContent("""
+                    {"type":"other","data":"something"}""").getFirst();
+            assertThat(content).isInstanceOf(IrisTextMessageContent.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void invalidJsonIsStoredAsTextContent() throws Exception {
+            var content = sendAndGetLlmResponseContent("{this is not valid json}").getFirst();
+            assertThat(content).isInstanceOf(IrisTextMessageContent.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void mixedTextAndMcqJsonIsSplitIntoMultipleContents() throws Exception {
+            String mixed = "Here are your questions! "
+                    + "{\"type\":\"mcq\",\"question\":\"What is X?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true},{\"text\":\"C\",\"correct\":false},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"B is correct.\"}"
+                    + " Good luck!";
+
+            var contents = sendAndGetLlmResponseContent(mixed);
+
+            assertThat(contents).hasSize(3);
+            assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq");
+            assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void mixedTextAndMcqSetJsonIsSplitIntoMultipleContents() throws Exception {
+            String mixed = "Here are your questions! "
+                    + "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"What is X?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true},{\"text\":\"C\",\"correct\":false},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"B is correct.\"}]}"
+                    + " Good luck!";
+
+            var contents = sendAndGetLlmResponseContent(mixed);
+
+            assertThat(contents).hasSize(3);
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq-set");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void textWithNonMcqJsonIsStoredAsSingleTextContent() throws Exception {
+            String input = "The config is {\"key\": \"value\"}";
+            var contents = sendAndGetLlmResponseContent(input);
+
+            assertThat(contents).hasSize(1);
+            assertThat(((IrisTextMessageContent) contents.getFirst()).getTextContent()).isEqualTo(input);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void pureMcqJsonIsStoredAsSingleJsonContent() throws Exception {
+            String mcqJson = "{\"type\":\"mcq\",\"question\":\"What is 2+2?\",\"options\":[{\"text\":\"3\",\"correct\":false},{\"text\":\"4\",\"correct\":true}],\"explanation\":\"Basic arithmetic.\"}";
+            var contents = sendAndGetLlmResponseContent(mcqJson);
+
+            assertThat(contents).hasSize(1);
+            var jsonContent = (IrisJsonMessageContent) contents.getFirst();
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("question").asString()).isEqualTo("What is 2+2?");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_zeroCorrect_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"5","correct":false}],"explanation":"Basic arithmetic."}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_twoCorrect_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"What is 2+2?","options":[{"text":"4","correct":true},{"text":"four","correct":true}],"explanation":"Basic arithmetic."}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_onlyOneOption_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"What is 2+2?","options":[{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_missingExplanation_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"4","correct":true}]}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_blankQuestion_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"  ","options":[{"text":"3","correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcq_missingOptionText_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq","question":"What is 2+2?","options":[{"correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcqSet_emptyQuestions_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback("""
+                    {"type":"mcq-set","questions":[]}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void malformedMcqSet_oneInvalidQuestion_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback(
+                    """
+                            {"type":"mcq-set","questions":[{"question":"Valid?","options":[{"text":"A","correct":false},{"text":"B","correct":true}],"explanation":"OK."},{"question":"Invalid?","options":[{"text":"Only one","correct":true}],"explanation":"Bad."}]}""");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void embeddedMalformedMcq_showsFallbackMessage() throws Exception {
+            assertMalformedMcqShowsFallback(
+                    "Here is a quiz: " + "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false}],\"explanation\":\"E.\"}" + " Good luck!");
+        }
+
+        // -- MCQ response endpoint -------------------------------------------
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_persistsResponseForSingleMcq() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage message = saveLlmMessageWithMcqContent(session,
+                    "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, null), HttpStatus.OK);
+
+            var json = readJsonContent(session, message);
+            assertThat(json.get("response").get("selectedIndex").asInt()).isEqualTo(1);
+            assertThat(json.get("response").get("submitted").asBoolean()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSingleQuestionAndOptionExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq","question":"Q?","options":[
+                      {"text":"A","correct":false,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"text":"B","correct":true,"metadata":{"nested":[null,"",[],{},false,0]}}],
+                     "explanation":"E.","metadata":{"nested":[null,"",[],{},false,0]},
+                     "extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, null), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            expected.set("response", JsonObjectMapper.get().readTree("{\"selectedIndex\":1,\"submitted\":true}"));
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSetQuestionOptionAndStoredResponseExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq-set","metadata":{"nested":[null,"",[],{},false,0]},"questions":[
+                      {"question":"Q1?","options":[{"text":"A","correct":false,"extension":null},{"text":"B","correct":true}],
+                       "explanation":"E1.","extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"question":"Q2?","options":[{"text":"C","correct":true},{"text":"D","correct":false}],"explanation":"E2."}],
+                     "responses":[
+                       {"questionIndex":0,"selectedIndex":0,"submitted":false,"extension":null,"metadata":{"nested":[null,"",[],{},false,0]}},
+                       {"questionIndex":1,"selectedIndex":1,"submitted":true,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}]}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            ((ObjectNode) expected.path("responses").get(0)).put("selectedIndex", 1).put("submitted", true);
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_persistsResponseForMcqSet() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage message = saveLlmMessageWithMcqContent(session,
+                    "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"Q1?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E1.\"},{\"question\":\"Q2?\",\"options\":[{\"text\":\"C\",\"correct\":true},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"E2.\"}]}");
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(0, false, 1), HttpStatus.OK);
+
+            var responses = readJsonContent(session, message).get("responses");
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).get("questionIndex").asInt()).isEqualTo(1);
+            assertThat(responses.get(0).get("selectedIndex").asInt()).isEqualTo(0);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_updatesExistingResponseForMcqSet() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage message = saveLlmMessageWithMcqContent(session,
+                    "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"Q1?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E1.\"},{\"question\":\"Q2?\",\"options\":[{\"text\":\"C\",\"correct\":true},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"E2.\"}]}");
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(0, false, 0), HttpStatus.OK);
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+            var responses = readJsonContent(session, message).get("responses");
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).get("selectedIndex").asInt()).isEqualTo(1);
+            assertThat(responses.get(0).get("submitted").asBoolean()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_returns409WhenSessionMismatches() throws Exception {
+            IrisChatSession session1 = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisChatSession session2 = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage message = saveLlmMessageWithMcqContent(session1,
+                    "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+            request.put(mcqResponseUrl(session2, message), new IrisMcqResponseDTO(0, true, null), HttpStatus.CONFLICT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_returns400ForUserMessage() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+            request.put(mcqResponseUrl(session, userMessage), new IrisMcqResponseDTO(0, true, null), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_returns400ForTextOnlyLlmMessage() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage llmTextMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+            request.put(mcqResponseUrl(session, llmTextMessage), new IrisMcqResponseDTO(0, true, null), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_returns400ForNonMcqJson() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage message = saveLlmMessageWithMcqContent(session, "{\"type\":\"other\",\"data\":\"something\"}");
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(0, true, null), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_returns403WhenAccessingForeignSession() throws Exception {
+            IrisChatSession otherUsersSession = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student2");
+            IrisMessage message = saveLlmMessageWithMcqContent(otherUsersSession,
+                    "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+            request.put(mcqResponseUrl(otherUsersSession, message), new IrisMcqResponseDTO(0, true, null), HttpStatus.FORBIDDEN);
+        }
+
+        // -- helpers for this nested class -----------------------------------
+
+        private List<IrisMessageContent> sendAndGetLlmResponseContent(String pyrisResult) throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            mockChatResponse(dto -> {
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), pyrisResult, FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            var reloaded = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+            var llmMessage = reloaded.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).findFirst().orElseThrow();
+            return llmMessage.getContent();
+        }
+
+        private void assertMalformedMcqShowsFallback(String pyrisResult) throws Exception {
+            var contents = sendAndGetLlmResponseContent(pyrisResult);
+            assertThat(contents).hasSize(1);
+            assertThat(((IrisTextMessageContent) contents.getFirst()).getTextContent())
+                    .isEqualTo("Sorry, I tried to generate a quiz question but the response was malformed. Please try again.");
+        }
+
+        private IrisMessage saveLlmMessageWithMcqContent(IrisChatSession session, String jsonString) {
+            IrisMessage message = new IrisMessage();
+            IrisJsonMessageContent jsonContent = new IrisJsonMessageContent();
+            jsonContent.setJsonContent(jsonString);
+            message.addContent(jsonContent);
+            return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        }
+
+        private JsonNode readJsonContent(IrisChatSession session, IrisMessage message) {
+            var reloaded = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+            var updatedMessage = reloaded.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
+            return JsonObjectMapper.get()
+                    .readTree(((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow())
+                            .getContentAsString());
+        }
+
+        private String mcqResponseUrl(IrisChatSession session, IrisMessage message) {
+            return messagesUrl(session) + "/" + message.getId() + "/mcq-response";
+        }
+    }
+
+    // =========================================================================
+    // Context Awareness: video/slides/combined view context forwarding to Pyris
+    // =========================================================================
+
+    @Nested
+    class ContextAwareness {
+
+        private Long unitId;
+
+        @BeforeEach
+        void setupLectureUnit() {
+            LectureUnit unit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+            unitId = unit.getId();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithVideoContext_forwardsContextToPyris() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var videoContext = new IrisVideoContextDTO(unitId, 45.5);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(videoContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNotNull();
+                assertThat(dto.context()).hasSize(1);
+                assertThat(dto.context().get(0)).isInstanceOf(IrisVideoContextDTO.class);
+                var forwardedContext = (IrisVideoContextDTO) dto.context().get(0);
+                assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
+                assertThat(forwardedContext.timestamp()).isEqualTo(45.5);
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithInvalidContextElement_isRejected() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            // page is annotated with @Min(1) on IrisSlidesContextDTO, so this element violates its own constraints.
+            // The context list must therefore be validated element by element, not just as a container.
+            var invalidSlidesContext = new IrisSlidesContextDTO(unitId, 0);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(invalidSlidesContext));
+
+            request.postWithoutResponseBody(messagesUrl(session), requestDto, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithSlidesContext_forwardsContextToPyris() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var slidesContext = new IrisSlidesContextDTO(unitId, 7);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(slidesContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNotNull();
+                assertThat(dto.context()).hasSize(1);
+                assertThat(dto.context().get(0)).isInstanceOf(IrisSlidesContextDTO.class);
+                var forwardedContext = (IrisSlidesContextDTO) dto.context().get(0);
+                assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
+                assertThat(forwardedContext.page()).isEqualTo(7);
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithCombinedViewContext_extractsLectureUnitIdForRagFiltering() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 3), new IrisVideoContextDTO(unitId, 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                // Combined view context should be in the context list
+                assertThat(dto.context()).isNotNull();
+                assertThat(dto.context()).hasSize(1);
+                assertThat(dto.context().get(0)).isInstanceOf(IrisCombinedViewContextDTO.class);
+
+                // AND the nested slide and video context should be forwarded unchanged
+                var forwardedContext = (IrisCombinedViewContextDTO) dto.context().get(0);
+                assertThat(forwardedContext.slides()).isNotNull();
+                assertThat(forwardedContext.slides().page()).isEqualTo(3);
+                assertThat(forwardedContext.video()).isNotNull();
+                assertThat(forwardedContext.video().timestamp()).isEqualTo(10.0);
+
+                // AND lectureUnitId should be derived from the nested context for RAG filtering
+                assertThat(dto.lectureUnitId()).isEqualTo(unitId);
+
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithMixedContexts_forwardsAllContexts() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var videoContext = new IrisVideoContextDTO(unitId, 10.0);
+            var slidesContext = new IrisSlidesContextDTO(unitId, 3);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(videoContext, slidesContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNotNull();
+                assertThat(dto.context()).hasSize(2);
+                assertThat(dto.context()).anyMatch(IrisVideoContextDTO.class::isInstance);
+                assertThat(dto.context()).anyMatch(IrisSlidesContextDTO.class::isInstance);
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithoutContext_worksNormally() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var requestDto = buildRequestWithContext(messageToSend, null);
+
+            mockChatResponse(dto -> {
+                // Context should be null (not empty list) for backward compatibility
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithInvalidContext_returns400() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            // Invalid context: lectureUnitId must be > 0
+            var invalidContext = new IrisVideoContextDTO("video", 0L, 10.0);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(invalidContext));
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithPendingContextMissingMode_returns400() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+            List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null))
+                    .toList();
+            var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), Map.of(), new IrisPendingContextDTO(null, lecture.getId()), null);
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithForeignLectureUnitId_contextDropped() throws Exception {
+            // A context referencing a lectureUnitId that does not belong to the session's lecture must be dropped.
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            long foreignUnitId = Long.MAX_VALUE;
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(foreignUnitId, 1), null);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithMixedValidAndForeignCombinedViewContext_contextDropped() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            long foreignUnitId = Long.MAX_VALUE;
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 1), new IrisVideoContextDTO(foreignUnitId, 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithMismatchedCombinedViewContextWithinLecture_contextDropped() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            LectureUnit secondUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 1), new IrisVideoContextDTO(secondUnit.getId(), 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithUncommittedFiles_lectureForeignContextIgnored() throws Exception {
+            // Lecture context sent from a programming session must be stripped before forwarding to Pyris.
+            ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, ProgrammingLanguage.JAVA, "ProgContext", "PROGCTX", null);
+            activateIrisFor(exercise);
+
+            IrisChatSession session = createProgrammingSession(exercise, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(999L, 1), null);
+            Map<String, String> uncommittedFiles = Map.of("Main.java", "public class Main {}");
+
+            List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null))
+                    .toList();
+            var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), uncommittedFiles, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                // Lecture context must be dropped for non-LECTURE_CHAT sessions
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+
+                // Uncommitted files are still forwarded via programmingExerciseSubmission.repository
+                if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
+                    assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
+                }
+
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        private IrisMessageRequestDTO buildRequestWithContext(IrisMessage message, List<IrisMessageContextDTO> context) {
+            List<IrisMessageContentDTO> contentDtos = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+            return new IrisMessageRequestDTO(contentDtos, message.getMessageDifferentiator(), Map.of(), context);
+        }
+
+        private IrisChatSession createProgrammingSession(ProgrammingExercise exercise, String studentLogin) {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + studentLogin);
+            IrisChatSession session = IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(exercise, user);
+            return irisChatSessionRepository.save(session);
+        }
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private void assertHelpfulRatingPersisted(IrisChatMode mode, Boolean helpfulValue) throws Exception {
+        IrisChatSession session = createSessionForUser(mode, "student1");
+        IrisMessage llmMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(helpfulUrl(session, llmMessage), helpfulValue, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        var reloaded = irisMessageRepository.findById(llmMessage.getId()).orElseThrow();
+        assertThat(reloaded.getHelpful()).isEqualTo(helpfulValue);
+    }
+
+    private IrisChatSession createSessionForUser(IrisChatMode mode, String studentLogin) {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + studentLogin);
+        IrisChatSession session = switch (mode) {
+            case COURSE_CHAT -> IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+            case LECTURE_CHAT -> IrisChatSessionFactory.createLectureSessionForUser(lecture, user);
+            case TEXT_EXERCISE_CHAT -> IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user);
+            case PROGRAMMING_EXERCISE_CHAT -> IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user);
+            default -> throw new IllegalArgumentException(mode + "is not a regular chat mode");
+        };
+        return irisChatSessionRepository.save(session);
+    }
+
+    private void mockChatResponse(Consumer<PyrisChatPipelineExecutionDTO> consumer) {
+        // All four chat modes hit the same /chat/run Pyris endpoint, so a single mock variant suffices.
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(consumer);
+    }
+
+    private void sendStatus(String jobId, String result, PyrisRunState runState, String sessionTitle, List<String> suggestions) throws Exception {
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null), HttpStatus.OK, callback.headers());
+    }
+
+    private static String messagesUrl(IrisChatSession session) {
+        return "/api/iris/sessions/" + session.getId() + "/messages";
+    }
+
+    private static String helpfulUrl(IrisChatSession session, IrisMessage message) {
+        return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/helpful";
+    }
+
+    private static String proactiveOutcomeUrl(IrisChatSession session, IrisMessage message) {
+        return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/proactive-outcome";
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tutorSuggestionRejectsOrdinaryChatSession(IrisChatMode mode) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        request.postWithoutResponseBody("/api/iris/sessions/" + session.getId() + "/tutor-suggestion", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        assertThat(irisChatSessionRepository.findById(session.getId())).isPresent();
+    }
+
+}

@@ -1,0 +1,424 @@
+package de.tum.cit.aet.artemis.text.web;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.validation.Valid;
+
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionWithoutAssessmentDTO;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
+import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
+
+/**
+ * REST controller for managing TextSubmission.
+ */
+@Conditional(TextEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.TEXT_EXERCISES)
+@RestController
+@RequestMapping("api/text/")
+public class TextSubmissionResource extends AbstractSubmissionResource {
+
+    private static final String ENTITY_NAME = "textSubmission";
+
+    private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
+
+    /**
+     * Only report the stage breakdown of a submission when it took at least this long, so a healthy system stays quiet.
+     */
+    private static final long SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS = 200;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final TextSubmissionService textSubmissionService;
+
+    private final TextAssessmentService textAssessmentService;
+
+    private final UserRepository userRepository;
+
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
+
+    private final Optional<PlagiarismAccessApi> plagiarismAccessApi;
+
+    private final ExerciseDateService exerciseDateService;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
+            TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
+            StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
+        this.textSubmissionRepository = textSubmissionRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.textExerciseRepository = textExerciseRepository;
+        this.authCheckService = authCheckService;
+        this.textSubmissionService = textSubmissionService;
+        this.userRepository = userRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.textAssessmentService = textAssessmentService;
+        this.examSubmissionApi = examSubmissionApi;
+        this.plagiarismAccessApi = plagiarismAccessApi;
+        this.exerciseDateService = exerciseDateService;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+    }
+
+    /**
+     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves their answer
+     *
+     * @param exerciseId        the id of the exercise for which to init a participation
+     * @param textSubmissionDTO the text submission to create
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
+     */
+    @PostMapping("exercises/{exerciseId}/text-submissions")
+    @EnforceAtLeastStudent
+    public ResponseEntity<TextSubmissionResponseDTO> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
+        log.debug("REST request to save text submission for exercise {} (language {}, submitted {})", exerciseId, textSubmissionDTO.language(), textSubmissionDTO.submitted());
+        if (textSubmissionDTO.id() != null) {
+            throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idExists");
+        }
+        return handleTextSubmission(exerciseId, toTextSubmission(textSubmissionDTO));
+    }
+
+    /**
+     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing text submission or creates a new one.
+     * This function is called by the text editor for saving and submitting text submissions.
+     * The submit specific handling occurs in the TextSubmissionService.createTextSubmission() and save() methods.
+     *
+     * @param exerciseId        the id of the exercise for which to init a participation
+     * @param textSubmissionDTO the text submission to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
+     *         500 (Internal Server Error) if the textSubmission couldn't be updated
+     */
+    @PutMapping("exercises/{exerciseId}/text-submissions")
+    @EnforceAtLeastStudent
+    public ResponseEntity<TextSubmissionResponseDTO> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
+        log.debug("REST request to update text submission {} for exercise {} (language {}, submitted {})", textSubmissionDTO.id(), exerciseId, textSubmissionDTO.language(),
+                textSubmissionDTO.submitted());
+        if (textSubmissionDTO.id() == null) {
+            return createTextSubmission(exerciseId, textSubmissionDTO);
+        }
+        final TextSubmission textSubmission = toTextSubmission(textSubmissionDTO);
+        return handleTextSubmission(exerciseId, textSubmission);
+    }
+
+    /**
+     * Maps the request DTO to a transient text submission, copying only the client-editable fields. The participation is
+     * resolved server-side from the exercise and the current user and is never taken from the request body.
+     *
+     * @param textSubmissionDTO the request DTO
+     * @return a transient text submission carrying only id, text, language and submitted
+     */
+    private TextSubmission toTextSubmission(TextSubmissionRequestDTO textSubmissionDTO) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setId(textSubmissionDTO.id());
+        textSubmission.setText(textSubmissionDTO.text());
+        textSubmission.setLanguage(textSubmissionDTO.language());
+        textSubmission.setSubmitted(Boolean.TRUE.equals(textSubmissionDTO.submitted()));
+        return textSubmission;
+    }
+
+    @NonNull
+    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
+        long start = System.currentTimeMillis();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        long stageStart = System.nanoTime();
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        long userNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
+        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        long exerciseNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
+        StudentParticipationSubmitTargetDTO participationFromExamGate = null;
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
+
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, textSubmission, user);
+        }
+        long examChecksNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
+        // Check if the user is allowed to submit
+        textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
+        long allowanceNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
+        var saved = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
+        textSubmission = saved.submission();
+        long saveNanos = System.nanoTime() - stageStart;
+        long end = System.currentTimeMillis();
+        // A slow autosave is worth attributing to a stage rather than guessing at, so the breakdown names which of them
+        // took the time.
+        if (end - start >= SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS) {
+            log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms)", exerciseId, end - start,
+                    userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000);
+        }
+        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
+        // Include the student: this is the student's own submission and the client checks participation ownership
+        // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, saved.participation()));
+    }
+
+    /**
+     * GET /text-submissions/:id : get the "id" textSubmission.
+     *
+     * @param submissionId the id of the textSubmission to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
+     */
+    @GetMapping("text-submissions/{submissionId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<TextSubmissionResponseDTO> getTextSubmissionWithResults(@PathVariable long submissionId) {
+        log.debug("REST request to get text submission: {}", submissionId);
+        var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
+        var participation = textSubmission.getParticipation();
+
+        checkSubmissionAccessForStudent(participation);
+        checkPotentialPlagiarismCaseForStudent(textSubmission);
+        anonymizeSubmissionForStudent(textSubmission);
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission));
+    }
+
+    /**
+     * Returns the full text submission for staff in its owning exercise.
+     *
+     * @param submissionId the submission to retrieve
+     * @return the staff submission projection
+     */
+    @GetMapping("text-submissions/{submissionId}/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<TextSubmissionResponseDTO> getTextSubmissionForStaff(@PathVariable long submissionId) {
+        var submission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new EntityNotFoundException("Student participation", "of text submission " + submissionId);
+        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), null);
+        // Tutors must not see the student behind a submission (double-blind); instructors and the owner may.
+        User user = userRepository.getUser();
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user) || authCheckService.isOwnerOfParticipation(participation, user);
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(submission, includeStudent));
+    }
+
+    /**
+     * Lists submissions with participant identities for instructors, optionally restricted to their own assessments.
+     *
+     * @param exerciseId      the exercise to list submissions for
+     * @param submittedOnly   whether to return only submitted submissions (ignored for the self selection)
+     * @param assessedByMe    whether to return only the current instructor's assessments
+     * @param correctionRound the correction round for the self selection
+     * @return the identified submissions
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/text-submissions")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<TextSubmissionResponseDTO>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByMe, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, submittedOnly, assessedByMe, correctionRound, true));
+    }
+
+    /**
+     * Lists only the authenticated user's assessments with anonymous participants, including for instructor callers.
+     *
+     * @param exerciseId      the exercise to list assessments for
+     * @param correctionRound the correction round to select
+     * @return the anonymous assessed submissions
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/text-submissions/assessed-by-me")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<TextSubmissionResponseDTO>> getMyAssessedTextSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, false, true, correctionRound, false));
+    }
+
+    private List<TextSubmissionResponseDTO> getSubmissionList(Long exerciseId, boolean submittedOnly, boolean assessedByMe, int correctionRound, boolean includeParticipant) {
+        return getSubmissionsForList(exerciseId, submittedOnly, assessedByMe, correctionRound).stream()
+                .map(submission -> TextSubmissionResponseDTO.of((TextSubmission) submission, includeParticipant)).toList();
+    }
+
+    /**
+     * GET /text-submission-without-assessment : get one textSubmission without assessment.
+     *
+     * @param exerciseId                      exerciseID for which a submission should be returned
+     * @param correctionRound                 correctionRound for which submissions without a result should be returned
+     *                                            TODO: Replace ?head=true with HTTP HEAD request
+     * @param skipAssessmentOrderOptimization optional value to define if the assessment queue should be skipped. Use if only checking for needed assessments.
+     * @param lockSubmission                  optional value to define if the submission should be locked and has the value of false if not set manually
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/text-submission-without-assessment")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<TextSubmissionWithoutAssessmentDTO> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        log.debug("REST request to get a text submission without assessment");
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!(exercise instanceof TextExercise)) {
+            throw new BadRequestAlertException("The exerciseId does not belong to a text exercise", ENTITY_NAME, "wrongExerciseType");
+        }
+
+        // Check if tutors can start assessing the students submission
+        textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        // Before the selection: it asks Athena which submission to hand out next, and again for the response, where the
+        // assessment editor gates the feedback suggestions on the same setting.
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
+                skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
+
+        // No more unassessed submissions
+        if (optionalTextSubmission.isEmpty()) {
+            return ResponseEntity.ok((TextSubmissionWithoutAssessmentDTO) null);
+        }
+
+        TextSubmission textSubmission = optionalTextSubmission.get();
+
+        if (lockSubmission) {
+            textSubmission = textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission.getId(), correctionRound);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
+        }
+
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
+
+        // Make sure the exercise is connected to the participation in the json response
+        final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        studentParticipation.setExercise(exercise);
+        textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+        // Remove sensitive information of submission depending on user
+        User user = userRepository.getUserWithAuthorities();
+
+        // The client resolves the participation via submission.participation; it carries the exercise and the locked
+        // submission with its results. Tutors must not see the student (double-blind); instructors may, matching the
+        // previous hideDetails behavior which only stripped the participant for non-instructors.
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        studentParticipation.setSubmissions(Set.of(textSubmission));
+        TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, includeStudent).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
+        return ResponseEntity.ok().body(TextSubmissionWithoutAssessmentDTO.of(textSubmission, participationDTO));
+    }
+
+    /**
+     * Checks if a student has access to a submission.
+     * This is the case if the student is the owner of the submission and the due date is over.
+     * Throws an AccessForbiddenException if the submission does not belong to the user or if the due date is not over.
+     *
+     * @param participation the participation to check
+     */
+    private void checkSubmissionAccessForStudent(Participation participation) {
+        if (!(participation instanceof StudentParticipation studentParticipation)) {
+            throw new AccessForbiddenException("The user is not the owner of the submission.");
+        }
+        User student = userRepository.getUser();
+        if (!studentParticipation.isOwnedBy(student)) {
+            throw new AccessForbiddenException("The user is not the owner of the submission.");
+        }
+
+        var afterDueDate = exerciseDateService.isAfterDueDate(participation);
+        if (!afterDueDate) {
+            throw new AccessForbiddenException("The submission period for this exercise is over.");
+        }
+    }
+
+    /**
+     * Checks if the student has been notified about a plagiarism case.
+     * Throws an AccessForbiddenException if the student has not been notified.
+     *
+     * @param textSubmission the text submission to check
+     */
+    private void checkPotentialPlagiarismCaseForStudent(TextSubmission textSubmission) {
+        plagiarismAccessApi.ifPresent(api -> {
+            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission.getParticipation().getExercise().getId(), textSubmission, userRepository.getUser().getLogin());
+            if (!wasNotified) {
+                throw new AccessForbiddenException("The user has not yet been notified about a plagiarism case.");
+            }
+        });
+    }
+
+    /**
+     * Anonymizes the submission for the student by removing sensitive-considered information.
+     *
+     * @param submission the submission to anonymize
+     */
+    private void anonymizeSubmissionForStudent(Submission submission) {
+        submission.setParticipation(null);
+        submission.setResults(null);
+        submission.setSubmissionDate(null);
+    }
+}

@@ -1,0 +1,459 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+
+import { OnboardingGeneralSettingsComponent } from './onboarding-general-settings.component';
+import { Course, Language } from 'app/course/shared/entities/course.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+describe('OnboardingGeneralSettingsComponent', () => {
+    let comp: OnboardingGeneralSettingsComponent;
+    let fixture: ComponentFixture<OnboardingGeneralSettingsComponent>;
+    let course: Course;
+    let athenaCourseConfigService: AthenaCourseConfigService;
+    // Read when the component is constructed, so tests that need a module active set it before calling createComponent()
+    let activeModuleFeatures: string[];
+
+    function createComponent() {
+        fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+        fixture.componentRef.setInput('course', course);
+        comp = fixture.componentInstance;
+        athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
+        fixture.detectChanges();
+    }
+
+    beforeEach(async () => {
+        activeModuleFeatures = [];
+        course = new Course();
+        course.id = 1;
+        course.title = 'Test Course';
+        course.description = 'Test description';
+        course.color = '#3fc0f0';
+
+        await TestBed.configureTestingModule({
+            imports: [OnboardingGeneralSettingsComponent, FormsModule],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: ProfileService,
+                    useValue: Object.assign(new MockProfileService(), { isModuleFeatureActive: (feature: string) => activeModuleFeatures.includes(feature) }),
+                },
+                {
+                    provide: AthenaCourseConfigService,
+                    useValue: {
+                        getCourseConfig: () => of({ gradingFeedbackEnabled: false, formativeFeedbackEnabled: false }),
+                        updateCourseConfig: () => of(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: false } })),
+                    },
+                },
+                {
+                    provide: IrisSettingsService,
+                    useValue: {
+                        getCourseSettingsWithRateLimit: () => of({ settings: { enabled: true } }),
+                        updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
+                    },
+                },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideComponent(OnboardingGeneralSettingsComponent, {
+                remove: {
+                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent, AboutIrisModalComponent],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(ColorSelectorComponent),
+                        MockComponent(TumAetUiDatePickerComponent),
+                        MockComponent(AboutIrisModalComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        createComponent();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize with the provided course', () => {
+        expect(comp).toBeTruthy();
+        expect(comp.course()).toEqual(course);
+    });
+
+    it('should open the about Iris modal', () => {
+        expect(comp['aboutIrisModalVisible']()).toBe(false);
+        comp.openAboutIrisModal();
+        expect(comp['aboutIrisModalVisible']()).toBe(true);
+    });
+
+    describe('Iris settings', () => {
+        it('loads the course settings when Iris is active', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            const load = vi.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettingsWithRateLimit');
+            createComponent();
+
+            expect(load).toHaveBeenCalledWith(course.id);
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('keeps the optimistic choice separate from the original settings and adopts the saved response', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const response = new Subject<HttpResponse<IrisCourseSettingsWithRateLimitDTO>>();
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(response);
+
+            comp.setIrisEnabled(false);
+            expect(comp.isIrisEnabled()).toBe(false);
+            expect(original?.enabled).toBe(true);
+            expect(update).toHaveBeenCalledWith(course.id, expect.objectContaining({ enabled: false }));
+
+            response.next(new HttpResponse({ body: { courseId: 1, settings: { enabled: true, variant: 'default' }, effectiveRateLimit: {}, applicationRateLimitDefaults: {} } }));
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('restores the original setting and reports a failed save', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const error = new HttpErrorResponse({ status: 403 });
+            vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(throwError(() => error));
+            const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.setIrisEnabled(false);
+
+            expect(comp.irisSettings()).toBe(original);
+            expect(comp.isIrisEnabled()).toBe(true);
+            expect(alert).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('does not save before settings have loaded', () => {
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings');
+            comp.setIrisEnabled(true);
+            expect(update).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should have language options for English and German', () => {
+        expect(comp.languageOptions).toHaveLength(2);
+        expect(comp.languageOptions[0].key).toBe(Language.ENGLISH);
+        expect(comp.languageOptions[1].key).toBe(Language.GERMAN);
+    });
+
+    it('should have semesters available', () => {
+        expect(comp.semesters()).toBeDefined();
+        expect(comp.semesters().length).toBeGreaterThan(0);
+    });
+
+    it('should expose ARTEMIS_DEFAULT_COLOR', () => {
+        expect(comp.ARTEMIS_DEFAULT_COLOR).toBe(ARTEMIS_DEFAULT_COLOR);
+    });
+
+    describe('semesterMissing', () => {
+        it('should be true when the course has no semester', () => {
+            expect(comp.course().semester).toBeUndefined();
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be true when the semester is blank', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: '   ' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be false once a semester is set', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: 'SS24' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(false);
+        });
+    });
+
+    describe('required dates', () => {
+        const pickerById = (id: string) =>
+            fixture.debugElement
+                .queryAll(By.directive(TumAetUiDatePickerComponent))
+                .find((picker) => picker.nativeElement.querySelector(`#${id}`) || picker.componentInstance.inputId() === id)!;
+        const expectPickerLabel = (inputId: string, key: string) => {
+            const picker = pickerById(inputId).componentInstance;
+            expect(picker.labelName()).toBe(key);
+            expect(picker.hideLabelName()).toBeFalsy();
+        };
+        const missingMessage = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}-missing"]`);
+
+        it('should mark both dates invalid and explain it while they are missing', () => {
+            expect(comp.startDateMissing()).toBe(true);
+            expect(comp.endDateMissing()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaRequired()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaDescribedBy()).toBe('onboarding-startDate-missing');
+            expect(missingMessage('onboarding-startDate')).not.toBeNull();
+            expect(pickerById('onboarding-endDate').componentInstance.invalid()).toBe(true);
+            expect(missingMessage('onboarding-endDate')).not.toBeNull();
+        });
+
+        it('should label each picker with its own visible label', () => {
+            expectPickerLabel('onboarding-startDate', 'artemisApp.course.startDate');
+            expectPickerLabel('onboarding-endDate', 'artemisApp.course.endDate');
+        });
+
+        it('should clear the invalid state and the message once a date is set', () => {
+            course.startDate = dayjs('2025-10-01');
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            expect(comp.startDateMissing()).toBe(false);
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(false);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaDescribedBy()).toBeUndefined();
+            expect(missingMessage('onboarding-startDate')).toBeNull();
+            expect(comp.endDateMissing()).toBe(true);
+            expect(missingMessage('onboarding-endDate')).not.toBeNull();
+        });
+
+        it('should leave the message to the picker while the typed text is not a date', () => {
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(false);
+            fixture.detectChanges();
+
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(true);
+            expect(missingMessage('onboarding-startDate')).toBeNull();
+
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(true);
+            fixture.detectChanges();
+
+            expect(missingMessage('onboarding-startDate')).not.toBeNull();
+        });
+
+        it('should report to the wizard whether the text of both pickers is a date', () => {
+            const emitSpy = vi.spyOn(comp.dateTextValidityChange, 'emit');
+
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(false);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            // The end date is fine, but the start date still is not.
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(false);
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(true);
+        });
+
+        it('should write a picked date back to the course', () => {
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            const picked = dayjs('2025-10-01T08:00:00');
+
+            pickerById('onboarding-endDate').componentInstance.valueChange.emit(picked);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy.mock.calls[0][0].endDate).toBe(picked);
+        });
+    });
+
+    describe('updateField', () => {
+        it('should emit courseUpdated when a field changes', () => {
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+
+            comp.updateField('description', 'new value');
+
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedCourse = emitSpy.mock.calls[0][0];
+            expect(emittedCourse.description).toBe('new value');
+        });
+
+        it('fills empty dates when the semester is selected', () => {
+            fixture.componentRef.setInput('course', new Course());
+            fixture.detectChanges();
+            let emitted: Course | undefined;
+            comp.courseUpdated.subscribe((updatedCourse) => (emitted = updatedCourse));
+
+            comp.updateField('semester', 'WS25/26');
+
+            expect(emitted!.startDate!.format('YYYY-MM-DD')).toBe('2025-10-01');
+            expect(emitted!.endDate!.format('YYYY-MM-DD')).toBe('2026-03-31');
+        });
+    });
+
+    describe('openColorSelector', () => {
+        it('should delegate to ColorSelectorComponent', () => {
+            const colorSelectorRef = comp.colorSelector();
+            const openSpy = vi.spyOn(colorSelectorRef!, 'openColorSelector');
+
+            const event = new MouseEvent('click');
+            comp.openColorSelector(event);
+
+            expect(openSpy).toHaveBeenCalledWith(event);
+        });
+    });
+
+    describe('onSelectedColor', () => {
+        it('should update the course color and emit change', () => {
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+
+            comp.onSelectedColor('#ff0000');
+
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedCourse = emitSpy.mock.calls[0][0];
+            expect(emittedCourse.color).toBe('#ff0000');
+        });
+    });
+    describe('athena configuration', () => {
+        function createWithAthenaActive() {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            createComponent();
+        }
+
+        it('should not load the athena configuration when the module is inactive', () => {
+            const getSpy = vi.spyOn(TestBed.inject(AthenaCourseConfigService), 'getCourseConfig');
+            createComponent();
+
+            expect(comp.athenaEnabled).toBe(false);
+            expect(getSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load the athena configuration when the module is active', () => {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+            fixture.componentRef.setInput('course', course);
+            comp = fixture.componentInstance;
+            athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+            fixture.detectChanges();
+
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(comp.isAthenaGradingEnabled()).toBe(true);
+            expect(comp.isAthenaFormativeEnabled()).toBe(false);
+        });
+
+        it('should show an error instead of the athena toggles after a failed load', () => {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+            fixture.componentRef.setInput('course', course);
+            comp = fixture.componentInstance;
+            vi.spyOn(TestBed.inject(AthenaCourseConfigService), 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            fixture.detectChanges();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(comp.isAthenaLoadFailed()).toBe(true);
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"] [jhiTranslate]')?.getAttribute('jhiTranslate')).toBe(
+                'artemisApp.course.athenaConfig.loadFailed',
+            );
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeNull();
+        });
+
+        it('should show the athena toggles once the configuration has loaded', () => {
+            createWithAthenaActive();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeTruthy();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeTruthy();
+        });
+
+        it('should save a switched feature right away without touching the other one', () => {
+            createWithAthenaActive();
+            const expected = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true };
+            const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: expected })));
+
+            comp.setAthenaFeatureEnabled('formativeFeedbackEnabled', true);
+
+            // Only the switched feature is sent, so the grading flag cannot be written back from a stale local value.
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(1, { formativeFeedbackEnabled: true });
+            expect(comp.isAthenaFormativeEnabled()).toBe(true);
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
+        });
+
+        it('should not emit a course update when a feature is switched', () => {
+            createWithAthenaActive();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(
+                of(new HttpResponse({ body: { gradingFeedbackEnabled: true, formativeFeedbackEnabled: false } })),
+            );
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
+            createWithAthenaActive();
+            const first = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            const second = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValueOnce(first.asObservable()).mockReturnValueOnce(second.asObservable());
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', false);
+            first.error(new HttpErrorResponse({ status: 400 }));
+            second.error(new HttpErrorResponse({ status: 400 }));
+
+            // Rolling the second switch back to the state it replaced would restore the first switch, which failed as
+            // well, and leave the feature shown as enabled although nothing was ever stored.
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
+        });
+
+        it('should load the configuration of the new course when the course changes', () => {
+            createWithAthenaActive();
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+            const otherCourse = new Course();
+            otherCourse.id = 2;
+
+            fixture.componentRef.setInput('course', otherCourse);
+            fixture.detectChanges();
+
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(2);
+            expect(comp.isAthenaGradingEnabled()).toBe(true);
+        });
+
+        it('should not reload when the wizard replaces the course with an updated copy', () => {
+            // The wizard hands this step a new course object on every change, always with the same id.
+            createWithAthenaActive();
+            const getSpy = vi.spyOn(athenaCourseConfigService, 'getCourseConfig');
+            const updated = Course.from(course);
+            updated.title = 'Renamed';
+
+            fixture.componentRef.setInput('course', updated);
+            fixture.detectChanges();
+
+            expect(getSpy).not.toHaveBeenCalled();
+        });
+
+        it('should revert the feature and alert when saving fails', () => {
+            createWithAthenaActive();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.setAthenaFeatureEnabled('gradingFeedbackEnabled', true);
+
+            expect(comp.isAthenaGradingEnabled()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
+        });
+    });
+});

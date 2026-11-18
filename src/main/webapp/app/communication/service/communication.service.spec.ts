@@ -1,0 +1,2034 @@
+import dayjs from 'dayjs/esm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { PostService } from 'app/communication/service/post.service';
+import { AnswerPostService } from 'app/communication/service/answer-post.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { ReactionService } from 'app/communication/service/reaction.service';
+import { MockReactionService } from 'test/helpers/mocks/service/mock-reaction.service';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
+import { CommunicationCrudAction, DisplayPriority, PageType, PostContextFilter, UserRole } from 'app/communication/communication.util';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockProvider } from 'ng-mocks';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
+import { Subject, of, throwError } from 'rxjs';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import {
+    communicationCourse,
+    communicationExam,
+    communicationExercise,
+    communicationLecture,
+    communicationLectureChannelDTO,
+    communicationPostExerciseUser1,
+    communicationPostInChannel,
+    communicationReactionUser2,
+    communicationResolvingAnswerPostUser1,
+    communicationUser1,
+    communicationUser2,
+    conversationBetweenUser1User2,
+    directMessageUser2,
+    plagiarismPost,
+} from 'test/helpers/sample/communication-sample-data';
+import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { SavedPostService } from 'app/communication/service/saved-post.service';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
+import { MockForwardedMessageService } from 'test/helpers/mocks/service/mock-forwarded-message.service';
+import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
+
+describe('CommunicationService', () => {
+    let communicationService: CommunicationService;
+    let communicationServiceUserStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;
+    let communicationServiceCreateWebsocketSubscriptionSpy: ReturnType<typeof vi.spyOn>;
+    let websocketServiceSubscribeSpy: ReturnType<typeof vi.spyOn>;
+    let websocketService: WebsocketService;
+    let reactionService: ReactionService;
+    let postService: PostService;
+    let forwardedMessageService: ForwardedMessageService;
+    let answerPostService: AnswerPostService;
+    let conversationService: ConversationService;
+    let post: Post;
+    let answerPost: AnswerPost;
+    let reaction: Reaction;
+    let course: Course;
+    let savedPostService: SavedPostService;
+    let setIsSavedAndStatusOfPostSpy: ReturnType<typeof vi.spyOn>;
+    let originalPosts: Posting[];
+    let targetConversation: Conversation;
+    let newContent: string;
+    let forwardedMessageCreateSpy: ReturnType<typeof vi.spyOn>;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(SessionStorageService),
+                MockProvider(ConversationService),
+                { provide: CommunicationService, useClass: CommunicationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
+                { provide: ReactionService, useClass: MockReactionService },
+                { provide: PostService, useClass: MockPostService },
+                { provide: ForwardedMessageService, useClass: MockForwardedMessageService },
+                { provide: AnswerPostService, useClass: MockAnswerPostService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+            ],
+        });
+        communicationService = TestBed.inject(CommunicationService);
+        websocketService = TestBed.inject(WebsocketService);
+        reactionService = TestBed.inject(ReactionService);
+        postService = TestBed.inject(PostService);
+        forwardedMessageService = TestBed.inject(ForwardedMessageService);
+        answerPostService = TestBed.inject(AnswerPostService);
+        conversationService = TestBed.inject(ConversationService);
+        savedPostService = TestBed.inject(SavedPostService);
+        communicationServiceGetFilteredPostsSpy = vi.spyOn(communicationService, 'getFilteredPosts');
+        communicationServiceCreateWebsocketSubscriptionSpy = vi.spyOn(communicationService, 'createWebsocketSubscription');
+        communicationServiceUserStub = vi.spyOn(communicationService, 'getUser');
+        // @ts-ignore method is private
+        setIsSavedAndStatusOfPostSpy = vi.spyOn(communicationService, 'setIsSavedAndStatusOfPost');
+        httpMock = TestBed.inject(HttpTestingController);
+
+        post = communicationPostExerciseUser1;
+        post.displayPriority = DisplayPriority.PINNED;
+        answerPost = communicationResolvingAnswerPostUser1;
+        reaction = communicationReactionUser2;
+        course = communicationCourse;
+        originalPosts = [{ id: 111 }, { id: 222 }] as Posting[];
+        targetConversation = { id: 999, type: ConversationType.CHANNEL } as Conversation;
+        newContent = 'Forwarded content';
+
+        forwardedMessageCreateSpy = vi.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
+            of(
+                new HttpResponse({
+                    body: { ...fm, id: Math.floor(Math.random() * 10000) } as ForwardedMessage,
+                }),
+            ),
+        );
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    describe('unread websocket ownership', () => {
+        it.each([ConversationType.CHANNEL, ConversationType.GROUP_CHAT, ConversationType.ONE_TO_ONE])(
+            'leaves %s personal-topic counting to the course conversation service',
+            async (type) => {
+                await Promise.resolve();
+                const socket = TestBed.inject(WebsocketService);
+                if (!(socket instanceof MockWebsocketService)) {
+                    throw new Error('Expected the shared websocket test service');
+                }
+                const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+                communicationService.setCourse(course);
+                socket.emit<PostBroadcastDTO>('/topic/user/99/notifications/conversations', {
+                    action: CommunicationCrudAction.CREATE,
+                    post: { id: 900, author: { id: 1, internal: true }, creationDate: dayjs(), conversation: { id: 77, type } },
+                });
+                expect(handleUnread).not.toHaveBeenCalled();
+            },
+        );
+
+        it('counts one course-wide post once even when the visible-message stream uses the same topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77);
+        });
+
+        it('routes an active course-wide post to the shared owner once, including when manually unread', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) throw new Error('Expected the shared websocket test service');
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            const directPatch = vi.spyOn(conversationService, 'markAsRead');
+            communicationService['currentConversation'] = { id: 77 };
+            communicationService['currentPostContextFilter'] = { conversationIds: [77] };
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 901, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77 } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77);
+            vi.runOnlyPendingTimers();
+            expect(directPatch).not.toHaveBeenCalled();
+        });
+
+        it('does not count own posts or edits received on the course-wide topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 99, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.UPDATE,
+                post: { id: 900, author: { id: 1, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).not.toHaveBeenCalled();
+        });
+    });
+
+    it('finishes only the requested page and calls its anchor hook before publishing the response', () => {
+        const response = new Subject<HttpResponse<Post[]>>();
+        vi.spyOn(postService, 'getPosts').mockReturnValue(response);
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const events: string[] = [];
+        const subscription = communicationService.posts.subscribe(() => events.push('posts'));
+        const callbacks = { beforeApply: vi.fn(() => events.push('anchor')), complete: vi.fn((applied: boolean) => events.push('complete:' + applied)) };
+        communicationService.getFilteredPosts({ courseId: course.id, page: 1 }, true, undefined, callbacks);
+        communicationService['posts$'].next([post]); // A live update is independent of the outstanding request.
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).not.toHaveBeenCalled();
+        events.length = 0;
+        response.next(new HttpResponse({ body: [post] }));
+        expect(events).toEqual(['anchor', 'posts']);
+        response.complete();
+        expect(events).toEqual(['anchor', 'posts', 'complete:true']);
+        subscription.unsubscribe();
+    });
+
+    describe('read bookkeeping of the messages request', () => {
+        it('reports the loaded messages of a single conversation as a read, also when a newer request owns the cache', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const readRequest = { unreadRevision: 2 };
+            const requested = vi.spyOn(courseConversations, 'messagesRequested').mockReturnValue(readRequest);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            const olderResponse = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts').mockReturnValueOnce(olderResponse).mockReturnValue(new Subject<HttpResponse<Post[]>>());
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [8], page: 0 }, true);
+            expect(requested).toHaveBeenCalledWith(7);
+            expect(requested).toHaveBeenCalledWith(8);
+            expect(loaded).not.toHaveBeenCalled();
+
+            olderResponse.next(new HttpResponse({ body: [post] }));
+
+            expect(loaded).toHaveBeenCalledExactlyOnceWith(7, readRequest);
+        });
+
+        it.each([
+            ['a search', { courseId: 1, conversationIds: [7], searchText: 'term', page: 0 }],
+            ['several conversations', { courseId: 1, conversationIds: [7, 8], page: 0 }],
+            ['no conversation', { courseId: 1, page: 0 }],
+        ])('does not report the response of %s as a read', (_name, filter) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const requested = vi.spyOn(courseConversations, 'messagesRequested');
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [post] })));
+
+            communicationService.getFilteredPosts(filter as PostContextFilter, true);
+
+            expect(requested).not.toHaveBeenCalled();
+            expect(loaded).not.toHaveBeenCalled();
+        });
+
+        it('does not report a failed messages request as a read', () => {
+            const courseConversations = TestBed.inject(CourseConversationsService);
+            const loaded = vi.spyOn(courseConversations, 'messagesLoaded');
+            vi.spyOn(postService, 'getPosts').mockReturnValue(throwError(() => new Error('failed')));
+
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [7], page: 0 }, true);
+
+            expect(loaded).not.toHaveBeenCalled();
+        });
+    });
+
+    it('retries an unsuccessful request before allowing cache hits', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const response = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
+        const callbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const filter = { courseId: course.id, page: 0 };
+        communicationService.getFilteredPosts(filter, true, undefined, callbacks);
+        response.complete();
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(callbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
+    it('does not invalidate a newer successful cache when an older request fails', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const older = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
+        const filter = { courseId: course.id, page: 1 };
+        communicationService.getFilteredPosts(filter, true);
+        communicationService.getFilteredPosts(filter, true);
+        older.complete();
+
+        communicationService.getFilteredPosts(filter, false);
+
+        expect(request).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+        [PageType.OVERVIEW, false],
+        [PageType.PAGE_SECTION, false],
+        [PageType.OVERVIEW, true],
+        [PageType.PAGE_SECTION, true],
+    ] as const)('discards superseded responses on %s with forceUpdate=%s', (pageType, forceUpdate) => {
+        const subscribe = vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const older = new Subject<HttpResponse<Post[]>>();
+        const currentPosts = [{ id: 200, conversation: { id: 2 } }] as Post[];
+        const currentFilter = { courseId: course.id, conversationIds: [2], page: 0 };
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: currentPosts, headers: new HttpHeaders({ 'X-Total-Count': '20' }) })));
+        const olderCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const currentCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const publishedPosts = vi.fn();
+        const publishedTotals = vi.fn();
+        const postsSubscription = communicationService.posts.subscribe(publishedPosts);
+        const totalsSubscription = communicationService.totalNumberOfPosts.subscribe(publishedTotals);
+        communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [1], page: 1 }, forceUpdate, undefined, olderCallbacks);
+        communicationService.getFilteredPosts(currentFilter, true, undefined, currentCallbacks);
+        publishedPosts.mockClear();
+        publishedTotals.mockClear();
+        subscribe.mockClear();
+
+        older.next(new HttpResponse({ body: [{ id: 100, conversation: { id: 1 } }] as Post[], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+        older.complete();
+
+        expect(olderCallbacks.beforeApply).not.toHaveBeenCalled();
+        expect(olderCallbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        expect(currentCallbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(currentCallbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        expect(publishedPosts).not.toHaveBeenCalled();
+        expect(publishedTotals).not.toHaveBeenCalled();
+        expect(subscribe).not.toHaveBeenCalled();
+        // A subsequent cache hit must still publish only the current conversation, without a retry.
+        communicationService.getFilteredPosts(currentFilter, false);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(publishedPosts).toHaveBeenCalledExactlyOnceWith(currentPosts);
+        expect(publishedTotals).toHaveBeenCalledExactlyOnceWith(20);
+        postsSubscription.unsubscribe();
+        totalsSubscription.unsubscribe();
+    });
+
+    it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('keeps live updates independent of failed-page retries on %s', (pageType) => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const conversation = { id: 99 } as ConversationDTO;
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => of(new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '151' }) }));
+        const failed = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response(page(1, 50)))
+            .mockReturnValueOnce(failed)
+            .mockReturnValueOnce(response(page(50, 99)))
+            .mockReturnValueOnce(response(page(100, 149)))
+            .mockReturnValueOnce(response(page(150, 150)));
+        const firstFilter = { courseId: course.id, conversationIds: [99], page: 0, pageSize: 50 };
+        const failedFilter = { ...firstFilter, page: 1 };
+        let visible: Post[] = [];
+        const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+        communicationService.getFilteredPosts(firstFilter, true, conversation);
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        failed.complete();
+
+        communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: { id: 151, conversation, creationDate: dayjs() } as Post });
+
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(visible).toHaveLength(51);
+        expect(failedFilter).toEqual({ ...firstFilter, page: 1 });
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        expect(request).toHaveBeenCalledTimes(3);
+        expect(visible).toHaveLength(100);
+        expect(new Set(visible.map((post) => post.id)).size).toBe(100);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 2 }, false, conversation);
+        expect(visible).toHaveLength(150);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 3 }, false, conversation);
+        expect(visible).toHaveLength(151);
+        expect(new Set(visible.map((post) => post.id))).toEqual(new Set(Array.from({ length: 151 }, (_, index) => index + 1)));
+        subscription.unsubscribe();
+    });
+
+    describe('live messages during a pending page request', () => {
+        const conversation = { id: 701, type: ConversationType.CHANNEL } as ChannelDTO;
+        const original = { id: 702, content: 'original', conversation, creationDate: dayjs() } as Post;
+        const updated = { ...original, content: 'edited live' };
+
+        it.each([
+            { name: 'creation', snapshot: [], events: [{ action: CommunicationCrudAction.CREATE, post: original }], expected: [[702, 'original']], total: 1 },
+            { name: 'update', snapshot: [original], events: [{ action: CommunicationCrudAction.UPDATE, post: updated }], expected: [[702, 'edited live']], total: 1 },
+            { name: 'deletion', snapshot: [original], events: [{ action: CommunicationCrudAction.DELETE, post: original }], expected: [], total: 0 },
+            {
+                name: 'creation followed by update',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.UPDATE, post: updated },
+                ],
+                expected: [[702, 'edited live']],
+                total: 1,
+            },
+            {
+                name: 'creation already present in the snapshot',
+                snapshot: [original],
+                events: [{ action: CommunicationCrudAction.CREATE, post: original }],
+                expected: [[702, 'original']],
+                total: 1,
+            },
+            {
+                name: 'duplicate creation',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                ],
+                expected: [[702, 'original']],
+                total: 1,
+            },
+            {
+                name: 'creation followed by deletion',
+                snapshot: [],
+                events: [
+                    { action: CommunicationCrudAction.CREATE, post: original },
+                    { action: CommunicationCrudAction.DELETE, post: original },
+                ],
+                expected: [],
+                total: 0,
+            },
+        ])('retains $name when an older HTTP snapshot arrives', ({ snapshot, events, expected, total }) => {
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi.spyOn(postService, 'getPosts').mockReturnValue(pending);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            let visible: Post[] = [];
+            const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+            const publishedTotals = vi.fn();
+            const totalsSubscription = communicationService.totalNumberOfPosts.subscribe(publishedTotals);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            for (const event of events) communicationService['handleNewOrUpdatedMessage'](event);
+
+            pending.next(new HttpResponse({ body: [...snapshot], headers: new HttpHeaders({ 'X-Total-Count': String(snapshot.length) }) }));
+            pending.complete();
+
+            expect(visible.map((post) => [post.id, post.content])).toEqual(expected);
+            expect(publishedTotals).toHaveBeenLastCalledWith(total);
+            expect(requests).toHaveBeenCalledOnce();
+            subscription.unsubscribe();
+            totalsSubscription.unsubscribe();
+        });
+
+        it('ignores a send response from a conversation that was left before a new-context refresh', () => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const nextConversation = { id: 801, type: ConversationType.CHANNEL };
+            const nextPost: Post = { ...original, id: 803, conversation: nextConversation };
+            const sentPost: Post = { ...original, id: 703 };
+            const created = new Subject<HttpResponse<Post>>();
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'create').mockReturnValue(created);
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: [nextPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) })))
+                .mockReturnValueOnce(pending);
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!] }, true, conversation);
+            const creation = communicationService.createPost({ ...sentPost, id: undefined }).subscribe();
+            const nextFilter = { courseId: course.id, conversationIds: [nextConversation.id] };
+            communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+            communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            created.next(new HttpResponse({ body: sentPost }));
+            created.complete();
+            const postsAfterSend = communicationService['cachedPosts'].map((post) => post.id);
+            pending.next(new HttpResponse({ body: [nextPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) }));
+            pending.complete();
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: sentPost });
+
+            expect(totals).toHaveBeenLastCalledWith(50);
+            expect(postsAfterSend).toEqual([nextPost.id]);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([nextPost.id]);
+            creation.unsubscribe();
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'search', filter: { searchText: 'different' }, forwarded: false },
+            { name: 'search', filter: { searchText: 'different' }, forwarded: true },
+            { name: 'author', filter: { authorIds: [communicationUser1.id! + 1000] }, forwarded: false },
+            { name: 'author', filter: { authorIds: [communicationUser1.id! + 1000] }, forwarded: true },
+        ])('ignores a send response after changing the $name filter with forwarded=$forwarded', ({ filter, forwarded }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const sentPost: Post = { ...original, id: 703, author: communicationUser1 };
+            const matchingPost: Post = { ...original, id: 803, content: 'different', author: { ...communicationUser1, id: communicationUser1.id! + 1000 } };
+            const created = new Subject<HttpResponse<Post>>();
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'create').mockReturnValue(created);
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(of(new HttpResponse({ body: [matchingPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) })))
+                .mockReturnValueOnce(pending);
+            const initialFilter = { courseId: course.id, conversationIds: [conversation.id!] };
+            communicationService.getFilteredPosts(initialFilter, true, conversation);
+            const creation = forwarded
+                ? communicationService.createForwardedMessages([{ id: 900 }], { id: conversation.id, type: conversation.type }, false, 'original').subscribe()
+                : communicationService.createPost({ ...sentPost, id: undefined }).subscribe();
+            const filtered = { ...initialFilter, ...filter };
+            communicationService.getFilteredPosts(filtered, true, conversation);
+            communicationService.getFilteredPosts(filtered, true, conversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            created.next(new HttpResponse({ body: sentPost }));
+            created.complete();
+            const postsAfterSend = communicationService['cachedPosts'].map((post) => post.id);
+            pending.next(new HttpResponse({ body: [matchingPost], headers: new HttpHeaders({ 'X-Total-Count': '50' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(50);
+            expect(postsAfterSend).toEqual([matchingPost.id]);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([matchingPost.id]);
+            creation.unsubscribe();
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'unset', conversationIds: undefined },
+            { name: 'empty', conversationIds: [] },
+        ])('retains HTTP creation when the legacy conversation filter is $name', ({ conversationIds }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+            vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: original })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds }, true, conversation);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+
+            communicationService.createPost(original).subscribe();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([original.id]);
+            expect(totals).toHaveBeenLastCalledWith(1);
+            subscription.unsubscribe();
+        });
+
+        it.each(['creation', 'forwarding', 'update', 'deletion'] as const)('retains a successful HTTP %s before its broadcast arrives', (mutation) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const creating = mutation === 'creation' || mutation === 'forwarding';
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: creating ? [] : [{ ...original }], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            const totals = vi.fn();
+            const totalSubscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            if (creating) {
+                vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: original })));
+                if (mutation === 'forwarding') {
+                    communicationService.createForwardedMessages([{ id: 900 }], { id: conversation.id, type: conversation.type }, false, 'forwarded').subscribe();
+                } else {
+                    communicationService.createPost(original).subscribe();
+                }
+            } else if (mutation === 'update') {
+                vi.spyOn(postService, 'update').mockReturnValue(of(new HttpResponse({ body: updated })));
+                communicationService.updatePost(updated).subscribe();
+            } else {
+                vi.spyOn(postService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+                communicationService.deletePost(original);
+            }
+
+            pending.next(new HttpResponse({ body: creating ? [] : [{ ...original }], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => [post.id, post.content])).toEqual(
+                mutation === 'deletion' ? [] : [[original.id, mutation === 'update' ? updated.content : original.content]],
+            );
+            expect(totals).toHaveBeenLastCalledWith(creating ? 101 : mutation === 'deletion' ? 99 : 100);
+            if (mutation === 'forwarding') expect(communicationService['cachedPosts'][0].hasForwardedMessages).toBe(true);
+            totalSubscription.unsubscribe();
+        });
+
+        it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('preserves unloaded totals while appending live changes on %s', (pageType) => {
+            communicationService.setPageType(pageType);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pagePost = { ...original, id: 711 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0, pageSize: 1 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.UPDATE, post: updated });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: oldPost });
+
+            pending.next(new HttpResponse({ body: [pagePost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => [post.id, post.content])).toEqual([
+                [702, 'edited live'],
+                [711, 'original'],
+            ]);
+            expect(totals).toHaveBeenLastCalledWith(100);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { snapshotIncludesCreation: false, serverTotal: 100 },
+            { snapshotIncludesCreation: false, serverTotal: 101 },
+            { snapshotIncludesCreation: true, serverTotal: 101 },
+        ])('counts a live creation once with snapshot inclusion=$snapshotIncludesCreation and total=$serverTotal', ({ snapshotIncludesCreation, serverTotal }) => {
+            communicationService.setPageType(PageType.OVERVIEW);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0, pageSize: 1 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            const snapshot = snapshotIncludesCreation ? [original] : [{ ...original, id: 711 }];
+            pending.next(new HttpResponse({ body: snapshot, headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].filter((post) => post.id === original.id)).toHaveLength(1);
+            expect(totals).toHaveBeenLastCalledWith(101);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { createFirst: false, serverTotal: 100, expected: 99 },
+            { createFirst: false, serverTotal: 99, expected: 99 },
+            { createFirst: true, serverTotal: 100, expected: 100 },
+            { createFirst: true, serverTotal: 101, expected: 100 },
+        ])('reconciles ordered membership changes with createFirst=$createFirst and total=$serverTotal', ({ createFirst, serverTotal, expected }) => {
+            communicationService.setPageType(PageType.OVERVIEW);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+            if (createFirst) communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: createFirst ? original : oldPost });
+            pending.next(new HttpResponse({ body: [{ ...original, id: 711 }], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(expected);
+            expect(communicationService['cachedPosts'].some((post) => post.id === (createFirst ? original.id : oldPost.id))).toBe(false);
+            subscription.unsubscribe();
+        });
+
+        it.each([PageType.OVERVIEW, PageType.PAGE_SECTION].flatMap((pageType) => [false, true].map((otherConversation) => ({ pageType, otherConversation }))))(
+            'reconciles an unloaded deletion on $pageType with otherConversation=$otherConversation',
+            ({ pageType, otherConversation }) => {
+                communicationService.setPageType(pageType);
+                vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+                const oldPost = { ...original, id: 710 };
+                const pagePost = { ...original, id: 711 };
+                const unloadedPost = { ...original, id: 712, conversation: otherConversation ? { id: conversation.id! + 1, type: conversation.type } : original.conversation };
+                const pending = new Subject<HttpResponse<Post[]>>();
+                const requests = vi
+                    .spyOn(postService, 'getPosts')
+                    .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                    .mockReturnValueOnce(pending);
+                const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0, pageSize: 1 };
+                const totals = vi.fn();
+                const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+                communicationService.getFilteredPosts(filter, true, conversation);
+                communicationService.getFilteredPosts({ ...filter, page: 1 }, false, conversation);
+                communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+                communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+                communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+
+                pending.next(new HttpResponse({ body: [pagePost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+                pending.complete();
+
+                expect(totals).toHaveBeenLastCalledWith(otherConversation ? 101 : 100);
+                expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([original.id, oldPost.id, pagePost.id]);
+                expect(requests).toHaveBeenCalledTimes(2);
+                subscription.unsubscribe();
+            },
+        );
+
+        it('does not reuse a total invalidated by an unloaded deletion before the next request', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const secondCreation = { ...original, id: 711 };
+            const unloadedPost = { ...original, id: 712 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!] };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: secondCreation });
+
+            pending.next(new HttpResponse({ body: [oldPost, original, secondCreation], headers: new HttpHeaders({ 'X-Total-Count': '101' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(101);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([oldPost.id, original.id, secondCreation.id]);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each(
+            [
+                { name: 'author', filter: { authorIds: [communicationUser1.id!] }, deleted: { author: { ...communicationUser1, id: communicationUser1.id! + 1 } } },
+                { name: 'search', filter: { searchText: 'original' }, deleted: { content: 'unrelated' } },
+            ].flatMap((entry) => [100, 101].map((serverTotal) => ({ ...entry, serverTotal }))),
+        )('uses the authoritative total for an unloaded deletion with the $name filter and serverTotal=$serverTotal', ({ filter, deleted, serverTotal }) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710, author: communicationUser1 };
+            const createdPost = { ...original, author: communicationUser1 };
+            const unloadedPost = { ...original, id: 712, ...deleted };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const context = { courseId: course.id, conversationIds: [conversation.id!], ...filter };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: createdPost });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+
+            pending.next(new HttpResponse({ body: [oldPost, createdPost], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+            pending.complete();
+
+            // Parent fields do not reveal whether an unloaded reply matched the server's filter.
+            expect(totals).toHaveBeenLastCalledWith(serverTotal);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([oldPost.id, createdPost.id]);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'reply content', filter: { searchText: 'original' }, answers: [{ content: 'original', author: communicationUser1 }] },
+            { name: 'reply author', filter: { authorIds: [communicationUser1.id!] }, answers: [{ content: 'reply', author: communicationUser1 }] },
+            {
+                name: 'same reply content and author',
+                filter: { searchText: 'original', authorIds: [communicationUser1.id!] },
+                answers: [{ content: 'original', author: communicationUser1 }],
+            },
+            { name: 'omitted replies under search', filter: { searchText: 'original' }, answers: undefined },
+            { name: 'omitted replies under author filtering', filter: { authorIds: [communicationUser1.id!] }, answers: undefined },
+        ])('does not infer exclusion from parent fields for $name', ({ filter, answers }) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710, author: communicationUser1 };
+            const createdPost = { ...original, author: communicationUser1 };
+            const unloadedPost: Post = { ...original, id: 712, content: 'unrelated', author: { ...communicationUser1, id: communicationUser1.id! + 1 }, answers };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            const context = { courseId: course.id, conversationIds: [conversation.id!], ...filter };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService.getFilteredPosts(context, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: createdPost });
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: unloadedPost });
+
+            pending.next(new HttpResponse({ body: [oldPost, createdPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(100);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([oldPost.id, createdPost.id]);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([false, true])('reconciles an HTTP deletion with cached=%s before its duplicate broadcast', (cached) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const oldPost = { ...original, id: 710 };
+            const deletedPost = cached ? oldPost : { ...original, id: 712 };
+            const pagePost = { ...original, id: 711 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            const requests = vi
+                .spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [oldPost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })))
+                .mockReturnValueOnce(pending);
+            vi.spyOn(postService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const filter = { courseId: course.id, conversationIds: [conversation.id!] };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            if (!cached) communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService.deletePost(deletedPost);
+            if (cached) communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: deletedPost });
+
+            pending.next(new HttpResponse({ body: [pagePost], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+            pending.complete();
+
+            expect(totals).toHaveBeenLastCalledWith(cached ? 99 : 100);
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual(cached ? [pagePost.id] : [original.id, pagePost.id]);
+            expect(requests).toHaveBeenCalledTimes(2);
+            subscription.unsubscribe();
+        });
+
+        it.each([
+            { name: 'its content', content: 'looking for Anna', authorName: 'Bob Builder', searchText: 'anna', expected: true },
+            { name: 'the name of its author', content: 'unrelated', authorName: 'Anna Schmidt', searchText: 'anna', expected: true },
+            { name: 'the surname of its author', content: 'unrelated', authorName: 'Anna Schmidt', searchText: ' SCHMIDT ', expected: true },
+            { name: 'neither its content nor its author', content: 'unrelated', authorName: 'Bob Builder', searchText: 'anna', expected: false },
+        ])('keeps a new message under a search for $name only if it matches: $expected', ({ content, authorName, searchText, expected }) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], searchText, page: 0 }, true, conversation);
+            const created = { ...original, id: 9100, content, author: { ...communicationUser1, name: authorName } } as Post;
+
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: created });
+
+            expect(communicationService['cachedPosts'].some((post) => post.id === created.id)).toBe(expected);
+        });
+
+        it('never publishes fewer posts than the snapshot exposes when an unrelated creation broadcast is delayed', () => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            const first = { ...original, id: 710 };
+            const second = { ...original, id: 711 };
+            const added = { ...original, id: 712 };
+            const pending = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts')
+                .mockReturnValueOnce(of(new HttpResponse({ body: [first, second], headers: new HttpHeaders({ 'X-Total-Count': '2' }) })))
+                .mockReturnValueOnce(pending);
+            const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService.getFilteredPosts(filter, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: first });
+            pending.next(new HttpResponse({ body: [second, added], headers: new HttpHeaders({ 'X-Total-Count': '2' }) }));
+            pending.complete();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([711, 712]);
+            expect(totals).toHaveBeenLastCalledWith(2);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: added });
+            expect(totals).toHaveBeenLastCalledWith(2);
+            expect(communicationService['cachedPosts']).toHaveLength(2);
+            subscription.unsubscribe();
+        });
+
+        it.each(['unobserved rows', 'initial page', 'reset', 'course', 'conversation', 'author', 'search', 'filter flag'] as const)(
+            'preserves the authoritative partial-page total after %s',
+            (context) => {
+                vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+                const pending = new Subject<HttpResponse<Post[]>>();
+                const getPosts = vi.spyOn(postService, 'getPosts');
+                const filter = { courseId: course.id, conversationIds: [conversation.id!], page: 0 };
+                if (context !== 'initial page') {
+                    getPosts.mockReturnValueOnce(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+                    communicationService.getFilteredPosts(filter, true, conversation);
+                }
+                if (context === 'reset') communicationService.resetCachedPosts();
+                if (context === 'course') communicationService.setCourse({ ...course, id: course.id! + 1 });
+                const nextConversation = context === 'conversation' ? { ...conversation, id: 703 } : conversation;
+                const nextFilter = {
+                    ...filter,
+                    courseId: context === 'course' ? course.id! + 1 : course.id,
+                    conversationIds: [nextConversation.id!],
+                    ...(context === 'author' ? { authorIds: [1] } : {}),
+                    ...(context === 'search' ? { searchText: 'original' } : {}),
+                    ...(context === 'filter flag' ? { filterToUnresolved: true } : {}),
+                };
+                getPosts.mockReturnValueOnce(pending);
+                const totals = vi.fn();
+                const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+                communicationService.getFilteredPosts(nextFilter, true, nextConversation);
+                communicationService['handleNewOrUpdatedMessage']({
+                    action: CommunicationCrudAction.CREATE,
+                    post: { ...original, conversation: { id: nextConversation.id, type: nextConversation.type } },
+                });
+                const serverTotal = context === 'unobserved rows' ? 105 : 100;
+                pending.next(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': String(serverTotal) }) }));
+                pending.complete();
+
+                expect(totals).toHaveBeenLastCalledWith(serverTotal);
+                expect(communicationService['cachedPosts']).toHaveLength(1);
+                subscription.unsubscribe();
+            },
+        );
+
+        it.each([
+            { forwarded: false, webSocketFirst: false },
+            { forwarded: false, webSocketFirst: true },
+            { forwarded: true, webSocketFirst: false },
+            { forwarded: true, webSocketFirst: true },
+        ])('counts one creation with forwarded=$forwarded and webSocketFirst=$webSocketFirst', ({ forwarded, webSocketFirst }) => {
+            communicationService.setCourse(course);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            const createdResponse = new Subject<HttpResponse<Post>>();
+            vi.spyOn(postService, 'create').mockReturnValue(createdResponse);
+            const totals = vi.fn();
+            const totalSubscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            const destination: Conversation = { id: conversation.id, type: conversation.type };
+            const creationSubscription = forwarded
+                ? communicationService.createForwardedMessages([{ id: 900 }], destination, false, 'forwarded').subscribe()
+                : communicationService.createPost(original).subscribe();
+            const receive = () => communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            if (webSocketFirst) receive();
+            createdResponse.next(new HttpResponse({ body: original }));
+            createdResponse.complete();
+            if (!webSocketFirst) receive();
+            receive();
+
+            expect(communicationService['cachedPosts'].map((post) => post.id)).toEqual([original.id]);
+            expect(totals).toHaveBeenLastCalledWith(101);
+            creationSubscription.unsubscribe();
+            totalSubscription.unsubscribe();
+        });
+
+        it.each([false, true])('counts one deletion with webSocketFirst=%s', (webSocketFirst) => {
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [original], headers: new HttpHeaders({ 'X-Total-Count': '100' }) })));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            const deletedResponse = new Subject<HttpResponse<void>>();
+            vi.spyOn(postService, 'delete').mockReturnValue(deletedResponse);
+            const totals = vi.fn();
+            const subscription = communicationService.totalNumberOfPosts.subscribe(totals);
+            communicationService.deletePost(original);
+            const receive = () => communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.DELETE, post: original });
+            if (webSocketFirst) receive();
+            deletedResponse.next(new HttpResponse<void>());
+            deletedResponse.complete();
+            if (!webSocketFirst) receive();
+            receive();
+
+            expect(communicationService['cachedPosts']).toHaveLength(0);
+            expect(totals).toHaveBeenLastCalledWith(99);
+            subscription.unsubscribe();
+        });
+
+        it('does not replay another conversation or a previous request into the active page', () => {
+            const older = new Subject<HttpResponse<Post[]>>();
+            const current = new Subject<HttpResponse<Post[]>>();
+            vi.spyOn(postService, 'getPosts').mockReturnValueOnce(older).mockReturnValueOnce(current);
+            vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+            let visible: Post[] = [];
+            const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [conversation.id!], page: 0 }, true, conversation);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: original });
+            communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [703], page: 0 }, true, { id: 703 } as ChannelDTO);
+            communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.UPDATE, post: updated });
+            older.next(new HttpResponse({ body: [original] }));
+            older.complete();
+            current.next(new HttpResponse({ body: [] }));
+            current.complete();
+
+            expect(visible).toEqual([]);
+            subscription.unsubscribe();
+        });
+    });
+
+    describe('Invoke post service methods', () => {
+        it('should create a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'create');
+
+            const createdPostSub = communicationService.createPost(post).subscribe((createdPost) => {
+                expect(createdPost).toEqual(post);
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([post]));
+
+            expect(postServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should delete a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'delete');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+
+            communicationService.deletePost(post);
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([]));
+
+            expect(postServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should update a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'update');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+            post.content = 'new content for update';
+
+            const updatedPostSub = communicationService.updatePost(post).subscribe((updatedPost) => {
+                expect(updatedPost).toEqual(post);
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([post]));
+
+            expect(postServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            updatedPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should pin a post and add it to pinnedPosts$ when receiving a WebSocket update', () => {
+            let pinnedPostsResult: Post[] = [];
+            const pinnedPostsSubscription = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            const pinnedPostDTO: PostBroadcastDTO = {
+                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER, conversation: { id: 22 } as Conversation } as Post,
+                action: CommunicationCrudAction.UPDATE,
+            };
+
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            communicationService['getFilteredPosts'](pinnedFilter);
+            communicationService['handleNewOrUpdatedMessage'](pinnedPostDTO);
+
+            vi.advanceTimersByTime(0);
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0].id).toBe(42);
+            expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
+
+            pinnedPostsSubscription.unsubscribe();
+        });
+
+        it('should unpin a post and remove it from pinnedPosts$ when receiving a WebSocket update', () => {
+            const pinnedPost = { id: 42, displayPriority: DisplayPriority.PINNED } as Post;
+            communicationService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedPostsSubscription = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            const unpinnedPostDTO: PostBroadcastDTO = {
+                post: { id: 42, displayPriority: DisplayPriority.NONE, conversation: { id: 22 } as Conversation } as Post,
+                action: CommunicationCrudAction.UPDATE,
+            };
+
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            communicationService['getFilteredPosts'](pinnedFilter);
+            communicationService['handleNewOrUpdatedMessage'](unpinnedPostDTO);
+            vi.advanceTimersByTime(0);
+
+            expect(pinnedPostsResult).toHaveLength(0);
+            pinnedPostsSubscription.unsubscribe();
+        });
+
+        it('should fetch pinned posts from server and update pinnedPosts$', () => {
+            const pinnedPostsMock: Post[] = [{ id: 100, displayPriority: DisplayPriority.PINNED } as Post, { id: 101, displayPriority: DisplayPriority.PINNED } as Post];
+            const getPostsSpy = vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: pinnedPostsMock })));
+
+            let pinnedPostsResult: Post[] = [];
+            const subscription = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            communicationService.fetchAllPinnedPosts(post.conversation!.id!).subscribe((fetched) => {
+                expect(fetched).toEqual(pinnedPostsMock);
+            });
+
+            vi.advanceTimersByTime(0);
+
+            expect(pinnedPostsResult).toEqual(pinnedPostsMock);
+            expect(getPostsSpy).toHaveBeenCalledOnce();
+
+            subscription.unsubscribe();
+        });
+
+        it('should ignore posts with invalid postContext when receiving WebSocket update', () => {
+            // Creating invalid postContext by not providing conversationId
+            const post: Post = { id: 100 } as Post;
+            const postDTO: PostBroadcastDTO = { post, action: CommunicationCrudAction.CREATE } as PostBroadcastDTO;
+
+            communicationService['handleNewOrUpdatedMessage'](postDTO);
+            vi.advanceTimersByTime(0);
+
+            const cachedPostsStub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([]));
+
+            vi.advanceTimersByTime(0);
+            cachedPostsStub.unsubscribe();
+        });
+
+        it('should archive a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'updatePostDisplayPriority');
+            const updatedPostSub = communicationService.updatePostDisplayPriority(post.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
+                expect(updatedPost).toEqual({ id: post.id, displayPriority: DisplayPriority.ARCHIVED });
+            });
+            expect(postServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            updatedPostSub.unsubscribe();
+        });
+
+        it('should get correct list of posts when set', () => {
+            communicationService.setPosts([post]);
+            vi.advanceTimersByTime(0);
+            const postsSub = communicationService.posts.subscribe((posts) => {
+                expect(posts).toEqual([post]);
+            });
+            vi.advanceTimersByTime(0);
+            postsSub.unsubscribe();
+        });
+
+        it('should get posts for course', () => {
+            const postServiceSpy = vi.spyOn(postService, 'getPosts');
+            communicationService.getFilteredPosts({ courseId: course.id });
+            expect(postServiceSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Invoke answer post service methods', () => {
+        it('should create an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'create');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+
+            const createdAnswerPostSub = communicationService.createAnswerPost(answerPost).subscribe((createdAnswerPost) => {
+                expect(createdAnswerPost).toEqual(answerPost);
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should delete an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'delete');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+            const createdAnswerPostSub = communicationService.createAnswerPost(answerPost).subscribe();
+
+            communicationService.deleteAnswerPost(answerPost).subscribe();
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
+
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should update an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'update');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+            const createdAnswerPostSub = communicationService.createAnswerPost(answerPost).subscribe();
+
+            const updatedAnswerPostSub = communicationService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
+                expect(updatedAnswerPost).toEqual(answerPost);
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            updatedAnswerPostSub.unsubscribe();
+            createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+    });
+
+    describe('Invoke reaction service methods', () => {
+        it('should create a reaction', () => {
+            const reactionServiceSpy = vi.spyOn(reactionService, 'create');
+            const createdPostSub = communicationService.createPost(post).subscribe();
+            reaction = { ...reaction, post };
+
+            const createdReactionSub = communicationService.createReaction(reaction).subscribe((createdReaction) => {
+                expect(createdReaction).toEqual(reaction);
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [reaction] }]));
+
+            expect(reactionServiceSpy).toHaveBeenCalledOnce();
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdReactionSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+
+        it('should delete a reaction', () => {
+            const reactionServiceSpy = vi.spyOn(reactionService, 'delete');
+            post = { ...post, reactions: [reaction] };
+            reaction.post = post;
+            const createdPostSub = communicationService.createPost(post).subscribe();
+
+            communicationService.deleteReaction(reaction).subscribe(() => {
+                expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            });
+            const cachedPostsSub = communicationService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [] }]));
+
+            vi.advanceTimersByTime(0);
+            expect(reactionServiceSpy).toHaveBeenCalledOnce();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
+        });
+    });
+
+    it('should determine that current user is author of post', () => {
+        communicationServiceUserStub.mockReturnValue(communicationUser1);
+        const currentUserIsAuthorOfPostingReturn = communicationService.currentUserIsAuthorOfPosting(post);
+        expect(currentUserIsAuthorOfPostingReturn).toBe(true);
+    });
+
+    it('should determine that current user is not author of post', () => {
+        communicationServiceUserStub.mockReturnValue(communicationUser2);
+        const currentUserIsAuthorOfPostingReturn = communicationService.currentUserIsAuthorOfPosting(post);
+        expect(currentUserIsAuthorOfPostingReturn).toBe(false);
+    });
+
+    it('should set course when current course has different id', () => {
+        communicationService.setCourse(course);
+        const newCourse = new Course();
+        newCourse.id = 99;
+        communicationService.setCourse(newCourse);
+        const getCourseReturn = communicationService.getCourse();
+        expect(getCourseReturn).toEqual(newCourse);
+    });
+
+    it('should determine the link components for a reference to a post with course-wide context', () => {
+        communicationService.setCourse(course);
+        const referenceLinkComponents = communicationService.getLinkForPost();
+        expect(referenceLinkComponents).toEqual(['/courses', communicationCourse.id, 'discussion']);
+    });
+
+    it('should determine the router link required for referencing an exercise page within posting', () => {
+        communicationService.setCourse(course);
+        const referenceRouterLink = communicationService.getLinkForExercise(communicationExercise.id!.toString());
+        expect(referenceRouterLink).toBe(`/courses/${communicationCourse.id}/exercises/${communicationExercise.id!.toString()}`);
+    });
+
+    it('should determine the router link required for referencing a lecture page within posting', () => {
+        communicationService.setCourse(course);
+        const referenceRouterLink = communicationService.getLinkForLecture(communicationLecture.id!.toString());
+        expect(referenceRouterLink).toBe(`/courses/${communicationCourse.id}/lectures/${communicationLecture.id!.toString()}`);
+    });
+
+    it('should determine the router link required for referencing a exam page', () => {
+        communicationService.setCourse(course);
+        const referenceRouterLink = communicationService.getLinkForExam(communicationExam.id!.toString());
+        expect(referenceRouterLink).toBe(`/courses/${communicationCourse.id}/exams/${communicationExam.id!.toString()}`);
+    });
+
+    it('should determine the router link required for referencing a faq', () => {
+        communicationService.setCourse(course);
+        const link = communicationService.getLinkForFaq();
+        expect(link).toBe(`/courses/${communicationCourse.id}/faq`);
+    });
+
+    it('should determine the router link required for navigation based on the channel subtype', () => {
+        communicationService.setCourse(course);
+        const channelDTO = new ChannelDTO();
+        channelDTO.subTypeReferenceId = 1;
+
+        channelDTO.subType = ChannelSubType.EXERCISE;
+        const exerciseRouterLink = communicationService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.LECTURE;
+        const lectureRouterLink = communicationService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.EXAM;
+        const examRouterLink = communicationService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.GENERAL;
+        const generalRouterLink = communicationService.getLinkForChannelSubType(channelDTO);
+
+        expect(exerciseRouterLink).toBe(`/courses/${communicationCourse.id}/exercises/1`);
+        expect(lectureRouterLink).toBe(`/courses/${communicationCourse.id}/lectures/1`);
+        expect(examRouterLink).toBe(`/courses/${communicationCourse.id}/exams/1`);
+        expect(generalRouterLink).toBeUndefined();
+    });
+
+    it('should link a general channel without a subtype reference to the Iris page', () => {
+        communicationService.setCourse(course);
+        const channelDTO = new ChannelDTO();
+        channelDTO.subType = ChannelSubType.GENERAL;
+
+        expect(communicationService.getLinkForChannelSubType(channelDTO)).toBe(`/courses/${communicationCourse.id}/iris`);
+        expect(communicationService.getLinkForGeneral()).toBe(`/courses/${communicationCourse.id}/iris`);
+    });
+
+    it('should determine the query param for a reference to a post in a conversation', () => {
+        communicationService.setCourse(course);
+        const referenceLinkComponents = communicationService.getQueryParamsForPost(communicationPostInChannel);
+        expect(referenceLinkComponents).toEqual({
+            searchText: `#${communicationPostInChannel.id}`,
+        });
+    });
+
+    it('should determine the query param for a reference to conversation message', () => {
+        communicationService.setCourse(course);
+        const referenceLinkComponents = communicationService.getQueryParamsForPost({ id: 1 } as Post);
+        expect(referenceLinkComponents).toEqual({});
+    });
+
+    it('should determine context information for a conversation message', () => {
+        communicationService.setCourse(course);
+        const contextInformation = communicationService.getContextInformation(communicationPostInChannel);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', communicationCourse.id, 'communication']);
+        expect(contextInformation.displayName).toBeTruthy();
+    });
+
+    it('should return "Direct Message" when conversation is a one-to-one chat', () => {
+        const dmConversation = { ...conversationBetweenUser1User2, type: ConversationType.ONE_TO_ONE };
+        const directMessagePost: Post = {
+            ...directMessageUser2,
+            conversation: dmConversation,
+        };
+        communicationService.setCourse(course);
+        const contextInformation = communicationService.getContextInformation(directMessagePost);
+
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Direct Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: dmConversation.id });
+    });
+
+    it('should return "Group Message" when conversation is a group chat', () => {
+        const groupChatConversation = {
+            id: 9999,
+            type: ConversationType.GROUP_CHAT,
+            conversationParticipants: [
+                { id: 1, user: communicationUser1, unreadMessagesCount: 0 },
+                { id: 2, user: communicationUser2, unreadMessagesCount: 0 },
+                { id: 3, user: { id: 3, name: 'User3' }, unreadMessagesCount: 0 },
+            ],
+        };
+
+        const groupChatPost: Post = {
+            id: 8888,
+            author: communicationUser1,
+            content: 'Hello Group Chat',
+            conversation: groupChatConversation,
+        } as Post;
+
+        communicationService.setCourse(course);
+        const contextInformation = communicationService.getContextInformation(groupChatPost);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Group Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: groupChatConversation.id });
+    });
+
+    describe('Handle websocket related functionality', () => {
+        beforeEach(() => {
+            communicationServiceCreateWebsocketSubscriptionSpy = vi.spyOn(communicationService, 'createWebsocketSubscription');
+            websocketServiceSubscribeSpy = vi.spyOn(websocketService, 'subscribe');
+            communicationService.setCourse(communicationCourse);
+        });
+
+        it('should create websocket subscription when posts with lecture context are initially retrieved from DB', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.CREATE } as PostBroadcastDTO));
+            // setup subscription
+            communicationService.getFilteredPosts({ conversationIds: [communicationPostInChannel.conversation!.id!] });
+            communicationServiceGetFilteredPostsSpy.mockReset();
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create websocket subscription when posts with exercise context are initially retrieved from DB', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.DELETE } as PostBroadcastDTO));
+            communicationService.setPageType(PageType.OVERVIEW);
+            // setup subscription
+            communicationService.getFilteredPosts({ conversationIds: [communicationPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE });
+            communicationServiceGetFilteredPostsSpy.mockReset();
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.UPDATE } as PostBroadcastDTO));
+            // setup subscription
+            communicationService.getFilteredPosts({ conversationIds: [communicationPostInChannel.conversation!.id!] });
+            communicationServiceGetFilteredPostsSpy.mockReset();
+
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not create new subscription if already exists', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.DELETE } as PostBroadcastDTO));
+            // setup subscription for the first time
+            communicationService.getFilteredPosts({ conversationIds: [communicationPostInChannel.conversation!.id!] });
+            communicationServiceGetFilteredPostsSpy.mockReset();
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(communicationServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            communicationService.getFilteredPosts({ conversationIds: [communicationPostInChannel.conversation!.id!] });
+            expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ conversationIds: [communicationPostInChannel.conversation!.id!] });
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('subscribes to broadcast topic for course-wide channels', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.CREATE } as PostBroadcastDTO));
+            communicationService.setPageType(PageType.OVERVIEW);
+            // setup subscription
+            communicationService.getFilteredPosts({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: true,
+            } as ChannelDTO);
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: true,
+            } as ChannelDTO);
+        });
+
+        it('subscribes to user specific topic for non-course-wide channels', () => {
+            websocketServiceSubscribeSpy.mockReturnValue(of({ post: communicationPostInChannel, action: CommunicationCrudAction.CREATE } as PostBroadcastDTO));
+            communicationService.setPageType(PageType.OVERVIEW);
+            // setup subscription
+            communicationService.getFilteredPosts({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: false,
+            } as ChannelDTO);
+            expect(communicationServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            vi.advanceTimersByTime(0);
+            expect(communicationServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: false,
+            } as ChannelDTO);
+        });
+
+        it.each([CommunicationCrudAction.CREATE, CommunicationCrudAction.UPDATE, CommunicationCrudAction.DELETE])(
+            'should not call postService.getPosts() for new or updated messages received over WebSocket',
+            (action: CommunicationCrudAction) => {
+                // Setup
+                const mockPostDTO = {
+                    post: communicationPostInChannel,
+                    action,
+                };
+                const mockReceiveObservable = new Subject();
+                websocketServiceSubscribeSpy.mockReturnValue(mockReceiveObservable.asObservable());
+                communicationService.setPageType(PageType.OVERVIEW);
+
+                // set currentPostContextFilter appropriately
+                communicationService.getFilteredPosts({ plagiarismCaseId: 1 } as PostContextFilter);
+
+                // Ensure subscribe to websocket was called
+                expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(2);
+
+                // Emulate receiving a message
+                const getPostsSpy = vi.spyOn(postService, 'getPosts');
+                const markAsReadSpy = vi.spyOn(conversationService, 'markAsRead');
+                mockReceiveObservable.next(mockPostDTO);
+
+                expect(markAsReadSpy).not.toHaveBeenCalled();
+
+                // Ensure getPosts() was not called
+                expect(getPostsSpy).not.toHaveBeenCalled();
+            },
+        );
+
+        it.each([CommunicationCrudAction.CREATE, CommunicationCrudAction.UPDATE, CommunicationCrudAction.DELETE])(
+            'should not call postService.getPosts() for new or updated plagiarism posts received over WebSocket',
+            (action: CommunicationCrudAction) => {
+                // Setup
+                const mockPostDTO = {
+                    post: communicationPostInChannel,
+                    action,
+                };
+                const mockReceiveObservable = new Subject();
+                websocketServiceSubscribeSpy.mockReturnValue(mockReceiveObservable.asObservable());
+                communicationService.setPageType(PageType.OVERVIEW);
+
+                // set currentPostContextFilter appropriately
+                communicationService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
+
+                // Ensure subscribe to websocket was called
+                expect(websocketService.subscribe).toHaveBeenCalledOnce();
+
+                // Emulate receiving a message
+                const getPostsSpy = vi.spyOn(postService, 'getPosts');
+                const markAsReadSpy = vi.spyOn(conversationService, 'markAsRead');
+                mockReceiveObservable.next(mockPostDTO);
+
+                expect(markAsReadSpy).not.toHaveBeenCalled();
+
+                // Ensure getPosts() was not called
+                expect(getPostsSpy).not.toHaveBeenCalled();
+            },
+        );
+
+        it('should update plagiarism posts received over WebSocket', () => {
+            // Setup
+            const post = { ...plagiarismPost };
+
+            const mockPostDTO = {
+                post: post,
+                action: CommunicationCrudAction.CREATE,
+            };
+            const mockReceiveObservable = new Subject();
+            websocketServiceSubscribeSpy.mockReturnValue(mockReceiveObservable.asObservable());
+            communicationService.setPageType(PageType.PLAGIARISM_CASE_STUDENT);
+
+            // set currentPostContextFilter appropriately
+            communicationService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id, conversationIds: [22] } as PostContextFilter);
+
+            // Ensure subscribe to websocket was not called
+            expect(websocketService.subscribe).toHaveBeenCalled();
+
+            // Emulate receiving a message
+            mockReceiveObservable.next(mockPostDTO);
+            expect(communicationService['cachedPosts'].findIndex((post) => post.id === mockPostDTO.post.id)).toBeTruthy();
+        });
+
+        it('should update displayed conversation messages if new message does not match search text', () => {
+            // Setup
+            const channel = 'someChannel';
+            const mockPostDTO = {
+                post: { ...communicationPostInChannel, content: 'search Text' },
+                action: CommunicationCrudAction.CREATE,
+            };
+            const mockReceiveObservable = new Subject();
+            websocketServiceSubscribeSpy.mockReturnValue(mockReceiveObservable.asObservable());
+            communicationService.setPageType(PageType.OVERVIEW);
+            communicationService.createWebsocketSubscription(channel);
+
+            vi.spyOn(postService, 'getPosts').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [mockPostDTO.post],
+                        headers: new HttpHeaders({
+                            'X-Total-Count': 1,
+                        }),
+                    }),
+                ),
+            );
+
+            // set currentPostContextFilter with search text
+            communicationService.getFilteredPosts({ conversationIds: [mockPostDTO.post.conversation?.id], searchText: 'Search text' } as PostContextFilter);
+
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
+            // Emulate receiving a message matching the search text
+            mockReceiveObservable.next(mockPostDTO);
+            // Emulate receiving a message not matching the search text
+            mockReceiveObservable.next({
+                post: { ...communicationPostInChannel, content: 'other Text' },
+                action: CommunicationCrudAction.CREATE,
+            });
+
+            communicationService.posts.subscribe((posts) => {
+                expect(posts[0]).toBe(mockPostDTO.post);
+            });
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should return current conversation', () => {
+            communicationService.getFilteredPosts({ conversationIds: [communicationLectureChannelDTO.id] } as PostContextFilter, false, communicationLectureChannelDTO);
+            expect(communicationService.getCurrentConversation()).toBe(communicationLectureChannelDTO);
+        });
+    });
+
+    it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', () => {
+        communicationService.setCourse(course);
+        const forwardedMessageServiceSpy = vi.spyOn(forwardedMessageService, 'getForwardedMessages');
+        const postIds = [1, 2, 3];
+
+        communicationService.getForwardedMessagesByIds(postIds, PostingType.POST);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST);
+        forwardedMessageServiceSpy.mockClear();
+
+        communicationService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER);
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', () => {
+        const forwardedMessageServiceSpy = vi.spyOn(forwardedMessageService, 'getForwardedMessages');
+
+        communicationService.getForwardedMessagesByIds([], PostingType.POST);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
+        communicationService.getForwardedMessagesByIds([], PostingType.ANSWER);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
+        communicationService.getForwardedMessagesByIds(undefined as any, PostingType.POST);
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should call PostService.getSourcePostsByIds with correct parameters', () => {
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds');
+        const postIds = [4, 5, 6];
+
+        communicationService.getSourcePostsByIds(postIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(communicationService['courseId'], postIds);
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should return undefined if no source post is found with the given ids (404 error)', () => {
+        const postIds = [4, 5, 6];
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        communicationService.getSourcePostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        vi.advanceTimersByTime(0);
+        expect(postServiceSpy).toHaveBeenCalledWith(communicationService['courseId'], postIds);
+        expect(result).toBeUndefined();
+    });
+
+    it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', () => {
+        const postServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        const answerPostIds = [7, 8, 9];
+
+        communicationService.getSourceAnswerPostsByIds(answerPostIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(communicationService['courseId'], answerPostIds);
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should return undefined if no source answer post is found with the given ids (404 error)', () => {
+        const postIds = [4, 5, 6];
+        const answerPostServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        communicationService.getSourceAnswerPostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        vi.advanceTimersByTime(0);
+        expect(answerPostServiceSpy).toHaveBeenCalledWith(communicationService['courseId'], postIds);
+        expect(result).toBeUndefined();
+    });
+
+    it('should not call getSourcePostsByIds if postId list is undefined', () => {
+        const postIds: number[] | undefined = undefined;
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds');
+        communicationService.getSourcePostsByIds(postIds as any);
+
+        expect(postServiceSpy).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(0);
+    });
+
+    it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
+        const answerPostIds: number[] | undefined = undefined;
+        const answerPostServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        communicationService.getSourceAnswerPostsByIds(answerPostIds as any);
+        expect(answerPostServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should create forwarded messages and update cached posts', () => {
+        const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
+        communicationService.setCourse(course);
+        const targetConversation: Conversation = { id: 77, type: ConversationType.CHANNEL };
+        const isAnswer = false;
+        const newContent = 'Forwarded content';
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders({ 'X-Total-Count': '0' }) })));
+        communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [targetConversation.id!] }, true, {
+            id: targetConversation.id,
+            type: targetConversation.type,
+        });
+
+        const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
+        vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+
+        let result: ForwardedMessage[] | undefined;
+        communicationService.createForwardedMessages(originalPosts, targetConversation, isAnswer, newContent).subscribe((res) => (result = res));
+        vi.advanceTimersByTime(0);
+
+        expect(postService.create).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({ content: newContent }));
+        expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
+        expect(result?.length).toBe(originalPosts.length);
+        expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBe(true);
+        expect(communicationService['cachedPosts']).toContainEqual(expect.objectContaining({ id: createdPost.id, hasForwardedMessages: true }));
+    });
+
+    it('should throw an error if course ID is not set before forwarding', () => {
+        communicationService.setCourse(undefined);
+        let errorThrown: Error | undefined;
+        communicationService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        vi.advanceTimersByTime(0);
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toContain('Course ID is not set');
+        expect(forwardedMessageCreateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fail if any forwardedMessageService.createForwardedMessage fails', () => {
+        communicationService.setCourse(communicationCourse);
+        forwardedMessageCreateSpy
+            .mockReturnValueOnce(
+                of(
+                    new HttpResponse({
+                        body: { id: 5678, sourcePostId: 111 } as unknown as ForwardedMessage,
+                    }),
+                ),
+            )
+            .mockReturnValueOnce(throwError(() => new Error('Some forwardedMessage creation error')));
+
+        let errorThrown: Error | undefined;
+        communicationService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        vi.advanceTimersByTime(0);
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toBe('Some forwardedMessage creation error');
+        expect(forwardedMessageCreateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should NOT update local cache if target conversation differs from currentConversation', () => {
+        communicationService.setCourse(communicationCourse);
+        communicationService.getFilteredPosts({ conversationIds: [101] } as PostContextFilter, false, { id: 101 } as ChannelDTO);
+
+        let result: ForwardedMessage[] | undefined;
+        communicationService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        vi.advanceTimersByTime(0);
+
+        expect(result).toHaveLength(originalPosts.length);
+        expect(communicationService['cachedPosts'].findIndex((p) => p.id === 123)).toBe(-1);
+    });
+
+    it('should NOT add newly created post to cache if it already exists in cache', () => {
+        communicationService.setCourse(communicationCourse);
+        communicationService.getFilteredPosts({ conversationIds: [targetConversation.id] } as PostContextFilter, false, targetConversation);
+
+        communicationService['cachedPosts'] = [{ id: 123, content: 'cached content', conversation: targetConversation } as Post];
+
+        let result: ForwardedMessage[] | undefined;
+        communicationService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        vi.advanceTimersByTime(0);
+
+        expect(result).toHaveLength(originalPosts.length);
+        const matchesInCache = communicationService['cachedPosts'].filter((p) => p.id === 123);
+        expect(matchesInCache).toHaveLength(1);
+    });
+
+    it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', () => {
+        communicationService.setCourse(course);
+        const targetConversation: Conversation = { id: 2 } as Conversation;
+        const originalAnswerPosts: Posting[] = [{ id: 10, content: 'originalAnswer1' } as Posting, { id: 11, content: 'originalAnswer2' } as Posting];
+
+        const createdPost: Post = { id: 200, content: 'Forwarded answer container', hasForwardedMessages: true } as Post;
+        vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+
+        const createFwSpy = vi.spyOn(forwardedMessageService, 'createForwardedMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1234 } as ForwardedMessage })));
+
+        let result: ForwardedMessage[] = [];
+        communicationService.createForwardedMessages(originalAnswerPosts, targetConversation, true, 'some content').subscribe((res) => (result = res));
+        vi.advanceTimersByTime(0);
+
+        expect(postService.create).toHaveBeenCalled();
+        expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
+
+        createFwSpy.mock.calls.forEach(([argForwardedMessage]) => {
+            expect(argForwardedMessage.sourceType).toBe(PostingType.ANSWER.toString());
+        });
+
+        expect(result).toHaveLength(originalAnswerPosts.length);
+    });
+
+    describe('Save post methods', () => {
+        it('should save a post and update cached posts', () => {
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'savePost');
+
+            communicationService.createPost(post).subscribe();
+            communicationService.savePost(post);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, true, post.savedPostStatus);
+            expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
+        });
+
+        it('should remove a saved post and update cached posts', () => {
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'removeSavedPost');
+
+            communicationService.createPost(post).subscribe();
+            communicationService.removeSavedPost(post);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, false, post.savedPostStatus);
+            expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
+        });
+
+        it('should change the saved post status and update cached posts', () => {
+            const status = SavedPostStatus.ARCHIVED;
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'changeSavedPostStatus');
+
+            communicationService.createPost(post).subscribe();
+            communicationService.changeSavedPostStatus(post, status);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, post.isSaved, status);
+            expect(savedPostServiceSpy).toHaveBeenCalled();
+        });
+
+        it('should reset cached posts and update total number of posts', () => {
+            const spyPostsNext = vi.spyOn(communicationService['posts$'], 'next');
+            const spyNumberOfPostsNext = vi.spyOn(communicationService['totalNumberOfPosts$'], 'next');
+            communicationService.resetCachedPosts();
+
+            expect(communicationService['cachedPosts']).toEqual([]);
+            expect(spyPostsNext).toHaveBeenCalledWith([]);
+            expect(communicationService['cachedTotalNumberOfPosts']).toBe(0);
+            expect(spyNumberOfPostsNext).toHaveBeenCalledWith(0);
+        });
+
+        it('should remove pinned post from pinnedPosts$ when WebSocket DELETE action is received', () => {
+            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED, conversation: { id: 22 } } as Post;
+            const mockDeleteDTO: PostBroadcastDTO = {
+                action: CommunicationCrudAction.DELETE,
+                post: { ...pinnedPost },
+            };
+
+            communicationService['pinnedPosts$'].next([pinnedPost]);
+            communicationService['cachedPosts'].push({ ...pinnedPost });
+            communicationService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
+            communicationService['handleNewOrUpdatedMessage'](mockDeleteDTO);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSubscription = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            expect(pinnedPostsResult).toHaveLength(0);
+            pinnedSubscription.unsubscribe();
+        });
+
+        it('should remove a post from pinnedPosts$ if the given post ID exists in the pinned list', () => {
+            const pinnedPost = { id: 999, displayPriority: DisplayPriority.PINNED } as Post;
+            communicationService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSub = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            communicationService['removeFromPinnedPosts'](999);
+            expect(pinnedPostsResult).toHaveLength(0);
+
+            pinnedSub.unsubscribe();
+        });
+
+        it('should not modify pinnedPosts$ if the given post ID is not in the pinned list', () => {
+            const pinnedPost = { id: 999, displayPriority: DisplayPriority.PINNED } as Post;
+            communicationService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSub = communicationService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            communicationService['removeFromPinnedPosts'](123);
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0]).toEqual(pinnedPost);
+
+            pinnedSub.unsubscribe();
+        });
+
+        it('should update a pinned post when receiving a WebSocket update', () => {
+            const pinnedPost = {
+                id: 42,
+                displayPriority: DisplayPriority.PINNED,
+                content: 'Old Content',
+                authorRole: UserRole.USER,
+                tags: [],
+                conversation: { id: 22 },
+            } as Post;
+
+            communicationService['cachedPosts'] = [pinnedPost];
+            communicationService['pinnedPosts$'].next([pinnedPost]);
+
+            const updatedPost = {
+                id: 42,
+                displayPriority: DisplayPriority.PINNED,
+                content: 'Updated Content',
+                tags: ['newTag'],
+                conversation: { id: 22 },
+            } as Post;
+            const updateDTO: PostBroadcastDTO = {
+                post: updatedPost,
+                action: CommunicationCrudAction.UPDATE,
+            };
+
+            communicationService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
+            communicationService['handleNewOrUpdatedMessage'](updateDTO);
+            vi.advanceTimersByTime(0);
+
+            let pinnedPostsResult: Post[] = [];
+            communicationService.getPinnedPosts().subscribe((pinned) => (pinnedPostsResult = pinned));
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0].id).toBe(42);
+            expect(pinnedPostsResult[0].content).toBe('Updated Content');
+        });
+    });
+
+    it('should properly set answer.post properties when receiving a post update via WebSocket', () => {
+        // Set up test data
+        communicationService.setCourse(course);
+
+        // Create a post with answers in the cached posts
+        const originalPost: Post = {
+            id: 456,
+            content: 'Original content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Answer 1' } as AnswerPost, { id: 101, content: 'Answer 2' } as AnswerPost],
+        } as Post;
+
+        communicationService['cachedPosts'] = [originalPost];
+        communicationService['currentPostContextFilter'] = { conversationIds: [123] } as PostContextFilter;
+
+        // Create an updated post DTO (as would be received from WebSocket)
+        const updatedPost: Post = {
+            id: 456,
+            content: 'Updated content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Updated Answer 1', post: { id: 456 } } as AnswerPost, { id: 101, content: 'Updated Answer 2', post: { id: 456 } } as AnswerPost],
+        } as Post;
+
+        const updateDTO: PostBroadcastDTO = {
+            action: CommunicationCrudAction.UPDATE,
+            post: updatedPost,
+        };
+
+        // Call the method that handles WebSocket updates
+        communicationService['handleNewOrUpdatedMessage'](updateDTO);
+        vi.advanceTimersByTime(0);
+
+        // Verify that the answer.post properties are set correctly for all answers
+        const updatedCachedPost = communicationService['cachedPosts'][0];
+        expect(updatedCachedPost.answers?.length).toBe(2);
+
+        updatedCachedPost.answers?.forEach((answer) => {
+            expect(answer.post).toBeDefined();
+            expect(answer.post?.id).toBe(456);
+            expect(answer.post?.author).toEqual({ id: 789, login: 'author' });
+            expect(answer.post?.conversation).toEqual({ id: 123 });
+        });
+    });
+
+    it('should make PUT request to enable communication with messaging', () => {
+        communicationService.enable(1, true).subscribe((resp) => expect(resp).toEqual(of()));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=true` });
+    });
+
+    it('should make PUT request to enable communication without messaging', () => {
+        communicationService.enable(1, false).subscribe((resp) => expect(resp).toEqual(of()));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=false` });
+    });
+});

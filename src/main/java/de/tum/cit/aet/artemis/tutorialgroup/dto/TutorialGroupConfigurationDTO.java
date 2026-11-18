@@ -1,0 +1,99 @@
+package de.tum.cit.aet.artemis.tutorialgroup.dto;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+
+/**
+ * DTO representing the {@link TutorialGroupsConfiguration}.
+ *
+ * <p>
+ * This DTO is used to transfer tutorial group configuration data between the server and the client.
+ * Date values are represented as {@link String} on the API layer to avoid implicit time zone
+ * conversions on the client side.
+ * </p>
+ *
+ * <p>
+ * The fields {@code tutorialPeriodStartInclusive} and {@code tutorialPeriodEndInclusive}
+ * represent local dates (ISO-8601 format, e.g. {@code yyyy-MM-dd}).
+ * The server is responsible for interpreting these values in the course time zone.
+ * </p>
+ *
+ * <p>
+ * Free periods are optionally included. If the underlying JPA collection is not initialized,
+ * an empty set is returned to avoid {@code LazyInitializationException}.
+ * </p>
+ *
+ * @param id                             the unique identifier of the configuration
+ * @param tutorialPeriodStartInclusive   start date (inclusive) of the tutorial period in ISO-8601 format
+ * @param tutorialPeriodEndInclusive     end date (inclusive) of the tutorial period in ISO-8601 format
+ * @param useTutorialGroupChannels       whether tutorial group channels are enabled
+ * @param usePublicTutorialGroupChannels whether public tutorial group channels are enabled
+ * @param tutorialGroupFreePeriods       optional set of free periods during the tutorial period
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPeriodStartInclusive, @NotBlank String tutorialPeriodEndInclusive,
+        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, @Valid Set<TutorialGroupConfigurationFreePeriodDTO> tutorialGroupFreePeriods) {
+
+    public static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
+
+    /**
+     * If the field is omitted during JSON deserialization, it is replaced
+     * with an empty set to maintain a consistent API contract.
+     */
+    public TutorialGroupConfigurationDTO {
+        tutorialGroupFreePeriods = tutorialGroupFreePeriods == null ? Set.of() : tutorialGroupFreePeriods;
+    }
+
+    /**
+     * DTO representing a {@link TutorialGroupFreePeriod}.
+     *
+     * @param id     the unique identifier of the free period
+     * @param start  start date-time in ISO-8601 format
+     * @param end    end date-time in ISO-8601 format
+     * @param reason optional reason for the free period
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TutorialGroupConfigurationFreePeriodDTO(Long id, @NotNull String start, @NotNull String end, String reason) {
+
+        /**
+         * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
+         *
+         * @param freePeriod the entity to convert
+         * @return a DTO representation of the entity
+         * @throws BadRequestAlertException if the entity contains invalid date values
+         */
+        public static TutorialGroupConfigurationFreePeriodDTO of(@NonNull TutorialGroupFreePeriod freePeriod) {
+            return new TutorialGroupConfigurationFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
+        }
+    }
+
+    /**
+     * Creates a {@link TutorialGroupConfigurationDTO} from a {@link TutorialGroupsConfiguration} entity.
+     *
+     * @param config the tutorial groups configuration entity
+     * @return a DTO representing the given configuration
+     */
+    public static TutorialGroupConfigurationDTO of(@NonNull TutorialGroupsConfiguration config) {
+        Set<TutorialGroupFreePeriod> freePeriods = config.getTutorialGroupFreePeriods();
+        Set<TutorialGroupConfigurationFreePeriodDTO> freePeriodDTOs = Set.of();
+
+        if (freePeriods != null && Hibernate.isInitialized(freePeriods)) {
+            freePeriodDTOs = freePeriods.stream().map(TutorialGroupConfigurationFreePeriodDTO::of).collect(Collectors.toSet());
+        }
+        return new TutorialGroupConfigurationDTO(config.getId(), config.getTutorialPeriodStartInclusive(), config.getTutorialPeriodEndInclusive(),
+                config.getUseTutorialGroupChannels(), config.getUsePublicTutorialGroupChannels(), freePeriodDTOs);
+    }
+}

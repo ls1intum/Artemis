@@ -1,0 +1,33 @@
+import { Service, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+import { Bean, Beans, ConfigProps, Env, PropertySource } from './configuration.model';
+
+@Service()
+export class ConfigurationService {
+    private http = inject(HttpClient);
+
+    getBeans(): Observable<Bean[]> {
+        return this.http.get<ConfigProps>('management/configprops').pipe(
+            map((configProps) =>
+                Object.values(
+                    Object.values(configProps.contexts)
+                        .map((context) => context.beans)
+                        .reduce((allBeans: Beans, contextBeans: Beans) => {
+                            // Merged into a fresh accumulator key by key; copying it on every step would be quadratic.
+                            for (const beanName of Object.keys(contextBeans)) {
+                                allBeans[beanName] = contextBeans[beanName];
+                            }
+                            return allBeans;
+                        }, {}),
+                ),
+            ),
+        );
+    }
+
+    getPropertySources(): Observable<PropertySource[]> {
+        return this.http.get<Env>('management/env').pipe(map((env) => env.propertySources));
+    }
+}

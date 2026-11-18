@@ -1,0 +1,76 @@
+import { OnDestroy, Service, inject } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+
+/**
+ * WebSocket payload broadcast by `ContentChangeScheduler` after an automatic
+ * orchestrator run completes for a course. Mirrors `AutoOrchestrationSummaryDTO` on the server.
+ */
+export interface AutoOrchestrationSummary {
+    courseId: number;
+    runId: string;
+    exerciseCount: number;
+    successCount: number;
+    failureCount: number;
+    /**
+     * Batch-level outcome; `NO_CHANGES` means the run completed and verified that nothing needed to change,
+     * `PARTIAL` means some changes were committed before the run stopped.
+     */
+    outcome?: 'SUCCESS' | 'NO_CHANGES' | 'PARTIAL' | 'FAILED';
+    completedAt: string;
+}
+
+/**
+ * Subscribes to `/topic/atlas/orchestrator/{courseId}` for the courses an instructor is currently
+ * viewing and surfaces a toast notification when the auto-trigger pipeline finishes a run. The
+ * subscription is short-lived: callers (the course dashboard component) call `subscribeToCourse`
+ * on init and `unsubscribeFromCourse` on destroy so we never accumulate orphan subscriptions.
+ */
+@Service()
+export class AutoOrchestrationNotificationService implements OnDestroy {
+    private readonly websocketService = inject(WebsocketService);
+    private readonly alertService = inject(AlertService);
+    private readonly subscriptions = new Map<number, Subscription>();
+
+    subscribeToCourse(courseId: number): void {
+        if (this.subscriptions.has(courseId)) {
+            return;
+        }
+        const topic = `/topic/atlas/orchestrator/${courseId}`;
+        const sub = this.websocketService.subscribe<AutoOrchestrationSummary>(topic).subscribe((summary) => {
+            if (summary && summary.courseId === courseId) {
+                this.handleSummary(summary);
+            }
+        });
+        this.subscriptions.set(courseId, sub);
+    }
+
+    unsubscribeFromCourse(courseId: number): void {
+        const sub = this.subscriptions.get(courseId);
+        if (sub) {
+            sub.unsubscribe();
+            this.subscriptions.delete(courseId);
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.subscriptions.forEach((sub) => sub.unsubscribe());
+        this.subscriptions.clear();
+    }
+
+    private handleSummary(summary: AutoOrchestrationSummary): void {
+        const params = { count: summary.exerciseCount, success: summary.successCount, failure: summary.failureCount };
+        if (summary.outcome === 'NO_CHANGES') {
+            this.alertService.info('artemisApp.atlasOrchestrator.autoToast.noChanges', params);
+        } else if (summary.outcome === 'PARTIAL') {
+            this.alertService.warning('artemisApp.atlasOrchestrator.autoToast.incomplete', params);
+        } else if (summary.failureCount === 0) {
+            this.alertService.success('artemisApp.atlasOrchestrator.autoToast.success', params);
+        } else if (summary.successCount === 0) {
+            this.alertService.error('artemisApp.atlasOrchestrator.autoToast.failure', params);
+        } else {
+            this.alertService.warning('artemisApp.atlasOrchestrator.autoToast.partial', params);
+        }
+    }
+}

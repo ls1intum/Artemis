@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -e
+
+artemis_path="$(cd "$(dirname "$0")/../.." && pwd -P)"
+
+cd "$artemis_path/deployment/docker"
+open -a Docker
+
+echo "Updating docker group ID in the docker compose file"
+# On macOS, Docker Desktop uses a user-owned socket (e.g., ~/.docker/run/docker.sock).
+# The 'docker' group usually does not exist, so we derive the GID from the actual socket.
+# The compose file uses 999 as a placeholder GID. We replace it with PRIMARY_GROUP_ID so the
+# container can access /var/run/docker.sock. If we cannot determine it, we keep 999.
+DOCKER_SOCK_PATH="/var/run/docker.sock"
+if [ -L "$DOCKER_SOCK_PATH" ]; then
+    DOCKER_SOCK_PATH="$(readlink "$DOCKER_SOCK_PATH")"
+fi
+PRIMARY_GROUP_ID="$(stat -f '%g' "$DOCKER_SOCK_PATH" 2>/dev/null || true)"
+if [ -z "$PRIMARY_GROUP_ID" ]; then
+    PRIMARY_GROUP_ID=$(dscl . -read /Groups/docker PrimaryGroupID 2>/dev/null | awk '{print $2}')
+fi
+
+if [ -n "$PRIMARY_GROUP_ID" ]; then
+    sed -i '' "s/999/$PRIMARY_GROUP_ID/g" artemis-dev-local-vc-local-ci-mysql.yml
+else
+    echo "Docker socket group ID not found, skipping replacement"
+fi
+
+docker compose -f artemis-dev-local-vc-local-ci-mysql.yml up -d
+echo "Finished docker compose"
+
+cd "$artemis_path"
+
+echo "Installing Artemis pnpm dependencies and start Artemis client"
+
+# Activate the pnpm version pinned via `packageManager` in package.json.
+corepack enable
+
+pnpm install --frozen-lockfile
+pnpm start

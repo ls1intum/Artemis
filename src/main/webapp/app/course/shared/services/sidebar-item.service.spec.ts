@@ -1,0 +1,396 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import {
+    faBullseye,
+    faChalkboardTeacher,
+    faChartColumn,
+    faCode,
+    faCog,
+    faComments,
+    faDumbbell,
+    faFileAlt,
+    faList,
+    faPuzzlePiece,
+    faQuestion,
+    faRobot,
+    faTable,
+    faTableCells,
+    faUserCheck,
+    faUsers,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
+import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
+import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
+
+describe('CourseSidebarItemService', () => {
+    let service: CourseSidebarItemService;
+    const courseId = 123;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({});
+        service = TestBed.inject(CourseSidebarItemService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    describe('getManagementDefaultItems', () => {
+        it('should return correct items with courseId', () => {
+            const items = service.getManagementDefaultItems(courseId);
+            const expectedItems = [
+                {
+                    routerLink: `${courseId}`,
+                    icon: faTableCells,
+                    title: 'Overview',
+                    translation: 'artemisApp.course.overview',
+                    hidden: false,
+                    isPrefix: true,
+                },
+                {
+                    routerLink: `${courseId}/exams`,
+                    icon: faFileAlt,
+                    iconColor: '#f59e0b',
+                    title: 'Exams',
+                    testId: 'exam-tab',
+                    translation: 'artemisApp.courseOverview.menu.exams',
+                    hidden: false,
+                },
+                {
+                    routerLink: `${courseId}/exercises`,
+                    icon: faCode,
+                    iconColor: '#6366f1',
+                    title: 'Exercises',
+                    translation: 'artemisApp.courseOverview.menu.exercises',
+                    hidden: false,
+                },
+                {
+                    routerLink: `${courseId}/course-statistics`,
+                    icon: faChartColumn,
+                    title: 'Statistics',
+                    translation: 'artemisApp.courseOverview.menu.statistics',
+                    hidden: false,
+                },
+            ];
+            expect(items).toHaveLength(4);
+            expect(items).toEqual(expectedItems);
+        });
+
+        it('should return correct items without courseId', () => {
+            const items = service.getManagementDefaultItems(2);
+
+            expect(items).toHaveLength(4);
+
+            expect(items[0]).toEqual({
+                routerLink: '2',
+                icon: faTableCells,
+                title: 'Overview',
+                translation: 'artemisApp.course.overview',
+                hidden: false,
+                isPrefix: true,
+            });
+
+            expect(items[2]).toEqual({
+                routerLink: '2/exercises',
+                icon: faCode,
+                iconColor: '#6366f1',
+                title: 'Exercises',
+                translation: 'artemisApp.courseOverview.menu.exercises',
+                hidden: false,
+            });
+        });
+    });
+
+    describe('getStudentDefaultItems', () => {
+        it('should return default items without training when questionsAvailableForTraining is false', () => {
+            const items = service.getStudentDefaultItems(false);
+
+            expect(items).toHaveLength(3);
+            expect(items[0].title).toBe('Exercises');
+            expect(items[1].title).toBe('Statistics');
+            expect(items[2].title).toBe('Calendar');
+        });
+
+        it('should include the training item when questionsAvailableForTraining is true', () => {
+            const items = service.getStudentDefaultItems(true);
+
+            expect(items).toHaveLength(4);
+            expect(items[0].title).toBe('Exercises');
+            expect(items[1].title).toBe('Training');
+            expect(items[2].title).toBe('Statistics');
+            expect(items[3].title).toBe('Calendar');
+        });
+    });
+
+    describe('Individual item methods', () => {
+        it('getGocastBindingItem should return the instructor course connection item', () => {
+            expect(service.getGocastBindingItem(courseId)).toEqual({
+                routerLink: `${courseId}/gocast-binding`,
+                icon: faVideo,
+                title: 'TUM.Live',
+                translation: 'artemisApp.gocast.title',
+                testId: 'gocast-binding',
+                hidden: false,
+            });
+        });
+
+        it('getTrainingItem should return correct item', () => {
+            const item = service.getTrainingItem();
+
+            expect(item).toEqual({
+                routerLink: 'training',
+                icon: faDumbbell,
+                title: 'Training',
+                translation: 'overview.training',
+                hidden: false,
+            });
+        });
+
+        it('getExamsItem should return correct item with courseId', () => {
+            const item = service.getExamsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/exams`,
+                icon: faFileAlt,
+                iconColor: '#f59e0b',
+                title: 'Exams',
+                testId: 'exam-tab',
+                translation: 'artemisApp.courseOverview.menu.exams',
+                hidden: false,
+            });
+        });
+
+        it('getExamsItem should return correct item without courseId', () => {
+            const item = service.getExamsItem();
+
+            expect(item).toEqual({
+                routerLink: 'exams',
+                icon: faFileAlt,
+                iconColor: '#f59e0b',
+                title: 'Exams',
+                testId: 'exam-tab',
+                translation: 'artemisApp.courseOverview.menu.exams',
+                hidden: false,
+            });
+        });
+
+        it('getLecturesItem should return correct item with courseId', () => {
+            const item = service.getLecturesItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/lectures`,
+                icon: faChalkboardTeacher,
+                iconColor: '#0ea5e9',
+                title: 'Lectures',
+                translation: 'artemisApp.courseOverview.menu.lectures',
+                testId: 'lectures',
+                hidden: false,
+            });
+        });
+
+        it('getLecturesItem should return correct item without courseId', () => {
+            const item = service.getLecturesItem();
+
+            expect(item).toEqual({
+                routerLink: 'lectures',
+                icon: faChalkboardTeacher,
+                iconColor: '#0ea5e9',
+                title: 'Lectures',
+                translation: 'artemisApp.courseOverview.menu.lectures',
+                testId: 'lectures',
+                hidden: false,
+            });
+        });
+
+        it('getCommunicationsItem should return correct item with courseId', () => {
+            const item = service.getCommunicationsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/communication`,
+                icon: faComments,
+                title: 'Communication',
+                translation: 'artemisApp.courseOverview.menu.communication',
+                hidden: false,
+            });
+        });
+
+        it('getCompetenciesManagementItem should return correct item', () => {
+            const item = service.getCompetenciesManagementItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/competency-management`,
+                icon: faBullseye,
+                iconColor: '#10b981',
+                title: 'Competency Management',
+                translation: 'artemisApp.courseOverview.menu.competencies',
+                hidden: false,
+            });
+        });
+
+        it('getCompetenciesItem should return correct item', () => {
+            const item = service.getCompetenciesItem();
+
+            expect(item).toEqual({
+                routerLink: 'competencies',
+                icon: faBullseye,
+                iconColor: '#10b981',
+                title: 'Competencies',
+                translation: 'artemisApp.courseOverview.menu.competencies',
+                hidden: false,
+            });
+        });
+
+        it('getLearningPathItem should include feature toggle', () => {
+            const item = service.getLearningPathItem();
+
+            expect(item.featureToggle).toBe(FeatureToggle.LearningPaths);
+        });
+
+        it('getLearningPathManagementItem should include feature toggle', () => {
+            const item = service.getLearningPathManagementItem(courseId);
+
+            expect(item.featureToggle).toBe(FeatureToggle.LearningPaths);
+        });
+
+        it('getIrisItem should return correct item', () => {
+            const item = service.getIrisItem();
+
+            expect(item).toEqual({
+                routerLink: 'iris',
+                icon: faRobot,
+                title: 'Iris',
+                translation: 'artemisApp.courseOverview.menu.iris',
+                hidden: false,
+            });
+        });
+
+        it('getFaqManagementItem should return correct item', () => {
+            const item = service.getFaqManagementItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/faqs`,
+                icon: faQuestion,
+                iconColor: '#ec4899',
+                title: 'FAQs',
+                translation: 'artemisApp.courseOverview.menu.faq',
+                hidden: false,
+            });
+        });
+
+        it('getFaqItem should return correct item', () => {
+            const item = service.getFaqItem();
+
+            expect(item).toEqual({
+                routerLink: 'faq',
+                icon: faQuestion,
+                iconColor: '#ec4899',
+                title: 'FAQs',
+                translation: 'artemisApp.courseOverview.menu.faq',
+                hidden: false,
+            });
+        });
+
+        it('getIrisSettingsItem should return correct item', () => {
+            const item = service.getIrisSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/iris-settings`,
+                icon: faRobot,
+                title: 'IRIS Settings',
+                translation: 'artemisApp.iris.settings.button.course.title',
+                testId: 'iris-settings',
+                hidden: false,
+            });
+        });
+
+        it('getAthenaSettingsItem should return correct item', () => {
+            const item = service.getAthenaSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/athena-settings`,
+                iconImage: ATHENA_LOGO_PATH,
+                title: 'Athena Settings',
+                translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+                testId: 'athena-settings',
+                hidden: false,
+            });
+        });
+
+        it('getAssessmentDashboardItem should return correct item', () => {
+            const item = service.getAssessmentDashboardItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/assessment-dashboard`,
+                icon: faUserCheck,
+                title: 'Assessment Dashboard',
+                translation: 'entity.action.assessmentDashboard',
+                hidden: false,
+            });
+        });
+
+        it('getScoresItem should return correct item', () => {
+            const item = service.getScoresItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/scores`,
+                icon: faTable,
+                title: 'Scores',
+                translation: 'entity.action.scores',
+                hidden: false,
+            });
+        });
+
+        it('getBuildQueueItem should return correct item', () => {
+            const item = service.getBuildQueueItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/build-overview`,
+                icon: faList,
+                title: 'Build Overview',
+                translation: 'artemisApp.buildQueue.title',
+                hidden: false,
+            });
+        });
+
+        it('getLtiConfigurationItem should return correct item', () => {
+            const item = service.getLtiConfigurationItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/lti-configuration`,
+                icon: faPuzzlePiece,
+                title: 'LTI Configuration',
+                translation: 'global.menu.admin.lti',
+                testId: 'lti-settings',
+                hidden: false,
+            });
+        });
+
+        it('getCourseSettingsItem should return correct item', () => {
+            const item = service.getCourseSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/settings`,
+                icon: faCog,
+                title: 'Settings',
+                translation: 'artemisApp.courseOverview.menu.settings',
+                testId: 'course-settings',
+                bottom: true,
+                hidden: false,
+            });
+        });
+
+        it('getTutorialGroupsItem should return correct item with courseId', () => {
+            const item = service.getTutorialGroupsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/tutorial-groups`,
+                icon: faUsers,
+                iconColor: '#8b5cf6',
+                title: 'Tutorials',
+                translation: 'artemisApp.courseOverview.menu.tutorialGroups',
+                hidden: false,
+            });
+        });
+    });
+});

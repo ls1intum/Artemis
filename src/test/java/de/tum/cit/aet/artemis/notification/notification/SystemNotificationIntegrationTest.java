@@ -1,0 +1,305 @@
+package de.tum.cit.aet.artemis.notification.notification;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
+import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
+import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+
+class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "systemnotification";
+
+    @Autowired
+    private SystemNotificationRepository systemNotificationRepo;
+
+    private SystemNotification systemNotification;
+
+    private SystemNotification systemNotificationActive;
+
+    private SystemNotification systemNotificationFuture;
+
+    @BeforeEach
+    void initTestCase() {
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+
+        // Generate a system notification that has expired.
+        SystemNotification systemNotificationExpired = generateSystemNotification(ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusMinutes(25));
+        systemNotificationRepo.save(systemNotificationExpired);
+
+        // Generate a system notification whose notification date is in the future.
+        systemNotificationFuture = generateSystemNotification(ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(8));
+        systemNotificationRepo.save(systemNotificationFuture);
+
+        // Generate an active system notification
+        systemNotificationActive = generateSystemNotification(ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25));
+        systemNotificationRepo.save(systemNotificationActive);
+
+        systemNotification = generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
+    }
+
+    @AfterEach
+    void tearDown() {
+        systemNotificationRepo.deleteAll();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testGetActiveSystemNotificationWithAnonymousUser() throws Exception {
+        // Do the actual request that is tested here.
+        getActiveSystemNotification();
+    }
+
+    @Test
+    void testGetActiveSystemNotificationWithoutUser() throws Exception {
+        getActiveSystemNotification();
+    }
+
+    @Test
+    void shouldNotTagTheCanonicalPublicSystemNotificationsPath() throws Exception {
+        // This resource lost its legacy alias, so its canonical path must carry no deprecation signal at all.
+        // That the interceptor still tags the aliases which remain is covered by LegacyApiPathDeprecationInterceptorTest.
+        request.performMvcRequest(get("/api/notification/public/system-notifications/active")).andExpect(status().isOk()).andExpect(header().doesNotExist("Deprecation"))
+                .andExpect(header().doesNotExist("Sunset")).andExpect(header().doesNotExist("Link"));
+    }
+
+    @Test
+    void shouldNoLongerServeTheRemovedLegacyPublicSystemNotificationsPath() throws Exception {
+        request.performMvcRequest(get("/api/core/public/system-notifications/active")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testGetActiveSystemNotification() throws Exception {
+        // Do the actual request that is tested here.
+        getActiveSystemNotification();
+    }
+
+    private void getActiveSystemNotification() throws Exception {
+        // Do the actual request that is tested here.
+        List<SystemNotificationDTO> notification = request.getList("/api/notification/public/system-notifications/active", HttpStatus.OK, SystemNotificationDTO.class);
+
+        // The returned notification must be an active notification.
+        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").extracting(SystemNotificationDTO::id)
+                .containsExactly(systemNotificationActive.getId(), systemNotificationFuture.getId());
+        assertThat(systemNotificationActive.getExpireDate()).as("Returned notification 0 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationActive.getNotificationDate()).as("Returned notification 0 is active.").isBeforeOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationFuture.getExpireDate()).as("Returned notification 1 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationFuture.getNotificationDate()).as("Returned notification 1 is not active.").isAfterOrEqualTo(ZonedDateTime.now());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification() throws Exception {
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), SystemNotificationDTO.class);
+
+        assertThat(systemNotificationRepo.findById(response.id())).as("Saved system notification").isNotNull();
+        assertThat(systemNotificationRepo.existsById(response.id())).as("Saved notification exists").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_BadRequest() throws Exception {
+        systemNotification.setId(1L);
+        request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "USER")
+    void testCreateSystemNotification_asInstructor_Forbidden() throws Exception {
+        request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void testCreateSystemNotification_asUser_Forbidden() throws Exception {
+        systemNotification.setId(1L);
+        request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification() throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        String updatedText = "updated text";
+        systemNotification.setText(updatedText);
+        SystemNotificationDTO response = request.putWithResponseBody("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), SystemNotificationDTO.class,
+                HttpStatus.OK);
+        assertThat(response.text()).as("response has updated text").isEqualTo(updatedText);
+        assertThat(systemNotificationRepo.findById(response.id())).get().as("repository contains updated notification").extracting(SystemNotification::getText)
+                .isEqualTo(updatedText);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "USER")
+    void testUpdateSystemNotification_asInstructor_Forbidden() throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        systemNotification.setText("updated text");
+        request.put("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_BadRequest() throws Exception {
+        SystemNotification systemNotification = generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
+        request.put("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetAllSystemNotifications() throws Exception {
+        List<SystemNotificationDTO> response = request.getList("/api/notification/admin/system-notifications", HttpStatus.OK, SystemNotificationDTO.class);
+        assertThat(response).as("system notification are present").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetSystemNotification() throws Exception {
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), SystemNotificationDTO.class);
+        assertThat(systemNotificationRepo.findById(response.id())).get().as("system notification is not null").isNotNull();
+        request.get("/api/notification/admin/system-notifications/" + response.id(), HttpStatus.OK, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + response.id() + 1, HttpStatus.NOT_FOUND, SystemNotificationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDeleteSystemNotification() throws Exception {
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), SystemNotificationDTO.class);
+        assertThat(systemNotificationRepo.findById(response.id())).get().as("system notification is not null").isNotNull();
+        request.delete("/api/notification/admin/system-notifications/" + response.id(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "USER")
+    void testDeleteSystemNotification_asInstructor_Forbidden() throws Exception {
+        SystemNotification notification = systemNotificationRepo.save(systemNotification);
+        assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
+        request.delete("/api/notification/admin/system-notifications/" + notification.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textAtMaxLength_ok() throws Exception {
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textAtMaxLength_ok() throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.putWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class, HttpStatus.OK);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textTooLong_badRequest() throws Exception {
+        String originalText = "original text";
+        systemNotification.setText(originalText);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getText).isEqualTo(originalText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_titleTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "a".repeat(256), "text", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_titleTooLong_badRequest() throws Exception {
+        String originalTitle = "original title";
+        systemNotification.setTitle(originalTitle);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "a".repeat(256), "text", ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getTitle).isEqualTo(originalTitle);
+    }
+
+    /**
+     * Generates a SystemNotification with the given arguments.
+     *
+     * @param notificationDate The notification date of the SystemNotification
+     * @param expiryDate       The expiry date of the SystemNotification
+     * @return The generated SystemNotification
+     */
+    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expiryDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setNotificationDate(notificationDate);
+        systemNotification.setExpireDate(expiryDate);
+        return systemNotification;
+    }
+
+    private static SystemNotificationUpdateDTO toUpdateDTO(SystemNotification notification) {
+        return new SystemNotificationUpdateDTO(notification.getId(), notification.getTitle(), notification.getText(), notification.getNotificationDate(),
+                notification.getExpireDate(), notification.getType());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void maintenanceRecipientCountMatchesCurrentEligibleRecipients() throws Exception {
+        String url = "/api/notification/admin/system-notifications/maintenance-recipients-count";
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        for (int index = 1; index <= 2; index++) {
+            var instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor" + index).orElseThrow();
+            instructor.setTestUser(false);
+            userTestRepository.saveAndFlush(instructor);
+        }
+        // addUsers resets course memberships, so take the baseline after preparing the users.
+        Long before = request.get(url, HttpStatus.OK, Long.class);
+        for (int index = 0; index < 2; index++) {
+            var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            course.setStartDate(ZonedDateTime.now().minusDays(1));
+            course.setEndDate(ZonedDateTime.now().plusDays(1));
+            courseRepository.saveAndFlush(course);
+        }
+        assertThat(request.get(url, HttpStatus.OK, Long.class)).isEqualTo(before + 2);
+
+    }
+
+}

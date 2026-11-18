@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "dataTable": {
+            "search": {
+                "failed": "Suche fehlgeschlagen",
+                "noResults": "Keine Ergebnisse",
+                "minQueryLengthHint": "Bitte mindestens {{ length }} Zeichen eingeben"
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+@import '../communication.component';
+
+.toggle-content {
+    font-size: smaller;
+    color: var(--communication-light-gray);
+}
+
+.edited-text {
+    color: var(--communication-gray);
+    font-size: smaller;
+}

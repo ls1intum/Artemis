@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "SubmissionType": {
+            "null": "",
+            "MANUAL": "MANUAL",
+            "TIMEOUT": "TIMEOUT",
+            "TEST": "TEST",
+            "OTHER": "OTHER"
+        }
+    }
+}

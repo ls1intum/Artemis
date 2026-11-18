@@ -1,0 +1,54 @@
+{
+    "health": {
+        "title": "Health Checks",
+        "refresh.button": "Refresh",
+        "stacktrace": "Stacktrace",
+        "details": {
+            "details": "Details",
+            "properties": "Properties",
+            "name": "Name",
+            "value": "Value",
+            "error": "Error",
+            "jobs": "Jobs:",
+            "running": "Running:",
+            "version": "Version:",
+            "started": "Started:",
+            "noBuildAgents": "No build agents reported."
+        },
+        "indicator": {
+            "clientConfigServer": "Client Config Server",
+            "discoveryComposite": "Discovery Composite",
+            "configServer": "Microservice Config Server",
+            "hystrix": "Hystrix",
+            "diskSpace": "Disk space",
+            "mail": "Email",
+            "db": "Database",
+            "ping": "Ping",
+            "livenessState": "Liveness",
+            "readinessState": "Readiness",
+            "continuousIntegrationServer": "Continuous Integration Server",
+            "versionControlServer": "Version Control Server",
+            "hazelcast": "Hazelcast",
+            "JHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
+            "websocketBroker": "Websocket Broker (Server -> Broker)",
+            "athena": "Athena",
+            "apollon": "Apollon Conversion Server",
+            "pyris": "Pyris",
+            "ssl": "SSL",
+            "hermes": "Hermes Push Notifications",
+            "sharing": "Sharing Platform Connector",
+            "redis": "Redis",
+            "weaviate": "Weaviate",
+            "reactiveDiscoveryClients": "Reactive Discovery Clients"
+        },
+        "table": {
+            "service": "Service name",
+            "status": "Status"
+        },
+        "status": {
+            "UNKNOWN": "UNKNOWN",
+            "UP": "UP",
+            "DOWN": "DOWN"
+        }
+    }
+}

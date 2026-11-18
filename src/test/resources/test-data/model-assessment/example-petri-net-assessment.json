@@ -1,0 +1,22 @@
+[
+    {
+        "text": "correct activity, but missing elements",
+        "reference": "PetriNetTransition:b5120d7d-24fe-465c-880e-cf35cfb75d34",
+        "credits": 0.0,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "reference": "PetriNetPlace:b62dff7b-0c20-4573-bc1c-38c94fedffd4",
+        "credits": 0.5,
+        "positive": true,
+        "type": "MANUAL"
+    },
+    {
+        "text": "good",
+        "reference": "PetriNetArc:ae4c0231-9a8a-4d90-b8b4-a5332769eb14",
+        "credits": 0.5,
+        "positive": true,
+        "type": "MANUAL"
+    }
+]

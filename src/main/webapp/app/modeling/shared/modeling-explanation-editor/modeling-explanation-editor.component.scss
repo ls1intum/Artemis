@@ -1,0 +1,32 @@
+:host {
+    box-sizing: border-box;
+    display: block;
+    width: var(--modeling-editor-explanation-panel-width, min(44rem, 100%));
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 0 auto;
+}
+
+.text-editor-textarea {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: calc(1.4em + 0.7rem);
+    max-height: 100%;
+    flex: 1;
+    padding: 0.45rem 0.55rem 0.3rem;
+    border: 0;
+    border-radius: var(--apollon-radius-sm);
+    background: color-mix(in srgb, var(--apollon-background) 82%, transparent);
+    color: var(--apollon-foreground);
+    font: inherit;
+    line-height: 1.4;
+    overflow-y: auto;
+    resize: none;
+
+    &:focus {
+        outline: none;
+    }
+}

@@ -1,0 +1,9 @@
+<tumaet-ui-search-field
+    data-testid="search-filter"
+    [value]="searchValue()"
+    [placeholder]="placeholderKey()"
+    [ariaLabel]="ariaLabelKey()"
+    [size]="size()"
+    [disabled]="disabled()"
+    (valueChange)="setSearchValue($event)"
+/>

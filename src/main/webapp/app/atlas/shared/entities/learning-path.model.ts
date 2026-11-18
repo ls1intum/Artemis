@@ -1,0 +1,102 @@
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { Course } from 'app/course/shared/entities/course.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
+import { CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
+
+export interface LearningPath extends BaseEntity {
+    id?: number;
+    progress?: number;
+    user?: User;
+    course?: Course;
+    competencies?: CourseCompetency[];
+}
+
+export interface LearningPathInformationDTO {
+    id: number;
+    user: UserNameAndLoginDTO;
+    progress: number;
+}
+
+export enum LearningObjectType {
+    LECTURE = 'LECTURE',
+    EXERCISE = 'EXERCISE',
+}
+
+export interface LearningPathCompetencyDTO {
+    id: number;
+    title: string;
+    masteryProgress: number;
+}
+
+export interface LearningPathDTO {
+    id: number;
+    progress: number;
+    startedByStudent: boolean;
+}
+
+export interface LearningPathAverageProgressDTO {
+    courseId: number;
+    averageProgress: number;
+    totalStudents: number;
+}
+
+export interface LearningPathNavigationObjectDTO {
+    id: number;
+    completed: boolean;
+    name?: string;
+    competencyId: number;
+    type: LearningObjectType;
+    repeatedTest: boolean;
+    unreleased: boolean;
+}
+
+export interface LearningPathNavigationDTO {
+    predecessorLearningObject?: LearningPathNavigationObjectDTO;
+    currentLearningObject?: LearningPathNavigationObjectDTO;
+    successorLearningObject?: LearningPathNavigationObjectDTO;
+    progress: number;
+}
+
+export interface LearningPathNavigationOverviewDTO {
+    learningObjects: LearningPathNavigationObjectDTO[];
+}
+
+export interface LearningPathsConfigurationDTO {
+    includeAllGradedExercises: boolean;
+}
+
+export enum CompetencyGraphNodeValueType {
+    MASTERY_PROGRESS = 'MASTERY_PROGRESS',
+    AVERAGE_MASTERY_PROGRESS = 'AVERAGE_MASTERY_PROGRESS',
+}
+
+export interface CompetencyGraphNodeDTO {
+    id: string;
+    label: string;
+    softDueDate: Date;
+    value: number;
+    valueType: CompetencyGraphNodeValueType;
+    dimension?: GraphNodeDimension;
+}
+
+export interface CompetencyGraphEdgeDTO {
+    id: string;
+    source: string;
+    target: string;
+    relationType: CompetencyRelationType;
+}
+
+export interface CompetencyGraphDTO {
+    nodes: CompetencyGraphNodeDTO[];
+    edges?: CompetencyGraphEdgeDTO[];
+}
+
+export enum NodeType {
+    COMPETENCY_START = 'COMPETENCY_START',
+    COMPETENCY_END = 'COMPETENCY_END',
+    MATCH_START = 'MATCH_START',
+    MATCH_END = 'MATCH_END',
+    EXERCISE = 'EXERCISE',
+    LECTURE_UNIT = 'LECTURE_UNIT',
+}

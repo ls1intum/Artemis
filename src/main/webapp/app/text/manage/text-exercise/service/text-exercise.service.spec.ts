@@ -1,0 +1,200 @@
+/**
+ * Test suite for the TextExerciseService.
+ * Tests CRUD operations, plagiarism detection, and tutor effort calculations for text exercises.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { take } from 'rxjs/operators';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
+import dayjs from 'dayjs/esm';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
+
+describe('TextExercise Service', () => {
+    let service: TextExerciseService;
+    let httpMock: HttpTestingController;
+    let elemDefault: TextExercise;
+    let requestResult: any;
+    let plagiarismResults: any;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                SessionStorageService,
+            ],
+        });
+        requestResult = {} as HttpResponse<TextExercise>;
+        service = TestBed.inject(TextExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = new TextExercise(new Course(), undefined);
+        elemDefault.assessmentDueDate = dayjs();
+        elemDefault.dueDate = dayjs();
+        elemDefault.releaseDate = dayjs();
+        elemDefault.studentParticipations = new Array<StudentParticipation>();
+        plagiarismResults = new PlagiarismResult();
+        plagiarismResults.exercise = elemDefault;
+        plagiarismResults.comparisons = [];
+        plagiarismResults.duration = 40;
+        plagiarismResults.similarityDistribution = [4, 10];
+    });
+
+    describe('Service methods', () => {
+        it('should find an element', () => {
+            const returnedFromService = Object.assign({}, elemDefault);
+            service
+                .find(123)
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            expect(requestResult.body).toEqual(elemDefault);
+        });
+
+        it('should create a TextExercise', () => {
+            const returnedFromService = Object.assign({ id: 0 }, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .create(new TextExercise(undefined, undefined))
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(returnedFromService);
+            expect(requestResult.body).toEqual(expected);
+        });
+
+        it('should update a TextExercise', () => {
+            const plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
+            const returnedFromService = Object.assign({}, elemDefault, { exampleSolution: 'BBBBBB', plagiarismDetectionConfig });
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .update(expected)
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
+            req.flush(returnedFromService);
+            expect(requestResult.body).toEqual(expected);
+        });
+
+        it('should return a list of TextExercise', () => {
+            const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .query(expected as unknown as Record<string, unknown>)
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush([returnedFromService]);
+            expect(requestResult.body).toEqual([expected]);
+        });
+
+        it('should delete a TextExercise', () => {
+            service.delete(123).subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'DELETE' });
+            req.flush({ status: 200 });
+            expect(requestResult.status).toBe(200);
+        });
+
+        it('should calculate and return tutor efforts', () => {
+            const exerciseId = 1;
+            const courseId = 1;
+            service.calculateTutorEffort(exerciseId, courseId).subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            const returnedFromService: TutorEffort[] = [
+                {
+                    courseId,
+                    exerciseId,
+                    numberOfSubmissionsAssessed: 1,
+                    totalTimeSpentMinutes: 1,
+                },
+            ];
+            req.flush(returnedFromService);
+            expect(requestResult).toEqual(returnedFromService);
+        });
+
+        it('should import a text exercise', () => {
+            const textExerciseReturned = { ...elemDefault };
+            textExerciseReturned.id = 123;
+            service
+                .import(textExerciseReturned)
+                .pipe(take(1))
+                .subscribe((resp) => {
+                    expect(resp.body).toEqual(textExerciseReturned);
+                });
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(textExerciseReturned);
+        });
+
+        it('should re-evaluate and update a text exercise', () => {
+            const textExerciseReturned = { ...elemDefault };
+            textExerciseReturned.id = 123;
+            service
+                .reevaluateAndUpdate(textExerciseReturned, { deleteFeedback: false })
+                .pipe(take(1))
+                .subscribe((resp) => {
+                    expect(resp.body).toEqual(textExerciseReturned);
+                });
+            const request = httpMock.expectOne({ method: 'PUT' });
+            expect(request.request.params.get('deleteFeedback')).toBe('false');
+            request.flush(textExerciseReturned);
+        });
+
+        it('should check plagiarism', () => {
+            const options = new PlagiarismOptions(5, 3, 3);
+            const expectedReturn = { ...plagiarismResults };
+            service
+                .checkPlagiarism(123, options)
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(expectedReturn);
+            expect(requestResult).toEqual(expectedReturn);
+        });
+
+        it('should get plagiarism result', () => {
+            const expectedReturnValue = { ...plagiarismResults };
+            service
+                .getLatestPlagiarismResult(123)
+                .pipe(take(1))
+                .subscribe((resp) => (requestResult = resp));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(expectedReturnValue);
+            expect(requestResult).toEqual(expectedReturnValue);
+        });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/text/text-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
+    });
+});

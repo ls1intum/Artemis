@@ -1,0 +1,58 @@
+package de.tum.cit.aet.artemis.lti;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+
+class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
+
+    private static final String TEST_PREFIX = "oauth2jwksintegrationtest";
+
+    @Test
+    @WithAnonymousUser
+    void getKeysetIsPublicAndReturnsJson() throws Exception {
+
+        String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
+        JsonMapper objectMapper = JsonObjectMapper.get();
+        JsonNode jsonKeyset = objectMapper.readTree(keyset);
+        assertThat(jsonKeyset.get("keys")).isNotNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getKeysetHasKey() throws Exception {
+        Course course = CourseFactory.generateMinimalCourse();
+        course = courseRepository.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId(TEST_PREFIX + "registrationId");
+        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setAuthorizationUri("authUri");
+        ltiPlatformConfiguration.setTokenUri("tokenUri");
+        ltiPlatformConfiguration.setJwkSetUri("jwkUri");
+
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+        oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
+
+        String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
+        JsonMapper objectMapper = JsonObjectMapper.get();
+        JsonNode jsonKeyset = objectMapper.readTree(keyset);
+
+        assertThat(jsonKeyset).isNotNull();
+        JsonNode keys = jsonKeyset.get("keys");
+        assertThat(keys).isNotNull();
+    }
+}

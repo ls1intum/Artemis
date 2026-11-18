@@ -1,0 +1,984 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
+import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
+import { clone } from 'lodash-es';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import type { Mock } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
+import { NgModel } from '@angular/forms';
+
+/**
+ * Helper function to set up canvas and Image mocks for image processing tests.
+ * @param toDataURLValue - The value that mockCanvas.toDataURL should return
+ * @returns An object with mock objects and cleanup function
+ */
+function setupCanvasAndImageMocks(toDataURLValue: string) {
+    const mockContext = {
+        drawImage: vi.fn(),
+        fillStyle: '',
+        fillRect: vi.fn(),
+    };
+
+    const mockCanvas = {
+        getContext: vi.fn().mockReturnValue(mockContext),
+        toDataURL: vi.fn().mockReturnValue(toDataURLValue),
+        width: 0,
+        height: 0,
+    } as any;
+
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    const originalCreateElement = document.createElement.bind(document);
+    const canvasSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        if (tag === 'canvas') return mockCanvas;
+        return originalCreateElement(tag);
+    });
+
+    const originalImage = globalThis.Image;
+    let imageCallCount = 0;
+    class MockImage {
+        onload: () => void = () => {};
+        private _src: string = '';
+        height: number = 200;
+        width: number = 200;
+        constructor() {
+            imageCallCount++;
+        }
+        get src() {
+            return this._src;
+        }
+        set src(value: string) {
+            this._src = value;
+            setTimeout(() => this.onload(), 0);
+        }
+    }
+    globalThis.Image = MockImage as any;
+
+    return {
+        mockContext,
+        mockCanvas,
+        canvasSpy,
+        originalImage,
+        getImageCallCount: () => imageCallCount,
+        cleanup: () => {
+            canvasSpy.mockRestore();
+            globalThis.Image = originalImage;
+        },
+    };
+}
+
+describe('DragAndDropQuestionEditComponent', () => {
+    let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
+    let component: DragAndDropQuestionEditComponent;
+    let createObjectURLStub: Mock;
+    let questionUpdatedSpy: Mock;
+    let addFileSpy: Mock;
+    let removeFileSpy: Mock;
+
+    const question1 = new DragAndDropQuestion();
+    question1.id = 1;
+    question1.backgroundFilePath = '';
+    const question2 = new DragAndDropQuestion();
+    question2.id = 2;
+    question2.backgroundFilePath = '';
+    const question3 = new DragAndDropQuestion();
+    question3.id = 3;
+    question3.backgroundFilePath = 'this/is/a/fake/path/1/image.jpg';
+    question3.dragItems = [
+        { id: 1, pictureFilePath: 'this/is/a/fake/path/2/image.jpg', text: undefined } as DragItem,
+        { id: 2, pictureFilePath: 'this/is/a/fake/path/3/image.jpg', text: undefined } as DragItem,
+        { id: 3, pictureFilePath: 'this/is/a/fake/path/4/image.jpg', text: undefined } as DragItem,
+    ];
+    const question4 = new DragAndDropQuestion();
+    question4.id = 3;
+    question4.backgroundFilePath = 'this/is/a/fake/path/1/image.jpg';
+    question4.dragItems = [
+        { id: 1, pictureFilePath: undefined, text: 'Text1' } as DragItem,
+        { id: 2, pictureFilePath: undefined, text: 'Text2' } as DragItem,
+        { id: 3, pictureFilePath: undefined, text: 'Text3' } as DragItem,
+    ];
+
+    const createObjectURLBackup = window.URL.createObjectURL;
+
+    beforeAll(() => {
+        window.URL.createObjectURL = vi.fn();
+    });
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .overrideComponent(DragAndDropQuestionEditComponent, {
+                set: {
+                    providers: [MockProvider(ChangeDetectorRef)],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('question', clone(question1));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+            const fileName = obj instanceof File ? obj.name : '';
+            return 'some/client/dependent/path/' + fileName;
+        });
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    afterAll(() => {
+        window.URL.createObjectURL = createObjectURLBackup;
+    });
+
+    it('should initialize', () => {
+        expect(component.backupQuestion).toEqual(question1);
+        expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
+        expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
+    });
+
+    it('should take points with a decimal separator and cut off the fraction after three digits', () => {
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        typeIntoInputNumber(input, '5.5555');
+
+        expect(input.value).toBe('5.555');
+        expect(component.question().points).toBe(5.555);
+    });
+
+    it('should detect changes and update component', () => {
+        fixture.componentRef.setInput('question', clone(question2));
+        fixture.detectChanges();
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.backupQuestion).toEqual(question2);
+    });
+
+    it('should edit question in different ways', () => {
+        const eventUpSpy = vi.spyOn(component.questionMoveUp, 'emit');
+        const eventDownSpy = vi.spyOn(component.questionMoveDown, 'emit');
+        const eventDeleteSpy = vi.spyOn(component.questionDeleted, 'emit');
+
+        component.moveUpQuestion();
+        component.moveDownQuestion();
+        component.deleteQuestion();
+
+        expect(eventUpSpy).toHaveBeenCalledOnce();
+        expect(eventDownSpy).toHaveBeenCalledOnce();
+        expect(eventDeleteSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should only remove its own files from the shared file pool when the question is deleted', () => {
+        // The pool is shared by all drag and drop questions of the quiz and already holds the files of another question.
+        const otherQuestionFiles = new Map<string, { path?: string; file: File }>([
+            ['other-background.png', { file: new File(['bg'], 'other-background.png') }],
+            ['other-item.png', { file: new File(['item'], 'other-item.png') }],
+        ]);
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const newQuestion = new DragAndDropQuestion();
+        newQuestion.dragItems = [];
+        fixture.componentRef.setInput('question', newQuestion);
+        fixture.componentRef.setInput('questionIndex', 2);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', otherQuestionFiles);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should remove the background and drag item files of the deleted question', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const filePool = new Map<string, { path?: string; file: File }>([['other-background.png', { file: new File(['bg'], 'other-background.png') }]]);
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', filePool);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).toHaveBeenCalledTimes(4);
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/1/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/2/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/4/image.jpg');
+        expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
+    });
+
+    it('should realign the click layer of every drag and drop question when the window is resized', () => {
+        const secondFixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        const secondComponent = secondFixture.componentInstance;
+        secondFixture.componentRef.setInput('question', clone(question2));
+        secondFixture.componentRef.setInput('questionIndex', 2);
+        secondFixture.componentRef.setInput('reEvaluationInProgress', false);
+        secondFixture.detectChanges();
+        const firstAdjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+        const secondAdjustSpy = vi.spyOn(secondComponent, 'adjustClickLayerWidth');
+
+        window.dispatchEvent(new Event('resize'));
+
+        // The drop locations are percentages of the click layer, so a layer that keeps its old width makes them drift away from the background image.
+        expect(firstAdjustSpy).toHaveBeenCalledOnce();
+        expect(secondAdjustSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop reacting to window resizes once the question is destroyed', () => {
+        const adjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+
+        fixture.destroy();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(adjustSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set background file', () => {
+        const file1 = { name: 'newFile1.jpg' } as File;
+        const file2 = { name: 'newFile2.png' } as File;
+        const event = { target: { files: [file1, file2] } } as unknown as Event;
+
+        component.setBackgroundFile(event);
+
+        expect(component.question().backgroundFilePath).toMatch(/\.jpg$/);
+        expect(addFileSpy).toHaveBeenCalledOnce();
+        expect(createObjectURLStub).toHaveBeenCalledOnce();
+        expect(createObjectURLStub).toHaveBeenCalledWith(file1);
+    });
+
+    it('should move the mouse in different situations', () => {
+        const event1 = { pageX: 10, pageY: 10 } as any;
+        const event2 = { clientX: -10, clientY: -10 } as any;
+
+        // @ts-ignore
+        component['mouseMoveAction'](event1, 0, 0, 10, 10);
+
+        expect(component.mouse.x).toBe(10);
+        expect(component.mouse.y).toBe(10);
+
+        // MOVE
+        component.mouse.offsetX = 15;
+        component.mouse.offsetY = 15;
+        component.draggingState = DragState.MOVE;
+        const lengthOfElement = 15;
+        component.currentDropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false } as DropLocation;
+
+        // @ts-ignore
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
+
+        expect(component.mouse.x).toBe(0);
+        expect(component.mouse.y).toBe(0);
+        expect(component.currentDropLocation!.posX).toBe(200 - lengthOfElement);
+        expect(component.currentDropLocation!.posY).toBe(200 - lengthOfElement);
+
+        // RESIZE_BOTH
+        component.draggingState = DragState.RESIZE_BOTH;
+        component.mouse.startX = 10;
+        component.mouse.startY = 10;
+
+        // @ts-ignore
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
+
+        expect(component.mouse.x).toBe(0);
+        expect(component.mouse.y).toBe(0);
+        expect(component.currentDropLocation!.posX).toBe(0);
+        expect(component.currentDropLocation!.posY).toBe(0);
+
+        // RESIZE_X
+        component.draggingState = DragState.RESIZE_X;
+        component.mouse.startX = 10;
+
+        fixture.changeDetectorRef.detectChanges();
+        // @ts-ignore
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
+
+        expect(component.currentDropLocation!.posX).toBe(0);
+        expect(component.currentDropLocation!.posY).toBe(0);
+
+        // RESIZE_Y
+        component.draggingState = DragState.RESIZE_Y;
+        component.mouse.startY = 10;
+
+        // @ts-ignore
+        component['mouseMoveAction'](event2, 0, 0, 10, 10);
+
+        expect(component.currentDropLocation!.posX).toBe(0);
+        expect(component.currentDropLocation!.posY).toBe(0);
+    });
+
+    it('should move mouse up', () => {
+        component.draggingState = DragState.MOVE;
+        component.mouseUp();
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.draggingState).toBe(DragState.NONE);
+        expect(component.currentDropLocation).toBeUndefined();
+
+        component.draggingState = DragState.CREATE;
+        const lengthOfElement = 15;
+        const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false } as DropLocation;
+        const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement, invalid: false } as DropLocation;
+        component.currentDropLocation = dropLocation;
+        const q = component.question();
+        q.dropLocations = [dropLocation, alternativeDropLocation];
+        q.correctMappings = undefined;
+
+        component.mouseUp();
+
+        expect(component.draggingState).toBe(DragState.NONE);
+        expect(component.currentDropLocation).toBeUndefined();
+        expect(q.correctMappings).toHaveLength(0);
+        expect(q.dropLocations).toEqual([alternativeDropLocation]);
+    });
+
+    it('should move background mouse down', () => {
+        component.draggingState = DragState.NONE;
+        component.question().backgroundFilePath = 'NeedToGetInThere';
+        const mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 } as any;
+        component.mouse = mouse;
+
+        component.backgroundMouseDown();
+
+        expect(component.currentDropLocation!.posX).toBe(mouse.x);
+        expect(component.currentDropLocation!.posY).toBe(mouse.y);
+        expect(component.currentDropLocation!.width).toBe(0);
+        expect(component.currentDropLocation!.height).toBe(0);
+        expect(component.draggingState).toBe(DragState.CREATE);
+    });
+
+    it('should drop location on mouse down', () => {
+        component.draggingState = DragState.NONE;
+        component.mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 } as any;
+        const dropLocation = new DropLocation();
+        dropLocation.posX = dropLocation.posY = 0;
+        component.dropLocationMouseDown(dropLocation);
+
+        expect(component.mouse.offsetX).toBe(-10);
+        expect(component.mouse.offsetY).toBe(-10);
+        expect(component.currentDropLocation).toEqual(dropLocation);
+        expect(component.draggingState).toBe(DragState.MOVE);
+    });
+
+    it('should drag, drop', () => {
+        component.drag();
+        expect(component.dropAllowed()).toBe(true);
+        component.drop();
+        expect(component.dropAllowed()).toBe(false);
+    });
+
+    it('should duplicate drop location', () => {
+        const dropLocation = { posX: 10, posY: 10, width: 0, height: 0 } as DropLocation;
+        component.question().dropLocations = [];
+
+        component.duplicateDropLocation(dropLocation);
+
+        const duplicatedDropLocation = component.question().dropLocations![0];
+        expect(duplicatedDropLocation.posX).toBe(dropLocation.posX! + 3);
+        expect(duplicatedDropLocation.posY).toBe(dropLocation.posY! + 3);
+        expect(duplicatedDropLocation.width).toBe(0);
+        expect(duplicatedDropLocation.height).toBe(0);
+    });
+
+    it('should resize mouse down', () => {
+        component.draggingState = DragState.NONE;
+        const dropLocation = { posX: 200, posY: 200, width: 0, height: 0 } as DropLocation;
+        // middle, right
+        let resizeLocationY = 'middle';
+        let resizeLocationX = 'right';
+
+        component.resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX);
+
+        expect(component.draggingState).toBe(DragState.RESIZE_X);
+        expect(component.mouse.startX).toBe(0);
+
+        // top, left
+        component.draggingState = DragState.NONE;
+        resizeLocationY = 'top';
+        resizeLocationX = 'left';
+
+        component.resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX);
+
+        expect(component.mouse.startY).toBe(0);
+        expect(component.mouse.startX).toBe(0);
+
+        // bottom, center
+        component.draggingState = DragState.NONE;
+        resizeLocationY = 'bottom';
+        resizeLocationX = 'center';
+
+        component.resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX);
+
+        expect(component.mouse.startY).toBe(0);
+        expect(component.draggingState).toBe(DragState.RESIZE_Y);
+    });
+
+    it('should add text item', () => {
+        component.addTextDragItem();
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.question().dragItems).toHaveLength(1);
+        const newDragItemOfQuestion = component.question().dragItems![0];
+        expect(newDragItemOfQuestion.text).toBe('Text');
+        expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
+        expect(component.filePreviewPaths().size).toBe(0);
+        expect(addFileSpy).not.toHaveBeenCalled();
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('should show and clear text overflow errors during re-evaluation: %s', async (reEvaluationInProgress) => {
+        const question = new DragAndDropQuestion();
+        question.dragItems = [{ text: 'a'.repeat(255), invalid: false }];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
+        const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
+        const model = textareaElement.injector.get(NgModel);
+        const counter: HTMLElement = fixture.nativeElement.querySelector('[data-testid="drag-item-character-count"]');
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(model.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+
+        textarea.value += 'b';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('256/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(true);
+        expect(model.hasError('customMaxLength')).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255) + 'b');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+        expect(textarea.getAttribute('aria-describedby')).toBe('drag-item-text-limit-1-0');
+
+        textarea.value = 'a'.repeat(255);
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(model.valid).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255));
+        expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(false);
+
+        textarea.value = 'Short item';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(question.dragItems![0].text).toBe('Short item');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('10/255');
+
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('0/255');
+    });
+
+    it('should create image item', () => {
+        const extension = 'png';
+        const fileName = 'testFile.' + extension;
+        const expectedPath = 'some/client/dependent/path/' + fileName;
+        const file = new File([], fileName);
+        const input = { files: [file], value: fileName };
+
+        component.createImageDragItem({ target: input } as unknown as Event);
+
+        expect(component.question().dragItems).toHaveLength(1);
+        const newDragItemOfQuestion = component.question().dragItems![0];
+        expect(newDragItemOfQuestion.text).toBeUndefined();
+        expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
+        expect(newDragItemOfQuestion.pictureFilePath).toMatch(/\.png$/);
+        const filePath = newDragItemOfQuestion.pictureFilePath!;
+        expect(component.filePreviewPaths().size).toBe(1);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
+        expect(addFileSpy).toHaveBeenCalledOnce();
+        expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
+        expect(removeFileSpy).not.toHaveBeenCalled();
+        expect(input.value).toBe('');
+    });
+
+    it('should delete drag item', () => {
+        const item = new DragItem();
+        const newItem = new DragItem();
+        const mapping = new DragAndDropMapping(newItem, new DropLocation());
+        const q = component.question();
+        q.dragItems = [item];
+        q.correctMappings = [mapping];
+
+        component.deleteDragItem(item);
+
+        expect(q.dragItems).toHaveLength(0);
+        expect(q.correctMappings).toEqual([mapping]);
+    });
+
+    it('should delete mapping', () => {
+        const item = new DragItem();
+        const location = new DropLocation();
+        const mapping = new DragAndDropMapping(item, location);
+        const q = component.question();
+        q.correctMappings = [mapping];
+
+        component.deleteMapping(mapping);
+
+        expect(q.correctMappings).toHaveLength(0);
+    });
+
+    it('should drop a drag item on a drop location', () => {
+        const location = new DropLocation();
+        const item = new DragItem();
+        item.id = 2;
+        location.id = 2;
+        const q = component.question();
+        q.dragItems = [item];
+        const mapping = new DragAndDropMapping(item, location);
+        q.correctMappings = [mapping];
+        const alternativeLocation = new DropLocation();
+        const alternativeItem = new DragItem();
+        alternativeLocation.id = 3;
+        alternativeItem.id = 3;
+        const event = { item: { data: alternativeItem } } as CdkDragDrop<DragItem, DragItem>;
+        const expectedMapping = new DragAndDropMapping(alternativeItem, alternativeLocation);
+        q.dragItems = [item, alternativeItem];
+
+        component.onDragDrop(alternativeLocation, event);
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(q.correctMappings).toEqual([mapping, expectedMapping]);
+    });
+
+    it('should get mapping index for mapping', () => {
+        const item1 = new DragItem();
+        const item2 = new DragItem();
+        const item3 = new DragItem();
+        const item4 = new DragItem();
+        const location1 = new DropLocation();
+        const location2 = new DropLocation();
+        const location3 = new DropLocation();
+        const location4 = new DropLocation();
+        const mapping1 = new DragAndDropMapping(item1, location1);
+        const mapping2 = new DragAndDropMapping(item2, location2);
+        const mapping3 = new DragAndDropMapping(item3, location3);
+        const mapping4 = new DragAndDropMapping(item4, location4); // unused mapping
+        const q = component.question();
+        q.correctMappings = [mapping1, mapping2, mapping3];
+
+        expect(component.getMappingIndex(mapping1)).toBe(1);
+        expect(component.getMappingIndex(mapping2)).toBe(2);
+        expect(component.getMappingIndex(mapping3)).toBe(3);
+        expect(component.getMappingIndex(mapping4)).toBe(0);
+    });
+
+    it('should get mappings for drop location', () => {
+        const item = new DragItem();
+        const location = new DropLocation();
+        const mapping = new DragAndDropMapping(item, location);
+        const q = component.question();
+        q.correctMappings = [mapping];
+
+        expect(component.getMappingsForDropLocation(location)).toEqual([mapping]);
+    });
+
+    it('should get mappings for drag item', () => {
+        const item = new DragItem();
+        const location = new DropLocation();
+        const mapping = new DragAndDropMapping(item, location);
+        const q = component.question();
+        q.correctMappings = [mapping];
+
+        expect(component.getMappingsForDragItem(item)).toEqual([mapping]);
+    });
+
+    it('should change picture drag item to text drag item', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.changeDetectorRef.detectChanges();
+
+        component.changeToTextDragItem(component.question().dragItems![1]);
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.filePreviewPaths().size).toBe(3);
+        expect(addFileSpy).not.toHaveBeenCalled();
+        expect(removeFileSpy).toHaveBeenCalledOnce();
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(component.question().dragItems![0]).toMatchObject({
+            id: 1,
+            pictureFilePath: 'this/is/a/fake/path/2/image.jpg',
+            text: undefined,
+        });
+        expect(component.question().dragItems![1]).toMatchObject({
+            id: 2,
+            pictureFilePath: undefined,
+            text: 'Text',
+        });
+        expect(component.question().dragItems![2]).toMatchObject({
+            id: 3,
+            pictureFilePath: 'this/is/a/fake/path/4/image.jpg',
+            text: undefined,
+        });
+    });
+
+    it('should change text drag item to picture drag item', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('question', clone(question4));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+        addFileSpy = vi.spyOn(component.addNewFile, 'emit');
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.changeDetectorRef.detectChanges();
+
+        const extension = 'png';
+        const fileName = 'testFile.' + extension;
+        const expectedPath = 'some/client/dependent/path/' + fileName;
+        const file = new File([], fileName);
+
+        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } } as unknown as Event);
+
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+        expect(component.question().dragItems![0]).toMatchObject({
+            id: 1,
+            pictureFilePath: undefined,
+            text: 'Text1',
+        });
+        expect(component.question().dragItems![2]).toMatchObject({
+            id: 3,
+            pictureFilePath: undefined,
+            text: 'Text3',
+        });
+        expect(component.question().dragItems![1].text).toBeUndefined();
+        expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
+        expect(component.question().dragItems![1].pictureFilePath).toMatch(/\.png$/);
+        const filePath = component.question().dragItems![1].pictureFilePath!;
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
+        expect(addFileSpy).toHaveBeenCalledOnce();
+        expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should change question title', () => {
+        const title = 'backupQuestionTitle';
+        const q = new DragAndDropQuestion();
+        q.title = 'alternativeBackupQuestionTitle';
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.title = title;
+
+        component.resetQuestionTitle();
+
+        expect(component.question().title).toBe(title);
+    });
+
+    it('should reset question', () => {
+        const title = 'backupQuestionTitle';
+        const dropLocation = new DropLocation();
+        const item = new DragItem();
+        const currentQuestion = new DragAndDropQuestion();
+        currentQuestion.title = 'alternativeBackupQuestionTitle';
+        fixture.componentRef.setInput('question', currentQuestion);
+        fixture.changeDetectorRef.detectChanges();
+
+        const backupQuestion = {
+            type: 'drag-and-drop',
+            randomizeOrder: false,
+            invalid: true,
+            exportQuiz: false,
+            title,
+            dropLocations: [dropLocation],
+            dragItems: [item],
+            correctMappings: [],
+            backgroundFilePath: 'filepath',
+            text: 'newText',
+            explanation: 'explanation',
+            hint: 'hint',
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        } as DragAndDropQuestion;
+        component.backupQuestion = backupQuestion;
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
+
+        component.resetQuestion();
+
+        expect(component.question()).toEqual(backupQuestion);
+        // without this the parent keeps the pre-reset validity and calls a restored question invalid
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the parent after resetting the question text', () => {
+        const currentQuestion = new DragAndDropQuestion();
+        currentQuestion.text = 'edited text';
+        fixture.componentRef.setInput('question', currentQuestion);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.text = 'backupText';
+        fixture.detectChanges();
+        questionUpdatedSpy.mockClear();
+
+        component.resetQuestionText();
+
+        expect(component.question().text).toBe('backupText');
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should reset drag item', () => {
+        const firstItem = new DragItem();
+        firstItem.id = 404;
+        firstItem.invalid = true;
+        const secondItem = new DragItem();
+        secondItem.id = 404;
+        secondItem.invalid = false;
+        const q = new DragAndDropQuestion();
+        q.dragItems = [new DragItem(), new DragItem(), firstItem, new DragItem()];
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.dragItems = [secondItem];
+
+        component.resetDragItem(firstItem);
+
+        expect(component.question().dragItems![2].invalid).toBe(false);
+    });
+
+    it('should reset drop location', () => {
+        const firstItem = new DropLocation();
+        firstItem.id = 404;
+        firstItem.invalid = true;
+        const secondItem = new DropLocation();
+        secondItem.id = 404;
+        secondItem.invalid = false;
+        const q = new DragAndDropQuestion();
+        q.dropLocations = [new DropLocation(), new DropLocation(), firstItem, new DropLocation()];
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+        component.backupQuestion = new DragAndDropQuestion();
+        component.backupQuestion.dropLocations = [secondItem];
+
+        component.resetDropLocation(firstItem);
+
+        expect(component.question().dropLocations![2].invalid).toBe(false);
+    });
+
+    it('should toggle preview', () => {
+        component.showPreview.set(true);
+        const q = new DragAndDropQuestion();
+        q.text = 'should be removed';
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.togglePreview();
+
+        expect(component.showPreview()).toBe(false);
+        expect(component.question().text).toBeUndefined();
+    });
+
+    it('should detect changes in markdown and edit accordingly', () => {
+        const q = new DragAndDropQuestion();
+        q.text = 'should be removed';
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+
+        const newValue = 'new value';
+        const initialCalls = questionUpdatedSpy.mock.calls.length;
+        component.changesInMarkdown(newValue);
+
+        expect(questionUpdatedSpy).toHaveBeenCalledTimes(initialCalls + 1);
+        expect(component.question().text).toBeUndefined();
+        expect(component.questionEditorText()).toBe(newValue);
+    });
+
+    it('should detect domain actions', () => {
+        const q = new DragAndDropQuestion();
+        q.text = 'text';
+        q.explanation = 'explanation';
+        q.hint = 'hint';
+        fixture.componentRef.setInput('question', q);
+        fixture.changeDetectorRef.detectChanges();
+        let textWithDomainAction: TextWithDomainAction;
+
+        // explanation
+        let action = new QuizExplanationAction();
+        let text = 'take this as an explanationCommand';
+        textWithDomainAction = { text, action };
+
+        component.domainActionsFound([textWithDomainAction]);
+
+        expect(component.question().explanation).toBe(text);
+
+        // hint
+        action = new QuizHintAction();
+        text = 'take this as a hintCommand';
+        textWithDomainAction = { text, action };
+
+        component.domainActionsFound([textWithDomainAction]);
+
+        expect(component.question().hint).toBe(text);
+
+        // text
+        text = 'take this null as a command';
+        textWithDomainAction = { text, action: undefined };
+
+        component.domainActionsFound([textWithDomainAction]);
+
+        expect(component.question().text).toBe(text);
+    });
+
+    it('should get images from drop locations', async () => {
+        const dragAndDropQuestion = component.question();
+        dragAndDropQuestion.backgroundFilePath = 'bg.png';
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
+        dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+        dragAndDropQuestion.correctMappings = [];
+        dragAndDropQuestion.dragItems = [];
+
+        const { mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,cropped');
+
+        const createImageDragItemSpy = vi.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
+            const dragItem = new DragItem();
+            dragItem.pictureFilePath = file.name;
+            dragAndDropQuestion.dragItems!.push(dragItem);
+            return dragItem;
+        });
+
+        const blankOutSpy = vi.spyOn(component, 'blankOutBackgroundImage').mockImplementation(() => {});
+
+        component.getImagesFromDropLocations();
+
+        await vi.waitFor(() => {
+            expect(dragAndDropQuestion.dragItems).toHaveLength(2);
+        });
+
+        expect(getImageCallCount()).toBe(2);
+        expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
+        expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
+        expect(dragAndDropQuestion.dragItems).toHaveLength(2);
+        expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
+        expect(blankOutSpy).toHaveBeenCalledOnce();
+
+        cleanup();
+    });
+
+    it('should add the imported background and drag item pictures as new files', () => {
+        const question = component.question();
+        question.backgroundFilePath = 'background.png';
+        const dragItem = new DragItem();
+        dragItem.pictureFilePath = 'item.png';
+        question.dragItems = [dragItem];
+        question.importedFiles = new Map([
+            ['background.png', new Blob(['background'])],
+            ['item.png', new Blob(['item'])],
+        ]);
+        addFileSpy.mockClear();
+
+        component.ngOnInit();
+
+        expect(addFileSpy).toHaveBeenCalledTimes(2);
+        // The files get fresh names, so the server stores them as new files instead of reusing those of the source exercise.
+        expect(question.backgroundFilePath).not.toBe('background.png');
+        expect(dragItem.pictureFilePath).not.toBe('item.png');
+        expect(addFileSpy).toHaveBeenCalledWith({ fileName: question.backgroundFilePath, file: expect.any(File) });
+        expect(addFileSpy).toHaveBeenCalledWith({ fileName: dragItem.pictureFilePath, file: expect.any(File) });
+    });
+
+    it('should blank out background image', async () => {
+        const dragAndDropQuestion = component.question();
+        dragAndDropQuestion.backgroundFilePath = 'bg.png';
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
+        dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+
+        const { mockContext, mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,blanked');
+
+        const setBackgroundSpy = vi.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
+
+        component.blankOutBackgroundImage();
+
+        await vi.waitFor(() => {
+            expect(setBackgroundSpy).toHaveBeenCalledOnce();
+        });
+
+        expect(getImageCallCount()).toBe(1);
+        expect(mockContext.drawImage).toHaveBeenCalledOnce();
+        expect(mockContext.fillStyle).toBe('white');
+        expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
+        expect(mockCanvas.toDataURL).toHaveBeenCalledOnce();
+        expect(setBackgroundSpy).toHaveBeenCalledOnce();
+        expect(setBackgroundSpy).toHaveBeenCalledWith(expect.any(File));
+
+        cleanup();
+    });
+
+    it('should convert data url to blob', () => {
+        const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+
+        const blob = component.dataUrlToBlob(dataUrl);
+
+        expect(blob).toBeInstanceOf(Blob);
+        expect(blob.type).toBe('image/png');
+        expect(blob.size).toBeGreaterThan(0);
+    });
+
+    it('should convert data url to file', () => {
+        const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+        const fileName = 'test.png';
+
+        const file = component.dataUrlToFile(dataUrl, fileName);
+
+        expect(file).toBeInstanceOf(File);
+        expect(file.name).toBe(fileName);
+        expect(file.type).toBe('image/png');
+        expect(file.size).toBeGreaterThan(0);
+    });
+});

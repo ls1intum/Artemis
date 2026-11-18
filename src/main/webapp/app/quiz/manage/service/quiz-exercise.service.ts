@@ -1,0 +1,269 @@
+import { Service, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
+import { FileService } from 'app/foundation/service/file.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { QuizExerciseRetrievalApi } from 'app/openapi/api/quiz-exercise-retrieval-api';
+import { QuizStatisticsApi } from 'app/openapi/api/quiz-statistics-api';
+import {
+    toQuizExercise,
+    toQuizExerciseFromListRow,
+    toQuizPointStatistics,
+    toQuizQuestionStatistic,
+    toQuizStatisticsOverview,
+} from 'app/quiz/shared/util/generated-quiz-exercise.util';
+import { toUpdateQuizExercise } from 'app/quiz/shared/util/quiz-exercise-update-request.util';
+import { toNamedFiles, toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
+import { QuizExerciseCreationUpdateApi } from 'app/openapi/api/quiz-exercise-creation-update-api';
+import { QuizExerciseDetails } from 'app/openapi/model/quiz-exercise-details';
+import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
+
+@Service()
+export class QuizExerciseService {
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
+    private accountService = inject(AccountService);
+    private quizExerciseRetrievalApi = inject(QuizExerciseRetrievalApi);
+    private quizStatisticsApi = inject(QuizStatisticsApi);
+    private quizExerciseCreationUpdateApi = inject(QuizExerciseCreationUpdateApi);
+
+    /**
+     * Create the given quiz exercise
+     * @param quizExercise the quiz exercise that should be created
+     * @param files the files that should be uploaded, keyed by the file name the questions reference
+     */
+    create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<QuizExercise> {
+        const exercise = toQuizExerciseCreate(quizExercise);
+        const namedFiles = toNamedFiles(files);
+        let request: Observable<QuizExerciseDetails>;
+        if (quizExercise.exerciseGroup?.id) {
+            request = this.quizExerciseCreationUpdateApi.createExamQuizExercise(quizExercise.exerciseGroup.id, exercise, namedFiles);
+        } else if (quizExercise.course?.id) {
+            request = this.quizExerciseCreationUpdateApi.createCourseQuizExercise(quizExercise.course.id, exercise, namedFiles);
+        } else {
+            throw new Error('Quiz exercise must belong to a course or an exercise group');
+        }
+        return request.pipe(map((created) => this.prepareForClient(toQuizExercise(created))));
+    }
+
+    /**
+     * Update the given quiz exercise
+     * @param id the id of the quiz exercise that should be updated
+     * @param quizExercise the quiz exercise that should be updated
+     * @param files the files that should be uploaded, keyed by the file name the questions reference
+     * @param notificationText the text students are notified with, if any
+     */
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, notificationText?: string): Observable<QuizExercise> {
+        return this.quizExerciseCreationUpdateApi
+            .updateQuizExercise(id, toUpdateQuizExercise(quizExercise), notificationText, toNamedFiles(files))
+            .pipe(map((updated) => this.prepareForClient(toQuizExercise(updated))));
+    }
+
+    /**
+     * Find the quiz exercise with the given id, with the full question graph an instructor edits
+     * @param quizExerciseId the id of the quiz exercise that should be found
+     */
+    find(quizExerciseId: number): Observable<QuizExercise> {
+        return this.quizExerciseRetrievalApi.getQuizExercise(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
+    }
+
+    /**
+     * Find the management details of an exam quiz exercise, converted like the course details
+     * @param quizExerciseId the id of the exam quiz exercise that should be found
+     */
+    findForExam(quizExerciseId: number): Observable<QuizExercise> {
+        return this.quizExerciseRetrievalApi.getQuizExerciseForExam(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
+    }
+
+    /**
+     * Loads the calculated overview statistics for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise overview and its calculated statistics
+     */
+    findStatisticsOverview(quizExerciseId: number): Observable<QuizStatisticsOverviewResponse> {
+        return this.quizStatisticsApi.getQuizStatisticsOverview(quizExerciseId).pipe(map((overview) => this.prepareForClient(toQuizStatisticsOverview(overview))));
+    }
+
+    /**
+     * Loads the calculated point distribution for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise and its calculated point distribution
+     */
+    findPointStatistic(quizExerciseId: number): Observable<QuizPointStatisticsResponse> {
+        return this.quizStatisticsApi.getQuizPointStatistic(quizExerciseId).pipe(map((pointStatistics) => this.prepareForClient(toQuizPointStatistics(pointStatistics))));
+    }
+
+    /**
+     * Loads the calculated statistic for one question in a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param questionId the ID of the quiz question
+     * @return the quiz exercise, question, and calculated question statistic
+     */
+    findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuizQuestionStatisticResponse> {
+        return this.quizStatisticsApi
+            .getQuizQuestionStatistic(quizExerciseId, questionId)
+            .pipe(map((questionStatistic) => this.prepareForClient(toQuizQuestionStatistic(questionStatistic))));
+    }
+
+    /**
+     * Note: the exercises in the response do not contain participations, the course or questions, to save network bandwidth
+     *
+     * @param courseId the course for which the quiz exercises should be returned
+     */
+    findForCourse(courseId: number): Observable<QuizExercise[]> {
+        return this.quizExerciseRetrievalApi
+            .getQuizExercisesForCourse(courseId)
+            .pipe(map((exercises) => exercises.map((exercise) => this.prepareForClient(toQuizExerciseFromListRow(exercise)))));
+    }
+
+    /**
+     * Note: the exercises in the response do not contain participations, the course, the exercise group or questions, to
+     * save network bandwidth
+     *
+     * @param examId the exam for which the quiz exercises should be returned
+     */
+    findAllForExam(examId: number): Observable<QuizExercise[]> {
+        return this.quizExerciseRetrievalApi
+            .getQuizExercisesForExam(examId)
+            .pipe(map((exercises) => exercises.map((exercise) => this.prepareForClient(toQuizExerciseFromListRow(exercise)))));
+    }
+
+    /**
+     * Find the quiz exercise with the given id, with as much of the question graph as the quiz state lets a student see
+     * @param quizExerciseId the id of the quiz exercise that should be loaded
+     */
+    findForStudent(quizExerciseId: number): Observable<QuizExercise> {
+        return this.quizExerciseRetrievalApi.getQuizExerciseForStudent(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
+    }
+
+    /**
+     * Exports given quiz questions into json file
+     * @param quizQuestions Quiz questions we want to export
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     * @param fileName Name (without ending) of the resulting file, defaults to 'quiz'
+     */
+    exportQuiz(quizQuestions?: QuizQuestion[], exportAll?: boolean, fileName?: string) {
+        // Make list of questions which we need to export,
+        const questions: QuizQuestion[] = [];
+
+        quizQuestions!.forEach((question) => {
+            if (exportAll === true || question.exportQuiz) {
+                question.exercise = undefined;
+                questions.push(question);
+            }
+        });
+        if (questions.length === 0) {
+            return;
+        }
+        this.exportAssetsFromAllQuestions(questions, fileName ?? 'quiz');
+    }
+
+    /**
+     * Exports assets (images) embedded in the markdown and from drag and drop exercises
+     * @param questions list of questions which will be exported
+     * @param fileName name of the output zip file
+     */
+    exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
+        const zip: ZipBuilder = new ZipBuilder();
+        const filePromises: Promise<void | File>[] = [];
+        const quizJson = JSON.stringify(questions);
+        const blob = new Blob([quizJson], { type: 'application/json' });
+        questions.forEach((question, questionIndex) => {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                if ((question as DragAndDropQuestion).backgroundFilePath) {
+                    const filePath = (question as DragAndDropQuestion).backgroundFilePath!;
+                    const fileNameExtension = filePath.split('.').last();
+                    filePromises.push(this.fetchFilePromise(`q${questionIndex}_background.${fileNameExtension}`, zip, filePath));
+                }
+                if ((question as DragAndDropQuestion).dragItems) {
+                    (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
+                        if (dragItem.pictureFilePath) {
+                            const filePath = dragItem.pictureFilePath;
+                            const fileNameExtension = filePath.split('.').last();
+                            // A drag item picture is stored under its filename alone, so the question-scoped path it is served under has to be assembled from the two ids.
+                            const downloadPath =
+                                question.id !== undefined && dragItem.id !== undefined
+                                    ? `drag-and-drop/questions/${question.id}/drag-items/${dragItem.id}/${filePath.substring(filePath.lastIndexOf('/') + 1)}`
+                                    : filePath;
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, downloadPath));
+                        }
+                    });
+                }
+            }
+            this.findImagesInMarkdown(JSON.stringify(question)).forEach((embeddedImage) => {
+                filePromises.push(this.fetchFilePromise(`q${questionIndex}_${embeddedImage[1]}`, zip, embeddedImage[2]));
+            });
+        });
+        if (filePromises.length === 0) {
+            downloadFile(blob, (fileName ?? 'quiz') + '.json');
+            return;
+        }
+        zip.file((fileName ?? 'quiz') + '.json', blob);
+        downloadZipFromFilePromises(zip, filePromises, fileName);
+    }
+
+    findImagesInMarkdown(description: string) {
+        // Will return all matches of ![file_name](path), will group file_name and path
+        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+        return [...description.matchAll(embeddedImageRegex)];
+    }
+
+    /**
+     * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
+     * @param fileName the name of the file to be zipped
+     * @param zip a ZipBuilder instance
+     * @param filePath the internal path of the file to be fetched
+     */
+    async fetchFilePromise(fileName: string, zip: ZipBuilder, filePath: string) {
+        return this.fileService
+            .getFile(filePath)
+            .then((fileResult) => {
+                zip.file(fileName, fileResult);
+            })
+            .catch((error) => {
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched` + error);
+            });
+    }
+
+    /**
+     * Evaluates the QuizStatus for a given quiz
+     *
+     * @param quizExercise the quiz exercise to get the status of
+     * @return the status of the quiz
+     */
+    getStatus(quizExercise: QuizExercise) {
+        if (!quizExercise.visibleToStudents) {
+            return QuizStatus.INVISIBLE;
+        }
+        if (quizExercise.quizEnded) {
+            return QuizStatus.OPEN_FOR_PRACTICE;
+        }
+        if (quizExercise.quizBatches && quizExercise.quizBatches.some((batch) => batch.started)) {
+            return QuizStatus.ACTIVE;
+        }
+        return QuizStatus.VISIBLE;
+    }
+
+    /**
+     * Applies the client-side preparation every loaded exercise receives, whatever its type: parsed categories, the
+     * current user's access rights, and the title the breadcrumbs show.
+     *
+     * @param quizExercise the converted exercise
+     * @returns the same exercise, prepared
+     */
+    private prepareForClient<T extends Omit<QuizExercise, 'quizQuestions'>>(quizExercise: T): T {
+        ExerciseService.parseExerciseCategories(quizExercise);
+        this.accountService.setAccessRightsForExerciseAndReferencedCourse(quizExercise);
+        this.exerciseService.sendExerciseTitleToTitleService(quizExercise);
+        return quizExercise;
+    }
+}

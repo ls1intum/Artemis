@@ -1,0 +1,639 @@
+{
+  "version": "3.0.0",
+  "type": "ComponentDiagram",
+  "size": {
+    "width": 1860,
+    "height": 660
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "51ba313e-a5d0-46b6-8d4f-377259960275": {
+      "id": "51ba313e-a5d0-46b6-8d4f-377259960275",
+      "name": "View",
+      "type": "Component",
+      "owner": null,
+      "bounds": {
+        "x": 1360,
+        "y": 0,
+        "width": 380,
+        "height": 280
+      }
+    },
+    "1016dcfd-67b7-4c8b-9fad-94452a261fae": {
+      "id": "1016dcfd-67b7-4c8b-9fad-94452a261fae",
+      "name": "GameView",
+      "type": "Component",
+      "owner": "51ba313e-a5d0-46b6-8d4f-377259960275",
+      "bounds": {
+        "x": 1450,
+        "y": 119,
+        "width": 200,
+        "height": 100
+      }
+    },
+    "04f0a555-9af1-4b83-b4f7-a8e82417dee0": {
+      "id": "04f0a555-9af1-4b83-b4f7-a8e82417dee0",
+      "name": "Model",
+      "type": "Component",
+      "owner": null,
+      "bounds": {
+        "x": 700,
+        "y": 10,
+        "width": 600,
+        "height": 560
+      }
+    },
+    "a2574389-9ca2-457e-846d-0149706b4af6": {
+      "id": "a2574389-9ca2-457e-846d-0149706b4af6",
+      "name": "Driving Service",
+      "type": "ComponentInterface",
+      "owner": "04f0a555-9af1-4b83-b4f7-a8e82417dee0",
+      "bounds": {
+        "x": 820,
+        "y": 310,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "32c3620c-4340-4f22-8dc4-fd6678c4576c": {
+      "id": "32c3620c-4340-4f22-8dc4-fd6678c4576c",
+      "name": "Car",
+      "type": "Component",
+      "owner": "04f0a555-9af1-4b83-b4f7-a8e82417dee0",
+      "bounds": {
+        "x": 1010,
+        "y": 302,
+        "width": 160,
+        "height": 40
+      }
+    },
+    "acc92bda-1378-4c27-9000-101929eb9d59": {
+      "id": "acc92bda-1378-4c27-9000-101929eb9d59",
+      "name": "Position Service",
+      "type": "ComponentInterface",
+      "owner": "04f0a555-9af1-4b83-b4f7-a8e82417dee0",
+      "bounds": {
+        "x": 1080,
+        "y": 160,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5": {
+      "id": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "name": "Controller",
+      "type": "Component",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 570
+      }
+    },
+    "d713af95-f5ba-400c-90b0-32cd2899eef9": {
+      "id": "d713af95-f5ba-400c-90b0-32cd2899eef9",
+      "name": "Mousesteering",
+      "type": "Component",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 290,
+        "y": 350,
+        "width": 200,
+        "height": 100
+      }
+    },
+    "53b61479-14ab-49dd-af0b-c73dd1b3c0b4": {
+      "id": "53b61479-14ab-49dd-af0b-c73dd1b3c0b4",
+      "name": "GameBoard",
+      "type": "Component",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 30,
+        "y": 270,
+        "width": 200,
+        "height": 100
+      }
+    },
+    "314f5494-0eee-450d-a242-764c84f96cda": {
+      "id": "314f5494-0eee-450d-a242-764c84f96cda",
+      "name": "AudioPlayer",
+      "type": "Component",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 30,
+        "y": 20,
+        "width": 200,
+        "height": 100
+      }
+    },
+    "1154e431-36dc-40fa-9162-072fa5e7ff87": {
+      "id": "1154e431-36dc-40fa-9162-072fa5e7ff87",
+      "name": "Music Service",
+      "type": "ComponentInterface",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 120,
+        "y": 160,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c": {
+      "id": "e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c",
+      "name": "Collision",
+      "type": "Component",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 340,
+        "y": 40,
+        "width": 200,
+        "height": 100
+      }
+    },
+    "ab02bf60-0ca9-46d3-bc5b-6f46a19306df": {
+      "id": "ab02bf60-0ca9-46d3-bc5b-6f46a19306df",
+      "name": "Collision Detection Service",
+      "type": "ComponentInterface",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 430,
+        "y": 210,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "b6c62b90-3bf0-4219-801e-a3191d6d3434": {
+      "id": "b6c62b90-3bf0-4219-801e-a3191d6d3434",
+      "name": "Game Setup",
+      "type": "ComponentInterface",
+      "owner": "da4b78da-8871-42a7-9bd3-ee9b4a4f4db5",
+      "bounds": {
+        "x": 120,
+        "y": 479,
+        "width": 20,
+        "height": 20
+      }
+    }
+  },
+  "relationships": {
+    "f2ca2746-1d6d-4caf-bca8-41c001736936": {
+      "id": "f2ca2746-1d6d-4caf-bca8-41c001736936",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 490,
+        "y": 330,
+        "width": 340,
+        "height": 70
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 70
+        },
+        {
+          "x": 340,
+          "y": 70
+        },
+        {
+          "x": 340,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "d713af95-f5ba-400c-90b0-32cd2899eef9"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "a2574389-9ca2-457e-846d-0149706b4af6"
+      }
+    },
+    "46751f1b-7e9b-40b7-8ed5-e206322868c7": {
+      "id": "46751f1b-7e9b-40b7-8ed5-e206322868c7",
+      "name": "",
+      "type": "ComponentInterfaceProvided",
+      "owner": null,
+      "bounds": {
+        "x": 130,
+        "y": 120,
+        "width": 1,
+        "height": 40
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "314f5494-0eee-450d-a242-764c84f96cda"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "1154e431-36dc-40fa-9162-072fa5e7ff87"
+      }
+    },
+    "5b0e39db-dd7f-4268-b95d-68507bf5eccb": {
+      "id": "5b0e39db-dd7f-4268-b95d-68507bf5eccb",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 130,
+        "y": 180,
+        "width": 1,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 90
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "53b61479-14ab-49dd-af0b-c73dd1b3c0b4"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "1154e431-36dc-40fa-9162-072fa5e7ff87"
+      }
+    },
+    "a12eadea-8b91-4c2b-b78f-6949ec85fd89": {
+      "id": "a12eadea-8b91-4c2b-b78f-6949ec85fd89",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 230,
+        "width": 210,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 90
+        },
+        {
+          "x": 210,
+          "y": 90
+        },
+        {
+          "x": 210,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "53b61479-14ab-49dd-af0b-c73dd1b3c0b4"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "ab02bf60-0ca9-46d3-bc5b-6f46a19306df"
+      }
+    },
+    "f84e1970-3414-4cb5-99a7-3c4cc18bc3b8": {
+      "id": "f84e1970-3414-4cb5-99a7-3c4cc18bc3b8",
+      "name": "",
+      "type": "ComponentInterfaceProvided",
+      "owner": null,
+      "bounds": {
+        "x": 440,
+        "y": 140,
+        "width": 1,
+        "height": 70
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 30
+        },
+        {
+          "x": 0,
+          "y": 70
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "ab02bf60-0ca9-46d3-bc5b-6f46a19306df"
+      }
+    },
+    "d7679b5a-141b-4c23-a5be-6cc2a147bb98": {
+      "id": "d7679b5a-141b-4c23-a5be-6cc2a147bb98",
+      "name": "",
+      "type": "ComponentInterfaceProvided",
+      "owner": null,
+      "bounds": {
+        "x": 130,
+        "y": 370,
+        "width": 1,
+        "height": 109
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 109
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "b6c62b90-3bf0-4219-801e-a3191d6d3434"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "53b61479-14ab-49dd-af0b-c73dd1b3c0b4"
+      }
+    },
+    "aa660bd3-7f48-4f14-8895-999e472e2984": {
+      "id": "aa660bd3-7f48-4f14-8895-999e472e2984",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 130,
+        "y": 169,
+        "width": 1560,
+        "height": 370
+      },
+      "path": [
+        {
+          "x": 1520,
+          "y": 0
+        },
+        {
+          "x": 1560,
+          "y": 0
+        },
+        {
+          "x": 1560,
+          "y": 370
+        },
+        {
+          "x": 0,
+          "y": 370
+        },
+        {
+          "x": 0,
+          "y": 330
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "1016dcfd-67b7-4c8b-9fad-94452a261fae"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "b6c62b90-3bf0-4219-801e-a3191d6d3434"
+      }
+    },
+    "63004c15-7edf-4fb2-be04-d2fcfa00d95c": {
+      "id": "63004c15-7edf-4fb2-be04-d2fcfa00d95c",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 320,
+        "width": 590,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 590,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "53b61479-14ab-49dd-af0b-c73dd1b3c0b4"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "a2574389-9ca2-457e-846d-0149706b4af6"
+      }
+    },
+    "94d3aace-82de-440b-b936-9d939d77ec73": {
+      "id": "94d3aace-82de-440b-b936-9d939d77ec73",
+      "name": "",
+      "type": "ComponentInterfaceProvided",
+      "owner": null,
+      "bounds": {
+        "x": 840,
+        "y": 320,
+        "width": 170,
+        "height": 2
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 85,
+          "y": 0
+        },
+        {
+          "x": 85,
+          "y": 2
+        },
+        {
+          "x": 170,
+          "y": 2
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "a2574389-9ca2-457e-846d-0149706b4af6"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "32c3620c-4340-4f22-8dc4-fd6678c4576c"
+      }
+    },
+    "1bf5cb12-5a18-4c27-8343-8d4823136ae7": {
+      "id": "1bf5cb12-5a18-4c27-8343-8d4823136ae7",
+      "name": "",
+      "type": "ComponentInterfaceProvided",
+      "owner": null,
+      "bounds": {
+        "x": 1090,
+        "y": 180,
+        "width": 1,
+        "height": 122
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 122
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "acc92bda-1378-4c27-9000-101929eb9d59"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "32c3620c-4340-4f22-8dc4-fd6678c4576c"
+      }
+    },
+    "7f47fc15-7c02-46e8-b534-5885c42222c3": {
+      "id": "7f47fc15-7c02-46e8-b534-5885c42222c3",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 1100,
+        "y": 169,
+        "width": 350,
+        "height": 1
+      },
+      "path": [
+        {
+          "x": 350,
+          "y": 0
+        },
+        {
+          "x": 175,
+          "y": 0
+        },
+        {
+          "x": 175,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "1016dcfd-67b7-4c8b-9fad-94452a261fae"
+      },
+      "target": {
+        "direction": "Right",
+        "element": "acc92bda-1378-4c27-9000-101929eb9d59"
+      }
+    },
+    "b1ad2e90-8bdb-432b-8492-857af6aacacb": {
+      "id": "b1ad2e90-8bdb-432b-8492-857af6aacacb",
+      "name": "",
+      "type": "ComponentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 540,
+        "y": 90,
+        "width": 550,
+        "height": 70
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 550,
+          "y": 0
+        },
+        {
+          "x": 550,
+          "y": 70
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "acc92bda-1378-4c27-9000-101929eb9d59"
+      }
+    },
+    "8e682b93-aa01-4f5c-9c16-a98f9affd009": {
+      "id": "8e682b93-aa01-4f5c-9c16-a98f9affd009",
+      "name": "",
+      "type": "ComponentDependency",
+      "owner": null,
+      "bounds": {
+        "x": 390,
+        "y": 219,
+        "width": 1160,
+        "height": 271
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 231
+        },
+        {
+          "x": 0,
+          "y": 271
+        },
+        {
+          "x": 1160,
+          "y": 271
+        },
+        {
+          "x": 1160,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "d713af95-f5ba-400c-90b0-32cd2899eef9"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "1016dcfd-67b7-4c8b-9fad-94452a261fae"
+      }
+    }
+  },
+  "assessments": {}
+}

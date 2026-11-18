@@ -1,0 +1,166 @@
+import type { Exam } from 'app/exam/shared/entities/exam.model';
+import type { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import dayjs from 'dayjs/esm';
+import { round } from 'app/foundation/util/utils';
+import { ServerDateService } from 'app/foundation/service/server-date.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
+/**
+ * Calculates the individual end time based on the studentExam
+ *
+ * @param exam
+ * @param studentExam
+ * @return {dayjs.Dayjs | undefined}
+ */
+export const endTime = (exam: Exam, studentExam: StudentExam): dayjs.Dayjs | undefined => {
+    if (!exam) {
+        return undefined;
+    }
+    if (studentExam && studentExam.workingTime && exam.startDate) {
+        return dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
+    }
+    return exam.endDate;
+};
+
+/**
+ * Calculates the working time of the exam in seconds.
+ * If either the exam or the exam dates are not set, undefined is returned.
+ *
+ * @param exam
+ * @return {number | undefined}
+ */
+export const examWorkingTime = (exam?: Exam): number | undefined => {
+    if (exam && !isRealExam(exam)) {
+        return exam.workingTime;
+    }
+    return normalWorkingTime(exam?.startDate, exam?.endDate);
+};
+
+/**
+ * Calculates the time between start and end date in seconds.
+ * If either the start or end date is not set, undefined is returned.
+ *
+ * @param startDate
+ * @param endDate
+ * @return {number | undefined}
+ */
+export const normalWorkingTime = (startDate?: dayjs.Dayjs, endDate?: dayjs.Dayjs): number | undefined =>
+    startDate && endDate ? dayjs(endDate).diff(startDate, 'seconds') : undefined;
+
+/**
+ * Calculates the additional working time in seconds
+ *
+ * @param exam
+ * @param studentExam
+ * @return {number} The additional working time in seconds
+ */
+export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): number => {
+    if (exam && exam.endDate && exam.startDate && studentExam && studentExam.workingTime) {
+        const personalEndDate = dayjs(exam.startDate).add(studentExam.workingTime, 'seconds');
+        return personalEndDate.diff(exam.endDate, 'seconds');
+    }
+    return 0;
+};
+
+/**
+ * Calculates the relative difference in percent points between the regular working time of the exam and the individual working time for the student.
+ *
+ * E.g., for a regular working time of "1h" and a student working time of "1h30min" the difference is +50.
+ * @param exam The exam which the student exam belongs to.
+ * @param studentExamWorkingTime The individual working time of a student exam.
+ * @return The relative working time extension in percent points rounded to two digits after the decimal separator.
+ */
+export const getRelativeWorkingTimeExtension = (exam: Exam, studentExamWorkingTime: number): number => {
+    const regularExamDuration = examWorkingTime(exam)!;
+    return round((studentExamWorkingTime / regularExamDuration - 1.0) * 100, 2);
+};
+
+/**
+ * Determines if the exam spans multiple days
+ *
+ * @param exam
+ * @param studentExam
+ * @return {boolean}
+ */
+export const isExamOverMultipleDays = (exam: Exam, studentExam: StudentExam): boolean => {
+    if (!exam || !exam.startDate || !exam.endDate) {
+        return false;
+    }
+    const endDate = endTime(exam, studentExam)!;
+
+    return !endDate.isSame(exam.startDate, 'day');
+};
+
+export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined, serverDateService: ServerDateService) {
+    if (isTestRun) {
+        return true;
+    }
+
+    return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
+}
+
+/**
+ * Determines whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to the student.
+ *
+ * If no examSummaryPublicationDate is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once that date has
+ * passed. As a safeguard, it is always available once the results are published, mirroring {@link de.tum.cit.aet.artemis.exam.domain.Exam#isExamSummaryPublished} on the server.
+ *
+ * @param isTestRun whether the current student exam is a test run (instructor) - test runs always have access
+ * @param exam the exam the summary belongs to
+ * @param serverDateService the service providing the synchronized server time
+ * @return true if the summary may be shown, false if it is withheld until the publication date
+ */
+export function isExamSummaryPublished(isTestRun: boolean, exam: Exam | undefined, serverDateService: ServerDateService): boolean {
+    // test runs and test exams (self-service practice) are never gated
+    if (isTestRun || !isRealExam(exam)) {
+        return true;
+    }
+    if (!exam?.examSummaryPublicationDate) {
+        return true;
+    }
+    return dayjs(exam.examSummaryPublicationDate).isBefore(serverDateService.now()) || !!isExamResultPublished(isTestRun, exam, serverDateService);
+}
+
+/**
+ * Checks if the given exam is acting as a test exam.
+ * This is the case if the exam mode is TEST, or if the exam mode is TEST_WITH_SUPERVISED_SESSION and its
+ * supervised session has already ended (i.e. the exam has entered the practice phase).
+ *
+ * @param exam The exam to check, which might be undefined.
+ * @returns True if the exam acts as a test exam, false otherwise.
+ */
+export function isActingAsTestExam(exam?: Exam) {
+    return exam?.examMode === ExamMode.TEST || isAfterSupervisedSession(exam);
+}
+
+function isAfterSupervisedSession(exam?: Exam): boolean {
+    const supervisedSessionEndDate = testExamSupervisedSessionEndDate(exam);
+    if (!supervisedSessionEndDate) {
+        return false;
+    }
+    return !dayjs().isBefore(supervisedSessionEndDate);
+}
+
+/**
+ * Calculates the supervised session end date for a test exam.
+ *
+ * @param exam The exam to calculate the supervised session end date for.
+ * @returns The supervised session end date as a Dayjs object, or undefined if it cannot be calculated.
+ */
+export function testExamSupervisedSessionEndDate(exam?: Exam): dayjs.Dayjs | undefined {
+    if (!(exam?.examMode === ExamMode.TEST_WITH_SUPERVISED_SESSION) || !exam?.startDate || exam.workingTime === undefined) {
+        return undefined;
+    }
+    return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
+}
+
+/**
+ * Checks if the given exam is a real exam.
+ * An exam is considered a real exam if its exam mode is undefined or explicitly set to REAL.
+ *
+ * @param exam The exam to check, which might be undefined.
+ * @returns True if the exam is a real exam, false otherwise.
+ */
+export function isRealExam(exam?: Exam): boolean {
+    return exam?.examMode === undefined || exam.examMode === ExamMode.REAL;
+}

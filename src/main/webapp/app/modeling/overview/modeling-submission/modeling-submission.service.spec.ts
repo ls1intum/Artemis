@@ -1,0 +1,199 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
+import { take } from 'rxjs/operators';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import dayjs from 'dayjs/esm';
+
+describe('ModelingSubmission Service', () => {
+    let service: ModelingSubmissionService;
+    let httpMock: HttpTestingController;
+    let elemDefault: ModelingSubmission;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+        });
+        service = TestBed.inject(ModelingSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = new ModelingSubmission();
+        elemDefault.id = 5;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
+    const getDefaultValues = (updateValues = {}) => {
+        const exerciseId = 5;
+        const returnedFromService = { ...elemDefault, id: exerciseId, ...updateValues };
+        const expected = { ...returnedFromService };
+        const requestOption = { test: 'Test' };
+        const correctionRound = 7;
+        const participationId = 4;
+        return { exerciseId, returnedFromService, expected, requestOption, correctionRound, participationId };
+    };
+
+    it('should find an element', () => {
+        const { returnedFromService, correctionRound } = getDefaultValues();
+        service
+            .getSubmission(123, correctionRound)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
+
+        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/modeling-submissions/123/for-assessment?correction-round=7` });
+        expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
+        req.flush(returnedFromService);
+    });
+
+    it('should create a ModelingSubmission', () => {
+        const { returnedFromService, expected } = getDefaultValues();
+        service
+            .create(new ModelingSubmission(), 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+    });
+
+    it('should update a ModelingSubmission', () => {
+        const { returnedFromService, expected } = getDefaultValues({ model: 'BBBBBB', explanationText: 'BBBBBB' });
+        service
+            .update(expected, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+    });
+
+    it('should get submissions without correction round', () => {
+        const { exerciseId, returnedFromService, requestOption } = getDefaultValues();
+        service
+            .getSubmissions(exerciseId, requestOption as { submittedOnly?: boolean; assessedByMe?: boolean })
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
+        expect(req.request.params.get('test')).toBe('Test');
+        req.flush(returnedFromService);
+    });
+
+    it('should get submissions with correction round', () => {
+        const { exerciseId, returnedFromService, requestOption, correctionRound } = getDefaultValues();
+        service
+            .getSubmissions(5, requestOption as { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test&correction-round=${correctionRound}` });
+        expect(req.request.params.get('test')).toBe('Test');
+        expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
+        req.flush(returnedFromService);
+    });
+
+    it('should getSubmissionWithoutAssessment', () => {
+        const { exerciseId, returnedFromService, correctionRound } = getDefaultValues();
+        service
+            .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toStrictEqual({ ...elemDefault }));
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/modeling/exercises/${exerciseId}/modeling-submission-without-assessment?correction-round=${correctionRound}&lock=true`,
+        });
+        expect(req.request.params.get('lock')).toBe('true');
+        expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
+        req.flush(returnedFromService);
+    });
+
+    it('should getLatestSubmissionForModelingEditor', () => {
+        const { returnedFromService, participationId } = getDefaultValues();
+        service
+            .getLatestSubmissionForModelingEditor(participationId)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
+        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/participations/${participationId}/latest-modeling-submission` });
+        req.flush(returnedFromService);
+    });
+
+    it('should get submissions with results for participation', () => {
+        const { participationId, returnedFromService } = getDefaultValues();
+        const submissions = [returnedFromService];
+
+        service
+            .getSubmissionsWithResultsForParticipation(participationId)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp).toEqual([returnedFromService]);
+            });
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/modeling/participations/${participationId}/submissions-with-results`,
+        });
+        req.flush(submissions);
+    });
+
+    it('should keep every result of a submission when the server lists the newest result first', () => {
+        // The history endpoint sorts results by completion date, newest first, so the older result sits behind the newer one.
+        const newerResult = { id: 25, completionDate: dayjs('2026-08-30T10:00:00Z'), feedbacks: [{ id: 3, text: 'newer' }] };
+        const olderResult = { id: 24, completionDate: dayjs('2026-08-29T10:00:00Z'), feedbacks: [{ id: 2, text: 'older' }] };
+        const submissionFromServer = deepClone(elemDefault);
+        submissionFromServer.results = [newerResult, olderResult];
+
+        let converted: ModelingSubmission[] = [];
+        service
+            .getSubmissionsWithResultsForParticipation(4)
+            .pipe(take(1))
+            .subscribe((resp) => (converted = resp));
+        httpMock.expectOne({ method: 'GET', url: 'api/modeling/participations/4/submissions-with-results' }).flush([submissionFromServer]);
+
+        const results = converted[0].results!;
+        expect(results.map((result) => result.id)).toEqual([25, 24]);
+        expect(converted[0].latestResult?.id).toBe(25);
+        expect(results.find((result) => result.id === 24)?.feedbacks?.[0]?.text).toBe('older');
+    });
+
+    it.each([0, 2])('loads my assessed submissions through the tutor route for round %s', (correctionRound) => {
+        service.getMyAssessedSubmissions(123, correctionRound).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne((request) => request.url === 'api/modeling/exercises/123/modeling-submissions/assessed-by-me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('correction-round')).toBe(correctionRound === 0 ? null : '2');
+        expect(req.request.params.has('assessedByTutor')).toBe(false);
+        req.flush([]);
+    });
+
+    it('keeps the instructor self filter on the instructor route', () => {
+        service.getSubmissions(123, { submittedOnly: true, assessedByMe: true }, 2).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/modeling/exercises/123/modeling-submissions');
+        expect(req.request.params.get('submittedOnly')).toBe('true');
+        expect(req.request.params.get('assessedByMe')).toBe('true');
+        expect(req.request.params.get('correction-round')).toBe('2');
+        req.flush([]);
+    });
+    it.each(['owner', 'staff-preview'] as const)('selects modeling editor URLs from explicit %s purpose', (purpose) => {
+        const suffix = purpose === 'staff-preview' ? '/for-staff' : '';
+        service.getLatestSubmissionForModelingEditor(123, purpose).subscribe((data) => expect(data.id).toBe(123));
+        const latest = httpMock.expectOne({ method: 'GET' });
+        expect(latest.request.url).toBe(`api/modeling/participations/123/latest-modeling-submission${suffix}`);
+        latest.flush({ id: 123 });
+        service.getSubmissionsWithResultsForParticipation(123, purpose).subscribe((data) => expect(data).toHaveLength(1));
+        const history = httpMock.expectOne({ method: 'GET' });
+        expect(history.request.url).toBe(`api/modeling/participations/123/submissions-with-results${suffix}`);
+        history.flush([{ id: 123 }]);
+    });
+
+    it('uses fixed assessment URL with correction and explicit result selectors', () => {
+        service.getSubmission(123, 1, 456).subscribe();
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/modeling/modeling-submissions/123/for-assessment');
+        expect(req.request.params.get('correction-round')).toBe('1');
+        expect(req.request.params.get('resultId')).toBe('456');
+        req.flush({ id: 123 });
+    });
+});

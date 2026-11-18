@@ -1,0 +1,500 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { Observable, Subject, firstValueFrom } from 'rxjs';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
+import dayjs from 'dayjs/esm';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { provideHttpClient } from '@angular/common/http';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+describe('ExamParticipationLiveEventsService', () => {
+    let service: ExamParticipationLiveEventsService;
+    let httpMock: HttpTestingController;
+    let mockWebsocketService: MockWebsocketService;
+    let mockExamParticipationService: ExamParticipationService;
+    let mockLocalStorageService: LocalStorageService;
+    let currentlyLoadedStudentExamSubject: Subject<any>;
+
+    beforeEach(() => {
+        currentlyLoadedStudentExamSubject = new Subject<any>();
+        mockExamParticipationService = {
+            currentlyLoadedStudentExam: currentlyLoadedStudentExamSubject,
+        } as unknown as ExamParticipationService;
+
+        mockLocalStorageService = {
+            store: vi.fn(),
+            retrieve: vi.fn(),
+        } as unknown as LocalStorageService;
+
+        mockWebsocketService = new MockWebsocketService();
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: WebsocketService, useValue: mockWebsocketService },
+                { provide: ExamParticipationService, useValue: mockExamParticipationService },
+                { provide: LocalStorageService, useValue: mockLocalStorageService },
+            ],
+        });
+
+        service = TestBed.inject(ExamParticipationLiveEventsService);
+        httpMock = TestBed.inject(HttpTestingController);
+        // @ts-ignore
+        mockWebsocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+
+        service['studentExamId'] = 1;
+        service['examId'] = 1;
+        service['courseId'] = 1;
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    // Every successful connection backfills events, including a first connection that
+    // becomes ready after the initial REST snapshot. Disconnections do not fetch.
+    it.each([
+        [true, true],
+        [true, false],
+        [false, true],
+        [false, false],
+    ])(
+        'should correctly react to websocket connection state and refetch events for connected=%s, wasEverConnectedBefore=%s',
+        async (connected: boolean, wasEverConnectedBefore: boolean) => {
+            // @ts-ignore
+            const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents');
+
+            // Simulate the connection state change (e.g., network drop then recovery)
+            mockWebsocketService.setConnectionState(new ConnectionState(connected, wasEverConnectedBefore));
+
+            const mockEvents: ExamLiveEvent[] = [
+                {
+                    id: 1,
+                    createdDate: dayjs(),
+                    eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+                },
+            ];
+
+            // The reconnection fetch happens synchronously (no setTimeout delay)
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            if (connected) {
+                // Both first connections and reconnections backfill the disconnected interval.
+                expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
+                const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/1/exams/1/student-exams/live-events` });
+                req.flush(mockEvents);
+                expect(service['events']).toEqual(mockEvents);
+                expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);
+            } else {
+                // Disconnections do not trigger a fetch.
+                expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+            }
+        },
+    );
+
+    it('backfills working time updates persisted after the initial snapshot when the first websocket connection is late', async () => {
+        vi.useFakeTimers();
+        try {
+            mockWebsocketService.setConnectionState(new ConnectionState(false, false));
+            currentlyLoadedStudentExamSubject.next({ id: 42, exam: { id: 24, course: { id: 12 } } });
+            const systemEvents: ExamLiveEvent[] = [];
+            const userEvents: ExamLiveEvent[] = [];
+            service.observeNewEventsAsSystem().subscribe((event) => systemEvents.push(event));
+            service.observeNewEventsAsUser([], dayjs()).subscribe((event) => userEvents.push(event));
+
+            // The initial snapshot completes while STOMP is still connecting.
+            await vi.advanceTimersByTimeAsync(2000);
+            const liveEventsURL = '/api/exam/courses/12/exams/24/student-exams/live-events';
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+
+            // An instructor changes working time after that snapshot, before the first
+            // successful subscription. There is no WebSocket delivery to replay locally.
+            await vi.advanceTimersByTimeAsync(1000);
+            const persistedEvent = {
+                id: 99,
+                eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+                createdDate: dayjs().toISOString(),
+                oldWorkingTime: 7260,
+                newWorkingTime: 107,
+                courseWide: true,
+            };
+            expect(systemEvents).toEqual([]);
+            expect(userEvents).toEqual([]);
+
+            mockWebsocketService.setConnectionState(new ConnectionState(true, false));
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([persistedEvent]);
+
+            expect(systemEvents.map((event) => (event as WorkingTimeUpdateEvent).newWorkingTime)).toEqual([107]);
+            expect(userEvents.map((event) => event.id)).toEqual([99]);
+
+            // A duplicate delivery after subscribing must not update the timer or show
+            // the dialog a second time.
+            mockWebsocketService.emit('/topic/exam-participation/exam/24/events', persistedEvent);
+            expect(systemEvents.map((event) => event.id)).toEqual([99]);
+            expect(userEvents.map((event) => event.id)).toEqual([99]);
+        } finally {
+            service.reset();
+            vi.useRealTimers();
+        }
+    });
+
+    it('does not send an extra request for a connection that opens before the delayed initial fetch', async () => {
+        vi.useFakeTimers();
+        try {
+            mockWebsocketService.setConnectionState(new ConnectionState(false, false));
+            currentlyLoadedStudentExamSubject.next({ id: 42, exam: { id: 24, course: { id: 12 } } });
+            const liveEventsURL = '/api/exam/courses/12/exams/24/student-exams/live-events';
+
+            // The connection opens while the delayed fetch is pending, which runs after the subscriptions exist.
+            await vi.advanceTimersByTimeAsync(500);
+            mockWebsocketService.setConnectionState(new ConnectionState(true, false));
+            httpMock.expectNone({ method: 'GET', url: liveEventsURL });
+
+            await vi.advanceTimersByTimeAsync(1500);
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+
+            // After the delayed fetch ran, a later reconnection backfills immediately again.
+            mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+        } finally {
+            service.reset();
+            vi.useRealTimers();
+        }
+    });
+
+    it('backfills again for a connection that opens while the delayed initial fetch is still in flight', async () => {
+        vi.useFakeTimers();
+        try {
+            mockWebsocketService.setConnectionState(new ConnectionState(false, false));
+            currentlyLoadedStudentExamSubject.next({ id: 42, exam: { id: 24, course: { id: 12 } } });
+            const liveEventsURL = '/api/exam/courses/12/exams/24/student-exams/live-events';
+
+            await vi.advanceTimersByTimeAsync(2000);
+            const initialRequest = httpMock.expectOne({ method: 'GET', url: liveEventsURL });
+
+            // The first request was served before the subscriptions existed, so an event persisted after it was
+            // handled can only be recovered by a request that starts after the connection. It must not be skipped.
+            mockWebsocketService.setConnectionState(new ConnectionState(true, false));
+            const connectionRequest = httpMock.expectOne({ method: 'GET', url: liveEventsURL });
+            initialRequest.flush([]);
+            connectionRequest.flush([]);
+        } finally {
+            service.reset();
+            vi.useRealTimers();
+        }
+    });
+
+    // Verifies the two-phase initialization when a new student exam loads:
+    //   Phase 1 (immediate): WebSocket subscription is set up so no real-time events are missed
+    //   Phase 2 (after 2s): REST fetch backfills any events created before the subscription
+    // Previously both phases were delayed by 5 seconds, creating a window for event loss.
+    it('should not fetch events on a websocket reconnect after the service was reset', () => {
+        // @ts-ignore
+        const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents');
+        const emittedEvents: ExamLiveEvent[][] = [];
+        service.observeAllEvents([]).subscribe((events) => emittedEvents.push(events));
+
+        service.reset();
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+
+        expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+        httpMock.expectNone({ method: 'GET' });
+        expect(emittedEvents.at(-1)).toEqual([]);
+    });
+
+    it('should subscribe to websocket immediately and fetch events after delay on student exam change', async () => {
+        // @ts-ignore
+        const unsubscribeFromExamLiveEventsSpy = vi.spyOn(service, 'unsubscribeFromExamLiveEvents');
+        const unsubscribeSpy = vi.fn();
+        const websocketStreamSubject = new Subject<any>();
+        const websocketSubscribeSpy = vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(
+            new Observable((observer) => {
+                const innerSub = websocketStreamSubject.subscribe(observer);
+                return () => {
+                    unsubscribeSpy();
+                    innerSub.unsubscribe();
+                };
+            }),
+        );
+
+        // @ts-ignore: accessing private method for testing
+        const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
+
+        // @ts-ignore: accessing private method for testing
+        const replayEventsSpy = vi.spyOn(service, 'replayEvents');
+
+        // Mock localStorage to return acknowledgement data for student exam 2
+        const retrieveSpy = vi.spyOn(mockLocalStorageService, 'retrieve').mockReturnValue(
+            JSON.stringify({
+                2: {
+                    lastChange: 1,
+                    acknowledgedEvents: {
+                        1: {
+                            user: 1,
+                            system: 1,
+                        },
+                    },
+                },
+            }),
+        );
+
+        // Set up existing subscriptions that should be cleaned up when a new student exam loads
+        service['currentWebsocketReceiveSubscriptions'] = [{ unsubscribe: vi.fn() } as any, { unsubscribe: vi.fn() } as any];
+        service['currentWebsocketChannels'] = ['123', '456'];
+
+        // Emit a new student exam — this triggers the full initialization flow
+        currentlyLoadedStudentExamSubject.next({ id: 2, exam: { id: 2, course: { id: 2 } } });
+
+        // Verify state was reset: events array cleared and old subscriptions torn down
+        expect(service['events']).toEqual([]);
+        expect(unsubscribeFromExamLiveEventsSpy).toHaveBeenCalledOnce();
+
+        // Verify the service captured the new student exam's identifiers
+        expect(service['studentExamId']).toBe(2);
+        expect(service['examId']).toBe(2);
+        expect(service['courseId']).toBe(2);
+
+        // Verify acknowledgement status was loaded from localStorage
+        // (called 2x total: once in constructor for clearOldAcknowledgement, once for the new student exam)
+        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(service['lastAcknowledgedEventStatus']).toEqual({
+            lastChange: 1,
+            acknowledgedEvents: {
+                1: {
+                    user: 1,
+                    system: 1,
+                },
+            },
+        });
+
+        // CRITICAL ASSERTION: WebSocket subscription should happen IMMEDIATELY (not after a delay)
+        // This is the fix for issues #12423/#12428/#12435 — previously this was delayed by 5s
+        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(2); // one per topic (student-specific + exam-wide)
+        expect(service['currentWebsocketReceiveSubscriptions']).toHaveLength(2);
+        expect(service['currentWebsocketChannels']).toHaveLength(2);
+
+        // The historical REST fetch should NOT have fired yet — it uses a 2s delay
+        // to spread server load when many students start the exam simultaneously
+        expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+
+        // After 2 seconds, the historical fetch fires to backfill events
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
+
+        // Simulate a WebSocket event arriving after subscription is active
+        const mockEvent: any = {
+            id: 123,
+            eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+            text: 'Test',
+            createdDate: '2021-08-02T12:00:00.000Z',
+        };
+
+        websocketStreamSubject.next(mockEvent);
+
+        // The event should be in the in-memory store
+        expect(service['events']).toEqual([mockEvent]);
+
+        // Verify the event is delivered through all three observer channels
+        const userEvents = firstValueFrom(service.observeNewEventsAsUser([], dayjs()));
+        const systemEvents = firstValueFrom(service.observeNewEventsAsSystem());
+        const allEvents = firstValueFrom(service.observeAllEvents());
+
+        // Flush microtask-deferred replayEvents() in observeNewEventsAs*
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await expect(userEvents).resolves.toEqual(mockEvent);
+        await expect(systemEvents).resolves.toEqual(mockEvent);
+        await expect(allEvents).resolves.toEqual([mockEvent]);
+
+        // replayEvents was called 2x: once each by observeNewEventsAsUser and observeNewEventsAsSystem
+        expect(replayEventsSpy).toHaveBeenCalledTimes(2);
+    });
+
+    // Regression test: previously fetchPreviousExamEvents() overwrote the entire events array
+    // with the HTTP response (this.events = fetchedEvents), which silently discarded any events
+    // that had already arrived via WebSocket. This caused intermittent event loss: if an instructor
+    // sent an announcement and it arrived via WebSocket before the REST fetch completed, the fetch
+    // response would erase it. This test verifies that events from both sources are merged.
+    it('should merge fetched events with existing websocket events instead of overwriting', async () => {
+        const websocketStreamSubject = new Subject<any>();
+        vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
+
+        // Loading a new student exam triggers: immediate WS subscription + 2s delayed REST fetch
+        currentlyLoadedStudentExamSubject.next({ id: 3, exam: { id: 3, course: { id: 3 } } });
+
+        // A WebSocket event arrives immediately (before the 2s REST fetch fires).
+        // This simulates an instructor sending a working time update right as the student loads.
+        const wsEvent: any = {
+            id: 42,
+            eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+            createdDate: '2021-08-02T12:00:00.000Z',
+            oldWorkingTime: 3600,
+            newWorkingTime: 7200,
+            courseWide: true,
+        };
+        websocketStreamSubject.next(wsEvent);
+        expect(service['events']).toHaveLength(1);
+        expect(service['events'][0].id).toBe(42);
+
+        // After 2 seconds, the REST fetch fires
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/3/exams/3/student-exams/live-events` });
+
+        // The server returns the same event (42) that we already got via WebSocket,
+        // plus an older event (10) from before our subscription was active
+        const fetchedEvents = [
+            { id: 10, createdDate: '2021-08-02T11:00:00.000Z', eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, text: 'Older event' },
+            { id: 42, createdDate: '2021-08-02T12:00:00.000Z', eventType: ExamLiveEventType.WORKING_TIME_UPDATE },
+        ];
+        req.flush(fetchedEvents);
+
+        // Both events must be present. Event 42 (from WebSocket) was preserved,
+        // and event 10 (only in REST response) was merged in. No overwrite happened.
+        expect(service['events']).toHaveLength(2);
+        const eventIds = service['events'].map((e: any) => e.id);
+        expect(eventIds).toContain(42);
+        expect(eventIds).toContain(10);
+    });
+
+    // Regression test for the race condition where a WebSocket event arrives while an HTTP
+    // request is in flight. The HTTP response does NOT contain the WS event (it was created
+    // after the server processed the GET request). Previously, the HTTP response would overwrite
+    // this.events, erasing the WS event. With the merge fix, both events are retained.
+    it('should not lose websocket events when fetch response arrives later', async () => {
+        const websocketStreamSubject = new Subject<any>();
+        vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(websocketStreamSubject.asObservable());
+
+        currentlyLoadedStudentExamSubject.next({ id: 4, exam: { id: 4, course: { id: 4 } } });
+
+        // Advance to trigger the delayed REST fetch
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/4/exams/4/student-exams/live-events` });
+
+        // While the HTTP request is in flight (sent but response not yet received),
+        // a new announcement arrives via WebSocket. This is the critical race condition.
+        const wsEvent: any = {
+            id: 99,
+            eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+            text: 'Late-breaking announcement',
+            createdDate: '2021-08-02T13:00:00.000Z',
+        };
+        websocketStreamSubject.next(wsEvent);
+        expect(service['events']).toHaveLength(1);
+
+        // Now the HTTP response arrives. It does NOT contain event 99 because the server
+        // processed the GET request before the announcement was created. It only has event 5.
+        req.flush([{ id: 5, createdDate: '2021-08-02T10:00:00.000Z', eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, text: 'Old event' }]);
+
+        // Both events must be present: event 99 from WebSocket and event 5 from REST.
+        // Previously, the REST response would have overwritten events, losing event 99.
+        expect(service['events']).toHaveLength(2);
+        const eventIds = service['events'].map((e: any) => e.id);
+        expect(eventIds).toContain(99);
+        expect(eventIds).toContain(5);
+    });
+
+    // Regression test for issue #13071: a WORKING_TIME_UPDATE event carries the exam's new start and end
+    // dates as ISO strings over the wire. They must be converted to dayjs objects so the pre-start countdown
+    // and the start-based content visibility can recompute from real dates rather than strings.
+    it('should convert the start and end dates of a working time update event to dayjs (issue #13071)', () => {
+        service['events'] = [];
+        const wsEvent = {
+            id: 7,
+            eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+            createdDate: '2021-08-02T12:00:00.000Z',
+            oldWorkingTime: 3600,
+            newWorkingTime: 3600,
+            courseWide: true,
+            newStartDate: '2021-08-02T12:05:00.000Z',
+            newEndDate: '2021-08-02T13:05:00.000Z',
+        } as unknown as ExamLiveEvent;
+
+        service['receiveExamLiveEvent'](wsEvent);
+
+        const stored = service['events'][0] as WorkingTimeUpdateEvent;
+        expect(dayjs.isDayjs(stored.newStartDate)).toBe(true);
+        expect(dayjs.isDayjs(stored.newEndDate)).toBe(true);
+        expect(stored.newStartDate!.toISOString()).toBe('2021-08-02T12:05:00.000Z');
+        expect(stored.newEndDate!.toISOString()).toBe('2021-08-02T13:05:00.000Z');
+    });
+
+    // Regression test for issue #13071: when the start is postponed, a problem statement update created between the old
+    // and the new start must stay hidden from the user. The user observer reads the start date per emission, so passing
+    // a getter (as the button/overlay do with their examStartDate signal) reflects the postponement.
+    it('should hide a problem statement update created before the current (postponed) start (issue #13071)', async () => {
+        service['events'] = [];
+        let currentStartDate = dayjs('2021-08-02T12:00:00.000Z');
+        const received: ExamLiveEvent[] = [];
+        service.observeNewEventsAsUser([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE], () => currentStartDate).subscribe((event) => received.push(event));
+
+        // Instructor postpones the start; the getter now returns the later start date.
+        currentStartDate = dayjs('2021-08-02T13:00:00.000Z');
+
+        // A problem statement update created between the old and the new start must not surface.
+        const beforeNewStart = { id: 1, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: '2021-08-02T12:30:00.000Z' } as unknown as ExamLiveEvent;
+        // A problem statement update created after the new start must surface.
+        const afterNewStart = { id: 2, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: '2021-08-02T13:30:00.000Z' } as unknown as ExamLiveEvent;
+        service['receiveExamLiveEvent'](beforeNewStart);
+        service['receiveExamLiveEvent'](afterNewStart);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(received.map((event) => event.id)).not.toContain(1);
+        expect(received.map((event) => event.id)).toContain(2);
+    });
+
+    // Regression test for issue #13071: a schedule-only working time update (working time unchanged) is sent purely to
+    // drive the pre-start countdown. It must reach the system observer but must NOT surface as a user-facing "working
+    // time changed" dialog or a no-op history entry.
+    it('should surface a schedule-only working time update to the system observer but not to the user (issue #13071)', async () => {
+        service['events'] = [];
+        const scheduleOnly = {
+            id: 1,
+            eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+            createdDate: '2021-08-02T12:00:00.000Z',
+            oldWorkingTime: 3600,
+            newWorkingTime: 3600,
+            courseWide: true,
+            newStartDate: '2021-08-02T12:05:00.000Z',
+            newEndDate: '2021-08-02T13:05:00.000Z',
+        } as unknown as ExamLiveEvent;
+
+        const userEvents: ExamLiveEvent[] = [];
+        const systemEvents: ExamLiveEvent[] = [];
+        const allEvents: ExamLiveEvent[][] = [];
+        service.observeNewEventsAsUser([], dayjs()).subscribe((event) => userEvents.push(event));
+        service.observeNewEventsAsSystem().subscribe((event) => systemEvents.push(event));
+        service.observeAllEvents().subscribe((events) => allEvents.push(events));
+
+        service['receiveExamLiveEvent'](scheduleOnly);
+
+        // Flush the microtask-deferred replayEvents() in the observeNewEventsAs* observers.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(systemEvents.map((event) => event.id)).toContain(1);
+        expect(userEvents.map((event) => event.id)).not.toContain(1);
+        expect(allEvents.at(-1)?.map((event) => event.id) ?? []).not.toContain(1);
+    });
+
+    it('acknowledgeEvent should set the correct timestamp and store it', () => {
+        // Mock initial status
+        service['lastAcknowledgedEventStatus'] = {
+            lastChange: 1,
+            acknowledgedEvents: {},
+        };
+
+        const nowUnix = dayjs().unix();
+        const mockEvent: ExamLiveEvent = {
+            id: 1,
+            createdDate: dayjs(),
+            eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+        };
+
+        service.acknowledgeEvent(mockEvent, true);
+        expect(service['lastAcknowledgedEventStatus']!.acknowledgedEvents['1'].user).toBeGreaterThanOrEqual(nowUnix);
+        expect(mockLocalStorageService.store).toHaveBeenCalledWith(expect.any(String), expect.any(String));
+    });
+});

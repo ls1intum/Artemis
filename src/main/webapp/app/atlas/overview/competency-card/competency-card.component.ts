@@ -1,0 +1,62 @@
+import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
+import { Component, inject, input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { CompetencyProgress, CourseCompetency, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+
+@Component({
+    selector: 'jhi-competency-card',
+    templateUrl: './competency-card.component.html',
+    imports: [
+        RouterLink,
+        FaIconComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        CompetencyRingsComponent,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        MarkdownDirective,
+    ],
+})
+export class CompetencyCardComponent {
+    translateService = inject(TranslateService);
+
+    courseId = input<number | undefined>();
+    competency = input<CourseCompetency>();
+    isPrerequisite = input<boolean>();
+    noProgressRings = input<boolean>(false);
+
+    protected readonly getIcon = getIcon;
+
+    getUserProgress(): CompetencyProgress {
+        const userProgress = this.competency()?.userProgress?.first();
+        if (userProgress) {
+            return userProgress;
+        }
+        return { progress: 0, confidence: 1 };
+    }
+
+    get progress(): number {
+        return getProgress(this.getUserProgress());
+    }
+
+    get mastery(): number {
+        return getMastery(this.getUserProgress());
+    }
+
+    get isMastered(): boolean {
+        return this.mastery >= 100;
+    }
+
+    get softDueDatePassed(): boolean {
+        return dayjs().isAfter(this.competency()?.softDueDate);
+    }
+}

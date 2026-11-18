@@ -1,0 +1,50 @@
+{
+    "artemisApp": {
+        "apollonDiagram": {
+            "home": {
+                "title": "Apollon Diagrams",
+                "createLabel": "Create a new Apollon Diagram",
+                "empty": "No Apollon diagram has been created for this course yet.",
+                "error": {
+                    "loading": "Error while loading Apollon Diagrams"
+                }
+            },
+            "updated": "Updated Apollon Diagram '{{ title }}'",
+            "create": {
+                "success": "Apollon Diagram with title {{ title }} was created successfully",
+                "error": "Error while creating Apollon Diagram",
+                "validationError": "Validation Error: Please add interactive elements first."
+            },
+            "update": {
+                "error": "Error while updating Apollon Diagram"
+            },
+            "delete": {
+                "question": "Are you sure you want to delete Apollon Diagram '{{ title }}'?",
+                "success": "Apollon Diagram with title {{ title }} was deleted successfully",
+                "error": "Error while deleting the Apollon Diagram with title {{ title }}"
+            },
+            "detail": {
+                "title": "Apollon Diagram {{ title }}",
+                "save": "Save Diagram",
+                "crop": "Crop image to selection",
+                "help": "Download your current selection as a PNG image",
+                "downloadHint": "Select diagram elements to download them as a PNG image",
+                "editorActions": "Diagram actions",
+                "createLabel": "Generate a Quiz Exercise",
+                "generate": "Generate",
+                "error": {
+                    "loading": "Error while loading Apollon Diagram"
+                },
+                "quizExercise": "Generate a Quiz Exercise for course {{ title }}.",
+                "exitConfirm": {
+                    "title": "Leave Diagram Editor",
+                    "question": "Your diagram has unsaved changes. Are you sure you want to leave the editor?"
+                }
+            },
+            "title": "Title",
+            "jsonRepresentation": "JSON Representation",
+            "courseId": "Course ID",
+            "back": "Back to Overview"
+        }
+    }
+}

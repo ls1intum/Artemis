@@ -1,0 +1,63 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorFileBrowserBadgeComponent } from 'app/programming/manage/code-editor/file-browser/badge/code-editor-file-browser-badge.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('CodeEditorFileBrowserBadgeComponent', () => {
+    let component: CodeEditorFileBrowserBadgeComponent;
+    let fixture: ComponentFixture<CodeEditorFileBrowserBadgeComponent>;
+    let translateService: TranslateService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+
+        translateService = TestBed.inject(TranslateService);
+
+        fixture = TestBed.createComponent(CodeEditorFileBrowserBadgeComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3));
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should correctly display the tooltip for a FEEDBACK_SUGGESTION badge', () => {
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+        expect(component.tooltip).toBe('Mocked Tooltip');
+    });
+
+    it('should return faLightbulb icon for a FEEDBACK_SUGGESTION badge', () => {
+        expect(component.icon!.iconName).toBe('lightbulb');
+    });
+
+    it('should correctly display the tooltip for a REVIEW_COMMENT badge', () => {
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.REVIEW_COMMENT, 2));
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Review Tooltip');
+
+        expect(component.tooltip).toBe('Mocked Review Tooltip');
+    });
+
+    it('should return faComments icon for a REVIEW_COMMENT badge', () => {
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.REVIEW_COMMENT, 2));
+
+        expect(component.icon!.iconName).toBe('comments');
+    });
+
+    it('should not have an icon for an unknown badge type', () => {
+        fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
+        fixture.detectChanges();
+        expect(component.icon).toBeUndefined();
+    });
+
+    it('should not have a tooltip for an unknown badge type', () => {
+        fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
+        fixture.detectChanges();
+        expect(component.tooltip).toBeUndefined();
+    });
+});

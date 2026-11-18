@@ -1,0 +1,43 @@
+import { TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
+import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { Subject, Subscription, debounceTime } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+
+@Component({
+    selector: 'jhi-standardized-competency-filter',
+    templateUrl: './standardized-competency-filter.component.html',
+    imports: [FormsModule, TumAetUiInputDirective, TumAetUiSelectComponent, TranslateDirective],
+})
+export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {
+    competencyTitleFilter = input<string>('');
+    knowledgeAreaFilter = input<KnowledgeAreaDTO | undefined>();
+    knowledgeAreasForSelect = input<KnowledgeAreaDTO[]>([]);
+
+    competencyTitleFilterChange = output<string>();
+    knowledgeAreaFilterChange = output<KnowledgeAreaDTO | undefined>();
+
+    protected titleFilterSubject = new Subject<string>();
+    private titleFilterSubscription?: Subscription;
+
+    ngOnInit(): void {
+        this.titleFilterSubscription = this.titleFilterSubject.pipe(debounceTime(500)).subscribe((value) => this.competencyTitleFilterChange.emit(value));
+    }
+
+    ngOnDestroy(): void {
+        this.titleFilterSubscription?.unsubscribe();
+        this.titleFilterSubject.complete();
+    }
+
+    onTitleChange(value: string): void {
+        this.titleFilterSubject.next(value);
+    }
+
+    onKnowledgeAreaChange(id: number | undefined): void {
+        // The select binds the knowledge area id (optionValue) — primitive matching reliably resolves the
+        // selected option's label, unlike object binding. Map the id back to the DTO the parent filter expects.
+        const knowledgeArea = id === undefined ? undefined : this.knowledgeAreasForSelect().find((ka) => ka.id === id);
+        this.knowledgeAreaFilterChange.emit(knowledgeArea);
+    }
+}

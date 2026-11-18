@@ -1,0 +1,191 @@
+---
+id: assessment
+title: Assessment and Grading
+sidebar_label: Assessment and Grading
+last_reviewed: 2026-11-03
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import assessmentDashboard from './assets/assessment/assessment-dashboard.png';
+import exerciseDashboard from './assets/assessment/exercise-dashboard.png';
+import gradingCriteria from './assets/assessment/grading-criteria.png';
+import exampleSubmission from './assets/assessment/example-submission.png';
+import trainingInstructions from './assets/assessment/training-instructions.png';
+import complaintReview from './assets/assessment/complaint-review.png';
+import leaderboard from './assets/assessment/leaderboard.png';
+
+Artemis assesses an exercise in one of three ways, chosen per exercise when it is created.
+
+- **Automatic** — Artemis marks the work itself, from test cases for a programming exercise or from the correct
+  answers of a quiz.
+- **Manual** — a tutor or instructor reads every submission and marks it.
+- **Semi-automatic** — the automatic result is the starting point, and a reviewer corrects and completes it.
+
+Manual assessment is available for programming, text, modeling and file upload exercises. A quiz is marked
+automatically and cannot be marked by hand.
+
+## How a Manual Assessment Runs
+
+A reviewer does not pick a submission; they ask for the next one. Opening an assessment **locks** that submission, so
+two reviewers never mark the same work, and the lock is what creates the result the marks are written to. The reviewer
+then applies feedback and points and submits the assessment, or cancels it — which deletes the draft result and
+returns the submission to the queue.
+
+<Callout variant={CalloutVariant.info}>
+
+  A reviewer may hold at most ten unfinished assessments in a course at once. The eleventh request is refused until
+  one is submitted or canceled, which stops a queue being reserved and left.
+
+</Callout>
+
+An assessment lock does not time out. A submission stays with the reviewer who opened it until they submit or
+cancel, and only that reviewer can let it go: the assessment locks page lists the submissions *you* hold, not
+everybody's. What the dashboard gives an instructor is the count, which is enough to notice a queue that has stalled
+and ask whoever is holding it. A complaint is the exception to all of this — a reviewer holds one for 24 hours, and
+the panel names the hour it comes free.
+
+Nothing reaches the student until the exercise's assessment due date has passed. Until then marks can be revised
+freely; afterwards the results are published together, and students can
+[rate the feedback](/student/assessment-grades/assessment#rating-feedback-quality) they received.
+
+## Assessment Dashboard
+
+**Assessment** in the course management shows how far the marking has got across every manually assessed exercise in
+the course. Each figure — assessments, complaints, feedback requests, open locks and student ratings — is given twice,
+as the course total and as your own share of it, so a reviewer sees both the state of the course and their own
+contribution to it.
+
+<Image src={assessmentDashboard} alt="Assessment dashboard with the per-exercise progress of the course" size={ImageSize.large} caption="Assessment progress across the course" />
+
+**Exercise Dashboard** on any row opens that exercise on its own. This is where a reviewer works: it holds the
+training material, the queue, and **Start new assessment**, which locks the next submission and opens it.
+
+<Image src={exerciseDashboard} alt="Exercise assessment dashboard with the queue and the training material" size={ImageSize.large} caption="A single exercise, as its reviewers see it" />
+
+## Structured Assessment Criteria
+
+A criterion is a piece of feedback with a point value attached, defined once on the exercise. In the assessment editor
+they sit beside the submission under **Structured Assessment Criteria**, grouped by what they judge, and a reviewer
+applies one by dragging it onto the passage or the element it concerns rather than typing the comment again.
+
+<Image src={gradingCriteria} alt="Assessment editor with the structured assessment criteria beside the submission" size={ImageSize.large} caption="Applying a criterion to a submission" />
+
+The point of them is consistency: two reviewers deduct the same marks for the same mistake and describe it in the same
+words, which is also what makes a complaint answerable. Students see the criterion that was applied, so the mark
+carries its reason with it.
+
+## Training Reviewers
+
+Before a reviewer may mark real work, Artemis can make them work through example submissions the instructor has
+prepared. Reviewers see the training material on the exercise dashboard and cannot reach the queue until they have
+finished it.
+
+An example submission is created on the exercise, and **Assessment Training** on it chooses between two modes.
+
+- **Read and Confirm** — the reviewer reads the submission together with the instructor's assessment and confirms
+  they have understood it.
+- **Assess Correctly** — the reviewer marks the submission themselves, and Artemis compares their marks with the
+  instructor's. If they do not match, the differences are explained and the reviewer tries again.
+
+<Image src={exampleSubmission} alt="Example submission with its assessment mode" size={ImageSize.large} caption="An example submission prepared for training" />
+
+An existing student submission can be imported as an example, which is both more realistic than an invented one and
+less work.
+
+Whether or not there are example submissions, a reviewer starts at the exercise's own instructions: the problem
+statement, the example solution and the assessment instructions, one after another, ending in **I have read and
+understood the instructions**. Until that is clicked the queue is not shown at all, so the instructions cannot be
+skipped past.
+
+<Image src={trainingInstructions} alt="Assessment instructions a reviewer confirms before marking" size={ImageSize.large} caption="The instructions a reviewer confirms" />
+
+## Double-Blind Assessment
+
+Manual assessment is double-blind. A reviewer does not see whose work they are marking, and a student does not see who
+marked theirs. Neither side can act on the other's identity, which is the point.
+
+## Complaints
+
+Where the course allows it, a student who thinks a mark is wrong can file a **complaint** on it. See
+[Course Configuration](/instructor/course-management/course-configuration#complaints) for the settings that switch
+complaints on and set their limits.
+
+A student may have only a limited number of complaints that are **open or were rejected** at any one time — three by
+default. An accepted complaint stops counting against that limit, so a student whose complaints keep being upheld is
+never blocked, while one who files unfounded complaints runs out.
+
+<Callout variant={CalloutVariant.info}>
+
+  A quiz can never be complained about. An exercise marked automatically can, but only if it carries **Complaint on
+  Automatic Assessment** — an option Artemis offers only where manual assessment is off and a due date is set, because
+  the complaint is what brings a tutor to the submission. Athena's preliminary AI feedback is refused outright, and in
+  an exam a complaint is only possible during the student review period.
+
+</Callout>
+
+A complaint arrives on the exercise dashboard. The reviewer who takes it reads the student's justification beside the
+original assessment and decides.
+
+<Image src={complaintReview} alt="Complaint review with the student justification and the accept and reject actions" size={ImageSize.large} caption="Answering a complaint" />
+
+- **Accept complaint** writes the response and updates the assessment. Adjusting the feedback blocks first is what
+  changes the marks, in either direction.
+- **Reject complaint** writes the response and leaves the assessment as it was. Say why: this is the answer the
+  student reads.
+
+Either way the response is written in **Complaint's response**, which takes up to 2000 characters by default. If
+neither answer is right — the case needs someone else — **Remove lock** returns the complaint to the queue
+untouched.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Accepting a complaint can lower a mark as well as raise it, because it reopens the whole assessment rather than only
+  the disputed part.
+
+</Callout>
+
+## More Feedback Requests
+
+A student who wants their marks explained rather than changed can send a **more feedback request** instead. It costs
+nothing against the complaint limit, and the reviewer answers it with a single **Provide more feedback** response —
+there is no accept or reject, because nothing is in dispute.
+
+Artemis stores at most one of the two per result, so a student who asks for more feedback has spent the slot and can
+no longer complain about that result. That trade is worth making clear to students; the
+[student page](/student/assessment-grades/assessment#more-feedback-requests) states it.
+
+## Grading Leaderboard
+
+The leaderboard counts what each reviewer has done: the points they have marked, the number of assessments, how many
+complaints about their marking were accepted, how many requests are still open, how many complaints and requests they
+have answered, the average mark they give, and the average rating students gave their feedback.
+
+<Image src={leaderboard} alt="Grading leaderboard with the per-reviewer counts" size={ImageSize.large} caption="The grading leaderboard" />
+
+Every reviewer sees it, which is the intent: the numbers are a shared standard rather than a private report. A
+reviewer whose figures sit far from the rest — many accepted complaints, or an average mark well away from everyone
+else's — is worth a conversation before the course ends rather than after.
+
+## Automatic Assessment
+
+A quiz is marked automatically as soon as it is over, and this is the only mode it has. A programming exercise is
+marked by its test cases, either while the exercise is running or once it has closed, and can be marked
+semi-automatically by having a reviewer correct the result afterwards.
+
+**Complaint on Automatic Assessment**, on the programming exercise's own form, lets students dispute what the tests
+concluded. Turning it on is what puts a tutor in front of a submission that no tutor would otherwise have seen, so
+budget for the work before enabling it on a large course.
+
+## Exercise-Specific Assessment
+
+Each exercise type's own page covers what its assessment editor offers.
+
+- [Programming Exercises](/instructor/exercises/programming-exercise)
+- [Quiz Exercises](/instructor/exercises/quiz-exercise)
+- [Modeling Exercises](/instructor/exercises/modeling-exercise)
+- [Text Exercises](/instructor/exercises/text-exercise)
+- [File Upload Exercises](/instructor/exercises/file-upload-exercise)
+- [Team Exercises](/instructor/exercises/team-exercise)

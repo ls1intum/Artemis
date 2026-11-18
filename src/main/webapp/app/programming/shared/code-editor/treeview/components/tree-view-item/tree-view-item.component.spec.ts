@@ -1,0 +1,213 @@
+import { Component, DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BrowserModule, By } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { slice } from 'lodash-es';
+
+import { TreeViewItemComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view-item/tree-view-item.component';
+import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
+import { CommonModule } from '@angular/common';
+import { createGenericTestComponent } from 'test/helpers/tree-view/common';
+
+const fakeItemTemplate = `
+<ng-template #itemTemplate let-item="item"
+  let-onCollapseExpand="onCollapseExpand"
+  let-onCheckedChange="onCheckedChange">
+  <div class="form-check">
+    @if (item.children) {
+      <i (click)="onCollapseExpand()" aria-hidden="true"
+        class="fa" [class.fa-caret-right]="item.collapsed" [class.fa-caret-down]="!item.collapsed"></i>
+    }
+    <label class="form-check-label">
+      <input type="checkbox" class="form-check-input"
+        [(ngModel)]="item.checked" (ngModelChange)="onCheckedChange()" [disabled]="item.disabled" />
+      {{item.text}}
+    </label>
+  </div>
+</ng-template>
+`;
+
+interface FakeData {
+    item: TreeViewItem<number>;
+    checkedChange: (checked: boolean) => void;
+}
+
+const fakeData: FakeData = {
+    // @ts-ignore
+    item: undefined,
+    checkedChange: () => {},
+};
+
+const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]="itemTemplate" (checkedChange)="checkedChange($event)"></treeview-item>';
+
+@Component({
+    selector: 'test',
+    template: '',
+    imports: [TreeViewItemComponent, FormsModule, CommonModule],
+})
+class TestComponent {
+    item = fakeData.item;
+    checkedChange = (checked: boolean) => fakeData.checkedChange(checked);
+}
+
+const createTestComponent = (html: string) => createGenericTestComponent(html, TestComponent) as ComponentFixture<TestComponent>;
+
+describe('TreeviewItemComponent', () => {
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [FormsModule, BrowserModule, TreeViewItemComponent],
+        });
+    });
+
+    describe('item', () => {
+        it('should not have element with class "treeview-item" if no item provided', () => {
+            const fixture = createTestComponent('<treeview-item></treeview-item>');
+            fixture.detectChanges();
+            const element = fixture.debugElement.query(By.css('.treeview-item'));
+            expect(element).toBeNull();
+        });
+
+        it('should have element with class "treeview-item" if binding item', () => {
+            fakeData.item = new TreeViewItem<number>({ children: [], text: '1', value: 1 });
+            const fixture = createTestComponent('<treeview-item [item]="item"></treeview-item>');
+            fixture.detectChanges();
+            const element = fixture.debugElement.query(By.css('.treeview-item'));
+            expect(element).not.toBeNull();
+        });
+    });
+
+    describe('template', () => {
+        let fixture: ComponentFixture<TestComponent>;
+        let collapsedElement: DebugElement;
+        let parentCheckbox: DebugElement;
+        let childrenCheckboxes: DebugElement[];
+
+        beforeEach(() => {
+            fakeData.item = new TreeViewItem({
+                text: 'Parent 1',
+                value: 1,
+                checked: true,
+                collapsed: false,
+                disabled: false,
+                children: [{ text: 'Child 1', value: 11 } as TreeViewItem<number>, { text: 'Child 2', value: 12 } as TreeViewItem<number>],
+            });
+        });
+
+        beforeEach(async () => {
+            fixture = createTestComponent(testTemplate);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            collapsedElement = fixture.debugElement.query(By.css('.fa'));
+            const checkboxElements = fixture.debugElement.queryAll(By.css('.form-check-input'));
+            parentCheckbox = checkboxElements[0];
+            childrenCheckboxes = slice(checkboxElements, 1);
+        });
+
+        it('should render "Parent 1", "Child 1" & "Child 2" with checked', () => {
+            expect(parentCheckbox.nativeElement.checked).toBe(true);
+            expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([false, false]);
+        });
+
+        describe('toggle collapse/expand', () => {
+            beforeEach(async () => {
+                collapsedElement.triggerEventHandler('click', {});
+                fixture.detectChanges();
+                await fixture.whenStable();
+            });
+
+            it('should not render children', () => {
+                const checkboxElements = fixture.debugElement.queryAll(By.css('.form-check-input'));
+                expect(checkboxElements).toHaveLength(1);
+            });
+        });
+
+        describe('uncheck "Parent 1"', () => {
+            let checkedChangeSpy: ReturnType<typeof vi.spyOn>;
+
+            beforeEach(async () => {
+                checkedChangeSpy = vi.spyOn(fakeData, 'checkedChange');
+                parentCheckbox.nativeElement.click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+            });
+
+            afterEach(() => {
+                checkedChangeSpy.mockRestore();
+            });
+
+            it('should un-check "Child 1" & "Child 2"', () => {
+                expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([false, false]);
+            });
+
+            it('should raise event checkedChange', () => {
+                expect(checkedChangeSpy).toHaveBeenCalledOnce();
+                expect(checkedChangeSpy).toHaveBeenCalledWith(false);
+            });
+        });
+
+        describe('un-check "Child 1"', () => {
+            let checkedChangeSpy: ReturnType<typeof vi.spyOn>;
+
+            beforeEach(async () => {
+                checkedChangeSpy = vi.spyOn(fakeData, 'checkedChange');
+                childrenCheckboxes[0].nativeElement.click();
+                fixture.detectChanges();
+                await fixture.whenStable();
+            });
+
+            afterEach(() => {
+                checkedChangeSpy.mockReset();
+            });
+
+            it('should uncheck "Parent 1"', () => {
+                expect(parentCheckbox.nativeElement.checked).toBe(false);
+            });
+
+            it('should raise event checkedChange', () => {
+                expect(checkedChangeSpy).toHaveBeenCalledOnce();
+                expect(checkedChangeSpy).toHaveBeenCalledWith(true);
+            });
+
+            describe('un-check "Child 2"', () => {
+                beforeEach(async () => {
+                    checkedChangeSpy.mockReset();
+                    childrenCheckboxes[1].nativeElement.click();
+                    fixture.detectChanges();
+                    await fixture.whenStable();
+                });
+
+                it('should keep "Parent 1" checked', () => {
+                    expect(parentCheckbox.nativeElement.checked).toBe(true);
+                });
+
+                it('should raise event checkedChange', () => {
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
+                    expect(checkedChangeSpy).toHaveBeenCalledWith(true);
+                });
+            });
+
+            describe('check "Child 1"', () => {
+                beforeEach(async () => {
+                    checkedChangeSpy.mockReset();
+                    childrenCheckboxes[0].nativeElement.click();
+                    fixture.detectChanges();
+                    await fixture.whenStable();
+                });
+
+                afterEach(() => {
+                    checkedChangeSpy.mockReset();
+                });
+
+                it('should not check "Parent 1"', () => {
+                    expect(parentCheckbox.nativeElement.checked).toBe(false);
+                });
+
+                it('should raise event checkedChange', () => {
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
+                    expect(checkedChangeSpy).toHaveBeenCalledWith(false);
+                });
+            });
+        });
+    });
+});

@@ -1,0 +1,149 @@
+package de.tum.cit.aet.artemis.plagiarism.web;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
+
+/**
+ * REST controller for managing Post.
+ */
+@Conditional(PlagiarismEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.PLAGIARISM_CASES)
+@RestController
+@RequestMapping("api/plagiarism/")
+public class PlagiarismPostResource {
+
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismPostResource.class);
+
+    private final PlagiarismPostService plagiarismPostService;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    public PlagiarismPostResource(PlagiarismPostService plagiarismPostService) {
+        this.plagiarismPostService = plagiarismPostService;
+    }
+
+    /**
+     * POST /courses/{courseId}/posts: Create a new post
+     *
+     * @param courseId id of course the post belongs to
+     * @param postDto  post to create
+     * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
+     */
+    @PostMapping("courses/{courseId}/posts")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismPostCreationDTO postDto)
+            throws URISyntaxException {
+        log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
+        long start = System.nanoTime();
+        PlagiarismPostCreationResponseDTO createdPost = plagiarismPostService.createPost(courseId, postDto);
+        log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.id())).body(createdPost);
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}: Update an existing post with given id
+     *
+     * @param courseId id of course the post belongs to
+     * @param postId   id of the post to update
+     * @param request  update payload carrying the fields the instructor may mutate
+     * @return ResponseEntity with status 200 (OK) containing the updated post as a cycle-free DTO,
+     *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
+     */
+    @PutMapping("courses/{courseId}/posts/{postId}")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<PostResponseDTO> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody PlagiarismPostUpdateRequestDTO request) {
+        log.debug("PUT updatePost invoked for course {} with content length {}", courseId, request.content() == null ? 0 : request.content().length());
+        long start = System.nanoTime();
+        Post updatedPost = plagiarismPostService.updatePost(courseId, postId, request);
+        log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(PostResponseDTO.from(updatedPost));
+    }
+
+    /**
+     * GET /courses/{courseId}/posts: Get all posts for a course by its id
+     *
+     * @param postContextFilter request param for filtering posts
+     * @return ResponseEntity with status 200 (OK) and with body all posts for the plagiarism case as
+     *         cycle-free DTOs, or 400 (Bad Request) if the checks on user, course, or post-validity fail
+     */
+    @GetMapping("courses/{courseId}/posts")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<PostResponseDTO>> getPostsInCourse(PostContextFilterDTO postContextFilter) {
+        Page<Post> coursePosts;
+        if (postContextFilter.plagiarismCaseId() != null) {
+            coursePosts = new PageImpl<>(plagiarismPostService.getAllPlagiarismCasePosts(postContextFilter));
+        }
+        else {
+            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", plagiarismPostService.getEntityName(),
+                    "noPlagiarismCase");
+        }
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
+
+        List<PostResponseDTO> body = coursePosts.getContent().stream().map(PostResponseDTO::from).toList();
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
+    }
+
+    /**
+     * DELETE /courses/{courseId}/posts/{id}: Delete a post by its id
+     *
+     * @param courseId id of course the post belongs to
+     * @param postId   id of the post to delete
+     * @return ResponseEntity with status 200 (OK),
+     *         or 400 (Bad Request) if the checks on user, course, or post-validity fail
+     */
+    @DeleteMapping("courses/{courseId}/posts/{postId}")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
+        log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
+        long start = System.nanoTime();
+        plagiarismPostService.deletePostById(courseId, postId);
+        log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, plagiarismPostService.getEntityName(), postId.toString())).build();
+    }
+}

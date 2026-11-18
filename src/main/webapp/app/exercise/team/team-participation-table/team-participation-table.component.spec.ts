@@ -1,0 +1,343 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { TeamService } from 'app/exercise/team/team.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { of } from 'rxjs';
+import { MockTeamService, mockTeam } from 'test/helpers/mocks/service/mock-team.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { TeamParticipationTableComponent } from 'app/exercise/team/team-participation-table/team-participation-table.component';
+import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import dayjs from 'dayjs/esm';
+import { HttpResponse } from '@angular/common/http';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+
+describe('TeamParticipationTableComponent', () => {
+    let comp: TeamParticipationTableComponent;
+    let fixture: ComponentFixture<TeamParticipationTableComponent>;
+    let debugElement: DebugElement;
+    let teamService: TeamService;
+    const course = {
+        id: 123,
+        title: 'Course Title',
+        isAtLeastInstructor: true,
+        isAtLeastEditor: true,
+        endDate: dayjs().subtract(5, 'minutes'),
+        courseArchivePath: 'some-path',
+    } as Course;
+    const exercise1 = {
+        id: 1,
+        type: ExerciseType.MODELING,
+        mode: ExerciseMode.TEAM,
+        teams: [mockTeam],
+        course,
+    } as Exercise;
+
+    const submission2 = {
+        id: 2,
+        submitted: true,
+        submissionDate: dayjs().subtract(10, 'minutes'),
+        results: [
+            {
+                id: 2,
+                successful: true,
+            },
+        ],
+        submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+    } as Submission;
+    const exercise2 = {
+        id: 2,
+        type: ExerciseType.TEXT,
+        mode: ExerciseMode.TEAM,
+        teams: [mockTeam],
+        course,
+        studentParticipations: [
+            {
+                id: 2,
+                team: mockTeam,
+                submissions: [submission2],
+            },
+        ],
+    } as Exercise;
+
+    const submission3 = {
+        id: 3,
+        submitted: true,
+        submissionDate: dayjs().subtract(10, 'minutes'),
+    } as Submission;
+    const exercise3 = {
+        id: 3,
+        type: ExerciseType.FILE_UPLOAD,
+        mode: ExerciseMode.TEAM,
+        dueDate: dayjs().subtract(5, 'minutes'),
+        teams: [mockTeam],
+        course,
+        studentParticipations: [
+            {
+                id: 1,
+                team: mockTeam,
+                submissions: [submission3],
+            },
+        ],
+    } as Exercise;
+    const submission4 = {
+        id: 4,
+        submitted: true,
+        submissionDate: dayjs().subtract(10, 'minutes'),
+        results: [
+            {
+                id: 2,
+                successful: true,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            },
+        ],
+    } as Submission;
+    const exercise4 = {
+        id: 3,
+        type: ExerciseType.PROGRAMMING,
+        mode: ExerciseMode.TEAM,
+        dueDate: dayjs().add(5, 'minutes'),
+        teams: [mockTeam],
+        course,
+        studentParticipations: [
+            {
+                id: 1,
+                team: mockTeam,
+                submissions: [submission4],
+            },
+        ],
+    } as Exercise;
+
+    const submission5 = {
+        id: 5,
+        submitted: true,
+        submissionDate: dayjs().subtract(10, 'minutes'),
+        results: [
+            {
+                id: 2,
+                successful: true,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            },
+        ],
+    } as Submission;
+    const exercise5 = {
+        id: 5,
+        type: ExerciseType.MODELING,
+        mode: ExerciseMode.TEAM,
+        dueDate: dayjs().add(5, 'minutes'),
+        teams: [mockTeam],
+        course,
+        studentParticipations: [
+            {
+                id: 1,
+                team: mockTeam,
+                submissions: [submission5],
+            },
+        ],
+    } as Exercise;
+    course.exercises = [exercise1, exercise2, exercise3, exercise4, exercise5];
+
+    let router: Router;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                MockProvider(TranslateService),
+                { provide: TeamService, useClass: MockTeamService },
+                LocalStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        })
+            .overrideComponent(TeamParticipationTableComponent, {
+                set: {
+                    imports: [ArtemisDatePipe, ArtemisTranslatePipe],
+                    schemas: [NO_ERRORS_SCHEMA],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(TeamParticipationTableComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        teamService = TestBed.inject(TeamService);
+        router = TestBed.inject(Router);
+    });
+
+    it('should request the explicit staff overview rather than infer it from instructor flags', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'staff');
+    });
+
+    it('should keep the student overview for an instructor using the default student view', () => {
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'student');
+    });
+
+    it('should link to the student routes in the student overview', () => {
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
+    it('should keep staff in course management, because the student team route requires team membership', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/course-management', comp.course().id, 'text-exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/course-management', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
+        vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise4);
+        fixture.componentRef.setInput('team', mockTeam);
+        vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+        comp.ngOnInit();
+        await fixture.whenStable();
+    });
+
+    it('Exercises for one team are loaded correctly', () => {
+        // Make sure that all 3 exercises were received for exercise
+        expect(comp.exercises()).toHaveLength(course.exercises!.length);
+
+        // Check that jhi-table-view is present
+        const datatable = debugElement.query(By.css('jhi-table-view'));
+        expect(datatable).not.toBeNull();
+    });
+
+    it('should keep the initialization date column sortable via its dot-path field', () => {
+        const initDateColumn = comp.columns().find((column) => column.field === 'participation.initializationDate');
+        expect(initDateColumn).toBeDefined();
+        expect(initDateColumn!.sort).toBe(true);
+    });
+
+    it('should keep the participation id column sortable for admins', () => {
+        fixture.componentRef.setInput('isAdmin', true);
+        const participationColumn = comp.columns().find((column) => column.field === 'participation.id');
+        expect(participationColumn).toBeDefined();
+        expect(participationColumn!.sort).toBe(true);
+    });
+
+    it('Assessment Action "continue" is triggered', () => {
+        const expectedAssessmentAction = comp.assessmentAction(submission2);
+        expect(expectedAssessmentAction).toBe('continue');
+    });
+
+    it('Assessment Action "start" is triggered', () => {
+        const expectedAssessmentAction = comp.assessmentAction(submission3);
+        expect(expectedAssessmentAction).toBe('start');
+    });
+
+    it('Assessment Action "open" is triggered', () => {
+        const expectedAssessmentAction = comp.assessmentAction(submission4);
+        expect(expectedAssessmentAction).toBe('open');
+    });
+
+    it('Navigate to assessment editor when opening exercise submission', async () => {
+        const participation = exercise2.studentParticipations![0];
+        await comp.openAssessmentEditor(exercise2, participation, 'new');
+        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith([
+            '/course-management',
+            course.id!.toString(),
+            exercise2.type! + '-exercises',
+            exercise2.id!.toString(),
+            'submissions',
+            'new',
+            'assessment',
+        ]);
+    });
+
+    it('Check enabled assessment button for exercises without due date', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('Check enabled assessment button for exercises with submission and passed due date', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('Check disabled assessment button for exercises without submission', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
+
+    it('Check disabled assessment button for exercises before due date as tutor', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
+            {
+                ...exercise4,
+                isAtLeastInstructor: false,
+            },
+            submission4,
+        );
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
+
+    it('Check disabled assessment button for programming exercises before due date as instructor', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
+            {
+                ...exercise4,
+                isAtLeastInstructor: true,
+            },
+            submission4,
+        );
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+    });
+
+    it('Check enabled assessment button for exercises before due date as instructor', () => {
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
+            {
+                ...exercise5,
+                isAtLeastInstructor: true,
+            },
+            submission5,
+        );
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('currentExerciseSubmissions only includes the submission of the current exercise, not other exercises in the team course', () => {
+        const athenaSubmission = {
+            id: 999,
+            submitted: true,
+            results: [{ id: 999, assessmentType: AssessmentType.AUTOMATIC_ATHENA }],
+        } as Submission;
+        const otherExerciseWithAthenaSubmission = {
+            id: 42,
+            type: ExerciseType.TEXT,
+            mode: ExerciseMode.TEAM,
+            teams: [mockTeam],
+            course,
+            studentParticipations: [{ id: 42, team: mockTeam, submissions: [athenaSubmission] }],
+        } as Exercise;
+
+        vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(
+            of(new HttpResponse({ body: { ...course, exercises: [otherExerciseWithAthenaSubmission, exercise4] } })),
+        );
+        fixture.componentRef.setInput('exercise', exercise4);
+        comp.loadAll();
+
+        const submissions = comp.currentExerciseSubmissions();
+
+        expect(submissions).toHaveLength(1);
+        expect(submissions[0]?.id).toBe(submission4.id);
+        expect(submissions.some((submission) => submission.results?.some((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA))).toBe(false);
+    });
+});

@@ -1,0 +1,71 @@
+import { signal } from '@angular/core';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { BehaviorSubject, of } from 'rxjs';
+import { Observable } from 'rxjs';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+
+const studentExamInstance = new StudentExam();
+const exercise = { id: 7 };
+const exercises = [exercise];
+studentExamInstance.exercises = exercises as Exercise[];
+
+const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExamInstance);
+const examEndViewSubject = new BehaviorSubject<boolean>(false);
+
+export class MockExamParticipationService {
+    /**
+     * Mirrors the real service's submission-sync contract: bindings that must react to in-place
+     * `isSynced` mutations read {@link submissionSyncVersion}, and every write path calls
+     * {@link notifySubmissionSyncStateChanged} to bump it. The notifier must really increment the same
+     * signal instance the readonly view exposes — a no-op over a static signal would let a binding under
+     * test silently never re-evaluate, which is the exact staleness bug this contract exists to prevent.
+     */
+    private readonly submissionSyncVersionSignal = signal(0);
+    readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+
+    notifySubmissionSyncStateChanged(): void {
+        this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
+    loadStudentExam = (courseId: number, examId: number): Observable<StudentExam> => {
+        return examParticipationSubjectMock;
+    };
+    loadStudentExamWithExercisesForSummary = (): Observable<StudentExam> => {
+        return examParticipationSubjectMock;
+    };
+
+    loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
+        return examParticipationSubjectMock;
+    }
+
+    loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        return examParticipationSubjectMock;
+    }
+
+    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number, isTestRun?: boolean): Observable<StudentExamWithGradeDTO> {
+        return of({} as StudentExamWithGradeDTO);
+    }
+
+    getExamExerciseIds = (): number[] => {
+        return [1, 3, 7];
+    };
+
+    saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {}
+
+    public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
+        return of({} as StudentExam);
+    }
+
+    setEndView(isEndView: boolean): void {
+        examEndViewSubject.next(false);
+    }
+
+    requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
+        return of(undefined);
+    }
+
+    getAthenaFeedbackUsage(courseId: number, examId: number, studentExamId: number): Observable<{ used: number; limit: number }> {
+        return of({ used: 0, limit: 10 });
+    }
+}

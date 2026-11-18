@@ -1,0 +1,210 @@
+<section>
+    <h3
+        jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
+        id="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
+    ></h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage"></p>
+    <div class="form-group">
+        <jhi-exercise-title-channel-name
+            [exercise]="programmingExercise()"
+            [course]="programmingExercise().course"
+            [minTitleLength]="3"
+            [titlePattern]="programmingExerciseCreationConfig().titleNamePattern"
+            [titleHelpIconText]="'artemisApp.programmingExercise.titleTooltip'"
+            [channelNameHelpIconText]="'artemisApp.programmingExercise.channelNameTooltip'"
+            [isExamMode]="isExamMode()"
+            [isImport]="isImport()"
+            [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+            [courseId]="courseId()"
+            (onTitleChange)="updateShortName($event)"
+        />
+    </div>
+    @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {
+        <div class="row">
+            @if (isEditFieldDisplayedRecord().shortName) {
+                <div class="form-group col-lg-6">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
+                        <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
+                    </div>
+                    <input
+                        required
+                        type="text"
+                        class="form-control"
+                        name="shortName"
+                        id="field_shortName"
+                        minlength="3"
+                        [maxlength]="PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH"
+                        [pattern]="programmingExerciseCreationConfig().shortNamePattern"
+                        [(ngModel)]="programmingExercise().shortName"
+                        [readOnly]="!programmingExerciseCreationConfig().isImportFromExistingExercise && !!programmingExercise().id"
+                        [disabled]="!programmingExerciseCreationConfig().isImportFromExistingExercise && !!programmingExercise().id"
+                        notIncludedIn
+                        [disallowedValues]="alreadyUsedShortNames()"
+                        #shortName="ngModel"
+                    />
+                    @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
+                        @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
+                            <p-message severity="error">
+                                <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
+                            </p-message>
+                        }
+                    }
+                </div>
+            }
+            @if (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories) {
+                <div class="col-12" [class.col-lg-6]="isEditFieldDisplayedRecord().shortName" id="creation-config-selector">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+                    </div>
+                    <jhi-category-selector
+                        [categories]="programmingExerciseCreationConfig().exerciseCategories"
+                        [existingCategories]="programmingExerciseCreationConfig().existingCategories"
+                        (selectedCategories)="programmingExerciseCreationConfig().updateCategories($event)"
+                    />
+                </div>
+            }
+        </div>
+    }
+    @if (programmingExercise().shortName && isShortNameFieldValid()) {
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
+                <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
+            </div>
+            <jhi-programming-exercise-repository-and-build-plan-details
+                [programmingExercise]="programmingExercise()"
+                [programmingLanguage]="programmingExerciseCreationConfig().selectedProgrammingLanguage"
+                [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository || false"
+                (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
+                [isCreateOrEdit]="true"
+                [isEditMode]="programmingExerciseCreationConfig().isEdit"
+                [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
+            />
+            @if (
+                editRepositoryCheckoutPath() &&
+                isLocalCIEnabled() &&
+                !isImport() &&
+                !programmingExerciseCreationConfig().isEdit &&
+                isEditFieldDisplayedRecord().editRepositoriesCheckoutPath
+            ) {
+                <jhi-programming-exercise-edit-checkout-directories
+                    [programmingExercise]="programmingExercise()"
+                    [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories()"
+                    (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
+                    (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
+                    (solutionCheckoutPathEvent)="onSolutionRepositoryCheckoutPathChange($event)"
+                    [pattern]="programmingExerciseCreationConfig().invalidDirectoryNamePattern"
+                />
+            }
+            @if (!programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExerciseCreationConfig().auxiliaryRepositoriesSupported) {
+                <div class="form-group">
+                    @if (
+                        programmingExercise().auxiliaryRepositories &&
+                        programmingExercise().auxiliaryRepositories!.length > 0 &&
+                        isEditFieldDisplayedRecord().addAuxiliaryRepository
+                    ) {
+                        <jhi-table-view
+                            id="auxiliaryRepositoryTable"
+                            [cols]="auxiliaryRepoColumns()"
+                            [vals]="programmingExercise().auxiliaryRepositories!"
+                            [rowActions]="auxRepoActionsRef"
+                            [options]="auxiliaryRepoTableOptions"
+                        />
+                    }
+                    @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
+                        <p-message severity="error">
+                            @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
+                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
+                            }
+                            @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
+                                <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
+                            }
+                        </p-message>
+                    }
+                    @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
+                        <p-message severity="info">
+                            <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
+                        </p-message>
+                    }
+                    @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
+                        <jhi-button
+                            [btnType]="ButtonType.WARNING"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faPlus"
+                            [title]="'artemisApp.programmingExercise.checkoutPath.edit'"
+                            (onClick)="toggleEditRepositoryCheckoutPath()"
+                        />
+                    }
+                    @if (isEditFieldDisplayedRecord().addAuxiliaryRepository) {
+                        <jhi-add-auxiliary-repository-button
+                            [programmingExercise]="programmingExercise()"
+                            (onRefresh)="programmingExerciseCreationConfig().refreshAuxiliaryRepositoryChecks()"
+                            class="ml-2"
+                        />
+                        <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
+                    }
+                </div>
+            }
+        </div>
+    }
+    <div class="form-group">
+        @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
+            <div class="form-check">
+                <label class="form-check-label" for="field_recreateBuildPlans">
+                    <input
+                        #recreateBuildPlans="ngModel"
+                        class="form-check-input"
+                        type="checkbox"
+                        name="recreateBuildPlans"
+                        id="field_recreateBuildPlans"
+                        [(ngModel)]="importOptions().recreateBuildPlans"
+                        (change)="programmingExerciseCreationConfig().recreateBuildPlanChange()"
+                    />
+                    <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title"></span>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description" />
+                </label>
+            </div>
+        }
+    </div>
+    @if (isSimpleMode()) {
+        <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
+    }
+</section>
+
+<!-- Auxiliary repository cell templates -->
+<ng-template #auxRepoNameTemplate let-cell>
+    <jhi-table-editable-field
+        [id]="cell.data.id + '-repositoryName'"
+        [value]="cell.data.name || ''"
+        [onValueUpdate]="programmingExerciseCreationConfig().updateRepositoryName(cell.data)"
+        [pattern]="programmingExerciseCreationConfig().invalidRepositoryNamePattern"
+        [isRequired]="true"
+        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
+    />
+</ng-template>
+
+<ng-template #auxCheckoutDirTemplate let-cell>
+    <jhi-table-editable-field
+        [id]="cell.data.id + '-checkoutDirectory'"
+        [value]="cell.data.checkoutDirectory || ''"
+        [onValueUpdate]="programmingExerciseCreationConfig().updateCheckoutDirectory(cell.data)"
+        [pattern]="programmingExerciseCreationConfig().invalidDirectoryNamePattern"
+        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
+    />
+</ng-template>
+
+<ng-template #auxDescriptionTemplate let-cell>
+    <textarea class="form-control table-editable-field__input me-2" [id]="cell.data.id + '-description'" [(ngModel)]="cell.data.description" name="description"></textarea>
+</ng-template>
+
+<ng-template #auxRepoActionsRef let-row>
+    <jhi-remove-auxiliary-repository-button
+        placement="right auto"
+        [programmingExercise]="programmingExercise()"
+        (onRefresh)="programmingExerciseCreationConfig().refreshAuxiliaryRepositoryChecks()"
+        [row]="row"
+    />
+</ng-template>

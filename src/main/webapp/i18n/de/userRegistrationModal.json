@@ -1,0 +1,24 @@
+{
+    "userRegistrationModal": {
+        "description": "Gib einen Suchbegriff ein, um Benutzer nach Name, Login, Matrikelnummer oder E-Mail zu finden. Wähle Benutzer aus und klicke auf Registrieren.",
+        "searchPlaceholder": "Nach Name, Login, Matrikelnummer oder E-Mail suchen",
+        "viewingSelectedPlaceholder": "Ausgewählte Benutzer anzeigen...",
+        "initialTitle": "Beginne mit der Suche nach Benutzern",
+        "initialHint": "Gib einen Namen, Login, eine Matrikelnummer oder E-Mail in das Suchfeld ein.",
+        "noResultsTitle": "Keine Benutzer für \"{{term}}\" gefunden",
+        "noResultsHint": "Versuche einen anderen Suchbegriff.",
+        "viewSelected": "Auswahl anzeigen ({{count}})",
+        "backToSearch": "Zurück zur Suche",
+        "selectedCount": "{{count}} ausgewählt",
+        "clearSelection": "Auswahl aufheben",
+        "registerButton": "Registrieren ({{count}})",
+        "alreadyRegisteredTooltip": "Der Benutzer ist bereits registriert.",
+        "searchError": "Beim Suchen nach Benutzern ist ein Fehler aufgetreten.",
+        "registerError": "Beim Registrieren der Benutzer ist ein Fehler aufgetreten.",
+        "columns": {
+            "nameLogin": "Name / Login",
+            "matriculationNumber": "Matrikelnummer",
+            "email": "E-Mail"
+        }
+    }
+}

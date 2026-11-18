@@ -1,0 +1,444 @@
+import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-exam-exercise-import',
+    templateUrl: './exam-exercise-import.component.html',
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        DifficultyBadgeComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+    ],
+})
+export class ExamExerciseImportComponent implements OnInit {
+    private profileService = inject(ProfileService);
+    private exerciseService = inject(ExerciseService);
+
+    exam = input.required<Exam>();
+    importInSameCourse = input(false);
+    // Id of the course the exam / exercise groups are imported into. Used to fetch the already taken programming exercise
+    // titles and short names so clashes can be flagged live (as the user types) instead of only after the server rejects.
+    targetCourseId = input<number>();
+    // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
+    selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
+    // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
+    // or must be changed because the exam is imported into the same course
+    titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
+
+    // Map of programming exercise ids with duplicated titles and their corresponding title
+    exercisesWithDuplicatedTitles = new Map<number, string>();
+
+    // Map of programming exercise ids with duplicated short names and their corresponding short name
+    exercisesWithDuplicatedShortNames = new Map<number, string>();
+
+    // Titles / short names of the programming exercises that already exist in the target course, fetched once from the
+    // server. Signals (not plain Sets) so that the late-arriving HTTP response re-runs change detection under zoneless and
+    // the per-field error messages update live. Used to flag clashes as the user types instead of only after a rejected import.
+    private alreadyUsedProgrammingTitles = signal<Set<string>>(new Set());
+    private alreadyUsedProgrammingShortNames = signal<Set<string>>(new Set());
+
+    // Expose enums to the template
+    exerciseType = ExerciseType;
+    // Map to determine, if an exercise group contains at least one programming exercise.
+    // I.E. the short name must be displayed in the corresponding table
+    containsProgrammingExercises = new Map<ExerciseGroup, boolean>();
+
+    // Patterns
+    // length of < 3 is also accepted in order to provide more accurate validation error messages
+    readonly SHORT_NAME_REGEX = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
+
+    // Prefix for the per-field validation error translation keys shown below the title / short name inputs
+    private static readonly IMPORT_ERROR_PREFIX = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+
+    // Icons
+    faCheckDouble = faCheckDouble;
+    faFont = faFont;
+
+    textExerciseEnabled = false;
+
+    getExerciseIcon = getIcon;
+
+    ngOnInit(): void {
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+        // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
+        if (this.importInSameCourse()) {
+            this.initializeTitleAndShortNameMap();
+        }
+        this.fetchAlreadyUsedProgrammingTitlesAndShortNames();
+    }
+
+    /**
+     * Fetches the titles and short names of the programming exercises that already exist in the target course so clashes
+     * can be flagged live (while the user is still typing) instead of only after the server rejects the import. Best
+     * effort: if the target course is unknown or the request fails, the per-field validation falls back to the
+     * post-import server response (the previous behaviour).
+     */
+    private fetchAlreadyUsedProgrammingTitlesAndShortNames(): void {
+        const courseId = this.targetCourseId();
+        const hasProgrammingExercises = this.exam().exerciseGroups?.some((group) => group.exercises?.some((exercise) => exercise.type === ExerciseType.PROGRAMMING));
+        if (!courseId || !hasProgrammingExercises) {
+            return;
+        }
+        this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((details: CourseExistingExerciseDetailsType) => {
+            this.alreadyUsedProgrammingTitles.set(details.exerciseTitles ?? new Set());
+            this.alreadyUsedProgrammingShortNames.set(details.shortNames ?? new Set());
+        });
+    }
+
+    /**
+     * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
+     * Called by the parent component
+     * @param exerciseGroups the returned groups, which may not have reached the exam input yet
+     */
+    updateMapsAfterRejectedImportDueToInvalidProjectKey(exerciseGroups = this.exam().exerciseGroups) {
+        this.titleAndShortNameOfProgrammingExercises.clear();
+        this.initializeTitleAndShortNameMap();
+        this.selectedExercises.clear();
+        this.containsProgrammingExercises.clear();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups);
+    }
+
+    /**
+     * Method to update the Maps after a rejected import due to duplicated short name or title
+     * Called by the parent component
+     * @param exerciseGroups the returned groups, which may not have reached the exam input yet
+     */
+    updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle(exerciseGroups = this.exam().exerciseGroups) {
+        this.titleAndShortNameOfProgrammingExercises.clear();
+        this.selectedExercises.clear();
+        this.containsProgrammingExercises.clear();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups);
+    }
+
+    /**
+     * Method to initialize the Maps selectedExercises and containsProgrammingExercises
+     * @param exerciseGroups the groups to select and display
+     */
+    initializeSelectedExercisesAndContainsProgrammingExercisesMaps(exerciseGroups = this.exam().exerciseGroups) {
+        // Initialize selectedExercises
+        exerciseGroups?.forEach((exerciseGroup) => {
+            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises?.filter((exercise) => this.isExerciseTypeEnabled(exercise.type))));
+        });
+        const duplicated = new Set<string>();
+        // Initialize containsProgrammingExercises
+        exerciseGroups?.forEach((exerciseGroup) => {
+            const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
+            this.containsProgrammingExercises.set(exerciseGroup, hasProgrammingExercises);
+            // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.
+            exerciseGroup.exercises?.forEach((exercise) => {
+                if (exercise.type === ExerciseType.PROGRAMMING && exercise.title) {
+                    if (duplicated.has(exercise.title)) {
+                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title, '']);
+                        exercise.title = '';
+                    } else {
+                        duplicated.add(exercise.title);
+                        this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * Method to initialize the Map titleAndShortNameOfProgrammingExercises for the import
+     * Case rejected Import: In the selected exercises, all the (previously) selected exercises are stored. All programming exercises are added to the Map,
+     * which functions as a blocklist.
+     * Case import in same course: The selected exercises are already initialized and all programming exercises are added to the
+     * Map / Blocklist, as the title and shortName must be changed when importing into the same course.
+     */
+    initializeTitleAndShortNameMap() {
+        // The title and short name of the programming exercises are added to the map to display the rejected title and short name to the user
+        this.selectedExercises.forEach((exerciseSet) => {
+            exerciseSet.forEach((exercise) => {
+                if (exercise.type === ExerciseType.PROGRAMMING) {
+                    this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, exercise.shortName!]);
+                }
+            });
+        });
+    }
+
+    /**
+     * Sets the selected exercise for an exercise group in the selectedExercises Map-
+     * The ExerciseGroup is the Key in the Map, the Exercises are stored as a Set as the value.
+     * @param exercise The selected exercise
+     * @param exerciseGroup The exercise group for which the user selected an exercise to import
+     */
+    onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
+        if (!this.isExerciseTypeEnabled(exercise.type)) {
+            return;
+        }
+
+        if (this.selectedExercises.get(exerciseGroup)!.has(exercise)) {
+            // Case Exercise is already selected -> delete
+            this.selectedExercises.get(exerciseGroup)!.delete(exercise);
+            // The title or short name of the exercise is not considered to be duplicated. In case it was duplicated
+            // before, the set with duplicates has to be updated (checked again if any objects can be removed from the map).
+            if (this.exercisesWithDuplicatedTitles.delete(exercise.id!)) {
+                this.removeProgrammingExerciseFromDuplicates(exercise.title!, true);
+            }
+
+            if (this.exercisesWithDuplicatedShortNames.delete(exercise.id!)) {
+                this.removeProgrammingExerciseFromDuplicates(exercise.shortName!, false);
+            }
+        } else {
+            this.selectedExercises.get(exerciseGroup)!.add(exercise);
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true);
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false);
+            }
+        }
+    }
+
+    /**
+     * Returns if an exercise is (currently) selected for import.
+     * I.E. if the exercise is contained within the Map selectedExercises
+     * @param exercise the exercise for which should be determined, if it is selected by the user
+     * @param exerciseGroup the corresponding exercise group i.e. the key of the map
+     */
+    exerciseIsSelected(exercise: Exercise, exerciseGroup: ExerciseGroup): boolean {
+        return this.selectedExercises.get(exerciseGroup)!.has(exercise);
+    }
+
+    /**
+     * Returns if an exercise Group contains exercises
+     * I.E. At least one exercise within the exercise Group is selected for import
+     * @param exerciseGroup the corresponding exercise group
+     */
+    exerciseGroupContainsExercises(exerciseGroup: ExerciseGroup): boolean {
+        return this.selectedExercises.get(exerciseGroup)!.size > 0;
+    }
+
+    /**
+     * Returns if an exercise Group contains at least one programming exercise
+     * I.E. the short name must be displayed in the selection menu
+     * @param exerciseGroup the corresponding exercise group
+     */
+    exerciseGroupContainsProgrammingExercises(exerciseGroup: ExerciseGroup): boolean {
+        return !!this.containsProgrammingExercises.get(exerciseGroup);
+    }
+
+    /**
+     * Returns the placeholder title (i.e. the one rejected by the server) for the programming exercise
+     * @param exerciseId the corresponding exercise
+     */
+    getBlocklistTitleOfProgrammingExercise(exerciseId: number): string {
+        const title = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.first();
+        return title ? title : ``;
+    }
+
+    /**
+     * Returns the placeholder shortName (i.e. the one rejected by the server) for the programming exercise
+     * @param exerciseId the corresponding exercise
+     */
+    getBlocklistShortNameOfProgrammingExercise(exerciseId: number): string {
+        const shortName = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.last();
+        return shortName ? shortName : ``;
+    }
+
+    /**
+     * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
+     * Called once by the parent component when the user desires to import the exam / exercise groups
+     */
+    public mapSelectedExercisesToExerciseGroups(): ExerciseGroup[] {
+        const exerciseGroups: ExerciseGroup[] = [];
+        this.selectedExercises?.forEach((value, key) => {
+            if (value.size > 0) {
+                key.exercises = Array.from(value.values());
+                exerciseGroups.push(key);
+            }
+        });
+        return exerciseGroups;
+    }
+
+    /**
+     * Validates the Title for Programming Exercises based on the user's input
+     * @param exercise the exercise to be checked
+     */
+    validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
+        return this.getProgrammingExerciseTitleError(exercise) === undefined;
+    }
+
+    /**
+     * Validates the Short Name for Programming Exercises based on the user's input
+     * @param exercise the exercise to be checked
+     */
+    validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
+        return this.getProgrammingExerciseShortNameError(exercise) === undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise title is invalid, or {@code undefined}
+     * if it is valid. Used to show a precise, actionable error below the title field instead of only a red border.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseTitleError(exercise: Exercise): string | undefined {
+        if (!exercise.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleRequired';
+        }
+        if (!EXERCISE_TITLE_NAME_REGEX.test(exercise.title)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titlePattern';
+        }
+        if (this.exercisesWithDuplicatedTitles.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleDuplicate';
+        }
+        // The title is already taken by another programming exercise in the target course (live check) or still equals the
+        // one rejected by the server / blocked because of a same-course import.
+        const blockedByServer =
+            exercise.title === this.getBlocklistTitleOfProgrammingExercise(exercise.id!) && this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) !== '';
+        if (this.alreadyUsedProgrammingTitles().has(exercise.title) || blockedByServer) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleAlreadyExists';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise short name is invalid, or
+     * {@code undefined} if it is valid. Used to show a precise, actionable error below the short name field.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseShortNameError(exercise: Exercise): string | undefined {
+        const shortName = exercise.shortName;
+        if (!shortName || shortName.length <= 2) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameLength';
+        }
+        if (!this.SHORT_NAME_REGEX.test(shortName)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNamePattern';
+        }
+        if (this.exercisesWithDuplicatedShortNames.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameDuplicate';
+        }
+        // The short name is already taken by another programming exercise in the target course (live check) or still equals
+        // the one rejected by the server / blocked because of a same-course import.
+        if (this.alreadyUsedProgrammingShortNames().has(shortName) || shortName === this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameAlreadyExists';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key explaining why the exercise group title is invalid, or {@code undefined} if it is valid.
+     * Shown directly below the group title field so the concrete reason is visible, not only a red border.
+     * @param exerciseGroup the exercise group to be checked
+     */
+    getExerciseGroupTitleError(exerciseGroup: ExerciseGroup): string | undefined {
+        if (!exerciseGroup.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'groupTitleRequired';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key explaining why a non-programming exercise title is invalid, or {@code undefined} if it is
+     * valid. Shown directly below the title field so the concrete reason is visible, not only a red border.
+     * @param exercise the exercise to be checked
+     */
+    getNonProgrammingExerciseTitleError(exercise: Exercise): string | undefined {
+        if (!exercise.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleRequired';
+        }
+        return undefined;
+    }
+
+    /**
+     * checks if there are any selected programming exercises with the same title or short name as the passed exercise
+     * @param exercise      exercise we want to use to check for duplications
+     * @param exerciseGroup exercise group of the exercise
+     * @param checkForTitle true if the title should be checked, otherwise the short name is checked
+     */
+    checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
+        if (!this.exerciseIsSelected(exercise, exerciseGroup)) {
+            return;
+        }
+
+        const duplicatesToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
+        let hasDuplicate = false;
+        this.selectedExercises.forEach((exerciseGroup) => {
+            exerciseGroup.forEach((ex) => {
+                if (ex.type === ExerciseType.PROGRAMMING && ex !== exercise) {
+                    if ((checkForTitle && ex.title === exercise.title) || (!checkForTitle && ex.shortName === exercise.shortName)) {
+                        hasDuplicate = true;
+                        duplicatesToCheck.set(ex.id!, checkForTitle ? exercise.title! : exercise.shortName!);
+                    }
+                }
+            });
+        });
+
+        // check if the exercise was a duplicate before
+        const titleOrShortName = duplicatesToCheck.get(exercise.id!);
+        if (duplicatesToCheck.delete(exercise.id!)) {
+            this.removeProgrammingExerciseFromDuplicates(titleOrShortName!, checkForTitle);
+        }
+
+        if (hasDuplicate) {
+            duplicatesToCheck.set(exercise.id!, checkForTitle ? exercise.title! : exercise.shortName!);
+        }
+    }
+
+    /**
+     * After a duplicate programming exercise's title / short name of programming exercise has been edited or a programming exercise has been unselected,
+     * other duplicates need to be checked if they can be removed from the map. In case there is only one exercise with the same title / short name
+     * it is no longer considered a duplicate and is removed
+     * @param titleOrShortName title / short name of the exercise that was a duplicate before
+     * @param checkForTitle   true if the exercise title duplication should be checked, otherwise short name duplication is checked
+     */
+    removeProgrammingExerciseFromDuplicates(titleOrShortName: string, checkForTitle: boolean) {
+        const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
+        const filteredKeys = Array.from(setToCheck.keys()).filter((key) => setToCheck.get(key) === titleOrShortName);
+
+        if (filteredKeys.length <= 1) {
+            filteredKeys.forEach((key) => setToCheck.delete(key));
+        }
+    }
+
+    /**
+     * Method to iterate over all exercise groups and exercises to validate, if the exerciseGroup.title & exercise.title & exercise.shortName are correctly set
+     */
+    public validateUserInput(): boolean {
+        let validConfiguration = true;
+        this.selectedExercises?.forEach((value, key) => {
+            if (this.getExerciseGroupTitleError(key) !== undefined) {
+                validConfiguration = false;
+            }
+            if (value.size > 0) {
+                value.forEach((exercise) => {
+                    if (!validConfiguration) {
+                        return;
+                    }
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        validConfiguration = this.validateTitleOfProgrammingExercise(exercise) && this.validateShortNameOfProgrammingExercise(exercise);
+                    } else {
+                        validConfiguration = this.getNonProgrammingExerciseTitleError(exercise) === undefined;
+                    }
+                });
+            }
+        });
+        return validConfiguration;
+    }
+
+    protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
+        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
+    }
+}

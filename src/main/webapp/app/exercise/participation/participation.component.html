@@ -1,0 +1,399 @@
+@if (exercise()) {
+    <ng-template titleBarTitle>
+        <h5 class="mb-0">
+            <span jhiTranslate="artemisApp.participation.home.title"></span>
+        </h5>
+    </ng-template>
+
+    <ng-template titleBarActions>
+        <div class="flex items-center gap-2 border-e pe-2">
+            @if (exercise()!.isAtLeastInstructor && exercise()!.type === ExerciseType.PROGRAMMING) {
+                <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" [shouldToggle]="true" [toggleBreakpoint]="'md'" />
+            }
+            @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
+                <jhi-external-submission class="inline-block" [exercise]="exercise()!" (resultCreated)="refresh()" />
+            }
+            @if (exercise()!.isAtLeastInstructor) {
+                <button
+                    severity="secondary"
+                    type="button"
+                    jhi-exercise-action-button
+                    [smallButton]="true"
+                    [buttonIcon]="faDownload"
+                    [buttonLabel]="'entity.action.export' | artemisTranslate"
+                    [hideLabelMobile]="true"
+                    [hideLabelBreakpoint]="'md'"
+                    [tumAetUiPopoverTrigger]="exportPopover"
+                ></button>
+                <tumaet-ui-popover #exportPopover [ariaLabel]="'artemisApp.exercise.export.options' | artemisTranslate">
+                    <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
+                    <button
+                        size="small"
+                        severity="secondary"
+                        tumAetUiButton
+                        type="button"
+                        class="me-1"
+                        [attr.aria-label]="'artemisApp.exercise.export.names' | artemisTranslate"
+                        (click)="exportNames()"
+                    >
+                        <fa-icon [icon]="faDownload" />
+                        <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.names"></span>
+                    </button>
+                    <jhi-exercise-scores-export-button [exercise]="exercise()!" />
+                    @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+                        <jhi-programming-assessment-repo-export [programmingExercises]="[exercise()!]" class="me-1" (buttonPressed)="closeExportPopover()" />
+                    }
+                    @if (exercise()!.type === ExerciseType.TEXT || exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.FILE_UPLOAD) {
+                        <jhi-exercise-submission-export [examExercise]="isExamExercise()" [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
+                    }
+                </tumaet-ui-popover>
+            }
+            <button size="small" severity="secondary" tumAetUiButton type="button" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate" (click)="refresh()">
+                <fa-icon [icon]="faSync" />
+                <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+            </button>
+        </div>
+    </ng-template>
+
+    <div class="flex flex-col h-full">
+        @if (rangeFilter()) {
+            <h4 class="flex items-center gap-4!">
+                <span>
+                    <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
+                </span>
+                <button severity="secondary" tumAetUiButton type="button" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
+            </h4>
+        }
+        <jhi-participation-access-notice [exercise]="exercise()!" />
+        <div style="flex: 1; min-height: 0">
+            <jhi-table-view
+                [cols]="columns()"
+                [vals]="participations()"
+                [totalRows]="totalRows()"
+                [loading]="isLoading()"
+                [tableActions]="filterActionsTemplate ?? null"
+                [rowActions]="actionsTemplate"
+                [options]="tableOptions()"
+                (onLazyLoad)="onLazyLoad($event)"
+            />
+        </div>
+    </div>
+}
+
+<!-- Filter dropdown in the table caption bar -->
+
+<ng-template #filterActionsTemplate>
+    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
+</ng-template>
+
+<!-- Row actions -->
+
+<ng-template #actionsTemplate let-dto>
+    <!-- Ordered by how often they are needed: assessing and opening the code first, destructive actions last -->
+    <div class="inline-flex flex-wrap items-center gap-1">
+        @if (exercise()!.isAtLeastInstructor) {
+            <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
+            @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+                @if (dto.buildPlanId && !isLocalCIEnabled()) {
+                    <a
+                        size="small"
+                        severity="primary"
+                        tumAetUiButton
+                        [attr.aria-label]="'artemisApp.programmingExercise.buildplan' | artemisTranslate"
+                        [href]="getBuildPlanUrl(dto)"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <fa-icon [icon]="farFileCode" />
+                        <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.programmingExercise.buildplan"></span>
+                    </a>
+                }
+            }
+        }
+        @if (exercise()!.type === ExerciseType.PROGRAMMING && canAccessLiveRepository()) {
+            <a
+                size="small"
+                severity="warn"
+                tumAetUiButton
+                data-testid="participation-online-editor"
+                [routerLink]="onlineEditorLink(dto.participationId)"
+                [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
+                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+            >
+                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.onlineEditor"></span>
+            </a>
+        }
+        @if (exercise()!.type === ExerciseType.PROGRAMMING && exercise()!.isAtLeastInstructor) {
+            @if (hasLoadedPendingSubmissions()) {
+                <jhi-programming-exercise-instructor-trigger-build-button
+                    [exercise]="exercise()!"
+                    [participation]="toProgrammingParticipation(dto)"
+                    [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
+                />
+            } @else {
+                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-text-secondary" />
+            }
+        }
+        @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
+            <button
+                size="small"
+                severity="primary"
+                tumAetUiButton
+                type="button"
+                [attr.aria-label]="'artemisApp.participation.addPresentation.label' | artemisTranslate"
+                (click)="addBasicPresentation(dto)"
+            >
+                <fa-icon [icon]="faFilePowerpoint" />
+                <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
+            </button>
+        }
+        @if (gradedPresentationEnabled() && !dto.testRun && hasGradedPresentationChanged(dto) && dto.presentationScore !== undefined) {
+            <button
+                size="small"
+                severity="primary"
+                tumAetUiButton
+                type="button"
+                [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100"
+                [attr.aria-label]="'artemisApp.participation.savePresentation.label' | artemisTranslate"
+                (click)="addGradedPresentation(dto)"
+            >
+                <fa-icon [icon]="faFilePowerpoint" />
+                <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.savePresentation.label"></span>
+            </button>
+        }
+        @if (
+            (basicPresentationEnabled() && (dto.presentationScore ?? 0) > 0) ||
+            (gradedPresentationEnabled() && (!hasGradedPresentationChanged(dto) || dto.presentationScore === undefined))
+        ) {
+            <button
+                size="small"
+                severity="danger"
+                tumAetUiButton
+                type="button"
+                [attr.aria-label]="'artemisApp.participation.removePresentation.label' | artemisTranslate"
+                (click)="removePresentation(dto)"
+            >
+                <fa-icon [icon]="faFilePowerpoint" />
+                <span class="hidden xl:inline ms-1" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
+            </button>
+        }
+        @if (exercise()!.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled() && dto.buildPlanId && exercise()!.isAtLeastInstructor) {
+            <button
+                type="button"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                jhiDeleteButton
+                [actionType]="ActionType.Cleanup"
+                deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
+                (delete)="cleanupProgrammingExerciseParticipation(dto)"
+                [dialogError]="dialogError"
+                [entityTitle]="dto.participantName"
+            >
+                <fa-icon [icon]="faEraser" />
+            </button>
+        }
+        @if (exercise()!.isAtLeastInstructor) {
+            <button
+                type="button"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                [skipFeatureToggle]="exercise()!.type !== ExerciseType.PROGRAMMING"
+                jhiDeleteButton
+                [entityTitle]="dto.participantName"
+                deleteQuestion="artemisApp.participation.delete.question"
+                (delete)="deleteParticipation(dto.participationId)"
+                [dialogError]="dialogError"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        }
+    </div>
+</ng-template>
+
+<!-- Cell templates -->
+
+<ng-template #repositoryCellTemplate let-cell>
+    @if (cell.data.repositoryUri) {
+        <jhi-code-button
+            size="small"
+            [allowOnlineIde]="false"
+            [exerciseId]="exercise()!.id!"
+            [repositoryViewLink]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+            [repositoryUri]="cell.data.repositoryUri"
+            [vcsAccessTokenSourceInfo]="{
+                returnedTokenType: 'repository-token',
+                repositoryType: RepositoryType.USER,
+                participationId: cell.data.participationId,
+            }"
+        />
+    }
+</ng-template>
+
+<ng-template #initStateCellTemplate let-cell>
+    <div class="flex flex-wrap items-center gap-1">
+        <span>{{ 'artemisApp.InitializationState.' + cell.data.initializationState | artemisTranslate }}</span>
+        @if (cell.data.testRun) {
+            <tumaet-ui-tag severity="info" data-testid="participation-practice-tag" [value]="'artemisApp.participation.practice' | artemisTranslate" />
+        }
+    </div>
+</ng-template>
+
+<ng-template #initDateCellTemplate let-cell>
+    {{ cell.data.initializationDate | artemisDate }}
+</ng-template>
+
+<ng-template #submissionCountCellTemplate let-cell>
+    @if (exercise()!.isAtLeastInstructor) {
+        <a [routerLink]="getParticipationLink(cell.data.participationId)">{{ cell.data.submissionCount }}</a>
+    } @else {
+        {{ cell.data.submissionCount }}
+    }
+</ng-template>
+
+<!-- A team exercise lists the participations of teams and the practice participations of single students, which have a student and no team. -->
+<ng-template #participantNameCellTemplate let-cell>
+    @if (exercise()!.teamMode && cell.data.teamId !== undefined) {
+        <div class="flex flex-col gap-1">
+            <a [routerLink]="['/course-management', course()!.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
+                {{ cell.data.participantName }}
+            </a>
+            <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
+        </div>
+    } @else {
+        @if (isAdmin()) {
+            <a routerLink="/admin/user-management/{{ cell.data.studentLogin }}">{{ cell.data.participantName }}</a>
+        } @else {
+            @if (exercise()!.teamMode && cell.data.studentLogin) {
+                <span data-testid="participation-practice-student">{{ cell.data.participantName }} ({{ cell.data.studentLogin }})</span>
+            } @else {
+                {{ cell.data.participantName }}
+            }
+        }
+    }
+</ng-template>
+
+<ng-template #basicPresentationCellTemplate let-cell>
+    {{ cell.data.presentationScore ?? 0 }}
+</ng-template>
+
+<ng-template #gradedPresentationCellTemplate let-cell>
+    <input
+        tumAetUiInput
+        [attr.aria-label]="'accessibility.presentationScore' | artemisTranslate"
+        name="presentationGrade"
+        type="number"
+        min="0"
+        max="100"
+        required
+        class="input-number-short"
+        [disabled]="cell.data.testRun"
+        [(ngModel)]="cell.data.presentationScore"
+        (ngModelChange)="changeGradedPresentation(cell.data)"
+    />
+</ng-template>
+
+<ng-template #individualDueDateCellTemplate let-cell>
+    @if (isEditingDueDate(cell.data.participationId)) {
+        <div style="min-width: 250px">
+            <div class="inline-flex flex-wrap items-center w-full">
+                <tumaet-ui-date-picker
+                    [inputId]="'individual-due-date-' + cell.data.participationId"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [value]="getPendingDueDate(cell.data.participationId)"
+                    [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
+                    [min]="exercise()!.dueDate"
+                    [disabled]="isSaving()"
+                    [invalid]="isBeforeExerciseDueDate(cell.data.participationId)"
+                    [ariaDescribedBy]="isBeforeExerciseDueDate(cell.data.participationId) ? 'individual-due-date-error-' + cell.data.participationId : undefined"
+                    [hideLabelName]="true"
+                    [ariaLabel]="'artemisApp.participation.individualDueDate' | artemisTranslate"
+                    (valueChange)="setPendingDueDate(cell.data.participationId, $event)"
+                    (inputValidityChange)="setDueDateTextValidity(cell.data.participationId, $event)"
+                />
+                <button
+                    severity="primary"
+                    variant="outlined"
+                    size="small"
+                    tumAetUiButton
+                    type="button"
+                    [disabled]="isSaving() || isPendingDueDateInvalid(cell.data.participationId)"
+                    (click)="saveIndividualDueDate(cell.data)"
+                    title="Save"
+                >
+                    <fa-icon [icon]="faCheck" />
+                </button>
+                <button
+                    severity="secondary"
+                    variant="outlined"
+                    size="small"
+                    tumAetUiButton
+                    type="button"
+                    [disabled]="isSaving()"
+                    (click)="cancelEditDueDate(cell.data)"
+                    title="Discard"
+                >
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            </div>
+            @if (isBeforeExerciseDueDate(cell.data.participationId)) {
+                <div [id]="'individual-due-date-error-' + cell.data.participationId" class="text-state-danger text-sm mt-1 block" data-testid="individual-due-date-error">
+                    {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.participation.individualDueDate' | artemisTranslate } }}
+                </div>
+            }
+        </div>
+    } @else {
+        <span class="flex items-center gap-2">
+            @if (cell.data.individualDueDate) {
+                {{ cell.data.individualDueDate | artemisDate }}
+            } @else {
+                <span class="text-text-secondary italic" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
+            }
+            @if (exercise()!.isAtLeastInstructor) {
+                <button
+                    severity="warn"
+                    variant="text"
+                    size="small"
+                    tumAetUiButton
+                    type="button"
+                    class="p-0"
+                    (click)="startEditDueDate(cell.data)"
+                    [title]="'artemisApp.participation.editIndividualDueDate' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faPencil" />
+                </button>
+            }
+        </span>
+    }
+</ng-template>
+
+<ng-template #completionDateCellTemplate let-cell>
+    @if (cell.data.completionDate) {
+        <div class="flex flex-col">
+            <span>{{ cell.data.completionDate | artemisDate }}</span>
+            @if (cell.data.durationInSeconds !== undefined) {
+                <span class="text-sm opacity-60" [tumAetUiTooltip]="'artemisApp.exercise.duration' | artemisTranslate" tumAetUiTooltipPlacement="top">
+                    {{ cell.data.durationInSeconds | artemisDurationFromSeconds: true }}
+                </span>
+            }
+        </div>
+    }
+</ng-template>
+
+<ng-template #lastResultCellTemplate let-cell>
+    @if (toResult(cell.data); as result) {
+        <div class="flex flex-wrap items-center gap-2">
+            <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+            @if (showAssessmentType() && cell.data.assessmentType) {
+                <span class="text-sm opacity-60" data-testid="participation-assessment-type">{{ cell.data.assessmentType }}</span>
+            }
+            @if (showAssessmentNote() && cell.data.assessmentNote?.trim()) {
+                <i
+                    class="pi pi-comment"
+                    [tumAetUiTooltip]="cell.data.assessmentNote"
+                    tumAetUiTooltipPlacement="top"
+                    [attr.aria-label]="'artemisApp.assessment.assessmentNote' | artemisTranslate"
+                ></i>
+            }
+        </div>
+    }
+</ng-template>

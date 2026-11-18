@@ -1,0 +1,291 @@
+import dayjs from 'dayjs/esm';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
+
+/**
+ * The available competency types (based on Bloom's Taxonomy)
+ */
+export enum CompetencyTaxonomy {
+    REMEMBER = 'REMEMBER',
+    UNDERSTAND = 'UNDERSTAND',
+    APPLY = 'APPLY',
+    ANALYZE = 'ANALYZE',
+    EVALUATE = 'EVALUATE',
+    CREATE = 'CREATE',
+}
+
+export enum CompetencyRelationType {
+    ASSUMES = 'ASSUMES',
+    EXTENDS = 'EXTENDS',
+    MATCHES = 'MATCHES',
+}
+
+export enum CompetencyRelationError {
+    CIRCULAR = 'CIRCULAR',
+    SELF = 'SELF',
+    EXISTING = 'EXISTING',
+}
+
+export enum CourseCompetencyValidators {
+    TITLE_MAX = 255,
+    DESCRIPTION_MAX = 10000,
+    MASTERY_THRESHOLD_MIN = 0,
+    MASTERY_THRESHOLD_MAX = 100,
+}
+
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in CourseCompetency.java
+export enum CourseCompetencyType {
+    COMPETENCY = 'competency',
+    PREREQUISITE = 'prerequisite',
+}
+
+/** Node representation of a course competency in the relation graph. */
+export interface CourseCompetencyGraphNode {
+    id: string;
+    label?: string;
+    dimension?: GraphNodeDimension;
+    data: {
+        id: number;
+        type?: CourseCompetencyType;
+    };
+}
+
+export const DEFAULT_MASTERY_THRESHOLD = 100;
+
+export const HIGH_COMPETENCY_LINK_WEIGHT = 1;
+export const MEDIUM_COMPETENCY_LINK_WEIGHT = 0.5;
+export const LOW_COMPETENCY_LINK_WEIGHT = 0.25;
+export const LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
+export const MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export abstract class BaseCompetency implements BaseEntity {
+    id?: number;
+    title?: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+}
+
+export interface UpdateCourseCompetencyRelationDTO {
+    newRelationType: CompetencyRelationType;
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export abstract class CourseCompetency extends BaseCompetency {
+    softDueDate?: dayjs.Dayjs;
+    masteryThreshold?: number;
+    optional?: boolean;
+    linkedStandardizedCompetency?: StandardizedCompetency;
+    exerciseLinks?: CompetencyExerciseLink[];
+    lectureUnitLinks?: CompetencyLectureUnitLink[];
+    userProgress?: CompetencyProgress[];
+    courseProgress?: CourseCompetencyProgress;
+    course?: Course;
+    linkedCourseCompetency?: CourseCompetency;
+    generatedByAi?: boolean = false;
+
+    public type?: CourseCompetencyType;
+
+    protected constructor(type: CourseCompetencyType) {
+        super();
+        this.type = type;
+        this.masteryThreshold = DEFAULT_MASTERY_THRESHOLD;
+    }
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class Competency extends CourseCompetency {
+    constructor() {
+        super(CourseCompetencyType.COMPETENCY);
+    }
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class CompetencyLearningObjectLink {
+    competency?: CourseCompetency;
+    weight: number;
+    generatedByAi?: boolean;
+
+    constructor(competency: CourseCompetency | undefined, weight: number, generatedByAi = false) {
+        this.competency = competency;
+        this.weight = weight;
+        this.generatedByAi = generatedByAi;
+    }
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
+    exercise?: Exercise;
+
+    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number, generatedByAi = false) {
+        super(competency, weight, generatedByAi);
+        this.exercise = exercise;
+    }
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
+    lectureUnit?: LectureUnit;
+
+    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number, generatedByAi = false) {
+        super(competency, weight, generatedByAi);
+        this.lectureUnit = lectureUnit;
+    }
+}
+
+export interface CompetencyImportResponseDTO extends BaseEntity {
+    title?: string;
+    description?: string;
+    softDueDate?: dayjs.Dayjs;
+    taxonomy?: CompetencyTaxonomy;
+    masteryThreshold?: number;
+    optional?: boolean;
+    generatedByAi?: boolean;
+    courseId?: number;
+    linkedStandardizedCompetencyId?: number;
+}
+
+export enum ConfidenceReason {
+    NO_REASON = 'NO_REASON',
+    RECENT_SCORES_LOWER = 'RECENT_SCORES_LOWER',
+    RECENT_SCORES_HIGHER = 'RECENT_SCORES_HIGHER',
+    MORE_EASY_POINTS = 'MORE_EASY_POINTS',
+    MORE_HARD_POINTS = 'MORE_HARD_POINTS',
+    QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+    MORE_LOW_WEIGHTED_EXERCISES = 'MORE_LOW_WEIGHTED_EXERCISES',
+    MORE_HIGH_WEIGHTED_EXERCISES = 'MORE_HIGH_WEIGHTED_EXERCISES',
+}
+
+export interface CompetencyProgress {
+    progress?: number;
+    confidence?: number;
+    confidenceReason?: ConfidenceReason;
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class CourseCompetencyProgress {
+    competencyId?: number;
+    numberOfStudents?: number;
+    numberOfMasteredStudents?: number;
+    averageStudentScore?: number;
+}
+
+export interface CompetencyRelation extends BaseEntity {
+    id?: number;
+    tailCompetency?: CourseCompetency;
+    headCompetency?: CourseCompetency;
+    type?: CompetencyRelationType;
+}
+
+export interface CourseCompetencyImportOptionsDTO {
+    competencyIds: number[];
+    sourceCourseId?: number;
+    importRelations: boolean;
+    importExercises: boolean;
+    importLectures: boolean;
+    referenceDate?: dayjs.Dayjs;
+    isReleaseDate?: boolean;
+}
+
+export interface CompetencyRelationDTO extends BaseEntity {
+    id?: number;
+    tailCompetencyId?: number;
+    headCompetencyId?: number;
+    relationType?: CompetencyRelationType;
+}
+
+/**
+ * Converts a CompetencyRelationDTO to a CompetencyRelation
+ * @param competencyRelationDTO
+ */
+export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelationDTO) {
+    const relation: CompetencyRelation = {
+        id: competencyRelationDTO.id,
+        tailCompetency: { id: competencyRelationDTO.tailCompetencyId },
+        headCompetency: { id: competencyRelationDTO.headCompetencyId },
+        type: competencyRelationDTO.relationType,
+    };
+    return relation;
+}
+
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
+export class CompetencyWithTailRelationDTO {
+    competency?: CourseCompetency;
+    tailRelations?: CompetencyRelationDTO[];
+}
+
+export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
+    if (!competencyTaxonomy) {
+        return faQuestion;
+    }
+
+    const icons = {
+        [CompetencyTaxonomy.REMEMBER]: faBrain,
+        [CompetencyTaxonomy.UNDERSTAND]: faComments,
+        [CompetencyTaxonomy.APPLY]: faPenFancy,
+        [CompetencyTaxonomy.ANALYZE]: faMagnifyingGlass,
+        [CompetencyTaxonomy.EVALUATE]: faPlusMinus,
+        [CompetencyTaxonomy.CREATE]: faCubesStacked,
+    };
+
+    return icons[competencyTaxonomy];
+}
+
+/**
+ * The progress depends on the amount of completed lecture units and the achieved scores in the exercises.
+ * @param competencyProgress The progress in the competency
+ */
+export function getProgress(competencyProgress: CompetencyProgress | undefined): number {
+    return Math.round(competencyProgress?.progress ?? 0);
+}
+
+/**
+ * The confidence is a factor for the progress, normally near 1. It depends on different heuristics and determines if the mastery is lower/higher than the progress.
+ * @param competencyProgress The progress in the competency
+ */
+export function getConfidence(competencyProgress: CompetencyProgress | undefined): number {
+    return competencyProgress?.confidence ?? 1;
+}
+
+/**
+ * The mastery is the final value that is shown to the user. It is the product of the progress and the confidence.
+ * @param competencyProgress The progress in the competency
+ */
+export function getMastery(competencyProgress: CompetencyProgress | undefined): number {
+    // clamp the value between 0 and 100
+    return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
+}
+
+/**
+ * Simple comparator for sorting competencies by their soft due date
+ * @param a The first competency
+ * @param b The second competency
+ */
+export function compareSoftDueDate(a: CourseCompetency, b: CourseCompetency): number {
+    if (a.softDueDate) {
+        if (b.softDueDate) {
+            if (a.softDueDate.isSame(b.softDueDate)) {
+                return 0;
+            }
+            return a.softDueDate.isBefore(b.softDueDate) ? -1 : 1;
+        }
+        return -1;
+    }
+    if (b.softDueDate) {
+        return 1;
+    }
+    return 0;
+}
+
+export interface CompetencyContributionCardDTO {
+    competencyId: number;
+    title: string;
+    weight: number;
+    mastery?: number;
+}

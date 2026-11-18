@@ -1,0 +1,138 @@
+<div class="grid grid-cols-12 gap-6! mb-4! justify-center">
+    <div class="col-span-12 xl:col-span-2 flex flex-col" data-testid="average-score-heading">
+        <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
+        <h4 data-testid="course-average">{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage() }}%</h4>
+    </div>
+    <div class="col-span-12 grid grid-cols-12 gap-6! xl:col-span-10 chart-row">
+        <fa-icon
+            [icon]="faArrowLeft"
+            size="2x"
+            class="col-span-1 flex items-center justify-end"
+            role="button"
+            (click)="switchTimeSpan(LEFT)"
+            [class.arrow-hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
+        />
+        <div class="col-span-12 lg:col-span-8 ps-0 chart-container" style="height: 300px">
+            <tumaet-ui-bar-chart
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig()"
+                interactive
+                (dataSelect)="onSelect($event)"
+                [ariaLabel]="'artemisApp.course.averageScore' | artemisTranslate"
+            />
+        </div>
+        <fa-icon
+            [icon]="faArrowRight"
+            size="2x"
+            class="col-span-1 flex items-center switch-forward"
+            role="button"
+            (click)="switchTimeSpan(RIGHT)"
+            [class.arrow-hidden]="!(currentSize() > MAX_SPAN_SIZE + currentPeriod())"
+        />
+        <ng-template #placeholder>
+            <div class="switch-forward-placeholder"></div>
+        </ng-template>
+        <div class="col-span-12 lg:col-span-2 flex flex-col items-center justify-center">
+            @if (exerciseTypeFilter.typeSet.size > 0) {
+                <div class="filter my-4!" aria-label="Filter Dropdown">
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        [severity]="chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters > 0 ? 'success' : 'secondary'"
+                        [tumAetUiPopoverTrigger]="filterPopover"
+                        id="filter-dropdown-button"
+                    >
+                        <fa-icon [icon]="faFilter" />
+                        <span
+                            jhiTranslate="artemisApp.courseOverview.exerciseList.filter"
+                            [translateValues]="{ num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }"
+                        ></span>
+                    </button>
+                    <tumaet-ui-popover
+                        #filterPopover
+                        [ariaLabel]="
+                            'artemisApp.courseOverview.exerciseList.filter'
+                                | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
+                        "
+                        ><ul class="m-0 list-none p-0 whitespace-nowrap space-y-2" data-testid="average-score-filter-options">
+                            @if (exerciseTypeFilter.typeSet.size) {
+                                <li>
+                                    <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>
+                                </li>
+                            }
+                            @for (type of exerciseTypeFilter.typeSet; track type) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleType(type)"
+                                            [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase().replace('-', '_') + 'Plural' | artemisTranslate }}</span>
+                                    </label>
+                                </li>
+                            }
+                            <li class="mt-1 mb-1">
+                                <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
+                            </li>
+                            <li>
+                                <label class="mb-1">
+                                    <input class="ms-2 accent-primary" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
+                                    <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeAllCategories"></b>
+                                </label>
+                            </li>
+                            @if (chartCategoryFilter.exercisesWithoutCategoriesPresent) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleExercisesWithNoCategory()"
+                                            [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.exercisesWithNoCategories"></span>
+                                    </label>
+                                </li>
+                            }
+                            @for (category of chartCategoryFilter.exerciseCategories; track category) {
+                                <li>
+                                    <label>
+                                        <input
+                                            class="ms-2 accent-primary"
+                                            (change)="toggleCategory(category)"
+                                            [checked]="chartCategoryFilter.getCurrentFilterState(category)"
+                                            type="checkbox"
+                                        />
+                                        <span class="ms-2">{{ category }}</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul></tumaet-ui-popover
+                    >
+                </div>
+            }
+            <div class="flex items-center">
+                <div class="legend-container">
+                    @for (interval of performanceIntervals; track interval) {
+                        <div
+                            class="legend-entry"
+                            (click)="togglePerformanceInterval(interval)"
+                            [attr.aria-pressed]="displayColorMap.get(interval) !== ''"
+                            #keyboardAction112
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                        >
+                            <div class="color-legend" [ngClass]="displayColorMap.get(interval)!"></div>
+                            <span>{{ 'artemisApp.courseStatistics.chartLegend.' + interval | artemisTranslate }}</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "shortAnswerQuestionStatistic": {
+            "home": {
+                "title": "Kurzantwort-Fragestatistiken",
+                "createLabel": "Kurzantwort-Fragestatistik erstellen"
+            },
+            "created": "Kurzantwort-Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Fragestatistik gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Kurzantwort-Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Kurzantwort-Fragestatistik"
+            },
+            "shortAnswerSpotCounters": "Kurzantwort-Spot-Zähler"
+        }
+    }
+}

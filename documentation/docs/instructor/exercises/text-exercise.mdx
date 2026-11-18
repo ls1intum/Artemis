@@ -1,0 +1,159 @@
+---
+id: text-exercise
+title: Text Exercise
+sidebar_label: Text Exercise
+last_reviewed: 2026-11-05
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import createFormGeneral from './assets/text/create-form-general.png';
+import createFormContent from './assets/text/create-form-content.png';
+import createFormGrading from './assets/text/create-form-grading.png';
+import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
+import createExerciseFormHint from './assets/general/create-exercise-form-hint.png';
+import hintIcon from './assets/general/hint-icon.png';
+import importTextExerciseModal from './assets/text/import-text-exercise-modal.png';
+import courseDashboardExerciseText from './assets/text/course-dashboard-exercise-text.png';
+import exerciseDetailsText from './assets/text/exercise-details-text.png';
+import exerciseAssessmentDashboard from './assets/text/exercise-assessment-dashboard-2.png';
+import assessmentModal from './assets/text/assessment-modal.png';
+import feedbackModal from './assets/general/feedback-modal.png';
+
+A text exercise asks students to write prose: an explanation, an argument, a comparison. There is nothing to run
+against an answer, so every submission is read and marked by a person — though Artemis can suggest assessments for
+passages that resemble ones already graded.
+
+## Create the Exercise
+
+**Create** on the course's **Exercises** page in course management opens the **Manage Exercises** dialog. Its
+**Create** tab lists the exercise types; picking **Text** opens the creation form.
+
+<Image src={manageExercisesDialog} alt="Manage Exercises dialog listing the exercise types" size={ImageSize.medium} caption="Choosing what to create" />
+
+The form is the same five sections for every exercise type:
+
+- **General** — the **Title**, the **Channel Name** of the communication channel Artemis opens for the exercise, and
+  the **Categories** it is filed under.
+- **Mode** — the **Difficulty**, and **Participation**, which is where an exercise is made a
+  [team exercise](/instructor/exercises/team-exercise). Participation cannot be changed once the exercise exists.
+- **Problem** — the **Problem Statement** students read, with files you can attach to it.
+- **Solution** — the **Example Solution**.
+- **Grading** — everything that decides what the exercise is worth and when. **Release Date** makes it visible,
+  **Start Date** lets students begin, **Due Date** stops them working, **Assessment Due Date** publishes the
+  feedback, and **Example Solution Publication Date** releases the solution; leave that last one empty and the
+  solution stays with the tutors. **Points** and **Bonus Points** set the value, **Include this exercise in the course score
+  calculation** takes **Yes**, **Bonus** or **No**, and **Assessment Instructions** are the rubric assessors work from.
+
+
+<Image src={createFormGeneral} alt="General and Mode sections of the text exercise form" size={ImageSize.large} caption="General and Mode" />
+
+<Callout variant={CalloutVariant.danger}>
+
+  Fields marked in red are mandatory.
+
+</Callout>
+
+<Image src={createFormContent} alt="Problem and Solution sections of the text exercise form" size={ImageSize.large} caption="Problem and Solution" />
+
+<Callout variant={CalloutVariant.info}>
+
+  Most fields carry a hint. Hover the <Image src={hintIcon} alt="hint" inline /> icon beside one to read it.
+
+</Callout>
+
+<Image src={createExerciseFormHint} alt="A hint shown after hovering the icon beside a field" size={ImageSize.medium} caption="A field's hint" />
+
+Each assessment instruction carries **Credits** worth of points, a **Scale** naming the performance level it
+represents, a **Description** saying when to apply it, and **Feedback** the student reads. **Limit** caps how often
+one instruction may contribute to a mark. Assessors apply them by dragging one onto a passage, which is what keeps
+several people marking the same way.
+
+<Image src={createFormGrading} alt="Grading section of the text exercise form, with the dates, points and assessment instructions" size={ImageSize.large} caption="Grading" />
+
+Whether this exercise gets AI feedback is not set here. It follows the course, which switches
+[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena) on for every eligible exercise at once — see
+[AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback).
+
+### Import an Existing Exercise
+
+The **Import** tab of the same dialog copies an exercise you already have instead of starting from an empty
+form. Pick the type, then the exercise, and Artemis opens the creation form with every field filled in from it,
+ready to adjust.
+
+<Image src={importTextExerciseModal} alt="Dialog listing the text exercises available to import" size={ImageSize.medium} caption="Choosing an exercise to import" />
+
+## Manage the Exercise
+
+The exercise appears on the course's exercise list, where each row offers the same set of actions:
+**Participations** lists who took part and what they achieved, **Example Submissions** manages the submissions
+assessors train on, **Edit** reopens the form and **Delete** removes it. Whatever does not fit on a
+narrow window moves behind the row's overflow menu. The title opens the exercise itself.
+
+<Image src={courseDashboardExerciseText} alt="Course exercise list with the actions available on a text exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
+
+Select the title to open the exercise details. The header shows the saved title and exercise type; **General**
+contains the **Exercise ID**. Section links scroll through the saved configuration, problem statement, solution and
+grading information without hiding the other sections, so browser search works across the page.
+
+The action bar offers **Participations**, **Statistics**, **Assessment Dashboard** and **Example submissions** where
+your role and the exercise context allow them. **Edit** reopens the form. **More actions** contains **Plagiarism**
+when you have Editor access and **Tutor Effort Statistics** for instructors; plagiarism checks also require the
+server's plagiarism feature. Instructors delete the exercise from **Exercise administration** at the bottom, with
+the confirmation required there.
+
+<Image src={exerciseDetailsText} alt="Text exercise details with navigation, editing actions and visible configuration sections" size={ImageSize.large} caption="The text exercise's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
+
+## Assess Submissions
+
+Assessment opens once the due date has passed. **Assessment** in the course navigation lists the exercises waiting
+to be marked; **Exercise Dashboard** on the text exercise opens its own queue.
+
+The first time you assess this exercise, Artemis shows the problem statement and a summary of the assessment
+instructions and asks you to work through an example before starting. After that, **Start new assessment** hands
+you one unassessed submission at a time, chosen at random so assessors cannot pick.
+
+<Image src={exerciseAssessmentDashboard} alt="Exercise assessment dashboard with the option to start a new assessment" size={ImageSize.large} caption="The exercise's assessment queue" />
+
+Click a text block to open the assessment dialog and give it points and feedback. To mark a passage Artemis has not
+split out on its own, hold `alt`/`option` and click the first and last word of the passage you want. Dragging an
+assessment instruction onto a passage applies its points and feedback in one go.
+
+<Image src={assessmentModal} alt="Assessment dialog on a selected text block" size={ImageSize.large} caption="Assessing a text block" />
+
+**Add new feedback** attaches feedback to the submission as a whole rather than to a passage.
+
+<Image src={feedbackModal} alt="Feedback dialog for the submission as a whole" size={ImageSize.large} caption="Feedback on the whole submission" />
+
+When you are done, **Submit** publishes the assessment, **Save** keeps it to finish later, **Cancel** discards it
+and releases the lock so somebody else can take the submission, and **Exercise Dashboard** returns to the queue.
+
+### Automatic Assessment Suggestions
+
+Where the course has **Grading feedback suggestions** enabled on the Athena settings page, Athena
+proposes feedback for passages resembling ones already graded in this exercise. The suggestions are a
+starting point an assessor accepts, edits or ignores; nothing is published without a person submitting it.
+
+<Callout variant={CalloutVariant.info}>
+
+  <strong>Research papers on Athena:</strong>
+
+  <ul>
+    <li>Jan Philip Bernius, Stephan Krusche, and Bernd Bruegge. <em>Machine learning based feedback on textual student answers in large courses</em>. Computers and Education: Artificial Intelligence, June 2022. <a href="https://doi.org/10.1016/j.caeai.2022.100081">doi:10.1016/j.caeai.2022.100081</a>.</li>
+    <li>Jan Philip Bernius, Stephan Krusche, and Bernd Bruegge. <em>A machine learning approach for suggesting feedback in textual exercises in large courses</em>. In 8th ACM Conference on Learning @ Scale, L@S '21, 173–182. Association for Computing Machinery (ACM), June 2021. <a href="https://doi.org/10.1145/3430895.3460135">doi:10.1145/3430895.3460135</a>.</li>
+    <li>Jan Philip Bernius. <em>Toward computer-aided assessment of textual exercises in very large courses</em>. In 52nd ACM Technical Symposium on Computer Science Education, SIGCSE '21, 1386. Association for Computing Machinery (ACM), March 2021. <a href="https://doi.org/10.1145/3408877.3439703">doi:10.1145/3408877.3439703</a>.</li>
+    <li>Jan Philip Bernius, Anna Kovaleva, Stephan Krusche, and Bernd Bruegge. <em>Towards the automation of grading textual student submissions to open-ended questions</em>. In 4th European Conference of Software Engineering Education, ECSEE '20, 61–70. Association for Computing Machinery (ACM), June 2020. <a href="https://doi.org/10.1145/3396802.3396805">doi:10.1145/3396802.3396805</a>.</li>
+    <li>Jan Philip Bernius, Anna Kovaleva, and Bernd Bruegge. <em>Segmenting student answers to textual exercises based on topic modeling</em>. In 17th Workshop on Software Engineering im Unterricht der Hochschulen, SEUH '20, 72–73. CEUR-WS.org, February 2020. https://ceur-ws.org/Vol-2531/poster03.pdf</li>
+    <li>Jan Philip Bernius and Bernd Bruegge. <em>Toward the automatic assessment of text exercises</em>. In 2nd Workshop on Innovative Software Engineering Education, ISEE '19, 19–22. CEUR-WS.org, February 2019. https://ceur-ws.org/Vol-2308/isee2019paper04.pdf</li>
+  </ul>
+
+</Callout>
+
+## What Students See
+
+Students start the exercise, write their answer beside the task and submit it — see
+[Text Exercise](/student/exercises/text-exercise) on the student pages.

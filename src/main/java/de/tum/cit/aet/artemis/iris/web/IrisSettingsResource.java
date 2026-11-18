@@ -1,0 +1,95 @@
+package de.tum.cit.aet.artemis.iris.web;
+
+import jakarta.validation.Valid;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+
+@Conditional(IrisEnabled.class)
+@Lazy
+@FeatureUsage(UserFeature.IRIS_SETTINGS)
+@RestController
+@RequestMapping("api/iris/")
+public class IrisSettingsResource {
+
+    private final CourseRepository courseRepository;
+
+    private final IrisSettingsService irisSettingsService;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService) {
+        this.courseRepository = courseRepository;
+        this.irisSettingsService = irisSettingsService;
+        this.authorizationCheckService = authorizationCheckService;
+    }
+
+    /**
+     * Gets the Iris settings of a course. Users below instructor receive the enabled flag, the proactive switch and the rate limits, the rest of the configuration is reserved for
+     * instructors.
+     *
+     * @param courseId the course id
+     * @return the settings of the course
+     */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/iris-settings")
+    @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        IrisCourseSettingsWithRateLimitDTO settings = irisSettingsService.getCourseSettingsWithRateLimit(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            // Users below instructor only receive the values their clients act on; the configuration is reserved for those who manage it.
+            return ResponseEntity.ok(withoutConfiguration(settings));
+        }
+        return ResponseEntity.ok(settings);
+    }
+
+    private static IrisCourseSettingsWithRateLimitDTO withoutConfiguration(IrisCourseSettingsWithRateLimitDTO settings) {
+        IrisCourseSettings current = settings.settings();
+        IrisCourseSettings reduced = current == null ? null
+                : new IrisCourseSettings(current.enabled(), null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, current.proactiveStruggleEnabled(), null);
+        return new IrisCourseSettingsWithRateLimitDTO(settings.courseId(), reduced, settings.effectiveRateLimit(), settings.applicationRateLimitDefaults());
+    }
+
+    /**
+     * Updates the Iris settings for a course.
+     *
+     * @param courseId the course id
+     * @param update   the new settings to apply
+     * @return the updated settings
+     */
+    @PutMapping("courses/{courseId}/iris-settings")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
+        courseRepository.findByIdElseThrow(courseId);
+        var isAdmin = authorizationCheckService.isCurrentUserAdminAccessEnabled();
+        var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
+        return ResponseEntity.ok(saved);
+    }
+}

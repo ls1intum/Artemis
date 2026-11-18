@@ -1,0 +1,17 @@
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
+export class TutorLeaderboardElement {
+    public name!: string;
+    public userId!: number;
+    public numberOfAssessments = 0;
+    public numberOfAcceptedComplaints = 0;
+    public numberOfTutorComplaints = 0;
+    public numberOfNotAnsweredMoreFeedbackRequests = 0;
+    public numberOfComplaintResponses = 0;
+    public numberOfAnsweredMoreFeedbackRequests = 0;
+    public numberOfTutorMoreFeedbackRequests = 0;
+    public points = 0;
+    public averageScore = 0;
+    public averageRating = 0;
+    public numberOfTutorRatings = 0;
+    public hasIssuesWithPerformance = false;
+}

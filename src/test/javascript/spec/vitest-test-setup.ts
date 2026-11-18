@@ -1,0 +1,261 @@
+/// <reference types="vitest/globals" />
+/**
+ * Global Vitest Test Setup for Artemis
+ *
+ * Provides the global mocks/polyfills for the Vitest client test suite (Vitest is the sole client test runner).
+ * The triple-slash reference above makes Vitest's global test APIs (describe/it/expect/vi) ambient for every
+ * spec without each file having to import them
+ * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
+ * NOTE: All tests run in zoneless mode - do not import zone.js
+ */
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { NgModule, provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed } from '@angular/core/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
+
+// Initialize the Angular TestBed once for the whole Vitest run. This replaces the former per-spec
+// `setupTestBed({ zoneless: true })` (removed from every spec):
+//   - the client suite is zoneless (provideZonelessChangeDetection);
+//   - the explicit @angular/compiler import above enables JIT for ng-mocks' runtime mock generation;
+//   - destroyAfterEach (Angular's default) tears down each component + injector after its test;
+//     without it, components accumulate and their lingering async work (subscriptions, translate
+//     pipes) fires against already-destroyed injectors during teardown, which under zoneless surfaces
+//     as unhandled errors ("No provider for TranslateService", NG0950) that fail the Vitest run;
+//   - many existing spec fixtures bind loose/unknown elements & attributes, so those are not
+//     treated as hard errors.
+// Unlike the former platformBrowserDynamicTesting(), this platform provides no ResourceLoader, so a
+// spec-local `templateUrl`/`styleUrls` would fail with "No provider for ResourceLoader". Nothing needs
+// one today: Analog's Vite plugin inlines external templates and styles at transform time.
+@NgModule({ providers: [provideZonelessChangeDetection()] })
+class ArtemisZonelessTestModule {}
+getTestBed().initTestEnvironment([BrowserTestingModule, ArtemisZonelessTestModule], platformBrowserTesting(), {
+    teardown: { destroyAfterEach: true },
+    errorOnUnknownElements: false,
+    errorOnUnknownProperties: false,
+});
+// Mock the canvas 2D context in jsdom (used by the PDF preview and Apollon diagram specs).
+import 'vitest-canvas-mock';
+import { vi } from 'vitest';
+
+import 'app/foundation/util/array.extension';
+
+import dayjs from 'dayjs/esm';
+import relativeTime from 'dayjs/esm/plugin/relativeTime';
+import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
+import utc from 'dayjs/esm/plugin/utc';
+import timezone from 'dayjs/esm/plugin/timezone';
+import isBetween from 'dayjs/esm/plugin/isBetween';
+import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/esm/plugin/isSameOrAfter';
+import minMax from 'dayjs/esm/plugin/minMax';
+import customParseFormat from 'dayjs/esm/plugin/customParseFormat';
+import isoWeek from 'dayjs/esm/plugin/isoWeek';
+import duration from 'dayjs/esm/plugin/duration';
+
+dayjs.extend(relativeTime);
+dayjs.extend(localizedFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isBetween);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(minMax);
+dayjs.extend(customParseFormat);
+dayjs.extend(isoWeek);
+dayjs.extend(duration);
+
+// Browser API mocks (not available in jsdom)
+globalThis.ResizeObserver = class ResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+};
+
+globalThis.IntersectionObserver = class IntersectionObserver {
+    readonly root = null;
+    readonly rootMargin = '';
+    readonly thresholds: readonly number[] = [];
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+        return [];
+    }
+} as unknown as typeof IntersectionObserver;
+
+URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+URL.revokeObjectURL = vi.fn();
+
+// Mock window scroll methods not implemented in jsdom
+window.scroll = vi.fn();
+window.scrollTo = vi.fn();
+window.scrollBy = vi.fn();
+
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    // Restoring a per-test spy must retain the factory rather than reset matchMedia to return undefined.
+    value: vi.fn((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+});
+
+// Ensure Element.prototype.matches exists (used by PrimeNG/PrimeUIX utils)
+if (typeof Element.prototype.matches === 'undefined') {
+    Element.prototype.matches = function (this: Element, selector: string): boolean {
+        const matches = (this.ownerDocument || document).querySelectorAll(selector);
+        let i = matches.length;
+        while (--i >= 0 && matches.item(i) !== this) {
+            // no body: the loop condition walks i back to the matching element
+        }
+        return i > -1;
+    } as typeof Element.prototype.matches;
+}
+
+// Ensure Element.prototype.checkVisibility exists (jsdom does not implement it; every supported browser does)
+if (typeof Element.prototype.checkVisibility === 'undefined') {
+    Element.prototype.checkVisibility = function (this: Element): boolean {
+        return this.isConnected && this.getClientRects().length > 0;
+    } as typeof Element.prototype.checkVisibility;
+}
+
+// Mock getComputedStyle to handle CSS custom properties
+const originalGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = function (element: Element, pseudoElt?: string | null): CSSStyleDeclaration {
+    const style = originalGetComputedStyle.call(window, element, pseudoElt);
+    return new Proxy(style, {
+        get(target, prop) {
+            const value = target[prop as keyof CSSStyleDeclaration];
+            // Return empty string for CSS custom properties that may cause issues
+            if (typeof prop === 'string' && prop.startsWith('--')) {
+                return '';
+            }
+            return value;
+        },
+    });
+} as typeof window.getComputedStyle;
+
+// Suppress jsdom CSS parsing errors for custom properties
+window.addEventListener('error', (event) => {
+    const msg = event.error?.message || event.message || '';
+    if (msg.includes('Cannot create property') && msg.includes('border')) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+});
+
+// Suppress noisy console.error messages from jsdom and Angular in test environment
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+    const msg = args[0];
+    if (typeof msg === 'string') {
+        // Suppress CSS variable parsing errors from jsdom
+        if (msg.includes('Cannot create property') && msg.includes('border')) {
+            return;
+        }
+        // Suppress jsdom "Not implemented" warnings for navigation
+        if (msg.includes('Not implemented')) {
+            return;
+        }
+    }
+    // Suppress stray undefined output
+    if (args.length === 1 && args[0] === undefined) {
+        return;
+    }
+    originalConsoleError.apply(console, args);
+};
+
+// Suppress noisy console.warn messages from Angular and jsdom in test environment
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+    const msg = args[0];
+    if (typeof msg === 'string') {
+        // Suppress Angular NG0953: Unexpected emit for destroyed OutputRef.
+        // This warning fires during test teardown when components with output() signals
+        // are destroyed while subscriptions are still active. It's harmless in tests
+        // because Angular cleans up these subscriptions automatically, but the warning
+        // fires before cleanup completes. In production, takeUntilDestroyed() prevents this.
+        if (msg.includes('NG0953')) {
+            return;
+        }
+        // Suppress jsdom "Not implemented" warnings (e.g., window.scroll)
+        if (msg.includes('Not implemented')) {
+            return;
+        }
+    }
+    // Suppress stray undefined output
+    if (args.length === 1 && args[0] === undefined) {
+        return;
+    }
+    originalConsoleWarn.apply(console, args);
+};
+
+// Patch CSSStyleDeclaration to handle CSS custom properties gracefully
+const originalSetProperty = CSSStyleDeclaration.prototype.setProperty;
+CSSStyleDeclaration.prototype.setProperty = function (property: string, value: string | null, priority?: string) {
+    try {
+        // If value contains CSS variables, skip setting it (jsdom can't handle them)
+        if (value && typeof value === 'string' && value.includes('var(--')) {
+            return;
+        }
+        return originalSetProperty.call(this, property, value, priority ?? '');
+    } catch (error) {
+        // Silently ignore CSS parsing errors from jsdom/cssstyle
+        // Log unexpected errors that might indicate real issues
+        if (error instanceof Error && !error.message.includes('Cannot create property')) {
+            console.warn('Unexpected error in CSSStyleDeclaration.setProperty:', error);
+        }
+    }
+};
+
+// PrimeNG UIX motion relies on matchMedia; mock it globally to avoid setup in individual specs.
+vi.mock('@primeuix/motion', () => ({
+    __esModule: true,
+    createMotion: vi.fn(() => ({
+        enter: vi.fn(() => Promise.resolve()),
+        leave: vi.fn(() => Promise.resolve()),
+        cancel: vi.fn(),
+        update: vi.fn(),
+    })),
+}));
+// Mock SVG methods not available in jsdom
+if (typeof SVGElement !== 'undefined') {
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'getScreenCTM', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            a: 1,
+            b: 0,
+            c: 0,
+            d: 1,
+            e: 0,
+            f: 0,
+            inverse: vi.fn().mockReturnValue({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+        }),
+    });
+
+    Object.defineProperty(SVGElement.prototype, 'createSVGPoint', {
+        writable: true,
+        value: vi.fn().mockReturnValue({
+            x: 0,
+            y: 0,
+            matrixTransform: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        }),
+    });
+}

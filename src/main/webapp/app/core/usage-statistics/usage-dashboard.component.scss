@@ -1,0 +1,23 @@
+// Layout and spacing are Tailwind utilities in the template. What stays here is the semester pill: Bootstrap's unlayered
+// reset of <button> would otherwise win over the layered Tailwind border, radius and background utilities.
+.usage {
+    &__pill {
+        padding: 0.25rem 1rem;
+        font-size: 0.875rem;
+        color: var(--body-color);
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 9999px;
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--primary);
+        }
+
+        &[aria-pressed='true'] {
+            color: var(--white);
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+    }
+}

@@ -1,0 +1,105 @@
+import { OnDestroy, Service, inject } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { Subject, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { DomainDependentService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent.service';
+import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+/**
+ * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
+ */
+@Service()
+export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
+    private submissionService = inject(ProgrammingSubmissionService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+
+    private participationId?: number;
+    private exerciseId?: number;
+    private isBuildingSubject = new Subject<boolean>();
+    private submissionSubscription?: Subscription;
+
+    constructor() {
+        super();
+        this.initDomainSubscription();
+    }
+
+    /**
+     * Completes building subject. If there are subscriptions unsubscribe form them.
+     */
+    override ngOnDestroy() {
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+        this.isBuildingSubject.complete();
+    }
+
+    /**
+     * Calls setDomain of super and updates according to parameter.
+     * @param domain - defines new domain of super and variables of current service.
+     */
+    override setDomain(domain: DomainChange) {
+        super.setDomain(domain);
+        const [domainType, domainValue] = domain;
+        // Release the subscription of the previous domain — this service is a root singleton, so a leftover
+        // subscription would keep the previous participation's shared submission state observed forever and
+        // prevent its websocket teardown. Afterwards ask the submission service to release the shared state
+        // of the previous participation, which only happens once no other component observes it anymore.
+        const previousParticipationId = this.participationId;
+        this.submissionSubscription?.unsubscribe();
+        if (previousParticipationId) {
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(previousParticipationId);
+        }
+        // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
+        if (domainType === DomainType.PARTICIPATION) {
+            this.participationId = domainValue.id;
+            // There is no differentiation between the participation types atm.
+            // This could be implemented in the domain service, but this would make the implementation more complicated, too.
+            this.exerciseId = (domainValue as StudentParticipation).exercise
+                ? (domainValue as StudentParticipation).exercise?.id
+                : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise?.id;
+            const personalParticipation = !!(domainValue as StudentParticipation).exercise && this.isOwnParticipation(domainValue);
+            if (this.participationId && this.exerciseId) {
+                this.submissionSubscription = this.submissionService
+                    .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
+                    .pipe(
+                        tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
+                        map(({ submission }) => !!submission),
+                        tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
+                    )
+                    .subscribe();
+            }
+        } else if (domainType === DomainType.TEST_REPOSITORY) {
+            // There are no submissions for the test repository, so it is never building.
+            this.isBuildingSubject.next(false);
+        }
+    }
+
+    /**
+     * Whether the participation belongs to the current user, which decides whether the results and submissions come on the topics of the user or on the ones of the
+     * instructors. An instructor who edits the code of a student does not own it. A participation that does not say whom it belongs to counts as the own one.
+     */
+    private isOwnParticipation(participation: StudentParticipation): boolean {
+        const login = this.accountService.userIdentity()?.login;
+        const owners = [participation.student, ...(participation.team?.students ?? [])].filter((user) => !!user?.login);
+        return !login || owners.length === 0 || owners.some((user) => user!.login === login);
+    }
+
+    /**
+     * Call an error if there is one.
+     */
+    onError() {
+        this.alertService.error('artemisApp.submission.resultTimeout');
+    }
+
+    /**
+     * Returns building state of this service.
+     */
+    getBuildingState() {
+        return this.isBuildingSubject.asObservable();
+    }
+}

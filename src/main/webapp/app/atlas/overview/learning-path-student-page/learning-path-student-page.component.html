@@ -1,0 +1,38 @@
+<div>
+    @if (isLearningPathLoading()) {
+        <div class="flex h-full items-center justify-center">
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+        </div>
+    } @else if (learningPath() && learningPath()!.startedByStudent) {
+        <jhi-learning-path-student-nav [learningPathId]="learningPath()!.id" />
+        <div class="overflow-auto">
+            @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
+                <jhi-learning-path-lecture-unit [courseId]="courseId()" [lectureUnitId]="currentLearningObject()!.id" />
+            } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
+                <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
+            } @else if (!isLearningPathNavigationLoading()) {
+                <div class="flex h-full w-full items-center justify-center">
+                    <div class="max-w-[500px] text-center">
+                        <h3 class="mb-4!" jhiTranslate="artemisApp.learningPath.completion.title"></h3>
+                        <div jhiTranslate="artemisApp.learningPath.completion.description"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="flex h-full w-full items-center justify-center">
+            <div class="max-w-[500px] text-center">
+                <h3 class="mb-4!" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
+                <div jhiTranslate="artemisApp.learningPath.generation.description"></div>
+                <button
+                    tumAetUiButton
+                    (click)="startLearningPath()"
+                    type="button"
+                    class="mt-6!"
+                    id="start-learning-path-button"
+                    jhiTranslate="artemisApp.learningPath.generation.generateButton"
+                ></button>
+            </div>
+        </div>
+    }
+</div>

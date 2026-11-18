@@ -1,0 +1,2543 @@
+package de.tum.cit.aet.artemis.programming;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
+import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.zip.ZipFile;
+
+import org.apache.commons.io.FileUtils;
+import org.assertj.core.data.Offset;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import tools.jackson.core.type.TypeReference;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
+import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
+import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.UriService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.MockDelegate;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+
+/**
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
+ * 1) LocalVC + LocalCI
+ */
+@Lazy
+@Service
+@Profile(SPRING_PROFILE_TEST)
+public class ProgrammingExerciseIntegrationTestService {
+
+    private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
+
+    private String userPrefix;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
+
+    @Autowired
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private FileService fileService;
+
+    @Value("${server.port}")
+    private int serverPort;
+
+    @Autowired
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private UriService uriService;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private RequestUtilService request;
+
+    @Autowired
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private GitService gitService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private PlagiarismUtilService plagiarismUtilService;
+
+    @Autowired
+    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private HibernateQueryInterceptor queryInterceptor;
+
+    private Course course;
+
+    public ProgrammingExercise programmingExercise;
+
+    /** The configuration {@link #programmingExercise} is stored with; the exercise does not carry it. */
+    private ProgrammingExerciseBuildConfig buildConfig;
+
+    private ProgrammingExercise programmingExerciseInExam;
+
+    private ProgrammingExerciseStudentParticipation participation1;
+
+    private ProgrammingExerciseStudentParticipation participation2;
+
+    private File downloadedFile;
+
+    private MockDelegate mockDelegate;
+
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private VersionControlService versionControlService;
+
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    private File plagiarismChecksTestReposDir;
+
+    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+            throws Exception {
+        this.userPrefix = userPrefix;
+        this.mockDelegate = mockDelegate;
+        this.versionControlService = versionControlService; // this can be used like a MockitoSpyBean
+        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a MockitoSpyBean
+        localVCLocalCITestService.setPort(serverPort);
+
+        userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(userPrefix);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+        // The configuration is a row of its own and is not loaded with the exercise.
+        buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        programmingExerciseInExam = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(userPrefix);
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseInExam.getId()).orElseThrow();
+
+        participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
+
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
+
+        this.plagiarismChecksTestReposDir = tempFileUtilService.createTempDirectory("jplag-repos").toFile();
+    }
+
+    void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
+        if (downloadedFile != null && downloadedFile.exists()) {
+            FileUtils.forceDelete(downloadedFile);
+        }
+        if (plagiarismChecksTestReposDir != null && plagiarismChecksTestReposDir.exists()) {
+            RepositoryExportTestUtil.safeDeleteDirectory(plagiarismChecksTestReposDir.toPath());
+        }
+    }
+
+    /**
+     * Deletes the LocalVC project folder for the given project key if present.
+     * Useful to avoid false positives in uniqueness checks between tests.
+     */
+    public void cleanupLocalVcProjectForKey(String projectKey) {
+        try {
+            RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, projectKey);
+        }
+        catch (IOException ignored) {
+            // best-effort cleanup
+        }
+    }
+
+    void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
+        programmingExerciseRepository.save(programmingExercise);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
+
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
+                HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
+    }
+
+    void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
+        programmingExerciseRepository.save(programmingExercise);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
+
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
+                HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
+        assertThat(releaseStateDTO.released()).isFalse();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
+    }
+
+    void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
+        programmingExercise.setTestCasesChanged(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
+                HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isFalse();
+        assertThat(releaseStateDTO.testCasesChanged()).isTrue();
+    }
+
+    void testProgrammingExerciseIsReleased_forbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
+    }
+
+    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
+        // Clean up any stale LocalVC project folder from parallel tests that might share the same projectKey
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+
+        // Seed LocalVC repositories for both participations and wire URIs
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
+
+        // Set one of the participations to practice mode
+        participation1.setPracticeMode(false);
+        participation2.setPracticeMode(true);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Export with excludePracticeSubmissions - only include participations for this exercise
+        var participationIds = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .map(participation -> participation.getId().toString()).toList();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
+
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        return unzipExportedFile();
+    }
+
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
+
+        // Make sure that the practice submission is not included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
+    }
+
+    void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
+
+        // Make sure that the practice submission is included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
+    }
+
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+        // Ensure a clean LocalVC project folder so we don't reuse stale repositories from previous tests
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+
+        // Seed LocalVC student repos and wire URIs
+        var repo1 = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Create .project and pom.xml in the student's repo to be modified during export
+        String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
+        String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
+        Path projectFilePath = repo1.workingCopyPath().resolve(".project");
+        Path pomPath = repo1.workingCopyPath().resolve("pom.xml");
+        FileUtils.writeStringToFile(projectFilePath.toFile(), projectFileContents, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(pomPath.toFile(), pomContents, StandardCharsets.UTF_8);
+        repo1.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repo1.workingCopy()).setMessage("seed project and pom").call();
+        repo1.workingCopy().push().setRemote("origin").call();
+
+        // Give LocalVC time to sync after push
+        Thread.sleep(100);
+
+        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
+        assertThat(participation).isPresent();
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
+                + String.join(",", List.of(participation.get().getId().toString()));
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Read exported project files and assert participant identifier appended
+        List<Path> entries = unzipExportedFile();
+        Optional<Path> extractedRepo = entries.stream().filter(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo).isPresent();
+        Path repoRoot = extractedRepo.get().getParent();
+        String modifiedEclipseProjectFile = Files.readString(repoRoot.resolve(".project"));
+        assertThat(modifiedEclipseProjectFile).contains(userPrefix + "student1");
+        String modifiedPom = Files.readString(repoRoot.resolve("pom.xml"));
+        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase(Locale.ROOT));
+        Files.deleteIfExists(projectFilePath);
+        Files.deleteIfExists(pomPath);
+    }
+
+    private static Path findFirstFile(@NonNull List<Path> zipPaths, String fileName) throws IOException {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("fileName must not be null/blank");
+        }
+
+        // Prefer a shallower path if multiple matches exist
+        return zipPaths.stream().filter(Files::isRegularFile).filter(p -> p.getFileName().toString().equals(fileName)).min(Comparator.comparingInt(Path::getNameCount))
+                .orElseThrow(() -> new FileNotFoundException("File '" + fileName + "' not found in unzipped export"));
+    }
+
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+        var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
+        assertThat(participation).isPresent();
+
+        // Empty project files: neither can be parsed as XML, so appending the participant identifier fails and is only logged. The export reads the participation's
+        // repository from the server, so the files have to be written into that repository rather than into a copy of it.
+        localVCRepositoryTestService.writeFilesAndPush(new LocalVCRepositoryUri(participation.get().getRepositoryUri()), Map.of(".project", "", "pom.xml", ""),
+                "Add unparseable project files");
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
+                + String.join(",", List.of(participation.get().getId().toString()));
+        // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
+        List<Path> entries = unzipExportedFile();
+        Optional<Path> extractedRepo = entries.stream().filter(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo).as("the student repository is part of the export").isPresent();
+        Path repoRoot = extractedRepo.orElseThrow().getParent();
+        assertThat(Files.readString(repoRoot.resolve(".project"))).as("the unparseable .project is exported unchanged").isEmpty();
+        assertThat(Files.readString(repoRoot.resolve("pom.xml"))).as("the unparseable pom.xml is exported unchanged").isEmpty();
+    }
+
+    void testExportSubmissionsByParticipationIds() throws Exception {
+        // Seed LocalVC student repositories and wire URIs
+        // use shared util to seed and wire repos for both participations
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Only get participations for this specific exercise to avoid interference from other tests
+        var participationIds = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .map(participation -> participation.getId().toString()).toList();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
+        // all options false by default, only test if export works at all
+        var exportOptions = new RepositoryExportOptionsDTO();
+
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        List<Path> entries = unzipExportedFile();
+
+        // Make sure both repositories are present (by login suffix). The manual export keeps the history of the student
+        // repositories, so each participation still arrives as a directory with its own .git.
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student2", ".git").toString()));
+    }
+
+    void testExportSubmissionAnonymizationCombining() throws Exception {
+        // Ensure base repos exist and retrieve handles for template/solution/tests
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Prepare template working copy handle
+        var templateRepo = baseRepositories.templateRepository();
+        String projectKey = programmingExercise.getProjectKey();
+
+        // Seed student repository from template bare and wire URI
+        String studentSlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation1.getParticipantIdentifier());
+        var studentRepo = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentSlug, templateRepo);
+        participation1.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentSlug));
+        programmingExerciseStudentParticipationRepository.save(participation1);
+
+        // Add a student commit to anonymize
+        localVCLocalCITestService.commitFile(studentRepo.workingCopyPath(), studentRepo.workingCopy(), "Test.java");
+        studentRepo.workingCopy().push().setRemote("origin").call();
+
+        // Rest call with options (combine + anonymize enabled in getOptions())
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
+        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        List<Path> entries = unzipExportedFile();
+
+        // Checks: file present and single anonymized commit
+        assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
+        // The exported repo format is: courseShortName-exerciseTitle-participationId-student-submission.git
+        // We match the suffix pattern that includes participation id and the anonymized suffix
+        String expectedSuffix = "-" + participation1.getId() + "-student-submission.git" + File.separator + ".git";
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(expectedSuffix)).findFirst();
+        assertThat(extractedRepo1).as("Expected to find exported repo matching pattern *%s but entries were: %s", expectedSuffix, entries).isPresent();
+        try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
+            RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
+            assertThat(commit.getAuthorIdent().getName()).isEqualTo("student");
+            assertThat(commit.getFullMessage()).isEqualTo("All student changes in one commit");
+        }
+    }
+
+    /**
+     * Recursively unzips the exported file.
+     *
+     * @return the list of files that the {@code downloadedFile} contained.
+     */
+    private List<Path> unzipExportedFile() throws Exception {
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        try (var files = Files.walk(extractedZipDir)) {
+            return files.toList();
+        }
+    }
+
+    void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + Long.MAX_VALUE;
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.NOT_FOUND);
+    }
+
+    void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
+    }
+
+    void testExportSubmissionsByStudentLogins() throws Exception {
+        downloadedFile = exportSubmissionsByStudentLogins();
+        assertThat(downloadedFile).exists();
+        List<Path> entries = unzipExportedFile();
+        // Assert both participant repos are included. For this endpoint/options, repos are anonymized and use the student-submission.git suffix
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith("student-submission.git" + File.separator + ".git"));
+    }
+
+    private File exportSubmissionsByStudentLogins() throws Exception {
+        // Seed LocalVC student repositories and wire URIs
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
+
+        // Give LocalVC time to sync after repository creation
+        Thread.sleep(100);
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1,"
+                + userPrefix + "student2";
+        return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
+    }
+
+    private RepositoryExportOptionsDTO getOptions() {
+        return new RepositoryExportOptionsDTO(false, true, false, null, false, true, true, true, true);
+    }
+
+    void testProgrammingExerciseDelete() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+    }
+
+    void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), true);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
+    }
+
+    void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+    }
+
+    void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
+
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
+    }
+
+    // VCS project deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
+    void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+    }
+
+    // VCS repository deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
+    void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+    }
+
+    void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        request.delete(path, HttpStatus.FORBIDDEN);
+    }
+
+    void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        request.delete(path, HttpStatus.FORBIDDEN);
+    }
+
+    void testGetProgrammingExercise() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        assertThat(programmingExerciseServer.id()).isEqualTo(programmingExercise.getId());
+        assertThat(programmingExerciseServer.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(programmingExerciseServer.shortName()).isEqualTo(programmingExercise.getShortName());
+        // The type discriminator and the nested course drive the client's routing and display links.
+        assertThat(programmingExerciseServer.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(programmingExerciseServer.course()).isNotNull();
+        assertThat(programmingExerciseServer.course().id()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertThat(programmingExerciseServer.course().title()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(programmingExerciseServer.buildConfig()).isNotNull();
+        assertThat(programmingExerciseServer.templateParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
+        assertThat(programmingExerciseServer.solutionParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
+    }
+
+    void testGetProgrammingExerciseWithStructuredGradingInstruction() throws Exception {
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        assertThat(programmingExerciseServer.title()).isEqualTo(programmingExercise.getTitle());
+
+        assertThat(programmingExerciseServer.gradingCriteria()).isNotNull();
+        GradingCriterionDTO criterionWithoutTitle = findGradingCriterionDTOByTitle(programmingExerciseServer, null);
+        GradingCriterionDTO criterionWithTitle = findGradingCriterionDTOByTitle(programmingExerciseServer, "test title");
+
+        // The grading-instruction editor needs the criterion and instruction ids to survive the round trip.
+        assertThat(criterionWithTitle.id()).isNotNull();
+        assertThat(criterionWithTitle.structuredGradingInstructions()).hasSize(3).allMatch(instruction -> instruction.id() != null);
+        assertThat(criterionWithoutTitle.structuredGradingInstructions()).hasSize(1);
+        final String expectedDescription = "created first instruction with empty criteria for testing";
+        assertThat(criterionWithoutTitle.structuredGradingInstructions()).anyMatch(instruction -> expectedDescription.equals(instruction.instructionDescription()));
+    }
+
+    private static GradingCriterionDTO findGradingCriterionDTOByTitle(ProgrammingExerciseResponseDTO exercise, String title) {
+        return exercise.gradingCriteria().stream().filter(criterion -> Objects.equals(title, criterion.title())).findAny().orElseThrow();
+    }
+
+    void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+    }
+
+    void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
+        assertThat(programmingExerciseServer.studentParticipations()).isNotEmpty();
+        // The instructor code editor reads {id, repositoryUri} off every participation slot.
+        assertThat(programmingExerciseServer.studentParticipations()).allSatisfy(participation -> {
+            assertThat(participation.id()).isNotNull();
+            assertThat(participation.type()).isEqualTo(ProgrammingExerciseStudentParticipationDTO.TYPE);
+            // Cycle break: the nested exercise stays empty while the participation is embedded under the exercise.
+            assertThat(participation.exercise()).isNull();
+        });
+    }
+
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "tutor1");
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-template-and-solution-participation?withSubmissionResults="
+                + withSubmissionResults;
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
+        assertThat(programmingExerciseServer.studentParticipations()).isNullOrEmpty();
+    }
+
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
+        AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-template-and-solution-participation" + "?withSubmissionResults="
+                + withSubmissionResults + "&withGradingCriteria=" + false;
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
+        assertThat(programmingExerciseServer.auxiliaryRepositories()).hasSize(1).allSatisfy(returnedRepository -> {
+            assertThat(returnedRepository.id()).isEqualTo(auxiliaryRepository.getId());
+            assertThat(returnedRepository.name()).isEqualTo(auxiliaryRepository.getName());
+            assertThat(returnedRepository.repositoryUri()).isEqualTo(auxiliaryRepository.getRepositoryUri());
+            assertThat(returnedRepository.checkoutDirectory()).isEqualTo(auxiliaryRepository.getCheckoutDirectory());
+        });
+        assertThat(programmingExerciseServer.gradingCriteria()).isNullOrEmpty();
+    }
+
+    private void checkTemplateAndSolutionParticipationsFromServer(ProgrammingExerciseResponseDTO programmingExerciseServer) {
+        assertThat(programmingExerciseServer.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(programmingExerciseServer.templateParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
+        assertThat(programmingExerciseServer.templateParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_TEMPLATE);
+        // the trigger-build button gates on the initialization state; dropping it silently disables manual builds
+        assertThat(programmingExerciseServer.templateParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(programmingExerciseServer.solutionParticipation()).isNotNull().extracting(TemplateSolutionParticipationDTO::id).isNotNull();
+        assertThat(programmingExerciseServer.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
+        assertThat(programmingExerciseServer.solutionParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+    }
+
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
+    }
+
+    void testGetProgrammingExercisesForCourse() throws Exception {
+        final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
+        var programmingExercisesServer = request.getList(path, HttpStatus.OK, ProgrammingExerciseListItemDTO.class);
+        assertThat(programmingExercisesServer).isNotEmpty();
+        var listItem = programmingExercisesServer.stream().filter(item -> programmingExercise.getId().equals(item.id())).findFirst().orElseThrow();
+        assertThat(listItem.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(listItem.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(listItem.projectKey()).isEqualTo(programmingExercise.getProjectKey());
+        assertThat(listItem.templateParticipation()).isNotNull();
+        assertThat(listItem.solutionParticipation()).isNotNull();
+        // The course is left out on purpose; the client re-attaches the course it already holds.
+        assertThat(listItem.course()).isNull();
+    }
+
+    void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
+        final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
+        request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExerciseListItemDTO.class);
+    }
+
+    void testGenerateStructureOracle() throws Exception {
+        // Wire base repositories in LocalVC and ensure tests repo has the expected directory
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Use the tests repository handle from base repos
+        var testsRepo = baseRepos.testsRepository();
+        String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
+        if (buildConfig.hasSequentialTestRuns()) {
+            testsPath = java.nio.file.Path.of("structural", testsPath).toString();
+        }
+        // Create tests path in tests repo so generator can write test.json (same approach as ProgrammingExerciseLocalVCExportsIntegrationTest)
+        Path testsDir = testsRepo.workingCopyPath().resolve(testsPath);
+        Files.createDirectories(testsDir);
+        Files.createFile(testsDir.resolve(".placeholder"));
+        testsRepo.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(testsRepo.workingCopy()).setMessage("Init tests dir").call();
+        testsRepo.workingCopy().push().setRemote("origin").call();
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
+        var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
+        assertThat(result).startsWith("Successfully generated the structure oracle");
+        request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
+                INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        var storedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        programmingExercise.setId(null);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, storedBuildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+        // both values are not set --> bad request
+        programmingExercise.setCourse(null);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
+        // both values are set --> bad request
+        programmingExerciseInExam.setCourse(course);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExerciseInExam, programmingExerciseUtilService.buildConfigOf(programmingExerciseInExam)), HttpStatus.BAD_REQUEST);
+    }
+
+    void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.getFirst();
+
+        String problemStatement = "[task][taskname](test1)";
+        String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
+        programmingExercise.setProblemStatement(problemStatement);
+
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        var response = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(programmingExercise.getProblemStatement()).as("test saved exercise contains test ids").isEqualTo(problemStatementWithId);
+    }
+
+    private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+    }
+
+    void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
+    }
+
+    void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST);
+    }
+
+    void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
+    }
+
+    void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
+                INVALID_TEMPLATE_REPOSITORY_URL);
+    }
+
+    void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
+
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
+                INVALID_SOLUTION_BUILD_PLAN_ID);
+    }
+
+    void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
+                INVALID_SOLUTION_REPOSITORY_URL);
+    }
+
+    void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
+        request.putAndExpectError("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.BAD_REQUEST,
+                INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    /**
+     * This test checks that it is not allowed to change the courseId of an exercise
+     * in an update request. The request should fail with 'HttpStatus.CONFLICT'.
+     */
+    void updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId() throws Exception {
+        // Create a programming exercise.
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        // Create a new course with different id.
+        Course newCourse = courseUtilService.createEnrolledCourse(userPrefix);
+
+        // Assign new course to the programming exercise.
+        ProgrammingExercise newProgrammingExercise = programmingExercise;
+        newProgrammingExercise.setCourse(newCourse);
+
+        // Programming exercise update with the new course should fail.
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(newProgrammingExercise, programmingExerciseUtilService.buildConfigOf(newProgrammingExercise)), HttpStatus.CONFLICT);
+    }
+
+    /**
+     * This test checks that it is not allowed to change SCA enabled option
+     */
+    void updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingSCAOption() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        ProgrammingExercise updatedExercise = programmingExercise;
+        updatedExercise.setStaticCodeAnalysisEnabled(true);
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(updatedExercise, programmingExerciseUtilService.buildConfigOf(updatedExercise)),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            participations.iterator().next().setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.iterator().next().setIndividualDueDate(individualDueDate);
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        assertThat(programmingExercise.getDueDate()).isNotNull();
+        programmingExercise.setReleaseDate(programmingExercise.getDueDate().minusDays(1));
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(1);
+
+            final var withIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() != null).toList();
+            assertThat(withIndividualDueDate).hasSize(1);
+            assertThat(withIndividualDueDate.getFirst().getIndividualDueDate()).isCloseTo(individualDueDate, HalfSecond());
+        }
+    }
+
+    void updateExerciseRemoveDueDate() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            assertThat(participations).hasSize(2);
+            participations.iterator().next().setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+            participations.iterator().next().setIndividualDueDate(ZonedDateTime.now().plusHours(20));
+            programmingExerciseStudentParticipationRepository.saveAll(participations);
+        }
+
+        programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
+        request.put("/api/programming/programming-exercises",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.OK);
+
+        {
+            final var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+            final var withNoIndividualDueDate = participations.stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+            assertThat(withNoIndividualDueDate).hasSize(2);
+        }
+    }
+
+    void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
+        final var endpoint = "/api/programming/programming-exercises/timeline";
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
+        params.add("notificationText", "The notification text");
+        request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.FORBIDDEN, params);
+    }
+
+    void updateTimeline_invalidId_notFound() throws Exception {
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
+        final var endpoint = "/api/programming/programming-exercises/timeline";
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
+        params.add("notificationText", "The notification text");
+        request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.NOT_FOUND, params);
+    }
+
+    void updateTimeline_ok() throws Exception {
+        final var endpoint = "/api/programming/programming-exercises/timeline";
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
+        params.add("notificationText", "The notification text");
+        request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
+    }
+
+    void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
+    }
+
+    void updateProblemStatement_invalidId_forbidden() throws Exception {
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
+    }
+
+    void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
+        request.post("/api/programming/programming-exercises/setup", null, HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+        programmingExercise.setCourse(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExerciseInExam, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExercise.setId(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.FORBIDDEN);
+    }
+
+    void createProgrammingExercise_titleNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("abc?=§ ``+##");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+        programmingExercise.setShortName("hi");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+        // Reject short names exceeding PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH (36); 37 chars must fail.
+        programmingExercise.setShortName("a".repeat(37));
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        course.setShortName(null);
+        courseRepository.save(course);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+        course.setShortName("Hi");
+        courseRepository.save(course);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(null);
+        buildConfig.setCheckoutSolutionRepository(false);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("emptyRepositories", "true");
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), ProgrammingExercise.class,
+                params, HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+        programmingExerciseInExam.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setId(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExerciseInExam, buildConfig), HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("asdb ³¼²½¼³`` ");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        programmingExercise.setProgrammingLanguage(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("..asd. ß?");
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("abc.final.xyz");
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("eist.2020something");
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName(null);
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameIsTooLong_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        programmingExercise.setPackageName("a".repeat(MAX_PACKAGE_NAME_LENGTH + 1));
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("packagenameTooLong"));
+    }
+
+    void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setMaxPoints(null);
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise.setAllowOnlineEditor(false);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        buildConfig.setSequentialTestRuns(true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.programmingLanguage(ProgrammingLanguage.C);
+        programmingExercise.setProjectType(ProjectType.FACT);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(20);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(-20);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("unique-title");
+        programmingExercise.setShortName("testuniqueshortname");
+        // the creation request body no longer carries a project key: the server always derives it from the course
+        // short name and the exercise short name, so the mock has to be set up for the derived key
+        programmingExercise.forceNewProjectKey();
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_projectTypeMissing_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setProjectType(null);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
+        programmingExercise.setProjectType(ProjectType.XCODE);
+        programmingExercise.setAllowOnlineEditor(true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        buildConfig.setCheckoutSolutionRepository(true);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setMaxPoints(0.0);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        programmingExercise.setMaxPoints(0.0);
+        // The error key tells the rejected points apart from the title of the fixture, which already exists in the course and is checked later.
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig)))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("maxScoreInvalid"));
+    }
+
+    void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setMaxPoints(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setMaxPoints(10.0);
+        programmingExercise.setBonusPoints(1.0);
+        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        request.post("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
+        programmingExercise.setId(-1L);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExerciseMaxScoreInvalidBadRequest() throws Exception {
+        programmingExercise.setMaxPoints(0.0);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise.setAllowOnlineEditor(false);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
+        programmingExercise.setProgrammingLanguage(null);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
+        programmingExercise.setShortName("newShortName");
+        programmingExercise.setTitle("newTitle");
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
+        programmingExercise.setId(null);
+        programmingExercise.setTitle(programmingExercise.getTitle() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
+        programmingExerciseInExam.setId(null);
+        programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
+        // short name will still be the same
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
+        programmingExercise.setId(null);
+        programmingExercise.setShortName(programmingExercise.getShortName() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
+        programmingExerciseInExam.setId(null);
+        programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
+        // title will still be the same
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+        var id = programmingExercise.getId();
+        programmingExercise.setId(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + id, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_scaChanged_badRequest() throws Exception {
+        // Static code analysis changes what the build plans have to run, so it may only change when they are recreated.
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        var programmingExerciseSca = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
+
+        setupMocksForConsistencyChecksOnImport(programmingExercise);
+        setupMocksForConsistencyChecksOnImport(programmingExerciseSca);
+
+        // false -> true
+        var sourceId = programmingExercise.getId();
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("NewTitle1");
+        programmingExercise.setShortName("NewShortname1");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, ProgrammingExercise.class, params,
+                HttpStatus.BAD_REQUEST);
+
+        // true -> false
+        sourceId = programmingExerciseSca.getId();
+        programmingExerciseSca.setId(null);
+        programmingExerciseSca.setStaticCodeAnalysisEnabled(false);
+        programmingExerciseSca.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSca.setTitle("NewTitle2");
+        programmingExerciseSca.setShortName("NewShortname2");
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExerciseSca, ProgrammingExercise.class, params,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+        programmingExercise.setCourse(null);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.getFirst();
+
+        String problemStatementWithId = "[task][Taskname](<testid>" + test1.getId() + "</testid>)";
+        String problemStatement = "[task][Taskname](test1)";
+        programmingExercise.setProblemStatement(problemStatementWithId);
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
+        String sourceId = programmingExercise.getId().toString();
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, course);
+        exerciseToBeImported.setProblemStatement(problemStatement);
+
+        mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, exerciseToBeImported, ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        assertThat(response.getProblemStatement()).isEqualTo("[task][Taskname](test1)");
+
+        var newTestCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(response.getId(), test1.getTestName()).orElseThrow();
+        String newProblemStatement = "[task][Taskname](<testid>" + newTestCase.getId() + "</testid>)";
+        var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
+
+        assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
+
+    }
+
+    void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
+        request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
+    }
+
+    @NonNull
+    private String getDefaultAPIEndpointForExportRepos() {
+        return "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/1,2,3";
+    }
+
+    void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
+        final var options = new RepositoryExportOptionsDTO(true, true, false, null, false, true, true, true, true);
+        request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
+    }
+
+    void generateStructureOracleForExercise_exerciseDoesNotExist_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises/" + (programmingExercise.getId() + 8337) + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
+        programmingExercise.setPackageName(null);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
+
+        programmingExercise.setPackageName("ab");
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void getTestCaseState_exerciseDoesNotExist_forbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
+        userUtilService.addTeachingAssistant(userPrefix + "tutoralt1");
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    void getTestCases_asTutor() throws Exception {
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        // The response DTO reads no lazy slot of a test case (neither exercise nor tasks), so the count stays flat at 5;
+        // one extra query per returned test case would breach this cap.
+        final List<ProgrammingExerciseTestCaseResponseDTO> returnedTests = QueryCountAssert
+                .assertThatDb(queryInterceptor, () -> request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCaseResponseDTO.class)).hasBeenCalledAtMostTimes(5);
+        final Set<ProgrammingExerciseTestCase> testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        // assert against the entity getters, not against the mapper's own output: comparing the response to
+        // ProgrammingExerciseTestCaseResponseDTO.of(...) would compare the mapper with itself and pass for any
+        // mis-mapped field, including the defaulting bonusMultiplier/bonusPoints getters that carry the real logic
+        assertThat(returnedTests).hasSameSizeAs(testsInDB);
+        for (ProgrammingExerciseTestCase testCase : testsInDB) {
+            var returned = returnedTests.stream().filter(test -> testCase.getId().equals(test.id())).findFirst().orElseThrow();
+            assertThat(returned.testName()).isEqualTo(testCase.getTestName());
+            assertThat(returned.weight()).isEqualTo(testCase.getWeight());
+            assertThat(returned.bonusMultiplier()).isEqualTo(testCase.getBonusMultiplier());
+            assertThat(returned.bonusPoints()).isEqualTo(testCase.getBonusPoints());
+            assertThat(returned.active()).isEqualTo(testCase.isActive());
+            assertThat(returned.visibility()).isEqualTo(testCase.getVisibility());
+            assertThat(returned.type()).isEqualTo(testCase.getType());
+        }
+    }
+
+    void getTestCases_asStudent_forbidden() throws Exception {
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCaseResponseDTO.class);
+    }
+
+    void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
+        userUtilService.addTeachingAssistant(userPrefix + "other-teaching-assistant1");
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
+
+        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCaseResponseDTO.class);
+    }
+
+    void updateTestCases_asInstrutor() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
+        }, HttpStatus.OK);
+        final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var expectedTestCases = testCasesInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+
+        assertThat(new HashSet<>(testCasesResponse)).containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCasesResponse).allSatisfy(testCase -> {
+            assertThat(testCase.visibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+            assertThat(testCase.weight()).isEqualTo(testCase.id() + 42);
+            assertThat(testCase.bonusMultiplier()).isEqualTo(testCase.id() + 1.0);
+            assertThat(testCase.bonusPoints()).isEqualTo(testCase.id() + 2.0);
+        });
+    }
+
+    void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
+
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
+        }, HttpStatus.OK);
+
+        assertThat(testCasesResponse).isNotNull();
+    }
+
+    void updateTestCases_nonExistingExercise_forbidden() throws Exception {
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
+        final var endpoint = "/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
+        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
+    }
+
+    void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
+        userUtilService.addInstructor(userPrefix + "other-instructor1");
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
+    }
+
+    void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream()
+                .map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), -1., testCase.getId() + 1.0, testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        request.patchWithResponseBody("/api" + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+        final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        final var updates = transformTestCasesToDto(testCases);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), -1.0, firstUpdate.bonusPoints(), firstUpdate.visibility());
+        updates.set(0, firstUpdate);
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        request.performMvcRequest(
+                MockMvcRequestBuilders.patch(new URI("/api" + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
+                .andExpect(status().isBadRequest()) //
+                .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
+                .andExpect(jsonPath("$.testCase").value(testCases.getFirst().getTestName()));
+    }
+
+    /**
+     * Setting the bonus points to {@code null} is okay, as {@link ProgrammingExerciseTestCase#getBonusPoints()} will replace that with 0.
+     */
+    void updateTestCases_testCaseBonusPointsNull() throws Exception {
+        {
+            final var originalTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+            originalTestCases.forEach(testCase -> testCase.setBonusPoints(1d));
+            programmingExerciseTestCaseRepository.saveAll(originalTestCases);
+        }
+
+        final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+
+        final var updates = transformTestCasesToDto(testCases);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), firstUpdate.bonusMultiplier(), null, firstUpdate.visibility());
+        updates.set(0, firstUpdate);
+
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
+
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
+        }, HttpStatus.OK);
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.id().equals(updates.getFirst().id())).findFirst().orElseThrow();
+        assertThat(updatedTestCase.bonusPoints()).isZero();
+        assertThat(testCasesResponse.stream().filter(testCase -> !testCase.id().equals(updatedTestCase.id()))).allMatch(testCase -> testCase.bonusPoints() == 1d);
+    }
+
+    private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
+        return testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(),
+                testCase.getBonusPoints(), testCase.getVisibility())).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    void resetTestCaseWeights_asInstructor() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
+        mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
+        programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
+            test.setWeight(42.0);
+            programmingExerciseTestCaseRepository.saveAndFlush(test);
+        });
+
+        // Resetting plus versioning takes 31 queries and the global search lookup of the exercise's channel one more; mapping the reset test cases must not
+        // pull their exercise or tasks back in
+        final var testCasesResponse = QueryCountAssert
+                .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(32);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
+
+        assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isZero());
+    }
+
+    void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
+        userUtilService.addInstructor(userPrefix + "other-instructor1");
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
+        request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
+    }
+
+    void testCheckPlagiarism() throws Exception {
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1", userPrefix);
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+
+        // Ensure template and solution participations exist
+        if (programmingExercise.getTemplateParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        }
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertPlagiarismResult(programmingExercise, result, 100.0);
+
+        // the compared commit of each side is stored, the compared ids of a programming comparison are participation ids
+        var comparison = result.plagiarismResult().comparisons().getFirst();
+        for (var submission : List.of(comparison.submissionA(), comparison.submissionB())) {
+            assertThat(plagiarismSubmissionRepository.findComparedCommitHashes(programmingExercise.getId(), submission.submissionId(), Pageable.ofSize(10))).hasSize(1)
+                    .allSatisfy(hash -> assertThat(hash).matches("[0-9a-f]{40}"));
+        }
+    }
+
+    void testCheckPlagiarismForTeamExercise() throws Exception {
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2", userPrefix);
+
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(programmingExercise);
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+
+        prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertPlagiarismResult(programmingExercise, result, 100.0);
+    }
+
+    void testCheckPlagiarismJplagReport() throws Exception {
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3", userPrefix);
+        var programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
+
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism-jplag-report";
+        var jplagZipArchive = request.getFile(path, HttpStatus.OK, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertThat(jplagZipArchive).isNotNull();
+        assertThat(jplagZipArchive).exists();
+
+        try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
+            assertThat(zipFile.getEntry("submissionMappings.json")).isNotNull();
+            var fileEntries = zipFile.stream().filter(entry -> entry.getName().startsWith("files/") && !entry.isDirectory()).toList();
+            assertThat(fileEntries).isNotEmpty();
+
+            var comparisonEntries = zipFile.stream().filter(entry -> entry.getName().startsWith("comparisons/") && entry.getName().endsWith(".json") && !entry.isDirectory())
+                    .toList();
+            assertThat(comparisonEntries).isNotEmpty();
+        }
+    }
+
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO result, double expectedSimilarity) {
+        // verify plagiarism result
+        assertThat(result.plagiarismResult().comparisons()).hasSize(1);
+
+        var comparison = result.plagiarismResult().comparisons().getFirst();
+        assertThat(comparison.similarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(comparison.status()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(comparison.matches()).hasSize(1);
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+    }
+
+    private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
+        var participationStudent1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        var participationStudent2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
+        var participationInstructor1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        var submissionStudent1 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent1, false);
+        var submissionStudent2 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent2, false);
+        var submissionInstructor1 = programmingExerciseUtilService.createProgrammingSubmission(participationInstructor1, false);
+        participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
+
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private Team createTeam(ProgrammingExercise programmingExercise, String suffix) {
+        var student = userUtilService.getUserByLogin(userPrefix + "student" + suffix);
+        var team = new Team().name("Team " + suffix).shortName(userPrefix + "team" + suffix).exercise(programmingExercise).students(Set.of(student));
+        return teamRepository.save(programmingExercise, team);
+    }
+
+    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
+        var participationTeam1 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "1"));
+        var participationTeam2 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "2"));
+        var submissionTeam1 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam1, false);
+        var submissionTeam2 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam2, false);
+        participationUtilService.addResultToSubmission(submissionTeam1, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionTeam2, AssessmentType.AUTOMATIC, null);
+
+        prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
+    }
+
+    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
+        var projectKey = programmingExercise.getProjectKey();
+
+        var exampleProgram = """
+                public class Main {
+
+                    /**
+                     * DO NOT EDIT!
+                     */
+                    public static void main(String[] args) {
+                        Main main = new Main();
+                        int magicNumber = main.calculateMagicNumber();
+
+                        System.out.println("Magic number: " + magicNumber);
+                    }
+
+                    /**
+                     * Calculate the magic number.
+                     *
+                     * @return the magic number.
+                     */
+                    private int calculateMagicNumber() {
+                        int a = 0;
+                        int b = 5;
+                        int magicNumber = 0;
+
+                        while (a < b) {
+                            magicNumber += b;
+                            a++;
+                        }
+
+                        return magicNumber;
+                    }
+                }
+                """;
+
+        // Create and wire template repository - JPlag needs this as base code
+        var templateSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "exercise");
+        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, templateSlug));
+        var templateUri = localVCLocalCITestService.buildLocalVCUri(null, projectKey, templateSlug);
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateUri);
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        // Write a template with enough Java tokens (>= 9) for JPlag basecode validation.
+        // JPlag's Java tokenizer counts structural tokens, so we need actual code statements.
+        var templateProgram = """
+                public class Main {
+
+                    public static void main(String[] args) {
+                        Main main = new Main();
+                        main.run();
+                    }
+
+                    private void run() {
+                        // TODO: Implement
+                    }
+                }
+                """;
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("Main.java", templateProgram), "seed template for plagiarism check");
+
+        // Get student participations (excluding instructor)
+        var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
+                .sorted(Comparator.comparing(DomainObject::getId)).toList();
+
+        if (studentParticipations.size() < 2) {
+            throw new IllegalStateException("Expected at least 2 student participations for plagiarism checks");
+        }
+
+        // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
+        for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
+            try {
+                // Clone the participation's repository rather than re-creating it, so any commits it already has are preserved
+                var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
+                RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
+                programmingExerciseStudentParticipationRepository.save(participation);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Failed to seed plagiarism test repository", e);
+            }
+        }
+
+        // Ensure the project folder exists
+        Files.createDirectories(localVCBasePath.resolve(projectKey));
+
+        // Give LocalVC time to sync after pushes and verify repos are cloneable
+        Thread.sleep(100);
+
+        // Verify that all student repositories can be cloned (catches race conditions early)
+        for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
+            var repoUri = participation.getVcsRepositoryUri();
+            assertThat(repoUri).as("Participation %d should have a repository URI", participation.getId()).isNotNull();
+            try {
+                var testClonePath = tempFileUtilService.createTempDirectory("plagiarism-clone-test");
+                var clonedRepo = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, testClonePath, true, false);
+                assertThat(clonedRepo).as("Repository %s should be cloneable", repoUri).isNotNull();
+                assertThat(clonedRepo.getLocalPath().resolve("Main.java")).exists();
+                gitService.deleteLocalRepository(clonedRepo);
+                FileUtils.deleteDirectory(testClonePath.toFile());
+            }
+            catch (Exception e) {
+                throw new AssertionError("Failed to clone repository " + repoUri + " - LocalVC may not have synced yet", e);
+            }
+        }
+    }
+
+    void testGetPlagiarismResult() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExercise.getId()).orElseThrow();
+
+        PlagiarismResult expectedResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
+
+        var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        assertThat(result.plagiarismResult().id()).isEqualTo(expectedResult.getId());
+    }
+
+    void testGetPlagiarismResultWithoutResult() throws Exception {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
+        assertThat(result).isNullOrEmpty();
+    }
+
+    void testGetPlagiarismResultWithoutExercise() throws Exception {
+        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.FORBIDDEN, PlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    void testValidateValidAuxiliaryRepository() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
+    }
+
+    void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+
+    void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withoutName(), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(""), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+        for (RepositoryType repositoryType : RepositoryType.values()) {
+            testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(repositoryType.getName()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("..."), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
+    }
+
+    void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
+    }
+
+    void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH)),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
+                AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withDescription(generateStringWithMoreThanNCharacters(500)), HttpStatus.BAD_REQUEST);
+    }
+
+    void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
+    }
+
+    void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    void testGetAuxiliaryRepositoriesOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        AuxiliaryRepository first = AuxiliaryRepositoryBuilder.defaults().get();
+        AuxiliaryRepository second = AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get();
+        programmingExercise.addAuxiliaryRepository(first);
+        programmingExercise.addAuxiliaryRepository(second);
+        auxiliaryRepositoryRepository.saveAll(List.of(first, second));
+        var returnedAuxiliaryRepositories = request.getList(defaultGetAuxReposEndpoint(), HttpStatus.OK, AuxiliaryRepositoryDTO.class);
+        assertThat(returnedAuxiliaryRepositories).hasSize(2);
+        assertThat(returnedAuxiliaryRepositories).extracting(AuxiliaryRepositoryDTO::id).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(returnedAuxiliaryRepositories).extracting(AuxiliaryRepositoryDTO::name).containsExactlyInAnyOrder(first.getName(), second.getName());
+        assertThat(returnedAuxiliaryRepositories).extracting(AuxiliaryRepositoryDTO::checkoutDirectory).containsExactlyInAnyOrder(first.getCheckoutDirectory(),
+                second.getCheckoutDirectory());
+    }
+
+    void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var returnedAuxiliaryRepositories = request.getList(defaultGetAuxReposEndpoint(), HttpStatus.OK, AuxiliaryRepositoryDTO.class);
+        assertThat(returnedAuxiliaryRepositories).isEmpty();
+    }
+
+    void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    void testResetForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetExerciseNotFound() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
+        }
+
+        // Two participations exist before reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
+        request.put(defaultResetEndpoint(programmingExercise.getId()) + "-participations", resetOptions, HttpStatus.OK);
+
+        // No participations exist after reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+    }
+
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        addAuxiliaryRepositoryToExercise();
+        String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), templateBuildPlanName);
+        mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), solutionBuildPlanName);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, true);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
+    }
+
+    void testExportAuxiliaryRepositoryForbidden() throws Exception {
+        AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
+    }
+
+    void testExportAuxiliaryRepositoryUnprocessableContent() throws Exception {
+        AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_CONTENT, File.class);
+    }
+
+    void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.FORBIDDEN, File.class);
+    }
+
+    void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), -1L), HttpStatus.NOT_FOUND, File.class);
+    }
+
+    private String generateStringWithMoreThanNCharacters(int n) {
+        return IntStream.range(0, n + 1).mapToObj(unused -> "a").reduce("", String::concat);
+    }
+
+    private AuxiliaryRepository addAuxiliaryRepositoryToExercise() {
+        addAuxiliaryRepositoryToExercise(programmingExercise);
+        return programmingExercise.getAuxiliaryRepositories().iterator().next();
+    }
+
+    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
+        AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
+        exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
+        // Attach it first: a repository names the exercise it belongs to, and cannot be written without one.
+        exercise.addAuxiliaryRepository(repository);
+        auxiliaryRepositoryRepository.save(repository);
+    }
+
+    private String defaultAuxiliaryRepositoryEndpoint() {
+        return "/api/programming/programming-exercises";
+    }
+
+    private String defaultResetEndpoint() {
+        return defaultResetEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultGetAuxReposEndpoint() {
+        return defaultGetAuxReposEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultExportInstructorAuxiliaryRepository(AuxiliaryRepository repository) {
+        return defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), repository.getId());
+    }
+
+    private String defaultResetEndpoint(Long exerciseId) {
+        return "/api/programming/programming-exercises/" + exerciseId + "/reset";
+    }
+
+    private String defaultGetAuxReposEndpoint(Long exerciseId) {
+        return "/api/programming/programming-exercises/" + exerciseId + "/auxiliary-repository";
+    }
+
+    private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
+        return "/api/programming/programming-exercises/" + exerciseId + "/export-instructor-auxiliary-repository?repositoryId=" + repositoryId;
+    }
+
+    private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
+        testAuxRepo(List.of(body.get()), expectedStatus);
+    }
+
+    private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(body));
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+        request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), updateDTO, ProgrammingExercise.class, expectedStatus);
+    }
+
+    private static class AuxiliaryRepositoryBuilder {
+
+        private final AuxiliaryRepository repository;
+
+        private AuxiliaryRepositoryBuilder() {
+            this.repository = new AuxiliaryRepository();
+        }
+
+        static AuxiliaryRepositoryBuilder of() {
+            return new AuxiliaryRepositoryBuilder();
+        }
+
+        static AuxiliaryRepositoryBuilder defaults() {
+            return of().withoutId().withName("defaultname").withCheckoutDirectory("directory").withDescription("DefaultDescription");
+        }
+
+        AuxiliaryRepositoryBuilder withName(String name) {
+            repository.setName(name);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withoutName() {
+            repository.setName(null);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withDifferentName() {
+            repository.setName("differentname");
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withDescription(String description) {
+            repository.setDescription(description);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withoutDescription() {
+            repository.setDescription(null);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withCheckoutDirectory(String checkoutDirectory) {
+            repository.setCheckoutDirectory(checkoutDirectory);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withoutCheckoutDirectory() {
+            repository.setCheckoutDirectory(null);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withDifferentCheckoutDirectory() {
+            repository.setCheckoutDirectory("differentcheckoutdirectory");
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withId(Long id) {
+            repository.setId(id);
+            return this;
+        }
+
+        AuxiliaryRepositoryBuilder withoutId() {
+            repository.setId(null);
+            return this;
+        }
+
+        AuxiliaryRepository get() {
+            return repository;
+        }
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        ProgrammingExercise programmingExerciseToBeConflicted = createCourseWithProgrammingExerciseForReEvaluation();
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
+                UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted, programmingExerciseUtilService.buildConfigOf(programmingExerciseToBeConflicted)),
+                HttpStatus.CONFLICT);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_changedShortName_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        String originalShortName = programmingExercise.getShortName();
+        // the DTO is built from the changed values of the entity, which is not saved
+        programmingExercise.setShortName(originalShortName + "x");
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", updateDTO, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseTestRepository.findById(programmingExercise.getId()).orElseThrow().getShortName()).isEqualTo(originalShortName);
+    }
+
+    /**
+     * Creates a course with one programming exercise and returns that exercise, loaded with the associations
+     * {@link UpdateProgrammingExerciseDTO#of} needs.
+     * <p>
+     * The exercise is looked up through the course it was just created in, rather than by taking an element out of
+     * {@link ProgrammingExerciseTestRepository#findAllWithEagerTemplateAndSolutionParticipations()}. The setup of this
+     * class already puts two programming exercises in the database - one in a course and one in an exam - and that
+     * query has no {@code ORDER BY}, so its row order is whatever the database returns. When the exam exercise came
+     * first, the request ran against an exercise whose course is only reachable through its exercise group,
+     * {@code getCourseViaExerciseGroupOrCourseMember()} returned null, and the endpoint answered 500 instead of the
+     * expected status.
+     *
+     * @return the programming exercise of the newly created course
+     */
+    private ProgrammingExercise createCourseWithProgrammingExerciseForReEvaluation() {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        return programmingExerciseTestRepository.findWithEagerTemplateAndSolutionParticipationsById(exercise.getId()).orElseThrow();
+    }
+
+    void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
+        // Wire base repos and push through the SAME working copy the wiring created. Creating a second working copy for
+        // the same slug intermittently left the endpoint's checkout reading the pre-push base state (flaky).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
+
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content?omitBinaries=true", HttpStatus.OK,
+                String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").doesNotContainKey("B.jar");
+    }
+
+    void testGetTemplateRepositoryFilesWithContent() throws Exception {
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
+
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
+    }
+
+    void testGetTemplateRepositoryFilesWithContentReflectsLatestCommit() throws Exception {
+        // The endpoint reads the latest commit of the bare repository rather than a checked-out working copy, so a
+        // newly pushed commit has to be visible immediately without the server checking the repository out again.
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "first"), "seed template files");
+        var filesAfterFirstPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterFirstPush).containsEntry("A.java", "first");
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "second", "New.java", "added"), "update template files");
+        var filesAfterSecondPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterSecondPush).containsEntry("A.java", "second").containsEntry("New.java", "added");
+    }
+
+    void testGetSolutionRepositoryFilesWithContent() throws Exception {
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.solutionRepository(), Map.of("Solution.java", "solved", "Helper.java", "help"), "seed solution files");
+
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/solution-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("Solution.java", "solved").containsEntry("Helper.java", "help");
+    }
+
+    // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Test", "CLT");
+        // The helper creates a fresh course, so the calling instructor needs a course role in it to read the files.
+        userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), testPrefix);
+
+        // Ensure base repositories (template, solution, tests) exist and URIs are wired for this exercise
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        String studentLogin = testPrefix + "student3";
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Write files in one commit and push to origin to ensure the commit exists remotely
+        // @formatter:off
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.ofEntries(
+            Map.entry("README.md", "Initial commit"),
+            Map.entry("test.txt", "Initial commit"),
+            Map.entry("A.java", "abc"),
+            Map.entry("B.java", "cde"),
+            Map.entry("C.java", "efg")
+        ), "seed student files");
+        // @formatter:on
+
+        // Persist submission with commit hash
+        var submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash(commit.getId().getName());
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
+
+        // @formatter:off
+        Map<String, String> expectedFiles = Map.ofEntries(
+            Map.entry("README.md", "Initial commit"),
+            Map.entry("test.txt", "Initial commit"),
+            Map.entry("A.java", "abc"),
+            Map.entry("B.java", "cde"),
+            Map.entry("C.java", "efg")
+        );
+        // @formatter:on
+
+        Map<String, String> actualFiles = request.get(
+                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content?commitId=" + submission.getCommitHash(), HttpStatus.OK,
+                new TypeReference<>() {
+                });
+        assertThat(actualFiles).isEqualTo(expectedFiles);
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Forbidden Test", "CLF");
+
+        var studentLogin = testPrefix + "student1";
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Write files, commit, and push via util
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg"),
+                "seed student files");
+
+        // Persist submission with commit hash
+        var submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash(commit.getId().getName());
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
+
+        // Expect forbidden for current user
+        request.get("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content?commitId=" + submission.getCommitHash(),
+                HttpStatus.FORBIDDEN, Map.class);
+    }
+
+    private ProgrammingExercise createProgrammingExerciseWithUniqueProjectKey(String title, String shortNamePrefix) {
+        var uniqueShortName = shortNamePrefix + ShortNameGenerator.generateRandomShortName(6);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, title, uniqueShortName);
+        return programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId())
+                .orElseThrow();
+    }
+
+    private long getMaxProgrammingExerciseId() {
+        return programmingExerciseRepository.findAll(PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
+    }
+
+    private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
+        mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()),
+                programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()),
+                programmingExercise.getSolutionBuildPlanId(), true, false);
+    }
+
+    /**
+     * Tests export of instructor repositories (template, solution, tests) with LocalVC server
+     */
+    public void exportInstructorRepositories_shouldReturnFile(RepositoryType repositoryType) throws Exception {
+        // Set up the exercise with problem statement for export
+        setupExerciseForExport();
+        var templateUrl = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + repositoryType.name();
+        String zip = request.get(templateUrl, HttpStatus.OK, String.class);
+        assertThat(zip).isNotNull();
+    }
+
+    /**
+     * Tests export of auxiliary repository with LocalVC server
+     */
+    public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
+        setupExerciseForExport();
+
+        var auxRepo = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+
+        String projectKey = programmingExercise.getProjectKey();
+        String auxRepoName = programmingExercise.generateRepositoryName("auxrepo");
+        auxRepo.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepoName + ".git");
+        auxRepo = auxiliaryRepositoryRepository.save(auxRepo);
+
+        localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey, auxRepoName);
+
+        var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxRepo.getId();
+        request.get(url, HttpStatus.OK, String.class);
+    }
+
+    /**
+     * Helper method to set up the exercise for export testing
+     */
+    private void setupExerciseForExport() throws IOException, GitAPIException, URISyntaxException, Exception {
+        // Add problem statement with embedded files (simplified version of generateProgrammingExerciseForExport)
+        String problemStatement = """
+                Problem statement
+                ![mountain.jpg](/api/core/files/markdown/test-image.jpg)
+                <img src="/api/core/files/markdown/test-image2.jpg" width="400">
+                """;
+        programmingExercise.setProblemStatement(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        if (programmingExercise.getTemplateParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        }
+
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
+        // Create and wire base repos via shared util to reduce duplication
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    }
+}

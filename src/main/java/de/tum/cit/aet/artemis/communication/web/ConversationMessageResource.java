@@ -1,0 +1,305 @@
+package de.tum.cit.aet.artemis.communication.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnnouncementDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+/**
+ * REST controller for managing Message Posts.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@FeatureUsage(UserFeature.MESSAGING)
+@RestController
+@RequestMapping("api/communication/")
+public class ConversationMessageResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
+
+    private final ConversationMessagingService conversationMessagingService;
+
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    private final ForwardedMessageService forwardedMessageService;
+
+    private final ChannelService channelService;
+
+    public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ForwardedMessageService forwardedMessageService,
+            ChannelService channelService) {
+        this.channelService = channelService;
+        this.conversationMessagingService = conversationMessagingService;
+        this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
+        this.forwardedMessageService = forwardedMessageService;
+    }
+
+    /**
+     * POST /courses/{courseId}/messages : Create a new message post
+     *
+     * @param courseId id of the course the message post belongs to
+     * @param post     message post to create
+     * @return ResponseEntity with status 201 (Created) containing the created message post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PostMapping("courses/{courseId}/messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PostResponseDTO> createMessage(@PathVariable Long courseId, @Valid @RequestBody CreatePostDTO post) throws URISyntaxException {
+        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.content());
+        long start = System.nanoTime();
+
+        if (post.conversation() == null) {
+            throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
+        }
+        CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
+        conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+
+        Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
+        // Note: no payload-trimming on the entity needed — PostResponseDTO.from projects only the fields the
+        // client is allowed to see (ConversationRefDTO drops conversationParticipants by construction).
+
+        log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(PostResponseDTO.from(sendToUserPost));
+    }
+
+    /**
+     * POST /courses/{courseId}/announcements : Post an announcement to a course
+     *
+     * @param courseId     id of the course the announcement belongs to
+     * @param announcement the announcement to post
+     * @return ResponseEntity with status 201 (Created) containing the created announcement,
+     *         or with status 400 (Bad Request) if the course has no announcement channel to post to
+     */
+    @PostMapping("courses/{courseId}/announcements")
+    @EnforceAtLeastInstructorInCourse
+    @AllowedScopes(AgentScope.ANNOUNCEMENTS_POST)
+    @Operation(summary = "Post an announcement to a course", description = """
+            Posts a message to the course's announcement channel (the default one unless channelId is given). \
+            Students are notified immediately and the post is visible at once, so confirm the text with the \
+            instructor before calling this. Requires at least the instructor role in the course.""")
+    @ApiResponse(responseCode = "201", description = "The announcement was posted.")
+    @ApiResponse(responseCode = "400", description = "The channel is not an announcement channel of the course, or the course has no default announcement channel.")
+    public ResponseEntity<PostResponseDTO> createAnnouncement(@PathVariable long courseId, @Valid @RequestBody CreateAnnouncementDTO announcement) throws URISyntaxException {
+        long channelId = channelService.findAnnouncementChannelIdElseThrow(courseId, announcement.channelId());
+        var post = new CreatePostDTO(announcement.content(), announcement.title(), false, new CreatePostConversationDTO(channelId));
+        return createMessage(courseId, post);
+    }
+
+    /**
+     * GET /courses/{courseId}/posts : Get all messages for a conversation by its id or in a list of course-wide channels
+     *
+     * @param pageable          pagination settings to fetch messages in smaller batches
+     * @param postContextFilter request param for filtering messages
+     * @param principal         contains the login of the user for the purpose of logging
+     * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
+     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @GetMapping("courses/{courseId}/messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<PostResponseDTO>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
+        long timeNanoStart = System.nanoTime();
+        Page<Post> posts;
+
+        final var requestingUser = userRepository.getUserWithAuthorities();
+        final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+
+        if (postContextFilter.conversationIds() != null && postContextFilter.conversationIds().length > 0) {
+            posts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
+        }
+        else {
+            throw new BadRequestAlertException("Messages must be associated with at least one conversion", conversationMessagingService.getEntityName(), "conversationMissing");
+        }
+
+        // PostResponseDTO is the cycle-free DTO that does this trimming structurally. preparePostForBroadcast
+        // still enriches transient fields (isSaved, authorRole) that the DTO reads.
+        posts.getContent().forEach(conversationMessagingService::preparePostForBroadcast);
+        final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), posts);
+        logDuration(posts.getContent(), principal, timeNanoStart);
+        List<PostResponseDTO> body = posts.getContent().stream().map(PostResponseDTO::from).toList();
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
+    }
+
+    private void logDuration(List<Post> posts, Principal principal, long timeNanoStart) {
+        if (log.isDebugEnabled()) {
+            long answerPosts = posts.stream().mapToLong(post -> post.getAnswers().size()).sum();
+            long reactions = posts.stream().mapToLong(post -> post.getReactions().size()).sum();
+            long answerReactions = posts.stream().flatMap(post -> post.getAnswers().stream()).mapToLong(answerPost -> answerPost.getReactions().size()).sum();
+            log.debug("/courses/{courseId}/messages finished in {} for {} posts with {} answer posts, {} reactions, and {} answer post reactions for user {}",
+                    TimeLogUtil.formatDurationFrom(timeNanoStart), posts.size(), answerPosts, reactions, answerReactions, principal.getName());
+        }
+    }
+
+    /**
+     * PUT /courses/{courseId}/messages/{messageId} : Update an existing message post with given id
+     *
+     * @param courseId    id of the course the message post belongs to
+     * @param messageId   id of the message post to update
+     * @param updatedPost message post to update
+     * @return ResponseEntity with status 200 (OK) containing the updated message post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/messages/{messageId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PostResponseDTO> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody UpdatePostingDTO updatedPost) {
+        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, updatedPost.content());
+        long start = System.nanoTime();
+        // Note: authorization is checked in the service method
+        Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, updatedPost);
+        log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(PostResponseDTO.from(updatedMessagePost));
+    }
+
+    /**
+     * DELETE /courses/{courseId}/messages/{id} : Delete a message post by its id
+     *
+     * @param courseId  id of the course the message post belongs to
+     * @param messageId id of the message post to delete
+     * @return ResponseEntity with status 200 (OK),
+     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @DeleteMapping("courses/{courseId}/messages/{messageId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
+        log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
+        long start = System.nanoTime();
+        // Note: authorization is checked in the service method
+        conversationMessagingService.deleteMessageById(courseId, messageId);
+        // deletion of message posts should not trigger entity deletion alert
+        log.debug("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the post change the displayPriority for
+     * @param displayPriority new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/messages/{messageId}/display-priority")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PostResponseDTO> updateDisplayPriority(@PathVariable Long courseId, @PathVariable("messageId") Long postId,
+            @RequestParam DisplayPriority displayPriority) {
+        // Note: authorization is checked in the service method
+        Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(PostResponseDTO.from(postWithUpdatedDisplayPriority));
+    }
+
+    /**
+     * GET /courses/{courseId}/messages-source-posts : Retrieve posts by their IDs
+     *
+     * @param courseId id of the course the posts belong to
+     * @param postIds  list of IDs of the posts to retrieve
+     * @return ResponseEntity with status 200 (OK) containing the list of posts in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @GetMapping("courses/{courseId}/messages-source-posts")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<PostResponseDTO>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
+        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds != null ? postIds.size() : 0);
+        long start = System.nanoTime();
+
+        if (postIds == null || postIds.isEmpty()) {
+            throw new BadRequestAlertException("Post IDs cannot be null or empty", conversationMessagingService.getEntityName(), "invalidPostIds");
+        }
+
+        if (postIds.stream().anyMatch(id -> id <= 0)) {
+            throw new BadRequestAlertException("Invalid post ID found", conversationMessagingService.getEntityName(), "invalidPostId");
+        }
+
+        List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
+
+        if (posts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Reading the original conversation and receiving a forward are separate permissions. Only the former
+        // permits returning conversation metadata and replies; a forward grants access to its source content alone.
+        User user = userRepository.getUser();
+        Set<Long> foundPostIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
+        Set<Long> directlyAccessibleIds = forwardedMessageService.findDirectlyAccessibleIds(posts, PostingType.POST, courseId, user);
+        Set<Long> forwardedSourceIds = directlyAccessibleIds.size() == foundPostIds.size() ? Set.of()
+                : forwardedMessageService.findAccessibleSourceIds(foundPostIds, PostingType.POST, courseId, user);
+        if (foundPostIds.stream().anyMatch(id -> !directlyAccessibleIds.contains(id) && !forwardedSourceIds.contains(id))) {
+            throw new AccessForbiddenException("Post", foundPostIds);
+        }
+
+        if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
+            throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");
+        }
+
+        // students must never receive unverified Iris replies attached to a source post (the eager answers are serialized as-is)
+        conversationMessagingService.hidePendingIrisRepliesFromStudents(posts, courseId);
+
+        log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
+        List<PostResponseDTO> body = posts.stream()
+                .map(source -> directlyAccessibleIds.contains(source.getId()) ? PostResponseDTO.from(source) : PostResponseDTO.fromForwardedSource(source)).toList();
+        return ResponseEntity.ok().body(body);
+    }
+}

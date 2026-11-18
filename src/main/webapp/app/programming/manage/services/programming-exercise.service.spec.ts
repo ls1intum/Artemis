@@ -1,0 +1,686 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+
+describe('ProgrammingExercise Service', () => {
+    let service: ProgrammingExerciseService;
+    let httpMock: HttpTestingController;
+
+    let defaultProgrammingExercise: ProgrammingExercise;
+    const resourceUrl = 'api/programming/programming-exercises';
+    const localCIResourceUrl = 'api/localci/programming-exercises';
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                LocalStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        }).compileComponents();
+
+        service = TestBed.inject(ProgrammingExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+    });
+
+    describe('Service methods', () => {
+        it('should find an exercise', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = { ...returnedFromService };
+            service
+                .find(123)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+        });
+
+        it('should find with template and solution participation and results', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = { ...returnedFromService };
+            service
+                .findWithTemplateAndSolutionParticipation(123)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+        });
+
+        it('should find with auxiliary repositories', () => {
+            const auxiliaryRepository: AuxiliaryRepository = { id: 5 };
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                auxiliaryRepositories: [auxiliaryRepository],
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = { ...returnedFromService };
+            service
+                .findWithAuxiliaryRepository(returnedFromService.id!)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+        });
+
+        it('should create a ProgrammingExercise', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                id: 0,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .automaticSetup(new ProgrammingExercise(undefined, undefined))
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(returnedFromService);
+        });
+
+        it('should persist Hyperion checklist link provenance after creating an exercise', () => {
+            const course = Object.assign(new Course(), { id: 7 });
+            const exercise = new ProgrammingExercise(course, undefined);
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+            const createdExercise = Object.assign(new ProgrammingExercise(course, undefined), { id: 11 });
+
+            service.automaticSetup(exercise).subscribe((response) => expect(response.body).toEqual(createdExercise));
+
+            const request = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false&hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toHaveLength(1);
+            request.flush(createdExercise);
+        });
+
+        it('should reconnect template submission with result', () => {
+            const templateParticipation = new TemplateProgrammingExerciseParticipation();
+            const tempSubmission = new ProgrammingSubmission();
+            const tempResult = new Result();
+            tempResult.id = 2;
+            tempSubmission.results = [tempResult];
+            templateParticipation.submissions = [tempSubmission];
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateParticipation,
+                id: 0,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .findWithTemplateAndSolutionParticipationAndLatestResults(expected.id)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+        });
+
+        it('should not find a latest result if none exists', () => {
+            const participation = new TemplateProgrammingExerciseParticipation();
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            participation.submissions = [];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            const submission = new ProgrammingSubmission();
+            participation.submissions = [submission];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            submission.results = [];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+        });
+
+        it('should find the latest result if multiple exist', () => {
+            const participation = new SolutionProgrammingExerciseParticipation();
+
+            const submission1 = {
+                submissionDate: dayjs().subtract(1, 'minute'),
+                results: [new Result(), new Result()],
+            } as Submission;
+
+            const result1 = new Result();
+            result1.id = 1;
+            const result2 = new Result();
+            result2.id = 2;
+
+            const submission2 = {
+                submissionDate: dayjs(),
+                results: [result1, result2],
+            } as Submission;
+
+            // service should find latest submission according to submission date, not order in list
+            participation.submissions = [submission2, submission1];
+
+            expect(service.getLatestResult(participation)).toEqual(result2);
+        });
+
+        it('should update a ProgrammingExercise', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
+                templateBuildPlanId: 'BBBBBB',
+                allowOnlineEditor: true,
+                allowOnlineIde: true,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .update(expected)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+        });
+
+        it('should include assessmentType and plagiarismDetectionConfig when updating', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 1;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
+
+            service.update(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            // Check that dto assessmentType field has correct value
+            expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
+
+            req.flush(exercise);
+        });
+
+        it('should persist Hyperion checklist link provenance after updating', () => {
+            const exercise = new ProgrammingExercise(Object.assign(new Course(), { id: 7 }), undefined);
+            exercise.id = 11;
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+            service.update(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+            const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}?hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+            request.flush(exercise);
+        });
+
+        it('should update the Timeline of a ProgrammingExercise', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: dayjs('2020-12-10 10:00:00'),
+                dueDate: dayjs('2021-01-01 10:00:00'),
+                assessmentDueDate: dayjs('2021-01-02 10:00:00'),
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .updateTimeline(expected)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+        });
+
+        it('should return a list of ProgrammingExercise', () => {
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateRepositoryUri: 'BBBBBB',
+                solutionRepositoryUri: 'BBBBBB',
+                templateBuildPlanId: 'BBBBBB',
+                allowOnlineEditor: true,
+                allowOnlineIde: true,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .query(expected)
+                .pipe(take(1))
+                .subscribe((resp) => {
+                    expect(resp.body).toEqual(expect.arrayContaining([expected]));
+                });
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush([returnedFromService]);
+        });
+
+        it('should delete a ProgrammingExercise', () => {
+            service.delete(123, false, false).subscribe((resp) => expect(resp.ok).toBe(true));
+
+            const req = httpMock.expectOne({ method: 'DELETE' });
+            req.flush({ status: 200 });
+        });
+
+        it('should make get request', () => {
+            const expectedBlob = new Blob(['abc', 'cfe']);
+            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
+            req.flush(expectedBlob);
+        });
+    });
+
+    it('should make post request for import from file', () => {
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const expected = new ProgrammingExercise(course, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        expected.studentParticipations = [];
+        expected.zipFileForImport = dummyFile;
+        request.zipFileForImport = dummyFile;
+        service.importFromFile(request, course.id).subscribe((resp) => expect(resp.body).toEqual(expected));
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
+        const req = httpMock.expectOne({ method: 'POST', url: url });
+        req.flush(request);
+    });
+
+    it('should persist Hyperion checklist link provenance when importing from file', () => {
+        const course = Object.assign(new Course(), { id: 1 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.zipFileForImport = new File([''], 'dummyFile');
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.importFromFile(exercise, course.id!).subscribe();
+
+        const request = httpMock.expectOne({ method: 'POST', url: `api/programming/courses/1/programming-exercises/import-from-file?hyperionCompetencyId=5` });
+        request.flush(exercise);
+    });
+
+    it('should generate Structure Oracle', () => {
+        const exerciseId = 1;
+        const expectedResult = 'oracle-structure';
+        service.generateStructureOracle(exerciseId).subscribe((structure) => expect(structure).toEqual(expectedResult));
+        const url = `${resourceUrl}/${exerciseId}/generate-tests`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expectedResult);
+    });
+
+    it('should reset Exercise', () => {
+        const exerciseId = 1;
+        const options = {
+            deleteParticipationsSubmissionsAndResults: false,
+            recreateBuildPlans: true,
+        };
+        const expectedResult = 'success';
+        service.reset(exerciseId, options).subscribe((response) => expect(response).toEqual(expectedResult));
+        const url = `${resourceUrl}/${exerciseId}/reset`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expectedResult);
+    });
+
+    it('sends destructive reset options unchanged to the instructor operation', () => {
+        const options = { deleteParticipationsSubmissionsAndResults: true, recreateBuildPlans: false };
+        service.resetParticipations(1, options).subscribe();
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/reset-participations` });
+        expect(req.request.body).toEqual(options);
+        req.flush('');
+    });
+
+    it('uses the staff snapshot URL with the original includeTests option', () => {
+        service.exportSolutionSnapshotForStaff(1, true).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-requested-repository/for-staff?includeTests=true` });
+        req.flush(new Blob());
+    });
+
+    it.each([
+        [false, 'for-staff'],
+        [true, 'for-instructor'],
+    ])('uses the selected staff archive audience %s', (identified, audience) => {
+        service.exportStudentRepositoryForStaff(1, 5, identified as boolean).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-repository/${audience}?participationId=5` });
+        req.flush(new Blob());
+    });
+
+    it('export instructor repository', () => {
+        const exerciseId = 1;
+        service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+    });
+
+    it('should export Student Requested Repository', () => {
+        const exerciseId = 1;
+        service.exportStudentRequestedRepository(exerciseId, true).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-requested-repository?includeTests=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+    });
+
+    it('should export a student repository', () => {
+        const exerciseId = 1;
+        const participationId = 5;
+        service.exportStudentRepository(exerciseId, participationId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+    });
+
+    it('should check plagiarism report', () => {
+        const exerciseId = 1;
+        service.checkPlagiarismJPlagReport(exerciseId).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(new Blob());
+    });
+
+    it.each([
+        { uri: 'template-files-content', method: 'getTemplateRepositoryTestFilesWithContent' },
+        { uri: 'solution-files-content', method: 'getSolutionRepositoryTestFilesWithContent' },
+        { uri: 'with-participations', method: 'findWithTemplateAndSolutionParticipationAndResults' },
+        { uri: 'check-plagiarism', method: 'checkPlagiarism' },
+        { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
+        { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
+    ])('should call correct exercise endpoint', (test) => {
+        const exerciseId = 1;
+        const functionToCall = service[test.method as keyof ProgrammingExerciseService] as (...args: unknown[]) => Observable<unknown>;
+        if (typeof functionToCall !== 'function') {
+            throw new Error(`Method ${test.method} does not exist on service`);
+        }
+        functionToCall.apply(service, [exerciseId]).subscribe();
+        const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
+
+        // Custom matcher function
+        const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+
+        const req = httpMock.expectOne((request) => {
+            return request.method === 'GET' && urlMatcher(request.url);
+        });
+
+        req.flush({});
+    });
+
+    it('should handle error when importing from file', () => {
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        request.zipFileForImport = dummyFile;
+
+        const errorResponse = { status: 422, statusText: 'Unprocessable Entity' };
+        service.importFromFile(request, course.id).subscribe({
+            next: () => {
+                throw new Error('expected an error');
+            },
+            error: (error) => expect(error.status).toBe(422),
+        });
+
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
+        const req = httpMock.expectOne({ method: 'POST', url: url });
+        req.flush('Import failed', errorResponse);
+    });
+
+    it('should update problem statement', () => {
+        const exerciseId = 123;
+        const problemStatement = 'Updated problem statement';
+        const expected = new ProgrammingExercise(undefined, undefined);
+        expected.id = exerciseId;
+        expected.studentParticipations = [];
+
+        service.updateProblemStatement(exerciseId, problemStatement).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/problem-statement`;
+        const req = httpMock.expectOne({ method: 'PATCH', url });
+        req.flush(expected);
+    });
+
+    it('should reevaluate and update exercise', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 123;
+        const expected = { ...exercise, studentParticipations: [] };
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exercise.id}/re-evaluate`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expected);
+    });
+
+    it('should persist Hyperion checklist link provenance after reevaluating an exercise', () => {
+        const course = Object.assign(new Course(), { id: 7 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 123;
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+        const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate?hyperionCompetencyId=5` });
+        expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+        request.flush(exercise);
+    });
+
+    it('should get theia config', () => {
+        const exerciseId = 123;
+        const expectedConfig = { dockerImage: 'theia:latest' };
+
+        service.getTheiaConfig(exerciseId).subscribe((config) => {
+            expect(config).toEqual(expectedConfig);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/theia-config`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedConfig);
+    });
+
+    it('should get checkout directories for programming language', () => {
+        const programmingLanguage = 'JAVA';
+        const checkoutSolution = true;
+        const expectedDirectories = { directories: ['src', 'test'] };
+
+        service.getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage as any, checkoutSolution).subscribe((directories) => {
+            expect(directories).toEqual(expectedDirectories);
+        });
+
+        const url = `${resourceUrl}/repository-checkout-directories?programmingLanguage=JAVA&checkoutSolution=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedDirectories);
+    });
+
+    it('should convert the build time window dates of a response to dayjs objects', () => {
+        const returnedFromService = new ProgrammingExercise(undefined, undefined);
+        returnedFromService.buildConfig!.advancedSettings = {
+            buildTimeWindow: { start: '2026-10-01T10:00:00Z' as unknown as dayjs.Dayjs, end: '2026-10-01T12:00:00Z' as unknown as dayjs.Dayjs },
+        };
+        const response = new HttpResponse<ProgrammingExercise>({ body: returnedFromService });
+
+        const converted = ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(response);
+
+        const window = converted.body!.buildConfig!.advancedSettings!.buildTimeWindow!;
+        expect(dayjs.isDayjs(window.start)).toBe(true);
+        expect(window.start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window.end!.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
+    });
+
+    it('should send the build time window of an update nested in the build config', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs('2026-10-01T10:00:00Z') } };
+
+        service.update(exercise).subscribe();
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body.buildConfig.advancedSettings).toEqual({ buildTimeWindow: { start: '2026-10-01T10:00:00.000Z' } });
+        req.flush(exercise);
+    });
+
+    it('should test convertDataFromClient method', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs();
+        exercise.templateParticipation = new TemplateProgrammingExerciseParticipation();
+        exercise.solutionParticipation = new SolutionProgrammingExerciseParticipation();
+
+        const convertedExercise = service.convertDataFromClient(exercise);
+
+        expect(convertedExercise).toBeDefined();
+        expect(convertedExercise.templateParticipation).toBeDefined();
+        expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
+
+    it('should strip the competency-link back-reference so the payload is not circular', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const competency = new Competency();
+        competency.id = 1;
+        // The link back-references the exercise itself, forming a real cycle.
+        const link = new CompetencyExerciseLink(competency, exercise, 42);
+        exercise.competencyLinks = [link];
+
+        // A circular structure would make JSON.stringify throw before the request is even sent.
+        expect(() => JSON.stringify(exercise.competencyLinks)).toThrow(/circular/i);
+
+        const convertedExercise = service.convertDataFromClient(exercise);
+
+        expect(convertedExercise.competencyLinks).toHaveLength(1);
+        const convertedLink = convertedExercise.competencyLinks![0];
+        // convertDataFromClient deep-clones the exercise, so the competency is an equal copy, not the same reference.
+        expect(convertedLink.competency).toEqual(competency);
+        expect(convertedLink.weight).toBe(42);
+        expect(convertedLink).not.toHaveProperty('exercise');
+        expect(() => JSON.stringify(convertedExercise)).not.toThrow();
+    });
+
+    it('should send a serializable competency link in the automaticSetup request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const competency = new Competency();
+        competency.id = 1;
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 42)];
+
+        service.automaticSetup(exercise).subscribe();
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        const sentLinks = (req.request.body as ProgrammingExercise).competencyLinks!;
+        expect(sentLinks).toHaveLength(1);
+        expect(sentLinks[0]).not.toHaveProperty('exercise');
+        // The real bug: HttpXhrBackend calls JSON.stringify on the body before sending it.
+        expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
+    });
+
+    it('should send a serializable competency link in the importExercise request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const competency = new Competency();
+        competency.id = 1;
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 42)];
+
+        service.importExercise(exercise, { recreateBuildPlans: false, setTestCaseVisibilityToAfterDueDate: false }).subscribe();
+
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${resourceUrl}/import?sourceExerciseId=7`);
+        const sentLinks = (req.request.body as ProgrammingExercise).competencyLinks!;
+        expect(sentLinks).toHaveLength(1);
+        expect(sentLinks[0]).not.toHaveProperty('exercise');
+        expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
+    });
+
+    it('should preview automatic after due date with a date response', () => {
+        const isoDate = '2026-06-01T12:15:00Z';
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+            programmingLanguage: 'JAVA' as any,
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeDefined();
+            expect(result!.toISOString()).toBe(dayjs(isoDate).toISOString());
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(isoDate);
+    });
+
+    it('should preview automatic after due date with null response', () => {
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeUndefined();
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(null);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/programming-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
+    });
+});

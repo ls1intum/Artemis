@@ -1,0 +1,21 @@
+<tumaet-ui-dialog [header]="header()" size="large" [(visible)]="isOpen">
+    <div class="frame">
+        <div class="top-elements">
+            <jhi-tutorial-registrations-register-search-bar [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentSelected)="selectStudent($event)" />
+            <jhi-tutorial-registrations-students-table [students]="selectedStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
+        </div>
+        @if (isLoading()) {
+            <jhi-loading-indicator-overlay />
+        }
+    </div>
+    <!-- The label goes on a projected span, never on the component host: jhiTranslate writes the element's
+         text content, which on a component host would wipe out the button the component renders. -->
+    <ng-template #footer>
+        <tumaet-ui-button data-testid="cancel-button" severity="secondary" size="small" (clicked)="close()">
+            <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerModal.cancelButtonLabel"></span>
+        </tumaet-ui-button>
+        <tumaet-ui-button data-testid="register-all-button" size="small" [disabled]="registerAllButtonDisabled()" (clicked)="registerAll()">
+            <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerModal.registerAllButtonLabel"></span>
+        </tumaet-ui-button>
+    </ng-template>
+</tumaet-ui-dialog>

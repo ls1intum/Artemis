@@ -1,0 +1,471 @@
+package de.tum.cit.aet.artemis.communication.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
+import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
+
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class ConversationMessagingService extends PostingService {
+
+    private static final Logger log = LoggerFactory.getLogger(ConversationMessagingService.class);
+
+    private final ConversationService conversationService;
+
+    private final ConversationMessageRepository conversationMessageRepository;
+
+    private final ChannelAuthorizationService channelAuthorizationService;
+
+    private final CourseNotificationService courseNotificationService;
+
+    private final PostRepository postRepository;
+
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    private final Optional<AutonomousTutorApi> autonomousTutorApi;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
+            SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
+            SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+        super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
+        this.conversationService = conversationService;
+        this.conversationMessageRepository = conversationMessageRepository;
+        this.channelAuthorizationService = channelAuthorizationService;
+        this.courseNotificationService = courseNotificationService;
+        this.postRepository = postRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
+        this.autonomousTutorApi = autonomousTutorApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+    }
+
+    /**
+     * Creates a new message in a conversation
+     *
+     * @param courseId the id where the conversation is located
+     * @param message  the post to be created includes the conversation id
+     * @return the created message and associated data
+     */
+    public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
+        // Pre-load course roles: preCheckUserAndCourseForMessaging + setAuthorRoleForPosting perform several
+        // course-role checks below for the same author/course; without this, each falls back to its own query.
+        var author = this.userRepository.getUserWithCourseRolesAndAuthorities();
+
+        var newMessage = message.toEntity();
+        newMessage.setAuthor(author);
+        newMessage.setDisplayPriority(DisplayPriority.NONE);
+
+        var conversationId = message.conversation().id();
+
+        var conversation = conversationService.loadConversationWithParticipantsIfGroupChat(conversationId);
+        // the path courseId is authoritative: reject messages targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty());
+        log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
+
+        newMessage.setConversation(conversation);
+
+        var course = preCheckUserAndCourseForMessaging(author, courseId);
+
+        // extra checks for channels
+        if (conversation instanceof Channel channel) {
+            channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
+        }
+        log.debug("      createMessage:additional authorization DONE");
+        Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
+        log.debug("      createMessage:parseUserMentions DONE");
+
+        // update last message date of conversation
+        conversation.setCourse(course);
+        conversationService.updateLastMessageDate(conversation);
+
+        // update last read date and unread message count of author
+        conversationParticipantRepository.updateLastRead(author.getId(), conversation.getId(), ZonedDateTime.now());
+
+        // The post and its unread counters commit together, before any reader can acknowledge the post.
+        var createdMessage = conversationMessageRepository.saveWithUnreadMessages(newMessage);
+        // set the conversation again, because it might have been lost during save
+        createdMessage.setConversation(conversation);
+        log.debug("      conversationMessageRepository.save DONE");
+
+        createdMessage.setAuthor(author);
+        setAuthorRoleForPosting(createdMessage, course);
+
+        syncPostWithWeaviate(createdMessage, conversation);
+
+        return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers, mentionsAllMembers(conversation, createdMessage.getContent()));
+    }
+
+    /**
+     * Notifies conversation members and mentioned users about a new message in a conversation
+     *
+     * @param createdConversationMessage the new message and associated data
+     */
+    @Async
+    public void notifyAboutMessageCreation(CreatedConversationMessage createdConversationMessage) {
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
+        Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
+        Conversation conversation = createdConversationMessage.completeConversation();
+        Course course = conversation.getCourse();
+
+        // Websocket notification 1: this notifies everyone including the author that there is a new message
+        Set<ConversationNotificationRecipientSummary> recipientSummaries;
+        preparePostForBroadcast(createdMessage);
+        // The details of the conversation are only hidden further below: whether students may see the channel depends on its exercise and exam
+        if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
+            // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first.
+            // A channel students cannot see yet is only delivered to staff, see broadcastForPost.
+            broadcastForPost(createdMessage, CommunicationCrudAction.CREATE, course.getId(), null);
+            log.debug("      broadcastForPost DONE");
+
+            recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getNotificationRecipients DONE");
+        }
+        else {
+            // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
+            recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getNotificationRecipients DONE");
+
+            if (conversation instanceof OneToOneChat) {
+                var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
+                if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
+                    // Another websocket notification
+                    conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, conversation, mapToUsers(recipientSummaries));
+                }
+            }
+
+            broadcastForPost(createdMessage, CommunicationCrudAction.CREATE, course.getId(), recipientSummaries);
+
+            log.debug("      broadcastForPost DONE");
+        }
+
+        var post = createdConversationMessage.messageWithHiddenDetails();
+        var author = post.getAuthor();
+
+        String channelType = switch (conversation) {
+            case OneToOneChat ignored -> "oneToOneChat";
+            case GroupChat ignored -> "groupChat";
+            default -> "channel";
+        };
+
+        var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
+                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
+        // "@all" in a group chat adds all members who did not mute or hide it. They get the mention notification instead of the new post notification.
+        var mentionedUserRecipients = resolveMentionRecipients(explicitMentionRecipients, createdConversationMessage.mentionsAllMembers(), recipientSummaries, author.getId());
+        var isVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
+
+        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
+            var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
+                    post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
+
+            // Announcements ignore the recipient's mute/hide preference, but never the release gate of the linked item.
+            courseNotificationService.sendCourseNotification(newAnnouncementNotification,
+                    recipientSummaries.stream().filter(summary -> summary.userId() != author.getId() && (isVisibleToStudents || summary.isAtLeastTutorInCourse()))
+                            .map(ConversationNotificationRecipientSummary::toUser).toList());
+        }
+        else {
+            var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
+                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId(), author.isBot());
+
+            // Direct messages and group chats only reach their members, who may always read them. A channel can still be hidden from students, e.g. before its
+            // exercise is released.
+            // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
+            // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
+            courseNotificationService.sendCourseNotification(newPostNotification,
+                    recipientSummaries.stream()
+                            .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
+                                    && (isVisibleToStudents || summary.isAtLeastTutorInCourse())
+                                    && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
+                            .map(ConversationNotificationRecipientSummary::toUser).toList());
+        }
+
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(), post.getAuthor().getId(),
+                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId(), post.getAuthor().isBot());
+
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+
+        createdMessage.getConversation().hideDetails();
+        try {
+            autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to forward message to autonomous tutor pipeline for post {}", createdMessage.getId(), e);
+        }
+    }
+
+    /**
+     * Maps a set of {@link ConversationNotificationRecipientSummary} to a set of {@link User}
+     *
+     * @param webSocketRecipients Set of recipient summaries
+     * @return Set of users meant to receive WebSocket messages
+     */
+    private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
+        return webSocketRecipients.stream().map(ConversationNotificationRecipientSummary::toUser).collect(Collectors.toSet());
+    }
+
+    /**
+     * fetch posts from database by conversationId
+     *
+     * @param pageable          requested page and page size
+     * @param postContextFilter request object to fetch posts
+     * @param requestingUser    the user requesting messages in course-wide channels
+     * @param courseId          the id of the course the post belongs to
+     * @return page of posts that match the given context
+     */
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
+        List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
+        boolean requesterIsAtLeastTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId, requesterIsAtLeastTutor);
+        if (Boolean.TRUE.equals(postContextFilter.filterToUnverifiedIris()) && !requesterIsAtLeastTutor) {
+            throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
+        }
+
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId(), requesterIsAtLeastTutor);
+        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
+
+        // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers
+        hidePendingIrisRepliesFromStudents(conversationPosts.getContent(), courseId);
+
+        // This check is needed to avoid resetting the unread count when searching
+        if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
+            Long conversationId = conversationIds.getFirst();
+            var participantSet = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversationId, Set.of(requestingUser.getId()));
+
+            // If there is no entry yet (e.g. for course-wide channels in which the user did not write a post yet,
+            // we create the entry to be able to track the unread count)
+            if (participantSet.isEmpty()) {
+                // The client loads the messages of a channel in several requests at once, so the first time a student opens a course-wide channel several requests get here
+                // together. Only one of them creates the participant. The others find it created and update the last read date, as they would have for an existing one.
+                var now = ZonedDateTime.now();
+                if (!conversationParticipantRepository.createIfAbsent(conversationId, requestingUser.getId(), false, now, 0L)) {
+                    conversationParticipantRepository.updateLastRead(requestingUser.getId(), conversationId, now);
+                }
+            }
+            else {
+                conversationParticipantRepository.updateLastRead(requestingUser.getId(), conversationId, ZonedDateTime.now());
+            }
+        }
+
+        return conversationPosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * updates non-restricted field of the post, persists the post,
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId    id of the course the post belongs to
+     * @param postId      id of the post to update
+     * @param messagePost post to update
+     * @return updated post that was persisted
+     */
+    public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
+        final User user = userRepository.getUserWithAuthorities();
+        // check
+        if (!Objects.equals(messagePost.id(), postId)) {
+            throw new BadRequestAlertException("Invalid id", POST_ENTITY_NAME, "idnull");
+        }
+
+        Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
+
+        parseUserMentions(course, messagePost.content());
+
+        // update: allow overwriting of values only for depicted fields
+        existingMessage.setContent(messagePost.content());
+        existingMessage.setTitle(messagePost.title());
+        existingMessage.setUpdatedDate(ZonedDateTime.now());
+
+        Post updatedPost = conversationMessageRepository.save(existingMessage);
+        updatedPost.setConversation(conversation);
+
+        syncPostWithWeaviate(updatedPost, conversation);
+
+        // emit a post update via websocket
+        preparePostForBroadcast(updatedPost);
+        broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
+
+        return updatedPost;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * determines authority to delete post and deletes the post
+     *
+     * @param courseId id of the course the post belongs to
+     * @param postId   id of the message post to delete
+     */
+    public void deleteMessageById(Long courseId, Long postId) {
+        final User user = userRepository.getUserWithAuthorities();
+
+        // checks
+        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
+        post.setConversation(conversation);
+
+        // delete
+        conversationMessageRepository.deleteById(postId);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
+            service.deleteAllAnswerPostsForPostAsync(postId);
+        });
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), post.getAuthor().getId(), post.getCreationDate());
+        conversation = conversationService.getConversationById(conversation.getId());
+
+        // Delete all connected saved posts
+        var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(postId, PostingType.POST);
+        savedPostRepository.deleteAll(savedPosts);
+
+        conversationService.notifyAllConversationMembersAboutUpdate(conversation);
+        preparePostForBroadcast(post);
+        broadcastForPost(post, CommunicationCrudAction.DELETE, course.getId(), null);
+    }
+
+    /**
+     * Invokes the updateMessage method to persist the change of displayPriority
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the message to change the pin state for
+     * @param displayPriority new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        final User user = userRepository.getUserWithAuthorities();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+
+        Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        // the path courseId is authoritative: reject before isMemberOrCreateForCourseWideElseThrow can persist a course-wide auto-join for a mismatching course
+        ensureConversationBelongsToCourseElseThrow(message.getConversation(), courseId);
+
+        Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
+                .orElse(message.getConversation());
+
+        if (conversation instanceof Channel && !channelAuthorizationService.hasChannelModerationRights(conversation.getId(), user)
+                || conversation instanceof GroupChat && !user.getId().equals(conversation.getCreator().getId())) {
+            throw new AccessForbiddenException("You are not allowed to change the display priority of messages in this conversation");
+        }
+
+        message.setDisplayPriority(displayPriority);
+
+        Post updatedMessage = conversationMessageRepository.save(message);
+        preparePostForBroadcast(message);
+        preparePostForBroadcast(updatedMessage);
+        // broadcast before hiding the details of the conversation: whether students may see the channel depends on its exercise and exam
+        broadcastForPost(message, CommunicationCrudAction.UPDATE, course.getId(), null);
+        message.getConversation().hideDetails();
+        return updatedMessage;
+    }
+
+    public List<Post> getMessageByIds(List<Long> sourcePostIds) {
+        if (sourcePostIds == null || sourcePostIds.isEmpty()) {
+            throw new BadRequestAlertException("Source post IDs cannot be null or empty", POST_ENTITY_NAME, "sourcepostidsinvalid");
+        }
+        return postRepository.findByIdIn(sourcePostIds);
+    }
+
+    private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
+        if (existingMessagePost.getConversation() == null) {
+            throw new BadRequestAlertException("The post does not belong to a conversation", POST_ENTITY_NAME, "conversationnotset");
+        }
+
+        var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
+        if (existingMessagePost.getAuthor().getId().equals(user.getId())
+                || (conversation instanceof Channel channel && channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user))) {
+            if (conversation instanceof Channel channel && channel.getIsArchived()) {
+                throw new BadRequestAlertException("A message cannot be created in an archived channel", POST_ENTITY_NAME, "channelarchived");
+            }
+            return conversation;
+        }
+        else {
+            throw new AccessForbiddenException("You are not allowed to edit or delete this message");
+        }
+    }
+
+    /**
+     * Synchronizes a post with Weaviate. Only posts in public, non-archived channels are indexed.
+     */
+    private void syncPostWithWeaviate(Post post, Conversation conversation) {
+        if (!(conversation instanceof Channel channel)) {
+            return;
+        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            }
+        });
+    }
+
+    @Override
+    public String getEntityName() {
+        return POST_ENTITY_NAME;
+    }
+}

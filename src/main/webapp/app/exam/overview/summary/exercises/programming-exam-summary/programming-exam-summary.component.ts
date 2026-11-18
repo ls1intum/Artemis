@@ -1,0 +1,120 @@
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
+import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Router } from '@angular/router';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CodeButtonComponent, type VcsAccessTokenSourceInfo } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+@Component({
+    selector: 'jhi-programming-exam-summary',
+    templateUrl: './programming-exam-summary.component.html',
+    imports: [TranslateDirective, CodeButtonComponent, FeedbackComponent, ProgrammingExerciseInstructionComponent, ComplaintsStudentViewComponent, ArtemisTranslatePipe],
+})
+export class ProgrammingExamSummaryComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly participation = input<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
+    readonly isTestRun = input(false);
+    readonly exam = input<Exam>(undefined!);
+    readonly isAfterStudentReviewStart = input(false);
+    readonly resultsPublished = input(false);
+    readonly isPrinting = input(false);
+    readonly isAfterResultsArePublished = input(false);
+    readonly instructorView = input(false);
+
+    readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
+
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly ProgrammingExercise = ProgrammingExercise;
+    protected readonly ExerciseType = ExerciseType;
+
+    result: Result | undefined;
+
+    readonly feedbackComponentParameters = signal<FeedbackComponentPreparedParams>(undefined!);
+
+    readonly commitHash = signal<string | undefined>(undefined);
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    protected readonly vcsAccessTokenSourceInfo = computed(() => this.getVcsAccessTokenSourceInfo());
+
+    routerLink!: string; // set in ngOnInit() from the current router URL
+    isInCourseManagement = false;
+
+    ngOnInit() {
+        this.routerLink = this.router.url;
+        const participation = this.participation();
+        participation.exercise = this.exercise();
+        const latestSubmission: ProgrammingSubmission | undefined = getLatestSubmission(participation);
+        this.submission.set(latestSubmission);
+        this.result = getLatestSubmissionResult(latestSubmission);
+        if (this.result && latestSubmission) {
+            this.result.submission = latestSubmission;
+            this.result.submission.participation = participation;
+        }
+        this.commitHash.set(latestSubmission?.commitHash?.slice(0, 11));
+        this.isInCourseManagement = this.router.url.includes('course-management');
+        const isBuilding = false;
+        const missingResultInfo = MissingResultInformation.NONE;
+
+        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, this.result, isBuilding, missingResultInfo);
+
+        if (this.result) {
+            this.feedbackComponentParameters.set(
+                prepareFeedbackComponentParameters(
+                    this.exercise(),
+                    this.result,
+                    participation,
+                    templateStatus,
+                    this.exam().latestIndividualEndDate,
+                    this.exerciseCacheService ?? this.exerciseService,
+                ),
+            );
+        }
+    }
+
+    private getOwnsParticipationForCodeButton(): boolean {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return !!userLogin && this.participation()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenSourceInfo(): VcsAccessTokenSourceInfo {
+        const participationId = this.participation().id!;
+        if (this.ownsParticipationForCodeButton()) {
+            return { returnedTokenType: 'participation-token', participationId };
+        }
+        return { returnedTokenType: 'repository-token', repositoryType: RepositoryType.USER, participationId };
+    }
+
+    get repositoryViewLink(): (string | number)[] {
+        if (this.isInCourseManagement) {
+            return ['..', 'programming-exercises', this.exercise().id!, 'repository', 'USER', this.participation().id!];
+        }
+        if (this.routerLink.includes('test-exam')) {
+            const parts = this.routerLink.split('/');
+            const examLink = parts.slice(0, parts.length - 2).join('/');
+            return [examLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
+        }
+        return [this.routerLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
+    }
+}

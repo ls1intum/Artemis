@@ -1,0 +1,476 @@
+package de.tum.cit.aet.artemis.quiz.util;
+
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
+
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.SubmittedAnswerTestRepository;
+
+/**
+ * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
+ */
+@Lazy
+@Service
+@Profile(SPRING_PROFILE_TEST)
+public class QuizExerciseUtilService {
+
+    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
+
+    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private CourseTestRepository courseRepo;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private QuizSubmissionTestRepository quizSubmissionRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
+    @Autowired
+    private QuizBatchRepository quizBatchRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private SubmittedAnswerTestRepository submittedAnswerRepository;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    /**
+     * Creates and saves a course with one quiz exercise with the title "Title".
+     * The quiz is synchronized and has a duration of 120 seconds.
+     *
+     * @return The created course with the quiz.
+     */
+    public Course addCourseWithOneQuizExercise() {
+        return addCourseWithOneQuizExercise("Title");
+    }
+
+    /**
+     * Creates and saves a course with one quiz exercise with the given title and enrolls the users identified by the given prefix.
+     *
+     * @param title      The title of the quiz exercise.
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created course with the quiz, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneQuizExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneQuizExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with one quiz exercise with the given title.
+     * The quiz is synchronized and has a duration of 120 seconds.
+     *
+     * @param title The title of the quiz exercise.
+     * @return The newly created course with the quiz.
+     */
+    public Course addCourseWithOneQuizExercise(String title) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle(title);
+        quizExercise.setDuration(120);
+        assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
+        assertThat(quizExercise.isValid()).isTrue();
+        course.addExercises(quizExercise);
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        quizExercise = exerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+        assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
+        return course;
+    }
+
+    /**
+     * Creates and adds a student participation to the given quiz submission. The submission is then saved in the repository.
+     *
+     * @param quizExercise The quiz for which a student participation should be created.
+     * @param submission   The submission which should be saved
+     * @param login        The login of the user participating in the quiz.
+     * @return The saved submission.
+     */
+    public QuizSubmission saveQuizSubmission(QuizExercise quizExercise, QuizSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        return quizSubmissionRepository.save(submission);
+    }
+
+    /**
+     * Sets quiz exercise dates and course to null so the quiz can be imported. The quiz batches are set to an empty set.
+     *
+     * @param quizExercise The quiz of which fields should be set to null.
+     */
+    public void emptyOutQuizExercise(QuizExercise quizExercise) {
+        quizExercise.setReleaseDate(null);
+        quizExercise.setDueDate(null);
+        quizExercise.setAssessmentDueDate(null);
+        quizExercise.setCourse(null);
+        quizExercise.setQuizBatches(new HashSet<>());
+    }
+
+    /**
+     * Creates and saves a new quiz exercise.
+     *
+     * @param releaseDate The release date of the quiz, also used to set the start date of the course.
+     * @param dueDate     The due date of the quiz, also used to set the end date of the course.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED or INDIVIDUAL.
+     * @return The created quiz exercise.
+     */
+    public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Creates and saves a new synchronized quiz exercise.
+     *
+     * @param course      The course for which to create the quiz.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The start time of the batch.
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz exercise.
+     */
+    public QuizExercise createAndSaveSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise synchronizedQuiz = QuizExerciseFactory.createSynchronizedQuiz(course, releaseDate, startTime, duration);
+        quizExerciseRepository.save(synchronizedQuiz);
+        exerciseConfigurationService.initialize(synchronizedQuiz);
+
+        return synchronizedQuiz;
+    }
+
+    /**
+     * Creates and saves a course. A new quiz exercise is created and added to the course.
+     *
+     * @param releaseDate The release date of the quiz, also used to set the start date of the course.
+     * @param dueDate     The due date of the quiz, also used to set the end date of the course.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz exercise.
+     */
+    public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
+
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Creates and saves a course and a quiz exercise, enrolling all test users identified by the given prefix.
+     * <p>
+     * This is the enrollment-aware counterpart of {@link #createQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}.
+     * Use this whenever the acting test user must pass the course-membership access check (i.e. whenever the
+     * expected response is anything other than {@code 403 FORBIDDEN}).
+     *
+     * @param userPrefix  The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param releaseDate The release date of the quiz, also used to derive the course start date.
+     * @param dueDate     The due date of the quiz, also used to derive the course end date.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz exercise (unsaved — call {@code quizExerciseService.save()} or {@code exerciseRepository.save()} as needed).
+     */
+    public QuizExercise createEnrolledQuiz(String userPrefix, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        userUtilService.enrollPrefixedUsersInCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return quizExercise;
+    }
+
+    /**
+     * Creates, enrolls users, and immediately persists a quiz exercise — the enrollment-aware counterpart of
+     * {@link #createAndSaveQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}.
+     *
+     * @param userPrefix  The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param releaseDate The release date of the quiz.
+     * @param dueDate     The due date of the quiz.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The saved quiz exercise.
+     */
+    public QuizExercise createAndSaveEnrolledQuiz(String userPrefix, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createEnrolledQuiz(userPrefix, releaseDate, dueDate, quizMode);
+        quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+        return quizExercise;
+    }
+
+    /**
+     * Creates and saves a new course.
+     *
+     * @param id        The id of the course.
+     * @param startDate The start date of the course.
+     * @param endDate   The end date of the course.
+     * @param exercises Exercises to be added to the course.
+     * @return Created and saved course.
+     */
+    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises);
+        courseRepo.saveWithDefaultConfigurations(course);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
+     * Users with the given prefix are enrolled in the course.
+     *
+     * @param userPrefix The prefix of the users to enroll in the course (e.g. "test-prefix-")
+     * @param startDate  The start date of the exam, also used to set the start date of the course the exam is in.
+     * @param endDate    The end date of the exam, also used to set the end date of the course the exam is in.
+     * @return The created exam quiz exercise.
+     */
+    @NonNull
+    public QuizExercise createAndSaveEnrolledExamQuiz(String userPrefix, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return createAndSaveEnrolledExamQuiz(userPrefix, startDate, endDate, false);
+    }
+
+    /**
+     * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
+     * Users with the given prefix are enrolled in the course.
+     *
+     * @param userPrefix The prefix of the users to enroll in the course (e.g. "test-prefix-")
+     * @param startDate  The start date of the exam, also used to set the start date of the course the exam is in.
+     * @param endDate    The end date of the exam, also used to set the end date of the course the exam is in.
+     * @param testExam   Whether the exam is a test exam
+     * @return The created exam quiz exercise.
+     */
+    @NonNull
+    public QuizExercise createAndSaveEnrolledExamQuiz(String userPrefix, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+
+        Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, testExam);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
+        examTestRepository.save(exam);
+
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+
+        quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Renames and saves the quiz exercise using the passed title.
+     *
+     * @param quizExercise The quiz to be renamed.
+     * @param newTitle     The new name of the quiz.
+     */
+    public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
+        quizExercise.setTitle(newTitle);
+        quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+    }
+
+    /**
+     * Sets the quiz exercise of the quiz batch and saves the batch into the repository.
+     *
+     * @param batch        The quiz batch which should be saved.
+     * @param quizExercise The quiz exercise to be added to the batch.
+     */
+    public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
+        batch.setQuizExercise(quizExercise);
+        quizBatchRepository.save(batch);
+    }
+
+    /**
+     * Creates and saves a quiz with a multiple, single choice, short, and drag and drop question.
+     * An actual picture file is used as the background and a data item of the drag and drop question.
+     * The quiz takes 120 seconds and is synchronized.
+     * A participation and submission are also created for the user with the given login. An answer is submitted for each question.
+     *
+     * @param course             The course of the quiz.
+     * @param login              The login of the user participating in the quiz.
+     * @param dueDateInTheFuture True, if the due date of the quiz is in the future.
+     * @return The created quiz submission.
+     * @throws IOException If the background or data item file cannot be accessed.
+     */
+    public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
+        QuizExercise quizExercise;
+        if (dueDateInTheFuture) {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
+        }
+        else {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, QuizMode.SYNCHRONIZED);
+        }
+        quizExercise.setTitle("quiz");
+        quizExercise.setDuration(120);
+
+        course.addExercises(quizExercise);
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(quizExercise);
+        studentParticipation.setParticipant(userUtilService.getUserByLogin(login));
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setParticipation(studentParticipation);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setScoreInPoints(2.0);
+        var submittedAnswerMC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().getFirst());
+        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst(), multipleChoiceQuestion.getAnswerOptions().get(1)));
+        submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
+        var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
+        submittedAnswerSC.setSelectedOptions(Set.of(singleChoiceQuestion.getAnswerOptions().getFirst()));
+        submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
+        var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
+        submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
+        ShortAnswerSubmittedText shortAnswerSubmittedText1 = new ShortAnswerSubmittedText();
+        ShortAnswerSubmittedText shortAnswerSubmittedText2 = new ShortAnswerSubmittedText();
+        shortAnswerQuestion.setExercise(quizExercise);
+        shortAnswerSubmittedText1.setText("my text");
+        shortAnswerSubmittedText1.setIsCorrect(false);
+        shortAnswerSubmittedText2.setText("is");
+        shortAnswerSubmittedText2.setIsCorrect(true);
+        shortAnswerSubmittedText1.setSubmittedAnswer(submittedShortAnswer);
+        shortAnswerSubmittedText2.setSubmittedAnswer(submittedShortAnswer);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText1);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText2);
+        shortAnswerSubmittedText1.setSpot(shortAnswerQuestion.getSpots().get(1));
+        shortAnswerSubmittedText2.setSpot(shortAnswerQuestion.getSpots().getFirst());
+
+        var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
+        var backgroundPathInFileSystem = FilePathConverter.getDragAndDropBackgroundFilePath().resolve("drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = FilePathConverter.getDragItemFilePath().resolve("drag_item.jpg");
+        if (Files.exists(backgroundPathInFileSystem)) {
+            Files.delete(backgroundPathInFileSystem);
+        }
+        if (Files.exists(dragItemPathInFileSystem)) {
+            Files.delete(dragItemPathInFileSystem);
+        }
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
+        dragAndDropQuestion.setBackgroundFilePath("drag_and_drop_background.jpg");
+        submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
+        dragAndDropQuestion.setExercise(quizExercise);
+        DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
+        dragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().getFirst());
+        dragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().getFirst());
+        DragAndDropMapping incorrectDragAndDropMapping = new DragAndDropMapping();
+        incorrectDragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(3));
+        incorrectDragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(1));
+        DragAndDropMapping mappingWithImage = new DragAndDropMapping();
+        mappingWithImage.setDragItem(dragAndDropQuestion.getDragItems().get(4));
+        mappingWithImage.setDropLocation(dragAndDropQuestion.getDropLocations().get(3));
+        dragAndDropQuestion.addCorrectMapping(dragAndDropMapping);
+        studentParticipationRepository.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        submittedShortAnswer.setSubmission(quizSubmission);
+        submittedAnswerMC.setSubmission(quizSubmission);
+        submittedAnswerSC.setSubmission(quizSubmission);
+        submittedDragAndDropAnswer.setSubmission(quizSubmission);
+        // submitted mappings are stored id-based in the JSON selection; no separate mapping rows / back-references anymore
+        submittedDragAndDropAnswer.addMappings(dragAndDropMapping);
+        submittedDragAndDropAnswer.addMappings(incorrectDragAndDropMapping);
+        submittedDragAndDropAnswer.addMappings(mappingWithImage);
+        submittedAnswerRepository.save(submittedDragAndDropAnswer);
+        quizQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+        quizQuestionRepository.saveAndFlush(singleChoiceQuestion);
+        quizQuestionRepository.save(dragAndDropQuestion);
+        submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedAnswerSC);
+        submittedAnswerRepository.save(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerMC);
+        quizSubmission.addSubmittedAnswers(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerSC);
+        studentParticipation.addSubmission(quizSubmission);
+        quizQuestionRepository.save(dragAndDropQuestion);
+        quizExercise = quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+        studentParticipationRepository.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        quizExercise.addParticipation(studentParticipation);
+        courseRepo.saveWithDefaultConfigurations(course);
+        quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(quizExercise);
+        return quizSubmission;
+    }
+
+    /**
+     * Creates and saves a quiz exercise with all question types using the passed dates and adds it to the given course.
+     * After initialization, the quiz consists of one multiple choice, one drag and drop, one short answer, and single choice question.
+     *
+     * @param releaseDate       The release date of the quiz.
+     * @param dueDate           The due date of the quiz.
+     * @param assessmentDueDate The assessment due date of the quiz.
+     * @param quizMode          The quiz mode of the quiz.
+     * @param course            The course to which the quiz should be added to.
+     * @return The newly created quiz exercise.
+     */
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
+        QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
+        var savedExercise = quizExerciseRepository.save(quizExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
+    }
+}

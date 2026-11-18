@@ -1,0 +1,1502 @@
+import { EmbeddedViewRef } from '@angular/core';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import dayjs from 'dayjs/esm';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
+import { of, throwError } from 'rxjs';
+import { Component } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { MockDirective, MockProvider } from 'ng-mocks';
+
+import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { User } from 'app/account/user/user.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { UMLDiagramType } from '@tumaet/apollon';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { By } from '@angular/platform-browser';
+import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+@Component({
+    template: '',
+})
+class DummyComponent {}
+
+describe('ExamUpdateComponent', () => {
+    let component: ExamUpdateComponent;
+    let fixture: ComponentFixture<ExamUpdateComponent>;
+    let examManagementService: ExamManagementService;
+    let router: Router;
+    let profileService: ProfileService;
+    let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
+
+    let examWithoutExercises: Exam;
+    let course: Course;
+    const routes = [
+        { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
+        { path: 'course-management/:courseId/exams', component: DummyComponent },
+        { path: 'course-management/:courseId/exams/:examId/import', component: DummyComponent },
+    ];
+
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the exam-update page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
+    });
+
+    describe('create and edit exams', () => {
+        beforeEach(() => {
+            examWithoutExercises = new Exam();
+            examWithoutExercises.id = 1;
+            examWithoutExercises.examMode = ExamMode.REAL;
+            examWithoutExercises.title = 'Test Exam';
+            course = new Course();
+            course.id = 1;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            TestBed.configureTestingModule({
+                imports: [],
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    provideRouter(routes),
+                    { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                    LocalStorageService,
+                    SessionStorageService,
+                    {
+                        provide: ActivatedRoute,
+                        useValue: {
+                            data: of({ exam: examWithoutExercises, course }),
+                            params: of({ courseId: '1' }),
+                            url: of([{ path: '' }] as UrlSegment[]),
+                        },
+                    },
+                    MockProvider(AlertService),
+                    MockProvider(GradingService, {
+                        findGradingScaleForExam: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: toGradingScaleDTO(new GradingScale()),
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockProvider(ExamManagementService, {
+                        create: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                        update: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                    MockProvider(CalendarService),
+                ],
+            }).compileComponents();
+
+            router = TestBed.inject(Router);
+            fixture = TestBed.createComponent(ExamUpdateComponent);
+            global.ResizeObserver = MockResizeObserver as any;
+            component = fixture.componentInstance;
+            examManagementService = TestBed.inject(ExamManagementService);
+
+            profileService = TestBed.inject(ProfileService);
+            getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
+        });
+
+        it('should initialize', () => {
+            fixture.detectChanges();
+            expect(fixture).not.toBeNull();
+            expect(component.exam).not.toBeNull();
+            expect(component.exam.course).toEqual(course);
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
+            expect(component.exam.workingTime).toBe(0);
+        });
+
+        it('should show the title validation message for a missing or whitespace-only title and hide it once a title is set', () => {
+            fixture.detectChanges();
+            const titleValidationSelector = By.css('[data-testid="title-validation-message"]');
+
+            const examWithBlankTitle = deepClone(component.exam);
+            examWithBlankTitle.title = '   ';
+            component.exam = examWithBlankTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).not.toBeNull();
+
+            const examWithTitle = deepClone(component.exam);
+            examWithTitle.title = 'A valid exam title';
+            component.exam = examWithTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
+        });
+
+        it('should place the title and channel name messages below their inputs instead of pulling them up into the input', () => {
+            fixture.detectChanges();
+            component.hideChannelNameInput.set(false);
+            const exam = deepClone(component.exam);
+            exam.title = '';
+            exam.channelName = '';
+            component.exam = exam;
+            fixture.detectChanges();
+
+            const messages: HTMLElement[] = ['title-validation-message', 'channel-name-validation-message'].map((testId) =>
+                fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
+            );
+            expect(messages.every((message) => message !== null)).toBe(true);
+            // a negative top margin moves the message over the lower edge of the input field above it
+            expect(messages.map((message) => Array.from(message.classList).filter((cssClass) => cssClass.startsWith('-mt-')))).toEqual([[], []]);
+            expect(messages.map((message) => message.classList.contains('mt-1'))).toEqual([true, true]);
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            const channelInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_channel_name');
+            expect(titleInput.parentElement!.contains(messages[0])).toBe(true);
+            expect(titleInput.parentElement!.contains(messages[1])).toBe(false);
+            expect(channelInput.parentElement!.contains(messages[1])).toBe(true);
+            expect(channelInput.parentElement!.contains(messages[0])).toBe(false);
+            expect(titleInput.getAttribute('aria-describedby')).toBe(messages[0].id);
+            expect(channelInput.getAttribute('aria-describedby')).toBe(messages[1].id);
+        });
+
+        describe('explanations of invalid fields', () => {
+            // One fixed reference time: two separate dayjs() calls differ by milliseconds, which would make equal offsets compare as different dates
+            const now = dayjs();
+            const hours = (offset: number) => now.add(offset, 'hours');
+
+            /** Renders the form with the given changes applied to a copy of the exam. */
+            function renderWith(changes: Partial<Exam>) {
+                fixture.detectChanges();
+                component.exam = Object.assign(new Exam(), component.exam, changes);
+                fixture.detectChanges();
+            }
+
+            /** Returns the key of the message shown for the field, or undefined if the field shows none. */
+            function shownMessage(testId: string): string | undefined {
+                const message: HTMLElement | null = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+                return message === null ? undefined : message.textContent!.trim();
+            }
+
+            const validDates = () => ({ visibleDate: hours(1), startDate: hours(2), endDate: hours(3), workingTime: 3600 });
+
+            it('should show the optional publication dates under their own label, with the help icon projected next to it', () => {
+                renderWith(validDates());
+
+                for (const [testId, labelKey] of [
+                    ['examSummaryPublicationDate', 'artemisApp.examManagement.examSummaryPublicationDate'],
+                    ['exampleSolutionPublicationDate', 'artemisApp.exam.exampleSolutionPublicationDate'],
+                ]) {
+                    const picker = fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+                    expect(picker.componentInstance.labelName()).toBe(labelKey);
+                    expect(picker.componentInstance.hideLabelName()).toBeFalsy();
+                    expect(picker.nativeElement.querySelector('jhi-help-icon[tumAetUiDatePickerLabelAddon]')).not.toBeNull();
+                }
+            });
+
+            // jsdom does not lay out CSS, so this asserts the structure: a fixed two-column grid (`sm:grid-cols-2`) would leave
+            // tracks narrower than the 15rem minimum of a date picker when the exam sidebar is open, so the pickers overlap.
+            it('should place every date picker in a grid that wraps by the available width instead of a fixed two columns', () => {
+                renderWith(validDates());
+
+                for (const testId of ['publishResultsDate', 'examSummaryPublicationDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'exampleSolutionPublicationDate']) {
+                    const grid = fixture.debugElement.query(By.css(`[data-testid="${testId}"]`)).nativeElement.closest('.grid');
+                    expect(grid, testId).not.toBeNull();
+                    expect(grid.className, testId).not.toContain('sm:grid-cols-2');
+                    expect(grid.className, testId).toContain('grid-cols-[repeat(auto-fill,minmax(max(15rem,');
+                }
+            });
+
+            it('should explain a release date of results that is not after the end of the exam', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(2) });
+                expect(shownMessage('publishResultsDate-error')).toBe('error.examPublishResultsDateAfterEnd');
+
+                renderWith({ publishResultsDate: hours(4) });
+                expect(shownMessage('publishResultsDate-error')).toBeUndefined();
+
+                renderWith({ publishResultsDate: undefined });
+                expect(shownMessage('publishResultsDate-error')).toBeUndefined();
+            });
+
+            it('should explain a release date of results that is set while the end of the exam is missing', () => {
+                renderWith({ ...validDates(), endDate: undefined, publishResultsDate: hours(4) });
+                expect(shownMessage('publishResultsDate-error')).toBe('error.examPublishResultsDateEndMissing');
+            });
+
+            it('should explain a submission overview date before the end of the exam, after the release of results or without an end', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(5), examSummaryPublicationDate: hours(3) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateAfterEnd');
+
+                renderWith({ examSummaryPublicationDate: hours(6) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateBeforeRelease');
+
+                renderWith({ endDate: undefined, examSummaryPublicationDate: hours(4) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateEndMissing');
+
+                renderWith({ endDate: hours(3), examSummaryPublicationDate: hours(4) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBeUndefined();
+
+                renderWith({ examSummaryPublicationDate: undefined });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBeUndefined();
+            });
+
+            it('should explain a start of the student review that is not after the release of results or has no release date', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(5), examStudentReviewStart: hours(4), examStudentReviewEnd: hours(7) });
+                expect(shownMessage('examStudentReviewStart-error')).toBe('error.examStudentReviewStartAfterRelease');
+
+                renderWith({ publishResultsDate: undefined });
+                expect(shownMessage('examStudentReviewStart-error')).toBe('error.examStudentReviewStartReleaseMissing');
+
+                renderWith({ publishResultsDate: hours(5), examStudentReviewStart: hours(6) });
+                expect(shownMessage('examStudentReviewStart-error')).toBeUndefined();
+
+                renderWith({ examStudentReviewStart: undefined, examStudentReviewEnd: undefined });
+                expect(shownMessage('examStudentReviewStart-error')).toBeUndefined();
+            });
+
+            it('should explain an example solution publication date before the end of the exam or before the visible date', () => {
+                renderWith({ ...validDates(), exampleSolutionPublicationDate: hours(2) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBe('error.examExampleSolutionPublicationDateAfterEnd');
+
+                renderWith({ endDate: undefined, exampleSolutionPublicationDate: hours(0) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBe('error.examExampleSolutionPublicationDateAfterVisible');
+
+                renderWith({ endDate: hours(3), exampleSolutionPublicationDate: hours(4) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBeUndefined();
+
+                renderWith({ exampleSolutionPublicationDate: undefined });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBeUndefined();
+            });
+
+            it('should explain a number of correction rounds other than 1 or 2 for a real exam', () => {
+                for (const invalidRounds of [0, 3, undefined]) {
+                    renderWith({ numberOfCorrectionRoundsInExam: invalidRounds });
+                    expect(shownMessage('correction-rounds-error')).toBe('error.examCorrectionRoundsInvalid');
+                }
+                for (const validRounds of [1, 2]) {
+                    renderWith({ numberOfCorrectionRoundsInExam: validRounds });
+                    expect(shownMessage('correction-rounds-error')).toBeUndefined();
+                }
+            });
+
+            it('should explain a negative grace period', () => {
+                renderWith({ gracePeriod: -1 });
+                expect(shownMessage('grace-period-low-error')).toBe('error.examGracePeriodNegative');
+
+                renderWith({ gracePeriod: 0 });
+                expect(shownMessage('grace-period-low-error')).toBeUndefined();
+            });
+
+            it('should explain missing or too low maximum points', () => {
+                for (const invalidPoints of [0, -5, undefined]) {
+                    renderWith({ examMaxPoints: invalidPoints });
+                    expect(shownMessage('max-points-low-error')).toBe('error.examMaxPointsMissingOrTooLow');
+                }
+                renderWith({ examMaxPoints: 1 });
+                expect(shownMessage('max-points-low-error')).toBeUndefined();
+            });
+
+            it('should write the typed maximum points into the exam and explain a fractional or too high value', async () => {
+                fixture.detectChanges();
+                // the form registers its controls one microtask after the first change detection
+                await fixture.whenStable();
+                const input: HTMLInputElement = fixture.nativeElement.querySelector('input#examMaxPoints');
+                const shownError = (translationKey: string) => fixture.nativeElement.querySelector(`[jhiTranslate="${translationKey}"]`) !== null;
+
+                typeIntoInputNumber(input, '120');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(120);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(false);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(false);
+
+                typeIntoInputNumber(input, '12.5');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(12.5);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(true);
+
+                // the message is shown while the typed value exceeds the limit, before the field is left and clamps it
+                input.focus();
+                input.value = '10000';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(10000);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(true);
+            });
+
+            it('should explain a number of exercises below 1 but accept an empty one', () => {
+                renderWith({ numberOfExercisesInExam: 0 });
+                expect(shownMessage('number-of-exercises-low-error')).toBe('error.examNumberOfExercisesTooLow');
+
+                renderWith({ numberOfExercisesInExam: undefined });
+                expect(shownMessage('number-of-exercises-low-error')).toBeUndefined();
+
+                renderWith({ numberOfExercisesInExam: 1 });
+                expect(shownMessage('number-of-exercises-low-error')).toBeUndefined();
+            });
+
+            it('should explain an emptied channel name', () => {
+                fixture.detectChanges();
+                component.hideChannelNameInput.set(false);
+                renderWith({ channelName: '' });
+                expect(shownMessage('channel-name-validation-message')).toBe('error.examChannelNameMissing');
+
+                renderWith({ channelName: 'exam-test' });
+                expect(shownMessage('channel-name-validation-message')).toBeUndefined();
+
+                component.hideChannelNameInput.set(true);
+                renderWith({ channelName: '' });
+                expect(shownMessage('channel-name-validation-message')).toBeUndefined();
+            });
+        });
+
+        it('should not allow saving while a date field holds text that is not a date', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            const input: HTMLInputElement = fixture.nativeElement.querySelector('input#publishResultsDate');
+            input.value = 'not a date';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
+        it('should validate the dates correctly', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            examWithoutExercises.publishResultsDate = dayjs().add(4, 'hours');
+            examWithoutExercises.exampleSolutionPublicationDate = dayjs().add(5, 'hours');
+            examWithoutExercises.examStudentReviewStart = dayjs().add(5, 'hours');
+            examWithoutExercises.examStudentReviewEnd = dayjs().add(6, 'hours');
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            examWithoutExercises.visibleDate = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.examStudentReviewEnd = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.examStudentReviewStart = dayjs().add(6, 'hours');
+            examWithoutExercises.examStudentReviewEnd = dayjs().add(5, 'hours');
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.examStudentReviewStart = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+        });
+
+        it('should reject equal visible and start dates through the timeline', async () => {
+            const startDate = dayjs().add(1, 'hour').startOf('minute');
+            examWithoutExercises.visibleDate = startDate;
+            examWithoutExercises.startDate = startDate;
+            examWithoutExercises.endDate = startDate.add(1, 'hour');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.timelineStatus().valid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+        });
+
+        it('should invalidate the configuration when an exam text exceeds the maximum length', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10001);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(true);
+            expect(component.areExamTextsValid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10000);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(false);
+            expect(component.areExamTextsValid).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
+        it('should invalidate the configuration when any of the individual exam texts exceeds the maximum length', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const tooLong = 'a'.repeat(10001);
+            expect(component.areExamTextsValid).toBe(true);
+
+            examWithoutExercises.startText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.startText = undefined;
+
+            examWithoutExercises.endText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.endText = undefined;
+
+            examWithoutExercises.confirmationEndText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.confirmationEndText = undefined;
+
+            expect(component.areExamTextsValid).toBe(true);
+        });
+
+        it('should treat missing or exactly-limit exam texts as within the limit', () => {
+            expect(component.isExamTextTooLong(undefined)).toBe(false);
+            expect(component.isExamTextTooLong('')).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10000))).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10001))).toBe(true);
+        });
+
+        it('should show channel name input for test exams', async () => {
+            examWithoutExercises.examMode = ExamMode.TEST;
+            examWithoutExercises.channelName = 'test-exam';
+            component.ngOnInit();
+            await Promise.resolve();
+            expect(component.hideChannelNameInput()).toBe(false);
+        });
+
+        it('should validate the example solution publication date correctly', () => {
+            const newExamWithoutExercises = new Exam();
+            newExamWithoutExercises.id = 2;
+            newExamWithoutExercises.title = 'Test Exam';
+            component.exam = newExamWithoutExercises;
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            const now = dayjs();
+            newExamWithoutExercises.visibleDate = now.add(2, 'hours');
+            newExamWithoutExercises.startDate = now.add(3, 'hours');
+            newExamWithoutExercises.endDate = now.add(4, 'hours');
+            newExamWithoutExercises.workingTime = 3600;
+            newExamWithoutExercises.exampleSolutionPublicationDate = undefined;
+            expect(component.isValidConfiguration).toBe(true);
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(4, 'hours');
+            expect(component.isValidConfiguration).toBe(true);
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(2, 'hours');
+            expect(component.isValidConfiguration).toBe(false);
+        });
+
+        it('should validate the exam summary publication date correctly', () => {
+            const newExam = new Exam();
+            newExam.id = 3;
+            newExam.title = 'Test Exam';
+            component.exam = newExam;
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            const now = dayjs();
+            newExam.visibleDate = now.add(2, 'hours');
+            newExam.startDate = now.add(3, 'hours');
+            newExam.endDate = now.add(4, 'hours');
+            newExam.workingTime = 3600;
+
+            // unset: valid (summary shown immediately after submission)
+            newExam.examSummaryPublicationDate = undefined;
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+
+            // after the end date: valid
+            newExam.examSummaryPublicationDate = now.add(5, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+
+            // before the end date: invalid
+            newExam.examSummaryPublicationDate = now.add(3, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            // after the publish results date: invalid
+            newExam.publishResultsDate = now.add(5, 'hours');
+            newExam.examSummaryPublicationDate = now.add(6, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            // no later than the publish results date: valid
+            newExam.examSummaryPublicationDate = now.add(5, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+        });
+
+        it('should update', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
+
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.detectChanges();
+
+            const updateSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            // trigger save
+            component.save();
+            await Promise.resolve();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+            expect(refreshSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should calculate the working time for real exams correctly', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.examMode = ExamMode.REAL;
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            component.updateExamWorkingTime();
+            // Without a valid startDate, the workingTime should be 0
+            // examWithoutExercises.workingTime is stored in seconds
+            expect(examWithoutExercises.workingTime).toBe(0);
+            // the component returns the workingTime in Minutes
+            expect(component.workingTimeInMinutes).toBe(0);
+
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            component.updateExamWorkingTime();
+            expect(examWithoutExercises.workingTime).toBe(7200);
+            expect(component.workingTimeInMinutes).toBe(120);
+
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = undefined;
+            component.updateExamWorkingTime();
+            // Without an endDate, the working time should be 0;
+            expect(examWithoutExercises.workingTime).toBe(0);
+            expect(component.workingTimeInMinutes).toBe(0);
+        });
+
+        it('should not calculate the working time for test exams', () => {
+            fixture.detectChanges();
+            examWithoutExercises.examMode = ExamMode.TEST;
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(12, 'hours');
+            component.updateExamWorkingTime();
+            expect(examWithoutExercises.workingTime).toBe(3600);
+            expect(component.workingTimeInMinutes).toBe(60);
+        });
+
+        it('should recalculate the working time when the exam timeline dates change', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const timeline = fixture.debugElement.query(By.directive(ExamTimelineComponent)).componentInstance as ExamTimelineComponent;
+            const startDate = dayjs().startOf('minute');
+            const endDate = startDate.add(2, 'hours');
+
+            timeline.startDate.set(startDate);
+            timeline.endDate.set(endDate);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.exam.startDate?.isSame(startDate)).toBe(true);
+            expect(component.exam.endDate?.isSame(endDate)).toBe(true);
+            expect(component.exam.workingTime).toBe(7200);
+        });
+
+        it('validates the working time for test exams correctly', () => {
+            examWithoutExercises.examMode = ExamMode.TEST;
+            examWithoutExercises.workingTime = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.endDate = dayjs().subtract(2, 'hours');
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+            expect(component.validateWorkingTime).toBe(true);
+
+            examWithoutExercises.workingTime = 7200;
+            expect(component.validateWorkingTime).toBe(true);
+
+            examWithoutExercises.workingTime = 10800;
+            expect(component.validateWorkingTime).toBe(false);
+        });
+
+        it('validates the working time for real exams correctly', () => {
+            examWithoutExercises.examMode = ExamMode.REAL;
+
+            examWithoutExercises.workingTime = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.workingTime = 3600;
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            expect(component.validateWorkingTime).toBe(true);
+        });
+
+        it('should correctly catch HTTPError when updating the examWithoutExercises', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+            fixture.detectChanges();
+
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const updateStub = vi.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
+
+            // trigger save
+            component.save();
+            await Promise.resolve();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving()).toBe(false);
+
+            updateStub.mockRestore();
+        });
+
+        it('should create', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            examWithoutExercises.id = undefined;
+            fixture.changeDetectorRef.detectChanges();
+
+            const createSpy = vi.spyOn(examManagementService, 'create').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            // trigger save
+            component.save();
+            await Promise.resolve();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+        });
+
+        it('should correctly catch HTTPError when creating the examWithoutExercises', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+            fixture.detectChanges();
+
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const createStub = vi.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
+
+            component.exam.id = undefined;
+            const now = dayjs();
+            component.exam.visibleDate = now;
+            component.exam.startDate = now.add(1, 'hour');
+            component.exam.endDate = now.add(2, 'hours');
+            component.exam.workingTime = 3600;
+
+            component.save();
+            await Promise.resolve();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving()).toBe(false);
+
+            createStub.mockRestore();
+        });
+
+        it('should call router navigate on resetToPreviousState', () => {
+            const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.course = course;
+            component.exam = examWithoutExercises;
+            examWithoutExercises.id = 1;
+            component.resetToPreviousState();
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examWithoutExercises.id]);
+
+            routerSpy.mockClear();
+            delete (examWithoutExercises as any).id;
+            component.resetToPreviousState();
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams']);
+        });
+
+        it('should correctly validate the number of correction rounds in a test Exams', () => {
+            examWithoutExercises.examMode = ExamMode.TEST;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
+            fixture.changeDetectorRef.detectChanges();
+
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 0;
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
+        });
+
+        it('should correctly validate the number of correction rounds in a realExam', () => {
+            examWithoutExercises.examMode = ExamMode.REAL;
+
+            examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
+
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
+
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 2;
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
+            expect(component.isValidNumberOfCorrectionRounds).toBe(true);
+
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 3;
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
+            expect(component.isValidNumberOfCorrectionRounds).toBe(false);
+        });
+
+        it('should correctly validate number of exercises', () => {
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBeUndefined();
+            expect(component.isValidNumberOfExercises).toBe(true);
+
+            examWithoutExercises.numberOfExercisesInExam = 0;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(0);
+            expect(component.isValidNumberOfExercises).toBe(false);
+
+            examWithoutExercises.numberOfExercisesInExam = 1;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(1);
+            expect(component.isValidNumberOfExercises).toBe(true);
+
+            examWithoutExercises.numberOfExercisesInExam = -20;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(-20);
+            expect(component.isValidNumberOfExercises).toBe(false);
+
+            examWithoutExercises.numberOfExercisesInExam = 40;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(40);
+            expect(component.isValidNumberOfExercises).toBe(true);
+
+            // Test max limit of 100
+            examWithoutExercises.numberOfExercisesInExam = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(100);
+            expect(component.isValidNumberOfExercises).toBe(true);
+
+            examWithoutExercises.numberOfExercisesInExam = 101;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(101);
+            expect(component.isValidNumberOfExercises).toBe(false);
+        });
+
+        it('should correctly validate max points with upper limit of 9999', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.examMaxPoints = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(100);
+            expect(component.isValidMaxPoints).toBe(true);
+
+            examWithoutExercises.examMaxPoints = 9999;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(9999);
+            expect(component.isValidMaxPoints).toBe(true);
+
+            examWithoutExercises.examMaxPoints = 10000;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(10000);
+            expect(component.isValidMaxPoints).toBe(false);
+        });
+
+        it('should correctly validate grace period with upper limit of 3600 seconds', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.gracePeriod = 180;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.isValidGracePeriod).toBe(true);
+
+            examWithoutExercises.gracePeriod = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3600);
+            expect(component.isValidGracePeriod).toBe(true);
+
+            examWithoutExercises.gracePeriod = 3601;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3601);
+            expect(component.isValidGracePeriod).toBe(false);
+        });
+
+        it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
+            fixture.detectChanges();
+
+            // Set up exam as a test exam with a long exam window
+            examWithoutExercises.examMode = ExamMode.TEST;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
+
+            // Valid working time
+            examWithoutExercises.workingTime = 86400; // 1 day
+            expect(component.exam.workingTime).toBe(86400);
+            expect(component.validateWorkingTime).toBe(true);
+
+            // Working time at limit (30 days = 2592000 seconds)
+            examWithoutExercises.workingTime = 2592000;
+            expect(component.exam.workingTime).toBe(2592000);
+            expect(component.validateWorkingTime).toBe(true);
+
+            // Working time exceeds limit
+            examWithoutExercises.workingTime = 2592001;
+            expect(component.exam.workingTime).toBe(2592001);
+            expect(component.validateWorkingTime).toBe(false);
+        });
+
+        it('should compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.save');
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button).toBeTruthy();
+        });
+
+        it('should disable save button when isSaving is true', async () => {
+            const now = dayjs().startOf('minute');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.detectChanges();
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+
+            component.isSaving.set(true);
+            let actionsHost = renderActions();
+            let button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
+
+            component.isSaving.set(false);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(false);
+        });
+
+        it.each(['2026-10-25T00:30:45Z', '2026-10-25T01:30:45Z'])('should toggle save button disabled state based on form validity and configuration validity at %s', (instant) => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            vi.setSystemTime(new Date(instant));
+            // Keep initial and restored dates relative to the same anchor across clock changes.
+            const now = dayjs().startOf('minute');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.changeDetectorRef.detectChanges();
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            const timeline = fixture.debugElement.query(By.directive(ExamTimelineComponent)).componentInstance as ExamTimelineComponent;
+            const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            //Step 1: Test case where the configuration and the form are valid
+            expect(component.isValidConfiguration).toBe(true);
+            let actionsHost = renderActions();
+            let button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(false);
+
+            // Step 2: Test case where the configuration is invalid
+            timeline.startDate.set(now.add(5, 'hours'));
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBe(false);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
+
+            // Step 3: Test case where the configuration is valid again, but the form is invalid
+            timeline.startDate.set(now.add(2, 'hours'));
+            timeline.endDate.set(now.add(3, 'hours'));
+            invalidSpy.mockReturnValue(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBe(true);
+            actionsHost = renderActions();
+            button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
+        });
+
+        it('should disable the save button when the title is only whitespace', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.title = '   ';
+
+            fixture.changeDetectorRef.detectChanges();
+            // Force the reactive form itself to report valid, so only the whitespace-only title can disable the save button
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.isValidConfiguration).toBe(false);
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button?.disabled).toBe(true);
+        });
+
+        it('should not save or open the confirmation dialog when a submit comes in for an invalid configuration', async () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+            examWithoutExercises.id = 1;
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(2, 'hours');
+            component['originalEndDate'] = dayjs().add(2, 'hours');
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(false);
+            component.handleSubmit();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should open the confirmation dialog when dates changed for an ongoing exam', async () => {
+            // Set up an ongoing exam
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Test Exam Title';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(1, 'hours');
+            component['originalEndDate'] = dayjs().add(1, 'hours');
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // Change the dates
+            examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
+            component.handleSubmit();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(true);
+            expect(component.confirmEntityNameValue()).toBe('');
+            expect(component.confirmDisabled()).toBe(true);
+        });
+
+        it('should keep the confirm button disabled until the entered name matches the exam title', async () => {
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'My Exam';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(1, 'hours');
+            component['originalEndDate'] = dayjs().add(1, 'hours');
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
+
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
+            component.handleSubmit();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(true);
+            expect(component.confirmDisabled()).toBe(true);
+        });
+
+        it('should not open the confirmation dialog when dates have not changed', async () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            // Set up an ongoing exam
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Unchanged Exam';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = examWithoutExercises.startDate.clone();
+            component['originalEndDate'] = examWithoutExercises.endDate.clone();
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // Don't change the dates
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
+            component.handleSubmit();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should enable confirm button when entered value matches exam title', () => {
+            examWithoutExercises.title = 'Exact Title Match';
+            fixture.detectChanges();
+
+            component.onConfirmNameChange('Exact Title Match');
+
+            expect(component.confirmEntityNameValue()).toBe('Exact Title Match');
+            expect(component.confirmDisabled()).toBe(false);
+        });
+
+        it('should disable confirm button when entered value does not match exam title', () => {
+            examWithoutExercises.title = 'Correct Title';
+            fixture.detectChanges();
+
+            component.onConfirmNameChange('Wrong Title');
+
+            expect(component.confirmEntityNameValue()).toBe('Wrong Title');
+            expect(component.confirmDisabled()).toBe(true);
+        });
+
+        it('should save and close the dialog when confirming the date change', async () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            component.exam.id = 1;
+            component.exam.title = 'Confirm Title';
+            component.confirmDateChangeVisible.set(true);
+            component.onConfirmNameChange('Confirm Title');
+
+            component.confirmDateChange();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not save when confirming while the entered name does not match', () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+
+            fixture.detectChanges();
+
+            component.exam.title = 'Some Title';
+            component.confirmDateChangeVisible.set(true);
+            component.onConfirmNameChange('Wrong');
+
+            component.confirmDateChange();
+
+            expect(component.confirmDateChangeVisible()).toBe(true);
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should close the dialog without saving when cancelling', () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+
+            component.confirmDateChangeVisible.set(true);
+            component.cancelDateChange();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('import exams', () => {
+        let alertService: AlertService;
+        let profileService: ProfileService;
+        let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
+
+        const course2 = new Course();
+        course2.id = 2;
+
+        // Initializing one Exercise Group per Exercise Type
+        const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
+        modelingExercise.id = 1;
+        modelingExercise.title = 'ModelingExercise';
+        const textExercise = new TextExercise(undefined, exerciseGroup1);
+        textExercise.id = 2;
+        textExercise.title = 'TextExercise';
+        exerciseGroup1.exercises = [modelingExercise, textExercise];
+
+        const timeNow = dayjs();
+
+        const examForImport = new Exam();
+        examForImport.id = 3;
+        examForImport.title = 'RealExam for Testing';
+        examForImport.examMode = ExamMode.REAL;
+        examForImport.examiner = 'Bruegge';
+        examForImport.moduleNumber = 'IN0006';
+        examForImport.courseName = 'Artemis';
+        examForImport.visibleDate = timeNow.subtract(2, 'hours');
+        examForImport.startDate = timeNow.subtract(1, 'hours');
+        examForImport.endDate = timeNow.add(1, 'hours');
+        examForImport.workingTime = 2 * 60 * 60;
+        examForImport.gracePeriod = 90;
+        examForImport.examMaxPoints = 15;
+        examForImport.numberOfExercisesInExam = 5;
+        examForImport.randomizeExerciseOrder = true;
+        examForImport.publishResultsDate = timeNow.add(1, 'days');
+        examForImport.examStudentReviewStart = timeNow.add(2, 'days');
+        examForImport.examStudentReviewEnd = timeNow.add(3, 'days');
+        examForImport.exampleSolutionPublicationDate = timeNow.add(4, 'days');
+        examForImport.numberOfCorrectionRoundsInExam = 2;
+        examForImport.startText = 'Hello World';
+        examForImport.endText = 'Goodbye World';
+        examForImport.confirmationStartText = '111';
+        examForImport.confirmationEndText = '222';
+        examForImport.course = course2;
+        examForImport.numberOfExamUsers = 1;
+        examForImport.exerciseGroups = [exerciseGroup1];
+        examForImport.examUsers = [
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                ...new User(5),
+            },
+        ];
+        examForImport.studentExams = [new StudentExam()];
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [],
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    provideRouter(routes),
+                    { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                    LocalStorageService,
+                    SessionStorageService,
+                    MockDirective(TranslateDirective),
+                    {
+                        provide: ActivatedRoute,
+                        useValue: {
+                            data: of({ exam: examForImport, course }),
+                            params: of({ examId: '3', courseId: '1' }),
+                            url: of([{ path: 'import' }] as UrlSegment[]),
+                        },
+                    },
+                    MockProvider(AlertService),
+                    MockProvider(GradingService, {
+                        findGradingScaleForExam: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: toGradingScaleDTO(new GradingScale()),
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockDirective(NgForm),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                ],
+            }).compileComponents();
+
+            router = TestBed.inject(Router);
+            fixture = TestBed.createComponent(ExamUpdateComponent);
+            component = fixture.componentInstance;
+            examManagementService = TestBed.inject(ExamManagementService);
+            alertService = TestBed.inject(AlertService);
+            global.ResizeObserver = MockResizeObserver as any;
+
+            profileService = TestBed.inject(ProfileService);
+            getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
+        });
+
+        it('should initialize without id and dates set', () => {
+            fixture.detectChanges();
+            expect(fixture).not.toBeNull();
+            expect(component.isImport()).toBe(true);
+            expect(component.exam).not.toBeNull();
+            expect(component.exam.id).toBeUndefined();
+            expect(component.exam.title).toBe('RealExam for Testing');
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
+            expect(component.exam.examiner).toBe('Bruegge');
+            expect(component.exam.moduleNumber).toBe('IN0006');
+            expect(component.exam.courseName).toBe('Artemis');
+            expect(component.exam.visibleDate).toBeUndefined();
+            expect(component.exam.startDate).toBeUndefined();
+            expect(component.exam.endDate).toBeUndefined();
+            expect(component.exam.workingTime).toBe(0);
+            expect(component.exam.gracePeriod).toBe(90);
+            expect(component.exam.examMaxPoints).toBe(15);
+            expect(component.exam.numberOfExercisesInExam).toBe(5);
+            expect(component.exam.randomizeExerciseOrder).toBe(true);
+            expect(component.exam.publishResultsDate).toBeUndefined();
+            expect(component.exam.examStudentReviewStart).toBeUndefined();
+            expect(component.exam.examStudentReviewEnd).toBeUndefined();
+            expect(component.exam.exampleSolutionPublicationDate).toBeUndefined();
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
+            expect(component.exam.startText).toBe('Hello World');
+            expect(component.exam.endText).toBe('Goodbye World');
+            expect(component.exam.confirmationStartText).toBe('111');
+            expect(component.exam.confirmationEndText).toBe('222');
+            expect(component.exam.course).toEqual(course);
+            expect(component.exam.numberOfExamUsers).toBe(1);
+            expect(component.exam.examUsers).toBeUndefined();
+            expect(component.exam.studentExams).toBeUndefined();
+        });
+
+        it('should perform import of an examWithoutExercises with exercises successfully', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
+
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            // The import runs behind the progress dialog; navigation happens once the user dismisses the success summary
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
+            component.save();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(importSpy).toHaveBeenCalledOnce();
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should perform import of an exam with only selected exercises successfully', async () => {
+            fixture.detectChanges();
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            // Only import one of two exercises
+            component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            // prepareExamForImport now returns a copy detached from the fixture, so mirror what save() does: it replaces
+            // the groups with the selected ones from mapSelectedExercisesToExerciseGroups.
+            expectedExam.exerciseGroups = [exerciseGroup1];
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
+
+            fixture.changeDetectorRef.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
+            component.save();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(importSpy).toHaveBeenCalledOnce();
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
+            // We expect to have imported only one exercise group and only one of two exercises
+            expect(expectedExam.exerciseGroups?.at(0)?.exercises).toHaveLength(1);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        status: 200,
+                        body: { exam: examForImport },
+                    }),
+                ),
+            );
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            fixture.detectChanges();
+
+            // We need to "fake" a wrong user input here. To not affect the other tests, the wrong examWithoutExercises is a deep clone of the examForImport
+            const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
+            const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
+            modelingExercise2.id = 2;
+            exerciseGroup2.exercises = [modelingExercise2];
+            const examWithError = deepClone(examForImport);
+            examWithError.exerciseGroups = [exerciseGroup2];
+
+            component.exam = examWithError;
+            // Manually update the child component's selectedExercises map to match the new exam
+            component.examExerciseImportComponent().selectedExercises.clear();
+            component.examExerciseImportComponent().selectedExercises.set(exerciseGroup2, new Set([modelingExercise2]));
+
+            fixture.changeDetectorRef.detectChanges();
+            component.save();
+
+            expect(importSpy).not.toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledOnce();
+        });
+
+        it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
+            'should perform import of examWithoutExercises AND correctly process conflict exception from server',
+            async (errorKey) => {
+                const expectedExam = prepareExamForImport(examForImport);
+                expectedExam.course = course;
+
+                const preCheckError = new HttpErrorResponse({
+                    error: {
+                        errorKey: errorKey,
+                        numberOfInvalidProgrammingExercises: 2,
+                        params: { exerciseGroups: [exerciseGroup1] },
+                    },
+                    status: 400,
+                });
+                const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
+                const alertSpy = vi.spyOn(alertService, 'error');
+
+                fixture.detectChanges();
+                vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+                // A validation error is returned before the progress dialog shows a summary; the dialog rejects with it
+                vi.spyOn(component.examImportProgressDialog(), 'runImport').mockRejectedValue(preCheckError);
+                component.save();
+                await Promise.resolve();
+                await Promise.resolve();
+
+                expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
+                if (errorKey == 'invalidKey') {
+                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
+                } else {
+                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
+                }
+            },
+        );
+
+        it('should perform input of exercise groups AND correctly process arbitrary exception from server', async () => {
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+
+            const error = new HttpErrorResponse({
+                status: 400,
+            });
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => error));
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockRejectedValue(error);
+            component.save();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(importSpy).toHaveBeenCalledOnce();
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
+            expect(alertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should compute correct save title text when importing', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle).toBe('entity.action.import');
+            const actionsHost = renderActions();
+            const button = actionsHost.querySelector<HTMLButtonElement>('#save-exam');
+            expect(button).toBeTruthy();
+        });
+    });
+});

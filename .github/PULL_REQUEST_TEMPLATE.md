@@ -1,0 +1,127 @@
+<!-- Follow https://docs.artemis.tum.de/developer/development-process#pull-request-readiness -->
+<!-- Check completed author Checklist tasks with [x], leave pending validation unchecked, delete only inapplicable tasks and empty sections, and replace example text. -->
+<!-- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready immediately so full CI and review bots run; do not wait for CI, reviews or test-server validation. -->
+<!-- Set the PR milestone to the intended release and verify the "ready for review" label once implementation is complete. -->
+<!-- Review Progress tasks remain open until verified. Before merge: all remaining tasks checked, required approvals obtained, threads resolved, checks passing and no conflicts; replace "ready for review" with "ready to merge". -->
+
+### Summary 
+<!-- Add a short, but convincing summary (abstract) of the PR changes here. --> 
+
+### Checklist
+#### General
+<!-- Check only completed author tasks; pending validation may remain unchecked during review. Complete every applicable task before merge and remove only tasks that do not apply. -->
+<!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
+<!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
+- [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
+- [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
+- [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.tum.de/developer/guidelines/language).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions).
+- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, and set `last_reviewed` of the pages I checked against the code, or none of these apply.
+
+
+#### Server
+- [ ] **Important**: I implemented the changes with a [very good performance](https://docs.artemis.tum.de/developer/guidelines/performance) and prevented too many (unnecessary) and too complex database calls.
+- [ ] I **strictly** followed the principle of **data economy** for all database calls.
+- [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
+- [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
+- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I went through the [security guideline](https://docs.artemis.tum.de/developer/guidelines/security): the ids of every request are checked against the course in the path, and tests cover a refused request.
+- [ ] I documented the Java code using JavaDoc style.
+
+
+#### Client
+- [ ] **Important**: I implemented the changes with a very good performance, prevented too many (unnecessary) REST calls and made sure the UI is responsive, even with large data (e.g. using paging).
+- [ ] I **strictly** followed the principle of **data economy** for all client-server REST calls.
+- [ ] I **strictly** followed the [client coding guidelines](https://docs.artemis.tum.de/developer/guidelines/client-development).
+- [ ] I **strictly** followed the [AET UI-UX guidelines](https://ls1intum.github.io/ui-ux-guidelines/).
+- [ ] Following the [theming guidelines](https://docs.artemis.tum.de/developer/guidelines/client-theming), I specified colors only in the theming variable files and checked that the changes look consistent in both the light and the dark theme.
+- [ ] I added multiple integration tests (Vitest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.tum.de/developer/guidelines/client-tests).
+- [ ] I added `authorities` to all new routes and checked the course groups for displaying navigation elements (links, buttons).
+- [ ] I documented the TypeScript code using JSDoc style.
+- [ ] I added multiple screenshots/screencasts of my UI changes.
+- [ ] I translated all newly inserted strings into English and German.
+
+
+#### Changes affecting Programming Exercises
+- [ ] **High priority**: I tested **all** changes and their related features with **all** corresponding user types on a test server configured with the **integrated lifecycle setup** (LocalVC and LocalCI).
+- [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server configured with **LocalVC** and **Jenkins**.
+
+
+### Motivation and Context
+<!-- Why is this change required? What problem does it solve? -->
+<!-- If it fixes an open issue, please link to the issue here. -->
+
+
+### Description
+<!-- Describe your changes in detail -->
+
+
+### Steps for Testing
+<!-- Please describe in detail how reviewers can test your changes. Make sure to take all related features and views into account! Below is an example that you can refine. -->
+Prerequisites:
+- 1 Instructor
+- 2 Students
+- 1 Programming Exercise with Complaints enabled
+
+1. Log in to Artemis
+2. Navigate to Course Administration
+3. ...
+
+#### Exam Mode Testing
+<!-- If this PR changes some components that are also used in the exam mode, the PR needs additional testing that the exam mode is still working as expected. -->
+<!-- If the testing steps above already describe the exam mode or the exam mode cannot be affected by this PR in any way, you can leave this out. -->
+
+Prerequisites:
+- 1 Instructor
+- 2 Students
+- 1 Exam with a Programming Exercise
+
+1. Log in to Artemis
+2. Participate in the exam as a student
+3. Make sure that the UI of the programming exercise in the exam mode stays unchanged. You can use the [exam mode documentation](https://docs.artemis.tum.de/student/exams) as reference.
+4. ...
+
+### Testserver States
+You can manage test servers using [Helios](https://helios.aet.cit.tum.de/). Check environment statuses in the [environment list](https://helios.aet.cit.tum.de/repo/69562331/environment/list). To deploy to a test server, go to the [CI/CD](https://helios.aet.cit.tum.de/repo/69562331/ci-cd) page, find your PR or branch, and trigger the deployment.
+
+### Review Progress
+<!-- Merge requires approvals from at least four reviewers, including required maintainer reviews. Keep applicable code, manual, exam mode and performance reviews below. -->
+<!-- The reviewer or author check the following boxes depending on what was reviewed or tested. All boxes should be checked before merge. -->
+<!-- You can add additional checkboxes if it makes sense to only review parts of the code or functionality. -->
+<!-- When changes are pushed, uncheck the affected boxes. (Not all changes require full re-reviews.) -->
+<!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
+
+#### Performance Review
+<!-- See [Large Course Setup](https://github.com/ls1intum/Artemis/tree/develop/supporting_scripts/course-scripts/quick-course-setup) for the automation script that handles large course setup. -->
+- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance even for very large courses with more than 2000 students.
+- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance even for very large courses with more than 2000 students.
+#### Code Review
+- [ ] Code Review 1
+- [ ] Code Review 2
+#### Manual Tests
+- [ ] Test 1
+- [ ] Test 2
+#### Exam Mode Test
+- [ ] Test 1
+- [ ] Test 2
+#### Performance Tests
+- [ ] Test 1
+- [ ] Test 2
+
+### Test Coverage
+<!-- Please add the test coverages for all changed files modified in this PR here. You can generate the coverage table using one of these options: -->
+<!-- 1. Run `pnpm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->
+<!-- 2. Use `supporting_scripts/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to generate the table from CI artifacts (requires GitHub token, follow the README for setup) -->
+<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
+<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->
+<!--       Remove rows with only trivial changes from the table. -->
+<!--
+| Class/File | Line Coverage | Confirmation (assert/expect) |
+|------------|--------------:|-----------------------------:|
+| ExerciseService.java | 85% | ✅                           |
+| programming-exercise.component.ts | 95% | ✅              |
+-->
+
+### Screenshots
+<!-- Add screenshots to demonstrate the changes in the UI. Remove the section if you did not change the UI. -->
+<!-- Create a GIF file from a screen recording in a docker container https://toub.es/2017/09/11/high-quality-gif-with-ffmpeg-and-docker/ -->

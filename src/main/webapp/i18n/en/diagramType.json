@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "DiagramType": {
+            "null": "",
+            "undefined": "",
+            "ClassDiagram": "Class Diagram",
+            "ObjectDiagram": "Object Diagram",
+            "ActivityDiagram": "Activity Diagram",
+            "UseCaseDiagram": "Use Case Diagram",
+            "CommunicationDiagram": "Communication Diagram",
+            "ComponentDiagram": "Component Diagram",
+            "DeploymentDiagram": "Deployment Diagram",
+            "PetriNet": "Petri Net",
+            "SyntaxTree": "Syntax Tree",
+            "Flowchart": "Flowchart",
+            "BPMN": "BPMN",
+            "Sfc": "Sequential Function Chart"
+        }
+    }
+}

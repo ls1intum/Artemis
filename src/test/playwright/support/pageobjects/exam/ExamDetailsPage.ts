@@ -1,0 +1,109 @@
+import { Page, expect } from '@playwright/test';
+import { navigateToExamSubpage } from './ExamManagementPage';
+import { finishDeletionProgress } from '../DeletionProgressDialog';
+
+/**
+ * A class which encapsulates UI selectors and actions for the exam details page.
+ */
+export class ExamDetailsPage {
+    private readonly page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    async openExerciseGroups(examId?: number) {
+        await navigateToExamSubpage(this.page, 'exercise-groups', examId);
+    }
+
+    async checkItemChecked(checklistItem: ExamChecklistItem) {
+        const checklistItemLocator = this.getChecklistItemLocator(checklistItem);
+        await checklistItemLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(checklistItemLocator.getByTestId('check-icon-checked'), `Checklist item for "${checklistItem}" is not checked or not found`).toBeVisible({ timeout: 30000 });
+    }
+
+    async checkItemUnchecked(checklistItem: ExamChecklistItem) {
+        const checklistItemLocator = this.getChecklistItemLocator(checklistItem);
+        await checklistItemLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(checklistItemLocator.getByTestId('check-icon-unchecked'), `Checklist item for "${checklistItem}" is not unchecked or not found`).toBeVisible({
+            timeout: 30000,
+        });
+    }
+
+    private getChecklistItemLocator(checklistItem: ExamChecklistItem) {
+        return this.page.getByTestId(checklistItem);
+    }
+
+    async clickStudentsToRegister() {
+        await this.page.getByTestId('students-button-at-least-one-student').click();
+    }
+
+    async clickStudentExamsToGenerate() {
+        await this.page.getByTestId('students-button-all-exams-generated').click();
+    }
+
+    async clickStudentExamsToPrepareStart() {
+        await this.page.getByTestId('students-button-all-exercises-prepared').click();
+    }
+
+    async clickEditExamForPublishDate() {
+        await this.page.locator('[data-testid="editButton_publish"]').click();
+    }
+
+    async clickEditExamForReviewDate() {
+        await this.page.locator('[data-testid="editButton_review"]').click();
+    }
+
+    async clickEvaluateQuizExercises() {
+        await this.page.locator('#evaluateQuizExercisesButton').click();
+    }
+
+    async clickAssessUnsubmittedParticipations() {
+        await this.page.locator('#assessUnsubmittedExamModelingAndTextParticipationsButton').click();
+    }
+
+    /**
+     * Deletes this exam.
+     * @param examTitle the exam title to confirm the deletion
+     * @returns the response of the delete request
+     */
+    async deleteExam(examTitle: string) {
+        // The exam-detail page wraps all controls in `@if (exam)`, so the delete
+        // button only appears after the GET /exams/{id} round-trip finishes.
+        // Under multi-node load that round-trip can creep past Playwright's default
+        // action timeout, eating into the 60s test budget. Wait for the title (same
+        // @if block) explicitly with a generous timeout so the subsequent click is fast.
+        await this.page.locator('[data-testid="exam-detail-title"]').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('[data-testid="exam-delete"]').click();
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
+        await expect(deleteButton).toBeDisabled();
+        await this.page.locator('#confirm-entity-name').fill(examTitle);
+        await expect(deleteButton).not.toBeDisabled();
+        const responsePromise = this.page.waitForResponse((response) => response.request().method() === 'DELETE' && /\/api\/exam\/courses\/\d+\/exams\/\d+$/.test(response.url()));
+        await deleteButton.click();
+        const response = await responsePromise;
+        // The server accepts the deletion with 202 and deletes in the background; the progress dialog reports it and has to be dismissed.
+        // A refused request (for example 409) never opens it, so only an accepted deletion is followed.
+        if (response.status() === 202) {
+            await finishDeletionProgress(this.page);
+        }
+        return response;
+    }
+}
+
+export enum ExamChecklistItem {
+    LEAST_ONE_EXERCISE_GROUP = 'check-least-one-exercise-group',
+    NUMBER_OF_EXERCISE_GROUPS = 'check-number-of-exercise-groups',
+    EACH_EXERCISE_GROUP_HAS_EXERCISES = 'check-each-exercise-group-has-exercises',
+    POINTS_IN_EXERCISE_GROUPS_EQUAL = 'check-points-in-exercise-groups-equal',
+    TOTAL_POINTS_POSSIBLE = 'check-total-points-possible',
+    LEAST_ONE_STUDENT = 'check-least-one-student',
+    ALL_EXAMS_GENERATED = 'check-all-exams-generated',
+    ALL_EXERCISES_PREPARED = 'check-all-exercises-prepared',
+    PUBLISHING_DATE_SET = 'check-publishing-date-set',
+    START_DATE_REVIEW_SET = 'check-start-date-review-set',
+    END_DATE_REVIEW_SET = 'check-end-date-review-set',
+    UNFINISHED_ASSESSMENTS = 'check-unfinished-assessments',
+    UNASSESSED_QUIZZES = 'check-unassessed-quizzes',
+    UNSUBMITTED_EXERCISES = 'check-unsubmitted-exercises',
+}

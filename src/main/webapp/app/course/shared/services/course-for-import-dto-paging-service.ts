@@ -1,0 +1,27 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { PagingService } from 'app/exercise/services/paging.service';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
+
+type EntityResponseType = SearchResult<CourseForImportDTO>;
+
+@Service()
+export class CourseForImportDTOPagingService extends PagingService<CourseForImportDTO> {
+    private http = inject(HttpClient);
+
+    private readonly RESOURCE_URL = 'api/course/courses';
+
+    constructor() {
+        super();
+    }
+
+    override search(pageable: SearchTermPageableSearch): Observable<EntityResponseType> {
+        const params = this.createHttpParams(pageable);
+        return this.http
+            .get<EntityResponseType>(`${this.RESOURCE_URL}/for-import`, { params, observe: 'response' })
+            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+    }
+}

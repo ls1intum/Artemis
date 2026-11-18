@@ -1,0 +1,85 @@
+@if (isInCourseManagement()) {
+    <a
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3 open-repository-button"
+        [routerLink]="repositoryLink()"
+        target="_blank"
+        rel="noopener noreferrer"
+        [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
+    >
+        <fa-icon [icon]="faExternalLink" />
+        <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.repo"></span>
+    </a>
+}
+@if (commitState() === CommitState.CONFLICT) {
+    <div>
+        <button
+            id="resolve_conflict_button"
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="danger"
+            class="me-3"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [forceDisabled]="disableActions() || isResolvingConflict()"
+            (click)="resetRepository()"
+            [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
+        >
+            @if (isResolvingConflict()) {
+                <span>
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
+                    <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
+                </span>
+            } @else {
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
+            }
+        </button>
+    </div>
+} @else {
+    <button
+        id="refresh_button"
+        type="button"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [forceDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
+        (click)="onRefresh()"
+        [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
+    >
+        @if (editorState() === EditorState.REFRESHING) {
+            <span>
+                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                <span jhiTranslate="artemisApp.editor.refreshing"></span>
+            </span>
+        } @else {
+            <fa-icon [icon]="faSync" />
+            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+        }
+    </button>
+    <button
+        id="submit_button"
+        type="button"
+        tumAetUiButton
+        size="small"
+        severity="success"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [forceDisabled]="
+            disableActions() ||
+            editorState() === EditorState.REFRESHING ||
+            editorState() === EditorState.SAVING ||
+            (commitState() !== CommitState.UNCOMMITTED_CHANGES && commitState() !== CommitState.CLEAN)
+        "
+        (click)="commit()"
+        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+    >
+        <span>
+            <fa-icon [icon]="farPlayCircle" />
+            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.submit"></span>
+        </span>
+    </button>
+}

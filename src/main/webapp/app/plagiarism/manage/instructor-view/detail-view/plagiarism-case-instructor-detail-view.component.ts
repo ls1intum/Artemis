@@ -1,0 +1,304 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
+import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
+import { PlagiarismCase, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
+import { getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { PageType } from 'app/communication/communication.util';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Subscription } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { faCheck, faChevronDown, faInfo, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { abbreviateString } from 'app/foundation/util/text.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
+import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
+import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { FormsModule } from '@angular/forms';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
+import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
+import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+@Component({
+    selector: 'jhi-plagiarism-case-instructor-detail-view',
+    templateUrl: './plagiarism-case-instructor-detail-view.component.html',
+    styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
+    providers: [CommunicationService, CourseConversationsService, LinkPreviewService, LinkifyService],
+    imports: [
+        PlagiarismCaseHeaderComponent,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        ConfirmAutofocusButtonComponent,
+        FormsModule,
+        PlagiarismCaseReviewComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTabComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabsComponent,
+    ],
+})
+export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
+    private communicationService = inject(CommunicationService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private themeService = inject(ThemeService);
+    private accountService = inject(AccountService);
+    private plagiarismPostService = inject(PlagiarismPostService);
+
+    readonly courseId = signal<number>(undefined!);
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
+    readonly plagiarismCase = signal<PlagiarismCase>(undefined!);
+
+    readonly verdictPointDeduction = signal(0);
+    readonly verdictMessage = signal('');
+    readonly createdPost = signal<Post>(undefined!);
+    currentAccount?: User;
+
+    activeTab: number | string | undefined = 1;
+
+    getExerciseUrlSegment = getExerciseUrlSegment;
+    faPrint = faPrint;
+    faChevronDown = faChevronDown;
+    faInfo = faInfo;
+    faCheck = faCheck;
+
+    readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
+    private postsSubscription?: Subscription;
+    readonly posts = signal<Post[] | undefined>(undefined);
+
+    ngOnInit(): void {
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
+        this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId(), this.plagiarismCaseId).subscribe({
+            next: (res: HttpResponse<PlagiarismCase>) => {
+                const plagiarismCase = res.body!;
+                this.plagiarismCase.set(plagiarismCase);
+
+                this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
+                this.verdictPointDeduction.set(plagiarismCase.verdictPointDeduction ?? 0);
+                this.communicationService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle });
+                this.communicationService.setPageType(this.pageType);
+                this.communicationService.getFilteredPosts({
+                    plagiarismCaseId: plagiarismCase.id,
+                });
+                void this.accountService.identity().then((user) => {
+                    this.currentAccount = user;
+                    this.createEmptyPost();
+                });
+            },
+        });
+        this.postsSubscription = this.communicationService.posts.subscribe((posts: Post[]) => {
+            const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
+
+            // Handle post-deletion case by checking if unfiltered posts are empty.
+            if (filteredPosts.length > 0 || posts.length === 0) {
+                // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
+                // when "posts.length > 0 && filteredPosts.length === 0".
+                this.posts.set(filteredPosts);
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.postsSubscription?.unsubscribe();
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as POINT_DEDUCTION
+     * and saves the point deduction in percent
+     */
+    savePointDeductionVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call savePointDeductionVerdict before student is notified');
+        }
+        this.plagiarismCasesService
+            .saveVerdict(this.courseId(), this.plagiarismCaseId, {
+                verdict: PlagiarismVerdict.POINT_DEDUCTION,
+                verdictPointDeduction: this.verdictPointDeduction(),
+            })
+            .subscribe({
+                next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                    this.plagiarismCase.update((plagiarismCase) =>
+                        cloneWith(plagiarismCase, {
+                            verdict: res.body!.verdict,
+                            verdictPointDeduction: res.body!.verdictPointDeduction!,
+                            verdictBy: res.body!.verdictBy,
+                            verdictDate: res.body!.verdictDate,
+                        }),
+                    );
+                },
+            });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as WARNING
+     * and saves the warning message
+     */
+    saveWarningVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveWarningVerdict before student is notified');
+        }
+        this.plagiarismCasesService
+            .saveVerdict(this.courseId(), this.plagiarismCaseId, {
+                verdict: PlagiarismVerdict.WARNING,
+                verdictMessage: this.verdictMessage(),
+            })
+            .subscribe({
+                next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                    this.plagiarismCase.update((plagiarismCase) =>
+                        cloneWith(plagiarismCase, {
+                            verdict: res.body!.verdict,
+                            verdictMessage: res.body!.verdictMessage!,
+                            verdictBy: res.body!.verdictBy,
+                            verdictDate: res.body!.verdictDate,
+                        }),
+                    );
+                },
+            });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as PLAGIARISM
+     */
+    saveVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+            next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                this.plagiarismCase.update((plagiarismCase) =>
+                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                );
+            },
+        });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as NO_PLAGIARISM
+     */
+    saveNoPlagiarismVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
+            next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                this.plagiarismCase.update((plagiarismCase) =>
+                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                );
+            },
+        });
+    }
+
+    isStudentNotified() {
+        return (this.posts()?.length ?? 0) > 0;
+    }
+
+    /**
+     * Called after successfully creating the plagiarism notification post.
+     * Adds the created post to the local list so the thread becomes visible immediately.
+     */
+    onStudentNotified(createdPost: Post): void {
+        const currentPosts = this.posts() ?? [];
+
+        const exists = currentPosts.some((post) => post.id === createdPost.id);
+        if (!exists) {
+            this.posts.set([...currentPosts, createdPost]);
+        }
+
+        this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
+        this.communicationService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
+    }
+
+    /**
+     * Creates a post for the student notification.
+     * This method invokes the communication service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
+     * The plagiarism case is set as context, and an example title and body for the instructor is generated.
+     **/
+    createEmptyPost(): void {
+        const plagiarismCase = this.plagiarismCase();
+        const studentName = abbreviateString(plagiarismCase.student?.name ?? '', 70);
+        const instructorName = abbreviateString(this.currentAccount?.name ?? '', 70);
+        const exerciseTitle = abbreviateString(plagiarismCase.exercise?.title ?? '', 70);
+        const belongsToExam = !!plagiarismCase.exercise?.examId;
+        const courseOrExamTitle = abbreviateString((belongsToExam ? plagiarismCase.exercise?.examTitle : plagiarismCase.exercise?.courseTitle) ?? '', 70);
+
+        const createdPost = this.communicationService.createEmptyPostForContext(undefined, plagiarismCase); // Note the limit of 1.000 characters for the post's content
+        createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
+            exercise: exerciseTitle,
+        });
+        createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
+            student: studentName,
+            instructor: instructorName,
+            exercise: exerciseTitle,
+            inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
+            courseOrExam: courseOrExamTitle,
+            cocLink: '/public/documents/student-code-of-conduct.pdf',
+            apsoLink: '/public/documents/apso.pdf',
+            dueDate: dayjs().add(7, 'day').format('DD.MM.YYYY'),
+        });
+        this.createdPost.set(createdPost);
+    }
+
+    /**
+     * Prints the whole page using the theme service
+     */
+    async printPlagiarismCase() {
+        return await this.themeService.print();
+    }
+
+    createPlagiarismPost = (post: Post): Observable<Post> => {
+        const dto: PlagiarismPostCreationDtoModel = {
+            title: post.title ?? '',
+            content: post.content ?? '',
+            visibleForStudents: post.visibleForStudents ?? true,
+            hasForwardedMessages: post.hasForwardedMessages ?? false,
+            plagiarismCaseId: this.plagiarismCaseId,
+        };
+        return this.plagiarismPostService.createPlagiarismPost(this.courseId(), dto);
+    };
+}

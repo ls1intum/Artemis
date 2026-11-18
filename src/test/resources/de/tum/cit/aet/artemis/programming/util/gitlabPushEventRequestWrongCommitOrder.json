@@ -1,0 +1,93 @@
+{
+    "object_kind": "push",
+    "event_name": "push",
+    "before": "bfee66eb53d2c29e94cebeb807752ed8843d4e9b",
+    "after": "11028e4104243d8cbae9175f2bc938cb8c2d7924",
+    "ref": "refs/heads/main",
+    "checkout_sha": "11028e4104243d8cbae9175f2bc938cb8c2d7924",
+    "message": null,
+    "user_id": 1,
+    "user_name": "Administrator",
+    "user_username": "artemis",
+    "user_email": "",
+    "user_avatar": "https://www.gravatar.com/avatar/e64c7d89f26bd1972efa854d13d7dd61?s=80&d=identicon",
+    "project_id": 299,
+    "project": {
+        "id": 299,
+        "name": "cs1pe1-artemis_admin_backup",
+        "description": null,
+        "web_url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup",
+        "avatar_url": null,
+        "git_ssh_url": "ssh://git@localhost:2222/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "git_http_url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "namespace": "CS1PE1 Programming Exercise 1",
+        "visibility_level": 0,
+        "path_with_namespace": "CS1PE1/cs1pe1-artemis_admin_backup",
+        "default_branch": "main",
+        "ci_config_path": null,
+        "homepage": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup",
+        "url": "ssh://git@localhost:2222/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "ssh_url": "ssh://git@localhost:2222/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "http_url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup.git"
+    },
+    "commits": [
+        {
+            "id": "11028e4104243d8cbae9175f2bc938cb8c2d7924",
+            "message": "Changes by Online Editor",
+            "title": "Changes by Online Editor",
+            "timestamp": "2021-01-02T10:45:33+01:00",
+            "url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup/-/commit/11028e4104243d8cbae9175f2bc938cb8c2d7924",
+            "author": {
+                "name": "artemis_admin_backup artemis_admin_backup",
+                "email": "artemis_admin_backup@localhost"
+            },
+            "added": [
+
+            ],
+            "modified": [
+                "src/com/pe1/BubbleSort.java"
+            ],
+            "removed": [
+
+            ]
+        },
+        {
+            "id": "bfee66eb53d2c29e94cebeb807752ed8843d4e9b",
+            "message": "Exercise-Template pushed by Artemis",
+            "title": "Exercise-Template pushed by Artemis",
+            "timestamp": "2020-12-28T14:58:27+01:00",
+            "url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup/-/commit/bfee66eb53d2c29e94cebeb807752ed8843d4e9b",
+            "author": {
+                "name": "artemis_admin_backup artemis_admin_backup",
+                "email": "artemis_admin_backup@localhost"
+            },
+            "added": [
+                ".classpath",
+                ".gitattributes",
+                ".gitignore",
+                ".project",
+                "src/com/pe1/BubbleSort.java",
+                "src/com/pe1/Client.java",
+                "src/com/pe1/MergeSort.java"
+            ],
+            "modified": [
+
+            ],
+            "removed": [
+
+            ]
+        }
+    ],
+    "total_commits_count": 2,
+    "push_options": {
+    },
+    "repository": {
+        "name": "cs1pe1-artemis_admin_backup",
+        "url": "ssh://git@localhost:2222/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "description": null,
+        "homepage": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup",
+        "git_http_url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "git_ssh_url": "ssh://git@localhost:2222/CS1PE1/cs1pe1-artemis_admin_backup.git",
+        "visibility_level": 0
+    }
+}

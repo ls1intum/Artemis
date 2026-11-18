@@ -1,0 +1,28 @@
+{
+    "login": {
+        "title": "Anmeldung",
+        "divider": "oder",
+        "form": {
+            "password": "Passwort",
+            "password.placeholder": "Passwort",
+            "rememberme": "Automatische Anmeldung",
+            "acceptTerms": "Bedingungen akzeptieren",
+            "button": "Anmelden"
+        },
+        "messages": {
+            "error": {
+                "authentication": "<strong>Anmeldung fehlgeschlagen!</strong> Überprüfe bitte deine Angaben und versuche es erneut."
+            }
+        },
+        "password": {
+            "forgot": "Passwort vergessen?"
+        },
+        "ide": {
+            "confirmation": "Wills du deinen Login und dein Passwort in deiner IDE speichern?\nDas wird das Importieren deiner Programmieraufgaben sehr vereinfachen!",
+            "title": "IDE Login"
+        }
+    },
+    "logout": {
+        "failed": "Das Logout war nicht erfolgreich aufgrund des folgenden Fehlers: {{error}}. Sollte der Fehler sich nicht von selbst lösen, lade bitte die Seite erneut."
+    }
+}

@@ -1,0 +1,308 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { take } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
+
+describe('Lecture Service', () => {
+    let httpMock: HttpTestingController;
+    let service: LectureService;
+    const resourceUrl = 'api/lecture/lectures';
+    let expectedResult: any;
+    let elemDefault: Lecture;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
+        });
+        service = TestBed.inject(LectureService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        expectedResult = {} as HttpResponse<Lecture>;
+        elemDefault = new Lecture();
+        elemDefault.startDate = dayjs();
+        elemDefault.course = new Course();
+        elemDefault.course.id = 42;
+        elemDefault.description = 'new service test Lecture';
+        elemDefault.endDate = dayjs();
+        elemDefault.id = 1;
+        elemDefault.title = 'Test Lecture';
+        elemDefault.isAtLeastEditor = false;
+        elemDefault.isAtLeastInstructor = false;
+        elemDefault.channelName = 'lecture-default';
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    describe('Service methods', () => {
+        it('should create a lecture in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            service
+                .create(elemDefault)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: resourceUrl,
+                method: 'POST',
+            });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should update a lecture in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            service
+                .update(elemDefault)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: resourceUrl,
+                method: 'PUT',
+            });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.id).toBe(1);
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should publish the saved title for the breadcrumb and the page title', () => {
+            const titleSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setTitle');
+
+            service.update(elemDefault).pipe(take(1)).subscribe();
+            httpMock.expectOne({ url: resourceUrl, method: 'PUT' }).flush({ ...elemDefault, title: 'Renamed Lecture' });
+
+            expect(titleSpy).toHaveBeenCalledWith(EntityType.LECTURE, [elemDefault.id], 'Renamed Lecture');
+        });
+
+        it('should find a lecture with details in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService, posts: [] };
+            const lectureId = elemDefault.id!;
+            service
+                .findWithDetails(lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${lectureId}/details`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should find a lecture in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            const lectureId = elemDefault.id!;
+            service
+                .find(lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${lectureId}`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should get all lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = false;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/lectures`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should load the narrow lecture overview and register converted lecture titles', () => {
+            const startDate = '2026-08-01T10:00:00.000Z';
+            const endDate = '2026-08-01T12:00:00.000Z';
+            const serverLecture = { id: 7, title: 'Overview lecture', startDate, endDate, isTutorialLecture: false };
+            const titleSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setTitle');
+            let received: LectureForOverview[] | undefined;
+
+            service.findAllByCourseIdForOverview(42).subscribe((lectures) => (received = lectures));
+            const request = httpMock.expectOne({ method: 'GET', url: 'api/lecture/courses/42/lectures-for-overview' });
+            expect(request.request.params.keys()).toEqual([]);
+            request.flush([serverLecture]);
+
+            expect(received).toHaveLength(1);
+            expect(received?.[0]).toMatchObject({ id: 7, title: 'Overview lecture', isTutorialLecture: false });
+            expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
+            expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);
+            expect(received?.[0].startDate?.toISOString()).toBe(startDate);
+            expect(received?.[0].endDate?.toISOString()).toBe(endDate);
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(EntityType.LECTURE, [7], 'Overview lecture');
+        });
+
+        it('should get all tutorial lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = true;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllTutorialLecturesByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/tutorial-lectures`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should import lecture', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            const lectureId = elemDefault.id!;
+            const courseId = 1;
+            service
+                .import(courseId, lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/import?courseId=${courseId}&sourceLectureId=${lectureId}`,
+                method: 'POST',
+            });
+
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should get all lectures with lecture units slides by courseId', async () => {
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllByCourseIdWithSlides(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/lectures-with-slides`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should delete a lecture in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const lectureId = elemDefault.id!;
+            service
+                .delete(lectureId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${lectureId}`,
+                method: 'DELETE',
+            });
+            req.flush(returnedFromService);
+            expect(req.request.method).toBe('DELETE');
+        });
+
+        it('should delete a lecture with its videos uploaded to TUM.Live', async () => {
+            service.delete(elemDefault.id!, true).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne({ url: `${resourceUrl}/${elemDefault.id}?deleteTumLiveRecordings=true`, method: 'DELETE' });
+            req.flush({});
+        });
+
+        it('should convert Dates from server', async () => {
+            const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
+            expect(results).toEqual([elemDefault, elemDefault]);
+        });
+
+        it('should convert no lectures to none', () => {
+            expect(service.convertLectureArrayDatesFromServer(undefined)).toBeUndefined();
+        });
+
+        it('should convert the dates of lectures and their units from the server', () => {
+            const lecture = { id: 3, startDate: '2026-10-01T08:00:00Z', lectureUnits: [{ id: 5, type: 'text', releaseDate: '2026-10-02T08:00:00Z' }] } as unknown as Lecture;
+
+            const [converted] = service.convertLectureArrayDatesFromServer([lecture])!;
+
+            expect(dayjs.isDayjs(converted.startDate)).toBe(true);
+            expect(dayjs.isDayjs(converted.lectureUnits![0].releaseDate)).toBe(true);
+        });
+
+        it('should convert the release dates of the units of a found lecture', () => {
+            service
+                .find(3)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            httpMock.expectOne({ url: `${resourceUrl}/3`, method: 'GET' }).flush({ id: 3, lectureUnits: [{ id: 5, type: 'text', releaseDate: '2026-10-02T08:00:00Z' }] });
+
+            expect(dayjs.isDayjs(expectedResult.body.lectureUnits[0].releaseDate)).toBe(true);
+        });
+
+        it('should create a lecture series for a course', () => {
+            const lectures = [new LectureSeriesCreateLectureDTO('Lecture 1', dayjs('2026-10-01T08:00:00Z'), dayjs('2026-10-01T09:30:00Z'))];
+
+            service.createSeries(lectures, 42).pipe(take(1)).subscribe();
+
+            const req = httpMock.expectOne({ url: 'api/lecture/courses/42/lectures', method: 'POST' });
+            expect(req.request.body).toBe(lectures);
+            req.flush(null);
+        });
+    });
+});
